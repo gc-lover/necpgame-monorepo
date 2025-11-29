@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Enhanced Content Elite & Champion Service API
+  description: |
+    API для Elite World Bosses и Champion Raids - усиленных версий контента.
+    
+    **Основные возможности:**
+    - Управление Elite World Bosses (редкое появление, +200% HP, +100% урон)
+    - Управление Champion Raids (усиленные механики, координация)
+    - Уникальные награды для каждого типа
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
+
+tags:
+  - name: Elite Bosses
+    description: Усиленные мировые боссы
+  - name: Champion Raids
+    description: Усиленные рейды
+
+paths:
+  /enhanced/elite-bosses/active:
+    get:
+      tags:
+        - Elite Bosses
+      summary: Получить активных Elite боссов
+      description: |
+        Возвращает список активных Elite World Bosses в мире.
+        Elite боссы появляются редко (1 раз в неделю) и имеют усиленные характеристики.
+      operationId: getActiveEliteBosses
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список активных Elite боссов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - elite_bosses
+                properties:
+                  elite_bosses:
+                    type: array
+                    items:
+                      $ref: 'gameplay-enhanced-content-schemas.yaml#/components/schemas/EliteBoss'
+              example:
+                elite_bosses:
+                  - boss_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                    base_boss_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                    boss_name: "Elite Cyber Dragon"
+                    spawn_time: "2025-12-01T10:00:00Z"
+                    despawn_time: "2025-12-08T10:00:00Z"
+                    defeated: false
+                    modifiers:
+                      hp_modifier: 3.0
+                      damage_modifier: 2.0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /enhanced/champion-raids/available:
+    get:
+      tags:
+        - Champion Raids
+      summary: Получить доступные Champion рейды
+      description: |
+        Возвращает список доступных Champion Raids с усиленными механиками.
+        Champion рейды требуют высокой координации команды.
+      operationId: getAvailableChampionRaids
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список доступных Champion рейдов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - champion_raids
+                properties:
+                  champion_raids:
+                    type: array
+                    items:
+                      $ref: 'gameplay-enhanced-content-schemas.yaml#/components/schemas/ChampionRaid'
+              example:
+                champion_raids:
+                  - raid_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                    base_raid_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                    raid_name: "Champion Corporate Tower"
+                    available: true
+                    modifiers:
+                      hp_modifier: 2.5
+                      damage_modifier: 1.75
+                    required_players: 8
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

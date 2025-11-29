@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-23T10:00:00Z
+  version: "1.1.0"
+  last_updated: 2025-11-29T12:00:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -49,17 +49,20 @@ summary:
     - API endpoints (высокоуровнево)
     - Технического задания для реализации
   essence: |
-    Гибридная сетевая архитектура с WebSocket для MMORPG зон (PvE) и UDP для PvP зон,
-    с динамическим переключением протоколов и масштабированием для больших битв.
+    Гибридная сетевая архитектура с:
+    - WebSocket для безопасных зон (PvP отключен) и открытого мира (PvE режим)
+    - UDP для выделенных PvP зон и боевых действий в открытом мире
+    - Динамическим переключением протоколов WebSocket ↔ UDP в открытом мире
+    - Масштабированием для больших битв (200-2000+ игроков)
 
 architecture:
   overview: |
     Гибридная сетевая система состоит из следующих компонентов:
     1. Protocol Gateway - единая точка входа с поддержкой WebSocket и UDP
-    2. Protocol Switch Manager - управление динамическим переключением протоколов
-    3. WebSocket Gateway - обработка WebSocket соединений (PvE зоны)
-    4. UDP Gateway - обработка UDP соединений (PvP зоны)
-    5. Zone Manager - управление зонами и выбор протокола
+    2. Protocol Switch Manager - управление динамическим переключением протоколов (только для открытого мира)
+    3. WebSocket Gateway - обработка WebSocket соединений (безопасные зоны и открытый мир в PvE режиме)
+    4. UDP Gateway - обработка UDP соединений (выделенные PvP зоны и открытый мир в PvP режиме)
+    5. Zone Manager - управление зонами и выбор протокола (определение типа зоны: безопасная/открытый мир/выделенная PvP)
     6. Session Manager - управление сессиями и состояние переключения
     7. Spatial Partitioning Engine - оптимизация для средних битв (200 игроков)
     8. Spatial Sharding Manager - масштабирование для больших битв (400+ игроков)
@@ -95,9 +98,21 @@ architecture:
         - Координация overlap периода (оба соединения активны)
         - Fallback на WebSocket при проблемах с UDP
       switch_triggers:
-        - PvE → PvP: Вход в боевой режим, детекция врагов
-        - PvP → PvE: Выход из боя, отсутствие врагов 5+ секунд
-        - UDP недоступен: Автоматический fallback на WebSocket
+        - Open world (WebSocket) → PvP (UDP):
+          - Вход в боевой режим (детекция врагов)
+          - Активация боевых способностей
+          - Вход в зону боевых действий
+        - PvP (UDP) → Open world (WebSocket):
+          - Выход из боя (отсутствие врагов 5+ секунд)
+          - Выход из зоны боевых действий
+          - Деактивация боевых способностей
+        - Safe zones (безопасные зоны):
+          - Переключение отключено (только WebSocket)
+        - Dedicated PvP zones (выделенные PvP зоны):
+          - Переключение отключено (только UDP)
+        - Fallback:
+          - UDP недоступен: Автоматический fallback на WebSocket
+          - Проблемы с UDP соединением: Возврат на WebSocket
       switch_mechanics: |
         1. Запрос на переключение от клиента или сервера
         2. Синхронизация состояния через WebSocket (критичные данные)
@@ -120,9 +135,18 @@ architecture:
         - Поддержка топиков (zone, character, world, chat)
         - Heartbeat и keepalive
       zone_types:
-        - Global PvE zones (города, открытый мир)
-        - Social zones (лобби, торговые зоны)
-        - Quest zones (квестовые инстансы)
+        - Safe zones (безопасные зоны - города, торговые зоны):
+          - PvP отключен полностью
+          - Протокол: WebSocket (постоянно, без переключения)
+          - Применение: города, торговые зоны, лобби
+        - Open world zones (открытый мир - PvE зоны с возможностью PvP):
+          - PvP возможен
+          - Протокол: WebSocket по умолчанию, UDP при входе в бой (динамическое переключение)
+          - Применение: открытый мир, квестовые зоны, исследовательские зоны
+        - Social zones (социальные зоны):
+          - PvP отключен
+          - Протокол: WebSocket (постоянно)
+          - Применение: лобби, торговые зоны, социальные хабы
       features:
         - Tick rate: 20-30 Hz для PvE зон
         - Задержка: <100 мс
@@ -166,11 +190,28 @@ architecture:
         - Управление лимитами игроков
         - Мониторинг производительности зон
       zone_protocol_mapping:
-        - Global PvE zones → WebSocket (TCP)
-        - Small PvP zones (5-20) → UDP
-        - GvG zones (200) → UDP + Spatial Partitioning
-        - GvG zones (400) → UDP + Spatial Sharding
-        - Massive war (2000+) → UDP + Cluster + Sharding
+        - Safe zones (безопасные зоны):
+          - Протокол: WebSocket (TCP) - постоянно
+          - PvP: отключен
+          - Переключение: нет (только WebSocket)
+        - Open world zones (открытый мир):
+          - Протокол по умолчанию: WebSocket (TCP)
+          - Протокол в бою: UDP (динамическое переключение)
+          - PvP: возможен
+          - Переключение: WebSocket ↔ UDP (автоматическое)
+        - Dedicated PvP zones (выделенные PvP зоны):
+          - Протокол: UDP - постоянно
+          - PvP: всегда включен
+          - Переключение: нет (только UDP)
+          - Типы: малые арены (5-20), GvG 200, GvG 400, Massive war 2000+
+        - Small PvP zones (5-20 игроков):
+          - Протокол: UDP + Spatial Partitioning
+        - GvG zones (200 игроков):
+          - Протокол: UDP + Spatial Partitioning
+        - GvG zones (400 игроков):
+          - Протокол: UDP + Spatial Sharding
+        - Massive war (2000+ игроков):
+          - Протокол: UDP + Cluster + Sharding
       endpoints:
         - GET /api/v1/zones - список зон
         - GET /api/v1/zones/{id} - информация о зоне
@@ -401,26 +442,44 @@ technical_specification:
 
   protocol_requirements:
     - WebSocket (TCP):
-      - Tick rate: 20-30 Hz для PvE зон
+      - Применение:
+        - Безопасные зоны (Safe Zones): постоянно, без переключения
+        - Открытый мир (Open World): по умолчанию, переключение на UDP при входе в бой
+      - Tick rate: 20-30 Hz
       - Задержка: <100 мс
       - Надежная доставка сообщений
       - Поддержка TLS (wss://)
+      - Данные: квесты, инвентарь, чат, торговля, социальные взаимодействия
     - UDP:
+      - Применение:
+        - Выделенные PvP зоны (Dedicated PvP Zones): постоянно, без переключения
+        - Открытый мир (Open World): при входе в бой, переключение из WebSocket
       - Tick rate: 60-128 Hz (зависит от типа зоны)
       - Задержка: 5-50 мс
       - Собственная реализация надежности (sequence, ACK/NACK)
       - QoS управление (prioritization, packet ordering)
       - Anti-cheat валидация
+      - Данные: позиции, выстрелы, урон, боевые события
 
   performance_requirements:
-    - Protocol switching: <1 секунда
-    - WebSocket: до 500 игроков на зону
-    - UDP small PvP: 5-20 игроков, 60-128 Hz
-    - UDP GvG 200: 200 игроков, 60-80 Hz, spatial partitioning
-    - UDP GvG 400: 400 игроков, 40-60 Hz, spatial sharding (2-4 shards)
-    - UDP massive war: 2000+ игроков, 20-40 Hz, cluster (5-10 servers)
-    - Bandwidth optimization: 80-90% снижение через spatial partitioning
-    - Event aggregation: батчинг 100 мс для больших битв
+    - Protocol switching (только для открытого мира):
+      - Время переключения: <1 секунда
+      - Overlap период: 1-2 секунды (оба соединения активны)
+      - Fallback: автоматический возврат на WebSocket при проблемах с UDP
+    - Безопасные зоны (Safe Zones):
+      - WebSocket: до 500 игроков на зону
+      - Переключение: отключено (только WebSocket)
+    - Открытый мир (Open World):
+      - WebSocket (PvE режим): до 500 игроков на зону
+      - UDP (PvP режим): зависит от количества игроков в бою
+    - Выделенные PvP зоны (Dedicated PvP Zones):
+      - UDP small PvP: 5-20 игроков, 60-128 Hz
+      - UDP GvG 200: 200 игроков, 60-80 Hz, spatial partitioning
+      - UDP GvG 400: 400 игроков, 40-60 Hz, spatial sharding (2-4 shards)
+      - UDP massive war: 2000+ игроков, 20-40 Hz, cluster (5-10 servers)
+    - Оптимизация:
+      - Bandwidth optimization: 80-90% снижение через spatial partitioning
+      - Event aggregation: батчинг 100 мс для больших битв
 
   scalability_requirements:
     - Горизонтальное масштабирование через пул инстансов
@@ -676,8 +735,10 @@ diagrams:
 decisions:
   - id: adr-hybrid-protocol-architecture
     summary: |
-      Выбрана гибридная архитектура с WebSocket для PvE зон и UDP для PvP зон
-      с динамическим переключением протоколов для оптимальной производительности.
+      Выбрана гибридная архитектура с:
+      - WebSocket для безопасных зон (PvP отключен) и открытого мира (PvE режим)
+      - UDP для выделенных PvP зон и боевых действий в открытом мире
+      - Динамическим переключением протоколов WebSocket ↔ UDP только в открытом мире
 
   - id: adr-protocol-switching
     summary: |

@@ -1,0 +1,297 @@
+openapi: 3.0.3
+info:
+  title: AI Adaptive Schemas
+  description: Общие схемы данных для системы адаптивного AI
+  version: 1.0.0
+
+components:
+  schemas:
+    AdaptationType:
+      type: string
+      enum: [attack_pattern, defense_pattern, target_priority, counter_strategy, positioning]
+      description: Тип адаптации AI
+      example: "attack_pattern"
+
+    StrategyType:
+      type: string
+      enum: [aggressive, defensive, balanced, counter, adaptive]
+      description: Тип стратегии AI
+      example: "adaptive"
+
+    TacticsPattern:
+      type: object
+      required:
+        - pattern_type
+        - frequency
+        - effectiveness
+      properties:
+        pattern_type:
+          type: string
+          description: Тип паттерна (combo_sequence, positioning, ability_usage)
+          example: "combo_sequence"
+        frequency:
+          type: number
+          format: float
+          description: Частота использования паттерна (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.75
+        effectiveness:
+          type: number
+          format: float
+          description: Эффективность паттерна (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.82
+
+    PlayerTacticsData:
+      type: object
+      required:
+        - player_id
+        - position_data
+        - ability_usage
+        - pattern_data
+        - timestamp
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        position_data:
+          type: object
+          description: Данные о позициях игрока
+          properties:
+            preferred_positions:
+              type: array
+              items:
+                type: object
+                properties:
+                  x:
+                    type: number
+                    format: float
+                  y:
+                    type: number
+                    format: float
+                  z:
+                    type: number
+                    format: float
+            average_position:
+              type: object
+              properties:
+                x:
+                  type: number
+                  format: float
+                y:
+                  type: number
+                  format: float
+                z:
+                  type: number
+                  format: float
+        ability_usage:
+          type: object
+          description: Данные об использовании способностей
+          properties:
+            most_used_abilities:
+              type: array
+              items:
+                type: object
+                properties:
+                  ability_id:
+                    type: string
+                    format: uuid
+                  usage_count:
+                    type: integer
+                    minimum: 0
+            combo_sequences:
+              type: array
+              items:
+                type: string
+        pattern_data:
+          type: object
+          description: Данные о паттернах поведения
+          properties:
+            attack_patterns:
+              type: array
+              items:
+                $ref: '#/components/schemas/TacticsPattern'
+            defense_patterns:
+              type: array
+              items:
+                $ref: '#/components/schemas/TacticsPattern'
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    TeamWeakness:
+      type: object
+      required:
+        - weakness_type
+        - severity
+        - description
+      properties:
+        weakness_type:
+          type: string
+          enum: [positioning, coordination, defense, offense, resource_management]
+          description: Тип слабости
+          example: "coordination"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Серьезность слабости
+          example: "high"
+        description:
+          type: string
+          description: Описание слабости
+          example: "Team lacks coordination in ability usage"
+        affected_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Игроки, затронутые слабостью
+
+    AIAdaptation:
+      type: object
+      required:
+        - adaptation_id
+        - encounter_id
+        - enemy_id
+        - adaptation_type
+        - adaptation_data
+        - applied_at
+      properties:
+        adaptation_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        encounter_id:
+          type: string
+          format: uuid
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        enemy_id:
+          type: string
+          format: uuid
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        adaptation_type:
+          $ref: '#/components/schemas/AdaptationType'
+        adaptation_data:
+          type: object
+          description: Данные адаптации
+          additionalProperties: true
+          example:
+            target_priority: "weakest_player"
+            attack_frequency: 0.8
+            defense_focus: "ability_blocking"
+        applied_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        effectiveness:
+          type: number
+          format: float
+          description: Эффективность адаптации (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          example: 0.75
+
+    ModelStatus:
+      type: object
+      required:
+        - model_id
+        - model_name
+        - status
+        - version
+        - last_trained
+      properties:
+        model_id:
+          type: string
+          format: uuid
+          example: "ee0e8400-e29b-41d4-a716-446655440000"
+        model_name:
+          type: string
+          description: Название модели
+          example: "tactics_analyzer_v1"
+        status:
+          type: string
+          enum: [training, ready, deployed, deprecated]
+          description: Статус модели
+          example: "deployed"
+        version:
+          type: string
+          description: Версия модели
+          example: "1.2.0"
+        last_trained:
+          type: string
+          format: date-time
+          description: Дата последнего обучения
+          example: "2025-12-01T08:00:00Z"
+        accuracy:
+          type: number
+          format: float
+          description: Точность модели (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          example: 0.88
+        training_samples:
+          type: integer
+          description: Количество образцов для обучения
+          minimum: 0
+          nullable: true
+          example: 100000
+
+    TrainingData:
+      type: object
+      required:
+        - encounter_id
+        - tactics_data
+        - adaptation_data
+        - effectiveness
+        - timestamp
+      properties:
+        encounter_id:
+          type: string
+          format: uuid
+          example: "ff0e8400-e29b-41d4-a716-446655440000"
+        tactics_data:
+          type: object
+          description: Данные о тактиках команды
+          properties:
+            team_composition:
+              type: array
+              items:
+                type: string
+                format: uuid
+            tactics_patterns:
+              type: array
+              items:
+                $ref: '#/components/schemas/TacticsPattern'
+            weaknesses:
+              type: array
+              items:
+                $ref: '#/components/schemas/TeamWeakness'
+        adaptation_data:
+          type: object
+          description: Данные об адаптациях AI
+          properties:
+            adaptations_applied:
+              type: array
+              items:
+                $ref: '#/components/schemas/AIAdaptation'
+            strategy_changes:
+              type: integer
+              minimum: 0
+        effectiveness:
+          type: number
+          format: float
+          description: Эффективность адаптаций (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.75
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+

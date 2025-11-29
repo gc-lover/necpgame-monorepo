@@ -1,0 +1,433 @@
+openapi: 3.0.3
+info:
+  title: Analytics Combat Overview & Metrics Service API
+  description: |
+    API для общей статистики и метрик боевой системы.
+    
+    **Основные возможности:**
+    - Общая статистика боевой системы
+    - Метрики с фильтрами
+    - Тренды по времени
+    
+    **Типы метрик:**
+    - TTK (Time To Kill)
+    - DPS (Damage Per Second)
+    - Accuracy (Точность)
+    - Effectiveness (Эффективность)
+    - Usage (Использование)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/analytics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/analytics
+    description: Продакшен сервер
+
+tags:
+  - name: Combat Overview
+    description: Общая статистика боевой системы
+  - name: Combat Metrics
+    description: Метрики боевой системы
+  - name: Combat Trends
+    description: Тренды по времени
+
+paths:
+  /combat/overview:
+    get:
+      tags:
+        - Combat Overview
+      summary: Получить общую статистику боевой системы
+      description: |
+        Возвращает общую статистику по всем боевым механикам за указанный период.
+        Включает агрегированные метрики по стрельбе, способностям, имплантам, комбо.
+      operationId: getCombatOverview
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          required: false
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+            example: "2025-12-01T00:00:00Z"
+        - name: end_date
+          in: query
+          required: false
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
+            example: "2025-12-31T23:59:59Z"
+        - name: mode
+          in: query
+          required: false
+          description: Фильтр по игровому режиму
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/GameMode'
+      responses:
+        '200':
+          description: Общая статистика боевой системы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatOverview'
+              example:
+                period:
+                  start: "2025-12-01T00:00:00Z"
+                  end: "2025-12-31T23:59:59Z"
+                total_sessions: 100000
+                total_events: 5000000
+                shooting:
+                  total_shots: 2000000
+                  total_hits: 1500000
+                  accuracy: 0.75
+                  average_ttk: 2.3
+                abilities:
+                  total_uses: 1000000
+                  average_effectiveness: 0.68
+                combos:
+                  total_executions: 500000
+                  average_damage: 250.5
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /combat/metrics:
+    get:
+      tags:
+        - Combat Metrics
+      summary: Получить метрики с фильтрами
+      description: |
+        Возвращает агрегированные метрики с возможностью фильтрации по различным измерениям.
+        Поддерживает фильтры по времени, режиму, зоне, классу, оружию, способностям.
+      operationId: getCombatMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: metric_type
+          in: query
+          required: true
+          description: Тип метрики
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/MetricType'
+        - name: dimension_type
+          in: query
+          required: false
+          description: Тип измерения для группировки
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/DimensionType'
+        - name: time_bucket
+          in: query
+          required: false
+          description: Временной интервал для агрегации
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/TimeBucket'
+        - name: start_date
+          in: query
+          required: false
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: false
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: mode
+          in: query
+          required: false
+          description: Фильтр по игровому режиму
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/GameMode'
+      responses:
+        '200':
+          description: Агрегированные метрики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+              example:
+                metric_type: "ttk"
+                dimension_type: "weapon"
+                time_bucket: "day"
+                metrics:
+                  - metric_name: "average_ttk"
+                    dimension_value: "weapon_001"
+                    time_bucket: "2025-12-01T00:00:00Z"
+                    value: 2.3
+                    sample_count: 5000
+                  - metric_name: "average_ttk"
+                    dimension_value: "weapon_002"
+                    time_bucket: "2025-12-01T00:00:00Z"
+                    value: 2.8
+                    sample_count: 3000
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /combat/trends:
+    get:
+      tags:
+        - Combat Trends
+      summary: Получить тренды по времени
+      description: |
+        Возвращает тренды метрик по времени для анализа изменений.
+        Показывает динамику метрик за указанный период.
+      operationId: getCombatTrends
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: metric_type
+          in: query
+          required: true
+          description: Тип метрики для анализа трендов
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/MetricType'
+        - name: metric_name
+          in: query
+          required: false
+          description: Название конкретной метрики
+          schema:
+            type: string
+            example: "average_ttk"
+        - name: dimension_type
+          in: query
+          required: false
+          description: Тип измерения
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/DimensionType'
+        - name: dimension_value
+          in: query
+          required: false
+          description: Значение измерения
+          schema:
+            type: string
+            example: "weapon_001"
+        - name: time_bucket
+          in: query
+          required: true
+          description: Временной интервал для агрегации
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/TimeBucket'
+        - name: start_date
+          in: query
+          required: true
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: true
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Тренды метрик по времени
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendsResponse'
+              example:
+                metric_type: "ttk"
+                metric_name: "average_ttk"
+                dimension_type: "weapon"
+                dimension_value: "weapon_001"
+                time_bucket: "day"
+                trends:
+                  - time_bucket: "2025-12-01T00:00:00Z"
+                    value: 2.3
+                    sample_count: 5000
+                  - time_bucket: "2025-12-02T00:00:00Z"
+                    value: 2.25
+                    sample_count: 5200
+                trend_direction: "decreasing"
+                trend_percentage: -2.17
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CombatOverview:
+      type: object
+      required:
+        - period
+        - total_sessions
+        - total_events
+      properties:
+        period:
+          type: object
+          required:
+            - start
+            - end
+          properties:
+            start:
+              type: string
+              format: date-time
+              example: "2025-12-01T00:00:00Z"
+            end:
+              type: string
+              format: date-time
+              example: "2025-12-31T23:59:59Z"
+        total_sessions:
+          type: integer
+          description: Общее количество сессий
+          minimum: 0
+          example: 100000
+        total_events:
+          type: integer
+          description: Общее количество событий
+          minimum: 0
+          example: 5000000
+        shooting:
+          type: object
+          properties:
+            total_shots:
+              type: integer
+              minimum: 0
+              example: 2000000
+            total_hits:
+              type: integer
+              minimum: 0
+              example: 1500000
+            accuracy:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              example: 0.75
+            average_ttk:
+              type: number
+              format: float
+              minimum: 0
+              example: 2.3
+        abilities:
+          type: object
+          properties:
+            total_uses:
+              type: integer
+              minimum: 0
+              example: 1000000
+            average_effectiveness:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              example: 0.68
+        combos:
+          type: object
+          properties:
+            total_executions:
+              type: integer
+              minimum: 0
+              example: 500000
+            average_damage:
+              type: number
+              format: float
+              minimum: 0
+              example: 250.5
+
+    MetricsResponse:
+      type: object
+      required:
+        - metric_type
+        - metrics
+      properties:
+        metric_type:
+          $ref: 'analytics-combat-schemas.yaml#/components/schemas/MetricType'
+        dimension_type:
+          $ref: 'analytics-combat-schemas.yaml#/components/schemas/DimensionType'
+        time_bucket:
+          $ref: 'analytics-combat-schemas.yaml#/components/schemas/TimeBucket'
+        metrics:
+          type: array
+          description: Список агрегированных метрик
+          items:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/AggregatedMetric'
+
+    TrendsResponse:
+      type: object
+      required:
+        - metric_type
+        - time_bucket
+        - trends
+        - trend_direction
+        - trend_percentage
+      properties:
+        metric_type:
+          $ref: 'analytics-combat-schemas.yaml#/components/schemas/MetricType'
+        metric_name:
+          type: string
+          example: "average_ttk"
+        dimension_type:
+          $ref: 'analytics-combat-schemas.yaml#/components/schemas/DimensionType'
+        dimension_value:
+          type: string
+          example: "weapon_001"
+        time_bucket:
+          $ref: 'analytics-combat-schemas.yaml#/components/schemas/TimeBucket'
+        trends:
+          type: array
+          description: Тренды по времени
+          items:
+            type: object
+            required:
+              - time_bucket
+              - value
+              - sample_count
+            properties:
+              time_bucket:
+                type: string
+                format: date-time
+                example: "2025-12-01T00:00:00Z"
+              value:
+                type: number
+                format: float
+                example: 2.3
+              sample_count:
+                type: integer
+                minimum: 0
+                example: 5000
+        trend_direction:
+          type: string
+          enum: [increasing, decreasing, stable]
+          description: Направление тренда
+          example: "decreasing"
+        trend_percentage:
+          type: number
+          format: float
+          description: Изменение в процентах
+          example: -2.17
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

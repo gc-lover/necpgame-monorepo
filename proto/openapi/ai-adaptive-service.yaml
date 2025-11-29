@@ -2,8 +2,14 @@ openapi: 3.0.3
 info:
   title: AI Adaptive Service API
   description: |
-    API для системы адаптивного AI: анализ тактик игроков, адаптация поведения врагов,
-    применение контр-стратегий и обучение моделей машинного обучения.
+    API для системы адаптивного AI.
+    
+    **Основные возможности:**
+    - Анализ тактик игроков в реальном времени
+    - Адаптация поведения AI врагов
+    - Применение контр-стратегий
+    - Обучение моделей машинного обучения
+    - Мониторинг статуса моделей
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -22,16 +28,18 @@ tags:
     description: Адаптации AI
   - name: Training
     description: Обучение моделей
+  - name: Models
+    description: Управление моделями
 
 paths:
   /analyze/tactics:
     post:
       tags:
         - Tactics Analysis
-      summary: Проанализировать тактики команды
+      summary: Анализировать тактики команды
       description: |
-        Анализирует тактики команды игроков в реальном времени: позиции, способности,
-        паттерны атак и определяет слабые места для применения контр-стратегий.
+        Анализирует тактики игроков в реальном времени и определяет слабые места команды.
+        Результаты используются для адаптации поведения AI врагов.
       operationId: analyzeTactics
       security:
         - BearerAuth: []
@@ -42,43 +50,46 @@ paths:
             schema:
               $ref: '#/components/schemas/AnalyzeTacticsRequest'
             example:
-              encounter_id: 'aa0e8400-e29b-41d4-a716-446655440000'
-              player_actions:
-                - player_id: '110e8400-e29b-41d4-a716-446655440000'
-                  position: { x: 10.5, y: 5.2, z: 2.1 }
-                  abilities_used: ['fire_blast', 'shield_wall']
-                  damage_dealt: 1250
-                  damage_taken: 350
-                  movement_pattern: 'aggressive'
-                - player_id: '110e8400-e29b-41d4-a716-446655440001'
-                  position: { x: 8.3, y: 6.1, z: 2.0 }
-                  abilities_used: ['heal', 'buff']
-                  damage_dealt: 200
-                  damage_taken: 150
-                  movement_pattern: 'defensive'
+              encounter_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              team_players:
+                - player_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                  position_data:
+                    preferred_positions:
+                      - x: 10.5
+                        y: 2.0
+                        z: 15.3
+                  ability_usage:
+                    most_used_abilities:
+                      - ability_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                        usage_count: 25
+                  pattern_data:
+                    attack_patterns:
+                      - pattern_type: "combo_sequence"
+                        frequency: 0.75
+                        effectiveness: 0.82
       responses:
         '200':
           description: Результаты анализа тактик
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TacticsAnalysisResult'
+                $ref: '#/components/schemas/AnalyzeTacticsResponse'
               example:
-                encounter_id: 'aa0e8400-e29b-41d4-a716-446655440000'
-                analysis_id: 'bb0e8400-e29b-41d4-a716-446655440000'
-                weak_points:
-                  - type: positioning
-                    description: Команда группируется, уязвима к AOE атакам
-                    severity: high
-                  - type: support_focus
-                    description: Саппорт часто на передовой, легко доступен
-                    severity: medium
-                recommended_adaptations:
-                  - type: aoe_focus
-                    priority: high
-                  - type: support_targeting
-                    priority: medium
-                analyzed_at: '2025-12-01T10:30:00Z'
+                encounter_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                analysis_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                tactics_patterns:
+                  - pattern_type: "combo_sequence"
+                    frequency: 0.75
+                    effectiveness: 0.82
+                weaknesses:
+                  - weakness_type: "coordination"
+                    severity: "high"
+                    description: "Team lacks coordination in ability usage"
+                    affected_players:
+                      - "bb0e8400-e29b-41d4-a716-446655440000"
+                recommendations:
+                  - adaptation_type: "counter_strategy"
+                    description: "Focus on interrupting combo sequences"
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
@@ -86,49 +97,47 @@ paths:
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /adaptations/{encounter_id}:
+  /adaptations/{encounterId}:
     get:
       tags:
         - Adaptations
       summary: Получить текущие адаптации AI
       description: |
-        Возвращает список активных адаптаций AI для конкретного энкаунтера,
-        включая тип адаптации и примененные модификаторы.
+        Возвращает список всех активных адаптаций AI для указанной встречи.
+        Включает информацию о типе адаптации, примененных изменениях и эффективности.
       operationId: getAdaptations
       security:
         - BearerAuth: []
       parameters:
-        - name: encounter_id
+        - name: encounterId
           in: path
           required: true
+          description: ID встречи
           schema:
             type: string
             format: uuid
-          description: ID энкаунтера
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
       responses:
         '200':
-          description: Текущие адаптации AI
+          description: Список адаптаций AI
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdaptationsResponse'
               example:
-                encounter_id: 'aa0e8400-e29b-41d4-a716-446655440000'
+                encounter_id: "aa0e8400-e29b-41d4-a716-446655440000"
                 adaptations:
-                  - id: 'cc0e8400-e29b-41d4-a716-446655440000'
-                    enemy_id: 'dd0e8400-e29b-41d4-a716-446655440000'
-                    adaptation_type: aoe_focus
+                  - adaptation_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                    enemy_id: "ff0e8400-e29b-41d4-a716-446655440000"
+                    adaptation_type: "attack_pattern"
                     adaptation_data:
-                      aoe_ability_usage: 1.5
-                      target_selection: 'grouped_players'
-                    applied_at: '2025-12-01T10:25:00Z'
-                  - id: 'cc0e8400-e29b-41d4-a716-446655440001'
-                    enemy_id: 'dd0e8400-e29b-41d4-a716-446655440001'
-                    adaptation_type: support_targeting
-                    adaptation_data:
-                      target_priority: 'support'
-                      attack_frequency: 1.3
-                    applied_at: '2025-12-01T10:27:00Z'
+                      target_priority: "weakest_player"
+                      attack_frequency: 0.8
+                    applied_at: "2025-12-01T10:00:00Z"
+                    effectiveness: 0.75
+                total: 5
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '404':
@@ -140,10 +149,10 @@ paths:
     post:
       tags:
         - Training
-      summary: Отправить данные для обучения моделей
+      summary: Отправить данные для обучения
       description: |
-        Отправляет данные о тактиках игроков и эффективности адаптаций AI
-        для обучения моделей машинного обучения.
+        Отправляет данные о тактиках и адаптациях для обучения моделей машинного обучения.
+        Данные используются для улучшения алгоритмов адаптации AI.
       operationId: submitTrainingData
       security:
         - BearerAuth: []
@@ -152,25 +161,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrainingDataRequest'
+              $ref: '#/components/schemas/SubmitTrainingDataRequest'
             example:
-              encounter_id: 'aa0e8400-e29b-41d4-a716-446655440000'
+              encounter_id: "aa0e8400-e29b-41d4-a716-446655440000"
               tactics_data:
-                player_positions: [{ x: 10.5, y: 5.2, z: 2.1 }]
-                ability_usage: ['fire_blast', 'shield_wall']
-                damage_patterns: { burst: 0.6, sustained: 0.4 }
+                team_composition:
+                  - "bb0e8400-e29b-41d4-a716-446655440000"
+                tactics_patterns:
+                  - pattern_type: "combo_sequence"
+                    frequency: 0.75
+                    effectiveness: 0.82
+                weaknesses:
+                  - weakness_type: "coordination"
+                    severity: "high"
+                    description: "Team lacks coordination"
               adaptation_data:
-                adaptations_applied: ['aoe_focus', 'support_targeting']
-                effectiveness: 0.75
-              outcome: success
-              completion_time: 1200
+                adaptations_applied:
+                  - adaptation_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                    adaptation_type: "counter_strategy"
+                strategy_changes: 3
+              effectiveness: 0.75
+              timestamp: "2025-12-01T10:00:00Z"
       responses:
         '200':
-          description: Данные успешно приняты
+          description: Данные приняты для обучения
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/SubmitTrainingDataResponse'
+              example:
+                training_data_id: "gg0e8400-e29b-41d4-a716-446655440000"
+                status: "accepted"
+                message: "Training data accepted for processing"
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
@@ -181,37 +203,39 @@ paths:
   /models/status:
     get:
       tags:
-        - Training
-      summary: Получить статус моделей AI
+        - Models
+      summary: Получить статус моделей
       description: |
-        Возвращает статус моделей машинного обучения: версия, дата обучения,
-        метрики эффективности и статус развертывания.
+        Возвращает статус всех моделей машинного обучения, используемых для адаптивного AI.
+        Включает информацию о версиях, точности и последнем обучении.
       operationId: getModelsStatus
       security:
         - BearerAuth: []
+      parameters:
+        - name: model_name
+          in: query
+          required: false
+          description: Фильтр по названию модели
+          schema:
+            type: string
+            example: "tactics_analyzer"
       responses:
         '200':
           description: Статус моделей
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ModelsStatus'
+                $ref: '#/components/schemas/ModelsStatusResponse'
               example:
                 models:
-                  - name: tactics_analyzer
-                    version: '2.1.0'
-                    status: active
-                    trained_at: '2025-11-28T00:00:00Z'
-                    accuracy: 0.87
-                    effectiveness: 0.82
-                  - name: adaptation_engine
-                    version: '1.5.0'
-                    status: active
-                    trained_at: '2025-11-25T00:00:00Z'
-                    accuracy: 0.79
-                    effectiveness: 0.75
-                last_training: '2025-11-28T00:00:00Z'
-                next_training: '2025-12-05T00:00:00Z'
+                  - model_id: "hh0e8400-e29b-41d4-a716-446655440000"
+                    model_name: "tactics_analyzer_v1"
+                    status: "deployed"
+                    version: "1.2.0"
+                    last_trained: "2025-12-01T08:00:00Z"
+                    accuracy: 0.88
+                    training_samples: 100000
+                total: 3
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '500':
@@ -223,210 +247,179 @@ components:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
 
   schemas:
-    PlayerAction:
-      type: object
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        position:
-          type: object
-          properties:
-            x:
-              type: number
-              format: float
-            y:
-              type: number
-              format: float
-            z:
-              type: number
-              format: float
-        abilities_used:
-          type: array
-          items:
-            type: string
-        damage_dealt:
-          type: integer
-          minimum: 0
-        damage_taken:
-          type: integer
-          minimum: 0
-        movement_pattern:
-          type: string
-          enum: [aggressive, defensive, balanced, evasive]
-
     AnalyzeTacticsRequest:
       type: object
       required:
         - encounter_id
-        - player_actions
+        - team_players
       properties:
         encounter_id:
           type: string
           format: uuid
-        player_actions:
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        team_players:
           type: array
+          description: Данные о тактиках игроков команды
           items:
-            $ref: '#/components/schemas/PlayerAction'
+            $ref: 'ai-adaptive-schemas.yaml#/components/schemas/PlayerTacticsData'
           minItems: 1
 
-    WeakPoint:
+    AnalyzeTacticsResponse:
       type: object
-      properties:
-        type:
-          type: string
-          enum: [positioning, support_focus, ability_usage, coordination, resource_management]
-        description:
-          type: string
-        severity:
-          type: string
-          enum: [low, medium, high, critical]
-
-    RecommendedAdaptation:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [aoe_focus, support_targeting, ability_interrupt, positioning_change, resource_depletion]
-        priority:
-          type: string
-          enum: [low, medium, high, critical]
-
-    TacticsAnalysisResult:
-      type: object
+      required:
+        - encounter_id
+        - analysis_id
+        - tactics_patterns
+        - weaknesses
       properties:
         encounter_id:
           type: string
           format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
         analysis_id:
           type: string
           format: uuid
-        weak_points:
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        tactics_patterns:
           type: array
+          description: Выявленные паттерны тактик
           items:
-            $ref: '#/components/schemas/WeakPoint'
-        recommended_adaptations:
+            $ref: 'ai-adaptive-schemas.yaml#/components/schemas/TacticsPattern'
+        weaknesses:
           type: array
+          description: Выявленные слабые места команды
           items:
-            $ref: '#/components/schemas/RecommendedAdaptation'
-        analyzed_at:
-          type: string
-          format: date-time
-
-    Adaptation:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        enemy_id:
-          type: string
-          format: uuid
-        adaptation_type:
-          type: string
-          enum: [aoe_focus, support_targeting, ability_interrupt, positioning_change, resource_depletion]
-        adaptation_data:
-          type: object
-          additionalProperties: true
-          description: Данные адаптации (зависят от типа)
-        applied_at:
-          type: string
-          format: date-time
+            $ref: 'ai-adaptive-schemas.yaml#/components/schemas/TeamWeakness'
+        recommendations:
+          type: array
+          description: Рекомендации по адаптации
+          items:
+            type: object
+            properties:
+              adaptation_type:
+                $ref: 'ai-adaptive-schemas.yaml#/components/schemas/AdaptationType'
+              description:
+                type: string
+                example: "Focus on interrupting combo sequences"
 
     AdaptationsResponse:
       type: object
+      required:
+        - encounter_id
+        - adaptations
+        - total
       properties:
         encounter_id:
           type: string
           format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
         adaptations:
           type: array
+          description: Список адаптаций AI
           items:
-            $ref: '#/components/schemas/Adaptation'
+            $ref: 'ai-adaptive-schemas.yaml#/components/schemas/AIAdaptation'
+        total:
+          type: integer
+          description: Общее количество адаптаций
+          minimum: 0
+          example: 5
 
-    TrainingDataRequest:
+    SubmitTrainingDataRequest:
       type: object
       required:
         - encounter_id
         - tactics_data
         - adaptation_data
-        - outcome
+        - effectiveness
+        - timestamp
       properties:
         encounter_id:
           type: string
           format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
         tactics_data:
           type: object
+          description: Данные о тактиках команды
           properties:
-            player_positions:
-              type: array
-              items:
-                type: object
-            ability_usage:
+            team_composition:
               type: array
               items:
                 type: string
-            damage_patterns:
-              type: object
-              additionalProperties:
-                type: number
-          additionalProperties: true
+                format: uuid
+            tactics_patterns:
+              type: array
+              items:
+                $ref: 'ai-adaptive-schemas.yaml#/components/schemas/TacticsPattern'
+            weaknesses:
+              type: array
+              items:
+                $ref: 'ai-adaptive-schemas.yaml#/components/schemas/TeamWeakness'
         adaptation_data:
           type: object
+          description: Данные об адаптациях AI
           properties:
             adaptations_applied:
               type: array
               items:
-                type: string
-            effectiveness:
-              type: number
-              format: float
-              minimum: 0.0
-              maximum: 1.0
-          additionalProperties: true
-        outcome:
-          type: string
-          enum: [success, failure, timeout]
-        completion_time:
-          type: integer
-          minimum: 0
-
-    ModelStatus:
-      type: object
-      properties:
-        name:
-          type: string
-        version:
-          type: string
-        status:
-          type: string
-          enum: [active, training, deprecated, error]
-        trained_at:
-          type: string
-          format: date-time
-        accuracy:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 1.0
+                $ref: 'ai-adaptive-schemas.yaml#/components/schemas/AIAdaptation'
+            strategy_changes:
+              type: integer
+              minimum: 0
         effectiveness:
           type: number
           format: float
           minimum: 0.0
           maximum: 1.0
+          example: 0.75
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
 
-    ModelsStatus:
+    SubmitTrainingDataResponse:
       type: object
+      required:
+        - training_data_id
+        - status
+        - message
+      properties:
+        training_data_id:
+          type: string
+          format: uuid
+          example: "gg0e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [accepted, processing, completed, failed]
+          description: Статус обработки данных
+          example: "accepted"
+        message:
+          type: string
+          description: Сообщение о статусе
+          example: "Training data accepted for processing"
+
+    ModelsStatusResponse:
+      type: object
+      required:
+        - models
+        - total
       properties:
         models:
           type: array
+          description: Список моделей
           items:
-            $ref: '#/components/schemas/ModelStatus'
-        last_training:
-          type: string
-          format: date-time
-        next_training:
-          type: string
-          format: date-time
+            $ref: 'ai-adaptive-schemas.yaml#/components/schemas/ModelStatus'
+        total:
+          type: integer
+          description: Общее количество моделей
+          minimum: 0
+          example: 3
 
-
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'

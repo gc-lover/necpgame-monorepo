@@ -1,0 +1,262 @@
+openapi: 3.0.3
+info:
+  title: Analytics Combat Schemas
+  description: Общие схемы данных для системы боевой аналитики и балансировки
+  version: 1.0.0
+
+components:
+  schemas:
+    MetricType:
+      type: string
+      enum: [ttk, dps, accuracy, effectiveness, usage, win_rate, pick_rate]
+      description: Тип метрики
+      example: "ttk"
+
+    DimensionType:
+      type: string
+      enum: [time, mode, zone, level, class, league, weapon, ability, implant, combo]
+      description: Тип измерения для агрегации
+      example: "time"
+
+    TimeBucket:
+      type: string
+      enum: [hour, day, week, month]
+      description: Временной интервал для агрегации
+      example: "day"
+
+    GameMode:
+      type: string
+      enum: [pve, pvp, arena]
+      description: Игровой режим
+      example: "pve"
+
+    BalanceIssueType:
+      type: string
+      enum: [overpowered, underpowered, class_imbalance]
+      description: Тип проблемы баланса
+      example: "overpowered"
+
+    IssueSeverity:
+      type: string
+      enum: [low, medium, high, critical]
+      description: Серьезность проблемы баланса
+      example: "high"
+
+    IssueStatus:
+      type: string
+      enum: [open, in_review, resolved, dismissed]
+      description: Статус проблемы баланса
+      example: "open"
+
+    BalanceChangeMode:
+      type: string
+      enum: [manual, semi_automatic, automatic]
+      description: Режим применения изменения баланса
+      example: "semi_automatic"
+
+    MetricFilter:
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        mode:
+          $ref: '#/components/schemas/GameMode'
+        zone_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        class:
+          type: string
+        league:
+          type: string
+        weapon_id:
+          type: string
+          format: uuid
+        ability_id:
+          type: string
+          format: uuid
+
+    AggregatedMetric:
+      type: object
+      required:
+        - metric_type
+        - metric_name
+        - dimension_type
+        - dimension_value
+        - time_bucket
+        - value
+        - sample_count
+      properties:
+        metric_type:
+          $ref: '#/components/schemas/MetricType'
+        metric_name:
+          type: string
+          description: Название метрики
+          example: "average_ttk"
+        dimension_type:
+          $ref: '#/components/schemas/DimensionType'
+        dimension_value:
+          type: string
+          description: Значение измерения
+          example: "pvp"
+        time_bucket:
+          type: string
+          format: date-time
+          description: Временной интервал
+          example: "2025-12-01T00:00:00Z"
+        value:
+          type: number
+          format: float
+          description: Значение метрики
+          example: 2.5
+        sample_count:
+          type: integer
+          description: Количество образцов
+          minimum: 0
+          example: 1000
+        metadata:
+          type: object
+          description: Дополнительные метаданные
+          additionalProperties: true
+
+    BalanceIssue:
+      type: object
+      required:
+        - issue_id
+        - issue_type
+        - severity
+        - description
+        - status
+        - created_at
+      properties:
+        issue_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        issue_type:
+          $ref: '#/components/schemas/BalanceIssueType'
+        skill_id:
+          type: string
+          description: ID навыка/способности/оружия
+          example: "weapon_001"
+        severity:
+          $ref: '#/components/schemas/IssueSeverity'
+        description:
+          type: string
+          description: Описание проблемы
+          example: "Weapon X has 30% higher TTK than average"
+        metrics:
+          type: object
+          description: Метрики, указывающие на проблему
+          additionalProperties: true
+        recommendations:
+          type: array
+          description: Рекомендации по исправлению
+          items:
+            $ref: '#/components/schemas/BalanceRecommendation'
+        status:
+          $ref: '#/components/schemas/IssueStatus'
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+
+    BalanceRecommendation:
+      type: object
+      required:
+        - recommendation_id
+        - skill_id
+        - parameter_name
+        - current_value
+        - recommended_value
+        - reason
+      properties:
+        recommendation_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        skill_id:
+          type: string
+          example: "weapon_001"
+        parameter_name:
+          type: string
+          description: Название параметра для изменения
+          example: "damage"
+        current_value:
+          type: number
+          format: float
+          example: 100.0
+        recommended_value:
+          type: number
+          format: float
+          example: 85.0
+        reason:
+          type: string
+          description: Обоснование рекомендации
+          example: "Reduce damage by 15% to balance TTK"
+
+    BalanceChange:
+      type: object
+      required:
+        - change_id
+        - skill_id
+        - parameter_name
+        - old_value
+        - new_value
+        - applied_at
+      properties:
+        change_id:
+          type: string
+          format: uuid
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        skill_id:
+          type: string
+          example: "weapon_001"
+        parameter_name:
+          type: string
+          example: "damage"
+        old_value:
+          type: number
+          format: float
+          nullable: true
+          example: 100.0
+        new_value:
+          type: number
+          format: float
+          example: 85.0
+        change_reason:
+          type: string
+          description: Причина изменения
+          example: "Balance adjustment based on analytics"
+        applied_by:
+          type: string
+          description: Кто применил изменение
+          example: "system"
+        applied_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        reverted_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        revert_reason:
+          type: string
+          nullable: true
+          example: null
+

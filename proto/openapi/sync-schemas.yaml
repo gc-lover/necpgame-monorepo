@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  title: Data Synchronization Schemas
+  description: Общие схемы данных для системы синхронизации
+  version: 1.0.0
+
+components:
+  schemas:
+    EventStatus:
+      type: string
+      enum: [pending, processed, failed]
+      description: Статус события
+      example: "pending"
+
+    SagaStatus:
+      type: string
+      enum: [started, in_progress, completed, failed, compensating]
+      description: Статус Saga
+      example: "in_progress"
+
+    ConflictType:
+      type: string
+      enum: [timestamp_conflict, version_conflict, data_conflict]
+      description: Тип конфликта
+      example: "version_conflict"
+
+    ResolutionStrategy:
+      type: string
+      enum: [last_write_wins, vector_clock, operational_transformation, crdt, voting]
+      description: Стратегия разрешения конфликта
+      example: "last_write_wins"
+
+    ConsistencyStatus:
+      type: string
+      enum: [consistent, inconsistent, checking]
+      description: Статус консистентности
+      example: "consistent"
+
+    Event:
+      type: object
+      required:
+        - event_id
+        - event_type
+        - payload
+        - created_at
+        - status
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        event_type:
+          type: string
+          description: Тип события
+          example: "character.updated"
+        payload:
+          type: object
+          description: Данные события
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-01T10:00:05Z"
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        retry_count:
+          type: integer
+          description: Количество попыток обработки
+          minimum: 0
+          example: 0
+        error_message:
+          type: string
+          nullable: true
+          example: null
+
+    OutboxEvent:
+      type: object
+      required:
+        - event_id
+        - event_type
+        - payload
+        - created_at
+        - status
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        event_type:
+          type: string
+          example: "inventory.item_added"
+        payload:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        retry_count:
+          type: integer
+          minimum: 0
+          example: 0
+        error_message:
+          type: string
+          nullable: true
+
+    SagaStep:
+      type: object
+      required:
+        - step_number
+        - service_name
+        - action
+        - status
+      properties:
+        step_number:
+          type: integer
+          minimum: 1
+          example: 1
+        service_name:
+          type: string
+          example: "inventory-service"
+        action:
+          type: string
+          example: "reserve_slot"
+        status:
+          type: string
+          enum: [pending, completed, failed, compensated]
+          example: "completed"
+        result:
+          type: object
+          nullable: true
+          additionalProperties: true
+        error:
+          type: string
+          nullable: true
+
+    SyncState:
+      type: object
+      required:
+        - key
+        - category
+        - value
+        - version
+        - updated_at
+      properties:
+        key:
+          type: string
+          description: Ключ состояния
+          example: "character:12345:stats"
+        category:
+          type: string
+          description: Категория состояния
+          example: "character"
+        value:
+          type: object
+          description: Значение состояния
+          additionalProperties: true
+        version:
+          type: integer
+          description: Версия состояния
+          minimum: 1
+          example: 5
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+
+    Conflict:
+      type: object
+      required:
+        - conflict_id
+        - key
+        - conflict_type
+        - old_value
+        - new_value
+        - detected_at
+      properties:
+        conflict_id:
+          type: string
+          format: uuid
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        key:
+          type: string
+          example: "character:12345:stats"
+        conflict_type:
+          $ref: '#/components/schemas/ConflictType'
+        old_value:
+          type: object
+          description: Старое значение
+          additionalProperties: true
+        new_value:
+          type: object
+          description: Новое значение
+          additionalProperties: true
+        detected_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolution_strategy:
+          $ref: '#/components/schemas/ResolutionStrategy'
+          nullable: true
+

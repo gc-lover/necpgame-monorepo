@@ -1,0 +1,819 @@
+openapi: 3.0.3
+info:
+  title: Combat Acrobatics Basic Service API
+  description: |
+    API для базовых элементов акробатики (Wall Run, Double Jump, Slide).
+    
+    **Основные возможности:**
+    - Управление Wall Run (бег по стенам)
+    - Управление Double Jump (двойной прыжок)
+    - Управление Slide (скольжение)
+    - Получение состояний акробатики
+    - Определение доступных поверхностей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+    description: Продакшен сервер
+
+tags:
+  - name: Wall Run
+    description: Бег по стенам
+  - name: Double Jump
+    description: Двойной прыжок
+  - name: Slide
+    description: Скольжение
+  - name: State
+    description: Состояние акробатики
+
+paths:
+  /wall-run/start:
+    post:
+      tags:
+        - Wall Run
+      summary: Начать Wall Run
+      description: |
+        Начинает бег по стене. Автоматически определяет подходящую поверхность
+        и начинает отслеживание состояния с расходом выносливости.
+      operationId: startWallRun
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartWallRunRequest'
+            example:
+              direction:
+                x: 1.0
+                y: 0.0
+                z: 0.0
+      responses:
+        '200':
+          description: Wall Run начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WallRunStateResponse'
+              example:
+                state_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                is_active: true
+                wall_surface_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                start_position:
+                  x: 10.5
+                  y: 5.0
+                  z: 20.3
+                current_position:
+                  x: 11.0
+                  y: 5.5
+                  z: 20.3
+                direction:
+                  x: 1.0
+                  y: 0.0
+                  z: 0.0
+                stamina_consumed: 0
+                duration: 0
+                started_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /wall-run/stop:
+    post:
+      tags:
+        - Wall Run
+      summary: Остановить Wall Run
+      description: |
+        Останавливает бег по стене. Сохраняет финальное состояние
+        и восстанавливает выносливость.
+      operationId: stopWallRun
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Wall Run остановлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WallRunStateResponse'
+              example:
+                state_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                is_active: false
+                wall_surface_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                start_position:
+                  x: 10.5
+                  y: 5.0
+                  z: 20.3
+                current_position:
+                  x: 15.0
+                  y: 8.0
+                  z: 20.3
+                direction:
+                  x: 1.0
+                  y: 0.0
+                  z: 0.0
+                stamina_consumed: 45
+                duration: 3
+                started_at: "2025-12-01T10:00:00Z"
+                stopped_at: "2025-12-01T10:00:03Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /wall-run/kick:
+    post:
+      tags:
+        - Wall Run
+      summary: Оттолкнуться от стены (Wall Kick)
+      description: |
+        Выполняет отталкивание от стены во время Wall Run.
+        Изменяет направление движения и применяет импульс.
+      operationId: wallKick
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WallKickRequest'
+            example:
+              direction:
+                x: 0.0
+                y: 1.0
+                z: 0.5
+      responses:
+        '200':
+          description: Wall Kick выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WallKickResponse'
+              example:
+                kick_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                wall_run_ended: true
+                new_direction:
+                  x: 0.0
+                  y: 1.0
+                  z: 0.5
+                stamina_consumed: 8
+                timestamp: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /wall-run/surfaces:
+    get:
+      tags:
+        - Wall Run
+      summary: Получить доступные поверхности для Wall Run
+      description: |
+        Возвращает список доступных поверхностей для Wall Run
+        в текущей области персонажа.
+      operationId: getWallRunSurfaces
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: radius
+          in: query
+          required: false
+          description: Радиус поиска поверхностей
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            default: 10.0
+      responses:
+        '200':
+          description: Список доступных поверхностей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurfacesResponse'
+              example:
+                surfaces:
+                  - surface_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                    surface_type: "wall"
+                    position:
+                      x: 10.0
+                      y: 5.0
+                      z: 20.0
+                    normal:
+                      x: 1.0
+                      y: 0.0
+                      z: 0.0
+                    material: "concrete"
+                    is_suitable: true
+                total: 1
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /double-jump:
+    post:
+      tags:
+        - Double Jump
+      summary: Выполнить Double Jump
+      description: |
+        Выполняет двойной прыжок в воздухе. Проверяет доступность
+        (персонаж в воздухе, не использован) и применяет импульс.
+      operationId: executeDoubleJump
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoubleJumpRequest'
+            example:
+              direction:
+                x: 0.0
+                y: 1.0
+                z: 0.0
+      responses:
+        '200':
+          description: Double Jump выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleJumpResponse'
+              example:
+                jump_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                was_used: true
+                jump_count: 1
+                max_jumps: 1
+                direction:
+                  x: 0.0
+                  y: 1.0
+                  z: 0.0
+                stamina_consumed: 12
+                timestamp: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /double-jump/available:
+    get:
+      tags:
+        - Double Jump
+      summary: Проверить доступность Double Jump
+      description: |
+        Проверяет, доступен ли Double Jump для персонажа
+        (в воздухе, не использован, есть выносливость).
+      operationId: checkDoubleJumpAvailable
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Статус доступности Double Jump
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleJumpAvailableResponse'
+              example:
+                is_available: true
+                is_in_air: true
+                was_used: false
+                jump_count: 0
+                max_jumps: 1
+                has_stamina: true
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /slide/start:
+    post:
+      tags:
+        - Slide
+      summary: Начать Slide
+      description: |
+        Начинает скольжение по горизонтальной поверхности.
+        Сохраняет инерцию движения и разрешает стрельбу.
+      operationId: startSlide
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSlideRequest'
+      responses:
+        '200':
+          description: Slide начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlideStateResponse'
+              example:
+                state_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                is_active: true
+                start_position:
+                  x: 10.0
+                  y: 0.0
+                  z: 20.0
+                current_position:
+                  x: 10.5
+                  y: 0.0
+                  z: 20.0
+                direction:
+                  x: 1.0
+                  y: 0.0
+                  z: 0.0
+                speed: 8.5
+                stamina_consumed: 0
+                duration: 0
+                started_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /slide/stop:
+    post:
+      tags:
+        - Slide
+      summary: Остановить Slide
+      description: |
+        Останавливает скольжение. Воспроизводит анимацию вставания
+        и восстанавливает выносливость.
+      operationId: stopSlide
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Slide остановлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlideStateResponse'
+              example:
+                state_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                is_active: false
+                start_position:
+                  x: 10.0
+                  y: 0.0
+                  z: 20.0
+                current_position:
+                  x: 15.0
+                  y: 0.0
+                  z: 20.0
+                direction:
+                  x: 1.0
+                  y: 0.0
+                  z: 0.0
+                speed: 5.0
+                stamina_consumed: 6
+                duration: 2
+                started_at: "2025-12-01T10:00:00Z"
+                stopped_at: "2025-12-01T10:00:02Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /state:
+    get:
+      tags:
+        - State
+      summary: Получить текущее состояние акробатики
+      description: |
+        Возвращает текущее состояние всех элементов акробатики:
+        Wall Run, Double Jump, Slide.
+      operationId: getAcrobaticsState
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Текущее состояние акробатики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcrobaticsStateResponse'
+              example:
+                wall_run:
+                  is_active: false
+                  was_used: false
+                double_jump:
+                  is_available: true
+                  was_used: false
+                  jump_count: 0
+                  max_jumps: 1
+                slide:
+                  is_active: false
+                  was_used: false
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    StartWallRunRequest:
+      type: object
+      properties:
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+
+    WallRunStateResponse:
+      type: object
+      required:
+        - state_id
+        - is_active
+        - start_position
+        - current_position
+        - direction
+        - stamina_consumed
+        - duration
+        - started_at
+      properties:
+        state_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        is_active:
+          type: boolean
+          example: true
+        wall_surface_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        start_position:
+          $ref: '#/components/schemas/Position3D'
+        current_position:
+          $ref: '#/components/schemas/Position3D'
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+        stamina_consumed:
+          type: integer
+          description: Потраченная выносливость
+          minimum: 0
+          example: 45
+        duration:
+          type: integer
+          description: Длительность в секундах
+          minimum: 0
+          example: 3
+        started_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        stopped_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-01T10:00:03Z"
+
+    WallKickRequest:
+      type: object
+      required:
+        - direction
+      properties:
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+
+    WallKickResponse:
+      type: object
+      required:
+        - kick_id
+        - wall_run_ended
+        - new_direction
+        - stamina_consumed
+        - timestamp
+      properties:
+        kick_id:
+          type: string
+          format: uuid
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        wall_run_ended:
+          type: boolean
+          description: Завершен ли Wall Run после kick
+          example: true
+        new_direction:
+          $ref: '#/components/schemas/Direction3D'
+        stamina_consumed:
+          type: integer
+          minimum: 0
+          example: 8
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    SurfacesResponse:
+      type: object
+      required:
+        - surfaces
+        - total
+      properties:
+        surfaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/Surface'
+        total:
+          type: integer
+          minimum: 0
+          example: 1
+
+    Surface:
+      type: object
+      required:
+        - surface_id
+        - surface_type
+        - position
+        - normal
+        - material
+        - is_suitable
+      properties:
+        surface_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        surface_type:
+          type: string
+          enum: [wall, floor, obstacle]
+          example: "wall"
+        position:
+          $ref: '#/components/schemas/Position3D'
+        normal:
+          $ref: '#/components/schemas/Direction3D'
+        material:
+          type: string
+          example: "concrete"
+        is_suitable:
+          type: boolean
+          example: true
+
+    DoubleJumpRequest:
+      type: object
+      properties:
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+
+    DoubleJumpResponse:
+      type: object
+      required:
+        - jump_id
+        - was_used
+        - jump_count
+        - max_jumps
+        - direction
+        - stamina_consumed
+        - timestamp
+      properties:
+        jump_id:
+          type: string
+          format: uuid
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        was_used:
+          type: boolean
+          example: true
+        jump_count:
+          type: integer
+          description: Количество использованных прыжков
+          minimum: 0
+          example: 1
+        max_jumps:
+          type: integer
+          description: Максимальное количество прыжков
+          minimum: 1
+          example: 1
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+        stamina_consumed:
+          type: integer
+          minimum: 0
+          example: 12
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    DoubleJumpAvailableResponse:
+      type: object
+      required:
+        - is_available
+        - is_in_air
+        - was_used
+        - jump_count
+        - max_jumps
+        - has_stamina
+      properties:
+        is_available:
+          type: boolean
+          example: true
+        is_in_air:
+          type: boolean
+          example: true
+        was_used:
+          type: boolean
+          example: false
+        jump_count:
+          type: integer
+          minimum: 0
+          example: 0
+        max_jumps:
+          type: integer
+          minimum: 1
+          example: 1
+        has_stamina:
+          type: boolean
+          example: true
+
+    StartSlideRequest:
+      type: object
+      properties:
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+
+    SlideStateResponse:
+      type: object
+      required:
+        - state_id
+        - is_active
+        - start_position
+        - current_position
+        - direction
+        - speed
+        - stamina_consumed
+        - duration
+        - started_at
+      properties:
+        state_id:
+          type: string
+          format: uuid
+          example: "ee0e8400-e29b-41d4-a716-446655440000"
+        is_active:
+          type: boolean
+          example: true
+        start_position:
+          $ref: '#/components/schemas/Position3D'
+        current_position:
+          $ref: '#/components/schemas/Position3D'
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+        speed:
+          type: number
+          format: float
+          description: Текущая скорость скольжения
+          minimum: 0
+          example: 8.5
+        stamina_consumed:
+          type: integer
+          minimum: 0
+          example: 6
+        duration:
+          type: integer
+          minimum: 0
+          example: 2
+        started_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        stopped_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-01T10:00:02Z"
+
+    AcrobaticsStateResponse:
+      type: object
+      required:
+        - wall_run
+        - double_jump
+        - slide
+      properties:
+        wall_run:
+          $ref: '#/components/schemas/WallRunState'
+        double_jump:
+          $ref: '#/components/schemas/DoubleJumpState'
+        slide:
+          $ref: '#/components/schemas/SlideState'
+
+    WallRunState:
+      type: object
+      required:
+        - is_active
+        - was_used
+      properties:
+        is_active:
+          type: boolean
+          example: false
+        was_used:
+          type: boolean
+          example: false
+
+    DoubleJumpState:
+      type: object
+      required:
+        - is_available
+        - was_used
+        - jump_count
+        - max_jumps
+      properties:
+        is_available:
+          type: boolean
+          example: true
+        was_used:
+          type: boolean
+          example: false
+        jump_count:
+          type: integer
+          minimum: 0
+          example: 0
+        max_jumps:
+          type: integer
+          minimum: 1
+          example: 1
+
+    SlideState:
+      type: object
+      required:
+        - is_active
+        - was_used
+      properties:
+        is_active:
+          type: boolean
+          example: false
+        was_used:
+          type: boolean
+          example: false
+
+    Position3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          example: 10.5
+        y:
+          type: number
+          format: float
+          example: 5.0
+        z:
+          type: number
+          format: float
+          example: 20.3
+
+    Direction3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          example: 1.0
+        y:
+          type: number
+          format: float
+          example: 0.0
+        z:
+          type: number
+          format: float
+          example: 0.0
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

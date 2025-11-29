@@ -33,7 +33,12 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize prestige service")
 	}
 
-	httpServer := server.NewHTTPServer(addr, paragonService, prestigeService)
+	masteryService, err := server.NewMasteryService(dbURL, redisURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize mastery service")
+	}
+
+	httpServer := server.NewHTTPServer(addr, paragonService, prestigeService, masteryService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

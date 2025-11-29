@@ -1,0 +1,500 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Difficulty Rating Service API
+  description: |
+    API для системы рейтинга сложности - автоматической подстройки сложности контента под уровень игрока.
+    
+    **Основные возможности:**
+    - Оценка навыков игроков на основе истории прохождения
+    - Оценка сложности контента на основе статистики
+    - Автоматическая подстройка сложности под команду
+    - Рекомендации по сложности для игрока и команды
+    
+    **Рейтинги:**
+    - Player Skill Rating - рейтинг навыков игрока
+    - Content Difficulty Rating - рейтинг сложности контента
+    - Рекомендации: Easy/Medium/Hard/Extreme
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
+
+tags:
+  - name: Difficulty Rating
+    description: Рейтинг сложности
+  - name: Recommendations
+    description: Рекомендации по сложности
+  - name: Difficulty Adjustment
+    description: Подстройка сложности
+
+paths:
+  /difficulty-rating/player/{playerId}:
+    get:
+      tags:
+        - Difficulty Rating
+      summary: Получить рейтинг навыков игрока
+      description: |
+        Возвращает текущий рейтинг навыков игрока, рассчитанный на основе
+        истории прохождения контента, включая completion rate, среднее время и смертность.
+      operationId: getPlayerSkillRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          description: UUID игрока
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Рейтинг навыков игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillRating'
+              example:
+                player_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                skill_rating: 75.5
+                completion_rate: 0.85
+                average_time: 1200
+                average_deaths: 2.3
+                recommended_difficulty: "medium"
+                updated_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /difficulty-rating/content/{contentId}:
+    get:
+      tags:
+        - Difficulty Rating
+      summary: Получить рейтинг сложности контента
+      description: |
+        Возвращает рейтинг сложности контента, рассчитанный на основе статистики
+        прохождения всех игроков, включая completion rate, среднее время и смертность.
+      operationId: getContentDifficultyRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          description: UUID контента
+          schema:
+            type: string
+            format: uuid
+            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Рейтинг сложности контента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentDifficultyRating'
+              example:
+                content_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                difficulty_rating: 65.2
+                completion_rate: 0.72
+                average_time: 1800
+                average_deaths: 3.5
+                difficulty_level: "hard"
+                updated_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /difficulty-rating/recommendations/{playerId}:
+    get:
+      tags:
+        - Recommendations
+      summary: Получить рекомендации по сложности
+      description: |
+        Возвращает рекомендации по подходящей сложности контента для игрока
+        на основе его рейтинга навыков и истории прохождения.
+      operationId: getDifficultyRecommendations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          description: UUID игрока
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+        - name: content_id
+          in: query
+          required: false
+          description: UUID контента для конкретной рекомендации (опционально)
+          schema:
+            type: string
+            format: uuid
+            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Рекомендации по сложности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyRecommendations'
+              example:
+                player_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                recommended_difficulty: "medium"
+                skill_rating: 75.5
+                recommendations:
+                  - content_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                    content_name: "Dungeon Alpha"
+                    recommended_difficulty: "medium"
+                    match_score: 0.85
+                    reason: "Ваш рейтинг навыков соответствует сложности контента"
+                  - content_id: "cc0e8400-e29b-41d4-a716-446655440001"
+                    content_name: "Dungeon Beta"
+                    recommended_difficulty: "hard"
+                    match_score: 0.72
+                    reason: "Немного сложнее, но подходит для развития навыков"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /difficulty-rating/adjust:
+    post:
+      tags:
+        - Difficulty Adjustment
+      summary: Подстроить сложность контента
+      description: |
+        Автоматически подстраивает сложность контента под команду игроков
+        на основе их рейтингов навыков. Рассчитывает средний рейтинг команды
+        и применяет соответствующие модификаторы.
+      operationId: adjustDifficulty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DifficultyAdjustmentRequest'
+            example:
+              content_id: "bb0e8400-e29b-41d4-a716-446655440000"
+              team_members:
+                - player_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                - player_id: "dd0e8400-e29b-41d4-a716-446655440001"
+                - player_id: "ee0e8400-e29b-41d4-a716-446655440002"
+      responses:
+        '200':
+          description: Сложность подстроена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyAdjustmentResult'
+              example:
+                content_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                team_average_rating: 72.3
+                original_difficulty: 65.0
+                adjusted_difficulty: 70.0
+                modifiers:
+                  hp_modifier: 1.08
+                  damage_modifier: 1.05
+                  experience_modifier: 1.10
+                adjusted_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerSkillRating:
+      type: object
+      required:
+        - player_id
+        - skill_rating
+        - completion_rate
+        - average_time
+        - average_deaths
+        - recommended_difficulty
+        - updated_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: UUID игрока
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        skill_rating:
+          type: number
+          format: float
+          description: Рейтинг навыков игрока (0-100)
+          minimum: 0
+          maximum: 100
+          example: 75.5
+        completion_rate:
+          type: number
+          format: float
+          description: Процент успешного прохождения контента (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.85
+        average_time:
+          type: integer
+          description: Среднее время прохождения контента в секундах
+          minimum: 0
+          example: 1200
+        average_deaths:
+          type: number
+          format: float
+          description: Среднее количество смертей за прохождение
+          minimum: 0
+          example: 2.3
+        recommended_difficulty:
+          $ref: '#/components/schemas/DifficultyLevel'
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    ContentDifficultyRating:
+      type: object
+      required:
+        - content_id
+        - difficulty_rating
+        - completion_rate
+        - average_time
+        - average_deaths
+        - difficulty_level
+        - updated_at
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          description: UUID контента
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        difficulty_rating:
+          type: number
+          format: float
+          description: Рейтинг сложности контента (0-100)
+          minimum: 0
+          maximum: 100
+          example: 65.2
+        completion_rate:
+          type: number
+          format: float
+          description: Процент успешного прохождения (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.72
+        average_time:
+          type: integer
+          description: Среднее время прохождения в секундах
+          minimum: 0
+          example: 1800
+        average_deaths:
+          type: number
+          format: float
+          description: Среднее количество смертей за прохождение
+          minimum: 0
+          example: 3.5
+        difficulty_level:
+          $ref: '#/components/schemas/DifficultyLevel'
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    DifficultyLevel:
+      type: string
+      enum: [easy, medium, hard, extreme]
+      description: Уровень сложности
+      example: "medium"
+
+    DifficultyRecommendations:
+      type: object
+      required:
+        - player_id
+        - recommended_difficulty
+        - skill_rating
+        - recommendations
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        recommended_difficulty:
+          $ref: '#/components/schemas/DifficultyLevel'
+        skill_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 75.5
+        recommendations:
+          type: array
+          description: Рекомендации по конкретному контенту
+          items:
+            $ref: '#/components/schemas/ContentRecommendation'
+
+    ContentRecommendation:
+      type: object
+      required:
+        - content_id
+        - content_name
+        - recommended_difficulty
+        - match_score
+        - reason
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        content_name:
+          type: string
+          description: Название контента
+          example: "Dungeon Alpha"
+        recommended_difficulty:
+          $ref: '#/components/schemas/DifficultyLevel'
+        match_score:
+          type: number
+          format: float
+          description: Оценка соответствия (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.85
+        reason:
+          type: string
+          description: Обоснование рекомендации
+          example: "Ваш рейтинг навыков соответствует сложности контента"
+
+    DifficultyAdjustmentRequest:
+      type: object
+      required:
+        - content_id
+        - team_members
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          description: UUID контента для подстройки
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        team_members:
+          type: array
+          description: Список игроков в команде
+          minItems: 1
+          maxItems: 8
+          items:
+            type: object
+            required:
+              - player_id
+            properties:
+              player_id:
+                type: string
+                format: uuid
+                example: "aa0e8400-e29b-41d4-a716-446655440000"
+
+    DifficultyAdjustmentResult:
+      type: object
+      required:
+        - content_id
+        - team_average_rating
+        - original_difficulty
+        - adjusted_difficulty
+        - modifiers
+        - adjusted_at
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        team_average_rating:
+          type: number
+          format: float
+          description: Средний рейтинг команды
+          minimum: 0
+          maximum: 100
+          example: 72.3
+        original_difficulty:
+          type: number
+          format: float
+          description: Исходная сложность контента
+          minimum: 0
+          maximum: 100
+          example: 65.0
+        adjusted_difficulty:
+          type: number
+          format: float
+          description: Подстроенная сложность
+          minimum: 0
+          maximum: 100
+          example: 70.0
+        modifiers:
+          type: object
+          description: Модификаторы сложности
+          required:
+            - hp_modifier
+            - damage_modifier
+            - experience_modifier
+          properties:
+            hp_modifier:
+              type: number
+              format: float
+              description: Модификатор здоровья врагов
+              minimum: 0.5
+              maximum: 2.0
+              example: 1.08
+            damage_modifier:
+              type: number
+              format: float
+              description: Модификатор урона врагов
+              minimum: 0.5
+              maximum: 2.0
+              example: 1.05
+            experience_modifier:
+              type: number
+              format: float
+              description: Модификатор опыта за прохождение
+              minimum: 0.5
+              maximum: 2.0
+              example: 1.10
+        adjusted_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

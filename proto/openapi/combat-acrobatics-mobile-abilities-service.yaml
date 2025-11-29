@@ -1,0 +1,175 @@
+openapi: 3.0.3
+info:
+  title: Combat Acrobatics Mobile Abilities Service API
+  description: |
+    API для мобильных способностей (активация способностей во время движения).
+    
+    **Основные возможности:**
+    - Активация способностей во время движения
+    - Модификация способностей для движения
+    - Проверка совместимости способностей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+    description: Продакшен сервер
+
+tags:
+  - name: Mobile Abilities
+    description: Мобильные способности
+
+paths:
+  /mobile-ability:
+    post:
+      tags:
+        - Mobile Abilities
+      summary: Активировать мобильную способность
+      description: |
+        Активирует способность во время движения (Wall Run, Slide, Air Dash).
+        Применяется мобильная версия способности с корректировкой затрат.
+      operationId: activateMobileAbility
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateMobileAbilityRequest'
+            example:
+              ability_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              movement_type: "wall_run"
+              target_id: "bb0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Мобильная способность активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileAbilityResponse'
+              example:
+                activation_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                ability_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                ability_name: "Cyber Strike"
+                movement_type: "wall_run"
+                mobile_version_applied: true
+                original_cost: 50.0
+                adjusted_cost: 60.0
+                effect_applied: true
+                timestamp: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ActivateMobileAbilityRequest:
+      type: object
+      required:
+        - ability_id
+        - movement_type
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: ID способности
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        movement_type:
+          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/MovementType'
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели способности
+          nullable: true
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        position:
+          type: object
+          description: Позиция для способности
+          nullable: true
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+
+    MobileAbilityResponse:
+      type: object
+      required:
+        - activation_id
+        - ability_id
+        - ability_name
+        - movement_type
+        - mobile_version_applied
+        - original_cost
+        - adjusted_cost
+        - effect_applied
+        - timestamp
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        ability_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        ability_name:
+          type: string
+          description: Название способности
+          example: "Cyber Strike"
+        movement_type:
+          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/MovementType'
+        mobile_version_applied:
+          type: boolean
+          description: Была ли применена мобильная версия
+          example: true
+        original_cost:
+          type: number
+          format: float
+          description: Исходная стоимость способности
+          minimum: 0
+          example: 50.0
+        adjusted_cost:
+          type: number
+          format: float
+          description: Скорректированная стоимость для движения
+          minimum: 0
+          example: 60.0
+        effect_applied:
+          type: boolean
+          description: Был ли применен эффект способности
+          example: true
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
