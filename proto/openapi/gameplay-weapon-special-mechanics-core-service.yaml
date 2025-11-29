@@ -36,25 +36,15 @@ paths:
       tags:
         - Special Mechanics
       summary: Применить специальную механику оружия
-      description: Применяет специальную механику оружия к цели
       operationId: applySpecialMechanics
       security:
         - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplySpecialMechanicsRequest'
-            example:
-              weapon_id: "550e8400-e29b-41d4-a716-446655440000"
-              character_id: "550e8400-e29b-41d4-a716-446655440001"
-              target_id: "550e8400-e29b-41d4-a716-446655440002"
-              mechanic_type: "persistent_effect"
-              mechanic_data:
-                projectile_type: "bolt"
-                damage_per_tick: 5.0
-                tick_interval: 0.1
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ApplySpecialMechanicsRequest'
       responses:
         '200':
           description: Механика успешно применена
@@ -74,7 +64,6 @@ paths:
       tags:
         - Special Mechanics
       summary: Получить механики оружия
-      description: Возвращает список всех специальных механик для указанного оружия
       operationId: getWeaponSpecialMechanics
       security:
         - BearerAuth: []
@@ -105,26 +94,15 @@ paths:
       tags:
         - Persistent Effects
       summary: Создать персистентный эффект
-      description: Создает персистентный эффект для снаряда (болт, стрела, сюрикен), застрявшего в теле цели
       operationId: createPersistentEffect
       security:
         - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePersistentEffectRequest'
-            example:
-              target_id: "550e8400-e29b-41d4-a716-446655440002"
-              projectile_type: "bolt"
-              position:
-                x: 0.5
-                y: 0.3
-                z: 0.2
-              damage_per_tick: 5.0
-              tick_interval: 0.1
-              remaining_ticks: 30
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CreatePersistentEffectRequest'
       responses:
         '201':
           description: Персистентный эффект создан
@@ -144,7 +122,6 @@ paths:
       tags:
         - Persistent Effects
       summary: Получить персистентные эффекты цели
-      description: Возвращает все активные персистентные эффекты для указанной цели
       operationId: getPersistentEffects
       security:
         - BearerAuth: []
@@ -175,23 +152,15 @@ paths:
       tags:
         - Chain Damage
       summary: Рассчитать цепной урон
-      description: Рассчитывает цепной урон от электрического оружия (молнии, EMP волны)
       operationId: calculateChainDamage
       security:
         - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CalculateChainDamageRequest'
-            example:
-              source_target_id: "550e8400-e29b-41d4-a716-446655440002"
-              weapon_id: "550e8400-e29b-41d4-a716-446655440000"
-              damage_type: "lightning"
-              base_damage: 100.0
-              max_jumps: 5
-              jump_damage_reduction: 0.25
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CalculateChainDamageRequest'
       responses:
         '200':
           description: Результат расчета цепного урона
@@ -211,24 +180,15 @@ paths:
       tags:
         - Environment Destruction
       summary: Разрушить окружение
-      description: Разрушает окружение и части тела взрывным оружием
       operationId: destroyEnvironment
       security:
         - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DestroyEnvironmentRequest'
-            example:
-              explosion_position:
-                x: 10.5
-                y: 2.3
-                z: 15.7
-              explosion_radius: 5.0
-              weapon_id: "550e8400-e29b-41d4-a716-446655440000"
-              damage: 150.0
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/DestroyEnvironmentRequest'
       responses:
         '200':
           description: Результат разрушения окружения
@@ -260,15 +220,12 @@ components:
         weapon_id:
           type: string
           format: uuid
-          description: ID оружия
         character_id:
           type: string
           format: uuid
-          description: ID персонажа
         target_id:
           type: string
           format: uuid
-          description: ID цели
         mechanic_type:
           type: string
           enum:
@@ -342,7 +299,6 @@ components:
         target_id:
           type: string
           format: uuid
-          description: ID цели
         projectile_type:
           type: string
           enum:
@@ -351,7 +307,7 @@ components:
             - shuriken
           description: Тип снаряда
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-schemas.yaml#/components/schemas/Position3D'
           description: Позиция снаряда в теле
         damage_per_tick:
           type: number
@@ -380,7 +336,7 @@ components:
         projectile_type:
           type: string
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-schemas.yaml#/components/schemas/Position3D'
         damage_per_tick:
           type: number
           format: float
@@ -418,11 +374,9 @@ components:
         source_target_id:
           type: string
           format: uuid
-          description: ID исходной цели
         weapon_id:
           type: string
           format: uuid
-          description: ID оружия
         damage_type:
           type: string
           enum:
@@ -485,8 +439,7 @@ components:
         - damage
       properties:
         explosion_position:
-          $ref: '#/components/schemas/Position3D'
-          description: Позиция взрыва
+          $ref: 'common-schemas.yaml#/components/schemas/Position3D'
         explosion_radius:
           type: number
           format: float
@@ -528,7 +481,7 @@ components:
             - body_part
             - debris
         position:
-          $ref: '#/components/schemas/Position3D'
+          $ref: 'common-schemas.yaml#/components/schemas/Position3D'
 
     AffectedTarget:
       type: object
@@ -543,21 +496,3 @@ components:
           type: array
           items:
             type: string
-
-    Position3D:
-      type: object
-      required:
-        - x
-        - y
-        - z
-      properties:
-        x:
-          type: number
-          format: float
-        y:
-          type: number
-          format: float
-        z:
-          type: number
-          format: float
-
