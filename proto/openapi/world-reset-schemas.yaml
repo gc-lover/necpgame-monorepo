@@ -1,0 +1,418 @@
+openapi: 3.0.3
+info:
+  title: World Reset Service Schemas
+  description: Схемы данных для World Reset Service API
+  version: 1.0.0
+
+components:
+  schemas:
+    ExecuteResetRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока (если не указан, сброс для всех игроков)
+        force:
+          type: boolean
+          description: Принудительный сброс (игнорировать проверки)
+          default: false
+    
+    ResetExecutionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Успешность выполнения
+        players_processed:
+          type: integer
+          description: Количество обработанных игроков
+        players_failed:
+          type: integer
+          description: Количество игроков с ошибками
+        execution_time_ms:
+          type: integer
+          description: Время выполнения в миллисекундах
+        errors:
+          type: array
+          items:
+            type: string
+          description: Список ошибок (если есть)
+    
+    ResetStatus:
+      type: object
+      properties:
+        last_execution:
+          type: string
+          format: date-time
+          description: Время последнего выполнения
+        next_execution:
+          type: string
+          format: date-time
+          description: Время следующего выполнения
+        status:
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - failed
+          description: Текущий статус
+        players_processed:
+          type: integer
+          description: Количество обработанных игроков
+    
+    NextResetTime:
+      type: object
+      properties:
+        next_reset:
+          type: string
+          format: date-time
+          description: Время следующего сброса
+        time_until_reset_seconds:
+          type: integer
+          description: Секунд до следующего сброса
+    
+    QuestPoolItem:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: ID квеста
+        quest_name:
+          type: string
+          description: Название квеста
+        quest_type:
+          type: string
+          enum:
+            - daily
+            - weekly
+          description: Тип квеста
+        difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+          description: Сложность квеста
+        reward:
+          type: object
+          description: Награда за квест
+        weight:
+          type: integer
+          description: Вес квеста в пуле (для вероятности выбора)
+    
+    AssignQuestRequest:
+      type: object
+      required:
+        - player_id
+        - quest_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        quest_id:
+          type: string
+          format: uuid
+          description: ID квеста из пула
+    
+    AssignedQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: ID квеста
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        assigned_at:
+          type: string
+          format: date-time
+          description: Время выдачи квеста
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения квеста
+    
+    PlayerQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: ID квеста
+        quest_name:
+          type: string
+          description: Название квеста
+        quest_type:
+          type: string
+          enum:
+            - daily
+            - weekly
+          description: Тип квеста
+        progress:
+          type: integer
+          description: Прогресс выполнения (0-100)
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - expired
+          description: Статус квеста
+        assigned_at:
+          type: string
+          format: date-time
+          description: Время выдачи квеста
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения квеста
+    
+    LoginRewards:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        current_day:
+          type: integer
+          description: Текущий день логина (1-30)
+        streak_days:
+          type: integer
+          description: Серия дней логина подряд
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+          description: Доступные награды
+        last_login:
+          type: string
+          format: date-time
+          description: Время последнего логина
+        can_claim:
+          type: boolean
+          description: Можно ли получить награду сейчас
+    
+    RewardItem:
+      type: object
+      properties:
+        day:
+          type: integer
+          description: День логина
+        reward_type:
+          type: string
+          enum:
+            - currency
+            - item
+            - experience
+          description: Тип награды
+        reward_value:
+          type: integer
+          description: Значение награды
+        reward_item_id:
+          type: string
+          format: uuid
+          description: ID предмета (если награда - предмет)
+        claimed:
+          type: boolean
+          description: Получена ли награда
+    
+    ClaimedReward:
+      type: object
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: ID награды
+        reward_type:
+          type: string
+          enum:
+            - currency
+            - item
+            - experience
+          description: Тип награды
+        reward_value:
+          type: integer
+          description: Значение награды
+        claimed_at:
+          type: string
+          format: date-time
+          description: Время получения награды
+    
+    LoginStreak:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        streak_days:
+          type: integer
+          description: Серия дней логина подряд
+        max_streak:
+          type: integer
+          description: Максимальная серия за всё время
+        last_login:
+          type: string
+          format: date-time
+          description: Время последнего логина
+        next_reset:
+          type: string
+          format: date-time
+          description: Время следующего сброса серии (если пропустить день)
+    
+    ResetSchedule:
+      type: object
+      properties:
+        daily:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              description: Включен ли daily reset
+            time:
+              type: string
+              format: time
+              description: Время сброса (HH:MM)
+            timezone:
+              type: string
+              description: Часовой пояс
+            next_execution:
+              type: string
+              format: date-time
+              description: Время следующего выполнения
+        weekly:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              description: Включен ли weekly reset
+            day:
+              type: string
+              enum:
+                - monday
+                - tuesday
+                - wednesday
+                - thursday
+                - friday
+                - saturday
+                - sunday
+              description: День недели для сброса
+            time:
+              type: string
+              format: time
+              description: Время сброса (HH:MM)
+            timezone:
+              type: string
+              description: Часовой пояс
+            next_execution:
+              type: string
+              format: date-time
+              description: Время следующего выполнения
+    
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        daily:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            time:
+              type: string
+              format: time
+            timezone:
+              type: string
+        weekly:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            day:
+              type: string
+              enum:
+                - monday
+                - tuesday
+                - wednesday
+                - thursday
+                - friday
+                - saturday
+                - sunday
+            time:
+              type: string
+              format: time
+            timezone:
+              type: string
+    
+    ExecutionStatus:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - daily
+            - weekly
+          description: Тип reset
+        status:
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - failed
+          description: Статус выполнения
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала выполнения
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения выполнения
+        players_processed:
+          type: integer
+          description: Количество обработанных игроков
+        players_total:
+          type: integer
+          description: Общее количество игроков
+        progress_percent:
+          type: number
+          format: float
+          description: Прогресс выполнения в процентах
+    
+    ResetEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: ID события
+        event_type:
+          type: string
+          enum:
+            - reset:daily-completed
+            - reset:weekly-completed
+            - reset:quest-assigned
+            - reset:reward-claimed
+            - reset:streak-updated
+          description: Тип события
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID игрока (если применимо)
+        timestamp:
+          type: string
+          format: date-time
+          description: Время события
+        data:
+          type: object
+          description: Дополнительные данные события
+
