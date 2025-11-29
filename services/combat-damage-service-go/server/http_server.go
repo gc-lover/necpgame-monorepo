@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/stock-analytics-charts-service-go/pkg/api"
+	"github.com/necpgame/combat-damage-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,7 +38,7 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewChartsHandlers()
+	handlers := NewDamageHandlers()
 
 	api.HandlerWithOptions(handlers, api.ChiServerOptions{
 		BaseURL:    "/api/v1",
