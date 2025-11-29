@@ -1,0 +1,448 @@
+openapi: 3.0.3
+info:
+  title: Combat Acrobatics Attacks Service API
+  description: |
+    API для атак в движении (Wall Run, Slide, Air, Vault).
+    
+    **Основные возможности:**
+    - Атаки во время Wall Run
+    - Атаки во время Slide
+    - Атаки в воздухе
+    - Атаки во время Vault
+    - Модификаторы точности
+    - Аналитика атак
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+    description: Продакшен сервер
+
+tags:
+  - name: Movement Attacks
+    description: Атаки в движении
+  - name: Accuracy Modifiers
+    description: Модификаторы точности
+  - name: Analytics
+    description: Аналитика атак
+
+paths:
+  /attack/wall-run:
+    post:
+      tags:
+        - Movement Attacks
+      summary: Атака во время Wall Run
+      description: |
+        Выполняет атаку (стрельба, удар или специальная атака) во время Wall Run.
+        Применяются модификаторы точности и проверяется возможность комбо.
+      operationId: attackWallRun
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementAttackRequest'
+            example:
+              attack_type: "shooting"
+              target_id: "bb0e8400-e29b-41d4-a716-446655440000"
+              weapon_id: "cc0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementAttackResponse'
+              example:
+                attack_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                movement_type: "wall_run"
+                attack_type: "shooting"
+                damage_dealt: 150
+                accuracy_modifier: -15.0
+                combo_triggered: false
+                timestamp: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /attack/slide:
+    post:
+      tags:
+        - Movement Attacks
+      summary: Атака во время Slide
+      description: |
+        Выполняет атаку во время Slide (стрельба, скользящие атаки, выход из Slide).
+        Применяются бонусы скорости атаки и проверяется возможность комбо.
+      operationId: attackSlide
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementAttackRequest'
+            example:
+              attack_type: "melee"
+              target_id: "bb0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementAttackResponse'
+              example:
+                attack_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                movement_type: "slide"
+                attack_type: "melee"
+                damage_dealt: 200
+                accuracy_modifier: -5.0
+                attack_speed_boost: 25.0
+                combo_triggered: true
+                timestamp: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /attack/air:
+    post:
+      tags:
+        - Movement Attacks
+      summary: Атака в воздухе
+      description: |
+        Выполняет атаку в воздухе (стрельба, удары, атаки во время Air Dash).
+        Точность снижается в зависимости от высоты.
+      operationId: attackAir
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementAttackRequest'
+            example:
+              attack_type: "shooting"
+              target_id: "bb0e8400-e29b-41d4-a716-446655440000"
+              weapon_id: "cc0e8400-e29b-41d4-a716-446655440000"
+              height: 15.5
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementAttackResponse'
+              example:
+                attack_id: "ff0e8400-e29b-41d4-a716-446655440000"
+                movement_type: "air"
+                attack_type: "shooting"
+                damage_dealt: 120
+                accuracy_modifier: -22.5
+                combo_triggered: false
+                timestamp: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /attack/vault:
+    post:
+      tags:
+        - Movement Attacks
+      summary: Атака во время Vault
+      description: |
+        Выполняет атаку во время Vault (стрельба, удары, выход из Vault).
+        Точность сохраняется с минимальными модификаторами.
+      operationId: attackVault
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementAttackRequest'
+            example:
+              attack_type: "melee"
+              target_id: "bb0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementAttackResponse'
+              example:
+                attack_id: "gg0e8400-e29b-41d4-a716-446655440000"
+                movement_type: "vault"
+                attack_type: "melee"
+                damage_dealt: 180
+                accuracy_modifier: 0.0
+                combo_triggered: true
+                timestamp: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /accuracy-modifiers:
+    get:
+      tags:
+        - Accuracy Modifiers
+      summary: Получить модификаторы точности
+      description: |
+        Возвращает модификаторы точности для всех типов движений
+        с учетом навыков и имплантов персонажа.
+      operationId: getAccuracyModifiers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Модификаторы точности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccuracyModifiersResponse'
+              example:
+                modifiers:
+                  - movement_type: "wall_run"
+                    base_modifier: -20.0
+                    skill_modifier: 10.0
+                    implant_modifier: 5.0
+                    final_modifier: -5.0
+                  - movement_type: "slide"
+                    base_modifier: -10.0
+                    skill_modifier: 15.0
+                    final_modifier: 5.0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /analytics:
+    get:
+      tags:
+        - Analytics
+      summary: Получить аналитику атак в движении
+      description: |
+        Возвращает статистику атак в движении: количество атак по типам,
+        средний урон, точность и другие метрики.
+      operationId: getMovementAttacksAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: movement_type
+          in: query
+          required: false
+          description: Фильтр по типу движения
+          schema:
+            $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/MovementType'
+        - name: start_date
+          in: query
+          required: false
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: false
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Аналитика атак в движении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementAttacksAnalyticsResponse'
+              example:
+                total_attacks: 10000
+                attacks_by_movement:
+                  - movement_type: "wall_run"
+                    count: 3000
+                    average_damage: 145.5
+                    average_accuracy: 0.75
+                  - movement_type: "slide"
+                    count: 4000
+                    average_damage: 180.2
+                    average_accuracy: 0.85
+                combo_rate: 0.25
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MovementAttackRequest:
+      type: object
+      required:
+        - attack_type
+      properties:
+        attack_type:
+          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/AttackType'
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели атаки
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        weapon_id:
+          type: string
+          format: uuid
+          description: ID оружия (для стрельбы)
+          nullable: true
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        ability_id:
+          type: string
+          format: uuid
+          description: ID способности (для специальных атак)
+          nullable: true
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        height:
+          type: number
+          format: float
+          description: Высота (для воздушных атак)
+          minimum: 0
+          nullable: true
+          example: 15.5
+
+    MovementAttackResponse:
+      type: object
+      required:
+        - attack_id
+        - movement_type
+        - attack_type
+        - damage_dealt
+        - accuracy_modifier
+        - combo_triggered
+        - timestamp
+      properties:
+        attack_id:
+          type: string
+          format: uuid
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        movement_type:
+          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/MovementType'
+        attack_type:
+          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/AttackType'
+        damage_dealt:
+          type: integer
+          description: Нанесенный урон
+          minimum: 0
+          example: 150
+        accuracy_modifier:
+          type: number
+          format: float
+          description: Примененный модификатор точности (в процентах)
+          example: -15.0
+        attack_speed_boost:
+          type: number
+          format: float
+          description: Бонус скорости атаки (в процентах)
+          nullable: true
+          example: 25.0
+        combo_triggered:
+          type: boolean
+          description: Было ли активировано комбо
+          example: false
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    AccuracyModifiersResponse:
+      type: object
+      required:
+        - modifiers
+      properties:
+        modifiers:
+          type: array
+          items:
+            $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/AccuracyModifier'
+
+    MovementAttacksAnalyticsResponse:
+      type: object
+      required:
+        - total_attacks
+        - attacks_by_movement
+        - combo_rate
+      properties:
+        total_attacks:
+          type: integer
+          description: Общее количество атак
+          minimum: 0
+          example: 10000
+        attacks_by_movement:
+          type: array
+          items:
+            $ref: '#/components/schemas/MovementAttackStats'
+        combo_rate:
+          type: number
+          format: float
+          description: Процент атак, активировавших комбо (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.25
+
+    MovementAttackStats:
+      type: object
+      required:
+        - movement_type
+        - count
+        - average_damage
+        - average_accuracy
+      properties:
+        movement_type:
+          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/MovementType'
+        count:
+          type: integer
+          description: Количество атак
+          minimum: 0
+          example: 3000
+        average_damage:
+          type: number
+          format: float
+          description: Средний урон
+          minimum: 0
+          example: 145.5
+        average_accuracy:
+          type: number
+          format: float
+          description: Средняя точность (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.75
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

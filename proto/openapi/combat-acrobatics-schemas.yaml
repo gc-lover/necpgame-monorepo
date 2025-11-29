@@ -1,0 +1,98 @@
+openapi: 3.0.3
+info:
+  title: Combat Acrobatics Schemas
+  description: Общие схемы данных для боевой акробатики
+  version: 1.0.0
+
+components:
+  schemas:
+    MovementType:
+      type: string
+      enum: [wall_run, slide, air, vault]
+      description: Тип движения
+      example: "wall_run"
+
+    AttackType:
+      type: string
+      enum: [shooting, melee, special]
+      description: Тип атаки
+      example: "shooting"
+
+    SpecialEffect:
+      type: string
+      enum: [stun, knockback, slow, burn, freeze]
+      description: Специальный эффект
+      example: "stun"
+
+    AccuracyModifier:
+      type: object
+      required:
+        - movement_type
+        - base_modifier
+        - skill_modifier
+        - final_modifier
+      properties:
+        movement_type:
+          $ref: '#/components/schemas/MovementType'
+        base_modifier:
+          type: number
+          format: float
+          description: Базовый модификатор точности (в процентах)
+          example: -20.0
+        skill_modifier:
+          type: number
+          format: float
+          description: Модификатор от навыков (в процентах)
+          example: 10.0
+        implant_modifier:
+          type: number
+          format: float
+          description: Модификатор от имплантов (в процентах)
+          nullable: true
+          example: 5.0
+        final_modifier:
+          type: number
+          format: float
+          description: Итоговый модификатор точности (в процентах)
+          example: -5.0
+
+    MovementComboChain:
+      type: object
+      required:
+        - chain_id
+        - chain_name
+        - sequence
+        - damage_boost
+        - attack_speed_boost
+        - special_effects
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        chain_name:
+          type: string
+          description: Название цепочки
+          example: "Wall Run → Wall Kick → Air Dash → Attack"
+        sequence:
+          type: array
+          description: Последовательность движений
+          items:
+            type: string
+          example: ["wall_run", "wall_kick", "air_dash", "attack"]
+        damage_boost:
+          type: number
+          format: float
+          description: Бонус урона (в процентах)
+          example: 30.0
+        attack_speed_boost:
+          type: number
+          format: float
+          description: Бонус скорости атаки (в процентах)
+          example: 20.0
+        special_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpecialEffect'
+          example: ["stun", "knockback"]
+

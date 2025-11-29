@@ -1,0 +1,456 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Seasonal Challenges Service API
+  description: |
+    API для управления сезонными испытаниями и валютой.
+    
+    **Основные возможности:**
+    - Получение активных испытаний
+    - Завершение испытаний
+    - Управление сезонной валютой
+    - Обмен валюты на награды
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay/seasonal
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay/seasonal
+    description: Продакшен сервер
+
+tags:
+  - name: Seasonal Challenges
+    description: Сезонные испытания
+  - name: Seasonal Currency
+    description: Сезонная валюта
+
+paths:
+  /challenges/active:
+    get:
+      tags:
+        - Seasonal Challenges
+      summary: Получить активные сезонные испытания
+      description: |
+        Возвращает список активных сезонных испытаний для персонажа
+        с информацией о прогрессе и доступности.
+      operationId: getActiveSeasonalChallenges
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: false
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+        - name: challenge_type
+          in: query
+          required: false
+          description: Фильтр по типу испытания
+          schema:
+            type: string
+            example: "raid"
+      responses:
+        '200':
+          description: Список активных испытаний
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveChallengesResponse'
+              example:
+                challenges:
+                  - challenge_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                    challenge_type: "raid"
+                    name: "Frostbite Raid"
+                    progress: 0.5
+                    completed: false
+                    available: true
+                total: 5
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /challenges/{id}/complete:
+    post:
+      tags:
+        - Seasonal Challenges
+      summary: Завершить сезонное испытание
+      description: |
+        Завершает сезонное испытание и начисляет сезонную валюту и награды.
+      operationId: completeSeasonalChallenge
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID испытания
+          schema:
+            type: string
+            format: uuid
+            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteChallengeRequest'
+            example:
+              character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              completion_data:
+                time_taken: 3600
+                deaths: 0
+      responses:
+        '200':
+          description: Испытание завершено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteChallengeResponse'
+              example:
+                challenge_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                completed: true
+                currency_earned: 1000
+                rewards:
+                  - item_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                    quantity: 1
+                completed_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /currency/balance:
+    get:
+      tags:
+        - Seasonal Currency
+      summary: Получить баланс сезонной валюты
+      description: |
+        Возвращает баланс сезонной валюты для персонажа в текущем сезоне.
+      operationId: getSeasonalCurrencyBalance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+        - name: season_id
+          in: query
+          required: false
+          description: ID сезона (по умолчанию текущий)
+          schema:
+            type: string
+            format: uuid
+            example: "dd0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Баланс сезонной валюты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyBalanceResponse'
+              example:
+                character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                season_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                currency_amount: 5000
+                updated_at: "2025-12-01T10:00:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /currency/exchange:
+    post:
+      tags:
+        - Seasonal Currency
+      summary: Обменять сезонную валюту
+      description: |
+        Обменивает сезонную валюту на предметы из сезонного магазина.
+      operationId: exchangeSeasonalCurrency
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeCurrencyRequest'
+            example:
+              character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              reward_id: "ee0e8400-e29b-41d4-a716-446655440000"
+              quantity: 1
+      responses:
+        '200':
+          description: Валюта обменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeCurrencyResponse'
+              example:
+                exchange_id: "ff0e8400-e29b-41d4-a716-446655440000"
+                character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                reward_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                currency_spent: 5000
+                items_received:
+                  - item_id: "gg0e8400-e29b-41d4-a716-446655440000"
+                    quantity: 1
+                new_balance: 0
+                exchanged_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CompleteChallengeRequest:
+      type: object
+      required:
+        - character_id
+        - completion_data
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        completion_data:
+          type: object
+          description: Данные о завершении
+          properties:
+            time_taken:
+              type: integer
+              description: Время прохождения в секундах
+              minimum: 0
+              example: 3600
+            deaths:
+              type: integer
+              description: Количество смертей
+              minimum: 0
+              example: 0
+          additionalProperties: true
+
+    CompleteChallengeResponse:
+      type: object
+      required:
+        - challenge_id
+        - completed
+        - currency_earned
+        - rewards
+        - completed_at
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        completed:
+          type: boolean
+          example: true
+        currency_earned:
+          type: integer
+          description: Полученная сезонная валюта
+          minimum: 0
+          example: 1000
+        rewards:
+          type: array
+          description: Полученные награды
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+          example:
+            - item_id: "cc0e8400-e29b-41d4-a716-446655440000"
+              quantity: 1
+        completed_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    ActiveChallengesResponse:
+      type: object
+      required:
+        - challenges
+        - total
+      properties:
+        challenges:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveChallenge'
+        total:
+          type: integer
+          minimum: 0
+          example: 5
+
+    ActiveChallenge:
+      type: object
+      required:
+        - challenge_id
+        - challenge_type
+        - name
+        - progress
+        - completed
+        - available
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        challenge_type:
+          type: string
+          example: "raid"
+        name:
+          type: string
+          example: "Frostbite Raid"
+        progress:
+          type: number
+          format: float
+          description: Прогресс выполнения (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.5
+        completed:
+          type: boolean
+          example: false
+        available:
+          type: boolean
+          example: true
+
+    CurrencyBalanceResponse:
+      type: object
+      required:
+        - character_id
+        - season_id
+        - currency_amount
+        - updated_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        season_id:
+          type: string
+          format: uuid
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        currency_amount:
+          type: integer
+          description: Количество сезонной валюты
+          minimum: 0
+          example: 5000
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    ExchangeCurrencyRequest:
+      type: object
+      required:
+        - character_id
+        - reward_id
+        - quantity
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        reward_id:
+          type: string
+          format: uuid
+          description: ID награды из сезонного магазина
+          example: "ee0e8400-e29b-41d4-a716-446655440000"
+        quantity:
+          type: integer
+          description: Количество предметов
+          minimum: 1
+          example: 1
+
+    ExchangeCurrencyResponse:
+      type: object
+      required:
+        - exchange_id
+        - character_id
+        - reward_id
+        - currency_spent
+        - items_received
+        - new_balance
+        - exchanged_at
+      properties:
+        exchange_id:
+          type: string
+          format: uuid
+          example: "ff0e8400-e29b-41d4-a716-446655440000"
+        character_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        reward_id:
+          type: string
+          format: uuid
+          example: "ee0e8400-e29b-41d4-a716-446655440000"
+        currency_spent:
+          type: integer
+          description: Потраченная валюта
+          minimum: 0
+          example: 5000
+        items_received:
+          type: array
+          description: Полученные предметы
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+          example:
+            - item_id: "gg0e8400-e29b-41d4-a716-446655440000"
+              quantity: 1
+        new_balance:
+          type: integer
+          description: Новый баланс валюты
+          minimum: 0
+          example: 0
+        exchanged_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

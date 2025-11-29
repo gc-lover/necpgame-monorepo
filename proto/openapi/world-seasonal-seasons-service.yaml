@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: World Seasonal Seasons Service API
+  description: |
+    API для управления сезонами и сезонным контентом.
+    
+    **Основные возможности:**
+    - Получение текущего сезона
+    - Получение испытаний сезона
+    - Получение наград сезона
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Seasons
+    description: Управление сезонами
+
+paths:
+  /seasons/current:
+    get:
+      tags:
+        - Seasons
+      summary: Получить текущий сезон
+      description: |
+        Возвращает информацию о текущем активном сезоне,
+        включая даты начала и окончания, сезонные аффиксы.
+      operationId: getCurrentSeason
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Информация о текущем сезоне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonResponse'
+              example:
+                season_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                name: "Season of Frost"
+                start_date: "2025-12-01T00:00:00Z"
+                end_date: "2026-03-01T00:00:00Z"
+                status: "active"
+                seasonal_affix_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                days_remaining: 90
+        '404':
+          description: Активный сезон не найден
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /seasons/{seasonId}/challenges:
+    get:
+      tags:
+        - Seasons
+      summary: Получить испытания сезона
+      description: |
+        Возвращает список всех сезонных испытаний для указанного сезона
+        с информацией о типах, условиях и наградах.
+      operationId: getSeasonChallenges
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          description: ID сезона
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+        - name: challenge_type
+          in: query
+          required: false
+          description: Фильтр по типу испытания
+          schema:
+            type: string
+            example: "raid"
+        - name: active_only
+          in: query
+          required: false
+          description: Только активные испытания
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Список испытаний сезона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonChallengesResponse'
+              example:
+                season_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                challenges:
+                  - challenge_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                    challenge_type: "raid"
+                    content_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                    name: "Frostbite Raid"
+                    conditions:
+                      min_level: 50
+                      max_players: 8
+                    rewards:
+                      currency: 1000
+                      items: []
+                    active: true
+                total: 10
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /seasons/{seasonId}/rewards:
+    get:
+      tags:
+        - Seasons
+      summary: Получить награды сезона
+      description: |
+        Возвращает список всех доступных наград для указанного сезона,
+        включая предметы, которые можно получить за сезонную валюту.
+      operationId: getSeasonRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          description: ID сезона
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+        - name: category
+          in: query
+          required: false
+          description: Фильтр по категории награды
+          schema:
+            type: string
+            example: "cosmetic"
+      responses:
+        '200':
+          description: Список наград сезона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonRewardsResponse'
+              example:
+                season_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                rewards:
+                  - reward_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                    category: "cosmetic"
+                    item_id: "ff0e8400-e29b-41d4-a716-446655440000"
+                    name: "Frostbite Armor Set"
+                    currency_cost: 5000
+                    available: true
+                total: 20
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    SeasonStatus:
+      type: string
+      enum: [upcoming, active, ended]
+      description: Статус сезона
+      example: "active"
+
+    SeasonResponse:
+      type: object
+      required:
+        - season_id
+        - name
+        - start_date
+        - end_date
+        - status
+      properties:
+        season_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Название сезона
+          example: "Season of Frost"
+        start_date:
+          type: string
+          format: date-time
+          example: "2025-12-01T00:00:00Z"
+        end_date:
+          type: string
+          format: date-time
+          example: "2026-03-01T00:00:00Z"
+        status:
+          $ref: '#/components/schemas/SeasonStatus'
+        seasonal_affix_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID сезонного аффикса
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        days_remaining:
+          type: integer
+          description: Дней до окончания сезона
+          minimum: 0
+          nullable: true
+          example: 90
+
+    SeasonChallengesResponse:
+      type: object
+      required:
+        - season_id
+        - challenges
+        - total
+      properties:
+        season_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        challenges:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonChallenge'
+        total:
+          type: integer
+          minimum: 0
+          example: 10
+
+    SeasonChallenge:
+      type: object
+      required:
+        - challenge_id
+        - challenge_type
+        - content_id
+        - name
+        - conditions
+        - rewards
+        - active
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        challenge_type:
+          type: string
+          description: Тип испытания (raid, dungeon, challenge)
+          example: "raid"
+        content_id:
+          type: string
+          format: uuid
+          description: ID контента
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Название испытания
+          example: "Frostbite Raid"
+        conditions:
+          type: object
+          description: Условия испытания
+          additionalProperties: true
+          example:
+            min_level: 50
+            max_players: 8
+        rewards:
+          type: object
+          description: Награды за испытание
+          properties:
+            currency:
+              type: integer
+              minimum: 0
+              example: 1000
+            items:
+              type: array
+              items:
+                type: string
+                format: uuid
+              example: []
+          additionalProperties: false
+        active:
+          type: boolean
+          description: Активно ли испытание
+          example: true
+
+    SeasonRewardsResponse:
+      type: object
+      required:
+        - season_id
+        - rewards
+        - total
+      properties:
+        season_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonReward'
+        total:
+          type: integer
+          minimum: 0
+          example: 20
+
+    SeasonReward:
+      type: object
+      required:
+        - reward_id
+        - category
+        - item_id
+        - name
+        - currency_cost
+        - available
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          example: "ee0e8400-e29b-41d4-a716-446655440000"
+        category:
+          type: string
+          description: Категория награды (cosmetic, equipment, consumable)
+          example: "cosmetic"
+        item_id:
+          type: string
+          format: uuid
+          description: ID предмета
+          example: "ff0e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Название награды
+          example: "Frostbite Armor Set"
+        currency_cost:
+          type: integer
+          description: Стоимость в сезонной валюте
+          minimum: 0
+          example: 5000
+        available:
+          type: boolean
+          description: Доступна ли награда
+          example: true
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

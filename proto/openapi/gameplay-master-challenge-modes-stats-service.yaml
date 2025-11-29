@@ -1,0 +1,236 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Master Challenge Modes Stats Service API
+  description: |
+    API для статистики и требований мастер-режимов.
+    
+    **Основные возможности:**
+    - Статистика режимов сложности
+    - Требования для режимов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
+
+tags:
+  - name: Difficulty Modes Stats
+    description: Статистика режимов сложности
+  - name: Difficulty Modes Requirements
+    description: Требования для режимов
+
+paths:
+  /difficulty-modes/stats:
+    get:
+      tags:
+        - Difficulty Modes Stats
+      summary: Получить статистику режимов сложности
+      description: |
+        Возвращает статистику по всем режимам сложности: количество завершений,
+        успешность, среднее время прохождения и другие метрики.
+      operationId: getDifficultyModesStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mode_level
+          in: query
+          required: false
+          description: Фильтр по уровню режима
+          schema:
+            $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyModeLevel'
+        - name: start_date
+          in: query
+          required: false
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: false
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Статистика режимов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyModesStatsResponse'
+              example:
+                stats:
+                  - mode_level: "master"
+                    total_attempts: 10000
+                    total_completions: 5000
+                    success_rate: 0.5
+                    average_completion_time: 1800
+                    average_deaths: 2.5
+                  - mode_level: "grandmaster"
+                    total_attempts: 5000
+                    total_completions: 1500
+                    success_rate: 0.3
+                    average_completion_time: 2400
+                    average_deaths: 5.0
+                total: 3
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /difficulty-modes/{mode}/requirements:
+    get:
+      tags:
+        - Difficulty Modes Requirements
+      summary: Получить требования для режима сложности
+      description: |
+        Возвращает детальные требования для доступа к указанному режиму сложности.
+        Включает минимальный уровень, необходимый контент и другие условия.
+      operationId: getDifficultyModeRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mode
+          in: path
+          required: true
+          description: Уровень режима (master, grandmaster, legendary)
+          schema:
+            $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyModeLevel'
+      responses:
+        '200':
+          description: Требования для режима
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyModeRequirementsResponse'
+              example:
+                mode_level: "master"
+                requirements:
+                  min_level: 50
+                  completed_content: []
+                  min_item_level: 450
+                  character_class_restrictions: []
+                restrictions:
+                  time_limit_multiplier: 1.2
+                  respawn_limit: 3
+                  checkpoint_limit: 2
+                  permadeath: false
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    DifficultyModesStatsResponse:
+      type: object
+      required:
+        - stats
+        - total
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/DifficultyModeStats'
+        total:
+          type: integer
+          minimum: 0
+          example: 3
+
+    DifficultyModeStats:
+      type: object
+      required:
+        - mode_level
+        - total_attempts
+        - total_completions
+        - success_rate
+        - average_completion_time
+        - average_deaths
+      properties:
+        mode_level:
+          $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyModeLevel'
+        total_attempts:
+          type: integer
+          description: Общее количество попыток
+          minimum: 0
+          example: 10000
+        total_completions:
+          type: integer
+          description: Общее количество завершений
+          minimum: 0
+          example: 5000
+        success_rate:
+          type: number
+          format: float
+          description: Процент успешных завершений (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.5
+        average_completion_time:
+          type: integer
+          description: Среднее время прохождения в секундах
+          minimum: 0
+          example: 1800
+        average_deaths:
+          type: number
+          format: float
+          description: Среднее количество смертей
+          minimum: 0
+          example: 2.5
+
+    DifficultyModeRequirementsResponse:
+      type: object
+      required:
+        - mode_level
+        - requirements
+        - restrictions
+      properties:
+        mode_level:
+          $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyModeLevel'
+        requirements:
+          $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyRequirements'
+        restrictions:
+          type: object
+          properties:
+            time_limit_multiplier:
+              type: number
+              format: float
+              minimum: 1.0
+              example: 1.2
+            respawn_limit:
+              type: integer
+              minimum: 0
+              example: 3
+            checkpoint_limit:
+              type: integer
+              minimum: 0
+              example: 2
+            permadeath:
+              type: boolean
+              description: Перманентная смерть
+              example: false
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

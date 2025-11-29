@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Master Challenge Modes Service API
+  description: |
+    API для системы мастер-режимов и Challenge modes.
+    
+    **Основные возможности:**
+    - Выбор режима сложности для контента
+    - Получение доступных режимов
+    - Статистика режимов
+    - Требования для режимов
+    
+    **Режимы сложности:**
+    - Master (+100% HP, +50% урон)
+    - Grandmaster (+200% HP, +100% урон)
+    - Legendary (+300% HP, +150% урон, перманентная смерть)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
+
+tags:
+  - name: Difficulty Modes
+    description: Режимы сложности
+  - name: Challenge Modes
+    description: Challenge режимы
+
+paths:
+  /instances/{instanceId}/difficulty:
+    post:
+      tags:
+        - Difficulty Modes
+      summary: Выбрать режим сложности для инстанса
+      description: |
+        Выбирает режим сложности для указанного инстанса контента.
+        Применяет модификаторы сложности и активирует ограничения.
+      operationId: selectDifficultyMode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          description: ID инстанса контента
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectDifficultyModeRequest'
+            example:
+              difficulty_mode_id: "bb0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Режим сложности выбран
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SelectDifficultyModeResponse'
+              example:
+                instance_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                difficulty_mode:
+                  mode_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                  name: "Master"
+                  level: "master"
+                  hp_modifier: 2.0
+                  damage_modifier: 1.5
+                  time_limit_multiplier: 1.2
+                  respawn_limit: 3
+                  checkpoint_limit: 2
+                  reward_modifier: 1.5
+                restrictions:
+                  time_remaining: 3600
+                  respawns_remaining: 3
+                  checkpoints_used: 0
+                status: "in_progress"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /content/{contentId}/difficulty-modes:
+    get:
+      tags:
+        - Difficulty Modes
+      summary: Получить доступные режимы сложности для контента
+      description: |
+        Возвращает список всех доступных режимов сложности для указанного контента.
+        Включает информацию о требованиях и модификаторах.
+      operationId: getContentDifficultyModes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          description: ID контента (рейд, подземелье, босс)
+          schema:
+            type: string
+            format: uuid
+            example: "cc0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Список доступных режимов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentDifficultyModesResponse'
+              example:
+                content_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                difficulty_modes:
+                  - mode_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                    name: "Master"
+                    level: "master"
+                    hp_modifier: 2.0
+                    damage_modifier: 1.5
+                    time_limit_multiplier: 1.2
+                    respawn_limit: 3
+                    checkpoint_limit: 2
+                    reward_modifier: 1.5
+                    requirements:
+                      min_level: 50
+                      completed_content: []
+                  - mode_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                    name: "Grandmaster"
+                    level: "grandmaster"
+                    hp_modifier: 3.0
+                    damage_modifier: 2.0
+                    time_limit_multiplier: 1.5
+                    respawn_limit: 1
+                    checkpoint_limit: 1
+                    reward_modifier: 2.0
+                    requirements:
+                      min_level: 60
+                      completed_content:
+                        - "cc0e8400-e29b-41d4-a716-446655440000"
+                total: 3
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    SelectDifficultyModeRequest:
+      type: object
+      required:
+        - difficulty_mode_id
+      properties:
+        difficulty_mode_id:
+          type: string
+          format: uuid
+          description: ID режима сложности
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+
+    SelectDifficultyModeResponse:
+      type: object
+      required:
+        - instance_id
+        - difficulty_mode
+        - restrictions
+        - status
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        difficulty_mode:
+          $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyMode'
+        restrictions:
+          $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyRestrictions'
+        status:
+          type: string
+          enum: [in_progress, completed, failed]
+          description: Статус сессии
+          example: "in_progress"
+
+    ContentDifficultyModesResponse:
+      type: object
+      required:
+        - content_id
+        - difficulty_modes
+        - total
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        difficulty_modes:
+          type: array
+          items:
+            $ref: 'gameplay-master-challenge-modes-schemas.yaml#/components/schemas/DifficultyModeWithRequirements'
+        total:
+          type: integer
+          minimum: 0
+          example: 3
+
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

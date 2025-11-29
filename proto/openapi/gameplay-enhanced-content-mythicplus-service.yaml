@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Enhanced Content MythicPlus Service API
+  description: |
+    API для Mythic+ Dungeons - масштабируемых подземелий с бесконечным уровнем сложности.
+    
+    **Основные возможности:**
+    - Управление Mythic+ подземельями (масштабируемая сложность)
+    - Модификаторы: +8% HP, +5% урон за уровень
+    - Бесконечное масштабирование (Mythic+1 до Mythic+51+)
+    - Уникальные награды за каждый уровень
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
+
+tags:
+  - name: MythicPlus
+    description: Масштабируемые подземелья
+
+paths:
+  /enhanced/mythicplus/{dungeonId}/levels:
+    get:
+      tags:
+        - MythicPlus
+      summary: Получить доступные уровни Mythic+
+      description: |
+        Возвращает информацию о доступных уровнях Mythic+ для подземелья.
+        Mythic+ имеет бесконечное масштабирование (+8% HP, +5% урон за уровень).
+      operationId: getMythicPlusLevels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dungeonId
+          in: path
+          required: true
+          description: UUID подземелья
+          schema:
+            type: string
+            format: uuid
+            example: "ff0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Информация об уровнях Mythic+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MythicPlusLevels'
+              example:
+                dungeon_id: "ff0e8400-e29b-41d4-a716-446655440000"
+                dungeon_name: "Cyberpunk Underground"
+                available_levels:
+                  - level: 1
+                    hp_modifier: 1.08
+                    damage_modifier: 1.05
+                    experience_bonus: 1.10
+                highest_completed_level: 5
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /enhanced/mythicplus/{dungeonId}/start:
+    post:
+      tags:
+        - MythicPlus
+      summary: Начать Mythic+ подземелье
+      description: |
+        Создает новую сессию Mythic+ подземелья с выбранным уровнем.
+        Применяет модификаторы сложности (+8% HP, +5% урон за уровень).
+      operationId: startMythicPlus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dungeonId
+          in: path
+          required: true
+          description: UUID подземелья
+          schema:
+            type: string
+            format: uuid
+            example: "ff0e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartMythicPlusRequest'
+            example:
+              mythicplus_level: 3
+              team_id: "gg0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '201':
+          description: Сессия Mythic+ создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MythicPlusSession'
+              example:
+                session_id: "hh0e8400-e29b-41d4-a716-446655440000"
+                dungeon_id: "ff0e8400-e29b-41d4-a716-446655440000"
+                mythicplus_level: 3
+                modifiers:
+                  hp_modifier: 1.24
+                  damage_modifier: 1.15
+                  experience_bonus: 1.30
+                status: "active"
+                started_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MythicPlusLevels:
+      type: object
+      required:
+        - dungeon_id
+        - dungeon_name
+        - available_levels
+      properties:
+        dungeon_id:
+          type: string
+          format: uuid
+          example: "ff0e8400-e29b-41d4-a716-446655440000"
+        dungeon_name:
+          type: string
+          description: Название подземелья
+          example: "Cyberpunk Underground"
+        available_levels:
+          type: array
+          description: Доступные уровни Mythic+
+          items:
+            $ref: '#/components/schemas/MythicPlusLevel'
+        highest_completed_level:
+          type: integer
+          description: Самый высокий пройденный уровень
+          minimum: 0
+          nullable: true
+          example: 5
+
+    MythicPlusLevel:
+      type: object
+      required:
+        - level
+        - hp_modifier
+        - damage_modifier
+        - experience_bonus
+      properties:
+        level:
+          type: integer
+          description: Уровень Mythic+ (1-51+)
+          minimum: 1
+          example: 1
+        hp_modifier:
+          type: number
+          format: float
+          description: Модификатор здоровья (+8% за уровень)
+          minimum: 1.0
+          example: 1.08
+        damage_modifier:
+          type: number
+          format: float
+          description: Модификатор урона (+5% за уровень)
+          minimum: 1.0
+          example: 1.05
+        experience_bonus:
+          type: number
+          format: float
+          description: Бонус опыта
+          minimum: 1.0
+          example: 1.10
+
+    StartMythicPlusRequest:
+      type: object
+      required:
+        - mythicplus_level
+        - team_id
+      properties:
+        mythicplus_level:
+          type: integer
+          description: Уровень Mythic+ для запуска
+          minimum: 1
+          example: 3
+        team_id:
+          type: string
+          format: uuid
+          description: UUID команды
+          example: "gg0e8400-e29b-41d4-a716-446655440000"
+
+    MythicPlusSession:
+      type: object
+      required:
+        - session_id
+        - dungeon_id
+        - mythicplus_level
+        - modifiers
+        - status
+        - started_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: UUID сессии Mythic+
+          example: "hh0e8400-e29b-41d4-a716-446655440000"
+        dungeon_id:
+          type: string
+          format: uuid
+          example: "ff0e8400-e29b-41d4-a716-446655440000"
+        mythicplus_level:
+          type: integer
+          minimum: 1
+          example: 3
+        modifiers:
+          type: object
+          required:
+            - hp_modifier
+            - damage_modifier
+            - experience_bonus
+          properties:
+            hp_modifier:
+              type: number
+              format: float
+              minimum: 1.0
+              example: 1.24
+            damage_modifier:
+              type: number
+              format: float
+              minimum: 1.0
+              example: 1.15
+            experience_bonus:
+              type: number
+              format: float
+              minimum: 1.0
+              example: 1.30
+        status:
+          type: string
+          enum: [active, completed, failed]
+          description: Статус сессии
+          example: "active"
+        started_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        completion_time:
+          type: integer
+          description: Время прохождения в секундах
+          nullable: true
+          example: null
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

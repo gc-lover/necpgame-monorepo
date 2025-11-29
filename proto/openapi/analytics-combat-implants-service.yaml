@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: Analytics Combat Implants Service API
+  description: |
+    API для статистики имплантов.
+    
+    **Основные возможности:**
+    - Статистика имплантов (использование, эффективность)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/analytics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/analytics
+    description: Продакшен сервер
+
+tags:
+  - name: Implants Stats
+    description: Статистика имплантов
+
+paths:
+  /combat/implants/stats:
+    get:
+      tags:
+        - Implants Stats
+      summary: Получить статистику имплантов
+      description: |
+        Возвращает общую статистику по имплантам: общее использование,
+        популярность и другие метрики.
+      operationId: getImplantsStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          required: false
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: false
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: mode
+          in: query
+          required: false
+          description: Фильтр по игровому режиму
+          schema:
+            $ref: 'analytics-combat-schemas.yaml#/components/schemas/GameMode'
+      responses:
+        '200':
+          description: Статистика имплантов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantsStats'
+              example:
+                total_activations: 500000
+                unique_implants: 30
+                average_effectiveness: 0.65
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /combat/implants/usage:
+    get:
+      tags:
+        - Implants Stats
+      summary: Получить статистику использования имплантов
+      description: |
+        Возвращает статистику использования имплантов: частота активации,
+        популярность и другие метрики.
+      operationId: getImplantsUsage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: implant_id
+          in: query
+          required: false
+          description: Фильтр по импланту
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          required: false
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: false
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          required: false
+          description: Лимит результатов
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          description: Смещение для пагинации
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Статистика использования имплантов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantsUsageResponse'
+              example:
+                implants:
+                  - implant_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                    implant_name: "Neural Boost"
+                    total_activations: 25000
+                    usage_rate: 0.05
+                    pick_rate: 0.08
+                total: 30
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ImplantsStats:
+      type: object
+      required:
+        - total_activations
+        - unique_implants
+        - average_effectiveness
+      properties:
+        total_activations:
+          type: integer
+          description: Общее количество активаций
+          minimum: 0
+          example: 500000
+        unique_implants:
+          type: integer
+          description: Количество уникальных имплантов
+          minimum: 0
+          example: 30
+        average_effectiveness:
+          type: number
+          format: float
+          description: Средняя эффективность (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.65
+
+    ImplantsUsageResponse:
+      type: object
+      required:
+        - implants
+        - total
+      properties:
+        implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplantUsage'
+        total:
+          type: integer
+          minimum: 0
+          example: 30
+
+    ImplantUsage:
+      type: object
+      required:
+        - implant_id
+        - implant_name
+        - total_activations
+        - usage_rate
+        - pick_rate
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        implant_name:
+          type: string
+          example: "Neural Boost"
+        total_activations:
+          type: integer
+          minimum: 0
+          example: 25000
+        usage_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.05
+        pick_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.08
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

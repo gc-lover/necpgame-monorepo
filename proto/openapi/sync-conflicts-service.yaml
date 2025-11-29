@@ -1,0 +1,250 @@
+openapi: 3.0.3
+info:
+  title: Data Synchronization Conflicts Service API
+  description: |
+    API для разрешения конфликтов при синхронизации данных.
+    
+    **Основные возможности:**
+    - Разрешение конфликтов
+    - Получение списка конфликтов
+    - Разрешение конфликтов по ID
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8090/api/v1/sync
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/sync
+    description: Продакшен сервер
+
+tags:
+  - name: Conflict Resolution
+    description: Разрешение конфликтов
+
+paths:
+  /conflicts/resolve:
+    post:
+      tags:
+        - Conflict Resolution
+      summary: Разрешить конфликт
+      description: |
+        Разрешает конфликт с использованием указанной стратегии.
+      operationId: resolveConflict
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveConflictRequest'
+            example:
+              conflict_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              resolution_strategy: "last_write_wins"
+              resolved_value:
+                level: 50
+                experience: 125000
+      responses:
+        '200':
+          description: Конфликт разрешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveConflictResponse'
+              example:
+                conflict_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                status: "resolved"
+                resolution_strategy: "last_write_wins"
+                resolved_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /conflicts:
+    get:
+      tags:
+        - Conflict Resolution
+      summary: Получить список конфликтов
+      description: |
+        Возвращает список конфликтов с фильтрацией по типу и статусу.
+      operationId: listConflicts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conflict_type
+          in: query
+          required: false
+          description: Фильтр по типу конфликта
+          schema:
+            $ref: 'sync-schemas.yaml#/components/schemas/ConflictType'
+        - name: resolved
+          in: query
+          required: false
+          description: Фильтр по статусу разрешения
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          required: false
+          description: Лимит результатов
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          description: Смещение для пагинации
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список конфликтов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictsListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /conflicts/{conflictId}/resolve:
+    post:
+      tags:
+        - Conflict Resolution
+      summary: Разрешить конфликт по ID
+      description: |
+        Разрешает конкретный конфликт по его ID с использованием стратегии.
+      operationId: resolveConflictById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conflictId
+          in: path
+          required: true
+          description: ID конфликта
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveConflictByIdRequest'
+            example:
+              resolution_strategy: "last_write_wins"
+              resolved_value:
+                level: 50
+      responses:
+        '200':
+          description: Конфликт разрешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveConflictResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ResolveConflictRequest:
+      type: object
+      required:
+        - conflict_id
+        - resolution_strategy
+        - resolved_value
+      properties:
+        conflict_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        resolution_strategy:
+          $ref: 'sync-schemas.yaml#/components/schemas/ResolutionStrategy'
+        resolved_value:
+          type: object
+          description: Разрешенное значение
+          additionalProperties: true
+
+    ResolveConflictByIdRequest:
+      type: object
+      required:
+        - resolution_strategy
+        - resolved_value
+      properties:
+        resolution_strategy:
+          $ref: 'sync-schemas.yaml#/components/schemas/ResolutionStrategy'
+        resolved_value:
+          type: object
+          additionalProperties: true
+
+    ResolveConflictResponse:
+      type: object
+      required:
+        - conflict_id
+        - status
+        - resolution_strategy
+        - resolved_at
+      properties:
+        conflict_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [resolved, failed]
+          example: "resolved"
+        resolution_strategy:
+          $ref: 'sync-schemas.yaml#/components/schemas/ResolutionStrategy'
+        resolved_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    ConflictsListResponse:
+      type: object
+      required:
+        - conflicts
+        - total
+      properties:
+        conflicts:
+          type: array
+          items:
+            $ref: 'sync-schemas.yaml#/components/schemas/Conflict'
+        total:
+          type: integer
+          minimum: 0
+          example: 10
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

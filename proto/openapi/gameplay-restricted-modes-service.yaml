@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Restricted Modes Service API
+  description: |
+    API для режимов с ограничениями (Ironman, Hardcore, Solo, No-Death).
+    
+    **Основные возможности:**
+    - Выбор режима с ограничениями
+    - Получение доступных режимов
+    - Статус режима
+    - Создание Ironman персонажа
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
+
+tags:
+  - name: Restricted Modes
+    description: Режимы с ограничениями
+  - name: Ironman Mode
+    description: Ironman режим
+
+paths:
+  /restricted-modes/select:
+    post:
+      tags:
+        - Restricted Modes
+      summary: Выбрать режим с ограничениями
+      description: |
+        Активирует режим с ограничениями для персонажа.
+        Режимы: Ironman (перманентная смерть), Hardcore (ограниченные ресурсы),
+        Solo Challenge (одиночное прохождение), No-Death Runs (без смертей).
+      operationId: selectRestrictedMode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectRestrictedModeRequest'
+            example:
+              character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              mode_type: "ironman"
+      responses:
+        '200':
+          description: Режим активирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestrictedModeResponse'
+              example:
+                session_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                mode_type: "ironman"
+                status: "active"
+                restrictions:
+                  permadeath: true
+                  no_auction: false
+                  solo_only: false
+                started_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /restricted-modes/available:
+    get:
+      tags:
+        - Restricted Modes
+      summary: Получить доступные режимы
+      description: |
+        Возвращает список доступных режимов с ограничениями для персонажа
+        с информацией о требованиях и ограничениях.
+      operationId: getAvailableRestrictedModes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: false
+          description: ID персонажа для проверки доступности
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Список доступных режимов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableRestrictedModesResponse'
+              example:
+                modes:
+                  - mode_type: "ironman"
+                    name: "Ironman Mode"
+                    description: "Перманентная смерть при смерти"
+                    restrictions:
+                      permadeath: true
+                      no_auction: false
+                      solo_only: false
+                    requirements:
+                      min_level: 1
+                    available: true
+                  - mode_type: "hardcore"
+                    name: "Hardcore Mode"
+                    description: "Ограниченные ресурсы и снаряжение"
+                    restrictions:
+                      permadeath: false
+                      no_auction: true
+                      limited_respawns: true
+                    requirements:
+                      min_level: 10
+                    available: true
+                total: 4
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /restricted-modes/status:
+    get:
+      tags:
+        - Restricted Modes
+      summary: Получить статус режима
+      description: |
+        Возвращает текущий статус активного режима с ограничениями для персонажа.
+      operationId: getRestrictedModeStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Статус режима
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestrictedModeResponse'
+              example:
+                session_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                mode_type: "ironman"
+                status: "active"
+                restrictions:
+                  permadeath: true
+                  no_auction: false
+                  solo_only: false
+                started_at: "2025-12-01T10:00:00Z"
+                deaths_count: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Режим не активен
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /restricted-modes/ironman/create:
+    post:
+      tags:
+        - Ironman Mode
+      summary: Создать Ironman персонажа
+      description: |
+        Создает нового персонажа в Ironman режиме с перманентной смертью.
+        Персонаж будет удален при смерти.
+      operationId: createIronmanCharacter
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIronmanCharacterRequest'
+            example:
+              account_id: "cc0e8400-e29b-41d4-a716-446655440000"
+              character_name: "IronmanHero"
+              class_id: "dd0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Ironman персонаж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IronmanCharacterResponse'
+              example:
+                character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                character_name: "IronmanHero"
+                mode_type: "ironman"
+                status: "active"
+                created_at: "2025-12-01T10:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    RestrictedModeType:
+      type: string
+      enum: [ironman, hardcore, solo, nodeath]
+      description: Тип режима с ограничениями
+      example: "ironman"
+
+    RestrictedModeStatus:
+      type: string
+      enum: [active, completed, failed]
+      description: Статус режима
+      example: "active"
+
+    SelectRestrictedModeRequest:
+      type: object
+      required:
+        - character_id
+        - mode_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
+
+    RestrictedModeResponse:
+      type: object
+      required:
+        - session_id
+        - character_id
+        - mode_type
+        - status
+        - restrictions
+        - started_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        character_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
+        status:
+          $ref: '#/components/schemas/RestrictedModeStatus'
+        restrictions:
+          type: object
+          description: Ограничения режима
+          properties:
+            permadeath:
+              type: boolean
+              description: Перманентная смерть
+              example: true
+            no_auction:
+              type: boolean
+              description: Нет доступа к аукциону
+              example: false
+            solo_only:
+              type: boolean
+              description: Только одиночное прохождение
+              example: false
+            limited_respawns:
+              type: boolean
+              description: Ограниченные респавны
+              example: false
+            no_deaths:
+              type: boolean
+              description: Прохождение без смертей
+              example: false
+          additionalProperties: false
+        started_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        deaths_count:
+          type: integer
+          description: Количество смертей
+          minimum: 0
+          nullable: true
+          example: 0
+
+    AvailableRestrictedModesResponse:
+      type: object
+      required:
+        - modes
+        - total
+      properties:
+        modes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableRestrictedMode'
+        total:
+          type: integer
+          minimum: 0
+          example: 4
+
+    AvailableRestrictedMode:
+      type: object
+      required:
+        - mode_type
+        - name
+        - description
+        - restrictions
+        - available
+      properties:
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
+        name:
+          type: string
+          description: Название режима
+          example: "Ironman Mode"
+        description:
+          type: string
+          description: Описание режима
+          example: "Перманентная смерть при смерти"
+        restrictions:
+          type: object
+          properties:
+            permadeath:
+              type: boolean
+              example: true
+            no_auction:
+              type: boolean
+              example: false
+            solo_only:
+              type: boolean
+              example: false
+            limited_respawns:
+              type: boolean
+              example: false
+            no_deaths:
+              type: boolean
+              example: false
+          additionalProperties: false
+        requirements:
+          type: object
+          description: Требования для режима
+          nullable: true
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+              example: 1
+            completed_content:
+              type: array
+              items:
+                type: string
+                format: uuid
+              example: []
+          additionalProperties: false
+        available:
+          type: boolean
+          description: Доступен ли режим для персонажа
+          example: true
+
+    CreateIronmanCharacterRequest:
+      type: object
+      required:
+        - account_id
+        - character_name
+        - class_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          description: ID аккаунта
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        character_name:
+          type: string
+          description: Имя персонажа
+          minLength: 3
+          maxLength: 32
+          example: "IronmanHero"
+        class_id:
+          type: string
+          format: uuid
+          description: ID класса персонажа
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+
+    IronmanCharacterResponse:
+      type: object
+      required:
+        - character_id
+        - character_name
+        - mode_type
+        - status
+        - created_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        character_name:
+          type: string
+          example: "IronmanHero"
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
+        status:
+          $ref: '#/components/schemas/RestrictedModeStatus'
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

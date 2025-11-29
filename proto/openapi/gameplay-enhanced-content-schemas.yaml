@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Enhanced Content Schemas
+  description: Общие схемы данных для системы усиленных версий контента
+  version: 1.0.0
+
+components:
+  schemas:
+    ContentModifiers:
+      type: object
+      required:
+        - hp_modifier
+        - damage_modifier
+      properties:
+        hp_modifier:
+          type: number
+          format: float
+          description: Модификатор здоровья (1.0 = базовое, 3.0 = +200%)
+          minimum: 1.0
+          example: 3.0
+        damage_modifier:
+          type: number
+          format: float
+          description: Модификатор урона (1.0 = базовый, 2.0 = +100%)
+          minimum: 1.0
+          example: 2.0
+
+    EliteBoss:
+      type: object
+      required:
+        - boss_id
+        - base_boss_id
+        - boss_name
+        - spawn_time
+        - despawn_time
+        - defeated
+        - modifiers
+      properties:
+        boss_id:
+          type: string
+          format: uuid
+          description: UUID Elite босса
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        base_boss_id:
+          type: string
+          format: uuid
+          description: UUID базового босса
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        boss_name:
+          type: string
+          description: Название Elite босса
+          example: "Elite Cyber Dragon"
+        spawn_time:
+          type: string
+          format: date-time
+          description: Время появления
+          example: "2025-12-01T10:00:00Z"
+        despawn_time:
+          type: string
+          format: date-time
+          description: Время исчезновения
+          example: "2025-12-08T10:00:00Z"
+        defeated:
+          type: boolean
+          description: Побежден ли босс
+          example: false
+        defeated_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID команды, победившей босса
+          example: null
+        modifiers:
+          $ref: '#/components/schemas/ContentModifiers'
+        location:
+          type: object
+          description: Местоположение босса
+          properties:
+            zone_id:
+              type: string
+              format: uuid
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+
+    ChampionRaid:
+      type: object
+      required:
+        - raid_id
+        - base_raid_id
+        - raid_name
+        - available
+        - modifiers
+        - required_players
+      properties:
+        raid_id:
+          type: string
+          format: uuid
+          description: UUID Champion рейда
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        base_raid_id:
+          type: string
+          format: uuid
+          description: UUID базового рейда
+          example: "ee0e8400-e29b-41d4-a716-446655440000"
+        raid_name:
+          type: string
+          description: Название Champion рейда
+          example: "Champion Corporate Tower"
+        available:
+          type: boolean
+          description: Доступен ли рейд
+          example: true
+        modifiers:
+          $ref: '#/components/schemas/ContentModifiers'
+        required_players:
+          type: integer
+          description: Требуемое количество игроков
+          minimum: 4
+          maximum: 16
+          example: 8
+        mechanics:
+          type: array
+          description: Усиленные механики
+          items:
+            type: string
+          example:
+            - "Enhanced coordination required"
+            - "New phase mechanics"
+

@@ -14,17 +14,19 @@ type HTTPServer struct {
 	router         *mux.Router
 	paragonService ParagonServiceInterface
 	prestigeService PrestigeServiceInterface
+	masteryService MasteryServiceInterface
 	logger         *logrus.Logger
 	server         *http.Server
 }
 
-func NewHTTPServer(addr string, paragonService ParagonServiceInterface, prestigeService PrestigeServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, paragonService ParagonServiceInterface, prestigeService PrestigeServiceInterface, masteryService MasteryServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:           addr,
 		router:         router,
 		paragonService: paragonService,
 		prestigeService: prestigeService,
+		masteryService: masteryService,
 		logger:         GetLogger(),
 	}
 
@@ -43,6 +45,11 @@ func NewHTTPServer(addr string, paragonService ParagonServiceInterface, prestige
 	api.HandleFunc("/prestige/info", prestigeHandlers.GetPrestigeInfo).Methods("GET")
 	api.HandleFunc("/prestige/reset", prestigeHandlers.ResetPrestige).Methods("POST")
 	api.HandleFunc("/prestige/bonuses", prestigeHandlers.GetPrestigeBonuses).Methods("GET")
+
+	masteryHandlers := NewMasteryHandlers(masteryService)
+	api.HandleFunc("/mastery/levels", masteryHandlers.GetMasteryLevels).Methods("GET")
+	api.HandleFunc("/mastery/{type}/progress", masteryHandlers.GetMasteryProgress).Methods("GET")
+	api.HandleFunc("/mastery/rewards", masteryHandlers.GetMasteryRewards).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
