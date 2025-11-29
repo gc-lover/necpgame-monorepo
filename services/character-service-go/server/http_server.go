@@ -33,10 +33,17 @@ type HTTPServer struct {
 	server           *http.Server
 	jwtValidator     *JwtValidator
 	authEnabled      bool
+	engramService    EngramServiceInterface
 }
 
 func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
+	
+	var engramService EngramServiceInterface
+	if cs, ok := characterService.(*CharacterService); ok {
+		engramService = cs.GetEngramService()
+	}
+	
 	server := &HTTPServer{
 		addr:             addr,
 		router:           router,
@@ -44,6 +51,7 @@ func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtV
 		logger:           GetLogger(),
 		jwtValidator:     jwtValidator,
 		authEnabled:      authEnabled,
+		engramService:    engramService,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -66,6 +74,16 @@ func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtV
 	api.HandleFunc("/characters/{characterId}", server.deleteCharacter).Methods("DELETE")
 	api.HandleFunc("/characters/{characterId}/validate", server.validateCharacter).Methods("GET")
 	api.HandleFunc("/characters/switch", server.switchCharacter).Methods("POST")
+
+	if engramService != nil {
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots", server.getEngramSlots).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/install", server.installEngram).Methods("POST")
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/remove", server.removeEngram).Methods("DELETE")
+		api.HandleFunc("/character/characters/{characterId}/engrams/active", server.getActiveEngrams).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence", server.getEngramInfluence).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence/update", server.updateEngramInfluence).Methods("POST")
+		api.HandleFunc("/character/characters/{characterId}/engrams/influence/levels", server.getEngramInfluenceLevels).Methods("GET")
+	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
