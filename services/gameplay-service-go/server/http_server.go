@@ -39,11 +39,12 @@ type HTTPServer struct {
 	progressionService ProgressionServiceInterface
 	questService     QuestServiceInterface
 	affixService     AffixServiceInterface
+	timeTrialService TimeTrialServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
@@ -51,6 +52,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		progressionService: progressionService,
 		questService:     questService,
 		affixService:     affixService,
+		timeTrialService: timeTrialService,
 		logger:           GetLogger(),
 	}
 
@@ -85,6 +87,14 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 
 	instanceAPI := router.PathPrefix("/api/v1/gameplay/instances").Subrouter()
 	instanceAPI.HandleFunc("/{instance_id}/affixes", affixHandlers.GetInstanceAffixes).Methods("GET")
+
+	timeTrialHandlers := NewTimeTrialHandlers(timeTrialService)
+	timeTrialAPI := router.PathPrefix("/api/v1/gameplay/time-trials").Subrouter()
+	timeTrialAPI.HandleFunc("/start", timeTrialHandlers.StartTimeTrial).Methods("POST")
+	timeTrialAPI.HandleFunc("/complete", timeTrialHandlers.CompleteTimeTrial).Methods("POST")
+	timeTrialAPI.HandleFunc("/sessions/{session_id}", timeTrialHandlers.GetTimeTrialSession).Methods("GET")
+	timeTrialAPI.HandleFunc("/weekly/current", timeTrialHandlers.GetCurrentWeeklyChallenge).Methods("GET")
+	timeTrialAPI.HandleFunc("/weekly/history", timeTrialHandlers.GetWeeklyChallengeHistory).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
