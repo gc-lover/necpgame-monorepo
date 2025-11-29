@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/necpgame/economy-service-go/models"
+	tradeapi "github.com/necpgame/economy-service-go/pkg/api"
 )
 
 type mockTradeService struct {
@@ -299,13 +300,17 @@ func TestHTTPServer_GetActiveTrades(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var response models.TradeListResponse
+	var response tradeapi.ActiveTradesResponse
 	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
 	if response.Total != 2 {
 		t.Errorf("Expected total 2, got %d", response.Total)
+	}
+
+	if len(response.Trades) != 2 {
+		t.Errorf("Expected 2 trades, got %d", len(response.Trades))
 	}
 }
 
