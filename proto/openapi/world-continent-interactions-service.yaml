@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: World Continent Interactions Service
+  description: Управление взаимодействиями между континентами (торговля, дипломатия, конфликты)
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Continent Interactions
+    description: Управление взаимодействиями между континентами
+
+paths:
+  /world/continents/{continentId1}/interact/{continentId2}:
+    post:
+      tags:
+        - Continent Interactions
+      summary: Создать взаимодействие между континентами
+      description: |
+        Создает взаимодействие между двумя континентами с указанным типом.
+      operationId: createContinentInteraction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: continentId1
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID первого континента
+        - name: continentId2
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID второго континента
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'world-continent-schemas.yaml#/components/schemas/CreateContinentInteractionRequest'
+            example:
+              continent_id_2: "bb0e8400-e29b-41d4-a716-446655440001"
+              interaction_type: "trade"
+              details: "Intercontinental trade agreement for technology exchange"
+      responses:
+        '201':
+          description: Взаимодействие успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: 'world-continent-schemas.yaml#/components/schemas/ContinentInteraction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/continents/{continentId}/interactions:
+    get:
+      tags:
+        - Continent Interactions
+      summary: Список взаимодействий континента
+      description: |
+        Возвращает список всех взаимодействий континента с другими континентами.
+      operationId: listContinentInteractions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: continentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID континента
+        - name: interaction_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - trade
+              - diplomacy
+              - conflict
+              - alliance
+          description: Фильтр по типу взаимодействия
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - pending
+              - cancelled
+          description: Фильтр по статусу
+      responses:
+        '200':
+          description: Список взаимодействий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  interactions:
+                    type: array
+                    items:
+                      $ref: 'world-continent-schemas.yaml#/components/schemas/ContinentInteraction'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

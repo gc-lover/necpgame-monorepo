@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: World Continent Structure Service
+  description: Управление структурой континентов (регионы, территории, ресурсы)
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Continent Structure
+    description: Управление структурой континентов
+
+paths:
+  /world/continents/{continentId}/regions:
+    get:
+      tags:
+        - Continent Structure
+      summary: Список регионов континента
+      description: |
+        Возвращает список всех регионов на континенте.
+      operationId: listContinentRegions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: continentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID континента
+      responses:
+        '200':
+          description: Список регионов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regions:
+                    type: array
+                    items:
+                      $ref: 'world-continent-schemas.yaml#/components/schemas/ContinentRegion'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/continents/{continentId}/territories:
+    get:
+      tags:
+        - Continent Structure
+      summary: Список территорий континента
+      description: |
+        Возвращает список всех территорий на континенте с информацией о контроле.
+      operationId: listContinentTerritories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: continentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID континента
+        - name: controlled_by
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по контролирующей структуре
+      responses:
+        '200':
+          description: Список территорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  territories:
+                    type: array
+                    items:
+                      $ref: 'world-continent-schemas.yaml#/components/schemas/ContinentTerritory'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/continents/{continentId}/resources:
+    get:
+      tags:
+        - Continent Structure
+      summary: Ресурсы континента
+      description: |
+        Возвращает информацию о ресурсах континента.
+      operationId: getContinentResources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: continentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID континента
+        - name: resource_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - minerals
+              - energy
+              - food
+              - technology
+              - population
+          description: Фильтр по типу ресурса
+      responses:
+        '200':
+          description: Ресурсы континента
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: 'world-continent-schemas.yaml#/components/schemas/ContinentResource'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+
