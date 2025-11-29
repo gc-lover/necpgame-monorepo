@@ -1,11 +1,11 @@
 metadata:
   id: canon-quest-sao-paulo-traffic-nightmare
-  title: 'Сан-Паулу — Кошмар пробок'
+  title: 'Сан-Паулу — Гонка в пробке'
   document_type: canon
   category: quest
   status: approved
-  version: '1.1.0'
-  last_updated: 2025-11-11T15:48:30Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-11T15:48:30Z
   owners:
@@ -20,9 +20,12 @@ metadata:
     - urban-life
     - inequality
   related_systems:
-    - transportation-system
-    - stress-system
+    - driving-system
+    - real-time-timer-system
+    - chase-system
+    - skill-check-engine
     - reputation-system
+    - quest-engine
   related_documents:
     - id: canon-quest-sao-paulo-mega-city
       relation: follows
@@ -46,49 +49,141 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Квест о транспортном кризисе Сан-Паулу находился вне схемы знаний и не связывался с системами транспорта и стресса."
-  goal: "Задокументировать испытание мегаполисными заторами, выделив этапы, показатели и классовые последствия."
-  essence: "Игрок переживает рекордные пробки, соблюдает rodízio, изучает вертолётные маршруты элиты и делает выводы о транспортной политике."
+  problem: "Квест time-critical доставки донорского сердца через пробки требует детализации механик времени, chase sequences и эмоциональных ставок."
+  goal: "Создать полноценный контентный квест с real-time таймером, chase mechanics и интеграцией с системами вождения и времени."
+  essence: "Игрок должен доставить донорское сердце 8-летней девочке через 300 км пробок Сан-Паулу за 30 минут, выбирая маршруты, уходя от конкурентов и преодолевая препятствия."
   key_points:
-    - Отражены рекордные показатели заторов и особенности вертолётного такси.
-    - Связи с транспортной, стрессовой и репутационной системами обновляют дальнейшие сценарии.
-    - Награда даёт титул «Выживший в пробках» и модификаторы для городской линии.
+    - Real-time timer (30 минут) с бонусами за скорость (< 20 минут = 10 000 XP).
+    - Множественные маршруты: между машин, по тротуару, через парк, метро.
+    - Chase sequence с конкурентами на черном SUV.
+    - Эмоциональные ставки: жизнь ребенка на кону.
+    - Driving skill checks (0.7-0.9 difficulty).
+quest_definition:
+  quest_type: side
+  level_min: 20
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: receive_organ_container
+      text: "Получить термоконтейнер с донорским сердцем от BioMed Corp"
+      type: interact
+      target: biomed_corp_hq
+      count: 1
+      optional: false
+    - id: choose_route
+      text: "Выбрать маршрут через пробки (между машин/тротуар/парк/метро)"
+      type: choice
+      target: route_selection
+      count: 1
+      optional: false
+    - id: overcome_police_barrier
+      text: "Преодолеть полицейское перекрытие (разрешение/обман/метро)"
+      type: choice
+      target: police_barrier
+      count: 1
+      optional: false
+    - id: evade_competitors
+      text: "Уйти от конкурентов на черном SUV (агрессивная езда/переулки/полиция)"
+      type: choice
+      target: competitor_chase
+      count: 1
+      optional: false
+    - id: deliver_to_hospital
+      text: "Доставить сердце в госпиталь за 30 минут"
+      type: interact
+      target: hospital_delivery_point
+      count: 1
+      optional: false
+      time_limit: 1800
+  rewards:
+    experience: 5000
+    money: 0
+    items:
+      - item_id: achievement_life_saver
+        quantity: 1
+    reputation:
+      BioMed_Corp: 25
+    unlocks:
+      - emergency_delivery_quests
+      - biomed_reputation_system
+    time_bonus:
+      experience: 10000
+      condition: "< 20 minutes"
+  branches:
+    - branch_id: aggressive_driving
+      description: "Агрессивная езда между машин"
+      consequences:
+        skills:
+          driving: +40
+        reputation:
+          Traffic_Police: -10
+        risks:
+          accident_chance: 0.3
+    - branch_id: sidewalk_route
+      description: "Маршрут по тротуару и переулкам"
+      consequences:
+        skills:
+          driving: +20
+          navigation: +30
+        reputation:
+          Pedestrians: -5
+    - branch_id: metro_escape
+      description: "Использование метро для обхода пробок"
+      consequences:
+        skills:
+          navigation: +50
+        time_saved: 600
+        reputation:
+          Metro_System: +10
 content:
   sections:
     - id: quest_profile
       title: 'Параметры квеста'
       body: |
-        Тип: survival-event. Сложность: hard. Формат: solo. Длительность: 4+ часа.
-        Награды: 3 000 XP, +20 к выносливости, титул «Выживший в пробках», временный дебафф -40% к эффективности времени.
+        Тип: side quest (time-critical delivery). Сложность: hard. Формат: solo. Длительность: 30 минут реального времени.
+        Награды: 5 000 XP (до 10 000 если < 20 минут), driving skill boost, ачивка «Спаситель жизни», репутация BioMed +25.
       mechanics_links: []
       assets: []
     - id: stages
-      title: 'Этапы'
+      title: 'Этапы квеста'
       body: |
-        1. Войти в час пик, выбрать маршрут и наблюдать рост пробок до рекорда 293 км.
-        2. Отследить работу системы rodízio, адаптируя график поездок.
-        3. Проанализировать вертолётные порты и стоимость перелётов.
-        4. Сравнить опыт наземного транспорта и вертолётного такси, собрать данные для отчёта.
-        5. Принять решение: продвигать реформу, использовать связи элиты или смириться с хаосом.
+        1. Получить термоконтейнер с донорским сердцем от BioMed Corp (8-летняя девочка ждет).
+        2. Выбрать маршрут через пробки: между машин, по тротуару, через парк, метро.
+        3. Преодолеть полицейское перекрытие: получить разрешение, обмануть, использовать метро.
+        4. Уйти от конкурентов на черном SUV: агрессивная езда, переулки, вызвать полицию.
+        5. Доставить сердце в госпиталь за 30 минут (бонус XP если < 20 минут).
       mechanics_links: []
       assets: []
     - id: systems_hooks
       title: 'Системные крючки'
       body: |
-        transportation-system моделирует заторы и ограничения rodízio, stress-system отслеживает накопление усталости.
-        reputation-system обновляет отношение граждан, таксистов и элиты в зависимости от выбора игрока.
+        driving-system обрабатывает управление мотоциклом Yamaha MT-09, real-time-timer-system отслеживает время доставки (30 минут), chase-system управляет погоней конкурентов, skill-check-system проверяет навыки вождения (0.7-0.9 difficulty), reputation-system обновляет репутацию с BioMed Corp, Traffic Police и Pedestrians.
       mechanics_links: []
       assets: []
     - id: regional_details
       title: 'Региональные детали'
       body: |
-        Отмечены рекорд 293 км пробок, 700+ вертолётных вылетов в день, средние 3–4 часа в пути и культурные особенности «cidade do helicóptero».
+        Сан-Паулу 2028 — чемпион мира по пробкам. 300 км застывшего металла в час пик. BioMed Corp — служба экстренной доставки органов на мотоциклах. 30 минут или смерть пациента. Конкуренты готовы саботировать — большие деньги на кону. Клаксоны, выхлопы, 35°C жара. Chase sequence через весь город.
       mechanics_links: []
       assets: []
     - id: rewards
       title: 'Награды и последствия'
       body: |
-        3 000 XP, +20 к выносливости, титул «Выживший в пробках», дебафф -40% эффективности времени (12 ч) и разблокировка транспортных реформ.
+        Базовые награды: 5 000 XP, ачивка «Спаситель жизни», репутация BioMed +25.
+        Бонус за скорость: если доставка < 20 минут, дополнительно 10 000 XP.
+        Driving skill boost: +40 (агрессивная езда), +20 (тротуар), +50 navigation (метро).
+        Ветвления влияют на репутацию: Traffic Police (-10 при агрессивной езде), Pedestrians (-5 при тротуаре), Metro System (+10 при использовании метро).
+        Риски: вероятность аварии 30% при агрессивной езде.
+      mechanics_links: []
+      assets: []
+    - id: emotional_stakes
+      title: 'Эмоциональные ставки'
+      body: |
+        Жизнь 8-летней девочки на кону. Каждая секунда важна. Таймер показывает оставшееся время. Музыка становится напряженнее по мере приближения дедлайна. Успешная доставка — триумф, опоздание — трагедия.
       mechanics_links: []
       assets: []
 appendix:
@@ -100,12 +195,16 @@ appendix:
       link: https://www.reuters.com
   decisions: []
 implementation:
-  github_issue: 364
+  github_issue: 249
   needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Гонка в пробке". Добавлены time-critical механики, chase sequences и эмоциональные ставки. Интеграция с системами вождения, таймера и погони.'
   - version: '1.1.0'
     date: 2025-11-11
     author: narrative_team
