@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Social Faction Layers Service
+  description: Управление слоями фракций
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Faction Layers
+    description: Управление слоями фракций
+
+paths:
+  /social/factions/{factionId}/layers:
+    post:
+      tags:
+        - Faction Layers
+      summary: Создать слой фракции
+      description: |
+        Создает новый слой в структуре фракции. Слои представляют многоуровневую структуру организации.
+      operationId: createFactionLayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/CreateFactionLayerRequest'
+            example:
+              name: "Elite Operatives"
+              level: 2
+              description: "Top-tier members of the faction"
+      responses:
+        '201':
+          description: Слой успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionLayer'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Faction Layers
+      summary: Список слоев фракции
+      description: |
+        Возвращает список всех слоев фракции, отсортированных по уровню.
+      operationId: listFactionLayers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      responses:
+        '200':
+          description: Список слоев
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  layers:
+                    type: array
+                    items:
+                      $ref: 'social-faction-schemas.yaml#/components/schemas/FactionLayer'
+              example:
+                layers:
+                  - id: "770e8400-e29b-41d4-a716-446655440000"
+                    faction_id: "550e8400-e29b-41d4-a716-446655440000"
+                    name: "Elite Operatives"
+                    level: 2
+                    description: "Top-tier members"
+                    created_at: "2025-11-29T12:00:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/factions/{factionId}/layers/{layerId}:
+    put:
+      tags:
+        - Faction Layers
+      summary: Обновить слой фракции
+      description: |
+        Обновляет информацию о слое фракции.
+      operationId: updateFactionLayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+        - name: layerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID слоя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/UpdateFactionLayerRequest'
+      responses:
+        '200':
+          description: Слой успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionLayer'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

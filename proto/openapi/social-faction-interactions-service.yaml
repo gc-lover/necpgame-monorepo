@@ -1,0 +1,253 @@
+openapi: 3.0.3
+info:
+  title: Social Faction Interactions Service
+  description: Управление взаимодействиями между фракциями, конфликтами и союзами
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Faction Interactions
+    description: Управление взаимодействиями между фракциями
+
+paths:
+  /social/factions/{factionId1}/interact/{factionId2}:
+    post:
+      tags:
+        - Faction Interactions
+      summary: Создать взаимодействие с фракцией
+      description: |
+        Создает взаимодействие между двумя фракциями с указанным типом отношений.
+      operationId: createFactionInteraction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId1
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID первой фракции
+        - name: factionId2
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID второй фракции
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/CreateFactionInteractionRequest'
+            example:
+              faction_id_2: "bb0e8400-e29b-41d4-a716-446655440000"
+              relationship_type: "trading"
+              details: "Trade agreement for raw materials"
+      responses:
+        '201':
+          description: Взаимодействие успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionInteraction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/factions/{factionId}/interactions:
+    get:
+      tags:
+        - Faction Interactions
+      summary: Список взаимодействий фракции
+      description: |
+        Возвращает список всех взаимодействий фракции с другими фракциями.
+      operationId: listFactionInteractions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+        - name: relationship_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - allied
+              - neutral
+              - competitive
+              - hostile
+              - trading
+          description: Фильтр по типу отношений
+      responses:
+        '200':
+          description: Список взаимодействий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  interactions:
+                    type: array
+                    items:
+                      $ref: 'social-faction-schemas.yaml#/components/schemas/FactionInteraction'
+              example:
+                interactions:
+                  - id: "cc0e8400-e29b-41d4-a716-446655440000"
+                    faction_id_1: "550e8400-e29b-41d4-a716-446655440000"
+                    faction_id_2: "bb0e8400-e29b-41d4-a716-446655440000"
+                    relationship_type: "trading"
+                    status: "active"
+                    details: "Trade agreement"
+                    created_at: "2025-11-29T12:00:00Z"
+                    updated_at: "2025-11-29T12:00:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/factions/{factionId1}/conflict/{factionId2}:
+    post:
+      tags:
+        - Faction Interactions
+      summary: Создать конфликт с фракцией
+      description: |
+        Объявляет конфликт с другой фракцией. Конфликты могут быть различных типов.
+      operationId: createFactionConflict
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId1
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID первой фракции
+        - name: factionId2
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID второй фракции
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/CreateFactionConflictRequest'
+            example:
+              faction_id_2: "bb0e8400-e29b-41d4-a716-446655440000"
+              conflict_type: "territorial"
+              details: "Dispute over control of the docks"
+      responses:
+        '201':
+          description: Конфликт успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionConflict'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/factions/{factionId1}/alliance/{factionId2}:
+    post:
+      tags:
+        - Faction Interactions
+      summary: Создать союз с фракцией
+      description: |
+        Создает союз с другой фракцией. Союзы позволяют фракциям сотрудничать.
+      operationId: createFactionAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId1
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID первой фракции
+        - name: factionId2
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID второй фракции
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                details:
+                  type: string
+                  maxLength: 1000
+                  description: Дополнительная информация о союзе
+      responses:
+        '201':
+          description: Союз успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionInteraction'
+              example:
+                id: "dd0e8400-e29b-41d4-a716-446655440000"
+                faction_id_1: "550e8400-e29b-41d4-a716-446655440000"
+                faction_id_2: "bb0e8400-e29b-41d4-a716-446655440000"
+                relationship_type: "allied"
+                status: "active"
+                details: "Mutual defense pact"
+                created_at: "2025-11-29T12:00:00Z"
+                updated_at: "2025-11-29T12:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

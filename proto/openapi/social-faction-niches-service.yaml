@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Social Faction Niches Service
+  description: Управление нишами и специализацией фракций
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Faction Niches
+    description: Управление нишами фракций
+
+paths:
+  /social/factions/{factionId}/niches:
+    post:
+      tags:
+        - Faction Niches
+      summary: Определить нишу фракции
+      description: |
+        Определяет новую нишу для фракции. Ниша определяет специализацию фракции.
+      operationId: createFactionNiche
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/CreateFactionNicheRequest'
+            example:
+              type: "territorial"
+              description: "Control of the docks district"
+              specialization: "Maritime trade and smuggling"
+      responses:
+        '201':
+          description: Ниша успешно определена
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionNiche'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Faction Niches
+      summary: Список ниш фракции
+      description: |
+        Возвращает список всех ниш, занимаемых фракцией.
+      operationId: listFactionNiches
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      responses:
+        '200':
+          description: Список ниш
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  niches:
+                    type: array
+                    items:
+                      $ref: 'social-faction-schemas.yaml#/components/schemas/FactionNiche'
+              example:
+                niches:
+                  - id: "aa0e8400-e29b-41d4-a716-446655440000"
+                    faction_id: "550e8400-e29b-41d4-a716-446655440000"
+                    type: "territorial"
+                    description: "Control of the docks district"
+                    specialization: "Maritime trade and smuggling"
+                    control_level: 75
+                    competitors: []
+                    created_at: "2025-11-29T12:00:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/factions/{factionId}/niches/{nicheId}/compete:
+    post:
+      tags:
+        - Faction Niches
+      summary: Конкуренция за нишу
+      description: |
+        Инициирует конкуренцию за нишу с другой фракцией. Фракции могут соревноваться за контроль над нишей.
+      operationId: competeForNiche
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+        - name: nicheId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID ниши
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/CompeteForNicheRequest'
+            example:
+              competitor_faction_id: "bb0e8400-e29b-41d4-a716-446655440000"
+              strategy: "economic"
+      responses:
+        '200':
+          description: Конкуренция за нишу инициирована
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionNiche'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

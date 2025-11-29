@@ -1,0 +1,430 @@
+openapi: 3.0.3
+info:
+  title: Social Faction Service - Schemas
+  description: Общие схемы данных для Social Faction Service
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+components:
+  schemas:
+    Faction:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID фракции
+        name:
+          type: string
+          description: Название фракции
+        type:
+          type: string
+          enum:
+            - criminal_band
+            - professional_guild
+            - political_movement
+            - corporate_alliance
+            - religious_sect
+            - scientific_organization
+          description: Тип фракции
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - disbanded
+          description: Статус фракции
+        description:
+          type: string
+          description: Описание фракции
+        ideology:
+          type: string
+          description: Идеология фракции
+        leader_id:
+          type: string
+          format: uuid
+          description: ID лидера фракции
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FactionLayer:
+      type: object
+      required:
+        - id
+        - faction_id
+        - name
+        - level
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+          description: Уровень слоя (1 - базовый, выше - более высокие уровни)
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    FactionBand:
+      type: object
+      required:
+        - id
+        - faction_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clan_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        leader_clan_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    FactionNiche:
+      type: object
+      required:
+        - id
+        - faction_id
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - territorial
+            - economic
+            - political
+            - criminal
+            - technological
+            - social
+          description: Тип ниши
+        description:
+          type: string
+        specialization:
+          type: string
+          description: Специализация фракции в этой нише
+        control_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Уровень контроля над нишей (0-100%)
+        competitors:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID фракций-конкурентов
+        created_at:
+          type: string
+          format: date-time
+
+    FactionInteraction:
+      type: object
+      required:
+        - id
+        - faction_id_1
+        - faction_id_2
+        - relationship_type
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id_1:
+          type: string
+          format: uuid
+        faction_id_2:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum:
+            - allied
+            - neutral
+            - competitive
+            - hostile
+            - trading
+          description: Тип отношений
+        status:
+          type: string
+          enum:
+            - active
+            - pending
+            - cancelled
+        details:
+          type: string
+          description: Дополнительная информация о взаимодействии
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FactionConflict:
+      type: object
+      required:
+        - id
+        - faction_id_1
+        - faction_id_2
+        - conflict_type
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id_1:
+          type: string
+          format: uuid
+        faction_id_2:
+          type: string
+          format: uuid
+        conflict_type:
+          type: string
+          enum:
+            - territorial
+            - economic
+            - political
+            - ideological
+            - resource_war
+          description: Тип конфликта
+        status:
+          type: string
+          enum:
+            - declared
+            - active
+            - resolved
+            - cancelled
+        resolution_type:
+          type: string
+          enum:
+            - negotiation
+            - mediation
+            - arbitration
+            - military
+            - economic
+          description: Тип разрешения конфликта
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+
+    CreateFactionRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        type:
+          type: string
+          enum:
+            - criminal_band
+            - professional_guild
+            - political_movement
+            - corporate_alliance
+            - religious_sect
+            - scientific_organization
+        description:
+          type: string
+          maxLength: 1000
+        ideology:
+          type: string
+          maxLength: 500
+
+    UpdateFactionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        ideology:
+          type: string
+          maxLength: 500
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - disbanded
+
+    CreateFactionLayerRequest:
+      type: object
+      required:
+        - name
+        - level
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        level:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+          maxLength: 500
+
+    UpdateFactionLayerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    CreateFactionBandRequest:
+      type: object
+      required:
+        - name
+        - clan_ids
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        clan_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+        leader_clan_id:
+          type: string
+          format: uuid
+
+    CreateFactionNicheRequest:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - territorial
+            - economic
+            - political
+            - criminal
+            - technological
+            - social
+        description:
+          type: string
+          maxLength: 500
+        specialization:
+          type: string
+          maxLength: 200
+
+    CompeteForNicheRequest:
+      type: object
+      required:
+        - competitor_faction_id
+      properties:
+        competitor_faction_id:
+          type: string
+          format: uuid
+        strategy:
+          type: string
+          enum:
+            - economic
+            - military
+            - political
+            - diplomatic
+          description: Стратегия конкуренции
+
+    CreateFactionInteractionRequest:
+      type: object
+      required:
+        - faction_id_2
+        - relationship_type
+      properties:
+        faction_id_2:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum:
+            - allied
+            - neutral
+            - competitive
+            - hostile
+            - trading
+        details:
+          type: string
+          maxLength: 1000
+
+    CreateFactionConflictRequest:
+      type: object
+      required:
+        - faction_id_2
+        - conflict_type
+      properties:
+        faction_id_2:
+          type: string
+          format: uuid
+        conflict_type:
+          type: string
+          enum:
+            - territorial
+            - economic
+            - political
+            - ideological
+            - resource_war
+        details:
+          type: string
+          maxLength: 1000
+
+    FactionListResponse:
+      type: object
+      properties:
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Faction'
+        total:
+          type: integer
+

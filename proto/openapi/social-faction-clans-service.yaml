@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: Social Faction Clans Service
+  description: Управление кланами в фракциях и бандами
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Faction Clans
+    description: Управление кланами в фракциях
+
+paths:
+  /social/factions/{factionId}/clans/{clanId}:
+    post:
+      tags:
+        - Faction Clans
+      summary: Добавить клан в фракцию
+      description: |
+        Добавляет существующий клан в фракцию.
+      operationId: addClanToFaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+        - name: clanId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID клана
+      responses:
+        '201':
+          description: Клан успешно добавлен в фракцию
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                message: "Clan added to faction"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          description: Клан уже в этой фракции
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Faction Clans
+      summary: Удалить клан из фракции
+      description: |
+        Удаляет клан из фракции.
+      operationId: removeClanFromFaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+        - name: clanId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID клана
+      responses:
+        '204':
+          description: Клан успешно удален из фракции
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/factions/{factionId}/bands:
+    post:
+      tags:
+        - Faction Clans
+      summary: Создать банду
+      description: |
+        Создает банду из нескольких кланов в фракции. Банда - это группировка кланов внутри фракции.
+      operationId: createFactionBand
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/CreateFactionBandRequest'
+            example:
+              name: "Night Runners"
+              clan_ids:
+                - "880e8400-e29b-41d4-a716-446655440001"
+                - "880e8400-e29b-41d4-a716-446655440002"
+              leader_clan_id: "880e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '201':
+          description: Банда успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionBand'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Faction Clans
+      summary: Список банд фракции
+      description: |
+        Возвращает список всех банд в фракции.
+      operationId: listFactionBands
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      responses:
+        '200':
+          description: Список банд
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bands:
+                    type: array
+                    items:
+                      $ref: 'social-faction-schemas.yaml#/components/schemas/FactionBand'
+              example:
+                bands:
+                  - id: "990e8400-e29b-41d4-a716-446655440000"
+                    faction_id: "550e8400-e29b-41d4-a716-446655440000"
+                    name: "Night Runners"
+                    clan_ids:
+                      - "880e8400-e29b-41d4-a716-446655440001"
+                      - "880e8400-e29b-41d4-a716-446655440002"
+                    leader_clan_id: "880e8400-e29b-41d4-a716-446655440001"
+                    created_at: "2025-11-29T12:00:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+
