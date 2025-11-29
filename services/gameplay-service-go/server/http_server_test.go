@@ -169,6 +169,142 @@ func (m *mockQuestService) ListQuestInstances(ctx context.Context, characterID u
 	}, nil
 }
 
+type mockAffixService struct{}
+
+func (m *mockAffixService) GetActiveAffixes(ctx context.Context) (*models.ActiveAffixesResponse, error) {
+	return nil, nil
+}
+
+func (m *mockAffixService) GetAffix(ctx context.Context, affixID uuid.UUID) (*models.Affix, error) {
+	return nil, nil
+}
+
+func (m *mockAffixService) GetInstanceAffixes(ctx context.Context, instanceID uuid.UUID) (*models.InstanceAffixesResponse, error) {
+	return nil, nil
+}
+
+func (m *mockAffixService) GetRotationHistory(ctx context.Context, weeksBack, limit, offset int) (*models.AffixRotationHistoryResponse, error) {
+	return nil, nil
+}
+
+func (m *mockAffixService) TriggerRotation(ctx context.Context, force bool, customAffixes []uuid.UUID) (*models.AffixRotation, error) {
+	return nil, nil
+}
+
+func (m *mockAffixService) GenerateInstanceAffixes(ctx context.Context, instanceID uuid.UUID) error {
+	return nil
+}
+
+type mockTimeTrialService struct{}
+
+func (m *mockTimeTrialService) StartTimeTrial(ctx context.Context, playerID uuid.UUID, req *models.StartTimeTrialRequest) (*models.TimeTrialSession, error) {
+	return nil, nil
+}
+
+func (m *mockTimeTrialService) CompleteTimeTrial(ctx context.Context, playerID uuid.UUID, req *models.CompleteTimeTrialRequest) (*models.TimeTrialCompletionResponse, error) {
+	return nil, nil
+}
+
+func (m *mockTimeTrialService) GetTimeTrialSession(ctx context.Context, sessionID uuid.UUID, playerID uuid.UUID) (*models.TimeTrialSession, error) {
+	return nil, nil
+}
+
+func (m *mockTimeTrialService) GetCurrentWeeklyChallenge(ctx context.Context) (*models.WeeklyTimeChallenge, error) {
+	return nil, nil
+}
+
+func (m *mockTimeTrialService) GetWeeklyChallengeHistory(ctx context.Context, weeksBack, limit, offset int) (*models.WeeklyChallengeHistoryResponse, error) {
+	return nil, nil
+}
+
+type mockComboService struct{}
+
+func (m *mockComboService) GetLoadout(ctx context.Context, characterID uuid.UUID) (*models.ComboLoadout, error) {
+	return nil, nil
+}
+
+func (m *mockComboService) UpdateLoadout(ctx context.Context, characterID uuid.UUID, req *models.UpdateLoadoutRequest) (*models.ComboLoadout, error) {
+	return nil, nil
+}
+
+func (m *mockComboService) SubmitScore(ctx context.Context, req *models.SubmitScoreRequest) (*models.ScoreSubmissionResponse, error) {
+	return nil, nil
+}
+
+func (m *mockComboService) GetAnalytics(ctx context.Context, comboID, characterID *uuid.UUID, periodStart, periodEnd *time.Time, limit, offset int) (*models.AnalyticsResponse, error) {
+	return nil, nil
+}
+
+type mockWeaponMechanicsService struct{}
+
+func (m *mockWeaponMechanicsService) ApplySpecialMechanics(ctx context.Context, weaponID, characterID, targetID uuid.UUID, mechanicType string, mechanicData map[string]interface{}) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponMechanicsService) GetWeaponSpecialMechanics(ctx context.Context, weaponID uuid.UUID) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockWeaponMechanicsService) CreatePersistentEffect(ctx context.Context, targetID uuid.UUID, projectileType string, position map[string]float64, damagePerTick, tickInterval float64, remainingTicks int) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponMechanicsService) GetPersistentEffects(ctx context.Context, targetID uuid.UUID) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockWeaponMechanicsService) CalculateChainDamage(ctx context.Context, sourceTargetID, weaponID uuid.UUID, damageType string, baseDamage float64, maxJumps int, jumpDamageReduction float64) ([]map[string]interface{}, float64, error) {
+	return nil, 0, nil
+}
+
+func (m *mockWeaponMechanicsService) DestroyEnvironment(ctx context.Context, explosionPosition map[string]float64, explosionRadius float64, weaponID uuid.UUID, damage float64) ([]map[string]interface{}, []map[string]interface{}, error) {
+	return nil, nil, nil
+}
+
+func (m *mockWeaponMechanicsService) PlaceDeployableWeapon(ctx context.Context, characterID uuid.UUID, weaponType string, position map[string]float64, activationRadius float64, ammoRemaining *int) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponMechanicsService) GetDeployableWeapon(ctx context.Context, deploymentID uuid.UUID) (map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockWeaponMechanicsService) FireLaser(ctx context.Context, weaponID, characterID uuid.UUID, laserType string, direction map[string]float64, duration *float64, chargeLevel *float64) (map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockWeaponMechanicsService) PerformMeleeAttack(ctx context.Context, characterID, targetID uuid.UUID, weaponType, attackType string) (uuid.UUID, float64, int, bool, error) {
+	return uuid.New(), 0, 0, false, nil
+}
+
+func (m *mockWeaponMechanicsService) ApplyElementalEffect(ctx context.Context, targetID uuid.UUID, elementType string, damage float64, duration *float64, stacks *int) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponMechanicsService) ApplyTemporalEffect(ctx context.Context, targetID uuid.UUID, effectType string, modifierValue map[string]interface{}, duration float64) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponMechanicsService) ApplyControl(ctx context.Context, targetID uuid.UUID, controlType string, controlData map[string]interface{}) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponMechanicsService) CreateSummon(ctx context.Context, characterID uuid.UUID, summonType string, position map[string]float64, duration *float64) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponMechanicsService) CalculateProjectileForm(ctx context.Context, weaponID uuid.UUID, formType string, formData map[string]interface{}) ([]map[string]interface{}, int, error) {
+	return nil, 0, nil
+}
+
+func (m *mockWeaponMechanicsService) CalculateClassSynergy(ctx context.Context, characterID, weaponID uuid.UUID, classID string) (map[string]interface{}, []string, error) {
+	return nil, nil, nil
+}
+
+func (m *mockWeaponMechanicsService) FireDualWielding(ctx context.Context, characterID, leftWeaponID, rightWeaponID uuid.UUID, firingMode string, targetID *uuid.UUID) (bool, bool, float64, float64, error) {
+	return false, false, 0, 0, nil
+}
+
 func TestHTTPServer_GetProgression(t *testing.T) {
 	mockProgService := &mockProgressionService{
 		progression:      make(map[uuid.UUID]*models.CharacterProgression),
@@ -194,7 +330,11 @@ func TestHTTPServer_GetProgression(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	req := httptest.NewRequest("GET", "/api/v1/gameplay/progression/characters/"+characterID.String(), nil)
 	w := httptest.NewRecorder()
@@ -226,7 +366,11 @@ func TestHTTPServer_AddExperience(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	characterID := uuid.New()
 	reqBody := map[string]interface{}{
@@ -257,7 +401,11 @@ func TestHTTPServer_AddSkillExperience(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	characterID := uuid.New()
 	reqBody := map[string]interface{}{
@@ -288,7 +436,11 @@ func TestHTTPServer_AllocateAttributePoint(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	characterID := uuid.New()
 	reqBody := map[string]interface{}{
@@ -318,7 +470,11 @@ func TestHTTPServer_AllocateSkillPoint(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	characterID := uuid.New()
 	reqBody := map[string]interface{}{
@@ -369,7 +525,11 @@ func TestHTTPServer_GetSkillProgression(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	req := httptest.NewRequest("GET", "/api/v1/gameplay/progression/characters/"+characterID.String()+"/skills", nil)
 	w := httptest.NewRecorder()
@@ -401,7 +561,11 @@ func TestHTTPServer_StartQuest(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	characterID := uuid.New()
 	reqBody := map[string]interface{}{
@@ -457,7 +621,11 @@ func TestHTTPServer_GetQuestInstance(t *testing.T) {
 
 	mockQuestService.questInstances[instanceID] = instance
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	req := httptest.NewRequest("GET", "/api/v1/gameplay/quests/instances/"+instanceID.String(), nil)
 	w := httptest.NewRecorder()
@@ -492,7 +660,11 @@ func TestHTTPServer_UpdateDialogue(t *testing.T) {
 	instanceID := uuid.New()
 	characterID := uuid.New()
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	choiceID := "choice_1"
 	reqBody := map[string]interface{}{
@@ -528,7 +700,11 @@ func TestHTTPServer_PerformSkillCheck(t *testing.T) {
 	instanceID := uuid.New()
 	characterID := uuid.New()
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	reqBody := map[string]interface{}{
 		"character_id":   characterID.String(),
@@ -571,7 +747,11 @@ func TestHTTPServer_CompleteObjective(t *testing.T) {
 	instanceID := uuid.New()
 	characterID := uuid.New()
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	reqBody := map[string]interface{}{
 		"character_id": characterID.String(),
@@ -604,7 +784,11 @@ func TestHTTPServer_CompleteQuest(t *testing.T) {
 	instanceID := uuid.New()
 	characterID := uuid.New()
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	reqBody := map[string]interface{}{
 		"character_id": characterID.String(),
@@ -636,7 +820,11 @@ func TestHTTPServer_FailQuest(t *testing.T) {
 	instanceID := uuid.New()
 	characterID := uuid.New()
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	reqBody := map[string]interface{}{
 		"character_id": characterID.String(),
@@ -686,7 +874,11 @@ func TestHTTPServer_ListQuestInstances(t *testing.T) {
 
 	mockQuestService.questLists[characterID] = []models.QuestInstance{instance1, instance2}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	req := httptest.NewRequest("GET", "/api/v1/gameplay/quests/characters/"+characterID.String(), nil)
 	w := httptest.NewRecorder()
@@ -718,7 +910,11 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		questLists:     make(map[uuid.UUID][]models.QuestInstance),
 	}
 
-	server := NewHTTPServer(":8080", mockProgService, mockQuestService)
+	mockAffixService := &mockAffixService{}
+	mockTimeTrialService := &mockTimeTrialService{}
+	mockComboService := &mockComboService{}
+	mockWeaponMechanicsService := &mockWeaponMechanicsService{}
+	server := NewHTTPServer(":8080", mockProgService, mockQuestService, mockAffixService, mockTimeTrialService, mockComboService, mockWeaponMechanicsService)
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()

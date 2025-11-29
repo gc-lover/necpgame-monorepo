@@ -1,15 +1,24 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-weapon-combinations-api
 
-SERVICE_NAME := economy-trade-sessions-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
 
 SPEC_DIR := ../../proto/openapi
-API_DIR := pkg/api
-SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-OUTPUT_FILE := $(API_DIR)/api.gen.go
+
+TRADE_SERVICE_SPEC := economy-trade-sessions-service
+WEAPON_COMBINATIONS_SPEC := economy-weapon-combinations-service
+
+TRADE_API_DIR := pkg/api
+WEAPON_COMBINATIONS_API_DIR := pkg/weaponcombinationsapi
+
+TRADE_SPEC := $(SPEC_DIR)/$(TRADE_SERVICE_SPEC).yaml
+TRADE_BUNDLED_SPEC := $(TRADE_API_DIR)/$(TRADE_SERVICE_SPEC).bundled.yaml
+TRADE_OUTPUT_FILE := $(TRADE_API_DIR)/api.gen.go
+
+WEAPON_COMBINATIONS_SPEC_FILE := $(SPEC_DIR)/$(WEAPON_COMBINATIONS_SPEC).yaml
+WEAPON_COMBINATIONS_BUNDLED_SPEC := $(WEAPON_COMBINATIONS_API_DIR)/$(WEAPON_COMBINATIONS_SPEC).bundled.yaml
+WEAPON_COMBINATIONS_OUTPUT_FILE := $(WEAPON_COMBINATIONS_API_DIR)/api.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
@@ -24,34 +33,39 @@ install-deps:
 	@echo "OK Dependencies installed"
 
 bundle-api: check-deps
-	@echo "Bundling OpenAPI spec: $(SERVICE_SPEC)"
-	@if [ ! -f "$(SERVICE_SPEC)" ]; then \
-		echo "❌ OpenAPI spec not found: $(SERVICE_SPEC)"; \
+	@echo "Bundling trade OpenAPI spec: $(TRADE_SPEC)"
+	@if [ ! -f "$(TRADE_SPEC)" ]; then \
+		echo "❌ OpenAPI spec not found: $(TRADE_SPEC)"; \
 		exit 1; \
 	fi
-	@mkdir -p $(API_DIR)
-	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || { echo "❌ Failed to bundle OpenAPI spec"; exit 1; }
-	@echo "OK Bundled spec: $(BUNDLED_SPEC)"
+	@mkdir -p $(TRADE_API_DIR)
+	@$(REDOCLY_CLI) bundle $(TRADE_SPEC) -o $(TRADE_BUNDLED_SPEC) || { echo "❌ Failed to bundle OpenAPI spec"; exit 1; }
+	@echo "OK Bundled spec: $(TRADE_BUNDLED_SPEC)"
 
 generate-api: bundle-api
-	@echo "Generating Go code from: $(BUNDLED_SPEC)"
-	@if [ ! -f "$(BUNDLED_SPEC)" ]; then \
-		echo "❌ Bundled spec not found: $(BUNDLED_SPEC)"; \
+	@echo "Generating Go code from: $(TRADE_BUNDLED_SPEC)"
+	@if [ ! -f "$(TRADE_BUNDLED_SPEC)" ]; then \
+		echo "❌ Bundled spec not found: $(TRADE_BUNDLED_SPEC)"; \
 		exit 1; \
 	fi
-	@$(OAPI_CODEGEN) -package api -generate types,$(ROUTER_TYPE) -o $(OUTPUT_FILE) $(BUNDLED_SPEC) || { echo "❌ Failed to generate code"; exit 1; }
-	@echo "OK Generated code: $(OUTPUT_FILE)"
+	@$(OAPI_CODEGEN) -package api -generate types,$(ROUTER_TYPE) -o $(TRADE_OUTPUT_FILE) $(TRADE_BUNDLED_SPEC) || { echo "❌ Failed to generate code"; exit 1; }
+	@echo "OK Generated code: $(TRADE_OUTPUT_FILE)"
+
+generate-weapon-combinations-api: check-deps
+	@echo "Generating weapon combinations API..."
+	@mkdir -p $(WEAPON_COMBINATIONS_API_DIR)
+	@$(REDOCLY_CLI) bundle $(WEAPON_COMBINATIONS_SPEC_FILE) -o $(WEAPON_COMBINATIONS_BUNDLED_SPEC) || { echo "❌ Failed to bundle $(WEAPON_COMBINATIONS_SPEC)"; exit 1; }
+	@$(OAPI_CODEGEN) -package weaponcombinationsapi -generate types,$(ROUTER_TYPE) -o $(WEAPON_COMBINATIONS_OUTPUT_FILE) $(WEAPON_COMBINATIONS_BUNDLED_SPEC) || { echo "❌ Failed to generate $(WEAPON_COMBINATIONS_SPEC)"; exit 1; }
+	@echo "OK Generated $(WEAPON_COMBINATIONS_SPEC)"
 
 verify-api: check-deps
-	@echo "Verifying OpenAPI spec: $(SERVICE_SPEC)"
-	@if [ ! -f "$(SERVICE_SPEC)" ]; then \
-		echo "❌ OpenAPI spec not found: $(SERVICE_SPEC)"; \
-		exit 1; \
-	fi
-	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || { echo "WARNING  OpenAPI spec validation failed"; exit 1; }
-	@echo "OK OpenAPI spec is valid"
+	@echo "Verifying OpenAPI specs..."
+	@$(REDOCLY_CLI) lint $(TRADE_SPEC) || { echo "WARNING  $(TRADE_SERVICE_SPEC) validation failed"; exit 1; }
+	@$(REDOCLY_CLI) lint $(WEAPON_COMBINATIONS_SPEC_FILE) || { echo "WARNING  $(WEAPON_COMBINATIONS_SPEC) validation failed"; exit 1; }
+	@echo "OK All OpenAPI specs are valid"
 
 clean:
 	@echo "Cleaning generated files"
-	@rm -f $(BUNDLED_SPEC) $(OUTPUT_FILE)
+	@rm -f $(TRADE_BUNDLED_SPEC) $(TRADE_OUTPUT_FILE)
+	@rm -rf $(WEAPON_COMBINATIONS_API_DIR)
 	@echo "OK Cleaned generated files"

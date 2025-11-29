@@ -4,265 +4,583 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: 'Operation type'
+        description: "Operation type"
         required: true
         type: choice
         options:
-          - update-labels
+          - update-status
           - add-comments
-          - transfer-to-qa
-          - transfer-to-next-stage
-      query:
-        description: 'GitHub search query (e.g., is:issue is:open label:agent:content-writer)'
+          - transfer-to-next-status
+          - analyze-and-update-status
+      status_filter:
+        description: 'Status filter (e.g., "Idea Writer - Todo" or "Backend - In Progress"). Use "All" for analyze-and-update-status'
         required: true
         type: string
+        default: "All"
       batch_size:
-        description: 'Batch size (default: 5)'
+        description: "Batch size (default: 5)"
         required: false
         type: string
-        default: '5'
+        default: "5"
       delay_ms:
-        description: 'Delay between requests in ms (default: 500)'
+        description: "Delay between requests in ms (default: 500)"
         required: false
         type: string
-        default: '500'
-      new_labels:
-        description: 'New labels (comma-separated, for update-labels operation)'
+        default: "500"
+      new_status:
+        description: "New status (for update-status or transfer operations)"
         required: false
         type: string
       comment_template:
-        description: 'Comment template (for add-comments operation)'
-        required: false
-        type: string
-      next_agent:
-        description: 'Next agent label (for transfer operations)'
+        description: "Comment template (for add-comments operation)"
         required: false
         type: string
   schedule:
-    - cron: '0 */6 * * *'
-  issues:
-    types: [labeled]
-    if: contains(github.event.label.name, 'queue:batch-process')
-  repository_dispatch:
-    types: [batch-process-issues]
+    - cron: "0 */6 * * *"
+
+env:
+  PROJECT_NUMBER: 1
 
 jobs:
   batch-process:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-      pull-requests: write
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Get Project Info
+        id: project
+        uses: actions/github-script@v7
         with:
-          node-version: '20'
+          script: |
+            const { data: projectV2 } = await github.graphql(`
+              query($owner: String!, $number: Int!) {
+                organization(login: $owner) {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                user(login: $owner) {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `, {
+              owner: context.repo.owner,
+              number: ${{ env.PROJECT_NUMBER }}
+            });
 
-      - name: Install dependencies
-        run: |
-          npm install @octokit/rest
+            const project = projectV2.organization?.projectV2 || projectV2.user?.projectV2;
+
+            if (!project) {
+              core.setOutput('project_node_id', '');
+              core.setOutput('status_field_id', '');
+              return;
+            }
+
+            const statusField = project.fields.nodes.find(f => f.name === 'Status');
+            const statusFieldId = statusField?.id || '';
+
+            core.setOutput('project_node_id', project.id);
+            core.setOutput('status_field_id', statusFieldId);
+
+            const statusOptions = {};
+            if (statusField && statusField.options) {
+              statusField.options.forEach(opt => {
+                statusOptions[opt.name] = opt.id;
+              });
+            }
+
+            core.setOutput('status_options', JSON.stringify(statusOptions));
 
       - name: Process Issues in Batches
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          OPERATION: ${{ github.event.inputs.operation || github.event.client_payload.operation || 'update-labels' }}
-          QUERY: ${{ github.event.inputs.query || github.event.client_payload.query || 'is:issue is:open label:queue:batch-process' }}
-          BATCH_SIZE: ${{ github.event.inputs.batch_size || github.event.client_payload.batch_size || '5' }}
-          DELAY_MS: ${{ github.event.inputs.delay_ms || github.event.client_payload.delay_ms || '500' }}
-          NEW_LABELS: ${{ github.event.inputs.new_labels || github.event.client_payload.new_labels || '' }}
-          COMMENT_TEMPLATE: ${{ github.event.inputs.comment_template || github.event.client_payload.comment_template || '' }}
-          NEXT_AGENT: ${{ github.event.inputs.next_agent || github.event.client_payload.next_agent || 'agent:qa' }}
-        run: |
-          node << 'EOF'
-          const { Octokit } = require('@octokit/rest');
-          
-          const octokit = new Octokit({
-            auth: process.env.GITHUB_TOKEN,
-          });
-          
-          const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-          const operation = process.env.OPERATION;
-          const query = process.env.QUERY;
-          const batchSize = parseInt(process.env.BATCH_SIZE) || 5;
-          const delayMs = parseInt(process.env.DELAY_MS) || 500;
-          const newLabels = process.env.NEW_LABELS ? process.env.NEW_LABELS.split(',').map(l => l.trim()) : [];
-          const commentTemplate = process.env.COMMENT_TEMPLATE || '';
-          const nextAgent = process.env.NEXT_AGENT;
-          
-          async function delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-          }
-          
-          async function searchIssues() {
-            console.log(`Searching issues with query: ${query}`);
-            const { data } = await octokit.rest.search.issuesAndPullRequests({
-              q: `repo:${owner}/${repo} ${query}`,
-              per_page: 100,
-            });
-            return data.items;
-          }
-          
-          async function updateIssueLabels(issueNumber, currentLabels, newLabels) {
-            const labelsToRemove = currentLabels
-              .filter(l => l.startsWith('agent:') || l.startsWith('stage:'))
-              .filter(l => !newLabels.includes(l));
-            
-            const allLabels = [
-              ...currentLabels.filter(l => !labelsToRemove.includes(l)),
-              ...newLabels.filter(l => !currentLabels.includes(l))
-            ];
-            
-            await octokit.rest.issues.update({
-              owner,
-              repo,
-              issue_number: issueNumber,
-              labels: allLabels,
-            });
-          }
-          
-          async function addComment(issueNumber, template) {
-            const comment = template
-              .replace('{issue_number}', issueNumber)
-              .replace('{timestamp}', new Date().toISOString());
-            
-            await octokit.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: issueNumber,
-              body: comment,
-            });
-          }
-          
-          async function transferToNextAgent(issueNumber, currentLabels) {
-            const agentLabels = currentLabels.filter(l => l.startsWith('agent:'));
-            const stageLabels = currentLabels.filter(l => l.startsWith('stage:'));
-            
-            const newLabels = [
-              ...currentLabels.filter(l => !l.startsWith('agent:') && !l.startsWith('stage:')),
-              nextAgent,
-            ];
-            
-            if (nextAgent === 'agent:qa') {
-              newLabels.push('stage:testing');
-            } else if (nextAgent === 'agent:content-writer') {
-              newLabels.push('stage:content');
-            } else if (nextAgent === 'agent:architect') {
-              newLabels.push('stage:design');
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const projectNodeId = '${{ steps.project.outputs.project_node_id }}';
+            const statusFieldId = '${{ steps.project.outputs.status_field_id }}';
+            const statusOptionsStr = '${{ steps.project.outputs.status_options }}';
+            const statusOptions = statusOptionsStr ? JSON.parse(statusOptionsStr) : {};
+            const operation = '${{ github.event.inputs.operation }}' || 'update-status';
+            const statusFilter = '${{ github.event.inputs.status_filter }}' || 'Todo';
+            const batchSizeInput = '${{ github.event.inputs.batch_size }}';
+            const batchSize = parseInt(batchSizeInput) || 5;
+            const delayMsInput = '${{ github.event.inputs.delay_ms }}';
+            const delayMs = parseInt(delayMsInput) || 500;
+            const newStatus = '${{ github.event.inputs.new_status }}' || '';
+            const commentTemplate = '${{ github.event.inputs.comment_template }}' || '';
+
+            if (!projectNodeId || !statusFieldId) {
+              core.setFailed('Missing project node ID or status field ID');
+              return;
             }
-            
-            await octokit.rest.issues.update({
-              owner,
-              repo,
-              issue_number: issueNumber,
-              labels: newLabels,
-            });
-            
-            await delay(delayMs);
-            
-            await octokit.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: issueNumber,
-              body: `OK Задача передана агенту ${nextAgent}\n\nОбработано через GitHub Actions Batch Processor.`,
-            });
-          }
-          
-          async function processBatch(issues) {
-            console.log(`Processing ${issues.length} issues in batches of ${batchSize}`);
-            
-            for (let i = 0; i < issues.length; i += batchSize) {
-              const batch = issues.slice(i, i + batchSize);
-              console.log(`\nProcessing batch ${Math.floor(i / batchSize) + 1} (${batch.length} issues)`);
+
+            async function delay(ms) {
+              return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async function getProjectItems() {
+              const projectNumberInput = '${{ env.PROJECT_NUMBER }}';
+              const projectNumber = parseInt(projectNumberInput) || 1;
               
-              for (const issue of batch) {
-                try {
-                  const issueNumber = issue.number;
-                  const currentLabels = issue.labels.map(l => l.name);
-                  
-                  console.log(`  Processing issue #${issueNumber}...`);
-                  
-                  switch (operation) {
-                    case 'update-labels':
-                      await updateIssueLabels(issueNumber, currentLabels, newLabels);
-                      break;
-                    case 'add-comments':
-                      await addComment(issueNumber, commentTemplate);
-                      break;
-                    case 'transfer-to-qa':
-                      await transferToNextAgent(issueNumber, currentLabels);
-                      break;
-                    case 'transfer-to-next-stage':
-                      await transferToNextAgent(issueNumber, currentLabels);
-                      break;
+              const { data: projectV2 } = await github.graphql(`
+                query($owner: String!, $number: Int!) {
+                  organization(login: $owner) {
+                    projectV2(number: $number) {
+                      id
+                    }
                   }
-                  
-                  await delay(delayMs);
-                } catch (error) {
-                  console.error(`  Error processing issue #${issue.number}:`, error.message);
-                  if (error.status === 403) {
-                    console.log('  Rate limit exceeded, waiting...');
-                    await delay(60000);
+                  user(login: $owner) {
+                    projectV2(number: $number) {
+                      id
+                    }
                   }
+                }
+              `, {
+                owner: context.repo.owner,
+                number: projectNumber
+              });
+              
+              const projectId = projectV2.organization?.projectV2?.id || projectV2.user?.projectV2?.id;
+              
+              if (!projectId) {
+                console.log(`Project #${projectNumber} not found`);
+                return [];
+              }
+              
+              let allItems = [];
+              let hasNextPage = true;
+              let cursor = null;
+              
+              while (hasNextPage) {
+                const { data: itemsResult } = await github.graphql(`
+                  query($projectId: ID!, $cursor: String) {
+                    node(id: $projectId) {
+                      ... on ProjectV2 {
+                        items(first: 100, after: $cursor) {
+                          pageInfo {
+                            hasNextPage
+                            endCursor
+                          }
+                          nodes {
+                            id
+                            content {
+                              ... on Issue {
+                                number
+                                title
+                                state
+                              }
+                            }
+                            fieldValues(first: 20) {
+                              nodes {
+                                ... on ProjectV2ItemFieldSingleSelectValue {
+                                  field {
+                                    ... on ProjectV2FieldCommon {
+                                      name
+                                    }
+                                  }
+                                  name
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                `, {
+                  projectId,
+                  cursor
+                });
+                
+                const items = itemsResult.node?.items?.nodes || [];
+                allItems = allItems.concat(items);
+                
+                hasNextPage = itemsResult.node?.items?.pageInfo?.hasNextPage || false;
+                cursor = itemsResult.node?.items?.pageInfo?.endCursor || null;
+                
+                if (hasNextPage) {
+                  console.log(`Fetched ${allItems.length} items so far, fetching more...`);
+                  await delay(500);
                 }
               }
               
-              if (i + batchSize < issues.length) {
-                console.log(`  Waiting 1s before next batch...`);
-                await delay(1000);
+              console.log(`Total items fetched: ${allItems.length}`);
+              
+              return allItems.filter(item => {
+                if (!item.content || item.content.__typename !== 'Issue') return false;
+                if (item.content.state !== 'OPEN') return false;
+                
+                // For analyze-and-update-status, return all items (ignore filter)
+                if (operation === 'analyze-and-update-status') {
+                  return true;
+                }
+                
+                const statusValue = item.fieldValues.nodes.find(
+                  fv => fv.field.name === 'Status'
+                );
+                const currentStatus = statusValue?.name || '';
+                
+                return currentStatus === statusFilter || statusFilter === '' || statusFilter === 'All';
+              });
+            }
+
+            async function updateStatus(projectItemId, newStatus) {
+              if (!statusOptions[newStatus]) {
+                console.log(`Status "${newStatus}" not found in project options`);
+                return false;
+              }
+              
+              try {
+                await github.graphql(`
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $valueId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: {
+                        singleSelectOptionId: $valueId
+                      }
+                    }) {
+                      projectV2Item {
+                        id
+                      }
+                    }
+                  }
+                `, {
+                  projectId: projectNodeId,
+                  itemId: projectItemId,
+                  fieldId: statusFieldId,
+                  valueId: statusOptions[newStatus]
+                });
+                
+                return true;
+              } catch (error) {
+                console.error(`Error updating status: ${error.message}`);
+                return false;
               }
             }
-          }
-          
-          async function handleLabeledEvent() {
-            if (process.env.GITHUB_EVENT_NAME === 'issues' && process.env.GITHUB_EVENT_ACTION === 'labeled') {
-              const eventPath = process.env.GITHUB_EVENT_PATH;
-              const fs = require('fs');
-              const event = JSON.parse(fs.readFileSync(eventPath, 'utf8'));
+
+            async function addComment(issueNumber, template) {
+              const comment = template
+                .replace('{issue_number}', issueNumber)
+                .replace('{timestamp}', new Date().toISOString());
               
-              if (event.label.name === 'queue:batch-process') {
-                const issueNumber = event.issue.number;
-                const issueLabels = event.issue.labels.map(l => l.name);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: comment,
+              });
+            }
+
+            const statusTransitions = {
+              'Idea Writer - Review': 'Architect - Todo',
+              'Content Writer - Review': 'Backend - Todo',
+              'Architect - Review': 'Database - Todo',
+              'Database - Review': 'API Designer - Todo',
+              'API Designer - Review': 'Backend - Todo',
+              'Backend - Review': 'Network - Todo',
+              'Network - Review': 'Security - Todo',
+              'Security - Review': 'DevOps - Todo',
+              'DevOps - Review': 'UE5 - Todo',
+              'UE5 - Review': 'QA - Todo',
+              'QA - Review': 'Game Balance - Todo',
+              'Game Balance - Review': 'Release - Todo'
+            };
+
+            async function transferToNextStatus(projectItemId, currentStatus) {
+              const nextStatus = statusTransitions[currentStatus] || newStatus;
+              
+              if (!nextStatus) {
+                console.log(`No next status found for: ${currentStatus}`);
+                return false;
+              }
+              
+              return await updateStatus(projectItemId, nextStatus);
+            }
+
+            async function getIssueDetails(issueNumber) {
+              try {
+                const issue = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
                 
-                const agentLabel = issueLabels.find(l => l.startsWith('agent:'));
-                const stageLabel = issueLabels.find(l => l.startsWith('stage:'));
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  per_page: 100
+                });
                 
-                if (agentLabel && stageLabel) {
-                  const nextAgent = agentLabel === 'agent:content-writer' ? 'agent:release' : 
-                                   agentLabel === 'agent:idea-writer' ? 'agent:architect' : 'agent:qa';
-                  
-                  const query = `is:issue is:open label:${agentLabel} label:${stageLabel}`;
-                  process.env.QUERY = query;
-                  process.env.OPERATION = 'transfer-to-next-stage';
-                  process.env.NEXT_AGENT = nextAgent;
+                return {
+                  title: issue.data.title,
+                  body: issue.data.body || '',
+                  labels: issue.data.labels.map(l => l.name),
+                  comments: comments.data.map(c => c.body)
+                };
+              } catch (error) {
+                console.error(`Error fetching issue #${issueNumber}:`, error.message);
+                return null;
+              }
+            }
+
+            function determineStatus(title, body, labels, comments) {
+              const titleLower = title.toLowerCase();
+              const bodyLower = (body || '').toLowerCase();
+              const allText = titleLower + ' ' + bodyLower + ' ' + comments.join(' ').toLowerCase();
+              
+              // Проверка заголовка на префикс агента
+              if (title.startsWith('[Idea Writer]') || title.startsWith('[Idea]')) {
+                // Проверяем комментарии на готовность
+                const hasOpenAPIReady = comments.some(c => 
+                  c.includes('OpenAPI спецификация готова') || 
+                  c.includes('OpenAPI spec ready')
+                );
+                if (hasOpenAPIReady) {
+                  return 'Backend - Todo';
+                }
+                const hasArchitectureReady = comments.some(c => 
+                  c.includes('Архитектура') && (c.includes('готова') || c.includes('готов'))
+                );
+                if (hasArchitectureReady) {
+                  return 'API Designer - Todo';
+                }
+                const hasContentLabels = labels.some(l => ['canon', 'lore', 'quest'].includes(l));
+                if (hasContentLabels) {
+                  return 'Content Writer - Todo';
+                }
+                return 'Idea Writer - Todo';
+              }
+              
+              if (title.startsWith('[API Designer]') || title.startsWith('[API]')) {
+                const hasOpenAPIReady = comments.some(c => 
+                  c.includes('OpenAPI спецификация готова') || 
+                  c.includes('OpenAPI spec ready')
+                );
+                if (hasOpenAPIReady) {
+                  return 'Backend - Todo';
+                }
+                return 'API Designer - Todo';
+              }
+              
+              if (title.startsWith('[Backend]') || title.startsWith('[Implementation]')) {
+                return 'Backend - Todo';
+              }
+              
+              if (title.startsWith('[Architect]') || title.startsWith('[Architecture]')) {
+                return 'Architect - Todo';
+              }
+              
+              if (title.startsWith('[Content Writer]') || title.startsWith('[Content]')) {
+                return 'Content Writer - Todo';
+              }
+              
+              if (title.startsWith('[Database]')) {
+                return 'Database - Todo';
+              }
+              
+              if (title.startsWith('[Network]')) {
+                return 'Network - Todo';
+              }
+              
+              if (title.startsWith('[Security]')) {
+                return 'Security - Todo';
+              }
+              
+              if (title.startsWith('[DevOps]')) {
+                return 'DevOps - Todo';
+              }
+              
+              if (title.startsWith('[UE5]') || title.startsWith('[Client]')) {
+                return 'UE5 - Todo';
+              }
+              
+              if (title.startsWith('[QA]') || title.startsWith('[Testing]')) {
+                return 'QA - Todo';
+              }
+              
+              if (title.startsWith('[Game Balance]')) {
+                return 'Game Balance - Todo';
+              }
+              
+              if (title.startsWith('[Release]')) {
+                return 'Release - Todo';
+              }
+              
+              // Анализ по ключевым словам
+              const hasContentLabels = labels.some(l => ['canon', 'lore', 'quest', 'content'].includes(l));
+              if (hasContentLabels && (allText.includes('квест') || allText.includes('quest'))) {
+                return 'Content Writer - Todo';
+              }
+              
+              if (allText.includes('openapi') || allText.includes('спецификация') || allText.includes('endpoints')) {
+                const hasOpenAPIReady = comments.some(c => 
+                  c.includes('OpenAPI спецификация готова') || 
+                  c.includes('OpenAPI spec ready')
+                );
+                if (hasOpenAPIReady) {
+                  return 'Backend - Todo';
+                }
+                return 'API Designer - Todo';
+              }
+              
+              if (allText.includes('архитектура') || allText.includes('architecture') || allText.includes('система') || allText.includes('system')) {
+                return 'Architect - Todo';
+              }
+              
+              if (allText.includes('реализация') || allText.includes('implementation') || allText.includes('go ') || allText.includes(' сервис')) {
+                return 'Backend - Todo';
+              }
+              
+              if (allText.includes('база данных') || allText.includes('database') || allText.includes('миграция') || allText.includes('migration')) {
+                return 'Database - Todo';
+              }
+              
+              if (allText.includes('ue5') || allText.includes('unreal') || allText.includes('клиент') || allText.includes('client')) {
+                return 'UE5 - Todo';
+              }
+              
+              // По умолчанию - Idea Writer для новых концепций
+              if (allText.includes('идея') || allText.includes('концепция') || allText.includes('lore') || allText.includes('лор')) {
+                return 'Idea Writer - Todo';
+              }
+              
+              // Если ничего не найдено - Todo
+              return 'Todo';
+            }
+
+            async function analyzeAndUpdateStatus(projectItemId, issueNumber, currentStatus) {
+              const issueDetails = await getIssueDetails(issueNumber);
+              
+              if (!issueDetails) {
+                console.log(`    Could not fetch issue details`);
+                return false;
+              }
+              
+              const correctStatus = determineStatus(
+                issueDetails.title,
+                issueDetails.body,
+                issueDetails.labels,
+                issueDetails.comments
+              );
+              
+              if (correctStatus === currentStatus) {
+                console.log(`    Status is correct: ${currentStatus}`);
+                return false;
+              }
+              
+              console.log(`    Status mismatch: current="${currentStatus}", correct="${correctStatus}"`);
+              
+              const updated = await updateStatus(projectItemId, correctStatus);
+              
+              if (updated) {
+                console.log(`    OK Updated status from "${currentStatus}" to "${correctStatus}"`);
+                return true;
+              }
+              
+              return false;
+            }
+
+            async function processBatch(items) {
+              console.log(`Processing ${items.length} items in batches of ${batchSize}`);
+              
+              for (let i = 0; i < items.length; i += batchSize) {
+                const batch = items.slice(i, i + batchSize);
+                console.log(`\nProcessing batch ${Math.floor(i / batchSize) + 1} (${batch.length} items)`);
+                
+                for (const item of batch) {
+                  try {
+                    const issueNumber = item.content.number;
+                    const projectItemId = item.id;
+                    const statusValue = item.fieldValues.nodes.find(
+                      fv => fv.field.name === 'Status'
+                    );
+                    const currentStatus = statusValue?.name || '';
+                    
+                    console.log(`  Processing issue #${issueNumber} (status: ${currentStatus})...`);
+                    
+                    switch (operation) {
+                      case 'update-status':
+                        if (newStatus) {
+                          await updateStatus(projectItemId, newStatus);
+                          console.log(`    Updated status to: ${newStatus}`);
+                        }
+                        break;
+                      case 'add-comments':
+                        if (commentTemplate) {
+                          await addComment(issueNumber, commentTemplate);
+                          console.log(`    Added comment`);
+                        }
+                        break;
+                      case 'transfer-to-next-status':
+                        const transferred = await transferToNextStatus(projectItemId, currentStatus);
+                        if (transferred) {
+                          const nextStatus = statusTransitions[currentStatus] || newStatus;
+                          console.log(`    Transferred to: ${nextStatus}`);
+                        }
+                        break;
+                      case 'analyze-and-update-status':
+                        await analyzeAndUpdateStatus(projectItemId, issueNumber, currentStatus);
+                        await delay(1000); // Extra delay for API calls
+                        break;
+                    }
+                    
+                    await delay(delayMs);
+                  } catch (error) {
+                    console.error(`  Error processing issue #${item.content.number}:`, error.message);
+                    if (error.status === 403) {
+                      console.log('  Rate limit exceeded, waiting...');
+                      await delay(60000);
+                    }
+                  }
+                }
+                
+                if (i + batchSize < items.length) {
+                  console.log(`  Waiting 1s before next batch...`);
+                  await delay(1000);
                 }
               }
             }
-          }
-          
-          async function main() {
+
             try {
-              await handleLabeledEvent();
+              const items = await getProjectItems();
+              console.log(`Found ${items.length} items with status: ${statusFilter}`);
               
-              const issues = await searchIssues();
-              console.log(`Found ${issues.length} issues`);
-              
-              if (issues.length === 0) {
-                console.log('No issues found, exiting');
+              if (items.length === 0) {
+                console.log('No items found, exiting');
                 return;
               }
               
-              await processBatch(issues);
+              await processBatch(items);
               console.log('\nOK Batch processing completed');
             } catch (error) {
-              console.error('Error:', error);
-              process.exit(1);
+              core.setFailed(`Error: ${error.message}`);
             }
-          }
-          
-          main();
-          EOF
-
