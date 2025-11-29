@@ -1,7 +1,11 @@
 openapi: 3.0.3
 info:
   title: Social Reputation History Service API
-  description: API для истории и отношений репутации
+  description: |
+    API для получения истории изменений репутации персонажей.
+    
+    **Основные возможности:**
+    - Получение истории изменений репутации
   version: 2.0.0
   contact:
     name: NECPGAME API Support
@@ -15,45 +19,15 @@ servers:
 
 tags:
   - name: Reputation History
-    description: История и отношения репутации
+    description: История изменений репутации
 
 paths:
-  /social/reputation/{player_id}/faction-relations:
-    get:
-      tags:
-        - Reputation History
-      summary: Получить отношения с фракциями
-      operationId: getFactionRelations
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Отношения с фракциями
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FactionRelationsResponse'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
   /social/reputation/{player_id}/history:
     get:
       tags:
         - Reputation History
       summary: Получить историю изменений репутации
+      description: Возвращает историю всех изменений репутации персонажа с фракциями
       operationId: getReputationHistory
       security:
         - BearerAuth: []
@@ -61,11 +35,13 @@ paths:
         - name: player_id
           in: path
           required: true
+          description: ID персонажа
           schema:
             type: string
             format: uuid
         - name: faction_id
           in: query
+          description: ID фракции для фильтрации (опционально)
           schema:
             type: string
             format: uuid
@@ -91,50 +67,6 @@ components:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
 
   schemas:
-    FactionReputation:
-      type: object
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        faction_id:
-          type: string
-          format: uuid
-        faction_name:
-          type: string
-        reputation_value:
-          type: integer
-          minimum: -100
-          maximum: 100
-        tier:
-          type: string
-          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
-        tier_color:
-          type: string
-        heat:
-          type: integer
-          minimum: 0
-          maximum: 100
-        last_change:
-          type: string
-          format: date-time
-        last_update:
-          type: string
-          format: date-time
-
-    FactionRelationsResponse:
-      type: object
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        relations:
-          type: array
-          items:
-            $ref: '#/components/schemas/FactionReputation'
-        total:
-          type: integer
-
     ReputationHistoryResponse:
       type: object
       properties:
@@ -185,11 +117,3 @@ components:
         created_at:
           type: string
           format: date-time
-
-security:
-  - BearerAuth: []
-
-
-
-
-

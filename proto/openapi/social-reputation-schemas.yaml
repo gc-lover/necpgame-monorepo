@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Social Reputation Service - Schemas
+  description: Общие схемы данных для Social Reputation Service
+  version: 2.0.0
+
+components:
+  schemas:
+    PlayerReputation:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_reputations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionReputation'
+        overall_reputation:
+          type: integer
+          minimum: -100
+          maximum: 100
+        last_update:
+          type: string
+          format: date-time
+
+    FactionReputation:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_color:
+          type: string
+        heat:
+          type: integer
+          minimum: 0
+          maximum: 100
+        last_change:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+
+    ChangeReputationRequest:
+      type: object
+      required:
+        - faction_id
+        - change_amount
+        - reason
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        change_amount:
+          type: integer
+          description: Изменение репутации (может быть отрицательным)
+        reason:
+          type: string
+          enum: [quest_completed, enemy_killed, npc_interaction, transaction, world_event, player_order, other]
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID источника изменения
+
+    ReputationChangeResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        old_reputation:
+          type: integer
+        new_reputation:
+          type: integer
+        old_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        new_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_changed:
+          type: boolean
+        heat_change:
+          type: integer
+        new_heat:
+          type: integer
+
+    ReputationTier:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_name:
+          type: string
+        tier_color:
+          type: string
+        reputation_value:
+          type: integer
+        tier_range:
+          type: object
+          properties:
+            min:
+              type: integer
+            max:
+              type: integer
+        effects:
+          $ref: '#/components/schemas/ReputationEffects'
+
+    FactionRelationsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionReputation'
+        total:
+          type: integer
+
+    ReputationEffects:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        territory_access:
+          type: string
+          enum: [blocked, restricted, normal, enhanced]
+        trade_access:
+          type: string
+          enum: [blocked, minimal, restricted, normal, enhanced]
+        npc_aggression:
+          type: string
+          enum: [none, low, medium, high]
+        price_modifier:
+          type: number
+          format: decimal
+        quest_access:
+          type: string
+          enum: [none, limited, restricted, normal, enhanced]
+        vip_services:
+          type: boolean
+        npc_recruitment:
+          type: boolean
+        exclusive_locations:
+          type: boolean
+        faction_bonuses:
+          type: array
+          items:
+            type: string
+        decay_modifier:
+          type: number
+          format: decimal
+
