@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: Character Engram Cyberpsychosis Service API
+  description: API для интеграции энграмм с системой киберпсихоза и управления блокаторами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Engram Cyberpsychosis
+    description: Влияние энграмм на киберпсихоз
+  - name: Engram Blockers
+    description: Защитные импланты (блокаторы)
+
+paths:
+  /character/characters/{character_id}/engrams/cyberpsychosis/risk:
+    get:
+      tags:
+        - Engram Cyberpsychosis
+      summary: Получить риск киберпсихоза от энграмм
+      operationId: getEngramCyberpsychosisRisk
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      responses:
+        "200":
+          description: Риск киберпсихоза
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberpsychosisRisk"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/cyberpsychosis/update:
+    post:
+      tags:
+        - Engram Cyberpsychosis
+      summary: Обновить риск киберпсихоза
+      operationId: updateEngramCyberpsychosisRisk
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      responses:
+        "200":
+          description: Риск обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberpsychosisRisk"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/blockers:
+    get:
+      tags:
+        - Engram Blockers
+      summary: Получить список установленных блокаторов
+      operationId: getEngramBlockers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      responses:
+        "200":
+          description: Список блокаторов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EngramBlocker"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/blockers/install:
+    post:
+      tags:
+        - Engram Blockers
+      summary: Установить блокатор
+      operationId: installEngramBlocker
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstallBlockerRequest"
+      responses:
+        "200":
+          description: Блокатор установлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramBlocker"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "common.yaml#/components/responses/Conflict"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CyberpsychosisRisk:
+      type: object
+      required:
+        - character_id
+        - base_risk
+        - engram_risk
+        - total_risk
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        base_risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Базовый риск киберпсихоза
+          example: 20.0
+        engram_risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Дополнительный риск от энграмм
+          example: 30.0
+        total_risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Общий риск киберпсихоза
+          example: 50.0
+        risk_factors:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskFactor"
+          description: Факторы риска от энграмм
+        blocker_reduction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Снижение риска через блокаторы
+          example: 10.0
+
+    RiskFactor:
+      type: object
+      required:
+        - factor_type
+        - risk_amount
+      properties:
+        factor_type:
+          type: string
+          enum: [base_per_engram, aggressive_engram, conflict_between_engrams, low_tier_chip, damaged_engram, high_influence]
+          description: Тип фактора риска
+        risk_amount:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Количество риска от этого фактора
+          example: 10.0
+        engram_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID энграммы, если применимо
+
+    EngramBlocker:
+      type: object
+      required:
+        - blocker_id
+        - character_id
+        - tier
+        - installed_at
+        - expires_at
+      properties:
+        blocker_id:
+          type: string
+          format: uuid
+          description: ID блокатора
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир блокатора (1-5)
+        risk_reduction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Снижение риска киберпсихоза (%)
+          example: 10.0
+        influence_reduction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Снижение скорости роста влияния (%)
+          example: 20.0
+        duration_days:
+          type: integer
+          minimum: 1
+          description: Длительность действия (дни)
+          example: 60
+        installed_at:
+          type: string
+          format: date-time
+          description: Дата установки
+        expires_at:
+          type: string
+          format: date-time
+          description: Дата истечения
+        buffs:
+          type: object
+          description: Бафы от блокатора
+          properties:
+            mental_resistance:
+              type: number
+              format: float
+              description: Сопротивление психическим эффектам (%)
+            concentration:
+              type: number
+              format: float
+              description: Концентрация (%)
+            all_skills:
+              type: number
+              format: float
+              description: Бонус ко всем навыкам (%)
+            hack_resistance:
+              type: number
+              format: float
+              description: Защита от взлома (%)
+        debuffs:
+          type: object
+          description: Штрафы от блокатора
+          properties:
+            energy_recovery:
+              type: number
+              format: float
+              description: Скорость восстановления энергии (%)
+            physical_strength:
+              type: number
+              format: float
+              description: Физическая сила (%)
+        is_active:
+          type: boolean
+          description: Активен ли блокатор
+
+    InstallBlockerRequest:
+      type: object
+      required:
+        - blocker_tier
+      properties:
+        blocker_tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир блокатора для установки
+          example: 2
+        implant_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID импланта (если используется существующий)
+

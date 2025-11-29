@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: Social Engram Romance Service API
+  description: API для интеграции энграмм с системой романсов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Engram Romance
+    description: Интеграция энграмм с романсами
+
+paths:
+  /social/romance/engrams/{engram_id}/comment:
+    post:
+      tags:
+        - Engram Romance
+      summary: Комментарий энграммы при романтическом событии
+      operationId: engramRomanceComment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: engram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID энграммы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RomanceCommentRequest"
+      responses:
+        "200":
+          description: Комментарий создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RomanceComment"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/romance/engrams/{engram_id}/influence:
+    get:
+      tags:
+        - Engram Romance
+      summary: Получить влияние энграммы на романтические отношения
+      operationId: getEngramRomanceInfluence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: engram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID энграммы
+        - name: relationship_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID романтических отношений (если нужно для конкретных отношений)
+      responses:
+        "200":
+          description: Влияние энграммы на отношения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramRomanceInfluence"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    RomanceCommentRequest:
+      type: object
+      required:
+        - character_id
+        - romance_event_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        romance_event_type:
+          type: string
+          enum: [kiss, intimate, dialogue, conflict, breakup]
+          description: Тип романтического события
+        partner_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID партнёра
+        event_context:
+          type: object
+          nullable: true
+          description: Контекст события
+          additionalProperties: true
+
+    RomanceComment:
+      type: object
+      required:
+        - comment_id
+        - engram_id
+        - comment_text
+        - created_at
+      properties:
+        comment_id:
+          type: string
+          format: uuid
+          description: ID комментария
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        comment_text:
+          type: string
+          description: Текст комментария
+          example: "Интересный выбор..."
+        romance_event_type:
+          type: string
+          enum: [kiss, intimate, dialogue, conflict, breakup]
+          description: Тип события
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния энграммы при создании комментария
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания комментария
+
+    EngramRomanceInfluence:
+      type: object
+      required:
+        - engram_id
+        - influence_level
+        - influence_category
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния энграммы
+        influence_category:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Категория влияния
+        engram_type:
+          type: string
+          enum: [friendly, aggressive, romantic, jealous]
+          nullable: true
+          description: Тип энграммы
+        relationship_impact:
+          type: object
+          description: Влияние на отношения
+          properties:
+            helps_relationship:
+              type: boolean
+              description: Помогает ли отношениям
+            interferes_relationship:
+              type: boolean
+              description: Мешает ли отношениям
+            impact_percentage:
+              type: number
+              format: float
+              minimum: -100
+              maximum: 100
+              description: Процент влияния на развитие отношений
+        special_events:
+          type: array
+          items:
+            type: string
+          description: Специальные события с этой энграммой
+          example: ["jealousy", "help"]
+

@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: Combat Sandevistan Service Schemas
+  description: Схемы данных для Combat Sandevistan Service API
+  version: 1.0.0
+
+components:
+  schemas:
+    SandevistanActivation:
+      type: object
+      required:
+        - activation_id
+        - phase
+        - started_at
+        - expires_at
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+          description: Идентификатор активации
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        phase:
+          type: string
+          enum:
+            - preparation
+            - active
+            - recuperation
+          description: Фаза активации
+          example: "active"
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала активации
+          example: "2025-11-29T10:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          description: Время окончания активации
+          example: "2025-11-29T10:15:00Z"
+        action_budget_remaining:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Оставшийся Action Budget
+          example: 2
+        bonuses:
+          type: object
+          description: Бонусы активации
+          properties:
+            movement_boost:
+              type: number
+              format: float
+              description: Увеличение скорости движения
+              example: 1.5
+            fire_rate_boost:
+              type: number
+              format: float
+              description: Увеличение скорости стрельбы
+              example: 2.0
+            dash_distance:
+              type: number
+              format: float
+              description: Дистанция рывка
+              example: 10.0
+
+    SandevistanStatus:
+      type: object
+      required:
+        - is_active
+        - phase
+        - cooldown_remaining
+      properties:
+        is_active:
+          type: boolean
+          description: Активен ли Sandevistan
+          example: true
+        phase:
+          type: string
+          enum:
+            - inactive
+            - preparation
+            - active
+            - recuperation
+          description: Текущая фаза
+          example: "active"
+        activation_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор текущей активации
+        cooldown_remaining:
+          type: integer
+          minimum: 0
+          description: Секунды до следующей активации
+          example: 30
+        heat_stacks:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: Количество стаков перегрева
+          example: 1
+        action_budget_remaining:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Оставшийся Action Budget
+          example: 2
+        temporal_marks_count:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Количество активных Temporal Marks
+          example: 1
+
+    Action:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - dash
+            - shoot
+            - melee
+            - reload
+          description: Тип действия
+          example: "dash"
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор цели
+        target_position:
+          type: object
+          description: Позиция цели
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+
+    ActionBudgetResult:
+      type: object
+      required:
+        - executed_actions
+        - budget_remaining
+      properties:
+        executed_actions:
+          type: array
+          description: Выполненные действия
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+                description: Тип действия
+              success:
+                type: boolean
+                description: Успешность выполнения
+              timestamp:
+                type: string
+                format: date-time
+                description: Время выполнения
+        budget_remaining:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Оставшийся Action Budget
+          example: 1
+
+    TemporalMark:
+      type: object
+      required:
+        - mark_id
+        - target_id
+        - marked_at
+        - expires_at
+      properties:
+        mark_id:
+          type: string
+          format: uuid
+          description: Идентификатор метки
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        target_id:
+          type: string
+          format: uuid
+          description: Идентификатор цели
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        marked_at:
+          type: string
+          format: date-time
+          description: Время установки метки
+          example: "2025-11-29T10:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения метки
+          example: "2025-11-29T10:15:00Z"
+        delayed_burst_damage:
+          type: number
+          format: float
+          description: Отложенный урон взрыва
+          example: 100.0
+
+    CoolingResult:
+      type: object
+      required:
+        - heat_stacks_removed
+        - new_heat_level
+      properties:
+        heat_stacks_removed:
+          type: integer
+          minimum: 0
+          description: Количество удаленных стаков перегрева
+          example: 2
+        new_heat_level:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: Новый уровень перегрева
+          example: 0
+        cooldown_reduced:
+          type: integer
+          minimum: 0
+          description: Секунды снятия с кулдауна
+          example: 10
+        cyberpsychosis_risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Риск киберпсихоза
+          example: 0.1
+
+    HeatStatus:
+      type: object
+      required:
+        - current_stacks
+        - max_stacks
+        - is_overstress
+      properties:
+        current_stacks:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: Текущие стаки перегрева
+          example: 2
+        max_stacks:
+          type: integer
+          description: Максимальное количество стаков
+          example: 4
+        is_overstress:
+          type: boolean
+          description: Состояние перегрузки
+          example: false
+        overstress_penalty:
+          type: object
+          nullable: true
+          description: Штрафы за перегрузку
+          properties:
+            hp_loss_percent:
+              type: number
+              format: float
+              description: Потеря HP в процентах
+            cooldown_multiplier:
+              type: number
+              format: float
+              description: Множитель кулдауна
+        cyberpsychosis_risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Риск киберпсихоза
+          example: 0.2
+
+    CounterplayResult:
+      type: object
+      required:
+        - effect_applied
+        - sandevistan_interrupted
+      properties:
+        effect_applied:
+          type: string
+          enum:
+            - chrono_jammer
+            - emp
+            - dilation_break
+          description: Примененный эффект
+          example: "chrono_jammer"
+        sandevistan_interrupted:
+          type: boolean
+          description: Прерван ли Sandevistan
+          example: true
+        action_budget_reduced:
+          type: integer
+          minimum: 0
+          description: Уменьшение Action Budget
+          example: 1
+        phase_ended:
+          type: boolean
+          description: Завершена ли фаза
+          example: false
+

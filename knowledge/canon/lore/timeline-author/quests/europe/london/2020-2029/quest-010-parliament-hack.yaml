@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +45,83 @@ summary:
     - Высокий уровень сложности хакерских мини-игр.
     - Ветки решений меняют политический климат и законы.
     - Возможность крупной финансовой выгоды или общественной поддержки.
+quest_definition:
+  quest_type: main
+  level_min: 8
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: get_parliament_access
+      text: "Получить пропуск, взломать внешние шлюзы и незаметно проникнуть в здание Парламента"
+      type: infiltrate
+      target: parliament_building
+      count: 1
+      optional: false
+    - id: hack_internal_systems
+      text: "Взломать внутренние системы: обход фаервола, дешифровка протоколов, подмена логов (DC 24)"
+      type: hack
+      target: parliament_data_center
+      count: 1
+      optional: false
+    - id: extract_corruption_data
+      text: "Сформировать пакет доказательств коррупции и выбрать формат для дальнейшего использования"
+      type: investigate
+      target: corruption_evidence_files
+      count: 1
+      optional: false
+    - id: decide_information_fate
+      text: "Принять решение о судьбе информации: опубликовать, шантажировать или манипулировать голосованием"
+      type: interact
+      target: information_decision_point
+      count: 1
+      optional: false
+    - id: deal_with_fallout
+      text: "Справиться с последствиями и реагированием фракций"
+      type: interact
+      target: political_fallout
+      count: 1
+      optional: false
+  rewards:
+    experience: 5000
+    currency: 0
+    items: []
+    reputation:
+      london_public: 0
+      london_government: 0
+    flags:
+      - parliament_hack_completed
+  branches:
+    - id: publish_evidence
+      condition: "player_morality_score >= 5"
+      objectives:
+        - id: release_to_public
+          text: "Опубликовать доказательства коррупции для общественной поддержки"
+          type: interact
+          target: public_publication
+          count: 1
+          optional: false
+    - id: blackmail_path
+      condition: "player_morality_score < 0"
+      objectives:
+        - id: blackmail_government
+          text: "Шантажировать правительство за до 200 000 еддис"
+          type: interact
+          target: blackmail_negotiation
+          count: 1
+          optional: false
+    - id: manipulate_voting
+      condition: "player_reputation_london_government >= 10"
+      objectives:
+        - id: manipulate_parliament_vote
+          text: "Манипулировать голосованием для изменения законов"
+          type: interact
+          target: vote_manipulation
+          count: 1
+          optional: false
 content:
   sections:
     - id: access
@@ -100,6 +177,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики политических интриг и высокоуровневого взлома.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

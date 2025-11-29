@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:58:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -52,6 +52,77 @@ summary:
     - Пятиэтапная арка выживания с участием горожан.
     - Аутентичные британские детали усиливают колорит.
     - Награда включает уникальный титул выжившего.
+quest_definition:
+  quest_type: main
+  level_min: 6
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: receive_storm_warning
+      text: "Получить предупреждение о приближающейся Красной Буре и решить, готовиться или эвакуироваться"
+      type: interact
+      target: storm_warning_system
+      count: 1
+      optional: false
+    - id: find_shelter
+      text: "Найти безопасное укрытие: телефонная будка, станция метро или укреплённое здание"
+      type: interact
+      target: shelter_locations
+      count: 1
+      optional: false
+    - id: survive_storm
+      text: "Пережить 48 часов шторма, управляя ресурсами и моралью"
+      type: survive
+      target: storm_shelter
+      count: 1
+      optional: false
+    - id: help_citizens
+      text: "Оказать помощь пострадавшим жителям и восстановить инфраструктуру"
+      type: interact
+      target: affected_citizens
+      count: 5
+      optional: false
+    - id: coordinate_cleanup
+      text: "Координировать работы по очистке и вернуть городу прежний облик"
+      type: manage
+      target: city_cleanup_operations
+      count: 1
+      optional: false
+  rewards:
+    experience: 2500
+    currency: 0
+    items:
+      - id: red_london_survivor_title
+        name: "Титул «Переживший Красный Лондон»"
+        quantity: 1
+    reputation:
+      london_city_services: 20
+      london_citizens: 15
+    flags:
+      - red_london_survived
+  branches:
+    - id: evacuation_path
+      condition: "player_morality_score < 0"
+      objectives:
+        - id: evacuate_early
+          text: "Эвакуироваться до начала бури"
+          type: interact
+          target: evacuation_point
+          count: 1
+          optional: false
+    - id: community_leader_path
+      condition: "player_reputation_london_citizens >= 10"
+      objectives:
+        - id: lead_community_response
+          text: "Возглавить ответ сообщества на катастрофу"
+          type: interact
+          target: community_leadership_meeting
+          count: 1
+          optional: false
 content:
   sections:
     - id: setup
@@ -113,6 +184,10 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики выживания и восстановления города.'
   - version: '1.0.0'
     date: 2025-11-13
     author: Concept Director

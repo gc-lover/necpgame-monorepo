@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +45,76 @@ summary:
     - Еженедельный liveops-ивент с турнирной таблицей.
     - Возможность коопа и ставок со зрителями.
     - Победа даёт уникальный титул и доступ к подпольным контрактам.
+quest_definition:
+  quest_type: side
+  level_min: 4
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: register_underground
+      text: "Найти закодированный вход, заплатить 1 000 еддис и подписать отказ от ответственности"
+      type: interact
+      target: underground_arena_registration
+      count: 1
+      optional: false
+    - id: complete_tournament_brackets
+      text: "Пройти серию из пяти боёв 1-на-1 с растущей сложностью, менять стиль и импланты между раундами"
+      type: combat
+      target: tournament_brackets
+      count: 5
+      optional: false
+    - id: fight_champion
+      text: "Сразиться с чемпионом в финальном бою с уникальными приёмами и адаптивным ИИ"
+      type: combat
+      target: arena_champion
+      count: 1
+      optional: false
+    - id: manage_audience
+      text: "Привлечь спонсоров, принять ставки зрителей и получить баффы «поддержка толпы»"
+      type: interact
+      target: audience_management
+      count: 1
+      optional: false
+    - id: complete_tournament
+      text: "Завершить турнир и получить место в рейтинге метро"
+      type: perform
+      target: tournament_completion
+      count: 1
+      optional: false
+  rewards:
+    experience: 2000
+    currency: 0
+    items:
+      - id: underground_fighter_title
+        name: "Титул «Подземный боец»"
+        quantity: 1
+    reputation:
+      london_underground: 10
+    flags:
+      - underground_fight_completed
+  branches:
+    - id: tournament_victory
+      condition: "tournament_position == 1"
+      objectives:
+        - id: claim_victory_reward
+          text: "Получить награду за победу: 20 000 еддис, титул и доступ к подпольным контрактам"
+          type: interact
+          target: victory_rewards
+          count: 1
+          optional: false
+    - id: tournament_defeat
+      condition: "tournament_position > 1"
+      objectives:
+        - id: deal_with_defeat
+          text: "Справиться с поражением: потеря вступительного взноса и временный штраф к репутации"
+          type: interact
+          target: defeat_consequences
+          count: 1
+          optional: false
 content:
   sections:
     - id: entry
@@ -93,6 +163,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики арены и подпольных боёв.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

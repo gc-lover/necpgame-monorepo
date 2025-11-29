@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -48,6 +48,82 @@ summary:
     - Туман создаёт тактическую зону, снижая видимость сенсоров и камер.
     - Временное окно в десять минут требует чёткого планирования и отхода.
     - Квест можно переигрывать, меняя цели (кража, диверсия, освобождение).
+quest_definition:
+  quest_type: side
+  level_min: 5
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: get_hacker_contract
+      text: "Получить канал связи с подпольным оператором, который взламывает муниципальные генераторы и указывает безопасные маршруты"
+      type: interact
+      target: hacker_contact
+      count: 1
+      optional: false
+    - id: activate_fog_protocol
+      text: "Запустить генераторы через консоль на выбранном районе, наблюдать за ростом тумана и отключением камер"
+      type: interact
+      target: fog_generator_console
+      count: 1
+      optional: false
+    - id: perform_operation
+      text: "Совершить выбранное преступление в тумане: кражу данных, ограбление карго или освобождение пленника"
+      type: perform
+      target: fog_operation_zone
+      count: 1
+      optional: false
+    - id: escape_before_dawn
+      text: "Покинуть район до рассеивания тумана: использовать дронов, канализацию или маскировочный транспорт"
+      type: perform
+      target: escape_route
+      count: 1
+      optional: false
+    - id: complete_protocol
+      text: "Завершить операцию и повысить статус в сети «Fog Protocol»"
+      type: interact
+      target: protocol_completion
+      count: 1
+      optional: false
+  rewards:
+    experience: 800
+    currency: 0
+    items: []
+    reputation:
+      fog_protocol_network: 10
+    flags:
+      - fog_protocol_completed
+  branches:
+    - id: data_theft
+      condition: "operation_type == 'data_theft'"
+      objectives:
+        - id: steal_data
+          text: "Украсть данные в тумане"
+          type: hack
+          target: data_target
+          count: 1
+          optional: false
+    - id: cargo_robbery
+      condition: "operation_type == 'cargo_robbery'"
+      objectives:
+        - id: rob_cargo
+          text: "Ограбить карго в тумане"
+          type: loot
+          target: cargo_target
+          count: 1
+          optional: false
+    - id: prisoner_rescue
+      condition: "operation_type == 'prisoner_rescue'"
+      objectives:
+        - id: rescue_prisoner
+          text: "Освободить пленника в тумане"
+          type: interact
+          target: prisoner_target
+          count: 1
+          optional: false
 content:
   sections:
     - id: contract
@@ -91,6 +167,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики повторяемых преступлений и городского укрытия.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

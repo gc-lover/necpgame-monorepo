@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: Inventory Engram Chips Service API
+  description: API для управления тирами чипов Relic и порчей энграмм
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Engram Chips
+    description: Тиры чипов Relic
+
+paths:
+  /inventory/engrams/chips/tiers:
+    get:
+      tags:
+        - Engram Chips
+      summary: Получить список тиров чипов
+      operationId: getEngramChipTiers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: league_year
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+          description: Текущий год лиги для проверки доступности
+      responses:
+        "200":
+          description: Список тиров чипов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EngramChipTier"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /inventory/engrams/chips/{chip_id}/tier:
+    get:
+      tags:
+        - Engram Chips
+      summary: Получить тир чипа
+      operationId: getEngramChipTier
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: chip_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID чипа
+      responses:
+        "200":
+          description: Информация о тире чипа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramChipTier"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /inventory/engrams/chips/{chip_id}/decay:
+    get:
+      tags:
+        - Engram Chips
+      summary: Получить статус порчи чипа
+      operationId: getEngramChipDecay
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: chip_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID чипа
+      responses:
+        "200":
+          description: Статус порчи чипа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChipDecayStatus"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    EngramChipTier:
+      type: object
+      required:
+        - tier
+        - tier_name
+        - stability_level
+        - lifespan_years
+        - corruption_risk
+        - available_from_year
+      properties:
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир чипа (1-5)
+          example: 3
+        tier_name:
+          type: string
+          enum: [prototype, standard, advanced, corporate, legendary]
+          description: Название тира
+          example: "advanced"
+        stability_level:
+          type: string
+          enum: [low, medium, high, very_high, maximum]
+          description: Уровень стабильности
+          example: "high"
+        lifespan_years:
+          type: integer
+          description: Срок действия (лет)
+          example: 10
+        lifespan_range:
+          type: object
+          properties:
+            min:
+              type: integer
+              description: Минимальный срок
+              example: 10
+            max:
+              type: integer
+              description: Максимальный срок
+              example: 15
+        corruption_risk:
+          type: string
+          enum: [high, medium, low, very_low, minimal]
+          description: Риск порчи при неправильном хранении
+          example: "low"
+        corruption_risk_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Процент риска порчи
+          example: 15.0
+        protection_level:
+          type: string
+          enum: [limited, standard, advanced, corporate, military]
+          description: Уровень защиты
+          example: "advanced"
+        creation_cost_min:
+          type: number
+          format: float
+          description: Минимальная стоимость создания
+          example: 750000.0
+        creation_cost_max:
+          type: number
+          format: float
+          description: Максимальная стоимость создания
+          example: 1200000.0
+        available_from_year:
+          type: integer
+          description: Год, с которого доступен тир
+          example: 2080
+        is_available:
+          type: boolean
+          description: Доступен ли тир в текущем году лиги
+
+    ChipDecayStatus:
+      type: object
+      required:
+        - chip_id
+        - decay_percent
+        - decay_risk
+        - storage_conditions
+      properties:
+        chip_id:
+          type: string
+          format: uuid
+          description: ID чипа
+        decay_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Процент порчи (0-100%)
+          example: 5.5
+        decay_risk:
+          type: string
+          enum: [none, low, medium, high, critical]
+          description: Текущий риск порчи
+          example: "low"
+        storage_conditions:
+          type: object
+          description: Условия хранения
+          properties:
+            temperature:
+              type: string
+              enum: [optimal, acceptable, poor, critical]
+              description: Температура хранения
+            humidity:
+              type: string
+              enum: [optimal, acceptable, poor, critical]
+              description: Влажность
+            electromagnetic_shield:
+              type: boolean
+              description: Электромагнитная защита
+            storage_time_outside:
+              type: integer
+              description: Время вне специального хранилища (часы)
+        time_until_critical:
+          type: integer
+          nullable: true
+          description: Время до критической порчи (часы)
+        decay_effects:
+          type: array
+          items:
+            type: string
+          description: Эффекты порчи
+          example: ["data_loss", "instability"]
+

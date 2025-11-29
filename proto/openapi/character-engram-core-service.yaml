@@ -1,0 +1,508 @@
+openapi: 3.0.3
+info:
+  title: Character Engram Core Service API
+  description: API для управления слотами энграмм и отслеживания влияния
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Engram Slots
+    description: Управление слотами энграмм
+  - name: Engram Influence
+    description: Отслеживание влияния энграмм
+
+paths:
+  /character/characters/{character_id}/engrams/slots:
+    get:
+      tags:
+        - Engram Slots
+      summary: Получить список слотов энграмм
+      operationId: getEngramSlots
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      responses:
+        "200":
+          description: Список слотов энграмм
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramSlotsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/slots/{slot_id}/install:
+    post:
+      tags:
+        - Engram Slots
+      summary: Установить энграмму в слот
+      operationId: installEngram
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3
+          description: ID слота (1-3)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstallEngramRequest"
+      responses:
+        "200":
+          description: Энграмма установлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramSlot"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "common.yaml#/components/responses/Conflict"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/slots/{slot_id}/remove:
+    delete:
+      tags:
+        - Engram Slots
+      summary: Удалить энграмму из слота
+      operationId: removeEngram
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3
+          description: ID слота (1-3)
+        - name: removal_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [safe, emergency, self]
+            default: safe
+          description: Тип удаления (safe, emergency, self)
+      responses:
+        "200":
+          description: Энграмма удалена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemoveEngramResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/active:
+    get:
+      tags:
+        - Engram Slots
+      summary: Получить активные энграммы
+      operationId: getActiveEngrams
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      responses:
+        "200":
+          description: Список активных энграмм
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActiveEngram"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/{engram_id}/influence:
+    get:
+      tags:
+        - Engram Influence
+      summary: Получить текущее влияние энграммы
+      operationId: getEngramInfluence
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+        - name: engram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID энграммы
+      responses:
+        "200":
+          description: Текущее влияние энграммы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramInfluence"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/{engram_id}/influence/update:
+    post:
+      tags:
+        - Engram Influence
+      summary: Обновить влияние энграммы
+      operationId: updateEngramInfluence
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+        - name: engram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID энграммы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInfluenceRequest"
+      responses:
+        "200":
+          description: Влияние обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramInfluence"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/engrams/influence/levels:
+    get:
+      tags:
+        - Engram Influence
+      summary: Получить все уровни влияния энграмм
+      operationId: getEngramInfluenceLevels
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      responses:
+        "200":
+          description: Уровни влияния всех активных энграмм
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EngramInfluenceLevel"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    EngramSlot:
+      type: object
+      required:
+        - slot_id
+        - character_id
+        - is_active
+      properties:
+        slot_id:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: ID слота (1-3)
+          example: 1
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        engram_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID установленной энграммы
+        installed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата и время установки
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Уровень влияния (0-100%)
+          example: 25.5
+        usage_points:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Баллы использования энграммы
+          example: 150
+        is_active:
+          type: boolean
+          description: Активен ли слот
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания записи
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата последнего обновления
+
+    EngramSlotsResponse:
+      type: object
+      required:
+        - slots
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/EngramSlot"
+          description: Список всех слотов энграмм
+
+    InstallEngramRequest:
+      type: object
+      required:
+        - engram_id
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы для установки
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        validate_compatibility:
+          type: boolean
+          default: true
+          description: Проверять совместимость с другими энграммами
+          example: true
+
+    RemoveEngramResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Успешно ли удалена энграмма
+          example: true
+        removal_risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Риск удаления (0-100%)
+          example: 5.0
+        penalties:
+          type: array
+          items:
+            type: string
+          description: Список штрафов после удаления
+          example: ["temporary_weakness", "skill_loss"]
+        cooldown_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: До какого времени нельзя установить новую энграмму
+
+    ActiveEngram:
+      type: object
+      required:
+        - engram_id
+        - slot_id
+        - influence_level
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы
+        slot_id:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: ID слота
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния (0-100%)
+        influence_level_category:
+          type: string
+          enum: [low, medium, high, critical, takeover]
+          description: Категория уровня влияния
+        usage_points:
+          type: integer
+          minimum: 0
+          description: Баллы использования
+        installed_at:
+          type: string
+          format: date-time
+          description: Дата установки
+
+    EngramInfluence:
+      type: object
+      required:
+        - engram_id
+        - influence_level
+        - usage_points
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния (0-100%)
+          example: 25.5
+        influence_level_category:
+          type: string
+          enum: [low, medium, high, critical, takeover]
+          description: Категория уровня влияния
+          example: "medium"
+        usage_points:
+          type: integer
+          minimum: 0
+          description: Баллы использования энграммы
+          example: 150
+        slot_id:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: ID слота
+        growth_rate:
+          type: number
+          format: float
+          description: Скорость роста влияния (модификатор)
+          example: 1.0
+        blocker_reduction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Снижение через блокаторы (0-100%)
+          example: 10.0
+
+    UpdateInfluenceRequest:
+      type: object
+      required:
+        - change_reason
+      properties:
+        change_reason:
+          type: string
+          enum: [skill_usage, decision_alignment, time_pass, blocker_effect, manual_adjust]
+          description: Причина изменения влияния
+          example: "skill_usage"
+        change_amount:
+          type: number
+          format: float
+          description: Изменение влияния (в баллах или процентах)
+          example: 10.0
+        action_data:
+          type: object
+          nullable: true
+          description: Дополнительные данные о действии
+          additionalProperties: true
+
+    EngramInfluenceLevel:
+      type: object
+      required:
+        - engram_id
+        - slot_id
+        - influence_level
+        - influence_level_category
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы
+        slot_id:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: ID слота
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния (0-100%)
+        influence_level_category:
+          type: string
+          enum: [low, medium, high, critical, takeover]
+          description: Категория уровня влияния
+        usage_points:
+          type: integer
+          minimum: 0
+          description: Баллы использования
+        dominance_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Процент доминирования среди других энграмм
+          example: 60.0
+

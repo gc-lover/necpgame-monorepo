@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +45,85 @@ summary:
     - Подчеркивает эмоциональную связь с британской кухней.
     - Дилемма между традицией и корпорациями.
     - Особый бафф и цепочка сюжетов о сохранении наследия.
+quest_definition:
+  quest_type: side
+  level_min: 2
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: gather_rumors
+      text: "Собрать сведения о забегаловке в пабах, изучить старые гиды и найти координаты"
+      type: investigate
+      target: pub_rumors
+      count: 3
+      optional: false
+    - id: find_shop
+      text: "Найти забегаловку в Ист-Энде и встретиться с владельцем"
+      type: interact
+      target: fish_and_chips_shop
+      count: 1
+      optional: false
+    - id: try_classic_recipe
+      text: "Попробовать классический рецепт Fish and Chips"
+      type: interact
+      target: shop_menu
+      count: 1
+      optional: false
+    - id: deal_with_corporation_threat
+      text: "Решить, как реагировать на угрозу корпорации: отбить рейд, согласиться на продажу или оставить всё как есть"
+      type: interact
+      target: corporation_threat_meeting
+      count: 1
+      optional: false
+    - id: decide_business_fate
+      text: "Принять решение о судьбе бизнеса: защитить, продать или уйти"
+      type: interact
+      target: business_fate_decision
+      count: 1
+      optional: false
+  rewards:
+    experience: 800
+    currency: 0
+    items:
+      - id: free_fish_and_chips_buff
+        name: "Бафф «Бесплатная еда» (+5% HP)"
+        quantity: 1
+    reputation:
+      london_tradition: 10
+    flags:
+      - fish_and_chips_quest_completed
+  branches:
+    - id: protect_tradition
+      condition: "player_morality_score >= 5"
+      objectives:
+        - id: defend_shop
+          text: "Защитить забегаловку от корпорации и сохранить традицию"
+          type: combat
+          target: corporate_raid
+          count: 1
+          optional: false
+    - id: sell_to_corporation
+      condition: "player_currency < 50000"
+      objectives:
+        - id: negotiate_sale
+          text: "Убедить владельца продать за 50 000 еддис"
+          type: interact
+          target: sale_negotiation
+          count: 1
+          optional: false
+    - id: abandon_shop
+      condition: "player_morality_score < 0"
+      objectives:
+        - id: leave_shop
+          text: "Уйти, позволив забегаловке закрыться"
+          type: interact
+          target: shop_abandonment
+          count: 1
+          optional: false
 content:
   sections:
     - id: rumor
@@ -93,6 +172,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики сохранения традиций и морального выбора.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team
