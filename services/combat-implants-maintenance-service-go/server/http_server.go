@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/combat-damage-service-go/pkg/api"
+	"github.com/necpgame/combat-implants-maintenance-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,7 +38,7 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewDamageHandlers()
+	handlers := NewMaintenanceHandlers()
 
 	api.HandlerWithOptions(handlers, api.ChiServerOptions{
 		BaseURL:    "/api/v1",
@@ -147,3 +147,4 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
+
