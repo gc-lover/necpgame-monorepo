@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: Combat Combos Catalog Service API
+  description: |
+    API для каталога комбо и синергий.
+    
+    **Основные возможности:**
+    - Получение каталога комбо с фильтрацией
+    - Детальная информация о комбо
+    - Информация о синергиях
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Combo Catalog
+    description: Каталог комбо
+
+paths:
+  /gameplay/combat/combos/catalog:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить каталог комбо
+      description: |
+        Возвращает каталог комбо с возможностью фильтрации по типу и сложности.
+        Поддерживает пагинацию.
+      operationId: getComboCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: combo_type
+          in: query
+          schema:
+            $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboType'
+          description: Фильтр по типу комбо
+        - name: complexity
+          in: query
+          schema:
+            $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboComplexity'
+          description: Фильтр по сложности
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Каталог комбо
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboCatalogResponse'
+              example:
+                combos:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    name: "Aerial Devastation"
+                    description: "Комбо из воздушных атак с максимальным уроном"
+                    combo_type: "solo"
+                    complexity: "Gold"
+                    requirements:
+                      min_level: 10
+                      required_skills: ["acrobatics", "combat"]
+                    sequence: ["wall_run", "air_dash", "attack"]
+                    bonuses:
+                      damage_multiplier: 1.5
+                      cooldown_reduction: 10
+                    cooldown: 30
+                    chain_compatible: true
+                total: 50
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/{comboId}:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить детальную информацию о комбо
+      description: |
+        Возвращает полную информацию о комбо, включая синергии и совместимые chain-комбо.
+      operationId: getComboDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: comboId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID комбо
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Детальная информация о комбо
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboDetails'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                name: "Aerial Devastation"
+                description: "Комбо из воздушных атак с максимальным уроном"
+                combo_type: "solo"
+                complexity: "Gold"
+                requirements:
+                  min_level: 10
+                  required_skills: ["acrobatics", "combat"]
+                sequence: ["wall_run", "air_dash", "attack"]
+                bonuses:
+                  damage_multiplier: 1.5
+                  cooldown_reduction: 10
+                cooldown: 30
+                chain_compatible: true
+                synergies:
+                  - id: "550e8400-e29b-41d4-a716-446655440002"
+                    synergy_type: "ability"
+                    combo_id: "550e8400-e29b-41d4-a716-446655440000"
+                    ability_ids: ["550e8400-e29b-41d4-a716-446655440001"]
+                    bonuses:
+                      damage_multiplier: 1.2
+                chain_compatible_combos:
+                  - "550e8400-e29b-41d4-a716-446655440007"
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

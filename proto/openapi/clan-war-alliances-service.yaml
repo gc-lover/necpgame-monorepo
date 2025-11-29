@@ -1,0 +1,127 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service - Alliances API
+  description: API для управления союзами в войне
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8092/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Alliance Manager
+    description: Управление союзами
+
+paths:
+  /world/clan-war/{war_id}/alliance/invite:
+    post:
+      tags:
+        - Alliance Manager
+      summary: Пригласить союзника в войну
+      operationId: inviteAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'clan-war-schemas.yaml#/components/schemas/InviteAllianceRequest'
+      responses:
+        '200':
+          description: Союзник приглашён
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/AllianceResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/{war_id}/alliance:
+    get:
+      tags:
+        - Alliance Manager
+      summary: Получить союзников войны
+      operationId: getAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Союзники войны
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/AllianceResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/{war_id}/alliance/remove:
+    post:
+      tags:
+        - Alliance Manager
+      summary: Удалить союзника из войны
+      operationId: removeAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'clan-war-schemas.yaml#/components/schemas/RemoveAllianceRequest'
+      responses:
+        '200':
+          description: Союзник удалён
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/AllianceResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

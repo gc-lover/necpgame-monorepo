@@ -1,0 +1,110 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service - Scores API
+  description: API для расчёта очков войны
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8092/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Score Calculator
+    description: Расчёт очков
+
+paths:
+  /world/clan-war/{war_id}/scores:
+    get:
+      tags:
+        - Score Calculator
+      summary: Получить очки войны
+      operationId: getWarScores
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Очки войны
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/WarScoresResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/scores/add:
+    post:
+      tags:
+        - Score Calculator
+      summary: Начислить очки за действие
+      operationId: addWarScore
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'clan-war-schemas.yaml#/components/schemas/AddScoreRequest'
+      responses:
+        '200':
+          description: Очки начислены
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/AddScoreResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/{war_id}/winner:
+    get:
+      tags:
+        - Score Calculator
+      summary: Получить победителя войны
+      operationId: getWarWinner
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Победитель войны
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/WarWinnerResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

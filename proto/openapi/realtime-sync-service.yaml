@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: Realtime Service - Sync API
+  description: API для синхронизации состояния, управления игровым циклом и областью интереса
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8080/api/v1/realtime
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1/realtime
+      description: Продакшен сервер
+
+tags:
+  - name: Game Loop
+    description: Управление игровым циклом
+  - name: Interest Management
+    description: Управление областью интереса
+  - name: State Synchronization
+    description: Синхронизация состояния игры
+
+paths:
+  /game-loop/stats:
+    get:
+      tags:
+        - Game Loop
+      summary: Статистика game loop
+      operationId: getGameLoopStats
+      parameters:
+        - name: instance_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика game loop
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/GameLoopStats'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+
+  /game-loop/force-tick:
+    post:
+      tags:
+        - Game Loop
+      summary: Принудительный тик
+      operationId: forceGameLoopTick
+      parameters:
+        - name: instance_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Тик выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ticked
+                  tick_time_ms:
+                    type: number
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+
+  /interest/{zone_id}/{cell_id}/players:
+    get:
+      tags:
+        - Interest Management
+      summary: Игроки в ячейке
+      operationId: getCellPlayers
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: cell_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Игроки в ячейке
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: 'realtime-schemas.yaml#/components/schemas/ZonePlayer'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /interest/{zone_id}/update:
+    post:
+      tags:
+        - Interest Management
+      summary: Обновление области интереса
+      operationId: updateInterestArea
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/UpdateInterestRequest'
+      responses:
+        '200':
+          description: Область интереса обновлена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: updated
+                  visible_players:
+                    type: array
+                    items:
+                      $ref: 'realtime-schemas.yaml#/components/schemas/ZonePlayer'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /sync/{character_id}/state:
+    get:
+      tags:
+        - State Synchronization
+      summary: Получение состояния
+      operationId: getCharacterState
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние персонажа
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/CharacterState'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - State Synchronization
+      summary: Синхронизация состояния
+      operationId: syncCharacterState
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/SyncStateRequest'
+      responses:
+        '200':
+          description: Состояние синхронизировано
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/CharacterState'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

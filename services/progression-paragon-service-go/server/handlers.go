@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/necpgame/progression-paragon-service-go/pkg/api"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,18 +22,8 @@ func NewParagonHandlers(service ParagonServiceInterface) *ParagonHandlers {
 	}
 }
 
-func (h *ParagonHandlers) GetParagonLevels(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
-		h.respondError(w, http.StatusBadRequest, "character_id is required")
-		return
-	}
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
+func (h *ParagonHandlers) GetParagonLevels(w http.ResponseWriter, r *http.Request, params api.GetParagonLevelsParams) {
+	characterID := uuid.UUID(params.CharacterId)
 
 	levels, err := h.service.GetParagonLevels(r.Context(), characterID)
 	if err != nil {
@@ -45,29 +37,14 @@ func (h *ParagonHandlers) GetParagonLevels(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, levels)
+	apiLevels := convertParagonLevelsToAPI(levels)
+	h.respondJSON(w, http.StatusOK, apiLevels)
 }
 
-func (h *ParagonHandlers) DistributeParagonPoints(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
-		h.respondError(w, http.StatusBadRequest, "character_id is required")
-		return
-	}
+func (h *ParagonHandlers) DistributeParagonPoints(w http.ResponseWriter, r *http.Request, params api.DistributeParagonPointsParams) {
+	characterID := uuid.UUID(params.CharacterId)
 
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
-
-	var req struct {
-		Allocations []struct {
-			StatType string `json:"stat_type"`
-			Points   int    `json:"points"`
-		} `json:"allocations"`
-	}
-
+	var req api.DistributeParagonPointsJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -76,7 +53,7 @@ func (h *ParagonHandlers) DistributeParagonPoints(w http.ResponseWriter, r *http
 	allocations := make([]ParagonAllocation, len(req.Allocations))
 	for i, a := range req.Allocations {
 		allocations[i] = ParagonAllocation{
-			StatType:       a.StatType,
+			StatType:        string(a.StatType),
 			PointsAllocated: a.Points,
 		}
 	}
@@ -88,21 +65,12 @@ func (h *ParagonHandlers) DistributeParagonPoints(w http.ResponseWriter, r *http
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, levels)
+	apiLevels := convertParagonLevelsToAPI(levels)
+	h.respondJSON(w, http.StatusOK, apiLevels)
 }
 
-func (h *ParagonHandlers) GetParagonStats(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
-		h.respondError(w, http.StatusBadRequest, "character_id is required")
-		return
-	}
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
+func (h *ParagonHandlers) GetParagonStats(w http.ResponseWriter, r *http.Request, params api.GetParagonStatsParams) {
+	characterID := uuid.UUID(params.CharacterId)
 
 	stats, err := h.service.GetParagonStats(r.Context(), characterID)
 	if err != nil {
@@ -116,7 +84,61 @@ func (h *ParagonHandlers) GetParagonStats(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, stats)
+	apiStats := convertParagonStatsToAPI(stats)
+	h.respondJSON(w, http.StatusOK, apiStats)
+}
+
+func convertParagonLevelsToAPI(levels *ParagonLevels) api.ParagonLevels {
+	characterID := openapi_types.UUID(levels.CharacterID)
+	paragonLevel := levels.ParagonLevel
+	paragonPointsTotal := levels.ParagonPointsTotal
+	paragonPointsSpent := levels.ParagonPointsSpent
+	paragonPointsAvailable := levels.ParagonPointsAvailable
+	experienceCurrent := int(levels.ExperienceCurrent)
+	experienceRequired := int(levels.ExperienceRequired)
+	updatedAt := levels.UpdatedAt
+
+	allocations := make([]api.ParagonAllocation, len(levels.Allocations))
+	for i, a := range levels.Allocations {
+		statType := api.ParagonAllocationStatType(a.StatType)
+		pointsAllocated := a.PointsAllocated
+		allocations[i] = api.ParagonAllocation{
+			StatType:        &statType,
+			PointsAllocated: &pointsAllocated,
+		}
+	}
+
+	return api.ParagonLevels{
+		CharacterId:            &characterID,
+		ParagonLevel:            &paragonLevel,
+		ParagonPointsTotal:      &paragonPointsTotal,
+		ParagonPointsSpent:      &paragonPointsSpent,
+		ParagonPointsAvailable: &paragonPointsAvailable,
+		ExperienceCurrent:      &experienceCurrent,
+		ExperienceRequired:     &experienceRequired,
+		Allocations:            &allocations,
+		UpdatedAt:              &updatedAt,
+	}
+}
+
+func convertParagonStatsToAPI(stats *ParagonStats) api.ParagonStats {
+	characterID := openapi_types.UUID(stats.CharacterID)
+	totalParagonLevels := stats.TotalParagonLevels
+	totalPointsEarned := stats.TotalPointsEarned
+	totalPointsSpent := stats.TotalPointsSpent
+	pointsByStat := stats.PointsByStat
+	globalRank := stats.GlobalRank
+	percentile := float32(stats.Percentile)
+
+	return api.ParagonStats{
+		CharacterId:        &characterID,
+		TotalParagonLevels: &totalParagonLevels,
+		TotalPointsEarned:  &totalPointsEarned,
+		TotalPointsSpent:   &totalPointsSpent,
+		PointsByStat:       &pointsByStat,
+		GlobalRank:         &globalRank,
+		Percentile:         &percentile,
+	}
 }
 
 func (h *ParagonHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
@@ -126,9 +148,9 @@ func (h *ParagonHandlers) respondJSON(w http.ResponseWriter, status int, data in
 }
 
 func (h *ParagonHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := map[string]string{
-		"error":   http.StatusText(status),
-		"message": message,
+	errorResponse := api.Error{
+		Error:   http.StatusText(status),
+		Message: message,
 	}
 	h.respondJSON(w, status, errorResponse)
 }

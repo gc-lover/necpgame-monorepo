@@ -1,0 +1,515 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service - Schemas
+  description: Схемы данных для Announcement Service
+  version: 1.0.0
+
+components:
+  schemas:
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        announcement_type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - SCHEDULED
+            - PUBLISHED
+            - ARCHIVED
+        title:
+          type: string
+        content:
+          type: string
+        scheduled_publish_at:
+          type: string
+          format: date-time
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        targeting:
+          type: object
+          additionalProperties: true
+          nullable: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+        media:
+          type: object
+          additionalProperties: true
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateAnnouncementRequest:
+      type: object
+      required:
+        - announcement_type
+        - title
+        - content
+      properties:
+        announcement_type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+          default: NORMAL
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+          default: NEWS_FEED
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        targeting:
+          type: object
+          additionalProperties: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+          default:
+            - NEWS_FEED
+        media:
+          type: object
+          additionalProperties: true
+
+    UpdateAnnouncementRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+        targeting:
+          type: object
+          additionalProperties: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+        media:
+          type: object
+          additionalProperties: true
+
+    ScheduleAnnouncementRequest:
+      type: object
+      required:
+        - scheduled_publish_at
+      properties:
+        scheduled_publish_at:
+          type: string
+          format: date-time
+
+    DeliverAnnouncementRequest:
+      type: object
+      properties:
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+        force:
+          type: boolean
+          default: false
+          description: Принудительная доставка даже если объявление не опубликовано
+
+    DeliveryStatusResponse:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        delivery_status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelDeliveryStatus'
+        total_recipients:
+          type: integer
+        delivered_count:
+          type: integer
+        failed_count:
+          type: integer
+
+    ChannelDeliveryStatus:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+        status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+        recipients_count:
+          type: integer
+        delivered_count:
+          type: integer
+        failed_count:
+          type: integer
+
+    SetTargetingRequest:
+      type: object
+      properties:
+        targeting:
+          type: object
+          properties:
+            region:
+              type: array
+              items:
+                type: string
+            min_level:
+              type: integer
+            max_level:
+              type: integer
+            min_activity_days:
+              type: integer
+            has_purchases:
+              type: boolean
+            languages:
+              type: array
+              items:
+                type: string
+            platforms:
+              type: array
+              items:
+                type: string
+                enum:
+                  - PC
+                  - CONSOLE
+                  - MOBILE
+          additionalProperties: true
+
+    AudienceResponse:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        estimated_audience_size:
+          type: integer
+        targeting_criteria:
+          type: object
+          additionalProperties: true
+        audience_breakdown:
+          type: object
+          properties:
+            by_region:
+              type: object
+              additionalProperties:
+                type: integer
+            by_level:
+              type: object
+              additionalProperties:
+                type: integer
+            by_platform:
+              type: object
+              additionalProperties:
+                type: integer
+
+    TrackClickRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        delivery_channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+
+    AnnouncementStats:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        total_views:
+          type: integer
+        total_reads:
+          type: integer
+        total_clicks:
+          type: integer
+        total_hides:
+          type: integer
+        read_rate:
+          type: number
+          format: float
+          description: Процент прочтений от просмотров
+        click_rate:
+          type: number
+          format: float
+          description: Процент кликов от прочтений
+        stats_by_channel:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChannelStats'
+
+    ChannelStats:
+      type: object
+      properties:
+        views:
+          type: integer
+        reads:
+          type: integer
+        clicks:
+          type: integer
+        hides:
+          type: integer
+
+    CreatePatchNoteRequest:
+      type: object
+      required:
+        - version
+        - title
+        - content
+      properties:
+        version:
+          type: string
+          maxLength: 50
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        improvements:
+          type: array
+          items:
+            type: string
+        known_issues:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            type: object
+          nullable: true
+        announcement_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    AnnouncementEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        announcement_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - announcement:created
+            - announcement:published
+            - announcement:delivered
+            - announcement:read
+            - announcement:clicked
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    AnnouncementEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    PatchNote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: string
+        title:
+          type: string
+        improvements:
+          type: array
+          items:
+            type: string
+        bug_fixes:
+          type: array
+          items:
+            type: string
+        known_issues:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            type: object
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    NewsFeedItem:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        preview:
+          type: string
+        media_url:
+          type: string
+          nullable: true
+        is_read:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+
+    MarkReadRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        delivery_channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+

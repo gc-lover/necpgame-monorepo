@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Combat Combos Activation Service API
+  description: |
+    API для активации комбо и применения синергий.
+    
+    **Основные возможности:**
+    - Активация комбо (solo, team, legendary)
+    - Применение синергий (ability, team, equipment, implant, timing)
+    - Обработка chain-комбо
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Combo Activation
+    description: Активация комбо и синергий
+
+paths:
+  /gameplay/combat/combos/activate:
+    post:
+      tags:
+        - Combo Activation
+      summary: Активировать комбо
+      description: |
+        Активирует комбо для персонажа или команды.
+        Проверяет требования, применяет бонусы и синергии.
+        Поддерживает solo, team и legendary комбо.
+      operationId: activateCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-combos-schemas.yaml#/components/schemas/ActivateComboRequest'
+            example:
+              character_id: "550e8400-e29b-41d4-a716-446655440003"
+              combo_id: "550e8400-e29b-41d4-a716-446655440000"
+              participants:
+                - "550e8400-e29b-41d4-a716-446655440003"
+                - "550e8400-e29b-41d4-a716-446655440004"
+              context:
+                position:
+                  x: 100.5
+                  y: 50.0
+                  z: 200.3
+                environment: "urban"
+      responses:
+        '200':
+          description: Комбо активировано
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboActivationResponse'
+              example:
+                success: true
+                activation_id: "550e8400-e29b-41d4-a716-446655440005"
+                combo:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Aerial Devastation"
+                  combo_type: "solo"
+                  complexity: "Gold"
+                applied_synergies:
+                  - id: "550e8400-e29b-41d4-a716-446655440002"
+                    synergy_type: "ability"
+                    bonuses:
+                      damage_multiplier: 1.2
+                bonuses_applied:
+                  damage_multiplier: 1.8
+                  cooldown_reduction: 10
+                  special_effects: ["stun"]
+                chain_combo_available: true
+                message: "Combo activated successfully"
+        '400':
+          description: Неверный запрос (не выполнены требования, комбо недоступно)
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "invalid_request"
+                message: "Combo requirements not met"
+                code: "COMBO_REQUIREMENTS_NOT_MET"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Комбо не найдено
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/synergy:
+    post:
+      tags:
+        - Combo Activation
+      summary: Применить синергию к комбо
+      description: |
+        Применяет синергию к активированному комбо.
+        Поддерживает все типы синергий: ability, team, equipment, implant, timing.
+      operationId: applySynergy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-combos-schemas.yaml#/components/schemas/ApplySynergyRequest'
+            example:
+              activation_id: "550e8400-e29b-41d4-a716-446655440005"
+              synergy_id: "550e8400-e29b-41d4-a716-446655440002"
+              context:
+                timing: 1500
+                participants: ["550e8400-e29b-41d4-a716-446655440003"]
+      responses:
+        '200':
+          description: Синергия применена
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-combos-schemas.yaml#/components/schemas/SynergyApplicationResponse'
+              example:
+                success: true
+                synergy:
+                  id: "550e8400-e29b-41d4-a716-446655440002"
+                  synergy_type: "ability"
+                  bonuses:
+                    damage_multiplier: 1.2
+                    cooldown_reduction: 5
+                bonuses_applied:
+                  damage_multiplier: 1.2
+                  cooldown_reduction: 5
+                  special_effects: []
+                message: "Synergy applied successfully"
+        '400':
+          description: Неверный запрос (синергия недоступна, требования не выполнены)
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Активация или синергия не найдены
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

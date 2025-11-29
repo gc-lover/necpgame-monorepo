@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: Realtime Service - Connections API
+  description: API для управления WebSocket соединениями
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8080/api/v1/realtime
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1/realtime
+      description: Продакшен сервер
+
+tags:
+  - name: Connections
+    description: Управление WebSocket соединениями
+
+paths:
+  /connections/{connection_id}:
+    get:
+      tags:
+        - Connections
+      summary: Информация о соединении
+      operationId: getConnection
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о соединении
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/Connection'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /connections/{connection_id}/subscribe:
+    post:
+      tags:
+        - Connections
+      summary: Подписка на топик
+      operationId: subscribeToTopic
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/SubscribeRequest'
+      responses:
+        '200':
+          description: Подписка создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: subscribed
+                  topic:
+                    type: string
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /connections/{connection_id}/unsubscribe:
+    post:
+      tags:
+        - Connections
+      summary: Отписка от топика
+      operationId: unsubscribeFromTopic
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/UnsubscribeRequest'
+      responses:
+        '200':
+          description: Отписка выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unsubscribed
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

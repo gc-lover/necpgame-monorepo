@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service - Content API
+  description: API для патчноутов и новостной ленты
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8096/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Patch Notes
+    description: Патчноуты
+  - name: News Feed
+    description: Новостная лента
+
+paths:
+  /announcements/patch-notes:
+    get:
+      tags:
+        - Patch Notes
+      summary: Получить патчноуты
+      operationId: getPatchNotes
+      parameters:
+        - name: version
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список патчноутов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patch_notes:
+                    type: array
+                    items:
+                      $ref: 'announcement-schemas.yaml#/components/schemas/PatchNote'
+                  total:
+                    type: integer
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /announcements/patch-notes/{version}:
+    get:
+      tags:
+        - Patch Notes
+      summary: Получить патчноут по версии
+      operationId: getPatchNoteByVersion
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Патчноут
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/PatchNote'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /announcements/news-feed:
+    get:
+      tags:
+        - News Feed
+      summary: Получить новостную ленту
+      operationId: getNewsFeed
+      parameters:
+        - name: character_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Новостная лента
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feed:
+                    type: array
+                    items:
+                      $ref: 'announcement-schemas.yaml#/components/schemas/NewsFeedItem'
+                  total:
+                    type: integer
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/patch-notes:
+    post:
+      tags:
+        - Patch Notes
+      summary: Создать патчноут (admin)
+      operationId: createPatchNote
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'announcement-schemas.yaml#/components/schemas/CreatePatchNoteRequest'
+      responses:
+        '201':
+          description: Патчноут создан
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/PatchNote'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

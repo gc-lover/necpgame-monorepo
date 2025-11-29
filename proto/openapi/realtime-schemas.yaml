@@ -1,0 +1,369 @@
+openapi: 3.0.3
+info:
+  title: Realtime Service - Schemas
+  description: Схемы данных для Realtime Service
+  version: 1.0.0
+
+components:
+  schemas:
+    Connection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+          nullable: true
+        zone_id:
+          type: string
+          format: uuid
+          nullable: true
+        cell_x:
+          type: integer
+          nullable: true
+        cell_y:
+          type: integer
+          nullable: true
+        instance_id:
+          type: string
+          format: uuid
+          nullable: true
+        connection_state:
+          type: string
+          enum:
+            - connected
+            - disconnected
+            - reconnecting
+        last_heartbeat:
+          type: string
+          format: date-time
+        connected_at:
+          type: string
+          format: date-time
+        disconnected_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    SubscribeRequest:
+      type: object
+      required:
+        - topic
+      properties:
+        topic:
+          type: string
+          enum:
+            - zone
+            - character
+            - world
+            - combat
+            - chat
+            - social
+
+    UnsubscribeRequest:
+      type: object
+      required:
+        - topic
+      properties:
+        topic:
+          type: string
+
+    Zone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        zone_type:
+          type: string
+        min_x:
+          type: number
+        min_y:
+          type: number
+        max_x:
+          type: number
+        max_y:
+          type: number
+        max_players:
+          type: integer
+        current_players:
+          type: integer
+        status:
+          type: string
+          enum:
+            - active
+            - maintenance
+            - full
+        instance_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ZonePlayer:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        cell_x:
+          type: integer
+        cell_y:
+          type: integer
+        position:
+          $ref: '#/components/schemas/Position'
+        connected_at:
+          type: string
+          format: date-time
+
+    JoinZoneRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position'
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+        rotation:
+          type: number
+
+    GameLoopStats:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        tick_rate:
+          type: integer
+        current_tick:
+          type: integer
+        avg_tick_time_ms:
+          type: number
+        max_tick_time_ms:
+          type: number
+        players_count:
+          type: integer
+        zones_count:
+          type: integer
+        performance_warnings:
+          type: array
+          items:
+            type: string
+
+    UpdateInterestRequest:
+      type: object
+      required:
+        - character_id
+        - position
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position'
+
+    CharacterState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position'
+        velocity:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        health:
+          type: integer
+        max_health:
+          type: integer
+        state:
+          type: string
+          enum:
+            - idle
+            - moving
+            - combat
+        sync_frequency:
+          type: integer
+          description: Частота синхронизации в Hz
+        last_updated:
+          type: string
+          format: date-time
+
+    SyncStateRequest:
+      type: object
+      required:
+        - position
+      properties:
+        position:
+          $ref: '#/components/schemas/Position'
+        velocity:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        input:
+          type: object
+          additionalProperties: true
+
+    ProtocolStats:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        total_messages:
+          type: integer
+        messages_per_second:
+          type: number
+        bandwidth_used:
+          type: number
+          description: В байтах в секунду
+        bandwidth_saved:
+          type: number
+          description: В байтах в секунду (благодаря оптимизации)
+        compression_ratio:
+          type: number
+        avg_message_size:
+          type: number
+
+    OptimizeProtocolRequest:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        enable_delta_compression:
+          type: boolean
+        enable_batching:
+          type: boolean
+        batch_size:
+          type: integer
+        enable_fec:
+          type: boolean
+
+    PerformanceProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          enum:
+            - esports
+            - siege
+            - extraction
+            - open_world
+            - raids
+            - massive_warfront
+            - casual
+            - social
+        tick_rate:
+          type: integer
+          description: Частота обновлений в Hz
+        max_latency_ms:
+          type: integer
+        description:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+
+    ApplyProfileRequest:
+      type: object
+      required:
+        - instance_id
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+
+    RealtimeEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - combat
+            - movement
+            - chat
+            - world
+            - social
+        zone_id:
+          type: string
+          format: uuid
+          nullable: true
+        character_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    PublishEventRequest:
+      type: object
+      required:
+        - event_type
+        - event_data
+      properties:
+        event_type:
+          type: string
+          enum:
+            - combat
+            - movement
+            - chat
+            - world
+            - social
+        zone_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        event_data:
+          type: object
+          additionalProperties: true
+

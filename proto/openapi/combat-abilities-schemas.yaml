@@ -1,0 +1,672 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Schemas
+  description: Схемы данных для системы боевых способностей
+  version: 1.0.0
+
+components:
+  schemas:
+    AbilityType:
+      type: string
+      enum: [tactical, signature, ultimate, passive, hacking]
+      description: Тип способности
+      example: "tactical"
+
+    AbilitySlot:
+      type: string
+      enum: [Q, E, R, passive, hacking]
+      description: Слот способности
+      example: "Q"
+
+    AbilitySource:
+      type: string
+      enum: [equipment, implant, progression, cyberdeck]
+      description: Источник способности
+      example: "progression"
+
+    Ability:
+      type: object
+      required:
+        - id
+        - name
+        - ability_type
+        - slot
+        - source
+        - rank
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор способности
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Название способности
+          example: "Thermal Grenade"
+        description:
+          type: string
+          description: Описание способности
+          example: "Бросает термическую гранату, наносящую урон по области"
+        ability_type:
+          $ref: '#/components/schemas/AbilityType'
+        slot:
+          $ref: '#/components/schemas/AbilitySlot'
+        source:
+          $ref: '#/components/schemas/AbilitySource'
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Ранг способности
+          example: 5
+        energy_cost:
+          type: integer
+          minimum: 0
+          description: Стоимость энергии
+          example: 25
+        health_cost:
+          type: integer
+          minimum: 0
+          description: Стоимость здоровья
+          example: 0
+        cooldown_base:
+          type: integer
+          minimum: 0
+          description: Базовое время кулдауна в секундах
+          example: 15
+        requirements:
+          type: object
+          description: Требования для использования способности
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+              example: 10
+            required_attributes:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                strength: 15
+                intelligence: 10
+            required_skills:
+              type: array
+              items:
+                type: string
+              example: ["combat", "tactics"]
+            required_abilities:
+              type: array
+              items:
+                type: string
+                format: uuid
+              example: []
+        modifiers:
+          type: object
+          description: Модификаторы способности
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 0
+              example: 1.2
+            range_bonus:
+              type: number
+              format: float
+              minimum: 0
+              example: 1.5
+            duration_bonus:
+              type: number
+              format: float
+              minimum: 0
+              example: 1.3
+        cyberpsychosis_impact:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Влияние на киберпсихоз (0-1)
+          example: 0.05
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2025-11-23T10:00:00Z"
+
+    AbilityLoadout:
+      type: object
+      required:
+        - id
+        - character_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор лоадаута
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        character_id:
+          type: string
+          format: uuid
+          description: Идентификатор персонажа
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        name:
+          type: string
+          description: Название лоадаута
+          example: "Assault Build"
+        slot_q:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте Q
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        slot_e:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте E
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        slot_r:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте R
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        passive_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список пассивных способностей
+          example: ["550e8400-e29b-41d4-a716-446655440005"]
+        hacking_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список хакерских способностей
+          example: ["550e8400-e29b-41d4-a716-446655440006"]
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическая активация способностей
+          example: false
+        priority:
+          type: integer
+          minimum: 1
+          description: Приоритет лоадаута
+          example: 1
+        is_active:
+          type: boolean
+          description: Активен ли лоадаут
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2025-11-23T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+          example: "2025-11-23T10:00:00Z"
+
+    AbilityLoadoutCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Название лоадаута
+          example: "Assault Build"
+        slot_q:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте Q
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        slot_e:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте E
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        slot_r:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте R
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        passive_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список пассивных способностей
+          example: ["550e8400-e29b-41d4-a716-446655440005"]
+        hacking_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список хакерских способностей
+          example: ["550e8400-e29b-41d4-a716-446655440006"]
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическая активация способностей
+          example: false
+        priority:
+          type: integer
+          minimum: 1
+          description: Приоритет лоадаута
+          example: 1
+
+    AbilityActivationRequest:
+      type: object
+      required:
+        - ability_id
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности для активации
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор цели (если требуется)
+          example: "550e8400-e29b-41d4-a716-446655440007"
+        position:
+          type: object
+          nullable: true
+          description: Позиция для активации (если требуется)
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+
+    AbilityActivationResponse:
+      type: object
+      required:
+        - success
+        - ability_id
+      properties:
+        success:
+          type: boolean
+          description: Успешность активации
+          example: true
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор активированной способности
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        cooldown_started:
+          type: boolean
+          description: Запущен ли кулдаун
+          example: true
+        cooldown_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания кулдауна
+          example: "2025-11-23T10:00:15Z"
+        synergy_triggered:
+          type: boolean
+          description: Сработала ли синергия
+          example: false
+        cyberpsychosis_updated:
+          type: boolean
+          description: Обновлен ли киберпсихоз
+          example: true
+        cyberpsychosis_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Текущий уровень киберпсихоза
+          example: 0.15
+        message:
+          type: string
+          nullable: true
+          description: Сообщение о результате
+          example: "Ability activated successfully"
+
+    CooldownStatus:
+      type: object
+      required:
+        - ability_id
+        - is_on_cooldown
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        is_on_cooldown:
+          type: boolean
+          description: Находится ли способность на кулдауне
+          example: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала кулдауна
+          example: "2025-11-23T10:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания кулдауна
+          example: "2025-11-23T10:00:15Z"
+        cooldown_duration:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Длительность кулдауна в секундах
+          example: 15
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Оставшееся время кулдауна в секундах
+          example: 10
+
+    CooldownCheckRequest:
+      type: object
+      required:
+        - ability_ids
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список идентификаторов способностей для проверки
+          example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440003"]
+
+    CooldownCheckResponse:
+      type: object
+      required:
+        - cooldowns
+      properties:
+        cooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CooldownStatus'
+
+    SynergyType:
+      type: string
+      enum: [ability, team, equipment, implant, timing]
+      description: Тип синергии
+      example: "ability"
+
+    Synergy:
+      type: object
+      required:
+        - id
+        - synergy_type
+        - bonuses
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор синергии
+          example: "550e8400-e29b-41d4-a716-446655440008"
+        synergy_type:
+          $ref: '#/components/schemas/SynergyType'
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список идентификаторов способностей
+          example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440003"]
+        implant_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Список идентификаторов имплантов
+          example: ["550e8400-e29b-41d4-a716-446655440009"]
+        equipment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Список идентификаторов экипировки
+          example: ["550e8400-e29b-41d4-a716-446655440010"]
+        requirements:
+          type: object
+          description: Требования для активации синергии
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+              example: 10
+            required_attributes:
+              type: object
+              additionalProperties:
+                type: integer
+              example:
+                strength: 15
+        bonuses:
+          type: object
+          description: Бонусы от синергии
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 1.0
+              example: 1.2
+            cooldown_reduction:
+              type: integer
+              minimum: 0
+              example: 5
+            energy_cost_reduction:
+              type: integer
+              minimum: 0
+              example: 10
+            special_effects:
+              type: array
+              items:
+                type: string
+              example: ["burn", "stun"]
+        complexity:
+          type: string
+          enum: [Bronze, Silver, Gold, Platinum, Legendary]
+          description: Сложность синергии
+          example: "Gold"
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2025-11-23T10:00:00Z"
+
+    SynergyApplyRequest:
+      type: object
+      required:
+        - synergy_id
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+          description: Идентификатор синергии для применения
+          example: "550e8400-e29b-41d4-a716-446655440008"
+        target_ability_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор способности-цели (если требуется)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    SynergyApplyResponse:
+      type: object
+      required:
+        - success
+        - synergy_id
+      properties:
+        success:
+          type: boolean
+          description: Успешность применения синергии
+          example: true
+        synergy_id:
+          type: string
+          format: uuid
+          description: Идентификатор примененной синергии
+          example: "550e8400-e29b-41d4-a716-446655440008"
+        bonuses_applied:
+          type: object
+          description: Примененные бонусы
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 1.0
+              example: 1.2
+            cooldown_reduction:
+              type: integer
+              minimum: 0
+              example: 5
+        message:
+          type: string
+          nullable: true
+          description: Сообщение о результате
+          example: "Synergy applied successfully"
+
+    CyberpsychosisState:
+      type: object
+      required:
+        - character_id
+        - current_level
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Идентификатор персонажа
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        current_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Текущий уровень киберпсихоза (0-1)
+          example: 0.15
+        threshold_breaches:
+          type: integer
+          minimum: 0
+          description: Количество превышений порогов
+          example: 0
+        active_implants_count:
+          type: integer
+          minimum: 0
+          description: Количество активных имплантов
+          example: 3
+        last_update:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+          example: "2025-11-23T10:00:00Z"
+        restrictions:
+          type: object
+          description: Ограничения из-за киберпсихоза
+          properties:
+            ability_usage_penalty:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              example: 0.1
+            attribute_penalties:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              example:
+                strength: -0.05
+                intelligence: -0.05
+
+    CyberpsychosisUpdateRequest:
+      type: object
+      required:
+        - ability_id
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности, которая влияет на киберпсихоз
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        duration_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Длительность использования в секундах
+          example: 5
+
+    AbilityMetrics:
+      type: object
+      required:
+        - character_id
+        - ability_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Идентификатор персонажа
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        activations_count:
+          type: integer
+          minimum: 0
+          description: Количество активаций
+          example: 150
+        successful_activations:
+          type: integer
+          minimum: 0
+          description: Количество успешных активаций
+          example: 145
+        failed_activations:
+          type: integer
+          minimum: 0
+          description: Количество неудачных активаций
+          example: 5
+        synergies_triggered:
+          type: integer
+          minimum: 0
+          description: Количество срабатываний синергий
+          example: 30
+        average_damage:
+          type: number
+          format: float
+          minimum: 0
+          nullable: true
+          description: Средний урон
+          example: 250.5
+        total_damage:
+          type: number
+          format: float
+          minimum: 0
+          description: Общий урон
+          example: 37575.0
+        period_start:
+          type: string
+          format: date-time
+          description: Начало периода статистики
+          example: "2025-11-23T00:00:00Z"
+        period_end:
+          type: string
+          format: date-time
+          description: Конец периода статистики
+          example: "2025-11-23T23:59:59Z"
+

@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: Technology Progression System - Integration API
+  description: API для интеграции системы разблокировки технологий с другими сервисами
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8093/api/v1
+      description: League Service (Technology Progression Integration)
+
+paths:
+  /league/technologies/check-availability:
+    post:
+      summary: Проверить доступность технологий
+      description: |
+        Проверяет доступность технологий для предмета/имплантата/квеста/торговца.
+        Используется Inventory Service, Character Service, Quest Service, World Service.
+      operationId: checkTechnologyAvailability
+      tags:
+        - Technology Progression Integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "league-technology-progression-schemas.yaml#/components/schemas/AvailabilityCheckRequest"
+            examples:
+              inventory_item:
+                summary: Проверка для предмета инвентаря
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440000"
+                  technology_ids:
+                    - "550e8400-e29b-41d4-a716-446655440001"
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                  context: inventory_item
+              character_implant:
+                summary: Проверка для имплантата персонажа
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440000"
+                  technology_ids:
+                    - "550e8400-e29b-41d4-a716-446655440001"
+                  context: character_implant
+              quest_requirement:
+                summary: Проверка для требования квеста
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440000"
+                  technology_ids:
+                    - "550e8400-e29b-41d4-a716-446655440001"
+                  context: quest_requirement
+              vendor_item:
+                summary: Проверка для товара торговца
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440000"
+                  technology_ids:
+                    - "550e8400-e29b-41d4-a716-446655440001"
+                  context: vendor_item
+      responses:
+        "200":
+          description: Результат проверки доступности
+          content:
+            application/json:
+              schema:
+                $ref: "league-technology-progression-schemas.yaml#/components/schemas/AvailabilityCheckResponse"
+              examples:
+                all_available:
+                  summary: Все технологии доступны
+                  value:
+                    available_technologies:
+                      - "550e8400-e29b-41d4-a716-446655440001"
+                      - "550e8400-e29b-41d4-a716-446655440002"
+                    unavailable_technologies: []
+                some_unavailable:
+                  summary: Некоторые технологии недоступны
+                  value:
+                    available_technologies:
+                      - "550e8400-e29b-41d4-a716-446655440001"
+                    unavailable_technologies:
+                      - technology_id: "550e8400-e29b-41d4-a716-446655440002"
+                        reason: "Technology not unlocked yet"
+                        missing_conditions:
+                          - "league_year >= 2030"
+                          - "quest_completed: braindance_intro"
+        "400":
+          $ref: "common-responses.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common-responses.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common-responses.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common-responses.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

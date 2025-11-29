@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service - Targeting API
+  description: API для таргетинга объявлений
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8096/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Announcement Targeting
+    description: Таргетинг объявлений
+
+paths:
+  /liveops/announcements/{announcement_id}/target:
+    post:
+      tags:
+        - Announcement Targeting
+      summary: Настроить таргетинг объявления
+      operationId: setAnnouncementTargeting
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'announcement-schemas.yaml#/components/schemas/SetTargetingRequest'
+      responses:
+        '200':
+          description: Таргетинг настроен
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/Announcement'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/audience:
+    get:
+      tags:
+        - Announcement Targeting
+      summary: Получить аудиторию объявления
+      operationId: getAnnouncementAudience
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Аудитория объявления
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/AudienceResponse'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,580 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service - Schemas
+  description: Схемы данных для Clan War Service
+  version: 1.0.0
+
+components:
+  schemas:
+    DeclareWarRequest:
+      type: object
+      required:
+        - attacker_clan_id
+        - defender_clan_id
+      properties:
+        attacker_clan_id:
+          type: string
+          format: uuid
+        defender_clan_id:
+          type: string
+          format: uuid
+        ally_guild_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ClanWar:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        attacker_clan_id:
+          type: string
+          format: uuid
+        defender_clan_id:
+          type: string
+          format: uuid
+        ally_guild_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+            - DECLARED
+            - PREPARATION
+            - ACTIVE
+            - ENDING
+            - ENDED
+        phase:
+          type: string
+          enum:
+            - PREPARATION
+            - ACTIVE
+            - ENDING
+          nullable: true
+        attacker_score:
+          type: integer
+          default: 0
+        defender_score:
+          type: integer
+          default: 0
+        winner_clan_id:
+          type: string
+          format: uuid
+          nullable: true
+        allies_attacker:
+          type: array
+          items:
+            type: string
+            format: uuid
+        allies_defender:
+          type: array
+          items:
+            type: string
+            format: uuid
+        declared_at:
+          type: string
+          format: date-time
+        preparation_started_at:
+          type: string
+          format: date-time
+          nullable: true
+        active_started_at:
+          type: string
+          format: date-time
+          nullable: true
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateBattleRequest:
+      type: object
+      required:
+        - territory_id
+        - battle_type
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        war_id:
+          type: string
+          format: uuid
+        battle_type:
+          type: string
+          enum:
+            - TERRITORY_BATTLE
+            - SIEGE
+            - OPEN_WORLD_PVP
+        scheduled_time:
+          type: string
+          format: date-time
+          nullable: true
+
+    WarBattle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        war_id:
+          type: string
+          format: uuid
+        territory_id:
+          type: string
+          format: uuid
+        battle_type:
+          type: string
+          enum:
+            - TERRITORY_BATTLE
+            - SIEGE
+            - OPEN_WORLD_PVP
+        status:
+          type: string
+          enum:
+            - CREATED
+            - ACTIVE
+            - ENDED
+        attacker_score:
+          type: integer
+          default: 0
+        defender_score:
+          type: integer
+          default: 0
+        scheduled_time:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateBattleScoreRequest:
+      type: object
+      required:
+        - side
+        - points
+      properties:
+        side:
+          type: string
+          enum:
+            - attacker
+            - defender
+        points:
+          type: integer
+          minimum: 1
+
+    WarResolution:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        winner_guild_id:
+          type: string
+          format: uuid
+        attacker_score:
+          type: integer
+        defender_score:
+          type: integer
+        territories_transferred:
+          type: array
+          items:
+            type: string
+            format: uuid
+        rewards:
+          type: object
+          properties:
+            winner:
+              type: object
+              additionalProperties: true
+            loser:
+              type: object
+              additionalProperties: true
+        resolved_at:
+          type: string
+          format: date-time
+
+    Territory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        owner_clan_id:
+          type: string
+          format: uuid
+          nullable: true
+        resource_type:
+          type: string
+          enum:
+            - ORE
+            - ENERGY
+            - DATA
+            - MIXED
+        resource_amount:
+          type: integer
+          default: 0
+        defense_level:
+          type: integer
+          default: 1
+        siege_difficulty:
+          type: integer
+          default: 1
+        location_x:
+          type: number
+          format: float
+        location_y:
+          type: number
+          format: float
+        location_z:
+          type: number
+          format: float
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CancelWarRequest:
+      type: object
+      required:
+        - clan_id
+      properties:
+        clan_id:
+          type: string
+          format: uuid
+
+    WarPhaseResponse:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        phase:
+          type: string
+          enum:
+            - PREPARATION
+            - ACTIVE
+            - ENDING
+        phase_started_at:
+          type: string
+          format: date-time
+        next_phase_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TransitionPhaseRequest:
+      type: object
+      required:
+        - new_phase
+      properties:
+        new_phase:
+          type: string
+          enum:
+            - PREPARATION
+            - ACTIVE
+            - ENDING
+
+    TransferTerritoryRequest:
+      type: object
+      required:
+        - new_owner_clan_id
+      properties:
+        new_owner_clan_id:
+          type: string
+          format: uuid
+
+    StartBattleRequest:
+      type: object
+      required:
+        - war_id
+      properties:
+        war_id:
+          type: string
+          format: uuid
+
+    EndBattleRequest:
+      type: object
+      required:
+        - war_id
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        winner_clan_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    ActiveWarsResponse:
+      type: object
+      properties:
+        wars:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClanWar'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ActiveBattlesResponse:
+      type: object
+      properties:
+        battles:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarBattle'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    WarScoresResponse:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        attacker_score:
+          type: integer
+        defender_score:
+          type: integer
+        score_breakdown:
+          type: object
+          properties:
+            territory_battles:
+              type: integer
+            siege_events:
+              type: integer
+            kill_score:
+              type: integer
+            territory_control:
+              type: integer
+
+    AddScoreRequest:
+      type: object
+      required:
+        - war_id
+        - clan_id
+        - score_type
+        - score_amount
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        battle_id:
+          type: string
+          format: uuid
+          nullable: true
+        clan_id:
+          type: string
+          format: uuid
+        score_type:
+          type: string
+          enum:
+            - TERRITORY_BATTLE
+            - SIEGE_EVENT
+            - KILL_SCORE
+            - TERRITORY_CONTROL
+        score_amount:
+          type: integer
+
+    AddScoreResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        war_id:
+          type: string
+          format: uuid
+        clan_id:
+          type: string
+          format: uuid
+        new_score:
+          type: integer
+
+    WarWinnerResponse:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        winner_clan_id:
+          type: string
+          format: uuid
+          nullable: true
+        attacker_score:
+          type: integer
+        defender_score:
+          type: integer
+        is_draw:
+          type: boolean
+
+    DistributeRewardsRequest:
+      type: object
+      required:
+        - war_id
+      properties:
+        war_id:
+          type: string
+          format: uuid
+
+    DistributeRewardsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        war_id:
+          type: string
+          format: uuid
+        rewards_distributed:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarReward'
+
+    WarReward:
+      type: object
+      properties:
+        clan_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+          enum:
+            - WINNER_REWARD
+            - LOSER_REWARD
+            - PARTICIPATION_REWARD
+        reward_amount:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+
+    WarRewardsResponse:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarReward'
+
+    InviteAllianceRequest:
+      type: object
+      required:
+        - clan_id
+        - ally_clan_id
+        - role
+      properties:
+        clan_id:
+          type: string
+          format: uuid
+        ally_clan_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - ALLY_ATTACKER
+            - ALLY_DEFENDER
+
+    RemoveAllianceRequest:
+      type: object
+      required:
+        - clan_id
+        - ally_clan_id
+      properties:
+        clan_id:
+          type: string
+          format: uuid
+        ally_clan_id:
+          type: string
+          format: uuid
+
+    AllianceResponse:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        allies_attacker:
+          type: array
+          items:
+            type: string
+            format: uuid
+        allies_defender:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    WarEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        war_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - clan-war:declared
+            - clan-war:phase-changed
+            - clan-war:battle-started
+            - clan-war:battle-ended
+            - clan-war:territory-captured
+            - clan-war:ended
+            - clan-war:rewards-distributed
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    WarEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+

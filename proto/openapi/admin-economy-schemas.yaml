@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: Admin Economy Schemas
+  description: Схемы данных для управления экономикой
+  version: 2.0.0
+
+components:
+  schemas:
+    PlayerBalance:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        currencies:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Тип валюты -> баланс
+
+    UpdateBalanceRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+        - reason
+      properties:
+        currency_type:
+          type: string
+        amount:
+          type: integer
+          description: Может быть отрицательным для уменьшения
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    MarketActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+          nullable: true
+        price:
+          type: integer
+        quantity:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    SuspiciousOperation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        operation_type:
+          type: string
+        player_id:
+          type: string
+          format: uuid
+        details:
+          type: object
+          additionalProperties: true
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        detected_at:
+          type: string
+          format: date-time
+
+    RMTReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateItemRequest:
+      type: object
+      required:
+        - name
+        - item_type
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+
+    UpdateItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+

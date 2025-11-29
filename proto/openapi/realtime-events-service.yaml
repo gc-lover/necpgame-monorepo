@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Realtime Service - Events API
+  description: API для управления realtime событиями
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8080/api/v1/realtime
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1/realtime
+      description: Продакшен сервер
+
+tags:
+  - name: Events
+    description: Realtime события
+
+paths:
+  /events/{zone_id}:
+    get:
+      tags:
+        - Events
+      summary: События зоны
+      operationId: getZoneEvents
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - combat
+              - movement
+              - chat
+              - world
+              - social
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События зоны
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: 'realtime-schemas.yaml#/components/schemas/RealtimeEvent'
+                  total:
+                    type: integer
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /events/publish:
+    post:
+      tags:
+        - Events
+      summary: Публикация события
+      operationId: publishEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/PublishEventRequest'
+      responses:
+        '201':
+          description: Событие опубликовано
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/RealtimeEvent'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

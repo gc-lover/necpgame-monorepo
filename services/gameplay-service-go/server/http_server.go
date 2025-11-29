@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/necpgame/gameplay-service-go/models"
+	"github.com/necpgame/gameplay-service-go/pkg/api"
+	"github.com/necpgame/gameplay-service-go/pkg/combosapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,11 +42,12 @@ type HTTPServer struct {
 	questService     QuestServiceInterface
 	affixService     AffixServiceInterface
 	timeTrialService TimeTrialServiceInterface
+	comboService     ComboServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
@@ -53,6 +56,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		questService:     questService,
 		affixService:     affixService,
 		timeTrialService: timeTrialService,
+		comboService:     comboService,
 		logger:           GetLogger(),
 	}
 
@@ -79,14 +83,8 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	questAPI.HandleFunc("/characters/{character_id}", server.listQuestInstances).Methods("GET")
 
 	affixHandlers := NewAffixHandlers(affixService)
-	affixAPI := router.PathPrefix("/api/v1/gameplay/affixes").Subrouter()
-	affixAPI.HandleFunc("/active", affixHandlers.GetActiveAffixes).Methods("GET")
-	affixAPI.HandleFunc("/{id}", affixHandlers.GetAffix).Methods("GET")
-	affixAPI.HandleFunc("/rotation/history", affixHandlers.GetRotationHistory).Methods("GET")
-	affixAPI.HandleFunc("/rotation/trigger", affixHandlers.TriggerRotation).Methods("POST")
-
-	instanceAPI := router.PathPrefix("/api/v1/gameplay/instances").Subrouter()
-	instanceAPI.HandleFunc("/{instance_id}/affixes", affixHandlers.GetInstanceAffixes).Methods("GET")
+	affixAPI := router.PathPrefix("/api/v1/gameplay").Subrouter()
+	api.HandlerFromMux(affixHandlers, affixAPI)
 
 	timeTrialHandlers := NewTimeTrialHandlers(timeTrialService)
 	timeTrialAPI := router.PathPrefix("/api/v1/gameplay/time-trials").Subrouter()
@@ -95,6 +93,10 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	timeTrialAPI.HandleFunc("/sessions/{session_id}", timeTrialHandlers.GetTimeTrialSession).Methods("GET")
 	timeTrialAPI.HandleFunc("/weekly/current", timeTrialHandlers.GetCurrentWeeklyChallenge).Methods("GET")
 	timeTrialAPI.HandleFunc("/weekly/history", timeTrialHandlers.GetWeeklyChallengeHistory).Methods("GET")
+
+	comboHandlers := NewComboHandlers(comboService)
+	comboAPI := router.PathPrefix("/api/v1/gameplay/combat/combos").Subrouter()
+	combosapi.HandlerFromMux(comboHandlers, comboAPI)
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

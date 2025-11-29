@@ -1,31 +1,43 @@
-FROM golang:1.24-alpine AS builder
+﻿FROM golang:1.24-alpine AS builder
 
-WORKDIR /app/services/progression-paragon-service-go
+WORKDIR /app
 
-RUN apk add --no-cache make nodejs npm git
+RUN apk add --no-cache make nodejs npm git ca-certificates tzdata
 
 COPY services/progression-paragon-service-go/go.mod services/progression-paragon-service-go/go.sum ./
 RUN go mod download
 
 RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
-COPY proto/ ../../proto/
-COPY services/progression-paragon-service-go/ ./
+COPY services/progression-paragon-service-go ./services/progression-paragon-service-go
+COPY proto ./proto
+
+WORKDIR /app/services/progression-paragon-service-go
 
 RUN make generate-api || true
 
 RUN go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux go build -o progression-paragon-service -ldflags="-w -s" .
+RUN CGO_ENABLED=0 GOOS=linux go build -o progression-paragon-service -ldflags="-w -s -extldflags '-static'" .
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /app
 
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
 COPY --from=builder /app/services/progression-paragon-service-go/progression-paragon-service /app/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8084/tcp 9084
 
-ENTRYPOINT ["/app/progression-paragon-service"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:9084/metrics || exit 1
 
+ENTRYPOINT ["/app/progression-paragon-service"]

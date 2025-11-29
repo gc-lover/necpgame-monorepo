@@ -1,0 +1,395 @@
+openapi: 3.0.3
+info:
+  title: Admin Players Service API
+  description: API для управления игроками
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Player Management
+    description: Управление игроками
+
+paths:
+  /players:
+    get:
+      tags:
+        - Player Management
+      summary: Список игроков
+      operationId: listPlayers
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Поиск по имени или email
+      responses:
+        '200':
+          description: Список игроков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerProfile'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}:
+    get:
+      tags:
+        - Player Management
+      summary: Профиль игрока
+      operationId: getPlayerProfile
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Профиль игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Player Management
+      summary: Обновление профиля игрока
+      operationId: updatePlayerProfile
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlayerRequest'
+      responses:
+        '200':
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Player Management
+      summary: Удаление игрока
+      operationId: deletePlayer
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeletePlayerRequest'
+      responses:
+        '200':
+          description: Игрок удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/sessions:
+    get:
+      tags:
+        - Player Management
+      summary: История сессий игрока
+      operationId: getPlayerSessions
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: История сессий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerSession'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/transactions:
+    get:
+      tags:
+        - Player Management
+      summary: История транзакций игрока
+      operationId: getPlayerTransactions
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/inventory:
+    get:
+      tags:
+        - Player Management
+      summary: Инвентарь игрока
+      operationId: getPlayerInventory
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Инвентарь игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InventoryItem'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/achievements:
+    get:
+      tags:
+        - Player Management
+      summary: Достижения игрока
+      operationId: getPlayerAchievements
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Достижения игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Achievement'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/sanctions:
+    post:
+      tags:
+        - Player Management
+      summary: Выдача санкции игроку
+      operationId: createSanction
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSanctionRequest'
+      responses:
+        '201':
+          description: Санкция выдана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sanction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/sanctions/{sanction_id}:
+    delete:
+      tags:
+        - Player Management
+      summary: Отзыв санкции
+      operationId: revokeSanction
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sanction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeSanctionRequest'
+      responses:
+        '200':
+          description: Санкция отозвана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: revoked
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerProfile:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/PlayerProfile'
+    UpdatePlayerRequest:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/UpdatePlayerRequest'
+    DeletePlayerRequest:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/DeletePlayerRequest'
+    PlayerSession:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/PlayerSession'
+    Transaction:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/Transaction'
+    InventoryItem:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/InventoryItem'
+    Achievement:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/Achievement'
+    CreateSanctionRequest:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/CreateSanctionRequest'
+    Sanction:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/Sanction'
+    RevokeSanctionRequest:
+      $ref: 'admin-players-schemas.yaml#/components/schemas/RevokeSanctionRequest'
+
+security:
+  - BearerAuth: []
+
