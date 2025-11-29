@@ -1,0 +1,214 @@
+metadata:
+  id: technology-progression-mechanics
+  title: Technology Progression - Механика разблокировки и интеграция
+  document_type: mechanics
+  category: progression
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-29T10:00:00Z
+  related_documents:
+    - id: technology-progression-system
+      relation: part_of
+content:
+  sections:
+    - id: unlock-mechanics
+      title: Механика разблокировки
+      body: |
+        Технологии разблокируются через несколько механизмов: автоматически по времени лиги, 
+        через сюжетные события, через репутацию с корпорациями и через специальные квесты.
+      subsections:
+        - id: automatic-unlock
+          title: Автоматическая разблокировка по времени
+          description: |
+            Технологии разблокируются автоматически при достижении соответствующего года в лиге.
+            Игроки получают уведомление о новых доступных технологиях.
+          mechanics:
+            - type: time_check
+              condition: league_year >= technology_unlock_year
+              action: unlock_technology
+            - type: notification
+              message: "Новая технология доступна: {technology_name}"
+            - type: ui_update
+              element: technology_list
+        - id: quest-unlock
+          title: Разблокировка через сюжет
+          description: |
+            Некоторые технологии требуют завершения определённых квестов.
+            Сюжетные события могут ускорить или замедлить разблокировку.
+          mechanics:
+            - type: quest_completion
+              condition: quest_id == required_quest
+              action: unlock_technology
+            - type: story_event
+              condition: event_id == required_event
+              action: unlock_technology
+        - id: reputation-unlock
+          title: Разблокировка через репутацию
+          description: |
+            Высокоуровневые технологии требуют репутации с корпорациями.
+            Разные корпорации предоставляют доступ к разным технологиям.
+          mechanics:
+            - type: reputation_check
+              condition: corporate_reputation >= required_reputation
+              action: unlock_technology
+            - type: vendor_access
+              condition: reputation >= threshold
+              action: enable_vendor_access
+        - id: access-restrictions
+          title: Ограничения доступа
+          description: |
+            Игроки не могут получить технологии, которые ещё не изобретены.
+            Торговцы не продают недоступные технологии.
+            Квесты не требуют недоступных технологий.
+          mechanics:
+            - type: technology_check
+              condition: technology_unlocked == false
+              action: block_access
+            - type: vendor_filter
+              condition: technology_unlocked == false
+              action: hide_item
+            - type: quest_validation
+              condition: required_technology_unlocked == false
+              action: block_quest
+    - id: system-integration
+      title: Интеграция с существующими системами
+      body: |
+        Система разблокировки технологий интегрируется с существующими игровыми системами 
+        для обеспечения согласованной работы всех компонентов игры.
+      subsections:
+        - id: league-integration
+          title: League System
+          description: |
+            Интеграция с системой лиг для получения текущего времени лиги и фазы.
+            Использование времени лиги для проверки доступности технологий.
+          integration_points:
+            - service: league-service
+              endpoint: GET /api/v1/league/current
+              data: current_year, current_phase
+            - service: league-service
+              endpoint: GET /api/v1/league/phases
+              data: phase_transitions
+        - id: inventory-integration
+          title: Inventory Service
+          description: |
+            Технологии как предметы в инвентаре. Ограничение покупки недоступных технологий.
+            Фильтрация доступных предметов по времени лиги.
+          integration_points:
+            - service: inventory-service
+              endpoint: GET /api/v1/inventory/items
+              filter: technology_unlocked == true
+            - service: inventory-service
+              endpoint: POST /api/v1/inventory/purchase
+              validation: check_technology_unlocked
+        - id: character-integration
+          title: Character Service
+          description: |
+            Ограничение установки недоступных имплантатов. Проверка доступности технологий 
+            при создании персонажа. Влияние на прогрессию персонажа.
+          integration_points:
+            - service: character-service
+              endpoint: POST /api/v1/character/implants/install
+              validation: check_implant_technology_unlocked
+            - service: character-service
+              endpoint: POST /api/v1/character/create
+              validation: check_starting_technology_availability
+        - id: quest-integration
+          title: Quest Service
+          description: |
+            Квесты, связанные с разблокировкой технологий. Сюжетные события, влияющие на доступность.
+            Исторические квесты о развитии технологий.
+          integration_points:
+            - service: quest-service
+              endpoint: POST /api/v1/quest/complete
+              action: unlock_technology_on_completion
+            - service: quest-service
+              endpoint: GET /api/v1/quest/available
+              filter: check_required_technology_unlocked
+        - id: world-integration
+          title: World Service
+          description: |
+            События мира, связанные с изобретением технологий. NPC, которые предоставляют доступ к технологиям.
+            Локации, связанные с разработкой технологий.
+          integration_points:
+            - service: world-service
+              endpoint: GET /api/v1/world/events
+              filter: technology_related_events
+            - service: world-service
+              endpoint: GET /api/v1/world/npcs
+              filter: technology_vendors
+    - id: visual-indicators
+      title: Визуальные индикаторы
+      body: |
+        UI элементы и визуальные эффекты для отображения доступных и заблокированных технологий.
+      subsections:
+        - id: ui-elements
+          title: UI элементы
+          elements:
+            - type: current_year_indicator
+              description: Индикатор текущего года лиги
+              location: top_bar
+            - type: technology_list
+              description: Список доступных технологий
+              location: technology_menu
+            - type: locked_technology_preview
+              description: Предпросмотр будущих технологий (заблокированных)
+              location: technology_menu
+            - type: unlock_timer
+              description: Таймер до разблокировки следующей технологии
+              location: technology_menu
+        - id: visual-effects
+          title: Визуальные эффекты
+          effects:
+            - type: unlock_animation
+              description: Анимация разблокировки технологии
+              trigger: technology_unlocked
+            - type: notification
+              description: Уведомления о новых доступных технологиях
+              trigger: technology_unlocked
+            - type: visual_difference
+              description: Визуальные различия между доступными и недоступными технологиями
+              implementation: grayed_out, locked_icon
+    - id: examples
+      title: Примеры использования
+      body: |
+        Конкретные примеры разблокировки технологий в различных сценариях.
+      scenarios:
+        - id: braindance-unlock
+          title: Разблокировка Braindance
+          time: 2030 год
+          requirements:
+            - league_year >= 2030
+            - complete_quest "Braindance Revolution"
+          result: |
+            Игрок получает доступ к Braindance технологиям.
+            Новые квесты и механики становятся доступными.
+          effects:
+            - unlock_technology: braindance
+            - unlock_quests: ["Braindance Experience", "Braindance Collection"]
+            - unlock_vendors: entertainment_vendors
+        - id: datakrash-event
+          title: DataKrash событие
+          time: 2021-2022 год
+          event: DataKrash разрушает старую NET
+          result: |
+            Временное ограничение доступа к киберпространству.
+            Игроки должны адаптироваться к новым условиям.
+          effects:
+            - lock_technology: net-advanced
+            - unlock_quest: "DataKrash Aftermath"
+            - world_event: "NET Collapse"
+        - id: relic-unlock
+          title: Разблокировка Relic
+          time: 2070 год
+          requirements:
+            - league_year >= 2070
+            - arasaka_reputation >= 150
+            - complete_quest "Relic Technology"
+          result: |
+            Доступ к технологии Relic.
+            Новые возможности для сохранения личности.
+          effects:
+            - unlock_technology: relic
+            - unlock_quests: ["Relic Creation", "Personality Transfer"]
+            - unlock_vendors: arasaka_vendors
+
