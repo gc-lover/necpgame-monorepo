@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Admin Analytics Service API
+  description: API для аналитики и мониторинга
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Analytics
+    description: Аналитика и мониторинг
+
+paths:
+  /analytics/players/online:
+    get:
+      tags:
+        - Analytics
+      summary: Онлайн игроки
+      operationId: getOnlinePlayers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Онлайн игроки
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - count
+                  - players
+                properties:
+                  count:
+                    type: integer
+                    minimum: 0
+                    description: Количество онлайн игроков
+                    example: 1250
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OnlinePlayer'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /analytics/matches/active:
+    get:
+      tags:
+        - Analytics
+      summary: Активные матчи
+      operationId: getActiveMatches
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Активные матчи
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - count
+                  - matches
+                properties:
+                  count:
+                    type: integer
+                    minimum: 0
+                    description: Количество активных матчей
+                    example: 45
+                  matches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveMatch'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /analytics/trade/operations:
+    get:
+      tags:
+        - Analytics
+      summary: Операции торговли
+      operationId: getTradeOperations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Операции торговли
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - operations
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeOperation'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /analytics/servers/load:
+    get:
+      tags:
+        - Analytics
+      summary: Нагрузка серверов
+      operationId: getServerLoad
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Нагрузка серверов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - servers
+                properties:
+                  servers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServerLoad'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /analytics/chat/activity:
+    get:
+      tags:
+        - Analytics
+      summary: Активность чатов
+      operationId: getChatActivity
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Активность чатов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - activity
+                properties:
+                  activity:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatActivity'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /analytics/anomalies:
+    get:
+      tags:
+        - Analytics
+      summary: Аномалии
+      operationId: getAnomalies
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Аномалии
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - anomalies
+                properties:
+                  anomalies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Anomaly'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /analytics/notifications:
+    get:
+      tags:
+        - Analytics
+      summary: Статистика уведомлений
+      operationId: getNotificationStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Статистика уведомлений
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - notifications
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NotificationStats'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    OnlinePlayer:
+      type: object
+      required:
+        - player_id
+        - character_name
+        - server
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        character_name:
+          type: string
+          description: Имя персонажа
+          example: "JohnDoe"
+        level:
+          type: integer
+          minimum: 1
+          description: Уровень персонажа
+          example: 25
+        server:
+          type: string
+          description: Сервер
+          example: "server-01"
+        connected_at:
+          type: string
+          format: date-time
+          description: Время подключения
+          example: "2025-11-29T10:00:00Z"
+
+    ActiveMatch:
+      type: object
+      required:
+        - id
+        - match_type
+        - players_count
+        - server
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор матча
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        match_type:
+          type: string
+          description: Тип матча
+          example: "deathmatch"
+        players_count:
+          type: integer
+          minimum: 0
+          description: Количество игроков
+          example: 12
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала матча
+          example: "2025-11-29T10:00:00Z"
+        server:
+          type: string
+          description: Сервер
+          example: "server-01"
+
+    TradeOperation:
+      type: object
+      required:
+        - id
+        - seller_id
+        - buyer_id
+        - item_id
+        - price
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор операции
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        seller_id:
+          type: string
+          format: uuid
+          description: Идентификатор продавца
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        buyer_id:
+          type: string
+          format: uuid
+          description: Идентификатор покупателя
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        item_id:
+          type: string
+          format: uuid
+          description: Идентификатор предмета
+          example: "550e8400-e29b-41d4-a716-446655440005"
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: Цена
+          example: 1500.50
+        created_at:
+          type: string
+          format: date-time
+          description: Время операции
+          example: "2025-11-29T10:00:00Z"
+
+    ServerLoad:
+      type: object
+      required:
+        - server_id
+        - server_name
+        - cpu_usage
+        - memory_usage
+        - players_online
+      properties:
+        server_id:
+          type: string
+          description: Идентификатор сервера
+          example: "server-01"
+        server_name:
+          type: string
+          description: Название сервера
+          example: "EU-West-01"
+        cpu_usage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Использование CPU в процентах
+          example: 65.5
+        memory_usage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Использование памяти в процентах
+          example: 72.3
+        players_online:
+          type: integer
+          minimum: 0
+          description: Количество онлайн игроков
+          example: 250
+
+    ChatActivity:
+      type: object
+      required:
+        - channel
+        - messages_count
+        - unique_senders
+      properties:
+        channel:
+          type: string
+          description: Канал чата
+          example: "global"
+        messages_count:
+          type: integer
+          minimum: 0
+          description: Количество сообщений
+          example: 1250
+        unique_senders:
+          type: integer
+          minimum: 0
+          description: Количество уникальных отправителей
+          example: 150
+        period:
+          type: string
+          description: Период статистики
+          example: "1h"
+
+    Anomaly:
+      type: object
+      required:
+        - id
+        - anomaly_type
+        - severity
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор аномалии
+          example: "550e8400-e29b-41d4-a716-446655440006"
+        anomaly_type:
+          type: string
+          description: Тип аномалии
+          example: "unusual_trade"
+        severity:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+          description: Серьезность аномалии
+          example: "high"
+        description:
+          type: string
+          description: Описание аномалии
+          example: "Unusual trade pattern detected"
+        detected_at:
+          type: string
+          format: date-time
+          description: Время обнаружения
+          example: "2025-11-29T10:00:00Z"
+
+    NotificationStats:
+      type: object
+      required:
+        - notification_type
+        - sent_count
+        - delivered_count
+      properties:
+        notification_type:
+          type: string
+          description: Тип уведомления
+          example: "system"
+        sent_count:
+          type: integer
+          minimum: 0
+          description: Количество отправленных
+          example: 1000
+        delivered_count:
+          type: integer
+          minimum: 0
+          description: Количество доставленных
+          example: 950
+        read_count:
+          type: integer
+          minimum: 0
+          description: Количество прочитанных
+          example: 800
+        period:
+          type: string
+          description: Период статистики
+          example: "24h"
+
+security:
+  - BearerAuth: []
+

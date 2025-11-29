@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Cooldown Schemas
+  description: Схемы данных для кулдаунов боевых способностей
+  version: 1.0.0
+
+components:
+  schemas:
+    CooldownStatus:
+      type: object
+      required:
+        - ability_id
+        - is_on_cooldown
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        is_on_cooldown:
+          type: boolean
+          description: Находится ли способность на кулдауне
+          example: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала кулдауна
+          example: "2025-11-23T10:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания кулдауна
+          example: "2025-11-23T10:00:15Z"
+        cooldown_duration:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Длительность кулдауна в секундах
+          example: 15
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Оставшееся время кулдауна в секундах
+          example: 10
+
+    CooldownCheckRequest:
+      type: object
+      required:
+        - ability_ids
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список идентификаторов способностей для проверки
+          example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440003"]
+
+    CooldownCheckResponse:
+      type: object
+      required:
+        - cooldowns
+      properties:
+        cooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CooldownStatus'
+

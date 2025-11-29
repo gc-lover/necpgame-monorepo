@@ -1,0 +1,572 @@
+openapi: 3.0.3
+info:
+  title: Admin Moderation Service API
+  description: API для модерации и обработки репортов
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Moderation
+    description: Модерация и обработка репортов
+
+paths:
+  /moderation/reports:
+    get:
+      tags:
+        - Moderation
+      summary: Список репортов
+      operationId: listReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - resolved
+              - rejected
+          description: Фильтр по статусу репорта
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список репортов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - reports
+                  - total
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Report'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 10
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /moderation/reports/{report_id}:
+    get:
+      tags:
+        - Moderation
+      summary: Детали репорта
+      operationId: getReportDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор репорта
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Детали репорта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /moderation/reports/{report_id}/resolve:
+    post:
+      tags:
+        - Moderation
+      summary: Разрешение репорта
+      operationId: resolveReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор репорта
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveReportRequest'
+      responses:
+        '200':
+          description: Репорт разрешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /moderation/chat/messages:
+    get:
+      tags:
+        - Moderation
+      summary: Сообщения чата
+      operationId: getChatMessages
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel
+          in: query
+          schema:
+            type: string
+          description: Фильтр по каналу
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Сообщения чата
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - messages
+                  - total
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 50
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /moderation/chat/messages/{message_id}:
+    delete:
+      tags:
+        - Moderation
+      summary: Удаление сообщения чата
+      operationId: deleteChatMessage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор сообщения
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMessageRequest'
+      responses:
+        '200':
+          description: Сообщение удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    example: "deleted"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /moderation/players/{player_id}/ban:
+    post:
+      tags:
+        - Moderation
+      summary: Бан игрока
+      operationId: banPlayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440002"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanPlayerRequest'
+      responses:
+        '200':
+          description: Игрок забанен
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    example: "banned"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Moderation
+      summary: Разбан игрока
+      operationId: unbanPlayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440002"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnbanPlayerRequest'
+      responses:
+        '200':
+          description: Игрок разбанен
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    example: "unbanned"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /moderation/bans:
+    get:
+      tags:
+        - Moderation
+      summary: Список банов
+      operationId: listBans
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список банов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - bans
+                  - total
+                properties:
+                  bans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ban'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 5
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Report:
+      type: object
+      required:
+        - id
+        - reporter_id
+        - reported_player_id
+        - report_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор репорта
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        reporter_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока, создавшего репорт
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        reported_player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока, на которого пожаловались
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        report_type:
+          type: string
+          description: Тип репорта
+          example: "cheating"
+        description:
+          type: string
+          description: Описание репорта
+          example: "Player using aimbot"
+        status:
+          type: string
+          enum:
+            - pending
+            - resolved
+            - rejected
+          description: Статус репорта
+          example: "pending"
+        resolved_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор администратора, разрешившего репорт
+          example: "550e8400-e29b-41d4-a716-446655440005"
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время разрешения репорта
+          example: "2025-11-29T10:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания репорта
+          example: "2025-11-29T09:00:00Z"
+
+    ResolveReportRequest:
+      type: object
+      required:
+        - status
+        - action
+      properties:
+        status:
+          type: string
+          enum:
+            - resolved
+            - rejected
+          description: Новый статус репорта
+          example: "resolved"
+        action:
+          type: string
+          description: Действие, предпринятое модератором
+          example: "Player banned for 7 days"
+        notes:
+          type: string
+          description: Дополнительные заметки
+          example: "Confirmed cheating behavior"
+
+    ChatMessage:
+      type: object
+      required:
+        - id
+        - player_id
+        - channel
+        - message
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор сообщения
+          example: "550e8400-e29b-41d4-a716-446655440006"
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440007"
+        channel:
+          type: string
+          description: Канал чата
+          example: "global"
+        message:
+          type: string
+          description: Текст сообщения
+          example: "Hello everyone!"
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания сообщения
+          example: "2025-11-29T10:00:00Z"
+
+    DeleteMessageRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Причина удаления сообщения
+          example: "Inappropriate language"
+
+    BanPlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        duration:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Длительность в секундах (NULL для постоянного бана)
+          example: 604800
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Причина бана
+          example: "Cheating detected"
+
+    UnbanPlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Причина разбана
+          example: "Appeal approved"
+
+    Ban:
+      type: object
+      required:
+        - id
+        - player_id
+        - admin_id
+        - reason
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор бана
+          example: "550e8400-e29b-41d4-a716-446655440008"
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        admin_id:
+          type: string
+          format: uuid
+          description: Идентификатор администратора
+          example: "550e8400-e29b-41d4-a716-446655440005"
+        reason:
+          type: string
+          description: Причина бана
+          example: "Cheating detected"
+        duration:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Длительность в секундах
+          example: 604800
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания бана
+          example: "2025-12-06T10:00:00Z"
+        is_active:
+          type: boolean
+          description: Активен ли бан
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания бана
+          example: "2025-11-29T10:00:00Z"
+
+security:
+  - BearerAuth: []
+
