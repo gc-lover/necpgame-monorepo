@@ -31,18 +31,20 @@ type HTTPServer struct {
 	addr          string
 	router        *mux.Router
 	ticketService TicketServiceInterface
+	slaService    SLAServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
 	authEnabled   bool
 }
 
-func NewHTTPServer(addr string, ticketService TicketServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService SLAServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:          addr,
 		router:        router,
 		ticketService: ticketService,
+		slaService:    slaService,
 		logger:        GetLogger(),
 		jwtValidator:  jwtValidator,
 		authEnabled:   authEnabled,
@@ -61,6 +63,10 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, jwtValidat
 	supportHandlers := NewSupportHandlers(ticketService)
 	support := api.PathPrefix("/support").Subrouter()
 	supportapi.HandlerFromMux(supportHandlers, support)
+
+	slaHandlers := NewSLAHandlers(slaService)
+	support.HandleFunc("/tickets/{ticket_id}/sla", slaHandlers.getTicketSLA).Methods("GET")
+	support.HandleFunc("/sla/violations", slaHandlers.getSLAViolations).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
