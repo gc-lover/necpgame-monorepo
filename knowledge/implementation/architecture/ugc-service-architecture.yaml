@@ -1,0 +1,370 @@
+metadata:
+  id: ugc-service-architecture
+  title: Архитектура UGC Service - система пользовательского контента
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - infrastructure
+    - storage
+    - ugc
+    - creator-economy
+  related_systems:
+    - creator-platform-service
+    - moderation-service
+    - cdn-service
+    - economy-service
+  related_documents:
+    - id: creator-economy-platform-architecture
+      relation: integrates
+    - id: economy-monetization
+      relation: implements
+  github_issue: 1462
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - infrastructure
+    - api-designer
+
+summary:
+  problem: |
+    Требуется детальная техническая архитектура для системы загрузки, хранения,
+    модерации и распространения пользовательского контента (3D модели, текстуры,
+    аудио, видео, скрипты, квесты).
+  goal: |
+    Создать архитектурную схему UGC Service с определением:
+    - Компонентов для загрузки и валидации контента
+    - Системы хранения (Hot/Cold Storage)
+    - CDN для распространения
+    - Метаданных и индексации
+    - Интеграции с модерацией
+    - Версионирования контента
+    - REST, WebSocket и Event Bus контрактов
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Полнофункциональная система для управления пользовательским контентом с поддержкой
+    загрузки, хранения, модерации, версионирования и распространения через CDN.
+
+architecture:
+  overview: |
+    Архитектура UGC Service состоит из следующих компонентов:
+    1. Upload Service - загрузка и валидация контента
+    2. Storage Service - управление хранилищами (Hot/Cold Storage)
+    3. CDN Service - распространение контента
+    4. Metadata Service - метаданные и индексация
+    5. Moderation Integration - интеграция с модерацией
+    6. Version Control - версионирование контента
+    7. API Gateway - единая точка входа
+
+  content_types:
+    - type: 3d_models
+      description: "3D модели (GLB, FBX, OBJ)"
+      max_size: "100 MB"
+      validation: "формат, полигоны, текстуры"
+      storage: "Hot Storage (S3)"
+    - type: textures
+      description: "Текстуры (PNG, JPG, DDS)"
+      max_size: "50 MB"
+      validation: "разрешение, формат, размер"
+      storage: "Hot Storage (S3)"
+    - type: audio
+      description: "Аудио (OGG, WAV, MP3)"
+      max_size: "20 MB"
+      validation: "формат, длительность, битрейт"
+      storage: "Hot Storage (S3)"
+    - type: video
+      description: "Видео (MP4, WebM)"
+      max_size: "500 MB"
+      validation: "формат, разрешение, длительность"
+      storage: "Cold Storage (S3 Glacier)"
+    - type: scripts
+      description: "Скрипты (Lua, JavaScript)"
+      max_size: "5 MB"
+      validation: "синтаксис, безопасность"
+      storage: "Hot Storage (S3)"
+    - type: quests
+      description: "Квесты (YAML, JSON)"
+      max_size: "10 MB"
+      validation: "структура, валидность"
+      storage: "Hot Storage (PostgreSQL)"
+
+  microservices:
+    - name: ugc-upload-service
+      port: 8110
+      responsibility: |
+        Загрузка и валидация контента:
+        - Прием загрузок от клиентов
+        - Валидация форматов и размеров
+        - Проверка безопасности
+        - Предварительная обработка
+      components:
+        - upload-handler: обработка загрузок
+        - content-validator: валидация контента
+        - security-scanner: проверка безопасности
+        - preprocessor: предварительная обработка
+
+    - name: ugc-storage-service
+      port: 8111
+      responsibility: |
+        Управление хранилищами:
+        - Hot Storage (активный контент)
+        - Cold Storage (архивный контент)
+        - Миграция между хранилищами
+        - Управление жизненным циклом
+      components:
+        - hot-storage-manager: управление Hot Storage
+        - cold-storage-manager: управление Cold Storage
+        - lifecycle-manager: управление жизненным циклом
+        - migration-manager: миграция между хранилищами
+
+    - name: ugc-cdn-service
+      port: 8112
+      responsibility: |
+        Распространение контента через CDN:
+        - Интеграция с CDN провайдерами
+        - Кэширование контента
+        - Оптимизация доставки
+        - Мониторинг производительности
+      components:
+        - cdn-manager: управление CDN
+        - cache-manager: управление кэшем
+        - optimization-engine: оптимизация доставки
+        - performance-monitor: мониторинг производительности
+
+    - name: ugc-metadata-service
+      port: 8113
+      responsibility: |
+        Метаданные и индексация:
+        - Хранение метаданных
+        - Индексация для поиска
+        - Теги и категории
+        - Статистика использования
+      components:
+        - metadata-manager: управление метаданными
+        - search-indexer: индексация для поиска
+        - tag-manager: управление тегами
+        - statistics-collector: сбор статистики
+
+    - name: ugc-version-service
+      port: 8114
+      responsibility: |
+        Версионирование контента:
+        - Управление версиями
+        - История изменений
+        - Откат версий
+        - Сравнение версий
+      components:
+        - version-manager: управление версиями
+        - history-tracker: отслеживание истории
+        - rollback-manager: откат версий
+        - diff-engine: сравнение версий
+
+  storage_strategy:
+    hot_storage: |
+      - Назначение: активный контент, часто используемый
+      - Технология: S3 (AWS S3 или MinIO)
+      - Типы контента: 3D модели, текстуры, аудио, скрипты, квесты
+      - Retention: до 90 дней без использования
+      - Доступ: быстрый (мгновенный)
+    cold_storage: |
+      - Назначение: архивный контент, редко используемый
+      - Технология: S3 Glacier или аналоги
+      - Типы контента: старые версии, неиспользуемый контент
+      - Retention: неограниченный
+      - Доступ: медленный (требует восстановления)
+
+  data_models:
+    - name: UGCContent
+      fields:
+        - id: UUID
+        - creator_id: UUID
+        - content_type: enum (3d_models, textures, audio, video, scripts, quests)
+        - title: string
+        - description: text
+        - file_path: string
+        - file_size: bigint
+        - file_hash: string
+        - storage_type: enum (hot, cold)
+        - version: int
+        - status: enum (draft, pending_moderation, approved, rejected, archived)
+        - moderation_status: json
+        - metadata: json
+        - tags: array<string>
+        - download_count: int
+        - rating: float
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: UGCVersion
+      fields:
+        - id: UUID
+        - content_id: UUID
+        - version_number: int
+        - file_path: string
+        - file_hash: string
+        - changelog: text
+        - created_by: UUID
+        - created_at: timestamp
+
+    - name: UGCMetadata
+      fields:
+        - id: UUID
+        - content_id: UUID
+        - metadata_key: string
+        - metadata_value: json
+        - indexed: boolean
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: UGCDownload
+      fields:
+        - id: UUID
+        - content_id: UUID
+        - player_id: UUID
+        - version: int
+        - downloaded_at: timestamp
+        - cdn_used: boolean
+
+  api_endpoints:
+    upload:
+      - POST /api/v1/ugc/upload - загрузка контента
+      - POST /api/v1/ugc/upload/{id}/validate - валидация загруженного контента
+      - GET /api/v1/ugc/upload/{id}/status - статус загрузки
+
+    content_management:
+      - GET /api/v1/ugc/content - список контента
+      - GET /api/v1/ugc/content/{id} - детали контента
+      - PUT /api/v1/ugc/content/{id} - обновление контента
+      - DELETE /api/v1/ugc/content/{id} - удаление контента
+      - GET /api/v1/ugc/content/{id}/download - скачивание контента
+
+    version_management:
+      - GET /api/v1/ugc/content/{id}/versions - список версий
+      - POST /api/v1/ugc/content/{id}/versions - создание новой версии
+      - GET /api/v1/ugc/content/{id}/versions/{version} - детали версии
+      - POST /api/v1/ugc/content/{id}/versions/{version}/rollback - откат версии
+
+    metadata:
+      - GET /api/v1/ugc/content/{id}/metadata - метаданные контента
+      - PUT /api/v1/ugc/content/{id}/metadata - обновление метаданных
+      - GET /api/v1/ugc/search - поиск контента
+      - GET /api/v1/ugc/tags - список тегов
+
+    moderation:
+      - POST /api/v1/ugc/content/{id}/moderate - отправка на модерацию
+      - GET /api/v1/ugc/content/{id}/moderation-status - статус модерации
+
+  websocket_events:
+    - ugc:upload-progress - прогресс загрузки
+    - ugc:content-approved - контент одобрен
+    - ugc:content-rejected - контент отклонен
+    - ugc:version-created - создана новая версия
+
+  event_bus_topics:
+    - ugc:content-uploaded - контент загружен
+    - ugc:content-validated - контент валидирован
+    - ugc:content-approved - контент одобрен модерацией
+    - ugc:content-rejected - контент отклонен модерацией
+    - ugc:version-created - создана версия
+    - ugc:content-downloaded - контент скачан
+    - ugc:content-archived - контент архивирован
+
+  data_synchronization:
+    tick_rate: |
+      - Загрузка контента: real-time (при загрузке)
+      - Миграция в Cold Storage: каждые 24 часа
+      - Обновление метаданных: при изменениях
+      - Синхронизация CDN: при публикации
+
+    network_load: |
+      - Загрузка контента: высокая нагрузка (большие файлы)
+      - Скачивание контента: высокая нагрузка (CDN)
+      - Метаданные: низкая нагрузка
+      - Версионирование: средняя нагрузка
+
+    caching_strategy: |
+      - Метаданные контента: кэш на 5 минут
+      - Список контента: кэш на 1 минуту
+      - Статус модерации: кэш на 1 минуту
+      - Версии контента: кэш на 10 минут
+
+  integrations:
+    with_creator_platform: |
+      - Загрузка контента через Creator Hub
+      - Управление контентом создателями
+      - Интеграция с монетизацией
+
+    with_moderation_service: |
+      - Автоматическая модерация контента
+      - Ручная модерация
+      - Отчеты о нарушениях
+
+    with_cdn_service: |
+      - Распространение контента через CDN
+      - Кэширование на edge серверах
+      - Оптимизация доставки
+
+    with_economy_service: |
+      - Монетизация контента
+      - Отслеживание продаж
+      - Выплаты создателям
+
+    with_storage_service: |
+      - Hot Storage (S3)
+      - Cold Storage (S3 Glacier)
+      - Управление жизненным циклом
+
+  technical_tasks:
+    - task: "Создать ugc-upload-service"
+      description: |
+        Сервис загрузки с Upload Handler, Content Validator, Security Scanner, Preprocessor
+      estimated_lines: 400
+
+    - task: "Создать ugc-storage-service"
+      description: |
+        Сервис хранения с Hot/Cold Storage Managers, Lifecycle Manager, Migration Manager
+      estimated_lines: 350
+
+    - task: "Создать ugc-cdn-service"
+      description: |
+        Сервис CDN с CDN Manager, Cache Manager, Optimization Engine, Performance Monitor
+      estimated_lines: 300
+
+    - task: "Создать ugc-metadata-service"
+      description: |
+        Сервис метаданных с Metadata Manager, Search Indexer, Tag Manager, Statistics Collector
+      estimated_lines: 300
+
+    - task: "Создать ugc-version-service"
+      description: |
+        Сервис версионирования с Version Manager, History Tracker, Rollback Manager, Diff Engine
+      estimated_lines: 250
+
+    - task: "Создать структуру БД для UGC"
+      description: |
+        Таблицы: ugc_content, ugc_versions, ugc_metadata, ugc_downloads
+      estimated_lines: 200
+
+    - task: "Интегрировать с существующими системами"
+      description: |
+        Интеграция с Creator Platform, Moderation Service, CDN Service, Economy Service
+      estimated_lines: 250
+
+    - task: "Создать API endpoints"
+      description: |
+        REST API для Upload, Content Management, Version Management, Metadata, Moderation
+      estimated_lines: 400
+
+    - task: "Интегрировать с Event Bus"
+      description: |
+        Подписка и публикация событий ugc:* для интеграции с другими системами
+      estimated_lines: 200
+
