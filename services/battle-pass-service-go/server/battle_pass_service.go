@@ -23,6 +23,7 @@ type BattlePassServiceInterface interface {
 	GetRewards(ctx context.Context, seasonID uuid.UUID) ([]models.BattlePassReward, error)
 	ClaimReward(ctx context.Context, characterID, rewardID uuid.UUID) error
 	GetWeeklyChallenges(ctx context.Context, characterID uuid.UUID) ([]models.WeeklyChallenge, error)
+	GetSeasonChallenges(ctx context.Context, characterID uuid.UUID, seasonID *uuid.UUID) ([]models.WeeklyChallenge, uuid.UUID, error)
 	CompleteChallenge(ctx context.Context, characterID, challengeID uuid.UUID) error
 	GetLevelRequirements(ctx context.Context, level int) (*models.LevelRequirements, error)
 }
@@ -318,6 +319,40 @@ func (s *BattlePassService) GetWeeklyChallenges(ctx context.Context, characterID
 	}
 
 	return result, nil
+}
+
+func (s *BattlePassService) GetSeasonChallenges(ctx context.Context, characterID uuid.UUID, seasonID *uuid.UUID) ([]models.WeeklyChallenge, uuid.UUID, error) {
+	var targetSeasonID uuid.UUID
+
+	if seasonID != nil {
+		targetSeasonID = *seasonID
+	} else {
+		season, err := s.repo.GetCurrentSeason(ctx)
+		if err != nil {
+			return nil, uuid.Nil, err
+		}
+		if season == nil {
+			return nil, uuid.Nil, errors.New("no active season")
+		}
+		targetSeasonID = season.ID
+	}
+
+	challenges, err := s.repo.GetWeeklyChallenges(ctx, targetSeasonID, nil)
+	if err != nil {
+		return nil, uuid.Nil, err
+	}
+
+	result := make([]models.WeeklyChallenge, len(challenges))
+	for i := range challenges {
+		result[i] = challenges[i]
+		progress, err := s.repo.GetChallengeProgress(ctx, characterID, challenges[i].ID)
+		if err == nil && progress != nil {
+			result[i].Progress = progress.Progress
+			result[i].IsCompleted = progress.IsCompleted
+		}
+	}
+
+	return result, targetSeasonID, nil
 }
 
 func (s *BattlePassService) CompleteChallenge(ctx context.Context, characterID, challengeID uuid.UUID) error {
