@@ -1,0 +1,195 @@
+metadata:
+  id: cyberspace-system-architecture
+  title: Архитектура системы киберпространства
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - cyberspace
+    - gameplay
+  related_systems:
+    - gameplay-service-go
+    - world-service-go
+  related_documents:
+    - id: network-system-architecture
+      relation: extends
+    - id: hacking-system-architecture
+      relation: extends
+  github_issue: 1447
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы киберпространства - сжатого 3D
+    пространства для доступа к удаленным устройствам, подключенным к сети.
+  goal: |
+    Создать архитектурную схему системы киберпространства с определением:
+    - Микросервисов для управления киберпространством
+    - Компонентов для навигации в 3D пространстве
+    - Доступа к удаленным устройствам
+    - Визуального представления
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система киберпространства для доступа к удаленным устройствам через
+    сжатое 3D пространство с визуальным представлением.
+
+architecture:
+  overview: |
+    Система киберпространства состоит из следующих компонентов:
+    1. Cyberspace Service - управление киберпространством
+    2. Cyberspace Navigation Service - навигация в 3D пространстве
+    3. Cyberspace Device Access Service - доступ к удаленным устройствам
+    4. Cyberspace Visual Service - визуальное представление
+    5. Cyberspace Network Integration - интеграция с сетью
+
+  microservices:
+    - name: cyberspace-service
+      location: gameplay-service-go (модуль cyberspace)
+      port: 8083
+      responsibility: |
+        Управление киберпространством:
+        - Вход в киберпространство
+        - Выход из киберпространства
+        - Управление сессиями киберпространства
+        - Интеграция с сетью
+      endpoints:
+        - POST /api/v1/gameplay/cyberspace/enter - вход в киберпространство
+        - POST /api/v1/gameplay/cyberspace/exit - выход из киберпространства
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/status - статус сессии
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/world - информация о мире
+
+    - name: cyberspace-navigation-service
+      location: gameplay-service-go (модуль cyberspace-navigation)
+      port: 8083
+      responsibility: |
+        Навигация в 3D пространстве:
+        - Управление позицией в киберпространстве
+        - Навигация между узлами
+        - Поиск путей
+        - Управление маршрутами
+      endpoints:
+        - POST /api/v1/gameplay/cyberspace/{sessionId}/navigate - навигация
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/position - текущая позиция
+        - POST /api/v1/gameplay/cyberspace/{sessionId}/path - поиск пути
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/nodes - список узлов
+
+    - name: cyberspace-device-access-service
+      location: gameplay-service-go (модуль cyberspace-device)
+      port: 8083
+      responsibility: |
+        Доступ к удаленным устройствам:
+        - Поиск устройств в киберпространстве
+        - Подключение к устройствам
+        - Взаимодействие с устройствами
+        - Управление доступом
+      endpoints:
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/devices - список устройств
+        - POST /api/v1/gameplay/cyberspace/{sessionId}/devices/{deviceId}/connect - подключение
+        - POST /api/v1/gameplay/cyberspace/{sessionId}/devices/{deviceId}/interact - взаимодействие
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/devices/{deviceId} - информация об устройстве
+
+    - name: cyberspace-visual-service
+      location: gameplay-service-go (модуль cyberspace-visual)
+      port: 8083
+      responsibility: |
+        Визуальное представление:
+        - Генерация визуального представления
+        - Управление визуальными эффектами
+        - Синхронизация визуального состояния
+      endpoints:
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/visual/state - визуальное состояние
+        - POST /api/v1/gameplay/cyberspace/{sessionId}/visual/update - обновление визуального состояния
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/visual/effects - визуальные эффекты
+
+    - name: cyberspace-network-integration
+      location: gameplay-service-go (модуль cyberspace-network)
+      port: 8083
+      responsibility: |
+        Интеграция с сетью:
+        - Подключение к сети через киберпространство
+        - Доступ к сетевым узлам
+        - Интеграция с системой сети
+      endpoints:
+        - POST /api/v1/gameplay/cyberspace/{sessionId}/network/connect - подключение к сети
+        - GET /api/v1/gameplay/cyberspace/{sessionId}/network/nodes - сетевые узлы
+        - POST /api/v1/gameplay/cyberspace/{sessionId}/network/nodes/{nodeId}/access - доступ к узлу
+
+  integrations:
+    network_service: |
+      - Подключение к сети
+      - Доступ к сетевым узлам
+      - Сетевая коммуникация
+
+    hacking_service: |
+      - Взлом через киберпространство
+      - Навигация для взлома
+      - Доступ к устройствам для взлома
+
+    device_service: |
+      - Доступ к удаленным устройствам
+      - Взаимодействие с устройствами
+
+  technical_tasks:
+    phase_1:
+      name: Cyberspace Service Core
+      tasks:
+        - Реализация Cyberspace Service
+        - Вход/выход из киберпространства
+        - Управление сессиями
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Cyberspace Navigation Service
+      tasks:
+        - Реализация Cyberspace Navigation Service
+        - Навигация в 3D пространстве
+        - Поиск путей
+      estimated_effort: 5 days
+
+    phase_3:
+      name: Cyberspace Device Access Service
+      tasks:
+        - Реализация Cyberspace Device Access Service
+        - Доступ к удаленным устройствам
+        - Взаимодействие с устройствами
+      estimated_effort: 4 days
+
+    phase_4:
+      name: Cyberspace Visual Service
+      tasks:
+        - Реализация Cyberspace Visual Service
+        - Визуальное представление
+        - Визуальные эффекты
+      estimated_effort: 4 days
+
+    phase_5:
+      name: Cyberspace Network Integration
+      tasks:
+        - Реализация Cyberspace Network Integration
+        - Интеграция с Network Service
+      estimated_effort: 3 days
+
+    phase_6:
+      name: Интеграции
+      tasks:
+        - Интеграция с Network Service
+        - Интеграция с Hacking Service
+        - Интеграция с Device Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 22 days
+

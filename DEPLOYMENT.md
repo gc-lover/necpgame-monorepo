@@ -222,7 +222,7 @@ kubectl get svc -n necpgame --show-labels | grep prometheus
 
 ## Дополнительная документация
 
-- `k8s/README.md` - Детальная документация по K8s манифестам
+- `k8s/README.md` - Детальная документация по K8s манифестам и структуре
 - `k8s/SECRETS_SETUP.md` - Настройка секретов
 - `.github/workflows/README.md` - Документация по GitHub Actions workflows
 

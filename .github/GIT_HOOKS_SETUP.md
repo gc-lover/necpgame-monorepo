@@ -60,27 +60,56 @@ export EXCLUDED_PATTERNS=(...)          # Исключения из провер
 - Git pre-commit hook
 - GitHub Actions workflow
 
-## Удаление
-
-```bash
-git config --unset core.hooksPath
-```
-
 ## Troubleshooting
 
-**Hook не запускается:**
+### Hook не запускается
+
 ```bash
 chmod +x .githooks/pre-commit
 git config core.hooksPath .githooks
 ```
 
-**Ошибка "permission denied" на Windows:**
+### Ошибка "permission denied" на Windows
+
 - Запустите Git Bash от имени администратора
 - Или используйте `install-git-hooks.bat`
 
-**Проверить установленные хуки:**
+### Git команды зависают на Windows
+
+Если git команды зависают, это может быть связано с проблемами WSL2 bash:
+
+1. **Проблема:** WSL2 bash не работает (ошибка подключения диска WSL2)
+2. **Решение:** Убедитесь, что Git использует Git Bash вместо WSL2 bash
+
+```bash
+# Проверьте, какой bash используется
+where bash.exe
+
+# Должен показать путь к Git Bash: C:\Program Files\Git\bin\bash.exe
+# Если показывает WSL путь - проблема в WSL2
+
+# Исправление: Настройте Git для использования Git Bash
+git config --global core.editor "'C:/Program Files/Git/bin/bash.exe' -c 'EDITOR=\"$EDITOR\" exec \"$EDITOR\" \"$@\"'"
+```
+
+Если проблема сохраняется, hooks настроены для автоматического обхода при ошибках. Они не должны блокировать git команды.
+
+### Проверка установленных хуков
+
 ```bash
 git config core.hooksPath
 ls -la .githooks/
+```
+
+### Временное отключение hooks
+
+```bash
+git config --unset core.hooksPath
+```
+
+## Удаление
+
+```bash
+git config --unset core.hooksPath
 ```
 

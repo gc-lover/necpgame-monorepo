@@ -1,4 +1,4 @@
-# Настройка Agent Review в Cursor
+# Настройка и Troubleshooting Agent Review в Cursor
 
 ## Проблема
 
@@ -34,11 +34,23 @@ git add .cursor/BUGBOT.md
 git commit -m "Add Agent Review rules"
 ```
 
-### Шаг 4: Перезапустите Cursor
+### Шаг 4: Настройте upstream для ветки
 
-После добавления файла перезапустите Cursor IDE.
+Если вы на ветке `develop`:
+```bash
+git branch --set-upstream-to=origin/develop develop
+```
 
-### Шаг 5: Использование Agent Review
+Если вы на ветке `main`:
+```bash
+git branch --set-upstream-to=origin/main main
+```
+
+### Шаг 5: Перезапустите Cursor
+
+После всех изменений полностью перезапустите Cursor IDE.
+
+## Использование Agent Review
 
 1. **В Cursor IDE:**
    - Откройте файл для ревью
@@ -49,35 +61,26 @@ git commit -m "Add Agent Review rules"
    - Используйте `@Cursor` в комментариях PR
    - Агент проанализирует изменения
 
-## Проверка работы
-
-1. Создайте тестовый файл с ошибкой
-2. Запустите Agent Review
-3. Проверьте, что агент находит проблемы
-
 ## Troubleshooting
 
 ### Проблема: "Failed to gather Agent Review context. Caused by: Error when executing 'git':"
 
-**Это основная проблема. Решения:**
+**Решения:**
 
 1. **Проверьте git в PATH:**
    ```bash
    git --version
-   # Должно показать версию git
    ```
 
 2. **Проверьте конфигурацию git:**
    ```bash
    git config --global user.name
    git config --global user.email
-   # Должны быть установлены
    ```
 
 3. **Закоммитьте незакоммиченные изменения:**
    ```bash
    git status
-   # Если есть изменения - закоммитьте их
    git add .
    git commit -m "WIP: temporary commit"
    ```
@@ -85,12 +88,13 @@ git commit -m "Add Agent Review rules"
 4. **Проверьте upstream для ветки:**
    ```bash
    git branch -vv
-   # Убедитесь, что ветка отслеживает remote
    ```
 
-5. **Перезапустите Cursor** после всех изменений
-
-**Подробнее:** см. `.cursor/AGENT_REVIEW_TROUBLESHOOTING.md`
+5. **Проверьте синхронизацию с remote:**
+   ```bash
+   git fetch origin
+   git status
+   ```
 
 ### Проблема: Git команды не выполняются
 
@@ -103,7 +107,7 @@ git commit -m "Add Agent Review rules"
 ### Проблема: Agent Review не видит правила
 
 **Решение:**
-- Убедитесь, что `.cursor/BUGBOT.md` закоммичен (проверьте: `git log --oneline --all -- .cursor/BUGBOT.md`)
+- Убедитесь, что `.cursor/BUGBOT.md` закоммичен
 - Проверьте, что файл имеет правильный формат (YAML frontmatter с `alwaysApply: true`)
 - Перезапустите Cursor
 
@@ -111,13 +115,30 @@ git commit -m "Add Agent Review rules"
 
 **Решение:**
 - Проверьте, что репозиторий синхронизирован с remote (`git fetch origin`)
-- Убедитесь, что есть доступ к GitHub (если используется)
+- Убедитесь, что есть доступ к GitHub
 - Проверьте логи Cursor (Help → Toggle Developer Tools → Console)
 - Попробуйте закоммитить все изменения перед ревью
 
+### Проблема: Проблемы с line endings (CRLF/LF) на Windows
+
+**Решение:**
+```bash
+git config core.autocrlf true
+# Или для проекта:
+git config core.autocrlf input
+```
+
+### Альтернативное решение: Использование через GitHub PR
+
+Если Agent Review не работает локально, используйте ревью через GitHub:
+
+1. Создайте Pull Request
+2. Используйте `@Cursor` в комментариях PR
+3. Cursor проанализирует изменения через GitHub API
+
 ## Дополнительная информация
 
-- Правила ревью находятся в `.cursor/BUGBOT.md`
-- Правила агентов находятся в `.cursor/rules/agent-*.mdc`
-- Общие правила находятся в `.cursor/rules/main.mdc`
+- Правила ревью: `.cursor/BUGBOT.md`
+- Правила агентов: `.cursor/rules/agent-*.mdc`
+- Общие правила: `.cursor/rules/main.mdc`
 

@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
+	cosmeticapi "github.com/necpgame/cosmetic-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -53,33 +55,22 @@ func NewHTTPServer(
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1/monetization/cosmetic").Subrouter()
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 
 	if authEnabled {
-		api.Use(server.authMiddleware)
+		apiRouter.Use(server.authMiddleware)
 	}
 
-	catalog := api.PathPrefix("/catalog").Subrouter()
-	catalog.HandleFunc("", server.getCosmeticCatalog).Methods("GET")
-	catalog.HandleFunc("/categories", server.getCosmeticCategories).Methods("GET")
+	cosmeticHandlers := NewCosmeticHandlers(
+		catalogService,
+		shopService,
+		purchaseService,
+		equipmentService,
+		inventoryService,
+		server.logger,
+	)
 
-	api.HandleFunc("/{cosmetic_id}", server.getCosmeticDetails).Methods("GET")
-
-	shop := api.PathPrefix("/shop").Subrouter()
-	shop.HandleFunc("/daily", server.getDailyShop).Methods("GET")
-	shop.HandleFunc("/history", server.getShopHistory).Methods("GET")
-
-	api.HandleFunc("/purchase", server.purchaseCosmetic).Methods("POST")
-	api.HandleFunc("/purchase/history/{player_id}", server.getPurchaseHistory).Methods("GET")
-
-	api.HandleFunc("/{cosmetic_id}/equip", server.equipCosmetic).Methods("POST")
-	api.HandleFunc("/{cosmetic_id}/unequip", server.unequipCosmetic).Methods("POST")
-	api.HandleFunc("/equipped/{player_id}", server.getEquippedCosmetics).Methods("GET")
-
-	api.HandleFunc("/rarity/{rarity}", server.getCosmeticsByRarity).Methods("GET")
-	api.HandleFunc("/inventory/{player_id}", server.getCosmeticInventory).Methods("GET")
-	api.HandleFunc("/inventory/{player_id}/owned", server.checkCosmeticOwnership).Methods("GET")
-	api.HandleFunc("/events/{player_id}", server.getCosmeticEvents).Methods("GET")
+	cosmeticapi.HandlerFromMux(cosmeticHandlers, apiRouter)
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -167,7 +158,7 @@ func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
 
 		duration := time.Since(start)
 		RecordRequestDuration(r.Method, r.URL.Path, float64(duration.Seconds()))
-		RecordRequest(r.Method, r.URL.Path, recorder.statusCode)
+		RecordRequest(r.Method, r.URL.Path, fmt.Sprintf("%d", recorder.statusCode))
 	})
 }
 

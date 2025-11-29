@@ -1,0 +1,181 @@
+metadata:
+  id: faction-system-architecture
+  title: Архитектура системы фракций
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - faction
+    - social
+  related_systems:
+    - social-service-go
+  related_documents:
+    - id: cooperation-hierarchy-system-architecture
+      relation: extends
+    - id: guild-system-architecture
+      relation: extends
+  github_issue: 1442
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы фракций с многослойной системой,
+    обобщающей различные кооперации, включая объединение кланов в банды и занятие определенных ниш.
+  goal: |
+    Создать архитектурную схему системы фракций с определением:
+    - Микросервисов для управления фракциями
+    - Компонентов для многослойной системы фракций
+    - Объединения кланов в фракции
+    - Ниш и специализации
+    - Взаимодействия между фракциями
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Многослойная система фракций для обобщения различных коопераций с объединением
+    кланов в банды и занятием определенных ниш.
+
+architecture:
+  overview: |
+    Система фракций состоит из следующих компонентов:
+    1. Faction Service - управление фракциями
+    2. Faction Layer Manager - управление слоями фракций
+    3. Faction Clan Manager - объединение кланов в фракции
+    4. Faction Niche Manager - управление нишами и специализацией
+    5. Faction Interaction Manager - взаимодействие между фракциями
+
+  microservices:
+    - name: faction-service
+      location: social-service-go (модуль faction)
+      port: 8084
+      responsibility: |
+        Управление фракциями:
+        - CRUD операции с фракциями
+        - Управление информацией о фракциях
+        - Управление статусом фракций
+      endpoints:
+        - POST /api/v1/social/factions - создание фракции
+        - GET /api/v1/social/factions/{factionId} - информация о фракции
+        - PUT /api/v1/social/factions/{factionId} - обновление фракции
+        - DELETE /api/v1/social/factions/{factionId} - удаление фракции
+
+    - name: faction-layer-manager
+      location: social-service-go (модуль faction-layer)
+      port: 8084
+      responsibility: |
+        Управление слоями фракций:
+        - Создание слоев фракций
+        - Управление слоями
+        - Взаимодействие между слоями
+      endpoints:
+        - POST /api/v1/social/factions/{factionId}/layers - создание слоя
+        - GET /api/v1/social/factions/{factionId}/layers - список слоев
+        - PUT /api/v1/social/factions/{factionId}/layers/{layerId} - обновление слоя
+
+    - name: faction-clan-manager
+      location: social-service-go (модуль faction-clan)
+      port: 8084
+      responsibility: |
+        Объединение кланов в фракции:
+        - Добавление кланов в фракции
+        - Управление кланами в фракциях
+        - Объединение кланов в банды
+      endpoints:
+        - POST /api/v1/social/factions/{factionId}/clans/{clanId} - добавление клана
+        - DELETE /api/v1/social/factions/{factionId}/clans/{clanId} - удаление клана
+        - POST /api/v1/social/factions/{factionId}/bands - создание банды
+        - GET /api/v1/social/factions/{factionId}/bands - список банд
+
+    - name: faction-niche-manager
+      location: social-service-go (модуль faction-niche)
+      port: 8084
+      responsibility: |
+        Управление нишами и специализацией:
+        - Определение ниш фракций
+        - Управление специализацией
+        - Конкуренция за ниши
+      endpoints:
+        - POST /api/v1/social/factions/{factionId}/niches - определение ниши
+        - GET /api/v1/social/factions/{factionId}/niches - список ниш
+        - POST /api/v1/social/factions/{factionId}/niches/{nicheId}/compete - конкуренция за нишу
+
+    - name: faction-interaction-manager
+      location: social-service-go (модуль faction-interaction)
+      port: 8084
+      responsibility: |
+        Взаимодействие между фракциями:
+        - Управление взаимодействиями
+        - Фракционные конфликты
+        - Союзы между фракциями
+      endpoints:
+        - POST /api/v1/social/factions/{factionId1}/interact/{factionId2} - взаимодействие
+        - GET /api/v1/social/factions/{factionId}/interactions - список взаимодействий
+        - POST /api/v1/social/factions/{factionId1}/conflict/{factionId2} - конфликт
+        - POST /api/v1/social/factions/{factionId1}/alliance/{factionId2} - союз
+
+  integrations:
+    guild_service: |
+      - Использование системы кланов
+      - Интеграция с гильдиями
+
+    world_service: |
+      - Интеграция с миром игры
+      - Управление территориями
+
+  technical_tasks:
+    phase_1:
+      name: Faction Service Core
+      tasks:
+        - Реализация Faction Service
+        - CRUD операции с фракциями
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Faction Layer Manager
+      tasks:
+        - Реализация Faction Layer Manager
+        - Управление слоями
+      estimated_effort: 3 days
+
+    phase_3:
+      name: Faction Clan Manager
+      tasks:
+        - Реализация Faction Clan Manager
+        - Объединение кланов
+      estimated_effort: 3 days
+
+    phase_4:
+      name: Faction Niche Manager
+      tasks:
+        - Реализация Faction Niche Manager
+        - Управление нишами
+      estimated_effort: 3 days
+
+    phase_5:
+      name: Faction Interaction Manager
+      tasks:
+        - Реализация Faction Interaction Manager
+        - Взаимодействие между фракциями
+      estimated_effort: 3 days
+
+    phase_6:
+      name: Интеграции
+      tasks:
+        - Интеграция с Guild Service
+        - Интеграция с World Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 18 days
+

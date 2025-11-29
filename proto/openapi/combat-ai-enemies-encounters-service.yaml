@@ -1,0 +1,182 @@
+openapi: 3.0.3
+info:
+  title: Combat AI Enemies Encounters Service API
+  description: |
+    API для управления встречами с AI врагами.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Encounters
+    description: Управление встречами с AI врагами
+
+paths:
+  /gameplay/combat/ai/encounter:
+    post:
+      tags:
+        - Encounters
+      summary: Создание встречи
+      description: |
+        Создает новую встречу с AI врагами в указанной зоне.
+        Встреча может быть обычной или рейдовой.
+      operationId: createEncounter
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/CreateEncounterRequest'
+      responses:
+        '201':
+          description: Встреча создана
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/AIEncounter'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/ai/encounter/{encounter_id}:
+    get:
+      tags:
+        - Encounters
+      summary: Информация о встрече
+      description: Возвращает детальную информацию о встрече с AI врагами.
+      operationId: getEncounter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: encounter_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор встречи
+          example: "550e8400-e29b-41d4-a716-446655440002"
+      responses:
+        '200':
+          description: Информация о встрече
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/AIEncounter'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/ai/encounter/{encounter_id}/start:
+    post:
+      tags:
+        - Encounters
+      summary: Старт встречи
+      description: |
+        Запускает встречу с AI врагами. После старта враги становятся активными
+        и начинают использовать поведенческие паттерны.
+      operationId: startEncounter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: encounter_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор встречи
+          example: "550e8400-e29b-41d4-a716-446655440002"
+      responses:
+        '200':
+          description: Встреча запущена
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/AIEncounter'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/ai/encounter/{encounter_id}/end:
+    post:
+      tags:
+        - Encounters
+      summary: Завершение встречи
+      description: |
+        Завершает встречу с AI врагами. Обрабатывает результат встречи,
+        начисляет награды и обновляет телеметрию.
+      operationId: endEncounter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: encounter_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор встречи
+          example: "550e8400-e29b-41d4-a716-446655440002"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/EndEncounterRequest'
+      responses:
+        '200':
+          description: Встреча завершена
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/AIEncounter'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
+
+

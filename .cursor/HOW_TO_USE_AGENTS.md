@@ -215,7 +215,7 @@ GitHub Actions автоматически:
 
 ### Агент не читает Issue
 
-1. Проверьте, что MCP GitHub настроен (см. `.cursor/AGENT_REVIEW_SETUP.md`)
+1. Проверьте, что MCP GitHub настроен (см. `.cursor/AGENT_REVIEW.md`)
 2. Убедитесь, что Issue #9 существует и доступен
 3. Попробуйте явно указать URL Issue в команде
 
@@ -281,5 +281,4 @@ Architect завершает работу → удаляет agent:architect, д
 - Управление метками: `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`
 - Поиск задач: `.cursor/rules/AGENT_TASK_DISCOVERY.md`
 - Конфигурация агентов: `.cursor/agents-config.md`
-- Тестирование workflow: `.github/TESTING_WORKFLOW.md`
 

@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Common Schemas
+  description: Общие схемы для системы античита
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+paths: {}
+
+components:
+  schemas:
+    Position:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: Координата X
+          example: 100.5
+        y:
+          type: number
+          format: float
+          description: Координата Y
+          example: 200.3
+        z:
+          type: number
+          format: float
+          description: Координата Z
+          example: 50.1
+        map_id:
+          type: string
+          description: Идентификатор карты
+          example: "map-01"
+
+    GameState:
+      type: object
+      properties:
+        position:
+          $ref: '#/components/schemas/Position'
+        health:
+          type: integer
+          minimum: 0
+          description: Здоровье
+          example: 100
+        mana:
+          type: integer
+          minimum: 0
+          description: Мана
+          example: 50
+        inventory:
+          type: object
+          description: Инвентарь
+          additionalProperties: true
+        quest_progress:
+          type: object
+          description: Прогресс квестов
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка
+          example: "2025-11-29T10:00:00Z"
+
+    Violation:
+      type: object
+      required:
+        - id
+        - player_id
+        - violation_type
+        - severity
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор нарушения
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
+          description: Тип нарушения
+          example: "SPEED_HACK"
+        violation_data:
+          type: object
+          description: Данные нарушения
+          additionalProperties: true
+        server_state:
+          type: object
+          description: Состояние сервера
+          additionalProperties: true
+        client_state:
+          type: object
+          description: Состояние клиента
+          additionalProperties: true
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьезность нарушения
+          example: "MEDIUM"
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+          example: "2025-11-29T10:00:00Z"
+
+    StateDiscrepancy:
+      type: object
+      required:
+        - field
+        - client_value
+        - server_value
+      properties:
+        field:
+          type: string
+          description: Поле с расхождением
+          example: "position"
+        client_value:
+          type: object
+          description: Значение на клиенте
+          additionalProperties: true
+        server_value:
+          type: object
+          description: Значение на сервере
+          additionalProperties: true
+        discrepancy_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Процент расхождения
+          example: 15.5
+
+    StateCorrection:
+      type: object
+      required:
+        - field
+        - old_value
+        - new_value
+        - reason
+      properties:
+        field:
+          type: string
+          description: Поле для коррекции
+          example: "position"
+        old_value:
+          type: object
+          description: Старое значение
+          additionalProperties: true
+        new_value:
+          type: object
+          description: Новое значение
+          additionalProperties: true
+        reason:
+          type: string
+          description: Причина коррекции
+          example: "Reconciliation mismatch"
+

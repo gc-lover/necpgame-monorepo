@@ -1,0 +1,156 @@
+metadata:
+  id: continent-system-architecture
+  title: Архитектура системы континентов
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - continent
+    - world
+  related_systems:
+    - world-service-go
+  related_documents:
+    - id: cooperation-hierarchy-system-architecture
+      relation: extends
+    - id: planet-system-architecture
+      relation: extends
+  github_issue: 1439
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - world
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы континентов как регионального
+    уровня в иерархии коопераций с взаимодействием между континентами и влиянием на мир игры.
+  goal: |
+    Создать архитектурную схему системы континентов с определением:
+    - Микросервисов для управления континентами
+    - Компонентов для структуры континентов
+    - Взаимодействия между континентами
+    - Региональных событий
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система континентов для управления региональным уровнем организации с
+    взаимодействием между континентами и региональными событиями.
+
+architecture:
+  overview: |
+    Система континентов состоит из следующих компонентов:
+    1. Continent Service - управление континентами
+    2. Continent Structure Manager - управление структурой континентов
+    3. Continent Interaction Manager - взаимодействие между континентами
+    4. Continent Event Manager - региональные события
+
+  microservices:
+    - name: continent-service
+      location: world-service-go (модуль continent)
+      port: 8088
+      responsibility: |
+        Управление континентами:
+        - CRUD операции с континентами
+        - Управление информацией о континентах
+        - Управление территориями континентов
+      endpoints:
+        - GET /api/v1/world/continents - список континентов
+        - GET /api/v1/world/continents/{continentId} - информация о континенте
+        - POST /api/v1/world/continents - создание континента
+        - PUT /api/v1/world/continents/{continentId} - обновление континента
+
+    - name: continent-structure-manager
+      location: world-service-go (модуль continent-structure)
+      port: 8088
+      responsibility: |
+        Управление структурой континентов:
+        - Управление регионами континентов
+        - Управление территориями
+        - Управление ресурсами континентов
+      endpoints:
+        - GET /api/v1/world/continents/{continentId}/regions - список регионов
+        - GET /api/v1/world/continents/{continentId}/territories - список территорий
+        - GET /api/v1/world/continents/{continentId}/resources - ресурсы континента
+
+    - name: continent-interaction-manager
+      location: world-service-go (модуль continent-interaction)
+      port: 8088
+      responsibility: |
+        Взаимодействие между континентами:
+        - Управление взаимодействиями
+        - Торговля между континентами
+        - Конфликты между континентами
+      endpoints:
+        - POST /api/v1/world/continents/{continentId1}/interact/{continentId2} - взаимодействие
+        - GET /api/v1/world/continents/{continentId}/interactions - список взаимодействий
+
+    - name: continent-event-manager
+      location: world-service-go (модуль continent-event)
+      port: 8088
+      responsibility: |
+        Региональные события:
+        - Создание региональных событий
+        - Управление событиями
+        - Обработка последствий событий
+      endpoints:
+        - POST /api/v1/world/continents/{continentId}/events - создание события
+        - GET /api/v1/world/continents/{continentId}/events - список событий
+        - POST /api/v1/world/continents/{continentId}/events/{eventId}/process - обработка события
+
+  integrations:
+    planet_service: |
+      - Интеграция с планетами
+      - Управление континентами на планетах
+
+    politics_service: |
+      - Политическое влияние на континенты
+      - Управление политикой континентов
+
+  technical_tasks:
+    phase_1:
+      name: Continent Service Core
+      tasks:
+        - Реализация Continent Service
+        - CRUD операции с континентами
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Continent Structure Manager
+      tasks:
+        - Реализация Continent Structure Manager
+        - Управление структурой
+      estimated_effort: 3 days
+
+    phase_3:
+      name: Continent Interaction Manager
+      tasks:
+        - Реализация Continent Interaction Manager
+        - Взаимодействие между континентами
+      estimated_effort: 3 days
+
+    phase_4:
+      name: Continent Event Manager
+      tasks:
+        - Реализация Continent Event Manager
+        - Региональные события
+      estimated_effort: 3 days
+
+    phase_5:
+      name: Интеграции
+      tasks:
+        - Интеграция с Planet Service
+        - Интеграция с Politics Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 15 days
+

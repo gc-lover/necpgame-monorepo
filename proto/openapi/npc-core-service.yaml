@@ -1,0 +1,407 @@
+openapi: 3.0.3
+info:
+  title: NPC Core Service API
+  description: |
+    API для управления NPC: типы, взаимодействия, диалоги, репутация.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: NPC Management
+    description: Управление NPC
+  - name: NPC Types
+    description: Типы NPC
+  - name: NPC Interactions
+    description: Взаимодействия с NPC
+  - name: NPC Dialogues
+    description: Диалоги с NPC
+  - name: NPC Reputation
+    description: Репутация с NPC
+
+paths:
+  /social/npc:
+    get:
+      tags:
+        - NPC Management
+      summary: Список NPC
+      description: Возвращает список NPC с возможностью фильтрации по типу, локации и фракции.
+      operationId: listNPCs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_type_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по типу NPC
+        - name: location_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по локации
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по фракции
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum:
+              - AVAILABLE
+              - BUSY
+              - UNAVAILABLE
+          description: Фильтр по состоянию
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - npcs
+                  - total
+                properties:
+                  npcs:
+                    type: array
+                    items:
+                      $ref: 'npc-schemas.yaml#/components/schemas/NPC'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 50
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc/{npc_id}:
+    get:
+      tags:
+        - NPC Management
+      summary: Детали NPC
+      description: Возвращает детальную информацию о конкретном NPC.
+      operationId: getNPC
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Информация о NPC
+          content:
+            application/json:
+              schema:
+                $ref: 'npc-schemas.yaml#/components/schemas/NPC'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc/types:
+    get:
+      tags:
+        - NPC Types
+      summary: Типы NPC
+      description: Возвращает список всех типов NPC.
+      operationId: listNPCTypes
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список типов NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - types
+                properties:
+                  types:
+                    type: array
+                    items:
+                      $ref: 'npc-schemas.yaml#/components/schemas/NPCType'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc/{npc_id}/interact:
+    post:
+      tags:
+        - NPC Interactions
+      summary: Начать взаимодействие
+      description: |
+        Начинает взаимодействие с NPC указанного типа.
+        Возвращает доступные интерфейсы взаимодействия.
+      operationId: startNPCInteraction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'npc-schemas.yaml#/components/schemas/InteractionRequest'
+      responses:
+        '200':
+          description: Взаимодействие начато
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - interaction_id
+                  - available_interfaces
+                properties:
+                  interaction_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор взаимодействия
+                    example: "550e8400-e29b-41d4-a716-446655440007"
+                  available_interfaces:
+                    type: array
+                    items:
+                      type: string
+                    description: Доступные интерфейсы
+                    example: ["dialogue", "trade", "quest"]
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc/{npc_id}/dialogue:
+    get:
+      tags:
+        - NPC Dialogues
+      summary: Диалог с NPC
+      description: |
+        Возвращает диалоговое дерево для NPC и текущий прогресс диалога игрока.
+      operationId: getNPCDialogue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Диалог с NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - dialogue
+                  - progress
+                properties:
+                  dialogue:
+                    $ref: 'npc-schemas.yaml#/components/schemas/Dialogue'
+                  progress:
+                    $ref: 'npc-schemas.yaml#/components/schemas/DialogueProgress'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc/{npc_id}/dialogue/response:
+    post:
+      tags:
+        - NPC Dialogues
+      summary: Ответ в диалоге
+      description: |
+        Обрабатывает выбор игрока в диалоге и возвращает следующий узел диалога.
+      operationId: respondToDialogue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'npc-schemas.yaml#/components/schemas/DialogueResponseRequest'
+      responses:
+        '200':
+          description: Ответ обработан
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - next_node
+                  - progress
+                properties:
+                  next_node:
+                    $ref: 'npc-schemas.yaml#/components/schemas/DialogueNode'
+                  progress:
+                    $ref: 'npc-schemas.yaml#/components/schemas/DialogueProgress'
+                  reputation_change:
+                    type: integer
+                    description: Изменение репутации
+                    example: 5
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc/{npc_id}/reputation:
+    get:
+      tags:
+        - NPC Reputation
+      summary: Репутация с NPC
+      description: Возвращает текущую репутацию игрока с NPC.
+      operationId: getNPCReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Репутация с NPC
+          content:
+            application/json:
+              schema:
+                $ref: 'npc-schemas.yaml#/components/schemas/NPCReputation'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc/{npc_id}/quests:
+    get:
+      tags:
+        - NPC Management
+      summary: Квесты от NPC
+      description: Возвращает список доступных и активных квестов от NPC.
+      operationId: getNPCQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Квесты от NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - available_quests
+                  - active_quests
+                properties:
+                  available_quests:
+                    type: array
+                    items:
+                      type: object
+                      description: Доступные квесты
+                  active_quests:
+                    type: array
+                    items:
+                      type: object
+                      description: Активные квесты
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
+
+

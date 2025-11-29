@@ -102,9 +102,17 @@
 
 **Контентные квесты (Canon/Lore) НЕ проходят через архитектурный этап:**
 
+**Контентные квесты ОБЯЗАТЕЛЬНО проходят через импорт в БД:**
+
 ```
-Idea Writer → Content Writer → QA → Release
+Idea Writer → Content Writer (создает + валидирует YAML) → Backend (импорт в БД) → QA (тестирование) → Release
 ```
+
+**Важно:** 
+- Content Writer сам валидирует YAML файлы
+- **ВСЕГДА передает Backend Developer для импорта в БД** - без импорта контент не попадет в игру
+- Backend Developer импортирует контент в БД через API endpoint `POST /api/v1/gameplay/quests/content/reload`
+- QA тестирует функционал после импорта в БД
 
 **Системные задачи проходят через архитектурный этап:**
 

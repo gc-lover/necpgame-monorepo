@@ -1,0 +1,171 @@
+metadata:
+  id: local-network-system-architecture
+  title: Архитектура системы локальной сети
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - local-network
+    - gameplay
+  related_systems:
+    - gameplay-service-go
+  related_documents:
+    - id: device-system-architecture
+      relation: extends
+    - id: hacking-system-architecture
+      relation: extends
+  github_issue: 1450
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы локальной сети для объединения
+    устройств в локальную сеть с изоляцией от глобальной сети и возможностью взлома.
+  goal: |
+    Создать архитектурную схему системы локальной сети с определением:
+    - Микросервисов для управления локальной сетью
+    - Компонентов для изоляции от глобальной сети
+    - Системы взлома локальной сети
+    - Установки бекдоров
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система локальной сети для объединения устройств с изоляцией от глобальной
+    сети и возможностью взлома и установки бекдоров.
+
+architecture:
+  overview: |
+    Система локальной сети состоит из следующих компонентов:
+    1. Local Network Service - управление локальной сетью
+    2. Network Isolation Manager - изоляция от глобальной сети
+    3. Local Network Hacking Service - взлом локальной сети
+    4. Backdoor Manager - установка и управление бекдорами
+
+  microservices:
+    - name: local-network-service
+      location: gameplay-service-go (модуль local-network)
+      port: 8083
+      responsibility: |
+        Управление локальной сетью:
+        - Создание локальной сети
+        - Добавление устройств в локальную сеть
+        - Управление устройствами в локальной сети
+        - Удаление устройств из локальной сети
+      endpoints:
+        - POST /api/v1/gameplay/local-network/create - создание локальной сети
+        - GET /api/v1/gameplay/local-network/{networkId} - информация о сети
+        - POST /api/v1/gameplay/local-network/{networkId}/devices/{deviceId} - добавление устройства
+        - DELETE /api/v1/gameplay/local-network/{networkId}/devices/{deviceId} - удаление устройства
+        - GET /api/v1/gameplay/local-network/{networkId}/devices - список устройств
+
+    - name: network-isolation-manager
+      location: gameplay-service-go (модуль network-isolation)
+      port: 8083
+      responsibility: |
+        Изоляция от глобальной сети:
+        - Изоляция локальной сети от глобальной
+        - Управление изоляцией
+        - Проверка изоляции
+      endpoints:
+        - POST /api/v1/gameplay/local-network/{networkId}/isolate - изоляция от глобальной сети
+        - POST /api/v1/gameplay/local-network/{networkId}/connect - подключение к глобальной сети
+        - GET /api/v1/gameplay/local-network/{networkId}/isolation-status - статус изоляции
+
+    - name: local-network-hacking-service
+      location: gameplay-service-go (модуль local-network-hacking)
+      port: 8083
+      responsibility: |
+        Взлом локальной сети:
+        - Взлом устройств в локальной сети
+        - Обход изоляции
+        - Доступ к изолированным устройствам
+        - Интеграция с системой взлома
+      endpoints:
+        - POST /api/v1/gameplay/local-network/{networkId}/hack - взлом локальной сети
+        - GET /api/v1/gameplay/local-network/{networkId}/hack-status - статус взлома
+        - POST /api/v1/gameplay/local-network/{networkId}/devices/{deviceId}/hack - взлом устройства
+
+    - name: backdoor-manager
+      location: gameplay-service-go (модуль backdoor)
+      port: 8083
+      responsibility: |
+        Установка и управление бекдорами:
+        - Установка бекдоров на устройства
+        - Управление бекдорами
+        - Доступ через бекдор
+        - Обнаружение бекдоров
+      endpoints:
+        - POST /api/v1/gameplay/local-network/{networkId}/devices/{deviceId}/backdoor/install - установка бекдора
+        - DELETE /api/v1/gameplay/local-network/{networkId}/devices/{deviceId}/backdoor - удаление бекдора
+        - POST /api/v1/gameplay/local-network/{networkId}/devices/{deviceId}/backdoor/connect - подключение через бекдор
+        - GET /api/v1/gameplay/local-network/{networkId}/devices/{deviceId}/backdoor/status - статус бекдора
+
+  integrations:
+    device_service: |
+      - Управление устройствами в локальной сети
+      - Взаимодействие с устройствами
+
+    hacking_service: |
+      - Взлом локальной сети
+      - Установка бекдоров
+      - Обход изоляции
+
+    network_service: |
+      - Изоляция от глобальной сети
+      - Подключение к глобальной сети
+
+  technical_tasks:
+    phase_1:
+      name: Local Network Service Core
+      tasks:
+        - Реализация Local Network Service
+        - Создание локальной сети
+        - Управление устройствами
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Network Isolation Manager
+      tasks:
+        - Реализация Network Isolation Manager
+        - Изоляция от глобальной сети
+      estimated_effort: 3 days
+
+    phase_3:
+      name: Local Network Hacking Service
+      tasks:
+        - Реализация Local Network Hacking Service
+        - Взлом локальной сети
+        - Интеграция с системой взлома
+      estimated_effort: 4 days
+
+    phase_4:
+      name: Backdoor Manager
+      tasks:
+        - Реализация Backdoor Manager
+        - Установка бекдоров
+        - Доступ через бекдор
+      estimated_effort: 3 days
+
+    phase_5:
+      name: Интеграции
+      tasks:
+        - Интеграция с Device Service
+        - Интеграция с Hacking Service
+        - Интеграция с Network Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 16 days
+

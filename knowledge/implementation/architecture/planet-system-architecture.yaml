@@ -1,0 +1,156 @@
+metadata:
+  id: planet-system-architecture
+  title: Архитектура системы планет
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - planet
+    - world
+  related_systems:
+    - world-service-go
+  related_documents:
+    - id: cooperation-hierarchy-system-architecture
+      relation: extends
+    - id: continent-system-architecture
+      relation: extends
+  github_issue: 1440
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - world
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы планет как глобального уровня
+    в иерархии коопераций с взаимодействием между планетами и влиянием на весь игровой мир.
+  goal: |
+    Создать архитектурную схему системы планет с определением:
+    - Микросервисов для управления планетами
+    - Компонентов для структуры планет
+    - Взаимодействия между планетами
+    - Глобальных событий
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система планет для управления глобальным уровнем организации с взаимодействием
+    между планетами и глобальными событиями.
+
+architecture:
+  overview: |
+    Система планет состоит из следующих компонентов:
+    1. Planet Service - управление планетами
+    2. Planet Structure Manager - управление структурой планет
+    3. Planet Interaction Manager - взаимодействие между планетами
+    4. Planet Event Manager - глобальные события
+
+  microservices:
+    - name: planet-service
+      location: world-service-go (модуль planet)
+      port: 8088
+      responsibility: |
+        Управление планетами:
+        - CRUD операции с планетами
+        - Управление информацией о планетах
+        - Управление континентами на планетах
+      endpoints:
+        - GET /api/v1/world/planets - список планет
+        - GET /api/v1/world/planets/{planetId} - информация о планете
+        - POST /api/v1/world/planets - создание планеты
+        - PUT /api/v1/world/planets/{planetId} - обновление планеты
+
+    - name: planet-structure-manager
+      location: world-service-go (модуль planet-structure)
+      port: 8088
+      responsibility: |
+        Управление структурой планет:
+        - Управление континентами на планетах
+        - Управление территориями
+        - Управление ресурсами планет
+      endpoints:
+        - GET /api/v1/world/planets/{planetId}/continents - список континентов
+        - GET /api/v1/world/planets/{planetId}/territories - список территорий
+        - GET /api/v1/world/planets/{planetId}/resources - ресурсы планеты
+
+    - name: planet-interaction-manager
+      location: world-service-go (модуль planet-interaction)
+      port: 8088
+      responsibility: |
+        Взаимодействие между планетами:
+        - Управление взаимодействиями
+        - Торговля между планетами
+        - Конфликты между планетами
+      endpoints:
+        - POST /api/v1/world/planets/{planetId1}/interact/{planetId2} - взаимодействие
+        - GET /api/v1/world/planets/{planetId}/interactions - список взаимодействий
+
+    - name: planet-event-manager
+      location: world-service-go (модуль planet-event)
+      port: 8088
+      responsibility: |
+        Глобальные события:
+        - Создание глобальных событий
+        - Управление событиями
+        - Обработка последствий событий
+      endpoints:
+        - POST /api/v1/world/planets/{planetId}/events - создание события
+        - GET /api/v1/world/planets/{planetId}/events - список событий
+        - POST /api/v1/world/planets/{planetId}/events/{eventId}/process - обработка события
+
+  integrations:
+    continent_service: |
+      - Управление континентами на планетах
+      - Интеграция с континентами
+
+    politics_service: |
+      - Политическое влияние на планеты
+      - Управление политикой планет
+
+  technical_tasks:
+    phase_1:
+      name: Planet Service Core
+      tasks:
+        - Реализация Planet Service
+        - CRUD операции с планетами
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Planet Structure Manager
+      tasks:
+        - Реализация Planet Structure Manager
+        - Управление структурой
+      estimated_effort: 3 days
+
+    phase_3:
+      name: Planet Interaction Manager
+      tasks:
+        - Реализация Planet Interaction Manager
+        - Взаимодействие между планетами
+      estimated_effort: 3 days
+
+    phase_4:
+      name: Planet Event Manager
+      tasks:
+        - Реализация Planet Event Manager
+        - Глобальные события
+      estimated_effort: 3 days
+
+    phase_5:
+      name: Интеграции
+      tasks:
+        - Интеграция с Continent Service
+        - Интеграция с Politics Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 15 days
+

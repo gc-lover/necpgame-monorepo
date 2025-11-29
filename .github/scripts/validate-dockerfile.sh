@@ -3,66 +3,71 @@ set -e
 
 echo "🔍 Проверка Dockerfile стандартов..."
 
-ERRORS=0
-TOTAL_ISSUES=0
+ISSUES_FOUND=0
+FAILED_SERVICES=()
 
-find services -maxdepth 2 -name "Dockerfile" 2>/dev/null | sort | while read -r dockerfile; do
-    service=$(echo "$dockerfile" | cut -d'/' -f2)
-    
+for dockerfile in $(find services -maxdepth 2 -name "Dockerfile" 2>/dev/null | sort); do
     if [ ! -f "$dockerfile" ]; then
         continue
     fi
     
+    service=$(echo "$dockerfile" | cut -d'/' -f2)
     content=$(cat "$dockerfile")
-    has_issues=false
+    service_issues=()
     
     if ! echo "$content" | grep -q "FROM golang:1.24-alpine"; then
-        echo "❌ $service: Не используется Go 1.24-alpine"
-        has_issues=true
-        TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+        service_issues+=("Не используется Go 1.24-alpine")
     fi
     
     if ! echo "$content" | grep -q "AS builder" || ! echo "$content" | grep -q "FROM alpine:latest"; then
-        echo "❌ $service: Отсутствует multi-stage build"
-        has_issues=true
-        TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+        service_issues+=("Отсутствует multi-stage build")
     fi
     
     if ! echo "$content" | grep -q "USER "; then
-        echo "❌ $service: Отсутствует security context (non-root user)"
-        has_issues=true
-        TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+        service_issues+=("Отсутствует security context (non-root user)")
     fi
     
     if ! echo "$content" | grep -q "HEALTHCHECK"; then
-        echo "❌ $service: Отсутствует health check"
-        has_issues=true
-        TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+        service_issues+=("Отсутствует health check")
     fi
     
     if ! echo "$content" | grep -q "-extldflags"; then
-        echo "❌ $service: Отсутствует статическая линковка"
-        has_issues=true
-        TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+        service_issues+=("Отсутствует статическая линковка")
     fi
     
     if ! echo "$content" | grep -q "tzdata"; then
-        echo "❌ $service: Отсутствует timezone data"
-        has_issues=true
-        TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+        service_issues+=("Отсутствует timezone data")
     fi
     
-    if [ "$has_issues" = false ]; then
+    if [ ${#service_issues[@]} -eq 0 ]; then
         echo "OK $service"
+    else
+        ISSUES_FOUND=1
+        FAILED_SERVICES+=("$service")
+        echo "❌ $service:"
+        for issue in "${service_issues[@]}"; do
+            echo "   - $issue"
+            echo "::error file=$dockerfile::$service: $issue"
+        done
     fi
 done
 
-if [ $TOTAL_ISSUES -eq 0 ]; then
-    echo ""
+echo ""
+
+if [ $ISSUES_FOUND -eq 0 ]; then
     echo "OK Все Dockerfile соответствуют стандартам!"
     exit 0
 else
+    echo "::error::Найдены Dockerfile, не соответствующие стандартам проекта"
     echo ""
-    echo "❌ Найдено $TOTAL_ISSUES проблем"
+    echo "Сервисы с проблемами: ${FAILED_SERVICES[*]}"
+    echo ""
+    echo "Пожалуйста, обновите Dockerfile согласно стандартам:"
+    echo "- Использовать Go 1.24-alpine"
+    echo "- Multi-stage build с alpine:latest"
+    echo "- Security context (non-root user)"
+    echo "- Health check"
+    echo "- Статическая линковка (-extldflags)"
+    echo "- Timezone data (tzdata)"
     exit 1
 fi

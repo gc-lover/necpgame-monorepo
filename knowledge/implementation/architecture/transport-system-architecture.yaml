@@ -1,0 +1,316 @@
+metadata:
+  id: transport-system-architecture
+  title: Архитектура системы транспорта
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - transport
+    - vehicle
+    - gameplay
+    - world
+  related_systems:
+    - gameplay-service-go
+    - economy-service-go
+    - world-service-go
+    - movement-service-go
+  related_documents:
+    - id: transport-system-microservices
+      relation: extends
+    - id: transport-system-database
+      relation: extends
+  github_issue: 1452
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы транспорта для управления
+    различными видами транспортных средств (автомобили, мотоциклы, ави, корабли,
+    воздушные корабли, шатлы) с поддержкой управления, физики движения,
+    владения, ремонта и кастомизации.
+  goal: |
+    Создать архитектурную схему системы транспорта с определением:
+    - Микросервисов для управления транспортом
+    - Компонентов для физики движения и управления
+    - Системы владения транспортом
+    - Системы ремонта и обслуживания
+    - Системы кастомизации
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Комплексная система управления транспортом с поддержкой различных типов
+    транспортных средств, физики движения, владения, ремонта и кастомизации.
+
+architecture:
+  overview: |
+    Система транспорта состоит из следующих компонентов:
+    1. Transport Service - управление транспортом и владением
+    2. Vehicle Physics Service - физика движения транспорта
+    3. Vehicle Control Service - управление транспортом
+    4. Vehicle Maintenance Service - ремонт и обслуживание
+    5. Vehicle Customization Service - кастомизация транспорта
+
+  vehicle_types:
+    - type: ground
+      subtypes:
+        - automobile: автомобили
+        - motorcycle: мотоциклы
+      characteristics:
+        - movement_type: ground
+        - physics: ground_physics
+        - control: ground_control
+    
+    - type: air
+      subtypes:
+        - avi: летающие авто
+        - airship: воздушные корабли
+      characteristics:
+        - movement_type: air
+        - physics: air_physics
+        - control: air_control
+    
+    - type: water
+      subtypes:
+        - ship: корабли
+      characteristics:
+        - movement_type: water
+        - physics: water_physics
+        - control: water_control
+    
+    - type: space
+      subtypes:
+        - shuttle: шатлы
+      characteristics:
+        - movement_type: space
+        - physics: space_physics
+        - control: space_control
+
+  microservices:
+    - name: transport-service
+      location: gameplay-service-go (модуль transport)
+      port: 8083
+      responsibility: |
+        Управление транспортом и владением:
+        - CRUD операции с транспортными средствами
+        - Управление владением транспортом
+        - Хранение транспорта
+        - Список транспорта игрока
+        - Интеграция с экономикой для покупки/продажи
+      endpoints:
+        - GET /api/v1/gameplay/transport/{characterId}/vehicles - список транспорта
+        - GET /api/v1/gameplay/transport/vehicles/{vehicleId} - информация о транспорте
+        - POST /api/v1/gameplay/transport/vehicles - создание транспорта
+        - PUT /api/v1/gameplay/transport/vehicles/{vehicleId} - обновление транспорта
+        - DELETE /api/v1/gameplay/transport/vehicles/{vehicleId} - удаление транспорта
+        - POST /api/v1/gameplay/transport/vehicles/{vehicleId}/claim - заявление права владения
+        - POST /api/v1/gameplay/transport/vehicles/{vehicleId}/store - хранение транспорта
+        - POST /api/v1/gameplay/transport/vehicles/{vehicleId}/retrieve - извлечение транспорта
+
+    - name: vehicle-physics-service
+      location: movement-service-go (модуль vehicle-physics)
+      port: 8082
+      responsibility: |
+        Физика движения транспорта:
+        - Расчет физики движения для различных типов транспорта
+        - Обработка коллизий
+        - Управление скоростью и ускорением
+        - Обработка повреждений от столкновений
+        - Синхронизация позиции транспорта
+      endpoints:
+        - POST /api/v1/movement/vehicles/{vehicleId}/physics/update - обновление физики
+        - GET /api/v1/movement/vehicles/{vehicleId}/physics/state - состояние физики
+        - POST /api/v1/movement/vehicles/{vehicleId}/physics/collision - обработка коллизий
+        - POST /api/v1/movement/vehicles/{vehicleId}/physics/damage - применение повреждений
+
+    - name: vehicle-control-service
+      location: gameplay-service-go (модуль vehicle-control)
+      port: 8083
+      responsibility: |
+        Управление транспортом:
+        - Обработка команд управления от клиента
+        - Валидация команд управления
+        - Применение команд к физике
+        - Управление входом/выходом из транспорта
+        - Управление пассажирами
+      endpoints:
+        - POST /api/v1/gameplay/transport/vehicles/{vehicleId}/control - команды управления
+        - POST /api/v1/gameplay/transport/vehicles/{vehicleId}/enter - вход в транспорт
+        - POST /api/v1/gameplay/transport/vehicles/{vehicleId}/exit - выход из транспорта
+        - GET /api/v1/gameplay/transport/vehicles/{vehicleId}/passengers - список пассажиров
+        - POST /api/v1/gameplay/transport/vehicles/{vehicleId}/passengers/{characterId} - добавление пассажира
+        - DELETE /api/v1/gameplay/transport/vehicles/{vehicleId}/passengers/{characterId} - удаление пассажира
+
+    - name: vehicle-maintenance-service
+      location: economy-service-go (модуль vehicle-maintenance)
+      port: 8085
+      responsibility: |
+        Ремонт и обслуживание транспорта:
+        - Управление состоянием транспорта (износ, повреждения)
+        - Ремонт транспорта
+        - Обслуживание транспорта
+        - Замена деталей
+        - Интеграция с экономикой для оплаты ремонта
+      endpoints:
+        - GET /api/v1/economy/transport/vehicles/{vehicleId}/condition - состояние транспорта
+        - POST /api/v1/economy/transport/vehicles/{vehicleId}/repair - ремонт транспорта
+        - POST /api/v1/economy/transport/vehicles/{vehicleId}/maintenance - обслуживание транспорта
+        - GET /api/v1/economy/transport/vehicles/{vehicleId}/repair-cost - стоимость ремонта
+        - POST /api/v1/economy/transport/vehicles/{vehicleId}/parts/replace - замена деталей
+
+    - name: vehicle-customization-service
+      location: economy-service-go (модуль vehicle-customization)
+      port: 8085
+      responsibility: |
+        Кастомизация транспорта:
+        - Управление внешним видом транспорта
+        - Установка модификаций
+        - Управление цветами и материалами
+        - Управление декоративными элементами
+        - Интеграция с экономикой для покупки модификаций
+      endpoints:
+        - GET /api/v1/economy/transport/vehicles/{vehicleId}/customization - кастомизация транспорта
+        - POST /api/v1/economy/transport/vehicles/{vehicleId}/customization - применение кастомизации
+        - GET /api/v1/economy/transport/customization/options - доступные опции кастомизации
+        - POST /api/v1/economy/transport/vehicles/{vehicleId}/mods - установка модификаций
+
+  data_flow:
+    vehicle_ownership: |
+      1. Игрок покупает транспорт через Economy Service
+      2. Transport Service создает запись о транспорте
+      3. Transport Service назначает владельца
+      4. Транспорт добавляется в список транспорта игрока
+      5. Realtime Gateway синхронизирует изменения
+
+    vehicle_control: |
+      1. Игрок входит в транспорт через Vehicle Control Service
+      2. Vehicle Control Service валидирует вход
+      3. Vehicle Physics Service инициализирует физику транспорта
+      4. Клиент отправляет команды управления
+      5. Vehicle Control Service обрабатывает команды
+      6. Vehicle Physics Service обновляет физику
+      7. Movement Service синхронизирует позицию
+      8. Realtime Gateway отправляет обновления другим игрокам
+
+    vehicle_repair: |
+      1. Игрок запрашивает ремонт через Vehicle Maintenance Service
+      2. Vehicle Maintenance Service проверяет состояние транспорта
+      3. Economy Service рассчитывает стоимость ремонта
+      4. Economy Service списывает валюту
+      5. Vehicle Maintenance Service применяет ремонт
+      6. Transport Service обновляет состояние транспорта
+      7. Realtime Gateway синхронизирует изменения
+
+  integrations:
+    economy_service: |
+      - Покупка/продажа транспорта
+      - Оплата ремонта и обслуживания
+      - Покупка модификаций и кастомизации
+      - Экономические транзакции
+
+    movement_service: |
+      - Синхронизация позиции транспорта
+      - Обработка физики движения
+      - Управление коллизиями
+
+    world_service: |
+      - Размещение транспорта в мире
+      - Интеграция с игровым миром
+      - Управление зонами для транспорта
+
+    character_service: |
+      - Владение транспортом
+      - Управление персонажами в транспорте
+      - Применение характеристик персонажа к управлению
+
+  tickrate_and_network_requirements:
+    vehicle_physics: |
+      tickrate: 20-30 Hz
+      network_load: |
+        - Позиция транспорта: 20-30 updates/sec
+        - Состояние транспорта: 5-10 updates/sec
+        - Команды управления: 20-30 updates/sec
+        - Общий трафик: ~2-5 KB/sec на транспорт
+
+    vehicle_control: |
+      tickrate: 20-30 Hz
+      network_load: |
+        - Команды управления: 20-30 updates/sec
+        - Состояние входа/выхода: event-based
+        - Общий трафик: ~1-2 KB/sec на транспорт
+
+    vehicle_maintenance: |
+      tickrate: 1-5 Hz
+      network_load: |
+        - Состояние транспорта: 1-5 updates/sec
+        - События ремонта: event-based
+        - Общий трафик: ~0.1-0.5 KB/sec на транспорт
+
+  technical_tasks:
+    phase_1:
+      name: Transport Service Core
+      tasks:
+        - Реализация Transport Service
+        - CRUD операции с транспортом
+        - Управление владением
+        - Интеграция с Economy Service
+      estimated_effort: 5 days
+
+    phase_2:
+      name: Vehicle Physics Service
+      tasks:
+        - Реализация Vehicle Physics Service
+        - Физика для различных типов транспорта
+        - Обработка коллизий
+        - Синхронизация позиции
+      estimated_effort: 7 days
+
+    phase_3:
+      name: Vehicle Control Service
+      tasks:
+        - Реализация Vehicle Control Service
+        - Обработка команд управления
+        - Управление входом/выходом
+        - Управление пассажирами
+      estimated_effort: 5 days
+
+    phase_4:
+      name: Vehicle Maintenance Service
+      tasks:
+        - Реализация Vehicle Maintenance Service
+        - Управление состоянием транспорта
+        - Система ремонта
+        - Интеграция с Economy Service
+      estimated_effort: 4 days
+
+    phase_5:
+      name: Vehicle Customization Service
+      tasks:
+        - Реализация Vehicle Customization Service
+        - Система кастомизации
+        - Управление модификациями
+        - Интеграция с Economy Service
+      estimated_effort: 4 days
+
+    phase_6:
+      name: Интеграции
+      tasks:
+        - Интеграция с Movement Service
+        - Интеграция с World Service
+        - Интеграция с Character Service
+        - WebSocket каналы
+      estimated_effort: 3 days
+
+    total_estimated_effort: 28 days
+

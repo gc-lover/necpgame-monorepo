@@ -1,0 +1,75 @@
+openapi: 3.0.3
+info:
+  title: Combat AI Enemies Raids Service API
+  description: |
+    API для управления рейдовыми сценариями и фазами боссов.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Raids
+    description: Управление рейдовыми сценариями
+
+paths:
+  /gameplay/combat/raids/{raid_id}/phase:
+    post:
+      tags:
+        - Raids
+      summary: Переход фазы рейда
+      description: |
+        Переводит рейдовую сессию в следующую фазу. Используется для управления
+        фазами боссов и механиками рейдов.
+      operationId: transitionRaidPhase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: raid_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор рейдовой сессии
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/RaidPhaseTransitionRequest'
+      responses:
+        '200':
+          description: Фаза рейда переведена
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/RaidSession'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
+
+
