@@ -38,17 +38,19 @@ type HTTPServer struct {
 	router           *mux.Router
 	progressionService ProgressionServiceInterface
 	questService     QuestServiceInterface
+	affixService     AffixServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
 		router:           router,
 		progressionService: progressionService,
 		questService:     questService,
+		affixService:     affixService,
 		logger:           GetLogger(),
 	}
 
@@ -73,6 +75,16 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	questAPI.HandleFunc("/instances/{instance_id}/complete", server.completeQuest).Methods("POST")
 	questAPI.HandleFunc("/instances/{instance_id}/fail", server.failQuest).Methods("POST")
 	questAPI.HandleFunc("/characters/{character_id}", server.listQuestInstances).Methods("GET")
+
+	affixHandlers := NewAffixHandlers(affixService)
+	affixAPI := router.PathPrefix("/api/v1/gameplay/affixes").Subrouter()
+	affixAPI.HandleFunc("/active", affixHandlers.GetActiveAffixes).Methods("GET")
+	affixAPI.HandleFunc("/{id}", affixHandlers.GetAffix).Methods("GET")
+	affixAPI.HandleFunc("/rotation/history", affixHandlers.GetRotationHistory).Methods("GET")
+	affixAPI.HandleFunc("/rotation/trigger", affixHandlers.TriggerRotation).Methods("POST")
+
+	instanceAPI := router.PathPrefix("/api/v1/gameplay/instances").Subrouter()
+	instanceAPI.HandleFunc("/{instance_id}/affixes", affixHandlers.GetInstanceAffixes).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
