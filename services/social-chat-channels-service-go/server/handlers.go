@@ -1,0 +1,168 @@
+package server
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+
+	"github.com/necpgame/social-chat-channels-service-go/pkg/api"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
+)
+
+type ChatChannelsHandlers struct{}
+
+func NewChatChannelsHandlers() *ChatChannelsHandlers {
+	return &ChatChannelsHandlers{}
+}
+
+func (h *ChatChannelsHandlers) GetChannels(w http.ResponseWriter, r *http.Request, params api.GetChannelsParams) {
+	channelId1 := openapi_types.UUID(uuid.New())
+	channelId2 := openapi_types.UUID(uuid.New())
+	channelType1 := api.ChatChannelChannelTypeGLOBAL
+	channelType2 := api.ChatChannelChannelTypeTRADE
+	now := time.Now()
+	name1 := "Global Chat"
+	name2 := "Trade Chat"
+	cooldownSeconds := 0
+	maxMessageLength := 500
+	isActive := true
+
+	channels := []api.ChatChannel{
+		{
+			Id:               &channelId1,
+			ChannelType:      &channelType1,
+			OwnerId:          nil,
+			Name:             &name1,
+			Description:      nil,
+			ReadPermission:  nil,
+			WritePermission: nil,
+			CooldownSeconds:  &cooldownSeconds,
+			MaxMessageLength: &maxMessageLength,
+			IsActive:         &isActive,
+			CreatedAt:        &now,
+		},
+		{
+			Id:               &channelId2,
+			ChannelType:      &channelType2,
+			OwnerId:          nil,
+			Name:             &name2,
+			Description:      nil,
+			ReadPermission:  nil,
+			WritePermission: nil,
+			CooldownSeconds:  &cooldownSeconds,
+			MaxMessageLength: &maxMessageLength,
+			IsActive:         &isActive,
+			CreatedAt:        &now,
+		},
+	}
+
+	total := len(channels)
+
+	response := api.ChannelListResponse{
+		Channels: &channels,
+		Total:    &total,
+	}
+
+	respondJSON(w, http.StatusOK, response)
+}
+
+func (h *ChatChannelsHandlers) GetChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
+	channelType := api.ChatChannelChannelTypeGLOBAL
+	now := time.Now()
+	name := "Global Chat"
+	cooldownSeconds := 0
+	maxMessageLength := 500
+	isActive := true
+
+	response := api.ChatChannel{
+		Id:               &channelId,
+		ChannelType:      &channelType,
+		OwnerId:          nil,
+		Name:             &name,
+		Description:      nil,
+		ReadPermission:  nil,
+		WritePermission: nil,
+		CooldownSeconds:  &cooldownSeconds,
+		MaxMessageLength: &maxMessageLength,
+		IsActive:         &isActive,
+		CreatedAt:        &now,
+	}
+
+	respondJSON(w, http.StatusOK, response)
+}
+
+func (h *ChatChannelsHandlers) JoinChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
+	var req api.JoinChannelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, err, "Invalid request body")
+		return
+	}
+
+	channelType := api.ChatChannelChannelTypeGLOBAL
+	now := time.Now()
+	name := "Global Chat"
+	cooldownSeconds := 0
+	maxMessageLength := 500
+	isActive := true
+
+	response := api.ChatChannel{
+		Id:               &channelId,
+		ChannelType:      &channelType,
+		OwnerId:          nil,
+		Name:             &name,
+		Description:      nil,
+		ReadPermission:  nil,
+		WritePermission: nil,
+		CooldownSeconds:  &cooldownSeconds,
+		MaxMessageLength: &maxMessageLength,
+		IsActive:         &isActive,
+		CreatedAt:        &now,
+	}
+
+	respondJSON(w, http.StatusOK, response)
+}
+
+func (h *ChatChannelsHandlers) LeaveChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
+	var req api.LeaveChannelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, err, "Invalid request body")
+		return
+	}
+
+	status := "left"
+	response := api.StatusResponse{
+		Status: &status,
+	}
+
+	respondJSON(w, http.StatusOK, response)
+}
+
+func (h *ChatChannelsHandlers) GetChannelMembers(w http.ResponseWriter, r *http.Request, channelId api.ChannelId, params api.GetChannelMembersParams) {
+	memberId1 := openapi_types.UUID(uuid.New())
+	memberId2 := openapi_types.UUID(uuid.New())
+	members := []openapi_types.UUID{memberId1, memberId2}
+	total := len(members)
+	limit := 50
+	offset := 0
+
+	if params.Limit != nil {
+		limit = int(*params.Limit)
+	}
+	if params.Offset != nil {
+		offset = int(*params.Offset)
+	}
+
+	response := api.ChannelMembersResponse{
+		ChannelId: &channelId,
+		Members:   &members,
+		Total:     &total,
+		Limit:     &limit,
+		Offset:    &offset,
+	}
+
+	respondJSON(w, http.StatusOK, response)
+}
+
+
+

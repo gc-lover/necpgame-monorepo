@@ -25,27 +25,32 @@ type TradeServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr          string
-	router        *mux.Router
-	tradeService  TradeServiceInterface
-	tradeHandlers *TradeHandlers
-	logger        *logrus.Logger
-	server        *http.Server
-	jwtValidator  *JwtValidator
-	authEnabled   bool
+	addr                string
+	router              *mux.Router
+	tradeService        TradeServiceInterface
+	tradeHandlers       *TradeHandlers
+	engramCreationService EngramCreationServiceInterface
+	engramTransferService EngramTransferServiceInterface
+	logger              *logrus.Logger
+	server              *http.Server
+	jwtValidator        *JwtValidator
+	authEnabled         bool
 }
 
-func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	tradeHandlers := NewTradeHandlers(tradeService)
+	
 	server := &HTTPServer{
-		addr:          addr,
-		router:        router,
-		tradeService:  tradeService,
-		tradeHandlers: tradeHandlers,
-		logger:        GetLogger(),
-		jwtValidator:  jwtValidator,
-		authEnabled:   authEnabled,
+		addr:                addr,
+		router:              router,
+		tradeService:        tradeService,
+		tradeHandlers:       tradeHandlers,
+		engramCreationService: engramCreationService,
+		engramTransferService: engramTransferService,
+		logger:              GetLogger(),
+		jwtValidator:        jwtValidator,
+		authEnabled:         authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -61,6 +66,19 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 	economy := apiRouter.PathPrefix("/economy").Subrouter()
 
 	tradeapi.HandlerFromMux(tradeHandlers, economy)
+
+	if server.engramCreationService != nil {
+		economy.HandleFunc("/engrams/create", server.createEngram).Methods("POST")
+		economy.HandleFunc("/engrams/create/cost", server.getEngramCreationCost).Methods("GET")
+		economy.HandleFunc("/engrams/create/validate", server.validateEngramCreation).Methods("POST")
+	}
+
+	if server.engramTransferService != nil {
+		economy.HandleFunc("/engrams/{engram_id}/transfer", server.transferEngram).Methods("POST")
+		economy.HandleFunc("/engrams/{engram_id}/loan", server.loanEngram).Methods("POST")
+		economy.HandleFunc("/engrams/{engram_id}/extract", server.extractEngram).Methods("POST")
+		economy.HandleFunc("/engrams/{engram_id}/trade", server.tradeEngram).Methods("POST")
+	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

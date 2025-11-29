@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Skill Checks and Conditions Service API
+  description: |
+    API для проверок навыков и условий квестов.
+    
+    **Основные возможности:**
+    - Выполнение проверок навыков
+    - Проверка условий квестов
+    - Получение требований квестов
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Skill Checks
+    description: Проверки навыков в квестах
+  - name: Quest Conditions
+    description: Условия и требования квестов
+paths:
+  /gameplay/quests/{quest_id}/skill-check:
+    post:
+      tags:
+        - Skill Checks
+      summary: Выполнить проверку навыка
+      description: |
+        Выполняет проверку навыка для квеста.
+        Проверяет атрибуты, навыки, предметы или репутацию персонажа.
+      operationId: performSkillCheck
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'quest-schemas.yaml#/components/schemas/SkillCheckRequest'
+      responses:
+        '200':
+          description: Результат проверки навыка
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/SkillCheckResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/skill-checks:
+    get:
+      tags:
+        - Skill Checks
+      summary: Получить историю проверок навыков
+      description: |
+        Возвращает историю всех проверок навыков для квеста.
+        Поддерживает пагинацию.
+      operationId: getSkillCheckHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+        - name: check_type
+          in: query
+          description: Фильтр по типу проверки
+          schema:
+            type: string
+            enum: [attribute, skill, item, reputation]
+        - name: passed
+          in: query
+          description: Фильтр по результату (true/false)
+          schema:
+            type: boolean
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История проверок навыков
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/SkillChecksResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/conditions/check:
+    post:
+      tags:
+        - Quest Conditions
+      summary: Проверить условия квеста
+      description: |
+        Проверяет условия квеста (требования для начала, условия для завершения, условия для целей).
+        Возвращает результат проверки всех условий.
+      operationId: checkQuestConditions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Результат проверки условий
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - all_conditions_met
+                  - conditions
+                properties:
+                  all_conditions_met:
+                    type: boolean
+                    description: Все условия выполнены
+                  conditions:
+                    type: array
+                    description: Детали проверки каждого условия
+                    items:
+                      type: object
+                      properties:
+                        condition_type:
+                          type: string
+                        condition_target:
+                          type: string
+                        required_value:
+                          type: integer
+                        actual_value:
+                          type: integer
+                        met:
+                          type: boolean
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/requirements:
+    get:
+      tags:
+        - Quest Conditions
+      summary: Получить требования квеста
+      description: |
+        Возвращает все требования для начала квеста.
+        Включает уровень, предметы, предыдущие квесты, репутацию и местоположение.
+      operationId: getQuestRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID определения квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Требования квеста
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestRequirements'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+
+

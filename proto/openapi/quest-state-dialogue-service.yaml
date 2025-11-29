@@ -1,0 +1,225 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine State and Dialogue Service API
+  description: |
+    API для управления состоянием квестов и диалогами.
+    
+    **Основные возможности:**
+    - Управление состоянием квестов
+    - Обработка диалогов
+    - История диалогов
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Quest State
+    description: Управление состоянием квестов
+  - name: Quest Dialogue
+    description: Обработка диалогов в квестах
+paths:
+  /gameplay/quests/{quest_id}/state:
+    get:
+      tags:
+        - Quest State
+      summary: Получить состояние квеста
+      description: |
+        Возвращает текущее состояние квеста, включая текущую цель и данные прогресса.
+      operationId: getQuestState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние квеста
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestState'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Quest State
+      summary: Обновить состояние квеста
+      description: |
+        Обновляет состояние квеста.
+        Используется для переходов между состояниями и обновления прогресса.
+      operationId: updateQuestState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'quest-schemas.yaml#/components/schemas/UpdateStateRequest'
+      responses:
+        '200':
+          description: Состояние квеста обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestState'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/dialogue:
+    get:
+      tags:
+        - Quest Dialogue
+      summary: Получить текущий диалог
+      description: |
+        Возвращает текущий узел диалога для квеста.
+        Включает текст, варианты выбора и проверки навыков.
+      operationId: getQuestDialogue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий диалог
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/DialogueNode'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/dialogue/choice:
+    post:
+      tags:
+        - Quest Dialogue
+      summary: Сделать выбор в диалоге
+      description: |
+        Обрабатывает выбор игрока в диалоге.
+        Переходит к следующему узлу диалога на основе выбора.
+      operationId: makeDialogueChoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'quest-schemas.yaml#/components/schemas/DialogueChoiceRequest'
+      responses:
+        '200':
+          description: Выбор обработан, возвращается следующий узел диалога
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/DialogueNode'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/dialogue/history:
+    get:
+      tags:
+        - Quest Dialogue
+      summary: Получить историю диалогов
+      description: |
+        Возвращает полную историю диалогов для квеста.
+        Включает все пройденные узлы и сделанные выборы.
+      operationId: getDialogueHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История диалогов
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/DialogueHistory'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+
+

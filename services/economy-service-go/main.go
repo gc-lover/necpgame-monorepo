@@ -8,8 +8,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/economy-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -30,6 +32,23 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize trade service")
 	}
 
+	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize database pool")
+	}
+
+	redisOpts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to parse Redis URL")
+	}
+
+	redisClient := redis.NewClient(redisOpts)
+	engramCreationRepo := server.NewEngramCreationRepository(dbPool)
+	engramCreationService := server.NewEngramCreationService(engramCreationRepo, redisClient)
+	
+	engramTransferRepo := server.NewEngramTransferRepository(dbPool)
+	engramTransferService := server.NewEngramTransferService(engramTransferRepo, engramCreationRepo, redisClient)
+
 	var jwtValidator *server.JwtValidator
 	if authEnabled && keycloakURL != "" {
 		issuer := keycloakURL + "/realms/" + keycloakRealm
@@ -43,7 +62,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, tradeService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, tradeService, jwtValidator, authEnabled, engramCreationService, engramTransferService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

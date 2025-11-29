@@ -32,26 +32,30 @@ type HTTPServer struct {
 	logger           *logrus.Logger
 	server           *http.Server
 	jwtValidator     *JwtValidator
-	authEnabled      bool
-	engramService    EngramServiceInterface
+	authEnabled           bool
+	engramService         EngramServiceInterface
+	engramSecurityService EngramSecurityServiceInterface
 }
 
 func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	
 	var engramService EngramServiceInterface
+	var engramSecurityService EngramSecurityServiceInterface
 	if cs, ok := characterService.(*CharacterService); ok {
 		engramService = cs.GetEngramService()
+		engramSecurityService = cs.GetEngramSecurityService()
 	}
 	
 	server := &HTTPServer{
-		addr:             addr,
-		router:           router,
-		characterService: characterService,
-		logger:           GetLogger(),
-		jwtValidator:     jwtValidator,
-		authEnabled:      authEnabled,
-		engramService:    engramService,
+		addr:                  addr,
+		router:                router,
+		characterService:      characterService,
+		logger:                GetLogger(),
+		jwtValidator:          jwtValidator,
+		authEnabled:           authEnabled,
+		engramService:         engramService,
+		engramSecurityService: engramSecurityService,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -76,13 +80,33 @@ func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtV
 	api.HandleFunc("/characters/switch", server.switchCharacter).Methods("POST")
 
 	if engramService != nil {
-		api.HandleFunc("/character/characters/{characterId}/engrams/slots", server.getEngramSlots).Methods("GET")
-		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/install", server.installEngram).Methods("POST")
-		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/remove", server.removeEngram).Methods("DELETE")
-		api.HandleFunc("/character/characters/{characterId}/engrams/active", server.getActiveEngrams).Methods("GET")
-		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence", server.getEngramInfluence).Methods("GET")
-		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence/update", server.updateEngramInfluence).Methods("POST")
-		api.HandleFunc("/character/characters/{characterId}/engrams/influence/levels", server.getEngramInfluenceLevels).Methods("GET")
+		engramHandlers := NewEngramHandlers(engramService, characterService)
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots", engramHandlers.GetEngramSlots).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/install", engramHandlers.InstallEngram).Methods("POST")
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/remove", engramHandlers.RemoveEngram).Methods("DELETE")
+		api.HandleFunc("/character/characters/{characterId}/engrams/active", engramHandlers.GetActiveEngrams).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence", engramHandlers.GetEngramInfluence).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence/update", engramHandlers.UpdateEngramInfluence).Methods("POST")
+		api.HandleFunc("/character/characters/{characterId}/engrams/influence/levels", engramHandlers.GetEngramInfluenceLevels).Methods("GET")
+	}
+
+	if engramSecurityService != nil {
+		securityHandlers := NewEngramSecurityHandlers(engramSecurityService)
+		api.HandleFunc("/character/engrams/{engramId}/protection", securityHandlers.GetEngramProtection).Methods("GET")
+		api.HandleFunc("/character/engrams/{engramId}/encode", securityHandlers.EncodeEngram).Methods("POST")
+	}
+
+	var engramCyberpsychosisService EngramCyberpsychosisServiceInterface
+	if cs, ok := characterService.(*CharacterService); ok {
+		engramCyberpsychosisService = cs.GetEngramCyberpsychosisService()
+	}
+
+	if engramCyberpsychosisService != nil {
+		cyberpsychosisHandlers := NewEngramCyberpsychosisHandlers(engramCyberpsychosisService)
+		api.HandleFunc("/character/characters/{characterId}/engrams/cyberpsychosis/risk", cyberpsychosisHandlers.GetEngramCyberpsychosisRisk).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/cyberpsychosis/update", cyberpsychosisHandlers.UpdateEngramCyberpsychosisRisk).Methods("POST")
+		api.HandleFunc("/character/characters/{characterId}/engrams/blockers", cyberpsychosisHandlers.GetEngramBlockers).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/blockers/install", cyberpsychosisHandlers.InstallEngramBlocker).Methods("POST")
 	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")

@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Rewards and Events Service API
+  description: |
+    API для управления наградами и событиями квестов.
+    
+    **Основные возможности:**
+    - Распределение наград за квесты
+    - Получение информации о наградах
+    - Просмотр событий квестов
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Quest Rewards
+    description: Награды за квесты
+  - name: Quest Events
+    description: События квестов
+paths:
+  /gameplay/quests/{quest_id}/rewards/distribute:
+    post:
+      tags:
+        - Quest Rewards
+      summary: Распределить награды за квест
+      description: |
+        Распределяет награды за завершённый квест.
+        Выдаёт опыт, валюту, предметы, репутацию и титулы.
+        Интегрируется с economy-service и mail-service.
+      operationId: distributeQuestRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды успешно распределены
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - rewards
+                properties:
+                  success:
+                    type: boolean
+                    description: Успешно ли распределены награды
+                  rewards:
+                    $ref: 'quest-schemas.yaml#/components/schemas/QuestRewards'
+                  distribution_details:
+                    type: object
+                    description: Детали распределения (какие награды куда отправлены)
+                    additionalProperties: true
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/rewards:
+    get:
+      tags:
+        - Quest Rewards
+      summary: Получить награды квеста
+      description: |
+        Возвращает информацию о наградах квеста.
+        Показывает, какие награды будут выданы при завершении квеста.
+      operationId: getQuestRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID определения квеста или инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды квеста
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestRewards'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/events:
+    get:
+      tags:
+        - Quest Events
+      summary: Получить события квеста
+      description: |
+        Возвращает историю событий квеста.
+        Включает события начала, выполнения целей, завершения и отмены.
+        Поддерживает фильтрацию по типу события и пагинацию.
+      operationId: getQuestEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          description: Фильтр по типу события
+          schema:
+            type: string
+            enum: [started, objective-completed, completed, failed, cancelled]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список событий квеста
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+
+
