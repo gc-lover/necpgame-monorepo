@@ -1,0 +1,546 @@
+metadata:
+  id: technology-progression-system-architecture
+  title: Архитектура системы разблокировки технологий
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T10:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - progression
+    - technology
+    - league-system
+    - timeline
+  related_systems:
+    - league-service
+    - inventory-service
+    - character-service
+    - quest-service
+    - world-service
+    - economy-service
+  related_documents:
+    - id: technology-progression-system
+      relation: implements
+    - id: league-system-mechanics
+      relation: integrates
+  github_issue: 1522
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-design
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы разблокировки технологий, которая:
+    - Привязывает доступность технологий к текущему времени лиги (2020-2093)
+    - Разблокирует технологии автоматически по времени и через сюжетные события
+    - Интегрируется с Inventory, Character, Quest, World сервисами
+    - Обеспечивает синхронизацию данных между сервисами
+    - Поддерживает высокую нагрузку и масштабируемость
+  goal: |
+    Создать архитектурную схему системы разблокировки технологий с определением:
+    - Компонентов для управления технологиями и разблокировками
+    - Микросервисов или модулей в существующих сервисах
+    - API endpoints (высокоуровнево)
+    - Интеграций с League, Inventory, Character, Quest, World сервисами
+    - Синхронизации данных (Event Sourcing, CQRS, Saga Pattern)
+    - Тикрейта и требований к сетевой нагрузке
+    - Структуры БД для технологий и разблокировок
+    - Технического задания для реализации
+
+architecture:
+  overview: |
+    Система разблокировки технологий состоит из следующих компонентов:
+    1. Technology Manager - управление технологиями и их разблокировками
+    2. Unlock Condition Evaluator - проверка условий разблокировки (время, квесты, репутация)
+    3. Technology Availability Filter - фильтрация доступных технологий для игроков
+    4. Unlock Event Publisher - публикация событий разблокировки
+    5. Technology Cache Manager - кэширование состояния технологий
+    6. Technology Sync Coordinator - синхронизация с другими сервисами
+
+  deployment_strategy: |
+    Система реализуется как модуль в существующем league-service, так как:
+    - Тесно связана с временем лиги
+    - Требует частого доступа к текущему году лиги
+    - Логически относится к мета-системе лиги
+    - Минимизирует сетевые вызовы между сервисами
+
+  components:
+    - name: Technology Manager
+      location: league-service-go (модуль technology-progression)
+      responsibility: |
+        Основной компонент для управления технологиями:
+        - Хранение определений технологий и условий разблокировки
+        - Проверка доступности технологий для игроков
+        - Обработка автоматических разблокировок по времени
+        - Управление состоянием разблокировок
+      dependencies:
+        - League Manager (получение текущего года)
+        - Unlock Condition Evaluator
+        - Technology Cache Manager
+      endpoints:
+        - GET /api/v1/league/technologies - список всех технологий
+        - GET /api/v1/league/technologies/available - доступные технологии для игрока
+        - GET /api/v1/league/technologies/{tech_id} - информация о технологии
+        - GET /api/v1/league/technologies/{tech_id}/unlock-status - статус разблокировки
+        - POST /api/v1/league/technologies/{tech_id}/unlock - разблокировка (admin/event)
+
+    - name: Unlock Condition Evaluator
+      location: league-service-go (модуль technology-progression)
+      responsibility: |
+        Проверка условий разблокировки технологий:
+        - Проверка времени лиги (league_year >= unlock_year)
+        - Проверка завершения квестов (через Quest Service)
+        - Проверка репутации с корпорациями (через Social Service)
+        - Проверка сюжетных событий (через World Service)
+      dependencies:
+        - League Manager
+        - Quest Service (HTTP/gRPC)
+        - Social Service (HTTP/gRPC)
+        - World Service (HTTP/gRPC)
+      evaluation_types:
+        - time_based: проверка league_year >= technology.unlock_year
+        - quest_based: проверка quest completion через Quest Service
+        - reputation_based: проверка corporate_reputation через Social Service
+        - event_based: проверка world events через World Service
+
+    - name: Technology Availability Filter
+      location: league-service-go (модуль technology-progression)
+      responsibility: |
+        Фильтрация доступных технологий для различных контекстов:
+        - Фильтрация предметов в Inventory Service
+        - Фильтрация имплантатов в Character Service
+        - Фильтрация квестов в Quest Service
+        - Фильтрация торговцев в World Service
+      dependencies:
+        - Technology Manager
+        - Unlock Condition Evaluator
+      filter_contexts:
+        - inventory_items: фильтрация предметов по технологиям
+        - character_implants: фильтрация имплантатов по технологиям
+        - quest_requirements: проверка доступности технологий для квестов
+        - vendor_items: фильтрация товаров торговцев
+
+    - name: Unlock Event Publisher
+      location: league-service-go (модуль technology-progression)
+      responsibility: |
+        Публикация событий разблокировки технологий:
+        - События автоматической разблокировки по времени
+        - События разблокировки через квесты
+        - События разблокировки через репутацию
+        - События для синхронизации с другими сервисами
+      dependencies:
+        - Event Bus (Kafka)
+        - Technology Manager
+      events_published:
+        - technology:unlocked - технология разблокирована
+        - technology:available - технология стала доступной для игрока
+        - technology:restricted - технология стала недоступной (DataKrash и т.д.)
+
+    - name: Technology Cache Manager
+      location: league-service-go (модуль technology-progression)
+      responsibility: |
+        Кэширование состояния технологий:
+        - Кэширование доступных технологий для игроков
+        - Кэширование условий разблокировки
+        - Инвалидация кэша при разблокировке
+        - Распределённый кэш через Redis
+      dependencies:
+        - Redis Cache
+        - Technology Manager
+      cache_keys:
+        - technology:available:{character_id} - доступные технологии игрока
+        - technology:unlock:{tech_id}:{character_id} - статус разблокировки
+        - technology:all - все технологии (read-only)
+
+    - name: Technology Sync Coordinator
+      location: league-service-go (модуль technology-progression)
+      responsibility: |
+        Синхронизация состояния технологий с другими сервисами:
+        - Синхронизация с Inventory Service (фильтрация предметов)
+        - Синхронизация с Character Service (ограничение имплантатов)
+        - Синхронизация с Quest Service (доступность квестов)
+        - Синхронизация с World Service (события и торговцы)
+      dependencies:
+        - Event Bus (Kafka)
+        - Inventory Service (HTTP/gRPC)
+        - Character Service (HTTP/gRPC)
+        - Quest Service (HTTP/gRPC)
+        - World Service (HTTP/gRPC)
+      sync_strategies:
+        - event_driven: через события Kafka
+        - on_demand: через HTTP/gRPC вызовы
+        - batch: периодическая синхронизация
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния технологий записываются как события:
+      - TechnologyUnlockedEvent - технология разблокирована
+      - TechnologyRestrictedEvent - технология ограничена
+      - TechnologyAvailabilityChangedEvent - изменилась доступность
+      
+      События хранятся в Event Store (Kafka topics) и используются для:
+      - Восстановления состояния
+      - Аудит-лога
+      - Синхронизации с другими сервисами
+      - Аналитики
+
+    cqrs_pattern: |
+      Разделение чтения и записи:
+      - Write Model: Technology Manager (команды разблокировки)
+      - Read Model: Technology Availability Filter (запросы доступности)
+      - Event Store: Kafka topics для событий
+      - Read Cache: Redis для быстрого доступа к доступным технологиям
+      
+      Преимущества:
+      - Масштабируемость чтения (несколько read replicas)
+      - Оптимизация запросов (кэширование)
+      - Независимость моделей чтения и записи
+
+    saga_pattern: |
+      Для транзакций между сервисами используется Saga Pattern:
+      
+      Пример: Разблокировка технологии через квест
+      1. Quest Service: квест завершён → публикует quest:completed
+      2. Technology Manager: получает событие → проверяет условия
+      3. Technology Manager: разблокирует технологию → публикует technology:unlocked
+      4. Inventory Service: получает событие → обновляет доступные предметы
+      5. Character Service: получает событие → обновляет доступные имплантаты
+      6. World Service: получает событие → обновляет торговцев
+      
+      Компенсация при ошибках:
+      - Если синхронизация с Inventory Service не удалась → откат разблокировки
+      - Если синхронизация с Character Service не удалась → откат разблокировки
+      - Логирование ошибок для последующего восстановления
+
+  integrations:
+    with_league_service: |
+      Прямая интеграция (внутри league-service):
+      - Получение текущего года лиги через League Manager
+      - Получение текущей фазы лиги через Season Controller
+      - Подписка на события изменения времени лиги
+      - Триггеры автоматической разблокировки при смене года
+
+    with_inventory_service: |
+      Интеграция через события и HTTP/gRPC:
+      - Публикация technology:unlocked → Inventory Service фильтрует предметы
+      - HTTP/gRPC вызовы для проверки доступности технологий при покупке
+      - Синхронизация доступных предметов через Technology Availability Filter
+      endpoints:
+        - GET /api/v1/economy/inventory/items?filter_by_technology=true
+        - POST /api/v1/economy/inventory/purchase (с проверкой технологии)
+
+    with_character_service: |
+      Интеграция через события и HTTP/gRPC:
+      - Публикация technology:unlocked → Character Service обновляет доступные имплантаты
+      - HTTP/gRPC вызовы для проверки технологии при установке имплантата
+      - Валидация имплантатов при создании персонажа
+      endpoints:
+        - POST /api/v1/characters/implants/install (с проверкой технологии)
+        - POST /api/v1/characters/create (с проверкой стартовых технологий)
+
+    with_quest_service: |
+      Интеграция через события:
+      - Подписка на quest:completed → проверка условий разблокировки
+      - Публикация technology:unlocked → Quest Service обновляет доступные квесты
+      - Фильтрация квестов по доступным технологиям
+      events:
+        - consumed: quest:completed
+        - published: technology:unlocked
+
+    with_world_service: |
+      Интеграция через события и HTTP/gRPC:
+      - Публикация technology:unlocked → World Service обновляет торговцев
+      - Подписка на world:event → проверка условий разблокировки
+      - Фильтрация событий мира по технологиям
+      events:
+        - consumed: world:event
+        - published: technology:unlocked
+
+  tickrate_and_network_requirements:
+    tickrate: |
+      Система работает в двух режимах:
+      
+      1. Real-time проверки (при действиях игрока):
+         - Проверка доступности технологии: < 10ms
+         - Фильтрация предметов: < 50ms
+         - Валидация имплантата: < 20ms
+         - Тикрейт: по требованию (on-demand)
+      
+      2. Периодические проверки (автоматические разблокировки):
+         - Проверка времени лиги: каждые 1 минуту
+         - Автоматическая разблокировка: при смене года лиги
+         - Синхронизация с сервисами: каждые 5 минут (batch)
+         - Тикрейт: 1 tick/минуту (для проверок), по событиям (для разблокировок)
+
+    network_requirements: |
+      Требования к сетевой нагрузке:
+      
+      Чтение (Read):
+      - GET /api/v1/league/technologies/available: ~100 req/s на игрока
+      - Кэширование: 95% запросов из кэша (Redis)
+      - Пропускная способность: ~10,000 req/s (с кэшем)
+      
+      Запись (Write):
+      - POST /api/v1/league/technologies/{tech_id}/unlock: ~1 req/s на игрока
+      - События разблокировки: ~100 events/s (все игроки)
+      - Пропускная способность: ~1,000 req/s
+      
+      Синхронизация:
+      - События Kafka: ~500 events/s (technology:unlocked)
+      - HTTP/gRPC вызовы к сервисам: ~200 req/s
+      - Batch синхронизация: каждые 5 минут, ~1000 записей за раз
+      
+      Latency требования:
+      - Проверка доступности: < 10ms (p99)
+      - Разблокировка технологии: < 100ms (p99)
+      - Синхронизация с сервисами: < 500ms (p99)
+
+  database_schema:
+    technologies_table: |
+      CREATE TABLE technologies (
+        id UUID PRIMARY KEY,
+        tech_id VARCHAR(100) UNIQUE NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        unlock_year INTEGER NOT NULL,
+        unlock_phase VARCHAR(50),
+        unlock_conditions JSONB NOT NULL,
+        availability JSONB NOT NULL,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      );
+      
+      unlock_conditions: JSONB с полями time_based, quest_based, reputation_based, event_based
+
+    technology_unlocks_table: |
+      CREATE TABLE technology_unlocks (
+        id UUID PRIMARY KEY,
+        technology_id UUID REFERENCES technologies(id),
+        character_id UUID NOT NULL,
+        unlock_type VARCHAR(50) NOT NULL,
+        unlock_source VARCHAR(100),
+        unlocked_at TIMESTAMP NOT NULL,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL
+      );
+      
+      Индексы:
+      - INDEX idx_tech_unlocks_character (character_id, technology_id)
+      - INDEX idx_tech_unlocks_tech (technology_id, unlocked_at)
+
+    technology_availability_cache: |
+      Redis: technology:available:{character_id} -> Set<tech_id>, TTL: 5 минут
+
+  api_endpoints:
+    technology_management:
+      - GET /api/v1/league/technologies
+        description: Получить список всех технологий
+        response: array<Technology>
+        cache: 1 час
+      - GET /api/v1/league/technologies/available
+        description: Получить доступные технологии для игрока
+        query_params: character_id (required)
+        response: array<Technology>
+        cache: 5 минут
+      - GET /api/v1/league/technologies/{tech_id}
+        description: Получить информацию о технологии
+        response: Technology
+        cache: 1 час
+      - GET /api/v1/league/technologies/{tech_id}/unlock-status
+        description: Получить статус разблокировки технологии для игрока
+        query_params: character_id (required)
+        response: UnlockStatus
+        cache: 5 минут
+      - POST /api/v1/league/technologies/{tech_id}/unlock
+        description: Разблокировать технологию (admin/event)
+        request: UnlockRequest
+        response: UnlockResponse
+        auth: admin или system
+
+    integration_endpoints:
+      - POST /api/v1/league/technologies/check-availability
+        description: Проверить доступность технологий для предмета/имплантата
+        request: AvailabilityCheckRequest
+        response: AvailabilityCheckResponse
+        used_by: Inventory Service, Character Service
+
+  subtasks:
+    - id: tech-prog-arch-1
+      title: Модуль Technology Manager в league-service
+      estimated_size: ~500 строк
+      priority: high
+      estimated_time: 3-4 дня
+
+    - id: tech-prog-arch-2
+      title: Модуль Unlock Condition Evaluator
+      estimated_size: ~400 строк
+      priority: high
+      estimated_time: 3-4 дня
+
+    - id: tech-prog-arch-3
+      title: Модуль Technology Availability Filter
+      estimated_size: ~200 строк
+      priority: high
+      estimated_time: 2-3 дня
+
+    - id: tech-prog-arch-4
+      title: Event Sourcing и CQRS реализация
+      estimated_size: ~650 строк
+      priority: high
+      estimated_time: 4-5 дней
+
+    - id: tech-prog-arch-5
+      title: Saga Pattern для синхронизации
+      estimated_size: ~450 строк
+      priority: medium
+      estimated_time: 3-4 дня
+
+    - id: tech-prog-arch-6
+      title: Интеграция с Inventory Service
+      estimated_size: ~150 строк
+      priority: high
+      estimated_time: 2-3 дня
+
+    - id: tech-prog-arch-7
+      title: Интеграция с Character Service
+      estimated_size: ~150 строк
+      priority: high
+      estimated_time: 2-3 дня
+
+    - id: tech-prog-arch-8
+      title: Интеграция с Quest Service
+      estimated_size: ~150 строк
+      priority: high
+      estimated_time: 2-3 дня
+
+    - id: tech-prog-arch-9
+      title: Интеграция с World Service
+      estimated_size: ~150 строк
+      priority: high
+      estimated_time: 2-3 дня
+
+    - id: tech-prog-arch-10
+      title: Миграции БД и схемы
+      estimated_size: ~200 строк
+      priority: high
+      estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "League Service (8093)"
+            TM[Technology Manager]
+            UCE[Unlock Condition Evaluator]
+            TAF[Technology Availability Filter]
+            UEP[Unlock Event Publisher]
+            TCM[Technology Cache Manager]
+            TSC[Technology Sync Coordinator]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>technologies<br/>technology_unlocks)]
+            Redis[(Redis Cache<br/>technology:available)]
+        end
+
+        subgraph "Event Bus"
+            Kafka[Kafka<br/>technology:unlocked<br/>technology:available<br/>technology:restricted]
+        end
+
+        subgraph "External Services"
+            LS[League Manager<br/>Current Year/Phase]
+            IS[Inventory Service<br/>Item Filtering]
+            CS[Character Service<br/>Implant Validation]
+            QS[Quest Service<br/>Quest Completion]
+            WS[World Service<br/>World Events]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|GET /technologies/available| TM
+        TM --> UCE
+        TM --> TAF
+        TM --> TCM
+        TM --> UEP
+        TM -->|store| DB
+        TCM -->|cache| Redis
+        UEP -->|publish| Kafka
+        UCE -->|get current year| LS
+        TSC -->|sync| IS
+        TSC -->|sync| CS
+        TSC -->|sync| QS
+        TSC -->|sync| WS
+        Kafka -->|consume| IS
+        Kafka -->|consume| CS
+        Kafka -->|consume| QS
+        Kafka -->|consume| WS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant L as League Service
+        participant TM as Technology Manager
+        participant K as Kafka
+        participant IS as Inventory Service
+
+        L->>TM: Year changed to 2030
+        TM->>TM: Unlock technology
+        TM->>K: technology:unlocked
+        K->>IS: Update available items
+    ```
+
+  saga_pattern_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant QS as Quest Service
+        participant TM as Technology Manager
+        participant IS as Inventory Service
+        participant CS as Character Service
+
+        QS->>TM: quest:completed
+        TM->>TM: Unlock technology
+        TM->>IS: technology:unlocked
+        TM->>CS: technology:unlocked
+        alt Failure
+            IS->>TM: Sync failed
+            TM->>TM: Rollback
+        end
+    ```
+
+decisions:
+  - decision: Реализация как модуль в league-service, а не отдельный микросервис
+    rationale: |
+      - Тесная связь с временем лиги (частые запросы к League Manager)
+      - Минимизация сетевых вызовов
+      - Логическая принадлежность к мета-системе лиги
+      - Упрощение синхронизации данных
+  - decision: Использование Event Sourcing и CQRS
+    rationale: |
+      - Масштабируемость чтения (несколько read replicas)
+      - Аудит-лог всех разблокировок
+      - Восстановление состояния из событий
+      - Оптимизация запросов через кэширование
+  - decision: Использование Saga Pattern для синхронизации
+    rationale: |
+      - Распределённые транзакции между сервисами
+      - Компенсация при ошибках
+      - Асинхронная синхронизация через события
+      - Отказоустойчивость системы
+  - decision: Кэширование доступных технологий в Redis
+    rationale: |
+      - Высокая частота запросов (100 req/s на игрока)
+      - Низкая латентность (< 10ms)
+      - Инвалидация при разблокировке
+      - Масштабируемость чтения
+
