@@ -1,11 +1,11 @@
 metadata:
   id: canon-quest-sao-paulo-mega-city
-  title: 'Сан-Паулу — Мегаполис'
+  title: 'Сан-Паулу — Вертикальный мир'
   document_type: canon
   category: quest
   status: approved
-  version: '1.1.0'
-  last_updated: 2025-11-11T15:48:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-11T15:48:00Z
   owners:
@@ -23,6 +23,9 @@ metadata:
     - exploration-system
     - economy-system
     - reputation-system
+    - parkour-system
+    - skill-check-engine
+    - quest-engine
   related_documents:
     - id: canon-quest-sao-paulo-traffic-nightmare
       relation: parallels
@@ -46,48 +49,137 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Описание мегаполиса Сан-Паулу оставалось в Markdown и не влияло на системы исследования и репутации."
-  goal: "Структурировать квест в YAML, выделив ключевые районы, контрасты и последствия для городских фракций."
-  essence: "Игрок исследует мегаполис на 22 млн жителей, фиксирует небоскрёбы Avenida Paulista и фавелы Paraisópolis, формируя отчёт об урбанистике."
+  problem: "Квест доставки через три вертикальных уровня мегаполиса Сан-Паулу требует детализации механик, диалогов и ветвлений."
+  goal: "Создать полноценный контентный квест с диалогами, ветвлениями и интеграцией с системами паркура, репутации и экономики."
+  essence: "Игрок выполняет курьерскую доставку загадочного пакета через три вертикальных уровня мегаполиса: Baixada (фавелы), Meio (средний класс), Topo (корпоративные башни), выбирая между взятками, навыками и риском."
   key_points:
-    - Маршрут включает смотровые площадки, финансовые районы и соседние фавелы.
-    - Системные связи обновляют экономику города и репутацию среди местных движений.
-    - Награды дают титул «Житель мегаполиса» и открывают дополнительные урбанистические ветки.
+    - Паркур через башню Копан (200+ метров) с тремя точками контроля.
+    - Три выбора на каждом уровне: взятка, рекомендация, альтернативный путь.
+    - Загадочный пакет с информацией, которая может изменить город.
+    - 9 вариантов прохождения (3 выбора по 3 пути).
+quest_definition:
+  quest_type: side
+  level_min: 15
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: receive_package
+      text: "Получить загадочный пакет от анонимного клиента"
+      type: interact
+      target: anonymous_client
+      count: 1
+      optional: false
+    - id: pass_baixada_checkpoint
+      text: "Пройти пост банды Comando Vertical в Baixada"
+      type: choice
+      target: baixada_checkpoint
+      count: 1
+      optional: false
+    - id: pass_meio_checkpoint
+      text: "Обойти милицию среднего уровня в Meio"
+      type: choice
+      target: meio_checkpoint
+      count: 1
+      optional: false
+    - id: reach_topo_level
+      text: "Проникнуть на вершину Topo к корпоративным башням"
+      type: choice
+      target: topo_access
+      count: 1
+      optional: false
+    - id: deliver_package
+      text: "Доставить пакет и узнать о содержимом"
+      type: interact
+      target: package_delivery_point
+      count: 1
+      optional: false
+  rewards:
+    experience: 4000
+    money: 0
+    items:
+      - item_id: achievement_vertical_journey
+        quantity: 1
+    reputation: {}
+    unlocks:
+      - urban_planning_quests
+      - favela_reputation_system
+  branches:
+    - branch_id: bribe_path
+      description: "Путь взяток - платить за проход на каждом уровне"
+      consequences:
+        money: -15000
+        reputation:
+          Comando_Vertical: 10
+          Milicia: 10
+          Corporations: -5
+    - branch_id: skill_path
+      description: "Путь навыков - использовать паркур, взлом, скрытность"
+      consequences:
+        skills:
+          parkour: +50
+          stealth: +30
+          hacking: +25
+        reputation:
+          Comando_Vertical: -5
+          Milicia: -5
+          Corporations: -10
+    - branch_id: alternative_path
+      description: "Альтернативный путь - найти обходные маршруты"
+      consequences:
+        exploration: +100
+        reputation:
+          Urban_Explorers: +20
 content:
   sections:
     - id: quest_profile
       title: 'Параметры квеста'
       body: |
-        Тип: exploration. Сложность: medium. Формат: solo. Длительность: 3–4 часа.
-        Награды: 2 500 XP, +25 к урбанистическому ресурсу, титул «Житель мегаполиса».
+        Тип: side quest (курьерская доставка). Сложность: medium. Формат: solo. Длительность: 2-3 часа.
+        Награды: 4 000 XP, ачивка «Вертикальное путешествие», навыки паркура/скрытности/взлома, репутация с фракциями.
       mechanics_links: []
       assets: []
     - id: stages
-      title: 'Этапы'
+      title: 'Этапы квеста'
       body: |
-        1. Осмотреть панораму с Edifício Itália и зафиксировать горизонт мегаполиса.
-        2. Изучить Avenida Paulista как финансовое сердце и собрать данные о потоках капитала.
-        3. Исследовать транспортные узлы, оценив легендарные пробки и метро.
-        4. Сопоставить Morumbi и Paraisópolis, задокументировать контрасты и реакции жителей.
+        1. Получить загадочный пакет от анонимного клиента в нижнем уровне Baixada.
+        2. Пройти пост банды Comando Vertical (выбор: взятка/рекомендация/альтернативный путь).
+        3. Обойти милицию среднего уровня Meio (выбор: документы/взлом/паркур).
+        4. Проникнуть на вершину Topo к корпоративным башням (выбор: честность/обман/скрытность).
+        5. Доставить пакет и узнать, что это доказательства коррупции.
       mechanics_links: []
       assets: []
     - id: systems_hooks
       title: 'Системные крючки'
       body: |
-        exploration-system открывает новые точки обзора, economy-system учитывает инвестиции и стоимость недвижимости,
-        reputation-system обновляет отношение городских активистов и бизнеса к игроку.
+        parkour-system обрабатывает вертикальную навигацию через башню Копан, reputation-system обновляет репутацию с фракциями (Comando Vertical, Milicia, Corporations), skill-check-system проверяет навыки stealth/hacking/athletics, economy-system учитывает взятки и затраты, exploration-system открывает обходные маршруты.
       mechanics_links: []
       assets: []
     - id: regional_details
       title: 'Региональные детали'
       body: |
-        Население агломерации 22 млн+, климат «Cidade da Garoa», небоскрёбы Avenida Paulista, контраст элитных районов и фавел Paraisópolis.
+        Сан-Паулу вырос не только вширь, но и ввысь. Фавелы карабкаются по небоскрёбам, создавая три мира: Baixada (нижний, тени и трущобы), Meio (средний класс), Topo (корпоративные башни и пентхаусы). Башня Копан — 200+ метров высотой, символ вертикального расслоения. Каждый уровень контролируется своей силой: банды внизу, милиция в центре, корпоративная охрана наверху. Контрабанда между уровнями — опасный бизнес.
       mechanics_links: []
       assets: []
     - id: rewards
       title: 'Награды и последствия'
       body: |
-        Квест выдаёт 2 500 XP, +25 к урбанистическому ресурсу, титул «Житель мегаполиса» и открывает доступ к городским реформам.
+        Базовые награды: 4 000 XP, ачивка «Вертикальное путешествие».
+        Ветвления влияют на награды: путь взяток (-15 000 эдди, репутация с бандами +10), путь навыков (+50 паркур, +30 скрытность, +25 взлом), альтернативный путь (+100 исследование, репутация с исследователями +20).
+        Пакет содержит доказательства коррупции, что открывает дополнительные квесты расследования.
+      mechanics_links: []
+      assets: []
+    - id: branches
+      title: 'Ветвления и выборы'
+      body: |
+        Три ключевых выбора на уровнях:
+        1. Baixada: взятка (5 000 эдди), рекомендация (нужна репутация), альтернативный путь (паркур через крыши).
+        2. Meio: документы (нужен взлом системы), взлом (нужен навык hacking), паркур (нужен навык parkour).
+        3. Topo: честность (дипломатия), обман (нужен навык deception), скрытность (нужен навык stealth).
+        Всего 9 вариантов прохождения (3×3×3).
       mechanics_links: []
       assets: []
 appendix:
@@ -99,12 +191,16 @@ appendix:
       link: https://www1.folha.uol.com.br
   decisions: []
 implementation:
-  github_issue: 364
+  github_issue: 249
   needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Вертикальный мир". Добавлены ветвления, выборы и интеграция с системами паркура, репутации и навыков.'
   - version: '1.1.0'
     date: 2025-11-11
     author: narrative_team
