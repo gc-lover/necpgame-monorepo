@@ -2,10 +2,14 @@ openapi: 3.0.3
 info:
   title: Gameplay Time Trials Service API
   description: |
-    API для системы временных испытаний: отслеживание времени прохождения, валидация результатов, управление сессиями.
+    API для системы временных испытаний (Time Trials) - соревнование на скорость прохождения контента.
     
-    Система позволяет игрокам соревноваться в скорости прохождения рейдов, подземелий и других контентов.
-    Результаты отслеживаются в лидербордах, игроки получают награды за рекорды.
+    **Основные возможности:**
+    - Начало и завершение временных испытаний
+    - Отслеживание времени прохождения
+    - Валидация результатов
+    - Еженедельные испытания
+    - Интеграция с лидербордами
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -19,9 +23,9 @@ servers:
 
 tags:
   - name: Time Trials
-    description: Управление временными испытаниями
-  - name: Time Trial Sessions
-    description: Сессии временных испытаний
+    description: Временные испытания
+  - name: Weekly Challenges
+    description: Еженедельные испытания
 
 paths:
   /time-trials/start:
@@ -30,8 +34,8 @@ paths:
         - Time Trials
       summary: Начать временное испытание
       description: |
-        Создает новую сессию временного испытания и запускает отсчет времени.
-        Время отсчитывается с момента входа до поражения финального босса.
+        Начинает временное испытание для указанного контента.
+        Создает сессию испытания и запускает отсчет времени.
       operationId: startTimeTrial
       security:
         - BearerAuth: []
@@ -42,30 +46,28 @@ paths:
             schema:
               $ref: '#/components/schemas/StartTimeTrialRequest'
             example:
-              trial_type: speedrun_raid
-              content_id: '660e8400-e29b-41d4-a716-446655440000'
-              team_id: '770e8400-e29b-41d4-a716-446655440000'
+              trial_type: "speedrun_raid"
+              content_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+              player_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+              team_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
       responses:
-        '201':
-          description: Сессия испытания создана
+        '200':
+          description: Испытание начато
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TimeTrialSession'
+                $ref: '#/components/schemas/TimeTrialSessionResponse'
               example:
-                id: '880e8400-e29b-41d4-a716-446655440000'
-                trial_type: speedrun_raid
-                content_id: '660e8400-e29b-41d4-a716-446655440000'
-                player_id: '990e8400-e29b-41d4-a716-446655440000'
-                team_id: '770e8400-e29b-41d4-a716-446655440000'
-                start_time: '2025-12-01T10:00:00Z'
-                status: in_progress
+                session_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+                trial_type: "speedrun_raid"
+                content_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                status: "in_progress"
+                start_time: "2025-12-01T10:00:00Z"
+                message: "Time trial started"
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
@@ -75,8 +77,8 @@ paths:
         - Time Trials
       summary: Завершить временное испытание
       description: |
-        Завершает сессию временного испытания, останавливает отсчет времени и валидирует результат.
-        При новом рекорде обновляет лидерборды и выдает достижения.
+        Завершает временное испытание с указанным временем прохождения.
+        Проверяет валидность результата и обновляет лидерборды.
       operationId: completeTimeTrial
       security:
         - BearerAuth: []
@@ -87,77 +89,141 @@ paths:
             schema:
               $ref: '#/components/schemas/CompleteTimeTrialRequest'
             example:
-              session_id: '880e8400-e29b-41d4-a716-446655440000'
-              completion_time_ms: 1800000
-              deaths_count: 2
-              abilities_used: ['hack', 'stealth', 'combat']
-      responses:
-          '200':
-            description: Испытание завершено
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/TimeTrialCompletionResponse'
-                example:
-                  session_id: '880e8400-e29b-41d4-a716-446655440000'
-                  completion_time_ms: 1800000
-                  rank: 15
-                  is_new_record: false
-                  is_personal_best: true
-                  reward_modifier: 1.0
-                  achievements:
-                    - id: 'aa0e8400-e29b-41d4-a716-446655440000'
-                      name: Personal Best
-                      description: Новый личный рекорд
-          '400':
-            $ref: 'common.yaml#/components/responses/BadRequest'
-          '401':
-            $ref: 'common.yaml#/components/responses/Unauthorized'
-          '404':
-            $ref: 'common.yaml#/components/responses/NotFound'
-          '500':
-            $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /time-trials/sessions/{session_id}:
-    get:
-      tags:
-        - Time Trial Sessions
-      summary: Получить информацию о сессии
-      description: |
-        Возвращает информацию о текущей сессии временного испытания, включая прошедшее время.
-      operationId: getTimeTrialSession
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID сессии испытания
+              session_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+              completion_time: 3600
+              validated: true
       responses:
         '200':
-          description: Информация о сессии
+          description: Испытание завершено
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TimeTrialSession'
+                $ref: '#/components/schemas/CompleteTimeTrialResponse'
               example:
-                id: '880e8400-e29b-41d4-a716-446655440000'
-                trial_type: speedrun_raid
-                content_id: '660e8400-e29b-41d4-a716-446655440000'
-                player_id: '990e8400-e29b-41d4-a716-446655440000'
-                team_id: '770e8400-e29b-41d4-a716-446655440000'
-                start_time: '2025-12-01T10:00:00Z'
-                elapsed_time_ms: 1200000
-                status: in_progress
+                session_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+                completion_time: 3600
+                rank: 1
+                is_record: true
+                previous_record: 4200
+                rewards:
+                  - type: "title"
+                    name: "Speedrunner"
+                  - type: "cosmetic"
+                    name: "Speedrun Badge"
+                message: "New record achieved!"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          description: Сессия не найдена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /time-trials/weekly/current:
+    get:
+      tags:
+        - Weekly Challenges
+      summary: Получить текущее еженедельное испытание
+      description: |
+        Возвращает информацию о текущем активном еженедельном испытании.
+      operationId: getCurrentWeeklyChallenge
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Текущее еженедельное испытание
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyChallengeResponse'
+              example:
+                challenge_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+                challenge_type: "time_attack_dungeon"
+                content_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+                week_start: "2025-12-01T00:00:00Z"
+                week_end: "2025-12-08T00:00:00Z"
+                conditions:
+                  max_time: 1800
+                  difficulty: "hard"
+                rewards:
+                  bronze:
+                    time_limit: 1800
+                    rewards: ["title: Bronze Speedrunner"]
+                  silver:
+                    time_limit: 1200
+                    rewards: ["title: Silver Speedrunner"]
+                  gold:
+                    time_limit: 900
+                    rewards: ["title: Gold Speedrunner"]
+                  platinum:
+                    time_limit: 600
+                    rewards: ["title: Platinum Speedrunner", "cosmetic: Speedrun Badge"]
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Еженедельное испытание не активно
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /time-trials/weekly/history:
+    get:
+      tags:
+        - Weekly Challenges
+      summary: Получить историю еженедельных испытаний
+      description: |
+        Возвращает историю еженедельных испытаний с возможностью фильтрации.
+      operationId: getWeeklyChallengesHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Количество записей
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: История еженедельных испытаний
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyChallengesHistoryResponse'
+              example:
+                challenges:
+                  - challenge_id: "g7a8b9c0-e1f2-3456-7890-123456g01234"
+                    challenge_type: "speedrun_raid"
+                    week_start: "2025-11-24T00:00:00Z"
+                    week_end: "2025-12-01T00:00:00Z"
+                    status: "completed"
+                  - challenge_id: "h8b9c0d1-f2e3-4567-8901-234567h01234"
+                    challenge_type: "time_attack_dungeon"
+                    week_start: "2025-11-17T00:00:00Z"
+                    week_end: "2025-11-24T00:00:00Z"
+                    status: "completed"
+                total: 10
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
@@ -167,145 +233,329 @@ components:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
 
   schemas:
+    TrialType:
+      type: string
+      enum:
+        - speedrun_raid
+        - time_attack_dungeon
+        - weekly_challenge
+      description: Тип временного испытания
+
+    TimeTrialStatus:
+      type: string
+      enum:
+        - in_progress
+        - completed
+        - failed
+      description: Статус испытания
+
     StartTimeTrialRequest:
       type: object
-      required: [trial_type, content_id]
+      required:
+        - trial_type
+        - content_id
+        - player_id
       properties:
         trial_type:
-          type: string
-          enum: [speedrun_raid, time_attack_dungeon, weekly_challenge]
-          description: Тип временного испытания
+          $ref: '#/components/schemas/TrialType'
         content_id:
           type: string
           format: uuid
           description: ID контента (рейд, подземелье и т.д.)
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+          example: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
         team_id:
           type: string
           format: uuid
-          nullable: true
           description: ID команды (для командных испытаний)
+          nullable: true
+          example: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
 
-    CompleteTimeTrialRequest:
+    TimeTrialSessionResponse:
       type: object
-      required: [session_id, completion_time_ms]
+      required:
+        - session_id
+        - trial_type
+        - content_id
+        - status
+        - start_time
       properties:
         session_id:
           type: string
           format: uuid
           description: ID сессии испытания
-        completion_time_ms:
-          type: integer
-          minimum: 0
-          description: Время прохождения в миллисекундах
-        deaths_count:
-          type: integer
-          minimum: 0
-          default: 0
-          description: Количество смертей
-        abilities_used:
-          type: array
-          items:
-            type: string
-          description: Список использованных способностей
-        route_optimization:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Коэффициент оптимизации маршрута (0-1)
-
-    TimeTrialSession:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ID сессии
+          example: "d4e5f6a7-b8c9-0123-4567-890123def012"
         trial_type:
-          type: string
-          enum: [speedrun_raid, time_attack_dungeon, weekly_challenge]
-          description: Тип испытания
+          $ref: '#/components/schemas/TrialType'
         content_id:
           type: string
           format: uuid
           description: ID контента
-        player_id:
-          type: string
-          format: uuid
-          description: ID игрока
-        team_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: ID команды
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        status:
+          $ref: '#/components/schemas/TimeTrialStatus'
         start_time:
           type: string
           format: date-time
-          description: Время начала
-        end_time:
+          description: Время начала испытания
+          example: "2025-12-01T10:00:00Z"
+        message:
           type: string
-          format: date-time
-          nullable: true
-          description: Время завершения
-        elapsed_time_ms:
-          type: integer
-          minimum: 0
-          description: Прошедшее время в миллисекундах (для активных сессий)
-        completion_time_ms:
-          type: integer
-          minimum: 0
-          nullable: true
-          description: Время прохождения в миллисекундах (для завершенных)
-        status:
-          type: string
-          enum: [in_progress, completed, failed]
-          description: Статус сессии
+          description: Дополнительное сообщение
+          example: "Time trial started"
 
-    TimeTrialCompletionResponse:
+    CompleteTimeTrialRequest:
       type: object
+      required:
+        - session_id
+        - completion_time
       properties:
         session_id:
           type: string
           format: uuid
-          description: ID сессии
-        completion_time_ms:
+          description: ID сессии испытания
+          example: "d4e5f6a7-b8c9-0123-4567-890123def012"
+        completion_time:
           type: integer
+          description: Время прохождения в секундах
           minimum: 0
-          description: Время прохождения в миллисекундах
-        rank:
-          type: integer
-          minimum: 1
-          description: Позиция в лидерборде
-        is_new_record:
+          example: 3600
+        validated:
           type: boolean
-          description: Является ли новым рекордом (топ-1)
-        is_personal_best:
-          type: boolean
-          description: Является ли личным рекордом
-        reward_modifier:
-          type: number
-          format: float
-          minimum: 1.0
-          description: Модификатор наград на основе времени
-          example: 1.5
-        achievements:
-          type: array
-          items:
-            $ref: '#/components/schemas/Achievement'
-          description: Полученные достижения
-        leaderboard_url:
-          type: string
-          format: uri
-          description: URL лидерборда
+          description: Результат валидирован
+          default: false
+          example: true
 
-    Achievement:
+    CompleteTimeTrialResponse:
       type: object
+      required:
+        - session_id
+        - completion_time
+        - rank
+        - is_record
       properties:
-        id:
+        session_id:
           type: string
           format: uuid
+          description: ID сессии испытания
+          example: "d4e5f6a7-b8c9-0123-4567-890123def012"
+        completion_time:
+          type: integer
+          description: Время прохождения в секундах
+          minimum: 0
+          example: 3600
+        rank:
+          type: integer
+          description: Ранг в лидерборде
+          minimum: 1
+          example: 1
+        is_record:
+          type: boolean
+          description: Является ли результат новым рекордом
+          example: true
+        previous_record:
+          type: integer
+          description: Предыдущий рекорд в секундах
+          nullable: true
+          minimum: 0
+          example: 4200
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          description: Полученные награды
+        message:
+          type: string
+          description: Дополнительное сообщение
+          example: "New record achieved!"
+
+    Reward:
+      type: object
+      required:
+        - type
+        - name
+      properties:
+        type:
+          type: string
+          enum:
+            - title
+            - cosmetic
+            - currency
+            - item
+          description: Тип награды
+          example: "title"
         name:
           type: string
-        description:
-          type: string
+          description: Название награды
+          example: "Speedrunner"
+        amount:
+          type: integer
+          description: Количество (для currency)
+          nullable: true
+          minimum: 0
+          example: 1000
 
+    WeeklyChallengeResponse:
+      type: object
+      required:
+        - challenge_id
+        - challenge_type
+        - content_id
+        - week_start
+        - week_end
+        - conditions
+        - rewards
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+          description: ID еженедельного испытания
+          example: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+        challenge_type:
+          type: string
+          enum:
+            - speedrun_raid
+            - time_attack_dungeon
+            - weekly_time_challenge
+          description: Тип испытания
+          example: "time_attack_dungeon"
+        content_id:
+          type: string
+          format: uuid
+          description: ID контента
+          example: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+        week_start:
+          type: string
+          format: date-time
+          description: Начало недели
+          example: "2025-12-01T00:00:00Z"
+        week_end:
+          type: string
+          format: date-time
+          description: Конец недели
+          example: "2025-12-08T00:00:00Z"
+        conditions:
+          type: object
+          description: Условия испытания
+          additionalProperties: true
+          example:
+            max_time: 1800
+            difficulty: "hard"
+        rewards:
+          type: object
+          description: Награды по уровням
+          properties:
+            bronze:
+              $ref: '#/components/schemas/TimeRewardTier'
+            silver:
+              $ref: '#/components/schemas/TimeRewardTier'
+            gold:
+              $ref: '#/components/schemas/TimeRewardTier'
+            platinum:
+              $ref: '#/components/schemas/TimeRewardTier'
+          example:
+            bronze:
+              time_limit: 1800
+              rewards: ["title: Bronze Speedrunner"]
+            silver:
+              time_limit: 1200
+              rewards: ["title: Silver Speedrunner"]
+            gold:
+              time_limit: 900
+              rewards: ["title: Gold Speedrunner"]
+            platinum:
+              time_limit: 600
+              rewards: ["title: Platinum Speedrunner", "cosmetic: Speedrun Badge"]
+
+    TimeRewardTier:
+      type: object
+      required:
+        - time_limit
+        - rewards
+      properties:
+        time_limit:
+          type: integer
+          description: Лимит времени в секундах
+          minimum: 0
+          example: 1800
+        rewards:
+          type: array
+          items:
+            type: string
+          description: Список наград
+          example: ["title: Bronze Speedrunner"]
+
+    WeeklyChallengeHistoryItem:
+      type: object
+      required:
+        - challenge_id
+        - challenge_type
+        - week_start
+        - week_end
+        - status
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+          description: ID еженедельного испытания
+          example: "g7a8b9c0-e1f2-3456-7890-123456g01234"
+        challenge_type:
+          type: string
+          enum:
+            - speedrun_raid
+            - time_attack_dungeon
+            - weekly_time_challenge
+          description: Тип испытания
+          example: "speedrun_raid"
+        week_start:
+          type: string
+          format: date-time
+          description: Начало недели
+          example: "2025-11-24T00:00:00Z"
+        week_end:
+          type: string
+          format: date-time
+          description: Конец недели
+          example: "2025-12-01T00:00:00Z"
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - upcoming
+          description: Статус испытания
+          example: "completed"
+
+    WeeklyChallengesHistoryResponse:
+      type: object
+      required:
+        - challenges
+        - total
+      properties:
+        challenges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyChallengeHistoryItem'
+          description: Список еженедельных испытаний
+        total:
+          type: integer
+          description: Общее количество испытаний
+          minimum: 0
+          example: 10
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []
