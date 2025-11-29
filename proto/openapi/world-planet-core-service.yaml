@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: World Planet Core Service
+  description: Основные endpoints для управления планетами
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Planets
+    description: Управление планетами
+
+paths:
+  /world/planets:
+    get:
+      tags:
+        - Planets
+      summary: Список планет
+      description: |
+        Возвращает список планет с возможностью фильтрации и пагинации.
+      operationId: listPlanets
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - colonizing
+          description: Фильтр по статусу планеты
+        - name: climate
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - temperate
+              - arid
+              - tropical
+              - arctic
+              - toxic
+          description: Фильтр по климату
+      responses:
+        '200':
+          description: Список планет
+          content:
+            application/json:
+              schema:
+                $ref: 'world-planet-schemas.yaml#/components/schemas/PlanetListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Planets
+      summary: Создать планету
+      description: |
+        Создает новую планету с указанными характеристиками.
+      operationId: createPlanet
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'world-planet-schemas.yaml#/components/schemas/CreatePlanetRequest'
+            example:
+              name: "Terra Nova"
+              description: "A newly discovered habitable planet"
+              size: 15000000.5
+              climate: "temperate"
+      responses:
+        '201':
+          description: Планета успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: 'world-planet-schemas.yaml#/components/schemas/Planet'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /world/planets/{planetId}:
+    get:
+      tags:
+        - Planets
+      summary: Информация о планете
+      description: |
+        Возвращает детальную информацию о планете по её ID.
+      operationId: getPlanet
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+      responses:
+        '200':
+          description: Информация о планете
+          content:
+            application/json:
+              schema:
+                $ref: 'world-planet-schemas.yaml#/components/schemas/Planet'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Planets
+      summary: Обновить планету
+      description: |
+        Обновляет информацию о планете.
+      operationId: updatePlanet
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'world-planet-schemas.yaml#/components/schemas/UpdatePlanetRequest'
+      responses:
+        '200':
+          description: Планета успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: 'world-planet-schemas.yaml#/components/schemas/Planet'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

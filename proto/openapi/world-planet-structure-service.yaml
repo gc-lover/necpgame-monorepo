@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: World Planet Structure Service
+  description: Управление структурой планет (континенты, территории, ресурсы)
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Planet Structure
+    description: Управление структурой планет
+
+paths:
+  /world/planets/{planetId}/continents:
+    get:
+      tags:
+        - Planet Structure
+      summary: Список континентов планеты
+      description: |
+        Возвращает список всех континентов на планете.
+      operationId: listPlanetContinents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+      responses:
+        '200':
+          description: Список континентов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  continents:
+                    type: array
+                    items:
+                      $ref: 'world-planet-schemas.yaml#/components/schemas/PlanetContinent'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/planets/{planetId}/territories:
+    get:
+      tags:
+        - Planet Structure
+      summary: Список территорий планеты
+      description: |
+        Возвращает список всех территорий на планете с информацией о контроле.
+      operationId: listPlanetTerritories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+        - name: controlled_by
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по контролирующей структуре
+      responses:
+        '200':
+          description: Список территорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  territories:
+                    type: array
+                    items:
+                      $ref: 'world-planet-schemas.yaml#/components/schemas/PlanetTerritory'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/planets/{planetId}/resources:
+    get:
+      tags:
+        - Planet Structure
+      summary: Ресурсы планеты
+      description: |
+        Возвращает информацию о ресурсах планеты.
+      operationId: getPlanetResources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+        - name: resource_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - minerals
+              - energy
+              - food
+              - technology
+              - population
+          description: Фильтр по типу ресурса
+      responses:
+        '200':
+          description: Ресурсы планеты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: 'world-planet-schemas.yaml#/components/schemas/PlanetResource'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

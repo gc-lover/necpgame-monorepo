@@ -1,0 +1,361 @@
+openapi: 3.0.3
+info:
+  title: World Planet Service - Schemas
+  description: Общие схемы данных для World Planet Service
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+components:
+  schemas:
+    Planet:
+      type: object
+      required:
+        - id
+        - name
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID планеты
+        name:
+          type: string
+          description: Название планеты
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - colonizing
+          description: Статус планеты
+        description:
+          type: string
+          description: Описание планеты
+        size:
+          type: number
+          format: float
+          description: Размер планеты (в км²)
+        climate:
+          type: string
+          enum:
+            - temperate
+            - arid
+            - tropical
+            - arctic
+            - toxic
+          description: Климат планеты
+        population:
+          type: integer
+          description: Население планеты
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanetResource'
+          description: Ресурсы планеты
+        government_id:
+          type: string
+          format: uuid
+          description: ID правящей политической структуры
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PlanetResource:
+      type: object
+      required:
+        - id
+        - type
+        - amount
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - minerals
+            - energy
+            - food
+            - technology
+            - population
+          description: Тип ресурса
+        amount:
+          type: number
+          format: float
+          description: Количество ресурса
+        max_amount:
+          type: number
+          format: float
+          description: Максимальное количество ресурса
+        regeneration_rate:
+          type: number
+          format: float
+          description: Скорость регенерации ресурса
+
+    PlanetContinent:
+      type: object
+      required:
+        - id
+        - planet_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        planet_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        size:
+          type: number
+          format: float
+        climate:
+          type: string
+        population:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    PlanetTerritory:
+      type: object
+      required:
+        - id
+        - planet_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        planet_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        controlled_by:
+          type: string
+          format: uuid
+          description: ID контролирующей структуры (фракция, корпорация, политика)
+        created_at:
+          type: string
+          format: date-time
+
+    PlanetInteraction:
+      type: object
+      required:
+        - id
+        - planet_id_1
+        - planet_id_2
+        - interaction_type
+      properties:
+        id:
+          type: string
+          format: uuid
+        planet_id_1:
+          type: string
+          format: uuid
+        planet_id_2:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum:
+            - trade
+            - diplomacy
+            - conflict
+            - alliance
+          description: Тип взаимодействия
+        status:
+          type: string
+          enum:
+            - active
+            - pending
+            - cancelled
+        details:
+          type: string
+          description: Дополнительная информация
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PlanetEvent:
+      type: object
+      required:
+        - id
+        - planet_id
+        - event_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        planet_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - economic_crisis
+            - political_change
+            - natural_disaster
+            - social_revolution
+            - technological_breakthrough
+          description: Тип события
+        status:
+          type: string
+          enum:
+            - active
+            - resolved
+            - cancelled
+        title:
+          type: string
+        description:
+          type: string
+        impact:
+          type: object
+          description: Влияние события на планету
+          properties:
+            economic:
+              type: number
+              format: float
+            political:
+              type: number
+              format: float
+            social:
+              type: number
+              format: float
+        started_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CreatePlanetRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        size:
+          type: number
+          format: float
+          minimum: 0
+        climate:
+          type: string
+          enum:
+            - temperate
+            - arid
+            - tropical
+            - arctic
+            - toxic
+
+    UpdatePlanetRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - colonizing
+
+    CreatePlanetInteractionRequest:
+      type: object
+      required:
+        - planet_id_2
+        - interaction_type
+      properties:
+        planet_id_2:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum:
+            - trade
+            - diplomacy
+            - conflict
+            - alliance
+        details:
+          type: string
+          maxLength: 1000
+
+    CreatePlanetEventRequest:
+      type: object
+      required:
+        - event_type
+        - title
+      properties:
+        event_type:
+          type: string
+          enum:
+            - economic_crisis
+            - political_change
+            - natural_disaster
+            - social_revolution
+            - technological_breakthrough
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        impact:
+          type: object
+          properties:
+            economic:
+              type: number
+              format: float
+            political:
+              type: number
+              format: float
+            social:
+              type: number
+              format: float
+
+    ProcessPlanetEventRequest:
+      type: object
+      properties:
+        resolution:
+          type: string
+          maxLength: 1000
+          description: Решение для обработки события
+
+    PlanetListResponse:
+      type: object
+      properties:
+        planets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Planet'
+        total:
+          type: integer
+
