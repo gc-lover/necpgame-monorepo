@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Admin Audit Service API
-  description: API для аудита действий администраторов
+  description: API для аудита
   version: 2.0.0
   contact:
     name: NECPGAME API Support
@@ -15,7 +15,7 @@ servers:
 
 tags:
   - name: Audit
-    description: Аудит действий администраторов
+    description: Аудит
 
 paths:
   /audit/logs:
@@ -23,48 +23,57 @@ paths:
       tags:
         - Audit
       summary: Список логов аудита
-      operationId: listAuditLogs
-      security:
-        - BearerAuth: []
+      operationId: getAuditLogs
       parameters:
         - name: admin_id
           in: query
           schema:
             type: string
             format: uuid
-          description: Фильтр по идентификатору администратора
         - name: action_type
           in: query
           schema:
             type: string
-          description: Фильтр по типу действия
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - player
+              - economy
+              - content
+              - moderation
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
-          description: Список логов аудита
+          description: Логи аудита
           content:
             application/json:
               schema:
                 type: object
-                required:
-                  - logs
-                  - total
                 properties:
                   logs:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AuditLog'
+                      $ref: 'admin-audit-schemas.yaml#/components/schemas/AuditLog'
                   total:
                     type: integer
-                    minimum: 0
-                    example: 100
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /audit/logs/{log_id}:
     get:
@@ -72,8 +81,6 @@ paths:
         - Audit
       summary: Детали лога аудита
       operationId: getAuditLogDetails
-      security:
-        - BearerAuth: []
       parameters:
         - name: log_id
           in: path
@@ -81,23 +88,19 @@ paths:
           schema:
             type: string
             format: uuid
-          description: Идентификатор лога
-          example: "550e8400-e29b-41d4-a716-446655440000"
       responses:
         '200':
-          description: Детали лога аудита
+          description: Детали лога
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuditLog'
+                $ref: 'admin-audit-schemas.yaml#/components/schemas/AuditLog'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /audit/logs/search:
     get:
@@ -105,40 +108,25 @@ paths:
         - Audit
       summary: Поиск по логам аудита
       operationId: searchAuditLogs
-      security:
-        - BearerAuth: []
       parameters:
         - name: query
           in: query
           required: true
           schema:
             type: string
-          description: Поисковый запрос
-        - name: admin_id
+        - name: limit
           in: query
           schema:
-            type: string
-            format: uuid
-          description: Фильтр по идентификатору администратора
-        - name: action_type
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
           in: query
           schema:
-            type: string
-          description: Фильтр по типу действия
-        - name: date_from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: date_to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
           description: Результаты поиска
@@ -146,26 +134,19 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - logs
-                  - total
                 properties:
                   logs:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AuditLog'
+                      $ref: 'admin-audit-schemas.yaml#/components/schemas/AuditLog'
                   total:
                     type: integer
-                    minimum: 0
-                    example: 25
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /audit/logs/export:
     get:
@@ -173,8 +154,6 @@ paths:
         - Audit
       summary: Экспорт логов аудита
       operationId: exportAuditLogs
-      security:
-        - BearerAuth: []
       parameters:
         - name: format
           in: query
@@ -183,31 +162,17 @@ paths:
             enum:
               - json
               - csv
-          default: json
-          description: Формат экспорта
-        - name: admin_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по идентификатору администратора
-        - name: action_type
-          in: query
-          schema:
-            type: string
-          description: Фильтр по типу действия
-        - name: date_from
+            default: json
+        - name: start_date
           in: query
           schema:
             type: string
             format: date-time
-          description: Начало периода
-        - name: date_to
+        - name: end_date
           in: query
           schema:
             type: string
             format: date-time
-          description: Конец периода
       responses:
         '200':
           description: Экспортированные логи
@@ -215,95 +180,23 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - download_url
                 properties:
-                  download_url:
-                    type: string
-                    format: uri
-                    description: URL для скачивания файла
-                    example: "https://api.necp.game/api/v1/admin/audit/logs/export/file-12345.json"
-                  expires_at:
-                    type: string
-                    format: date-time
-                    description: Время истечения ссылки
-                    example: "2025-11-29T12:00:00Z"
+                  data:
+                    type: array
+                    items:
+                      $ref: 'admin-audit-schemas.yaml#/components/schemas/AuditLog'
             text/csv:
               schema:
                 type: string
-                description: CSV файл с логами
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
     BearerAuth:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
 
-  schemas:
-    AuditLog:
-      type: object
-      required:
-        - id
-        - admin_id
-        - action_type
-        - action_details
-        - created_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Уникальный идентификатор лога
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        admin_id:
-          type: string
-          format: uuid
-          description: Идентификатор администратора
-          example: "550e8400-e29b-41d4-a716-446655440001"
-        admin_username:
-          type: string
-          description: Имя пользователя администратора
-          example: "admin"
-        action_type:
-          type: string
-          description: Тип действия
-          example: "player.ban"
-        action_details:
-          type: object
-          description: Детали действия
-          additionalProperties: true
-          example:
-            player_id: "550e8400-e29b-41d4-a716-446655440002"
-            reason: "Cheating detected"
-            duration: 604800
-        target_user_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: Идентификатор целевого пользователя
-          example: "550e8400-e29b-41d4-a716-446655440002"
-        ip_address:
-          type: string
-          nullable: true
-          description: IP адрес
-          example: "192.168.1.1"
-        user_agent:
-          type: string
-          nullable: true
-          description: User-Agent
-          example: "Mozilla/5.0"
-        created_at:
-          type: string
-          format: date-time
-          description: Время создания лога
-          example: "2025-11-29T10:00:00Z"
-
 security:
   - BearerAuth: []
-
