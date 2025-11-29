@@ -1,0 +1,422 @@
+openapi: 3.0.3
+info:
+  title: Economy Weapon Combinations Service API
+  description: |
+    API для матрицы комбинаций оружия (Borderlands-стиль) и управления модификаторами.
+    
+    **Основные возможности:**
+    - Генерация комбинаций оружия с различными характеристиками
+    - Управление модификаторами оружия (обвес, чипы, прошивки)
+    - Управление корпорациями и их специализациями
+    - Интеграция с процедурной матрицей экипировки
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Weapon Combinations
+    description: Матрица комбинаций оружия (Borderlands-стиль)
+  - name: Weapon Modifiers
+    description: Модификаторы оружия (обвес, чипы, прошивки)
+  - name: Corporations
+    description: Корпорации и их специализации
+
+paths:
+  /economy/weapons/combinations/generate:
+    post:
+      tags:
+        - Weapon Combinations
+      summary: Сгенерировать комбинацию оружия
+      description: |
+        Генерирует уникальную комбинацию оружия на основе матрицы комбинаций.
+        Алгоритм генерации включает выбор базового типа, формы проджектайла,
+        специальных механик, модификаторов, бренда и редкости.
+      operationId: generateWeaponCombination
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateWeaponCombinationRequest'
+            example:
+              weapon_type: "pistol"
+              brand_id: "550e8400-e29b-41d4-a716-446655440000"
+              rarity: "RARE"
+              seed: "weapon-combination-seed-12345"
+      responses:
+        '201':
+          description: Комбинация оружия успешно сгенерирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponCombination'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/weapons/combinations/matrix:
+    get:
+      tags:
+        - Weapon Combinations
+      summary: Получить матрицу комбинаций
+      description: Возвращает матрицу совместимости форм проджектайлов и механик
+      operationId: getWeaponCombinationMatrix
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Матрица комбинаций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponCombinationMatrixResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/weapons/modifiers:
+    get:
+      tags:
+        - Weapon Modifiers
+      summary: Получить список модификаторов
+      description: Возвращает список доступных модификаторов оружия
+      operationId: getWeaponModifiers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: modifier_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - attachment
+              - chip
+              - firmware
+          description: Тип модификатора
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список модификаторов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponModifiersResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/weapons/modifiers/apply:
+    post:
+      tags:
+        - Weapon Modifiers
+      summary: Применить модификатор к оружию
+      description: Применяет модификатор (обвес, чип, прошивка) к оружию
+      operationId: applyWeaponModifier
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyWeaponModifierRequest'
+            example:
+              weapon_id: "550e8400-e29b-41d4-a716-446655440000"
+              modifier_id: "550e8400-e29b-41d4-a716-446655440010"
+              modifier_type: "attachment"
+      responses:
+        '200':
+          description: Модификатор успешно применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponModifierApplied'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/weapons/corporations:
+    get:
+      tags:
+        - Corporations
+      summary: Получить список корпораций и специализаций
+      description: Возвращает список корпораций и их специализаций в производстве оружия
+      operationId: getCorporations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список корпораций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorporationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    GenerateWeaponCombinationRequest:
+      type: object
+      required:
+        - weapon_type
+      properties:
+        weapon_type:
+          type: string
+          enum:
+            - pistol
+            - automatic
+            - rifle
+            - sniper_rifle
+            - shotgun
+            - smg
+            - launcher
+            - melee
+            - laser
+            - energy
+          description: Базовый тип оружия
+        brand_id:
+          type: string
+          format: uuid
+          description: ID бренда (опционально, если не указан - выбирается случайно)
+        rarity:
+          type: string
+          enum:
+            - COMMON
+            - UNCOMMON
+            - RARE
+            - EPIC
+            - LEGENDARY
+          description: Редкость (опционально, если не указана - рассчитывается)
+        seed:
+          type: string
+          description: Сид для детерминированной генерации (опционально)
+
+    WeaponCombination:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        weapon_type:
+          type: string
+        projectile_form:
+          type: string
+          enum:
+            - point
+            - line
+            - fan
+            - spiral
+            - wave
+            - circle
+            - square
+            - chain
+        special_mechanics:
+          type: array
+          items:
+            type: string
+          description: Список специальных механик
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeaponModifierInfo'
+        brand_id:
+          type: string
+          format: uuid
+        rarity:
+          type: string
+        alternate_firing_modes:
+          type: array
+          items:
+            type: string
+        stats:
+          type: object
+          additionalProperties: true
+          description: Характеристики оружия
+        name:
+          type: string
+          description: Уникальное имя оружия
+        generated_at:
+          type: string
+          format: date-time
+
+    WeaponCombinationMatrixResponse:
+      type: object
+      properties:
+        compatibility_matrix:
+          type: object
+          additionalProperties: true
+          description: Матрица совместимости форм и механик
+        brand_specializations:
+          type: object
+          additionalProperties: true
+          description: Специализации брендов
+        total:
+          type: integer
+          description: Общее количество комбинаций
+
+    WeaponModifiersResponse:
+      type: object
+      properties:
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeaponModifier'
+        total:
+          type: integer
+
+    WeaponModifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        modifier_type:
+          type: string
+          enum:
+            - attachment
+            - chip
+            - firmware
+        description:
+          type: string
+        effects:
+          type: object
+          additionalProperties: true
+          description: Эффекты модификатора
+        compatibility:
+          type: array
+          items:
+            type: string
+          description: Совместимые типы оружия
+
+    ApplyWeaponModifierRequest:
+      type: object
+      required:
+        - weapon_id
+        - modifier_id
+        - modifier_type
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+          description: ID оружия
+        modifier_id:
+          type: string
+          format: uuid
+          description: ID модификатора
+        modifier_type:
+          type: string
+          enum:
+            - attachment
+            - chip
+            - firmware
+          description: Тип модификатора
+
+    WeaponModifierApplied:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        modifier_id:
+          type: string
+          format: uuid
+        modifier_type:
+          type: string
+        applied_at:
+          type: string
+          format: date-time
+        new_stats:
+          type: object
+          additionalProperties: true
+          description: Новые характеристики оружия после применения модификатора
+
+    WeaponModifierInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        modifier_type:
+          type: string
+
+    CorporationsResponse:
+      type: object
+      properties:
+        corporations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Corporation'
+        total:
+          type: integer
+
+    Corporation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Название корпорации
+        specialization:
+          type: string
+          description: Специализация в производстве оружия
+        period_start:
+          type: integer
+          description: Год начала производства
+        period_end:
+          type: integer
+          description: Год окончания производства (null если продолжается)
+        preferred_projectile_forms:
+          type: array
+          items:
+            type: string
+          description: Предпочитаемые формы проджектайлов
+        preferred_mechanics:
+          type: array
+          items:
+            type: string
+          description: Предпочитаемые механики
+        preferred_modifiers:
+          type: array
+          items:
+            type: string
+          description: Предпочитаемые модификаторы
+

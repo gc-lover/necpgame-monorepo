@@ -1,0 +1,398 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Weapon Special Mechanics Combat Service API
+  description: |
+    API для боевых специальных механик оружия.
+    
+    **Основные возможности:**
+    - Размещаемое оружие (мины, ловушки, турели)
+    - Лазерное оружие (непрерывные лучи, импульсы, рельсы)
+    - Ближний бой с уникальными механиками
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Deployable Weapons
+    description: Размещаемое оружие (мины, ловушки, турели)
+  - name: Laser Weapons
+    description: Лазерное оружие
+  - name: Melee Combat
+    description: Ближний бой
+
+paths:
+  /gameplay/combat/weapons/deployable/place:
+    post:
+      tags:
+        - Deployable Weapons
+      summary: Разместить оружие
+      description: Размещает оружие на карте (мина, ловушка, турель)
+      operationId: placeDeployableWeapon
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceDeployableWeaponRequest'
+            example:
+              character_id: "550e8400-e29b-41d4-a716-446655440001"
+              weapon_type: "mine"
+              position:
+                x: 10.5
+                y: 0.0
+                z: 15.7
+              activation_radius: 3.0
+      responses:
+        '201':
+          description: Оружие успешно размещено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeployableWeapon'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/deployable/{deploymentId}:
+    get:
+      tags:
+        - Deployable Weapons
+      summary: Получить размещенное оружие
+      description: Возвращает информацию о размещенном оружии
+      operationId: getDeployableWeapon
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID размещенного оружия
+      responses:
+        '200':
+          description: Информация о размещенном оружии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeployableWeapon'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/laser/fire:
+    post:
+      tags:
+        - Laser Weapons
+      summary: Стрелять лазером
+      description: Выполняет выстрел лазерным оружием (непрерывный луч, импульс, рельс)
+      operationId: fireLaser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FireLaserRequest'
+            example:
+              weapon_id: "550e8400-e29b-41d4-a716-446655440000"
+              character_id: "550e8400-e29b-41d4-a716-446655440001"
+              laser_type: "continuous"
+              direction:
+                x: 1.0
+                y: 0.0
+                z: 0.0
+              duration: 2.0
+      responses:
+        '200':
+          description: Лазер успешно выпущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaserFireResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/melee/attack:
+    post:
+      tags:
+        - Melee Combat
+      summary: Выполнить атаку ближнего боя
+      description: Выполняет атаку ближнего боя (катана, когти, сюрикены)
+      operationId: performMeleeAttack
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeleeAttackRequest'
+            example:
+              character_id: "550e8400-e29b-41d4-a716-446655440001"
+              weapon_type: "katana"
+              target_id: "550e8400-e29b-41d4-a716-446655440002"
+              attack_type: "slash"
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeleeAttackResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlaceDeployableWeaponRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_type
+        - position
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        weapon_type:
+          type: string
+          enum:
+            - mine
+            - trap
+            - turret
+            - drone
+          description: Тип размещаемого оружия
+        position:
+          $ref: '#/components/schemas/Position3D'
+          description: Позиция размещения
+        activation_radius:
+          type: number
+          format: float
+          minimum: 0
+          default: 3.0
+          description: Радиус активации
+        ammo_remaining:
+          type: integer
+          minimum: 0
+          description: Оставшийся боезапас
+
+    DeployableWeapon:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        weapon_type:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position3D'
+        state:
+          type: string
+          enum:
+            - placed
+            - active
+            - destroyed
+        activation_radius:
+          type: number
+          format: float
+        ammo_remaining:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        activated_at:
+          type: string
+          format: date-time
+          nullable: true
+        destroyed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    FireLaserRequest:
+      type: object
+      required:
+        - weapon_id
+        - character_id
+        - laser_type
+        - direction
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+          description: ID оружия
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        laser_type:
+          type: string
+          enum:
+            - continuous
+            - pulse
+            - rail
+          description: Тип лазера
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+          description: Направление луча
+        duration:
+          type: number
+          format: float
+          minimum: 0
+          description: Длительность выстрела (для непрерывного луча)
+        charge_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Уровень заряда (для импульсного лазера)
+
+    LaserFireResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        heat_level:
+          type: number
+          format: float
+          description: Текущий уровень перегрева
+        max_heat:
+          type: number
+          format: float
+          description: Максимальный уровень перегрева
+        is_overheated:
+          type: boolean
+          description: Перегрето ли оружие
+        targets_hit:
+          type: array
+          items:
+            $ref: '#/components/schemas/LaserHit'
+
+    LaserHit:
+      type: object
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        damage:
+          type: number
+          format: float
+        hit_position:
+          $ref: '#/components/schemas/Position3D'
+
+    MeleeAttackRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_type
+        - target_id
+        - attack_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        weapon_type:
+          type: string
+          enum:
+            - katana
+            - claws
+            - shuriken
+          description: Тип оружия ближнего боя
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели
+        attack_type:
+          type: string
+          enum:
+            - slash
+            - stab
+            - throw
+          description: Тип атаки
+
+    MeleeAttackResponse:
+      type: object
+      properties:
+        attack_id:
+          type: string
+          format: uuid
+        damage:
+          type: number
+          format: float
+        combo_count:
+          type: integer
+          description: Текущее количество комбо
+        is_critical:
+          type: boolean
+          description: Критический удар
+
+    Position3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
+    Direction3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+

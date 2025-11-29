@@ -1,0 +1,389 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Weapon Special Mechanics Effects Service API
+  description: |
+    API для эффектов специальных механик оружия.
+    
+    **Основные возможности:**
+    - Стихийные эффекты (огонь, лед, яд, кислота)
+    - Временные эффекты (вампиризм, ускорение, замедление)
+    - Контроль и манипуляция (психотропное, гравитационное, телепортационное)
+    - Призыв и поддержка (дроны, лечение)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Elemental Effects
+    description: Стихийные эффекты
+  - name: Temporal Effects
+    description: Временные эффекты
+  - name: Control & Manipulation
+    description: Контроль и манипуляция
+  - name: Summon & Support
+    description: Призыв и поддержка
+
+paths:
+  /gameplay/combat/weapons/elemental/apply:
+    post:
+      tags:
+        - Elemental Effects
+      summary: Применить стихийный эффект
+      description: Применяет стихийный эффект (огонь, лед, яд, кислота) к цели
+      operationId: applyElementalEffect
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyElementalEffectRequest'
+            example:
+              target_id: "550e8400-e29b-41d4-a716-446655440002"
+              element_type: "fire"
+              damage: 50.0
+              duration: 5.0
+              stacks: 1
+      responses:
+        '200':
+          description: Стихийный эффект применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElementalEffectResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/temporal/apply:
+    post:
+      tags:
+        - Temporal Effects
+      summary: Применить временный эффект
+      description: Применяет временный эффект (вампиризм, ускорение, замедление времени) к цели
+      operationId: applyTemporalEffect
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyTemporalEffectRequest'
+            example:
+              target_id: "550e8400-e29b-41d4-a716-446655440002"
+              effect_type: "vampirism"
+              modifier_value:
+                health_restore_percent: 0.15
+              duration: 10.0
+      responses:
+        '200':
+          description: Временный эффект применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporalEffectResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/control/apply:
+    post:
+      tags:
+        - Control & Manipulation
+      summary: Применить контроль
+      description: Применяет эффект контроля (психотропное, гравитационное, телепортационное) к цели
+      operationId: applyControl
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyControlRequest'
+            example:
+              target_id: "550e8400-e29b-41d4-a716-446655440002"
+              control_type: "psychotropic"
+              control_data:
+                behavior: "attack_allies"
+                duration: 5.0
+      responses:
+        '200':
+          description: Контроль применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/summon/create:
+    post:
+      tags:
+        - Summon & Support
+      summary: Создать призванное существо
+      description: Создает призванное существо (дрон, союзник, турель)
+      operationId: createSummon
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSummonRequest'
+            example:
+              character_id: "550e8400-e29b-41d4-a716-446655440001"
+              summon_type: "drone"
+              position:
+                x: 10.5
+                y: 2.0
+                z: 15.7
+              duration: 30.0
+      responses:
+        '201':
+          description: Существо успешно призвано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Summon'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ApplyElementalEffectRequest:
+      type: object
+      required:
+        - target_id
+        - element_type
+        - damage
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели
+        element_type:
+          type: string
+          enum:
+            - fire
+            - ice
+            - poison
+            - acid
+          description: Тип стихийного эффекта
+        damage:
+          type: number
+          format: float
+          minimum: 0
+          description: Урон эффекта
+        duration:
+          type: number
+          format: float
+          minimum: 0
+          description: Длительность эффекта (секунды)
+        stacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Количество стаков эффекта
+
+    ElementalEffectResponse:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        element_type:
+          type: string
+        stacks:
+          type: integer
+        damage_per_tick:
+          type: number
+          format: float
+        expires_at:
+          type: string
+          format: date-time
+
+    ApplyTemporalEffectRequest:
+      type: object
+      required:
+        - target_id
+        - effect_type
+        - modifier_value
+        - duration
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели
+        effect_type:
+          type: string
+          enum:
+            - vampirism
+            - acceleration
+            - slow_time
+          description: Тип временного эффекта
+        modifier_value:
+          type: object
+          additionalProperties: true
+          description: Значения модификаторов (зависит от типа эффекта)
+        duration:
+          type: number
+          format: float
+          minimum: 0
+          description: Длительность эффекта (секунды)
+
+    TemporalEffectResponse:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        effect_type:
+          type: string
+        modifier_value:
+          type: object
+          additionalProperties: true
+        expires_at:
+          type: string
+          format: date-time
+
+    ApplyControlRequest:
+      type: object
+      required:
+        - target_id
+        - control_type
+        - control_data
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели
+        control_type:
+          type: string
+          enum:
+            - psychotropic
+            - gravitational
+            - teleportation
+          description: Тип контроля
+        control_data:
+          type: object
+          additionalProperties: true
+          description: Данные контроля (зависит от типа)
+
+    ControlResponse:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        control_type:
+          type: string
+        control_data:
+          type: object
+          additionalProperties: true
+        expires_at:
+          type: string
+          format: date-time
+
+    CreateSummonRequest:
+      type: object
+      required:
+        - character_id
+        - summon_type
+        - position
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        summon_type:
+          type: string
+          enum:
+            - drone
+            - ally
+            - turret
+          description: Тип призванного существа
+        position:
+          $ref: '#/components/schemas/Position3D'
+          description: Позиция призыва
+        duration:
+          type: number
+          format: float
+          minimum: 0
+          description: Длительность жизни существа (секунды)
+
+    Summon:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        summon_type:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position3D'
+        health:
+          type: number
+          format: float
+        max_health:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        destroyed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Position3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
