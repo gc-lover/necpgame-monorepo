@@ -1,0 +1,442 @@
+metadata:
+  id: player-quest-board-architecture
+  title: Архитектура Player Quest Board - система создания квестов игроками
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - quests
+    - player-created-content
+    - creator-economy
+    - moderation
+  related_systems:
+    - quest-service
+    - moderation-service
+    - social-service
+    - creator-platform-service
+  related_documents:
+    - id: quest-system-architecture
+      relation: extends
+    - id: creator-economy-platform-architecture
+      relation: integrates
+  github_issue: 1461
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - quest
+    - api-designer
+
+summary:
+  problem: |
+    Существующая архитектура системы квестов поддерживает тип `player_created`, но нет
+    детальной проработки процесса создания, модерации и распространения пользовательских квестов.
+  goal: |
+    Создать архитектурную схему Player Quest Board с определением:
+    - Компонентов для создания квестов игроками (in-game + веб)
+    - Системы модерации контента
+    - Каталога и досок фиксеров
+    - Статистики и метрик
+    - Механизма превращения в канон
+    - REST, WebSocket и Event Bus контрактов
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Полнофункциональная система для создания, модерации, публикации и распространения
+    пользовательских квестов с возможностью превращения популярных квестов в канон.
+
+architecture:
+  overview: |
+    Архитектура Player Quest Board состоит из следующих компонентов:
+    1. Quest Creator - редактор квестов для игроков
+    2. Quest Validator - валидация квестов
+    3. Quest Moderation Manager - управление модерацией
+    4. Quest Board Manager - управление досками фиксеров
+    5. Quest Analytics Collector - сбор статистики
+    6. Quest Promotion Manager - превращение в канон
+    7. Quest Rating System - система рейтингов и отзывов
+
+  quest_creator:
+    creation_interfaces:
+      - interface: in_game
+        description: "Редактор квестов в игре"
+        features:
+          - visual_editor: "визуальный редактор"
+          - template_system: "система шаблонов"
+          - preview_mode: "режим предпросмотра"
+          - save_draft: "сохранение черновиков"
+      - interface: web
+        description: "Веб-редактор квестов"
+        features:
+          - advanced_editor: "продвинутый редактор"
+          - collaboration: "совместная работа"
+          - version_control: "контроль версий"
+          - export_import: "экспорт/импорт"
+
+    quest_elements:
+      - element: objectives
+        description: "Цели квеста"
+        types:
+          - kill_targets: "убить целей"
+          - collect_items: "собрать предметы"
+          - reach_location: "достичь локации"
+          - talk_to_npc: "поговорить с NPC"
+          - complete_objective: "выполнить задачу"
+      - element: rewards
+        description: "Награды квеста"
+        types:
+          - currency: "валюта"
+          - items: "предметы"
+          - experience: "опыт"
+          - reputation: "репутация"
+      - element: dialogue
+        description: "Диалоги квеста"
+        features:
+          - dialogue_tree: "дерево диалогов"
+          - branching: "ветвление"
+          - choices: "выборы игрока"
+      - element: conditions
+        description: "Условия квеста"
+        types:
+          - level_requirement: "требование уровня"
+          - faction_requirement: "требование фракции"
+          - quest_prerequisite: "предварительный квест"
+          - item_requirement: "требование предмета"
+
+  quest_moderation:
+    moderation_stages:
+      - stage: automatic
+        description: "Автоматическая модерация"
+        checks:
+          - content_validation: "валидация контента"
+          - profanity_filter: "фильтр запрещенных слов"
+          - technical_validation: "техническая валидация"
+          - balance_check: "проверка баланса"
+      - stage: manual
+        description: "Ручная модерация"
+        checks:
+          - content_review: "проверка контента"
+          - lore_compliance: "соответствие лору"
+          - quality_assessment: "оценка качества"
+          - policy_compliance: "соответствие политике"
+
+    moderation_workflow: |
+      1. Квест создан игроком
+      2. Автоматическая валидация (формат, структура)
+      3. Автоматическая модерация (контент, баланс)
+      4. Если автоматическая модерация пройдена → очередь ручной модерации
+      5. Модератор проверяет квест
+      6. Если одобрен → публикация на доске
+      7. Если отклонен → возврат создателю с комментариями
+
+  quest_board:
+    board_types:
+      - type: fixer_board
+        description: "Доска фиксера"
+        features:
+          - npc_quest_provider: "NPC предоставляет квесты"
+          - location_based: "привязана к локации"
+          - faction_based: "привязана к фракции"
+      - type: global_board
+        description: "Глобальная доска"
+        features:
+          - all_quests: "все опубликованные квесты"
+          - search_filter: "поиск и фильтрация"
+          - sorting: "сортировка по рейтингу, популярности"
+
+    board_features:
+      - quest_listing: "список квестов"
+      - quest_details: "детали квеста"
+      - quest_acceptance: "принятие квеста"
+      - quest_rating: "оценка квеста"
+      - quest_reviews: "отзывы о квесте"
+      - quest_sharing: "поделиться квестом"
+
+  quest_analytics:
+    metrics:
+      - metric: completion_rate
+        description: "Процент завершения квеста"
+      - metric: average_time
+        description: "Среднее время прохождения"
+      - metric: player_rating
+        description: "Рейтинг игроков"
+      - metric: popularity_score
+        description: "Популярность квеста"
+      - metric: revenue_generated
+        description: "Доход от квеста (если монетизирован)"
+
+    analytics_dashboard: |
+      - Обзор статистики квеста
+      - Графики популярности
+      - Анализ отзывов
+      - Сравнение с другими квестами
+      - Рекомендации по улучшению
+
+  quest_promotion:
+    promotion_criteria:
+      - high_completion_rate: "высокий процент завершения"
+      - high_rating: "высокий рейтинг"
+      - high_popularity: "высокая популярность"
+      - lore_compliance: "соответствие лору"
+      - quality_standards: "соответствие стандартам качества"
+
+    promotion_process: |
+      1. Квест достигает критериев продвижения
+      2. Автоматическая проверка или ручной отбор
+      3. Рассмотрение командой разработки
+      4. Если одобрен → превращение в канон
+      5. Интеграция в основную игру
+      6. Награда создателю
+
+  microservices:
+    - name: quest-creator-service
+      port: 8120
+      responsibility: |
+        Создание квестов игроками:
+        - Quest Creator (in-game + веб)
+        - Quest Validator
+        - Draft Management
+      components:
+        - quest-creator: редактор квестов
+        - quest-validator: валидация квестов
+        - draft-manager: управление черновиками
+
+    - name: quest-moderation-service
+      port: 8121
+      responsibility: |
+        Модерация квестов:
+        - Quest Moderation Manager
+        - Automatic Moderation
+        - Manual Moderation Queue
+      components:
+        - moderation-manager: управление модерацией
+        - auto-moderation: автоматическая модерация
+        - moderation-queue: очередь модерации
+
+    - name: quest-board-service
+      port: 8122
+      responsibility: |
+        Управление досками квестов:
+        - Quest Board Manager
+        - Fixer Board Integration
+        - Quest Listing
+      components:
+        - board-manager: управление досками
+        - fixer-integration: интеграция с фиксерами
+        - listing-manager: управление списками
+
+    - name: quest-analytics-service
+      port: 8123
+      responsibility: |
+        Аналитика квестов:
+        - Quest Analytics Collector
+        - Metrics Aggregator
+        - Report Generator
+      components:
+        - analytics-collector: сбор аналитики
+        - metrics-aggregator: агрегация метрик
+        - report-generator: генерация отчетов
+
+  data_models:
+    - name: PlayerQuest
+      fields:
+        - id: UUID
+        - creator_id: UUID
+        - title: string
+        - description: text
+        - quest_data: json
+        - status: enum (draft, pending_moderation, approved, rejected, published, archived, canonized)
+        - moderation_status: json
+        - rating: float
+        - completion_count: int
+        - popularity_score: float
+        - created_at: timestamp
+        - updated_at: timestamp
+        - published_at: timestamp
+
+    - name: QuestModeration
+      fields:
+        - id: UUID
+        - quest_id: UUID
+        - moderator_id: UUID
+        - moderation_type: enum (automatic, manual)
+        - status: enum (pending, approved, rejected)
+        - comments: text
+        - violations: json
+        - created_at: timestamp
+        - reviewed_at: timestamp
+
+    - name: QuestBoard
+      fields:
+        - id: UUID
+        - board_type: enum (fixer, global)
+        - location_id: UUID
+        - npc_id: UUID
+        - quest_ids: array<UUID>
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: QuestRating
+      fields:
+        - id: UUID
+        - quest_id: UUID
+        - player_id: UUID
+        - rating: int (1-5)
+        - review: text
+        - helpful_count: int
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: QuestAnalytics
+      fields:
+        - id: UUID
+        - quest_id: UUID
+        - metric_type: enum (completion_rate, average_time, rating, popularity)
+        - metric_value: decimal
+        - period_start: timestamp
+        - period_end: timestamp
+        - created_at: timestamp
+
+  api_endpoints:
+    quest_creation:
+      - POST /api/v1/quest-board/quests/create - создание квеста
+      - GET /api/v1/quest-board/quests/drafts - список черновиков
+      - GET /api/v1/quest-board/quests/drafts/{id} - черновик квеста
+      - PUT /api/v1/quest-board/quests/drafts/{id} - обновление черновика
+      - POST /api/v1/quest-board/quests/drafts/{id}/publish - публикация квеста
+
+    quest_management:
+      - GET /api/v1/quest-board/quests - список квестов
+      - GET /api/v1/quest-board/quests/{id} - детали квеста
+      - PUT /api/v1/quest-board/quests/{id} - обновление квеста
+      - DELETE /api/v1/quest-board/quests/{id} - удаление квеста
+      - POST /api/v1/quest-board/quests/{id}/accept - принятие квеста
+
+    moderation:
+      - GET /api/v1/quest-board/moderation/queue - очередь модерации
+      - POST /api/v1/quest-board/moderation/{id}/approve - одобрение квеста
+      - POST /api/v1/quest-board/moderation/{id}/reject - отклонение квеста
+      - GET /api/v1/quest-board/moderation/{id} - статус модерации
+
+    quest_board:
+      - GET /api/v1/quest-board/boards - список досок
+      - GET /api/v1/quest-board/boards/{id} - детали доски
+      - GET /api/v1/quest-board/boards/{id}/quests - квесты на доске
+      - GET /api/v1/quest-board/fixers/{npcId}/board - доска фиксера
+
+    rating_reviews:
+      - POST /api/v1/quest-board/quests/{id}/rate - оценка квеста
+      - GET /api/v1/quest-board/quests/{id}/ratings - рейтинги квеста
+      - POST /api/v1/quest-board/quests/{id}/reviews - отзыв о квесте
+      - GET /api/v1/quest-board/quests/{id}/reviews - отзывы о квесте
+
+    analytics:
+      - GET /api/v1/quest-board/quests/{id}/analytics - аналитика квеста
+      - GET /api/v1/quest-board/creator/{id}/analytics - аналитика создателя
+
+  websocket_events:
+    - quest-board:quest-created - квест создан
+    - quest-board:quest-published - квест опубликован
+    - quest-board:quest-approved - квест одобрен
+    - quest-board:quest-rejected - квест отклонен
+    - quest-board:quest-rated - квест оценен
+    - quest-board:quest-canonized - квест стал каноном
+
+  event_bus_topics:
+    - quest-board:quest-created - квест создан
+    - quest-board:quest-submitted - квест отправлен на модерацию
+    - quest-board:quest-approved - квест одобрен
+    - quest-board:quest-rejected - квест отклонен
+    - quest-board:quest-published - квест опубликован
+    - quest-board:quest-accepted - квест принят игроком
+    - quest-board:quest-completed - квест завершен
+    - quest-board:quest-rated - квест оценен
+    - quest-board:quest-canonized - квест стал каноном
+
+  data_synchronization:
+    tick_rate: |
+      - Создание квеста: real-time
+      - Модерация: при событиях
+      - Обновление рейтингов: каждые 5 минут
+      - Аналитика: каждые 1 час
+
+    network_load: |
+      - Создание квестов: средняя нагрузка
+      - Модерация: низкая нагрузка
+      - Доски квестов: высокая нагрузка (кэширование)
+      - Аналитика: средняя нагрузка (периодическая)
+
+    caching_strategy: |
+      - Список квестов на доске: кэш на 1 минуту
+      - Детали квеста: кэш на 5 минут
+      - Рейтинги: кэш на 5 минут
+      - Аналитика: кэш на 1 час
+
+  integrations:
+    with_quest_service: |
+      - Использование Quest Engine для выполнения квестов
+      - Создание инстансов квестов
+      - Отслеживание прогресса
+
+    with_moderation_service: |
+      - Автоматическая модерация контента
+      - Ручная модерация
+      - Отчеты о нарушениях
+
+    with_social_service: |
+      - Интеграция с фиксерами (NPC)
+      - Социальные функции
+      - Уведомления
+
+    with_creator_platform: |
+      - Создание квестов через Creator Hub
+      - Монетизация квестов
+      - Аналитика создателей
+
+  technical_tasks:
+    - task: "Создать quest-creator-service"
+      description: |
+        Сервис создания квестов с Quest Creator, Quest Validator, Draft Manager
+      estimated_lines: 400
+
+    - task: "Создать quest-moderation-service"
+      description: |
+        Сервис модерации с Moderation Manager, Auto Moderation, Moderation Queue
+      estimated_lines: 350
+
+    - task: "Создать quest-board-service"
+      description: |
+        Сервис досок с Board Manager, Fixer Integration, Listing Manager
+      estimated_lines: 300
+
+    - task: "Создать quest-analytics-service"
+      description: |
+        Сервис аналитики с Analytics Collector, Metrics Aggregator, Report Generator
+      estimated_lines: 300
+
+    - task: "Создать структуру БД для Player Quest Board"
+      description: |
+        Таблицы: player_quests, quest_moderations, quest_boards, quest_ratings, quest_analytics
+      estimated_lines: 200
+
+    - task: "Интегрировать с существующими системами"
+      description: |
+        Интеграция с Quest Service, Moderation Service, Social Service, Creator Platform
+      estimated_lines: 250
+
+    - task: "Создать API endpoints"
+      description: |
+        REST API для Quest Creation, Quest Management, Moderation, Quest Board, Rating/Reviews, Analytics
+      estimated_lines: 400
+
+    - task: "Интегрировать с Event Bus"
+      description: |
+        Подписка и публикация событий quest-board:* для интеграции с другими системами
+      estimated_lines: 200
+
