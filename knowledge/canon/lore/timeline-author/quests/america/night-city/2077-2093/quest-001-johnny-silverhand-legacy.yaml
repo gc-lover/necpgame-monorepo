@@ -1,0 +1,291 @@
+metadata:
+  id: quest-night-city-2077-2093-johnny-silverhand-legacy
+  title: 'Night City 2077-2093 — Наследие Johnny'
+  document_type: canon
+  category: quests
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-29T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - night-city
+    - engram
+    - johnny-silverhand
+    - historical
+    - main-quest
+    - canon-character
+  topics:
+    - historical-engram
+    - rockerboy-legacy
+    - arasaka-conspiracy
+  related_systems:
+    - narrative-service
+    - quest-service
+    - character-service
+    - engram-system
+  related_documents:
+    - id: engram-chips-system-concept
+      relation: implements
+    - id: npc-lifecycle
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - liveops
+  risk_level: medium
+
+review:
+  chain:
+    - role: content_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+
+summary:
+  problem: |
+    Игрокам требуется доступ к исторической энграмме Johnny Silverhand, легендарного рокера и врага Arasaka.
+    Энграмма доступна с 2077 года (после событий Cyberpunk 2077).
+  goal: |
+    Найти и получить энграмму Johnny Silverhand, узнать о его наследии и получить уникальные бонусы.
+  essence: |
+    Игрок расследует следы Johnny Silverhand, находит его энграмму, созданную в 2023 году,
+    и получает доступ к его навыкам и уникальным знаниям. Квест связывает события Cyberpunk 2077
+    с будущим миром игры.
+  key_points:
+    - Поиск следов Johnny Silverhand после 2077 года
+    - Обнаружение его энграммы в старом бункере Arasaka
+    - Получение уникальной исторической энграммы
+    - Специальные диалоги и события с Johnny
+    - Уникальные навыки и бонусы
+
+quest_definition:
+  quest_type: main
+  level_min: 25
+  level_max: null
+  requirements:
+    required_quests:
+      - quest-night-city-2070-2077-first-engram
+    required_flags:
+      - relic_technology_unlocked
+      - first_engram_created
+    required_reputation:
+      night_city: 50
+    required_items: []
+  objectives:
+    - id: investigate_johnny_rumors
+      text: "Узнать о слухах про энграмму Johnny Silverhand в Afterlife"
+      type: interact
+      target: afterlife_bar_rumors
+      count: 1
+      optional: false
+    - id: find_arasaka_bunker
+      text: "Найти старый бункер Arasaka, где хранились энграммы"
+      type: explore
+      target: arasaka_old_bunker
+      count: 1
+      optional: false
+    - id: hack_security
+      text: "Взломать систему безопасности бункера (Netrunner 60+ или альтернативный путь)"
+      type: skill_check
+      target: bunker_security_hack
+      skill_type: netrunning
+      skill_min: 0.6
+      count: 1
+      optional: true
+    - id: find_engram_storage
+      text: "Найти хранилище энграмм в бункере"
+      type: explore
+      target: engram_storage_vault
+      count: 1
+      optional: false
+    - id: locate_johnny_engram
+      text: "Обнаружить чип с энграммой Johnny Silverhand"
+      type: collect
+      target: johnny_silverhand_engram_chip
+      count: 1
+      optional: false
+    - id: deal_with_arasaka
+      text: "Разобраться с охраной Arasaka, которая пытается забрать энграмму"
+      type: combat
+      target: arasaka_security_squad
+      count: 1
+      optional: false
+    - id: escape_bunker
+      text: "Покинуть бункер с энграммой, избегая преследования"
+      type: stealth
+      target: bunker_escape
+      count: 1
+      optional: true
+    - id: decode_engram
+      text: "Расшифровать защиту энграммы (военная защита, требуется Netrunner 95+ или специальные инструменты)"
+      type: skill_check
+      target: engram_decryption
+      skill_type: netrunning
+      skill_min: 0.95
+      count: 1
+      optional: true
+    - id: install_johnny_engram
+      text: "Установить энграмму Johnny Silverhand (опционально, или сохранить для торговли)"
+      type: interact
+      target: install_johnny_engram
+      count: 1
+      optional: true
+    - id: first_johnny_dialogue
+      text: "Поговорить с Johnny Silverhand после установки энграммы"
+      type: interact
+      target: johnny_first_dialogue
+      count: 1
+      optional: true
+  rewards:
+    experience: 15000
+    currency: 50000
+    items:
+      - id: johnny_silverhand_engram
+        name: "Engram: Johnny Silverhand"
+        quantity: 1
+        unique: true
+      - id: johnny_guitar
+        name: "Johnny's Guitar (Replica)"
+        quantity: 1
+      - id: samurai_band_logo
+        name: "Samurai Band Logo Implant"
+        quantity: 1
+    reputation:
+      night_city: 30
+      arasaka: -50
+      rockerboys: 40
+    flags:
+      - johnny_silverhand_engram_found
+      - johnny_silverhand_installed
+  branches:
+    - id: install_johnny
+      condition: "player_choice == 'install'"
+      objectives:
+        - id: experience_johnny_influence
+          text: "Испытать влияние Johnny: его взгляды на корпорации, музыку, свободу"
+          type: interact
+          target: johnny_influence_events
+          count: 3
+          optional: false
+    - id: sell_engram
+      condition: "player_choice == 'sell'"
+      objectives:
+        - id: find_buyer
+          text: "Найти покупателя для исторической энграммы (высокая цена)"
+          type: interact
+          target: engram_buyer_negotiation
+          count: 1
+          optional: false
+    - id: keep_for_later
+      condition: "player_choice == 'keep'"
+      objectives: []
+
+content:
+  sections:
+    - id: overview
+      title: Обзор квеста
+      body: |
+        Легендарный квест о поиске энграммы Johnny Silverhand, созданной Arasaka в 2023 году
+        после его смерти. Энграмма была утеряна в 2077 году и хранилась в старом бункере.
+        Квест доступен с 2077 года и является одной из самых ценных исторических энграмм.
+      mechanics_links:
+        - mechanics/progression/engram-chips-system-concept.md
+      assets: []
+    - id: introduction
+      title: Начало расследования
+      body: |
+        В баре Afterlife игрок слышит слухи о том, что энграмма Johnny Silverhand всё ещё существует.
+        Старые фиксеры говорят, что после событий 2077 года энграмма была спрятана в заброшенном
+        бункере Arasaka в Badlands. Некоторые ищут её годами, но пока никто не нашёл.
+      mechanics_links: []
+      assets: []
+    - id: arasaka_bunker
+      title: Старый бункер Arasaka
+      body: |
+        Заброшенный бункер в Badlands, построенный во время Четвёртой корпоративной войны.
+        Когда-то здесь хранились энграммы важных врагов корпорации. После 2077 года бункер
+        был заброшен, но система безопасности всё ещё активна. Arasaka периодически проверяет
+        бункер, но не знает о местонахождении энграммы Johnny.
+      mechanics_links: []
+      assets: []
+    - id: johnny_engram
+      title: Энграмма Johnny Silverhand
+      body: |
+        Уникальная историческая энграмма:
+        - Создана в 2023 году после смерти Johnny
+        - Хранилась Arasaka как трофей
+        - Утеряна в 2077 году
+        - Военная защита (Netrunner 95+ для взлома)
+        - Уникальные навыки: Rockerboy Charisma, Anti-Corporate Tactics, Music Mastery
+        - Специальные диалоги и комментарии о корпорациях, музыке, свободе
+      mechanics_links: []
+      assets: []
+    - id: johnny_interactions
+      title: Взаимодействие с Johnny
+      body: |
+        После установки энграммы:
+        - Johnny комментирует корпоративные действия игрока
+        - Даёт советы по борьбе с Arasaka и другими корпорациями
+        - Рассказывает истории о Samurai, Alt Cunningham, рок-н-ролле
+        - Может конфликтовать с корпоративными энграммами
+        - Уникальные события при посещении знаковых мест Night City
+      mechanics_links: []
+      assets: []
+    - id: arasaka_conflict
+      title: Конфликт с Arasaka
+      body: |
+        После обнаружения энграммы Arasaka отправляет отряд безопасности. Игрок должен:
+        - Сразиться с отрядом (боевой путь)
+        - Скрыться через систему вентиляции (стелс путь)
+        - Использовать взлом для отключения системы (Netrunner путь)
+      mechanics_links: []
+      assets: []
+    - id: rewards
+      title: Награды
+      body: |
+        - Энграмма Johnny Silverhand (уникальная, историческая)
+        - Реплика гитары Johnny
+        - Имплант с логотипом Samurai
+        - Репутация с рокерами +40
+        - Репутация с Arasaka -50
+        - Доступ к уникальным навыкам и перкам Johnny
+      mechanics_links: []
+      assets: []
+
+appendix:
+  glossary:
+    - term: Johnny Silverhand
+      definition: "Легендарный рокер, враг Arasaka, погиб в 2023 году, энграмма создана Arasaka"
+    - term: Samurai
+      definition: "Легендарная рок-группа Johnny Silverhand"
+    - term: Badlands
+      definition: "Пустоши вокруг Night City, территория кочевников"
+  references:
+    - id: npc-lifecycle
+      type: canon
+      relation: references
+  decisions: []
+
+implementation:
+  github_issue: 1547
+  needs_task: false
+  queue_reference: []
+  blockers: []
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Создан квест "Наследие Johnny" - поиск исторической энграммы Johnny Silverhand в Night City (2077-2093)'
+
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

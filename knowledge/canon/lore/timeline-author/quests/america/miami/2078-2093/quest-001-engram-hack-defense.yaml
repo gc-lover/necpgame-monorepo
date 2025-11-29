@@ -1,0 +1,257 @@
+metadata:
+  id: quest-miami-2078-2093-engram-hack-defense
+  title: 'Miami 2078-2093 — Защита от взлома'
+  document_type: canon
+  category: quests
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-29T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - miami
+    - engram
+    - hacking
+    - security
+    - side-quest
+  topics:
+    - engram-security
+    - netrunning
+    - protection-systems
+  related_systems:
+    - narrative-service
+    - quest-service
+    - character-service
+    - engram-system
+    - netrunning-service
+  related_documents:
+    - id: engram-chips-system-concept
+      relation: implements
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - liveops
+  risk_level: medium
+
+review:
+  chain:
+    - role: content_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+
+summary:
+  problem: |
+    У игрока ценная энграмма, и Netrunner пытается её взломать. Игрок должен установить
+    защиту или сам взломать защиту, чтобы понять как защитить свою энграмму.
+  goal: |
+    Защитить свою энграмму от взлома, установить улучшенную защиту, или научиться взламывать
+    защиту других энграмм.
+  essence: |
+    Квест на защиту и взлом энграмм. Игрок сталкивается с попыткой взлома своей энграммы,
+    должен установить защиту и научиться системе безопасности энграмм. Также может изучить
+    технику взлома для собственных целей.
+  key_points:
+    - Защита энграммы от взлома
+    - Изучение системы защиты энграмм
+    - Возможность научиться взламывать
+    - Тиры защиты (базовая, стандартная, продвинутая, корпоративная, военная)
+
+quest_definition:
+  quest_type: side
+  level_min: 25
+  level_max: null
+  requirements:
+    required_quests:
+      - quest-night-city-2070-2077-first-engram
+    required_flags:
+      - first_engram_created
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: detect_hack_attempt
+      text: "Обнаружить попытку взлома своей энграммы через систему уведомлений"
+      type: interact
+      target: hack_attempt_notification
+      count: 1
+      optional: false
+    - id: track_hacker
+      text: "Отследить Netrunner, который пытается взломать энграмму"
+      type: explore
+      target: hacker_location_tracking
+      count: 1
+      optional: false
+    - id: confront_hacker
+      text: "Встретиться с хакером: сразиться, договориться, или предложить сотрудничество"
+      type: interact
+      target: hacker_confrontation
+      count: 1
+      optional: false
+    - id: learn_protection
+      text: "Изучить систему защиты энграмм в специализированной клинике Miami"
+      type: explore
+      target: miami_engram_security_clinic
+      count: 1
+      optional: false
+    - id: choose_protection_tier
+      text: "Выбрать тир защиты для своей энграммы (базовая до военной)"
+      type: interact
+      target: protection_tier_selection
+      count: 1
+      optional: false
+    - id: install_protection
+      text: "Установить защиту на энграмму (требует Netrunner навыки или помощь специалиста)"
+      type: skill_check
+      target: protection_installation
+      skill_type: netrunning
+      skill_min: 0.5
+      count: 1
+      optional: false
+    - id: test_protection
+      text: "Протестировать защиту, попробовав взломать свою энграмму (опционально)"
+      type: interact
+      target: protection_test
+      count: 1
+      optional: true
+  rewards:
+    experience: 8000
+    currency: 30000
+    items:
+      - id: protection_implant
+        name: "Engram Protection System Implant"
+        quantity: 1
+      - id: hacking_tools
+        name: "Advanced Engram Hacking Tools (если выбран путь взлома)"
+        quantity: 1
+    reputation:
+      miami: 15
+      netrunners: 10
+    flags:
+      - engram_protection_learned
+      - engram_security_mastered
+  branches:
+    - id: protect_engram
+      condition: "player_choice == 'protect'"
+      objectives:
+        - id: install_high_tier
+          text: "Установить высокий тир защиты (корпоративная или военная)"
+          type: interact
+          target: high_tier_protection
+          count: 1
+          optional: false
+      rewards:
+        experience: 2000
+        items:
+          - id: corporate_protection
+            name: "Corporate-Grade Engram Protection"
+            quantity: 1
+    - id: learn_hacking
+      condition: "player_choice == 'learn_hack'"
+      objectives:
+        - id: hacker_training
+          text: "Обучение у Netrunner технике взлома энграмм"
+          type: interact
+          target: hacking_training_session
+          count: 1
+          optional: false
+      rewards:
+        experience: 3000
+        items:
+          - id: hacking_manual
+            name: "Engram Hacking Manual"
+            quantity: 1
+    - id: neutralize_hacker
+      condition: "player_choice == 'neutralize'"
+      objectives:
+        - id: defeat_hacker
+          text: "Одолеть Netrunner в бою или через взлом"
+          type: combat
+          target: hacker_combat
+          count: 1
+          optional: false
+      rewards:
+        experience: 2500
+        currency: 20000
+
+content:
+  sections:
+    - id: overview
+      title: Обзор квеста
+      body: |
+        Квест на защиту и взлом энграмм. Игрок сталкивается с попыткой взлома своей ценной
+        энграммы, должен установить защиту и изучить систему безопасности. Также может
+        выбрать путь взлома для собственных целей.
+      mechanics_links:
+        - mechanics/progression/engram-chips-system-concept.md
+      assets: []
+    - id: hack_attempt
+      title: Попытка взлома
+      body: |
+        Игрок получает уведомление о попытке взлома своей энграммы. Система защиты (если установлена)
+        заблокировала попытку, но хакер может попробовать снова. Игрок должен найти и остановить
+        взломщика, или установить защиту если её нет.
+      mechanics_links: []
+      assets: []
+    - id: hacker
+      title: Netrunner взломщик
+      body: |
+        Профессиональный Netrunner, который специализируется на взломе энграмм. Может быть:
+        - Враг: пытается украсть энграмму
+        - Нейтрал: предложит научить взлому за плату
+        - Союзник: предупредит о других взломщиках
+      mechanics_links: []
+      assets: []
+    - id: protection_tiers
+      title: Тиры защиты
+      body: |
+        Игрок может установить:
+        - **Базовая**: Netrunner 20+ для взлома
+        - **Стандартная**: Netrunner 50+ для взлома
+        - **Продвинутая**: Netrunner 75+ для взлома
+        - **Корпоративная**: Netrunner 90+, нужны связи
+        - **Военная**: Netrunner 95+, редкие инструменты, самоуничтожение при взломе
+      mechanics_links: []
+      assets: []
+    - id: hacking_path
+      title: Путь взлома
+      body: |
+        Если игрок выбирает обучение взлому:
+        - Изучает технику взлома энграмм
+        - Получает инструменты для взлома
+        - Может взламывать чужие энграммы
+        - Риски: самоуничтожение чипа, malware, уведомление владельца
+      mechanics_links: []
+      assets: []
+
+appendix:
+  glossary:
+    - term: Тиры защиты
+      definition: "Уровни защиты энграмм от взлома, от базовой до военной"
+  references:
+    - id: engram-chips-system-concept
+      type: concept
+      relation: references
+  decisions: []
+
+implementation:
+  github_issue: 1547
+  needs_task: false
+  queue_reference: []
+  blockers: []
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Создан квест "Защита от взлома" - защита и взлом энграмм в Miami'
+
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
