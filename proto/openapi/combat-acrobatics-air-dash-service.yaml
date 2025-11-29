@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Combat Acrobatics Air Dash Service API
+  description: |
+    API для управления Air Dash (воздушный рывок).
+    
+    **Основные возможности:**
+    - Выполнение Air Dash
+    - Проверка доступности
+    - Управление зарядами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+    description: Продакшен сервер
+
+tags:
+  - name: Air Dash
+    description: Воздушный рывок
+
+paths:
+  /air-dash:
+    post:
+      tags:
+        - Air Dash
+      summary: Выполнить Air Dash
+      description: |
+        Выполняет воздушный рывок в воздухе. Проверяет доступность
+        (заряды, выносливость, кулдаун) и применяет импульс.
+      operationId: executeAirDash
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AirDashRequest'
+      responses:
+        '200':
+          description: Air Dash выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AirDashResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /air-dash/available:
+    get:
+      tags:
+        - Air Dash
+      summary: Проверить доступность Air Dash
+      description: |
+        Проверяет, доступен ли Air Dash (в воздухе, есть заряды,
+        нет кулдауна, есть выносливость).
+      operationId: checkAirDashAvailable
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Статус доступности Air Dash
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AirDashAvailableResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /air-dash/charges:
+    get:
+      tags:
+        - Air Dash
+      summary: Получить количество зарядов Air Dash
+      description: |
+        Возвращает текущее количество зарядов Air Dash,
+        максимальное количество и информацию о кулдауне.
+      operationId: getAirDashCharges
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Информация о зарядах Air Dash
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AirDashChargesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    AirDashRequest:
+      type: object
+      required:
+        - direction
+      properties:
+        direction:
+          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
+
+    AirDashResponse:
+      type: object
+      required:
+        - dash_id
+        - current_charges
+        - max_charges
+        - direction
+        - stamina_consumed
+        - timestamp
+      properties:
+        dash_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        current_charges:
+          type: integer
+          description: Текущее количество зарядов
+          minimum: 0
+          example: 0
+        max_charges:
+          type: integer
+          description: Максимальное количество зарядов
+          minimum: 1
+          example: 1
+        cooldown_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания кулдауна
+          example: "2025-12-01T10:00:02Z"
+        direction:
+          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
+        stamina_consumed:
+          type: integer
+          minimum: 0
+          example: 12
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    AirDashAvailableResponse:
+      type: object
+      required:
+        - is_available
+        - is_in_air
+        - current_charges
+        - max_charges
+        - cooldown_active
+        - has_stamina
+      properties:
+        is_available:
+          type: boolean
+          example: true
+        is_in_air:
+          type: boolean
+          example: true
+        current_charges:
+          type: integer
+          minimum: 0
+          example: 1
+        max_charges:
+          type: integer
+          minimum: 1
+          example: 1
+        cooldown_active:
+          type: boolean
+          example: false
+        has_stamina:
+          type: boolean
+          example: true
+
+    AirDashChargesResponse:
+      type: object
+      required:
+        - current_charges
+        - max_charges
+        - cooldown_remaining
+      properties:
+        current_charges:
+          type: integer
+          minimum: 0
+          example: 1
+        max_charges:
+          type: integer
+          minimum: 1
+          example: 1
+        cooldown_until:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        cooldown_remaining:
+          type: integer
+          description: Оставшееся время кулдауна в секундах
+          minimum: 0
+          example: 0
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

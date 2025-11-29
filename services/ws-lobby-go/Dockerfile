@@ -1,16 +1,39 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
+
 WORKDIR /app
+
+RUN apk add --no-cache git ca-certificates tzdata
+
 COPY go.mod go.sum ./
 RUN go mod download
+
 COPY . .
+
 RUN go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux go build -o ws-lobby -ldflags="-w -s" .
+RUN CGO_ENABLED=0 GOOS=linux go build -o ws-lobby -ldflags="-w -s -extldflags '-static'" .
 
 FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates tzdata
+
 WORKDIR /app
+
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
 COPY --from=builder /app/ws-lobby /app/
-EXPOSE 18081 9090
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 18081/tcp 9090
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:9090/metrics || exit 1
+
 ENTRYPOINT ["/app/ws-lobby"]
 

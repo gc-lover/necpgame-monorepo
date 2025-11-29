@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: Combat Acrobatics Basic State Service API
+  description: |
+    API для получения состояний базовых элементов акробатики.
+    
+    **Основные возможности:**
+    - Получение текущего состояния всех базовых элементов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+    description: Продакшен сервер
+
+tags:
+  - name: State
+    description: Состояние акробатики
+
+paths:
+  /state:
+    get:
+      tags:
+        - State
+      summary: Получить текущее состояние акробатики
+      description: |
+        Возвращает текущее состояние всех элементов акробатики:
+        Wall Run, Double Jump, Slide.
+      operationId: getAcrobaticsState
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Текущее состояние акробатики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcrobaticsStateResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    AcrobaticsStateResponse:
+      type: object
+      required:
+        - wall_run
+        - double_jump
+        - slide
+      properties:
+        wall_run:
+          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/WallRunState'
+        double_jump:
+          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/DoubleJumpState'
+        slide:
+          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/SlideState'
+
+  responses:
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
