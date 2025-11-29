@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Social Reputation Heat Service API
-  description: API для системы Heat (враждебности) в репутации
+  description: |
+    API для управления Heat (накалом) репутации персонажей.
+    
+    **Основные возможности:**
+    - Получение текущего Heat персонажа
+    - Снижение Heat различными методами
   version: 2.0.0
   contact:
     name: NECPGAME API Support
@@ -15,7 +20,7 @@ servers:
 
 tags:
   - name: Reputation Heat
-    description: Система Heat (враждебности)
+    description: Управление Heat (накалом) репутации
 
 paths:
   /social/reputation/{player_id}/heat:
@@ -23,6 +28,7 @@ paths:
       tags:
         - Reputation Heat
       summary: Получить Heat
+      description: Возвращает текущий уровень Heat персонажа с фракцией
       operationId: getHeat
       security:
         - BearerAuth: []
@@ -30,11 +36,13 @@ paths:
         - name: player_id
           in: path
           required: true
+          description: ID персонажа
           schema:
             type: string
             format: uuid
         - name: faction_id
           in: query
+          description: ID фракции (опционально)
           schema:
             type: string
             format: uuid
@@ -57,6 +65,7 @@ paths:
       tags:
         - Reputation Heat
       summary: Снизить Heat
+      description: Снижает Heat персонажа с фракцией выбранным методом
       operationId: reduceHeat
       security:
         - BearerAuth: []
@@ -64,6 +73,7 @@ paths:
         - name: player_id
           in: path
           required: true
+          description: ID персонажа
           schema:
             type: string
             format: uuid
@@ -135,11 +145,3 @@ components:
           type: integer
           minimum: 1
           description: Количество Heat для снижения
-
-security:
-  - BearerAuth: []
-
-
-
-
-
