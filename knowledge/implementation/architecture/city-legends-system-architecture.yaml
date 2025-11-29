@@ -1,0 +1,573 @@
+metadata:
+  id: city-legends-system-architecture
+  title: Архитектура системы городских легенд для игроков
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - legends
+    - npc
+    - reputation
+    - content-generation
+    - world-building
+  related_systems:
+    - social-service
+    - npc-service
+    - achievement-service
+    - world-service
+    - analytics-service
+  related_documents:
+    - id: reputation-system-architecture
+      relation: extends
+    - id: achievement-system-architecture
+      relation: extends
+    - id: npc-dialogue-system
+      relation: integrates
+  github_issue: 1464
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - npc
+    - api-designer
+
+summary:
+  problem: |
+    В текущей системе репутации есть уровень "Legendary" (+76 to +100), но отсутствует механика,
+    которая бы делала игроков настоящими городскими легендами - объектами слухов и баек,
+    которые NPC рассказывают друг другу. Это упущенная возможность для создания атмосферы
+    и социального взаимодействия.
+  goal: |
+    Создать архитектурную схему системы городских легенд с определением:
+    - Компонентов для управления статусом легенды
+    - Системы генерации баек на основе действий игроков
+    - Интеграции с NPC диалоговой системой
+    - Системы шаблонов и вариативности баек
+    - Механизма распространения легенд между NPC
+    - Системы триггеров и контекстной активации
+    - REST, WebSocket и Event Bus контрактов
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы городских легенд, которая делает игроков частью лора
+    и нарратива через байки, распространяемые NPC, создавая атмосферу живого мира.
+
+architecture:
+  overview: |
+    Архитектура системы городских легенд состоит из следующих компонентов:
+    1. Legend Status Manager - управление статусом легенды игрока
+    2. Legend Story Generator - генерация баек на основе действий
+    3. Story Template Engine - обработка шаблонов баек
+    4. Story Variant Generator - генерация вариантов баек
+    5. Legend Spreader - распространение легенд между NPC
+    6. Trigger Manager - управление триггерами активации
+    7. Context Analyzer - анализ контекста для активации
+    8. Dialogue Integration Manager - интеграция с диалогами NPC
+    9. Knowledge Network Manager - управление сетью знаний NPC
+    10. Legend Analytics - аналитика легенд
+
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Управление статусом легенды:
+        - Определение условий получения статуса
+        - Отслеживание активности игрока
+        - Управление жизненным циклом легенды
+        - Интеграция с системой репутации
+      components:
+        - legend-status-manager: управление статусом легенды
+        - legend-eligibility-checker: проверка условий получения статуса
+        - legend-activity-tracker: отслеживание активности
+        - legend-lifecycle-manager: управление жизненным циклом
+
+    - name: legend-service
+      port: 8090
+      responsibility: |
+        Основной сервис для работы с легендами:
+        - Генерация баек на основе действий
+        - Управление шаблонами и вариативностью
+        - Распространение легенд между NPC
+        - Управление триггерами активации
+        - Интеграция с диалогами NPC
+      components:
+        - legend-story-generator: генерация баек
+        - story-template-engine: обработка шаблонов
+        - story-variant-generator: генерация вариантов
+        - legend-spreader: распространение легенд
+        - trigger-manager: управление триггерами
+        - context-analyzer: анализ контекста
+        - dialogue-integration-manager: интеграция с диалогами
+        - knowledge-network-manager: управление сетью знаний
+        - legend-analytics: аналитика
+
+  legend_status:
+    eligibility_conditions:
+      reputation_threshold: |
+        - Репутация Legendary (+76 to +100) с минимум 3 фракциями
+        - Или комбинация: репутация Honored+ с уникальными достижениями
+      achievement_triggers: |
+        - Уникальные достижения ("Один против армии", "Тень в ночи", "Король арены")
+        - Специфические действия (1000 убийств определенного типа врагов)
+        - Социальные достижения (помощь X игрокам, создание клана)
+      temporal_factor: |
+        - Статус не постоянный - требует поддержания активности
+        - Если игрок неактивен >30 дней, статус теряется
+        - Можно восстановить через новые достижения
+
+    legend_types:
+      - type: combat
+        description: "Боевые легенды"
+        examples:
+          - "Тот, кто выжил в одиночку против отряда корпоратов"
+          - "Тень, которая никогда не промахивается"
+          - "Берсерк, который не знает страха"
+        sources:
+          - achievement_service: "боевые достижения"
+          - analytics_service: "статистика убийств"
+          - combat_service: "уникальные боевые действия"
+
+      - type: social
+        description: "Социальные легенды"
+        examples:
+          - "Тот, кто помог тысяче новичков"
+          - "Легенда баров, знающий все тайны города"
+          - "Посредник, который всегда находит решение"
+        sources:
+          - achievement_service: "социальные достижения"
+          - analytics_service: "статистика помощи игрокам"
+          - social_service: "репутация и отношения"
+
+      - type: economic
+        description: "Экономические легенды"
+        examples:
+          - "Торговец, который никогда не обманывает"
+          - "Коллекционер редчайших артефактов"
+          - "Магнат, контролирующий рынок"
+        sources:
+          - achievement_service: "экономические достижения"
+          - analytics_service: "статистика транзакций"
+          - economy_service: "торговые паттерны"
+
+      - type: exploration
+        description: "Исследовательские легенды"
+        examples:
+          - "Тот, кто нашел все секреты города"
+          - "Археолог, раскопавший древние тайны"
+          - "Хакер, проникший в недоступные системы"
+        sources:
+          - achievement_service: "исследовательские достижения"
+          - analytics_service: "статистика открытий"
+          - world_service: "открытые локации"
+
+  story_generation:
+    data_sources:
+      - achievement_service: |
+          - Уникальные достижения (тип, описание, дата получения)
+          - Редкие достижения (процент игроков, получивших)
+          - Цепочки достижений (связанные события)
+      - analytics_service: |
+          - Количество убийств по типам врагов
+          - Уникальные комбинации действий
+          - Рекорды (максимальный урон, время выживания)
+          - Социальные метрики (помощь другим игрокам)
+      - social_service: |
+          - Уровень репутации с каждой фракцией
+          - Изменения репутации (резкие скачки)
+          - Конфликты между фракциями
+      - economy_service: |
+          - Крупные транзакции
+          - Редкие предметы в инвентаре
+          - Торговые паттерны
+      - inventory_service: |
+          - Уникальные предметы
+          - Коллекции редких артефактов
+
+    template_structure: |
+      Template {
+        id: unique_identifier
+        type: legend_type (combat, social, economic, exploration)
+        category: event_category
+        base_template: "текст с {переменными}"
+        variables: [variable_definitions]
+        conditions: [activation_conditions]
+        variants: [alternative_templates]
+      }
+
+    variable_types:
+      - player_name: "имя игрока"
+      - action_verb: "глагол действия (убил, победил, нашел)"
+      - enemy_type: "тип врага (корпораты, бандиты, роботы)"
+      - location: "локация события"
+      - number: "числовое значение (1000, 50, 3)"
+      - time_context: "временной контекст (вчера, на прошлой неделе)"
+      - faction: "название фракции"
+      - emotion: "эмоциональная окраска (страх, восхищение, уважение)"
+
+    generation_algorithm: |
+      1. Сбор данных из различных источников
+      2. Выбор релевантных событий (фильтрация по важности)
+      3. Выбор шаблона по типу легенды
+      4. Заполнение переменных из данных игрока
+      5. Генерация 3-5 вариантов байки
+      6. Валидация и сохранение в БД
+
+    variability_levels:
+      - basic: "Простая подстановка переменных"
+      - medium: "Вариация формулировок и структуры"
+      - high: "Полная переформулировка с сохранением смысла"
+
+  story_spreading:
+    spread_mechanism: |
+      Легенды начинаются с NPC-свидетелей событий и распространяются по сети
+      социальных связей между NPC. Со временем информация искажается, обрастая
+      деталями и преувеличениями.
+
+    knowledge_sources:
+      - direct_witnesses: |
+          - NPC, которые видели событие лично
+          - Высокая точность информации
+          - Множество деталей
+      - secondary_sources: |
+          - NPC, которые узнали от свидетелей
+          - Средняя точность
+          - Меньше деталей
+      - tertiary_sources: |
+          - NPC, которые узнали от других
+          - Низкая точность
+          - Искаженная информация
+
+    spread_channels:
+      - direct_communication: "NPC встречаются и разговаривают"
+      - gathering_places: "бары, рынки, общественные места"
+      - faction_channels: "информация внутри фракций"
+      - random_encounters: "случайные NPC делятся информацией"
+
+    distortion_factors: |
+      distortion = base_distortion + (time_factor * time_passed) +
+                   (distance_factor * hops) + (importance_factor * event_importance)
+      accuracy = 1.0 - min(1.0, distortion)
+
+    temporal_model: |
+      - Рождение: событие происходит, свидетели знают
+      - Распространение: информация распространяется (1-7 дней)
+      - Пик популярности: максимальное распространение (7-30 дней)
+      - Затухание: информация забывается (30+ дней)
+      - Забвение: легенда исчезает или становится мифом
+
+  trigger_system:
+    trigger_types:
+      - spatial: |
+          - Игрок входит в определенную локацию
+          - Игрок находится рядом с NPC-рассказчиком
+          - Игрок посещает место, связанное с легендой
+      - temporal: |
+          - Определенное время суток
+          - Определенный день недели
+          - Специальные события (праздники, события мира)
+      - event_based: |
+          - Завершение квеста, связанного с легендой
+          - Достижение игроком определенного статуса
+          - События мира, связанные с легендой
+      - dialogue: |
+          - Игрок задает вопрос про легенду
+          - Тема разговора релевантна легенде
+          - Игрок упоминает имя легендарного игрока
+      - social: |
+          - Присутствие легендарного игрока в локации
+          - Встреча с другими игроками, знающими легенду
+          - Изменение репутации игрока
+      - combined: |
+          - Комбинация нескольких факторов
+          - Условия "И" и "ИЛИ"
+          - Приоритеты триггеров
+
+    priority_levels:
+      - critical: "байка активируется немедленно (присутствие легенды)"
+      - high: "байка активируется при первом подходящем моменте"
+      - medium: "байка активируется при наличии времени"
+      - low: "байка активируется в фоновом режиме"
+
+    relevance_calculation: |
+      relevance_score = (location_weight * location_match) +
+                        (faction_weight * faction_match) +
+                        (time_weight * time_match) +
+                        (event_weight * event_match)
+
+    spam_prevention: |
+      - Кулердауны между активациями
+      - Лимиты на количество баек в час/день
+      - Уникальность (одна байка не повторяется в короткий период)
+
+  dialogue_integration:
+    integration_types:
+      - active_dialogues: |
+          - NPC сам начинает рассказывать байку при встрече
+          - Триггер: игрок-легенда входит в локацию
+      - reactive_dialogues: |
+          - Игрок спрашивает про легендарного игрока
+          - Триггер: вопрос в диалоге
+      - background_conversations: |
+          - NPC разговаривают между собой про легенд
+          - Триггер: игрок находится рядом, но не взаимодействует
+      - contextual_mentions: |
+          - Байка упоминается в контексте другого диалога
+          - Триггер: релевантная тема в разговоре
+
+    dialogue_node_types: |
+      - Legend Story Node: новый тип узла с ссылкой на байку
+      - Conditional Node: условный узел (проверка наличия легенды)
+      - Dynamic Node: динамическая вставка баек в существующие диалоги
+
+    npc_knowledge_levels: |
+      - direct_knowledge: "NPC видел событие лично"
+      - rumors: "NPC слышал от других"
+      - legends: "NPC знает только мифы и преувеличения"
+
+  data_models:
+    - name: PlayerLegend
+      fields:
+        - id: UUID
+        - player_id: UUID
+        - legend_type: enum (combat, social, economic, exploration)
+        - status: enum (active, inactive, lost)
+        - reputation_requirement: json
+        - achievement_triggers: array<UUID>
+        - created_at: timestamp
+        - last_active_at: timestamp
+        - expires_at: timestamp
+        - created_by: string (achievement, reputation, manual)
+
+    - name: LegendStory
+      fields:
+        - id: UUID
+        - player_legend_id: UUID
+        - template_id: UUID
+        - story_text: text
+        - variant_id: UUID
+        - context: json (location, faction, time)
+        - generated_at: timestamp
+        - accuracy: float (0.0-1.0)
+        - distortion_level: float
+        - popularity_score: float
+
+    - name: StoryTemplate
+      fields:
+        - id: UUID
+        - type: enum (combat, social, economic, exploration)
+        - base_template: text
+        - variables: json
+        - conditions: json
+        - variants: array<text>
+        - cultural_adaptations: json
+
+    - name: NPCLegendKnowledge
+      fields:
+        - id: UUID
+        - npc_id: UUID
+        - legend_story_id: UUID
+        - knowledge_level: enum (direct, secondary, tertiary)
+        - accuracy: float
+        - learned_from: UUID (npc_id или null для прямых свидетелей)
+        - learned_at: timestamp
+        - last_told_at: timestamp
+
+    - name: LegendTrigger
+      fields:
+        - id: UUID
+        - legend_story_id: UUID
+        - trigger_type: enum (spatial, temporal, event, dialogue, social, combined)
+        - conditions: json
+        - priority: enum (critical, high, medium, low)
+        - cooldown_seconds: int
+        - max_activations_per_hour: int
+
+    - name: TriggerActivation
+      fields:
+        - id: UUID
+        - trigger_id: UUID
+        - npc_id: UUID
+        - player_id: UUID
+        - activated_at: timestamp
+        - context: json
+
+    - name: NPCSocialNetwork
+      fields:
+        - id: UUID
+        - npc_id: UUID
+        - connected_npc_id: UUID
+        - connection_type: enum (friend, colleague, acquaintance, enemy)
+        - connection_strength: float
+        - location_proximity: boolean
+
+  api_endpoints:
+    legend_management:
+      - GET /api/v1/legends/player/{playerId} - получение легенд игрока
+      - GET /api/v1/legends/player/{playerId}/status - статус легенды
+      - POST /api/v1/legends/player/{playerId}/check-eligibility - проверка условий
+      - GET /api/v1/legends/player/{playerId}/stories - байки игрока
+      - GET /api/v1/legends/story/{storyId} - детали байки
+
+    story_generation:
+      - POST /api/v1/legends/generate-story - генерация новой байки
+      - GET /api/v1/legends/templates - список шаблонов
+      - GET /api/v1/legends/templates/{templateId} - детали шаблона
+      - POST /api/v1/legends/templates - создание шаблона
+
+    npc_integration:
+      - GET /api/v1/legends/npc/{npcId}/knowledge - знания NPC о легендах
+      - GET /api/v1/legends/npc/{npcId}/available-stories - доступные байки для NPC
+      - POST /api/v1/legends/npc/{npcId}/learn-story - NPC узнает байку
+      - GET /api/v1/legends/npc/{npcId}/social-network - социальная сеть NPC
+
+    trigger_management:
+      - GET /api/v1/legends/triggers - список триггеров
+      - POST /api/v1/legends/triggers - создание триггера
+      - POST /api/v1/legends/triggers/{triggerId}/activate - активация триггера
+      - GET /api/v1/legends/triggers/{triggerId}/activations - история активаций
+
+  websocket_events:
+    - legend:status-changed - изменение статуса легенды
+    - legend:story-generated - новая байка сгенерирована
+    - legend:story-told - NPC рассказал байку
+    - legend:knowledge-spread - знание распространилось между NPC
+
+  event_bus_topics:
+    - legend:player-became-legend - игрок стал легендой
+    - legend:player-lost-legend - игрок потерял статус
+    - legend:story-generated - байка сгенерирована
+    - legend:story-told - байка рассказана NPC
+    - legend:knowledge-spread - знание распространилось
+    - legend:trigger-activated - триггер активирован
+
+  data_synchronization:
+    tick_rate: |
+      - Статус легенды: проверка каждые 1 час
+      - Генерация баек: асинхронно при событиях
+      - Распространение знаний: пакетная обработка каждые 15 минут
+      - Проверка триггеров: при событиях (вход в локацию, диалог)
+
+    network_load: |
+      - Генерация баек: низкая нагрузка (асинхронно)
+      - Распространение знаний: средняя нагрузка (пакетная обработка)
+      - Проверка триггеров: средняя нагрузка (при событиях)
+      - Запросы знаний NPC: высокая нагрузка (кэширование обязательно)
+
+    caching_strategy: |
+      - Активные легенды: кэш на 1 час
+      - Байки игрока: кэш на 30 минут
+      - Знания NPC: кэш на 15 минут
+      - Шаблоны: кэш на 24 часа
+
+  integrations:
+    with_social_service: |
+      - Получение данных репутации для определения легенды
+      - Подписка на изменения репутации
+      - Интеграция с системой репутации
+
+    with_achievement_service: |
+      - Подписка на события новых достижений
+      - Запрос данных о достижениях игрока
+      - Использование достижений для генерации баек
+
+    with_analytics_service: |
+      - Получение статистики действий игрока
+      - Анализ паттернов поведения
+      - Метрики для определения легенды
+
+    with_npc_service: |
+      - Интеграция с диалоговой системой NPC
+      - Управление знаниями NPC
+      - Реакции NPC на легендарных игроков
+
+    with_world_service: |
+      - Получение данных о локациях
+      - Подписка на события мира
+      - Распространение легенд по локациям
+
+    with_inventory_service: |
+      - Проверка редких предметов
+      - Анализ коллекций
+
+  technical_tasks:
+    - task: "Создать legend-service микросервис"
+      description: |
+        Новый микросервис для управления легендами с компонентами:
+        - Legend Story Generator
+        - Story Template Engine
+        - Legend Spreader
+        - Trigger Manager
+        - Dialogue Integration Manager
+      estimated_lines: 400
+
+    - task: "Расширить social-service для управления статусом легенды"
+      description: |
+        Добавить компоненты в social-service:
+        - Legend Status Manager
+        - Legend Eligibility Checker
+        - Legend Activity Tracker
+      estimated_lines: 300
+
+    - task: "Создать структуру БД для легенд"
+      description: |
+        Создать таблицы:
+        - player_legends
+        - legend_stories
+        - story_templates
+        - npc_legend_knowledge
+        - legend_triggers
+        - trigger_activations
+        - npc_social_network
+      estimated_lines: 200
+
+    - task: "Интегрировать с NPC диалоговой системой"
+      description: |
+        Расширить диалоговую систему новыми типами узлов:
+        - Legend Story Node
+        - Conditional Legend Node
+        - Dynamic Legend Node
+      estimated_lines: 250
+
+    - task: "Реализовать систему распространения знаний"
+      description: |
+        Создать механизм распространения легенд между NPC:
+        - Knowledge Network Manager
+        - Distortion Engine
+        - Temporal Manager
+        - Geographic Manager
+      estimated_lines: 350
+
+    - task: "Реализовать систему триггеров"
+      description: |
+        Создать систему триггеров активации:
+        - Trigger Manager
+        - Context Analyzer
+        - Relevance Calculator
+        - Cooldown Manager
+      estimated_lines: 300
+
+    - task: "Создать API endpoints"
+      description: |
+        Реализовать REST API для управления легендами:
+        - Legend Management endpoints
+        - Story Generation endpoints
+        - NPC Integration endpoints
+        - Trigger Management endpoints
+      estimated_lines: 400
+
+    - task: "Интегрировать с Event Bus"
+      description: |
+        Подписка на события и публикация событий легенд:
+        - Подписка на achievement:unlocked
+        - Подписка на reputation:changed
+        - Публикация legend:* событий
+      estimated_lines: 200
+
