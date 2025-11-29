@@ -1,0 +1,587 @@
+metadata:
+  id: weapon-special-mechanics-architecture-details
+  title: Детали архитектуры специальных механик оружия
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T19:00:00Z
+  related_documents:
+    - id: weapon-special-mechanics-architecture
+      relation: details
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - combat
+    - api-designer
+
+data_flows:
+  persistent_effects_flow: |
+    1. Игрок попадает снарядом в цель
+    2. Persistent Effects Manager получает событие combat.shooting.hit-registered
+    3. Persistent Effects Manager проверяет тип снаряда (болт, стрела, сюрикен)
+    4. Persistent Effects Manager создает персистентный эффект
+    5. Persistent Effects Manager сохраняет эффект в БД
+    6. Persistent Effects Manager публикует событие combat.weapon.persistent-effect-created
+    7. DoT система начинает наносить урон каждые 0.1 секунды
+    8. Persistent Effects Manager публикует событие combat.weapon.persistent-effect-tick каждые 0.1 секунды
+    9. Realtime Gateway отправляет обновления клиентам через WebSocket
+    10. При удалении снаряда Persistent Effects Manager публикует событие combat.weapon.persistent-effect-removed
+
+  chain_damage_flow: |
+    1. Игрок попадает электрическим оружием в цель
+    2. Chain Damage Manager получает событие combat.shooting.hit-registered
+    3. Chain Damage Manager определяет тип оружия (электрическое)
+    4. Chain Damage Manager находит ближайшие металлические объекты/импланты
+    5. Chain Damage Manager рассчитывает цепной урон для каждой цели
+    6. Chain Damage Manager применяет урон к каждой цели
+    7. Chain Damage Manager публикует событие combat.weapon.chain-damage-triggered
+    8. Chain Damage Manager публикует событие combat.weapon.chain-damage-jumped для каждого прыжка
+    9. Realtime Gateway отправляет визуальные данные клиентам через WebSocket
+    10. Visual & Audio Effects Manager получает события и триггерит эффекты
+
+  environment_destruction_flow: |
+    1. Игрок взрывает гранату рядом с укрытием
+    2. Environment Destruction Manager получает событие combat.shooting.hit-registered
+    3. Environment Destruction Manager определяет тип оружия (взрывное)
+    4. Environment Destruction Manager проверяет разрушаемость объектов в радиусе
+    5. Environment Destruction Manager рассчитывает разрушение для каждого объекта
+    6. Environment Destruction Manager обновляет состояние объектов в БД
+    7. Environment Destruction Manager публикует событие combat.weapon.environment-destroyed
+    8. Realtime Gateway отправляет данные о разрушении клиентам
+    9. Visual & Audio Effects Manager получает событие и триггерит эффекты разрушения
+
+  deployable_weapons_flow: |
+    1. Игрок размещает мину на поверхности
+    2. Deployable Weapons Manager получает команду PlaceDeployableWeaponCommand
+    3. Deployable Weapons Manager валидирует позицию размещения
+    4. Deployable Weapons Manager создает размещенное оружие в БД
+    5. Deployable Weapons Manager публикует событие combat.weapon.deployable-placed
+    6. Realtime Gateway отправляет данные о размещении клиентам
+    7. При приближении цели Deployable Weapons Manager активирует мину
+    8. Deployable Weapons Manager публикует событие combat.weapon.deployable-activated
+    9. Deployable Weapons Manager применяет урон/эффекты
+    10. Deployable Weapons Manager удаляет мину из БД
+    11. Deployable Weapons Manager публикует событие combat.weapon.deployable-destroyed
+
+  laser_weapons_flow: |
+    1. Игрок начинает стрелять лазером
+    2. Laser Weapons Manager получает команду FireLaserCommand
+    3. Laser Weapons Manager проверяет перегрев оружия
+    4. Laser Weapons Manager рассчитывает траекторию луча
+    5. Laser Weapons Manager проверяет попадания в цели
+    6. Laser Weapons Manager применяет урон к целям
+    7. Laser Weapons Manager увеличивает перегрев оружия
+    8. Laser Weapons Manager публикует событие combat.weapon.laser-fired
+    9. Realtime Gateway отправляет данные о луче клиентам через WebSocket
+    10. При достижении максимального перегрева Laser Weapons Manager публикует событие combat.weapon.laser-overheated
+
+  weapon_combination_matrix_flow: |
+    1. Система лута запрашивает генерацию оружия
+    2. Weapon Combination Matrix Manager получает команду GenerateWeaponCombinationCommand
+    3. Weapon Combination Matrix Manager выбирает базовый тип оружия
+    4. Weapon Combination Matrix Manager выбирает бренд
+    5. Weapon Combination Matrix Manager рассчитывает редкость
+    6. Weapon Combination Matrix Manager выбирает форму проджектайла
+    7. Weapon Combination Matrix Manager выбирает специальные механики
+    8. Weapon Combination Matrix Manager генерирует модификаторы
+    9. Weapon Combination Matrix Manager выбирает альтернативные режимы
+    10. Weapon Combination Matrix Manager генерирует характеристики
+    11. Weapon Combination Matrix Manager валидирует баланс
+    12. Weapon Combination Matrix Manager генерирует уникальное имя
+    13. Weapon Combination Matrix Manager сохраняет оружие в БД
+    14. Weapon Combination Matrix Manager публикует событие economy.weapon.combination-generated
+
+database_structure:
+  tables:
+    - name: weapon_special_mechanics
+      description: Специальные механики оружия
+      columns:
+        - id: UUID PRIMARY KEY
+        - weapon_id: UUID FOREIGN KEY
+        - mechanic_type: ENUM (persistent_effect, chain_damage, environment_destruction, deployable, laser, melee, elemental, temporal, control, summon, projectile_form)
+        - mechanic_data: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: persistent_effects
+      description: Персистентные эффекты (снаряды в теле)
+      columns:
+        - id: UUID PRIMARY KEY
+        - target_id: UUID FOREIGN KEY
+        - projectile_type: ENUM (bolt, arrow, shuriken)
+        - position: JSONB
+        - damage_per_tick: DECIMAL(10,2)
+        - tick_interval: DECIMAL(5,2)
+        - remaining_ticks: INTEGER
+        - created_at: TIMESTAMP
+        - expires_at: TIMESTAMP
+
+    - name: chain_damage_jumps
+      description: Прыжки цепного урона
+      columns:
+        - id: UUID PRIMARY KEY
+        - source_target_id: UUID FOREIGN KEY
+        - target_id: UUID FOREIGN KEY
+        - damage: DECIMAL(10,2)
+        - jump_number: INTEGER
+        - created_at: TIMESTAMP
+
+    - name: environment_destruction
+      description: Разрушение окружения
+      columns:
+        - id: UUID PRIMARY KEY
+        - object_id: UUID
+        - destruction_type: ENUM (wall, barrier, body_part, debris)
+        - position: JSONB
+        - destruction_data: JSONB
+        - created_at: TIMESTAMP
+
+    - name: deployable_weapons
+      description: Размещенное оружие
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - weapon_type: ENUM (mine, trap, turret, drone)
+        - position: JSONB
+        - state: ENUM (placed, active, destroyed)
+        - activation_radius: DECIMAL(5,2)
+        - ammo_remaining: INTEGER
+        - created_at: TIMESTAMP
+        - activated_at: TIMESTAMP
+        - destroyed_at: TIMESTAMP
+
+    - name: laser_weapons_state
+      description: Состояние лазерного оружия
+      columns:
+        - id: UUID PRIMARY KEY
+        - weapon_id: UUID FOREIGN KEY
+        - character_id: UUID FOREIGN KEY
+        - heat_level: DECIMAL(5,2)
+        - max_heat: DECIMAL(5,2)
+        - is_overheated: BOOLEAN
+        - last_fired_at: TIMESTAMP
+
+    - name: melee_combos
+      description: Комбо ближнего боя
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - weapon_type: ENUM (katana, claws, shuriken)
+        - combo_count: INTEGER
+        - last_attack_at: TIMESTAMP
+        - combo_expires_at: TIMESTAMP
+
+    - name: elemental_effects
+      description: Стихийные эффекты
+      columns:
+        - id: UUID PRIMARY KEY
+        - target_id: UUID FOREIGN KEY
+        - element_type: ENUM (fire, ice, poison, acid)
+        - stacks: INTEGER
+        - damage_per_tick: DECIMAL(10,2)
+        - tick_interval: DECIMAL(5,2)
+        - created_at: TIMESTAMP
+        - expires_at: TIMESTAMP
+
+    - name: temporal_effects
+      description: Временные эффекты
+      columns:
+        - id: UUID PRIMARY KEY
+        - target_id: UUID FOREIGN KEY
+        - effect_type: ENUM (vampirism, acceleration, slow_time)
+        - modifier_value: JSONB
+        - created_at: TIMESTAMP
+        - expires_at: TIMESTAMP
+
+    - name: control_effects
+      description: Эффекты контроля
+      columns:
+        - id: UUID PRIMARY KEY
+        - target_id: UUID FOREIGN KEY
+        - control_type: ENUM (psychotropic, gravitational, teleportation)
+        - control_data: JSONB
+        - created_at: TIMESTAMP
+        - expires_at: TIMESTAMP
+
+    - name: summons
+      description: Призванные существа
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - summon_type: ENUM (drone, ally, turret)
+        - position: JSONB
+        - health: DECIMAL(10,2)
+        - max_health: DECIMAL(10,2)
+        - created_at: TIMESTAMP
+        - expires_at: TIMESTAMP
+        - destroyed_at: TIMESTAMP
+
+    - name: weapon_combination_matrix
+      description: Матрица комбинаций оружия
+      columns:
+        - id: UUID PRIMARY KEY
+        - weapon_type: ENUM
+        - projectile_form: ENUM
+        - special_mechanics: JSONB
+        - modifiers: JSONB
+        - brand_id: UUID FOREIGN KEY
+        - rarity: ENUM
+        - compatibility_matrix: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: weapon_modifiers
+      description: Модификаторы оружия
+      columns:
+        - id: UUID PRIMARY KEY
+        - weapon_id: UUID FOREIGN KEY
+        - modifier_type: ENUM (attachment, chip, firmware)
+        - modifier_data: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: class_weapon_synergies
+      description: Синергии классов и оружия
+      columns:
+        - id: UUID PRIMARY KEY
+        - class_id: UUID FOREIGN KEY
+        - weapon_type: ENUM
+        - synergy_bonuses: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: dual_wielding_state
+      description: Состояние двойного оружия
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - left_weapon_id: UUID FOREIGN KEY
+        - right_weapon_id: UUID FOREIGN KEY
+        - firing_mode: ENUM (single, simultaneous, alternating)
+        - skill_level: INTEGER
+        - penalties: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+integrations:
+  combat_shooting_service: |
+    - Интеграция с системой стрельбы для применения специальных механик
+    - Получение событий выстрелов и попаданий
+    - Применение специальных эффектов к урону
+    - Синхронизация состояния оружия
+
+  procedural_equipment_matrix: |
+    - Интеграция с матрицей экипировки для генерации оружия
+    - Использование матрицы комбинаций при генерации
+    - Применение модификаторов к оружию
+    - Синхронизация с брендами и редкостями
+
+  ability_service: |
+    - Получение способностей, влияющих на специальные механики
+    - Интеграция способностей с модификаторами
+    - Обработка способностей для призыва и поддержки
+
+  implant_service: |
+    - Получение данных об имплантах для специальных механик
+    - Расчет бонусов имплантов для механик
+    - Интеграция имплантов с модификаторами
+
+  progression_service: |
+    - Получение данных о навыках для специальных механик
+    - Расчет бонусов навыков для механик
+    - Обновление навыков на основе использования механик
+
+  inventory_service: |
+    - Проверка экипированного оружия
+    - Получение данных о модификаторах оружия
+    - Расчет модификаторов экипировки
+
+  analytics_service: |
+    - Логирование всех применений специальных механик
+    - Сбор метрик эффективности механик
+    - Анализ паттернов использования
+    - Детект эксплойтов
+
+  realtime_gateway: |
+    - Отправка realtime обновлений специальных механик
+    - Синхронизация персистентных эффектов
+    - Уведомления о цепном уроне
+    - Уведомления о размещенном оружии
+
+  world_service: |
+    - Получение данных об окружении для разрушения
+    - Проверка разрушаемости объектов
+    - Обновление состояния окружения
+
+technical_specification:
+  implementation_phases:
+    phase_1:
+      name: Базовая инфраструктура
+      tasks:
+        - Создание структуры БД для специальных механик
+        - Реализация Event Sourcing инфраструктуры
+        - Реализация CQRS паттернов
+        - Реализация базового Special Mechanics Manager
+        - Интеграция с Event Bus
+      estimated_effort: 5 days
+      related_issues:
+        - 1574
+
+    phase_2:
+      name: Персистентные эффекты и цепной урон
+      tasks:
+        - Реализация Persistent Effects Manager
+        - Реализация Chain Damage Manager
+        - Интеграция с системой стрельбы
+        - Реализация DoT системы
+        - Визуализация эффектов
+      estimated_effort: 6 days
+      related_issues:
+        - 1550
+        - 1551
+
+    phase_3:
+      name: Разрушение окружения и размещаемое оружие
+      tasks:
+        - Реализация Environment Destruction Manager
+        - Реализация Deployable Weapons Manager
+        - Интеграция с World Service
+        - Физическая система разрушения
+        - Система размещения оружия
+      estimated_effort: 7 days
+      related_issues:
+        - 1552
+        - 1553
+
+    phase_4:
+      name: Лазерное оружие и ближний бой
+      tasks:
+        - Реализация Laser Weapons Manager
+        - Реализация Melee Combat Manager
+        - Система перегрева лазеров
+        - Система комбо ближнего боя
+        - Интеграция с системой движения
+      estimated_effort: 6 days
+      related_issues:
+        - 1554
+        - 1555
+
+    phase_5:
+      name: Стихийные и временные эффекты
+      tasks:
+        - Реализация Elemental Effects Manager
+        - Реализация Temporal Effects Manager
+        - Система стаков эффектов
+        - Система взаимодействия между стихиями
+        - Интеграция с системой урона
+      estimated_effort: 5 days
+      related_issues:
+        - 1556
+        - 1557
+
+    phase_6:
+      name: Контроль, призыв и поддержка
+      tasks:
+        - Реализация Control & Manipulation Manager
+        - Реализация Summon & Support Manager
+        - Система контроля AI
+        - Система призыва существ
+        - Интеграция с Ability Service
+      estimated_effort: 6 days
+      related_issues:
+        - 1558
+        - 1559
+
+    phase_7:
+      name: Формы проджектайлов и матрица комбинаций
+      tasks:
+        - Реализация Projectile Forms Manager
+        - Реализация Weapon Combination Matrix Manager
+        - Система расчета траекторий
+        - Алгоритм генерации комбинаций
+        - Интеграция с матрицей экипировки
+      estimated_effort: 7 days
+      related_issues:
+        - 1560
+        - 1561
+
+    phase_8:
+      name: Синергии с классами и двойное оружие
+      tasks:
+        - Реализация Class Synergy Manager
+        - Реализация Dual Wielding Manager
+        - Система классовых бонусов
+        - Система навыков двойного оружия
+        - Интеграция с Progression Service
+      estimated_effort: 5 days
+      related_issues:
+        - 1562
+        - 1563
+
+    phase_9:
+      name: Модификаторы и корпорации
+      tasks:
+        - Реализация Weapon Modifiers Manager
+        - Реализация Corporation Specializations Manager
+        - Система обвеса, чипов и прошивок
+        - Интеграция с Economy Service
+        - Лор корпораций
+      estimated_effort: 5 days
+      related_issues:
+        - 1575
+        - 1576
+
+    phase_10:
+      name: Визуальные и звуковые эффекты
+      tasks:
+        - Реализация Visual & Audio Effects Manager
+        - Интеграция с клиентом (UE5)
+        - Система частиц и анимаций
+        - Звуковое оформление
+        - Оптимизация производительности
+      estimated_effort: 6 days
+      related_issues:
+        - 1577
+
+    phase_11:
+      name: Дополнительные механики
+      tasks:
+        - Реализация дополнительных механик (альтернативные режимы, управляемые снаряды, оружие для передвижения)
+        - Реализация эффектов (глитч, накопление, комбо-система)
+        - Реализация тактических механик (разделение, рикошеты, замедление, маркировка)
+        - Реализация продвинутых механик (взрыв при смерти, поглощение урона, фазирование, мутация)
+        - Реализация уникальных механик (оружие-ловушка, временной щит, энергетический хлыст, трансформация)
+      estimated_effort: 8 days
+      related_issues:
+        - 1565
+        - 1566
+        - 1567
+        - 1568
+        - 1569
+
+    phase_12:
+      name: Специальные механики по типам оружия
+      tasks:
+        - Реализация специальных механик для каждого типа оружия
+        - Интеграция с системой стрельбы
+        - Балансировка механик
+      estimated_effort: 5 days
+      related_issues:
+        - 1570
+
+    phase_13:
+      name: Ган-ката и модульная система
+      tasks:
+        - Реализация системы ган-каты
+        - Реализация модульной системы оружия
+        - Реализация взаимодействия с окружением
+        - Интеграция с системой боя
+      estimated_effort: 5 days
+      related_issues:
+        - 1571
+        - 1572
+
+    phase_14:
+      name: Взаимодействия и синергии
+      tasks:
+        - Реализация системы взаимодействий оружия
+        - Реализация синергий с имплантами и окружением
+        - Система комбинаций эффектов
+        - Интеграция с Combat System
+      estimated_effort: 5 days
+      related_issues:
+        - 1573
+
+    phase_15:
+      name: Научное обоснование и лор
+      tasks:
+        - Создание системы распределения оружия по периодам
+        - Научное обоснование для каждого типа оружия
+        - Лор-тексты для каждого оружия
+        - Интеграция с Technology Progression System
+      estimated_effort: 3 days
+      related_issues:
+        - 1564
+
+  total_estimated_effort: 89 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        Gateway --> EconomyService[Economy Service<br/>8085]
+        Gateway --> ClientService[Client Service<br/>8089]
+        
+        GameplayService --> SMM[Special Mechanics Manager]
+        GameplayService --> PEM[Persistent Effects Manager]
+        GameplayService --> CDM[Chain Damage Manager]
+        GameplayService --> EDM[Environment Destruction Manager]
+        GameplayService --> DWM[Deployable Weapons Manager]
+        GameplayService --> LWM[Laser Weapons Manager]
+        GameplayService --> MCM[Melee Combat Manager]
+        GameplayService --> EEM[Elemental Effects Manager]
+        GameplayService --> TEM[Temporal Effects Manager]
+        GameplayService --> CMM[Control & Manipulation Manager]
+        GameplayService --> SSM[Summon & Support Manager]
+        GameplayService --> PFM[Projectile Forms Manager]
+        GameplayService --> CSM[Class Synergy Manager]
+        GameplayService --> DWM2[Dual Wielding Manager]
+        
+        EconomyService --> WCMM[Weapon Combination Matrix Manager]
+        EconomyService --> WMM[Weapon Modifiers Manager]
+        EconomyService --> CSM2[Corporation Specializations Manager]
+        
+        ClientService --> VAEM[Visual & Audio Effects Manager]
+        
+        GameplayService --> CombatShooting[Combat Shooting Service]
+        GameplayService --> AbilityService[Ability Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> InventoryService[Inventory Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        GameplayService --> WorldService[World Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        EconomyService --> DB2[(Economy DB)]
+        
+        Client --> WSWeapons[WebSocket<br/>Weapons]
+        WSWeapons --> GameplayService
+    ```
+
+  event_sourcing_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant SMM as Special Mechanics Manager
+        participant ES as Event Store
+        participant RG as Realtime Gateway
+        participant VAEM as Visual & Audio Effects Manager
+        
+        C->>SMM: Apply Special Mechanics Command
+        SMM->>SMM: Process Command
+        SMM->>ES: Publish Event (WeaponSpecialMechanicsApplied)
+        ES->>RG: Event Published
+        RG->>C: Realtime Update
+        ES->>VAEM: Event Published
+        VAEM->>C: Visual/Audio Effect
+    ```
+
+  cqrs_diagram: |
+    ```mermaid
+    graph LR
+        C[Client] --> CH[Command Handler]
+        C --> QH[Query Handler]
+        CH --> ES[Event Store]
+        QH --> RS[Read Store]
+        ES --> RS
+    ```
+
