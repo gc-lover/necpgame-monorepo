@@ -1,0 +1,338 @@
+metadata:
+  id: ui-hacking-networks
+  title: Hacking System - Network Visualization UI/UX Design
+  document_type: design
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-29T16:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-29T16:05:00Z
+  owners:
+    - role: ui_ux_designer
+      contact: ui-ux@necp.game
+  tags:
+    - ui
+    - ux
+    - design
+    - hacking
+    - networks
+  topics:
+    - ui-design
+    - user-experience
+    - cyberpunk-aesthetic
+  related_systems:
+    - combat-service
+    - gameplay-service
+  related_documents:
+    - id: combat-hacking
+      relation: based_on
+      path: knowledge/mechanics/combat/combat-hacking.yaml
+    - id: ui-hacking-cyberdeck
+      relation: complements
+      path: knowledge/design/ui/ui-hacking-cyberdeck.yaml
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - frontend
+    - ue5
+  risk_level: medium
+review:
+  chain:
+    - role: ui_ux_designer
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходим детальный UI/UX дизайн для визуализации сетей, узлов, защиты ICE и маршрутов взлома.
+  goal: Создать интуитивную визуализацию сетей в стиле Cyberpunk 2077 с интерактивными элементами.
+  essence: Дизайн-документ описывает визуализацию сетей, узлов, защиты, маршрутов взлома и интерактивное взаимодействие.
+  key_points:
+    - Карта сети с узлами и связями
+    - Визуализация защиты ICE с уровнями сложности
+    - Интерактивные маршруты взлома
+    - Уровни доступа и контрольные узлы
+content:
+  visual_design:
+    style: cyberpunk-2077
+    color_scheme:
+      background:
+        primary: '#0A0A0F'
+        secondary: '#151520'
+        grid: '#1A1A2E'
+      network_nodes:
+        accessible: '#00FF88'
+        locked: '#666666'
+        controlled: '#00AAFF'
+        target: '#FFAA00'
+        critical: '#FF4444'
+      network_connections:
+        active: '#00FF88'
+        inactive: '#333344'
+        secure: '#FF4444'
+        hacked: '#AA00FF'
+      ice_protection:
+        level_1: '#00FF88'
+        level_2: '#FFAA00'
+        level_3: '#FF6600'
+        level_4: '#FF4444'
+        level_5: '#FF0000'
+      access_levels:
+        public: '#00FF88'
+        restricted: '#FFAA00'
+        private: '#FF4444'
+        classified: '#FF0000'
+    typography:
+      font_family:
+        primary: 'Cyberpunk-Regular'
+        secondary: 'Roboto-Mono'
+        display: 'Cyberpunk-Bold'
+    effects:
+      node_pulse:
+        color: '#00FF88'
+        frequency: medium
+        trigger: node_active
+      connection_flow:
+        speed: medium
+        direction: bidirectional
+        color: '#00FF88'
+      ice_glow:
+        intensity: high
+        color: dynamic_by_level
+        animation: pulse
+  interface_structure:
+    network_view:
+      title: Network Map
+      layout: fullscreen_overlay
+      position: center
+      size: 100% width, 100% height
+      sections:
+        - id: network_canvas
+          title: Network Visualization
+          position: center
+          size: 100% width, 100% height
+          components:
+            - type: network_graph
+              layout: force_directed
+              nodes:
+                - type: device_node
+                  visual: icon_circle
+                  size: dynamic_by_importance
+                  label: device_name
+                - type: control_node
+                  visual: icon_hexagon
+                  size: large
+                  label: node_name
+                - type: data_node
+                  visual: icon_square
+                  size: medium
+                  label: data_name
+              connections:
+                - type: network_link
+                  visual: line
+                  width: dynamic_by_bandwidth
+                  label: connection_type
+            - type: ice_visualization
+              display: overlay_shield
+              color: dynamic_by_level
+              animation: pulse
+            - type: access_level_indicators
+              display: color_coding
+              legend: visible
+        - id: network_info_panel
+          title: Network Information
+          position: right_sidebar
+          width: 300px
+          height: 100%
+          components:
+            - type: selected_node_info
+              sections:
+                - node_name
+                - node_type
+                - access_level
+                - ice_protection
+                - available_hacks
+                - connection_count
+            - type: hack_routes
+              display: path_list
+              highlight: optimal_route
+            - type: action_buttons
+              buttons:
+                - hack_node
+                - scan_network
+                - view_details
+        - id: network_controls
+          title: Controls
+          position: top_bar
+          height: 60px
+          components:
+            - type: view_mode_selector
+              modes:
+                - overview
+                - detailed
+                - security_focus
+            - type: filter_controls
+              filters:
+                - node_type
+                - access_level
+                - ice_level
+                - connection_status
+            - type: zoom_controls
+              min: 0.5x
+              max: 3x
+              default: 1x
+        - id: network_legend
+          title: Legend
+          position: bottom_left
+          width: 200px
+          height: 150px
+          components:
+            - type: color_legend
+              items:
+                - node_types
+                - access_levels
+                - ice_levels
+                - connection_status
+  ux_mechanics:
+    navigation:
+      primary_method: mouse_keyboard
+      secondary_method: controller
+      shortcuts:
+        open_network_view: 'N'
+        zoom_in: 'Mouse Wheel Up'
+        zoom_out: 'Mouse Wheel Down'
+        pan: 'Middle Mouse Button'
+        select_node: 'Left Click'
+        hack_node: 'H'
+    interactions:
+      select_node:
+        flow:
+          1. hover_for_preview
+          2. click_to_select
+          3. show_details
+          4. highlight_connections
+        feedback:
+          - node_highlight
+          - connection_highlight
+          - info_panel_update
+      hack_node:
+        flow:
+          1. select_target_node
+          2. choose_hack_type
+          3. show_route_preview
+          4. confirm_hack
+          5. execute_hack
+        validation:
+          - access_level_check
+          - ice_protection_check
+          - route_availability
+        feedback:
+          - route_visualization
+          - hack_animation
+          - success_failure_notification
+      explore_network:
+        flow:
+          1. scan_network
+          2. discover_nodes
+          3. map_connections
+          4. identify_routes
+        feedback:
+          - discovery_animation
+          - node_reveal
+          - connection_reveal
+    feedback_systems:
+      notifications:
+        types:
+          - node_discovered
+          - route_found
+          - hack_successful
+          - hack_failed
+          - ice_detected
+        display: toast_notifications
+        position: top_center
+        duration: 2-3_seconds
+      tooltips:
+        trigger: hover
+        content:
+          - node_info
+          - ice_level
+          - access_level
+          - available_hacks
+          - connection_info
+    accessibility:
+      color_blind_support: true
+      text_scaling: true
+      high_contrast_mode: true
+      screen_reader_support: true
+  animations:
+    transitions:
+      view_open:
+        duration: 300ms
+        easing: ease_out_cubic
+        effect: fade_in
+      view_close:
+        duration: 250ms
+        easing: ease_in_cubic
+        effect: fade_out
+      node_select:
+        duration: 200ms
+        easing: ease_out
+        effect: scale_highlight
+      node_hack:
+        duration: 1000ms
+        easing: ease_in_out
+        effect: hack_animation
+    state_changes:
+      node_discovery:
+        duration: 500ms
+        effect: fade_in_scale
+      connection_activation:
+        duration: 400ms
+        effect: flow_animation
+      ice_detection:
+        duration: 300ms
+        effect: pulse_glow
+  responsive_design:
+    breakpoints:
+      mobile: 480px
+      tablet: 768px
+      desktop: 1920px
+      ultrawide: 2560px
+    adaptations:
+      mobile:
+        view_layout: simplified
+        info_panel: overlay
+        controls: bottom_bar
+      tablet:
+        view_layout: standard
+        info_panel: side_panel
+        controls: top_bar
+      desktop:
+        view_layout: full
+        info_panel: side_panel
+        controls: top_bar
+implementation:
+  needs_task: true
+  github_issue: 1487
+  queue_reference: []
+  blockers: []
+  technical_requirements:
+    - graph_rendering_engine
+    - network_topology_api
+    - ice_protection_system
+    - route_calculation
+  performance_targets:
+    view_open_time: '< 200ms'
+    node_render_fps: '>= 60fps'
+    network_update_rate: '10hz'
+history:
+  - version: '1.0.0'
+    date: 2025-11-29
+    author: UI/UX Designer
+    changes: Initial UI/UX design document for network visualization created
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
