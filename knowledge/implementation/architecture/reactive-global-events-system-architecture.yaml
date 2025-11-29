@@ -1,0 +1,434 @@
+metadata:
+  id: reactive-global-events-system-architecture
+  title: Архитектура системы реактивных глобальных событий
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - world
+    - events
+    - reactive
+    - player-impact
+    - scaling
+  related_systems:
+    - world-service
+    - quest-service
+    - economy-service
+    - social-service
+    - analytics-service
+  related_documents:
+    - id: world-events-system-architecture
+      relation: extends
+    - id: player-impact-systems
+      relation: implements
+    - id: live-events-system
+      relation: extends
+  github_issue: 1454
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - world
+    - api-designer
+
+summary:
+  problem: |
+    Требуется система, где действия игроков, завершение квестов и накопленная активность
+    могут вызывать глобальные события разных масштабов. Сейчас есть система запланированных
+    событий (Live Events System), но нет механики реактивных событий, триггеримых действиями игроков.
+  goal: |
+    Создать архитектурную схему системы реактивных глобальных событий с определением:
+    - Компонентов для накопления активности игроков
+    - Системы триггеров для разных масштабов событий
+    - Механизма каскадных эффектов (локальное → городское → региональное)
+    - Интеграции с существующими системами событий и влияния игроков
+    - REST, WebSocket и Event Bus контрактов
+    - Структуры БД для отслеживания активности и событий
+    - Технического задания для реализации
+  essence: |
+    Система реактивных глобальных событий расширяет существующую систему мировых событий,
+    добавляя механизм автоматической активации событий на основе накопленной активности игроков
+    с поддержкой масштабирования от локального до межпланетарного уровня.
+
+architecture:
+  overview: |
+    Архитектура системы реактивных глобальных событий состоит из следующих компонентов:
+    1. Activity Accumulator - накопление активности игроков
+    2. Scale Manager - управление масштабами событий
+    3. Threshold Calculator - расчет порогов активации
+    4. Reactive Trigger Manager - управление реактивными триггерами
+    5. Cascade Event Manager - управление каскадными эффектами
+    6. Activity Window Manager - управление временными окнами
+    7. Impact Aggregator - агрегация влияния игроков
+    8. Event Activation Coordinator - координация активации событий
+
+  event_scales:
+    - scale: district
+      description: "Локальный (District) - район города, несколько кварталов"
+      influence_radius: "1-5 км"
+      player_threshold: 10-50
+      activity_window: "1-7 дней"
+      example_events:
+        - "Восстание в районе Watson"
+        - "Корпоративный рейд на рынок"
+        - "Уличная война между бандами"
+
+    - scale: city
+      description: "Городской (City) - весь город (Night City, London, Tokyo)"
+      influence_radius: "весь город"
+      player_threshold: 100-500
+      activity_window: "7-30 дней"
+      example_events:
+        - "Корпоративная война в городе"
+        - "Массовые протесты"
+        - "Технологический прорыв"
+
+    - scale: region
+      description: "Региональный (Country/Region) - страна или крупный регион"
+      influence_radius: "страна/регион"
+      player_threshold: 1000-5000
+      activity_window: "30-90 дней"
+      example_events:
+        - "Региональный конфликт"
+        - "Экономический кризис региона"
+        - "Политическая революция"
+
+    - scale: continent
+      description: "Континентальный (Continent) - весь континент"
+      influence_radius: "континент"
+      player_threshold: 10000-50000
+      activity_window: "90-180 дней"
+      example_events:
+        - "Континентальная война"
+        - "Глобальная пандемия"
+        - "Технологическая революция"
+
+    - scale: planetary
+      description: "Планетарный (Planetary) - вся планета Земля"
+      influence_radius: "планета"
+      player_threshold: 100000-500000
+      activity_window: "180-365 дней"
+      example_events:
+        - "Глобальная катастрофа"
+        - "Планетарное событие"
+        - "Изменение климата"
+
+    - scale: interplanetary
+      description: "Межпланетарный (Interplanetary) - другие планеты, колонии"
+      influence_radius: "межпланетарный"
+      player_threshold: 500000+
+      activity_window: "365+ дней"
+      example_events:
+        - "Колонизация новой планеты"
+        - "Межпланетарный конфликт"
+        - "Космическая катастрофа"
+
+  activity_accumulation:
+    activity_sources:
+      - quest_completion: |
+          - Завершение квестов определенного типа
+          - Цепочки квестов
+          - Уникальные квесты
+      - player_actions: |
+          - Массовые действия игроков (убийства, торговля)
+          - Накопление определенных действий
+          - Уникальные комбинации действий
+      - economic_activity: |
+          - Крупные транзакции
+          - Изменение цен на рынке
+          - Экономические паттерны
+      - social_activity: |
+          - Изменение репутации фракций
+          - Массовые социальные действия
+          - Фракционные конфликты
+      - exploration_activity: |
+          - Открытие новых локаций
+          - Массовое исследование
+          - Археологические находки
+
+    accumulation_mechanism: |
+      activity_score = Σ(player_actions * weight) + 
+                       Σ(quest_completions * weight) +
+                       Σ(economic_activity * weight) +
+                       Σ(social_activity * weight) +
+                       Σ(exploration_activity * weight)
+
+    time_windows: |
+      - Short-term: 1-7 дней (локальные события)
+      - Medium-term: 7-30 дней (городские события)
+      - Long-term: 30-90 дней (региональные события)
+      - Very-long-term: 90-365 дней (континентальные/планетарные)
+
+    decay_mechanism: |
+      activity_score = activity_score * decay_factor ^ (time_passed / decay_period)
+      Старая активность постепенно теряет вес
+
+  trigger_system:
+    trigger_conditions:
+      - threshold_based: |
+          - Активность достигает порога для масштаба
+          - Порог зависит от масштаба события
+          - Порог может быть динамическим
+      - percentage_based: |
+          - Процент игроков выполнил действие
+          - Процент территории затронут
+          - Процент фракций вовлечено
+      - combination_based: |
+          - Комбинация нескольких условий
+          - Все условия должны быть выполнены
+          - Или хотя бы одно условие
+
+    cascade_triggers: |
+      - Локальное событие может триггерить городское
+      - Городское событие может триггерить региональное
+      - Региональное событие может триггерить континентальное
+      - Каскадные события имеют задержку (1-7 дней)
+
+    activation_rules: |
+      - Проверка порогов каждые 15 минут
+      - Минимальный интервал между событиями одного масштаба
+      - Максимальное количество активных событий одного масштаба
+      - Приоритет событий при конфликте
+
+  microservices:
+    - name: world-service
+      port: 8086
+      responsibility: |
+        Управление реактивными событиями:
+        - Накопление активности игроков
+        - Расчет порогов активации
+        - Управление триггерами
+        - Координация каскадных эффектов
+      components:
+        - activity-accumulator: накопление активности
+        - scale-manager: управление масштабами
+        - threshold-calculator: расчет порогов
+        - reactive-trigger-manager: управление триггерами
+        - cascade-event-manager: каскадные эффекты
+        - activity-window-manager: временные окна
+        - impact-aggregator: агрегация влияния
+        - event-activation-coordinator: координация активации
+
+    - name: analytics-service
+      port: 8087
+      responsibility: |
+        Отслеживание активности игроков:
+        - Сбор метрик активности
+        - Агрегация данных по масштабам
+        - Расчет пороговых значений
+        - Аналитика событий
+      components:
+        - activity-tracker: отслеживание активности
+        - metrics-aggregator: агрегация метрик
+        - threshold-analyzer: анализ порогов
+
+  data_models:
+    - name: ReactiveEvent
+      fields:
+        - id: UUID
+        - event_type: enum (quest, action, economic, social, exploration)
+        - scale: enum (district, city, region, continent, planetary, interplanetary)
+        - trigger_conditions: json
+        - threshold: float
+        - current_activity: float
+        - activity_window_start: timestamp
+        - activity_window_end: timestamp
+        - status: enum (pending, active, completed, cancelled)
+        - parent_event_id: UUID (для каскадных событий)
+        - child_events: array<UUID>
+        - created_at: timestamp
+        - activated_at: timestamp
+        - completed_at: timestamp
+
+    - name: ActivityAccumulation
+      fields:
+        - id: UUID
+        - scale: enum
+        - region_id: UUID
+        - activity_type: enum
+        - activity_score: float
+        - player_count: int
+        - window_start: timestamp
+        - window_end: timestamp
+        - decay_factor: float
+        - updated_at: timestamp
+
+    - name: EventTrigger
+      fields:
+        - id: UUID
+        - reactive_event_id: UUID
+        - trigger_type: enum (threshold, percentage, combination)
+        - conditions: json
+        - threshold_value: float
+        - check_interval_seconds: int
+        - last_checked_at: timestamp
+        - activated: boolean
+
+    - name: CascadeEvent
+      fields:
+        - id: UUID
+        - parent_event_id: UUID
+        - child_event_id: UUID
+        - cascade_delay_days: int
+        - cascade_condition: json
+        - triggered: boolean
+        - triggered_at: timestamp
+
+  api_endpoints:
+    activity_management:
+      - GET /api/v1/world/reactive-events/activity/{scale} - активность по масштабу
+      - GET /api/v1/world/reactive-events/activity/{scale}/{regionId} - активность региона
+      - POST /api/v1/world/reactive-events/activity/record - запись активности
+      - GET /api/v1/world/reactive-events/thresholds/{scale} - пороги для масштаба
+
+    event_management:
+      - GET /api/v1/world/reactive-events - список реактивных событий
+      - GET /api/v1/world/reactive-events/{id} - детали события
+      - GET /api/v1/world/reactive-events/active - активные события
+      - GET /api/v1/world/reactive-events/pending - ожидающие события
+      - GET /api/v1/world/reactive-events/by-scale/{scale} - события по масштабу
+      - POST /api/v1/world/reactive-events/{id}/activate - ручная активация
+      - POST /api/v1/world/reactive-events/{id}/cancel - отмена события
+
+    trigger_management:
+      - GET /api/v1/world/reactive-events/triggers - список триггеров
+      - POST /api/v1/world/reactive-events/triggers - создание триггера
+      - GET /api/v1/world/reactive-events/triggers/{id} - детали триггера
+      - POST /api/v1/world/reactive-events/triggers/{id}/check - проверка триггера
+
+    cascade_management:
+      - GET /api/v1/world/reactive-events/cascades - каскадные связи
+      - POST /api/v1/world/reactive-events/cascades - создание каскада
+      - GET /api/v1/world/reactive-events/{id}/cascades - каскады события
+
+  websocket_events:
+    - reactive-event:activity-updated - обновление активности
+    - reactive-event:threshold-reached - достигнут порог
+    - reactive-event:event-activated - событие активировано
+    - reactive-event:cascade-triggered - каскадное событие активировано
+
+  event_bus_topics:
+    - reactive-event:activity-recorded - активность записана
+    - reactive-event:threshold-checked - проверка порога
+    - reactive-event:event-pending - событие ожидает активации
+    - reactive-event:event-activated - событие активировано
+    - reactive-event:cascade-triggered - каскадное событие
+    - reactive-event:event-completed - событие завершено
+
+  data_synchronization:
+    tick_rate: |
+      - Накопление активности: каждые 5 минут
+      - Проверка порогов: каждые 15 минут
+      - Обновление активности: при событиях (real-time)
+      - Каскадные проверки: каждые 1 час
+
+    network_load: |
+      - Накопление активности: средняя нагрузка (пакетная обработка)
+      - Проверка порогов: низкая нагрузка (периодическая)
+      - Активация событий: высокая нагрузка (требует координации)
+      - Каскадные эффекты: средняя нагрузка (асинхронная обработка)
+
+    caching_strategy: |
+      - Активность по масштабам: кэш на 5 минут
+      - Пороги активации: кэш на 1 час
+      - Активные события: кэш на 1 минуту
+      - Каскадные связи: кэш на 1 час
+
+  integrations:
+    with_world_service: |
+      - Использование существующей системы мировых событий
+      - Расширение Event Manager для реактивных событий
+      - Интеграция с Event Scheduler
+
+    with_quest_service: |
+      - Подписка на quest:completed события
+      - Анализ типов завершенных квестов
+      - Накопление активности от квестов
+
+    with_analytics_service: |
+      - Получение метрик активности игроков
+      - Агрегация данных по масштабам
+      - Расчет пороговых значений
+
+    with_economy_service: |
+      - Подписка на экономические события
+      - Анализ экономической активности
+      - Триггеры экономических событий
+
+    with_social_service: |
+      - Подписка на изменения репутации
+      - Анализ социальной активности
+      - Триггеры социальных событий
+
+    with_player_impact_systems: |
+      - Использование данных влияния игроков
+      - Интеграция с системой агрегации влияния
+      - Синхронизация пороговых значений
+
+  technical_tasks:
+    - task: "Расширить world-service для реактивных событий"
+      description: |
+        Добавить компоненты в world-service:
+        - Activity Accumulator
+        - Scale Manager
+        - Threshold Calculator
+        - Reactive Trigger Manager
+        - Cascade Event Manager
+      estimated_lines: 450
+
+    - task: "Создать структуру БД для реактивных событий"
+      description: |
+        Создать таблицы:
+        - reactive_events
+        - activity_accumulations
+        - event_triggers
+        - cascade_events
+      estimated_lines: 200
+
+    - task: "Реализовать систему накопления активности"
+      description: |
+        Создать механизм накопления активности:
+        - Activity Accumulator
+        - Activity Window Manager
+        - Decay Manager
+      estimated_lines: 300
+
+    - task: "Реализовать систему триггеров"
+      description: |
+        Создать систему триггеров:
+        - Trigger Manager
+        - Threshold Calculator
+        - Trigger Checker
+      estimated_lines: 250
+
+    - task: "Реализовать каскадные эффекты"
+      description: |
+        Создать механизм каскадных событий:
+        - Cascade Event Manager
+        - Cascade Condition Checker
+        - Cascade Delay Manager
+      estimated_lines: 200
+
+    - task: "Создать API endpoints"
+      description: |
+        Реализовать REST API для реактивных событий:
+        - Activity Management endpoints
+        - Event Management endpoints
+        - Trigger Management endpoints
+        - Cascade Management endpoints
+      estimated_lines: 400
+
+    - task: "Интегрировать с Event Bus"
+      description: |
+        Подписка на события и публикация событий:
+        - Подписка на quest:completed
+        - Подписка на экономические события
+        - Публикация reactive-event:* событий
+      estimated_lines: 200
+
