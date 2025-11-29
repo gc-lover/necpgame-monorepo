@@ -1,0 +1,193 @@
+metadata:
+  id: engram-chips-system-architecture
+  title: Архитектура системы чипов энграмм
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T15:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - progression
+    - engrams
+    - cyberpunk
+    - character
+    - technology
+  related_systems:
+    - character-service
+    - inventory-service
+    - economy-service
+    - gameplay-service
+    - social-service
+    - league-service
+    - quest-service
+  related_documents:
+    - id: engram-chips-system-concept
+      relation: implements
+    - id: technology-progression-system-architecture
+      relation: integrates
+    - id: progression-system-architecture
+      relation: integrates
+    - id: multi-type-romance-system-architecture
+      relation: integrates
+    - id: engram-chips-system-architecture-character
+      relation: references
+    - id: engram-chips-system-architecture-economy
+      relation: references
+    - id: engram-chips-system-architecture-database
+      relation: references
+    - id: engram-chips-system-architecture-sync
+      relation: references
+  github_issues:
+    - 1539
+    - 1540
+    - 1541
+    - 1542
+    - 1543
+    - 1544
+    - 1545
+    - 1546
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-design
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы чипов энграмм, которая:
+    - Управляет установкой и хранением энграмм в слотах (1-3)
+    - Отслеживает влияние энграмм на персонажа (0-100%)
+    - Обрабатывает совместимость и конфликты между энграммами
+    - Управляет созданием, кодированием и взломом энграмм
+    - Обеспечивает передачу энграмм между игроками (PvP)
+    - Интегрируется с системами романсов, киберпсихоза, прогрессии
+    - Синхронизирует данные между сервисами
+    - Поддерживает высокую нагрузку и масштабируемость
+  goal: |
+    Создать архитектурную схему системы чипов энграмм с определением:
+    - Компонентов для управления энграммами
+    - Микросервисов или модулей в существующих сервисах
+    - API endpoints (высокоуровнево)
+    - Интеграций с другими системами
+    - Синхронизации данных (Event Sourcing, CQRS, Saga Pattern)
+    - Тикрейта и требований к сетевой нагрузке
+    - Структуры БД для энграмм
+    - Технического задания для реализации
+  essence: |
+    Комплексная система управления цифровыми копиями сознания на чипах Relic с поддержкой
+    установки, влияния, конфликтов, создания, передачи между игроками и интеграцией
+    с прогрессией, романсами и киберпсихозом.
+
+architecture:
+  overview: |
+    Система чипов энграмм состоит из следующих основных компонентов:
+    1. Engram Slot Manager - управление слотами энграмм (1-3)
+    2. Influence Tracker - отслеживание влияния энграмм (0-100%)
+    3. Compatibility Calculator - расчёт совместимости между энграммами
+    4. Conflict Resolver - разрешение конфликтов между энграммами
+    5. Engram Creator - создание энграмм
+    6. Engram Encoder - кодирование и защита энграмм
+    7. Engram Hacker - взлом энграмм
+    8. Engram Transfer Manager - передача между игроками
+    9. Engram Romance Integrator - интеграция с романсами
+    10. Engram Cyberpsychosis Integrator - интеграция с киберпсихозом
+
+  deployment_strategy: |
+    Система реализуется как модули в существующих сервисах:
+    - character-service-go: основные компоненты управления энграммами (слоты, влияние, установка)
+    - inventory-service-go: хранение чипов как предметов
+    - economy-service-go: экономика создания и покупки энграмм
+    - gameplay-service-go: интеграция с прогрессией и навыками
+    - social-service-go: интеграция с романсами
+    - netrunning-service-go: взлом и защита энграмм (если существует)
+
+  components_overview: |
+    Компоненты системы разбиты по сервисам:
+    
+    Character Service:
+    - Engram Slot Manager
+    - Influence Tracker
+    - Compatibility Calculator
+    - Conflict Resolver
+    - Engram Encoder
+    - Engram Cyberpsychosis Integrator
+    - Engram Blockers Manager
+    - Engram Historical Manager
+    
+    Economy Service:
+    - Engram Creator
+    - Engram Transfer Manager
+    
+    Inventory Service:
+    - Engram Chip Tier Manager
+    
+    Gameplay Service:
+    - Engram Hacker
+    
+    Social Service:
+    - Engram Romance Integrator
+    
+    Детальное описание компонентов см. в связанных документах:
+    - engram-chips-system-architecture-character.yaml
+    - engram-chips-system-architecture-economy.yaml
+
+  integrations_overview: |
+    Система интегрируется с:
+    - Character Service: установка, влияние, импланты
+    - Inventory Service: хранение чипов
+    - Economy Service: создание, передача
+    - Gameplay Service: прогрессия, навыки
+    - Social Service: романсы
+    - League Service: Technology Progression System
+    
+    Детали интеграций см. в engram-chips-system-architecture-sync.yaml
+
+  database_overview: |
+    Структура БД включает:
+    - character_engram_slots: слоты энграмм персонажей
+    - engrams: данные энграмм
+    - engram_influence_history: история влияния
+    - engram_conflicts: конфликты между энграммами
+    - engram_creation_log: лог создания
+    - engram_transfers: передачи энграмм
+    - engram_hacking_log: лог взлома
+    
+    Детальная схема БД см. в engram-chips-system-architecture-database.yaml
+
+  data_synchronization_overview: |
+    Используется Event Sourcing, CQRS и Saga Pattern:
+    - Event Sourcing: все изменения записываются как события
+    - CQRS: разделение чтения и записи
+    - Saga Pattern: для сложных операций (создание, передача)
+    
+    Детали синхронизации см. в engram-chips-system-architecture-sync.yaml
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  integrations_defined: true
+  database_schema_defined: true
+  performance_requirements_defined: true
+
+history:
+  - version: "1.1.0"
+    date: 2025-11-29
+    author: Content Writer Agent
+    changes: |
+      Разбит большой файл архитектуры на несколько файлов:
+      - Основной файл (metadata, overview)
+      - engram-chips-system-architecture-character.yaml
+      - engram-chips-system-architecture-economy.yaml
+      - engram-chips-system-architecture-database.yaml
+      - engram-chips-system-architecture-sync.yaml
+  - version: "1.0.0"
+    date: 2025-11-29
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы чипов энграмм
+
