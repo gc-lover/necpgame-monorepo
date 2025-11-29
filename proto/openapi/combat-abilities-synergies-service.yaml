@@ -1,0 +1,292 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Synergies Service API
+  description: |
+    API для управления синергиями способностей и киберпсихозом.
+    
+    **Основные возможности:**
+    - Получение доступных синергий
+    - Применение синергий
+    - Обновление состояния киберпсихоза
+    - Получение метрик способностей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Synergies
+    description: Синергии способностей
+  - name: Cyberpsychosis
+    description: Управление киберпсихозом
+  - name: Metrics
+    description: Метрики способностей
+
+paths:
+  /gameplay/combat/abilities/synergies:
+    get:
+      tags:
+        - Synergies
+      summary: Получить доступные синергии
+      description: |
+        Возвращает список доступных синергий для текущего персонажа.
+        Фильтрует синергии на основе активных способностей, имплантов и экипировки.
+        Поддерживает фильтрацию по типу синергии и пагинацию.
+      operationId: getAvailableSynergies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: synergy_type
+          in: query
+          schema:
+            $ref: 'combat-abilities-schemas.yaml#/components/schemas/SynergyType'
+          description: Фильтр по типу синергии
+        - name: complexity
+          in: query
+          schema:
+            type: string
+            enum: [Bronze, Silver, Gold, Platinum, Legendary]
+          description: Фильтр по сложности
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - synergies
+                  - total
+                properties:
+                  synergies:
+                    type: array
+                    items:
+                      $ref: 'combat-abilities-schemas.yaml#/components/schemas/Synergy'
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Общее количество доступных синергий
+                    example: 10
+                  limit:
+                    type: integer
+                    minimum: 1
+                    example: 20
+                  offset:
+                    type: integer
+                    minimum: 0
+                    example: 0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/abilities/synergies/apply:
+    post:
+      tags:
+        - Synergies
+      summary: Применить синергию
+      description: |
+        Применяет синергию к способности или набору способностей.
+        Проверяет требования синергии и применяет бонусы.
+      operationId: applySynergy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-abilities-schemas.yaml#/components/schemas/SynergyApplyRequest'
+      responses:
+        '200':
+          description: Синергия успешно применена
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/SynergyApplyResponse'
+        '400':
+          description: Ошибка валидации или синергия недоступна
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "ValidationError"
+                message: "Synergy requirements not met"
+                code: "SYNERGY_REQUIREMENTS_NOT_MET"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Синергия недоступна
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "ForbiddenError"
+                message: "Synergy not available"
+                code: "SYNERGY_NOT_AVAILABLE"
+        '404':
+          description: Синергия не найдена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "NotFoundError"
+                message: "Synergy not found"
+                code: "SYNERGY_NOT_FOUND"
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/abilities/cyberpsychosis:
+    post:
+      tags:
+        - Cyberpsychosis
+      summary: Обновить состояние киберпсихоза
+      description: |
+        Обновляет состояние киберпсихоза на основе использования способности.
+        Рассчитывает влияние способности на киберпсихоз с учетом активных имплантов.
+        Проверяет пороговые значения и применяет ограничения при необходимости.
+      operationId: updateCyberpsychosis
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-abilities-schemas.yaml#/components/schemas/CyberpsychosisUpdateRequest'
+      responses:
+        '200':
+          description: Состояние киберпсихоза успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Способность не найдена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "NotFoundError"
+                message: "Ability not found"
+                code: "ABILITY_NOT_FOUND"
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Cyberpsychosis
+      summary: Получить текущее состояние киберпсихоза
+      description: |
+        Возвращает текущее состояние киберпсихоза для текущего персонажа.
+        Включает уровень киберпсихоза, количество превышений порогов и активные ограничения.
+      operationId: getCyberpsychosisState
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/CyberpsychosisState'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Состояние киберпсихоза не найдено
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "NotFoundError"
+                message: "Cyberpsychosis state not found"
+                code: "CYBERPSYCHOSIS_STATE_NOT_FOUND"
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/abilities/metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Получить метрики способностей
+      description: |
+        Возвращает метрики использования способностей для текущего персонажа.
+        Поддерживает фильтрацию по способности и периоду времени.
+      operationId: getAbilityMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ability_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по идентификатору способности
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода статистики
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода статистики
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - metrics
+                  - total
+                properties:
+                  metrics:
+                    type: array
+                    items:
+                      $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityMetrics'
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Общее количество записей метрик
+                    example: 10
+                  limit:
+                    type: integer
+                    minimum: 1
+                    example: 20
+                  offset:
+                    type: integer
+                    minimum: 0
+                    example: 0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

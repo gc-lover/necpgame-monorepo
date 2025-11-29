@@ -1,0 +1,132 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Activation Service API
+  description: |
+    API для активации боевых способностей и управления кулдаунами.
+    
+    **Основные возможности:**
+    - Активация способностей с проверкой доступности и ресурсов
+    - Проверка статуса кулдаунов
+    - Управление кулдаунами для нескольких способностей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Ability Activation
+    description: Активация способностей
+  - name: Cooldowns
+    description: Управление кулдаунами
+
+paths:
+  /gameplay/combat/abilities/activate:
+    post:
+      tags:
+        - Ability Activation
+      summary: Активировать способность
+      description: |
+        Активирует способность для текущего персонажа.
+        Проверяет доступность, кулдауны, ресурсы (энергия, здоровье) и киберпсихоз.
+        При успешной активации запускает кулдаун и обновляет киберпсихоз.
+      operationId: activateAbility
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityActivationRequest'
+      responses:
+        '200':
+          description: Способность успешно активирована
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityActivationResponse'
+        '400':
+          description: Ошибка валидации или способность недоступна
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "ValidationError"
+                message: "Ability is on cooldown"
+                code: "ABILITY_ON_COOLDOWN"
+                details:
+                  ability_id: "550e8400-e29b-41d4-a716-446655440000"
+                  cooldown_expires_at: "2025-11-23T10:00:15Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Способность недоступна из-за ограничений
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "ForbiddenError"
+                message: "Ability requirements not met"
+                code: "ABILITY_REQUIREMENTS_NOT_MET"
+        '404':
+          description: Способность не найдена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "NotFoundError"
+                message: "Ability not found"
+                code: "ABILITY_NOT_FOUND"
+        '409':
+          description: Конфликт при активации (например, недостаточно ресурсов)
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "ConflictError"
+                message: "Insufficient energy"
+                code: "INSUFFICIENT_ENERGY"
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/abilities/cooldowns:
+    post:
+      tags:
+        - Cooldowns
+      summary: Проверить статус кулдаунов
+      description: |
+        Проверяет статус кулдаунов для списка способностей.
+        Возвращает информацию о текущих кулдаунах, времени окончания и оставшемся времени.
+      operationId: checkCooldowns
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-abilities-schemas.yaml#/components/schemas/CooldownCheckRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/CooldownCheckResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
