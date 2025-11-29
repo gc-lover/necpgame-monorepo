@@ -1,0 +1,427 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Proximity, Events & Statistics Service API
+  description: API для управления proximity каналами, событиями и статистикой голосового чата
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Proximity Voice Handler
+  - name: Participant Manager
+  - name: Voice Events
+  - name: Voice Statistics
+
+paths:
+  /social/voice/proximity/update:
+    post:
+      tags:
+        - Proximity Voice Handler
+      summary: Обновить позицию proximity канала
+      operationId: updateProximityPosition
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProximityPositionRequest'
+      responses:
+        '200':
+          description: Позиция обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProximityUpdateResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/proximity/nearby/{player_id}:
+    get:
+      tags:
+        - Proximity Voice Handler
+      summary: Получить ближайших игроков
+      operationId: getNearbyPlayers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: radius
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 20.0
+      responses:
+        '200':
+          description: Ближайшие игроки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearbyPlayersResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/participants/{participant_id}/mute:
+    post:
+      tags:
+        - Participant Manager
+      summary: Заглушить участника
+      operationId: muteParticipant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: participant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteParticipantRequest'
+      responses:
+        '200':
+          description: Участник заглушен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/participants/{participant_id}/deafen:
+    post:
+      tags:
+        - Participant Manager
+      summary: Оглушить участника
+      operationId: deafenParticipant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: participant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeafenParticipantRequest'
+      responses:
+        '200':
+          description: Участник оглушён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/participants/{participant_id}/kick:
+    post:
+      tags:
+        - Participant Manager
+      summary: Исключить участника из канала
+      operationId: kickParticipant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: participant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickParticipantRequest'
+      responses:
+        '200':
+          description: Участник исключён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/events/{channel_id}:
+    get:
+      tags:
+        - Voice Events
+      summary: Получить события канала
+      operationId: getVoiceEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - voice:channel-joined
+              - voice:channel-left
+              - voice:participant-joined
+              - voice:participant-left
+              - voice:participant-muted
+              - voice:participant-speaking
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События канала
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice-lobby/events/{lobby_id}:
+    get:
+      tags:
+        - Voice Events
+      summary: События лобби
+      operationId: getLobbyEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - voice-lobby:created
+              - voice-lobby:player-joined
+              - voice-lobby:player-left
+              - voice-lobby:subchannel-created
+              - voice-lobby:subchannel-deleted
+              - voice-lobby:permission-changed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LobbyEvent'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice/stats/channels:
+    get:
+      tags:
+        - Voice Statistics
+      summary: Получить статистику каналов
+      operationId: getChannelStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - PARTY
+              - GUILD
+              - RAID
+              - PROXIMITY
+      responses:
+        '200':
+          description: Статистика каналов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelStatsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/stats/participants:
+    get:
+      tags:
+        - Voice Statistics
+      summary: Получить статистику участников
+      operationId: getParticipantStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика участников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantStatsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/stats/quality:
+    get:
+      tags:
+        - Voice Statistics
+      summary: Получить статистику качества звука
+      operationId: getQualityStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: participant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика качества
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityStatsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    UpdateProximityPositionRequest:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/UpdateProximityPositionRequest'
+    ProximityUpdateResponse:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/ProximityUpdateResponse'
+    NearbyPlayersResponse:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/NearbyPlayersResponse'
+    MuteParticipantRequest:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/MuteParticipantRequest'
+    DeafenParticipantRequest:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/DeafenParticipantRequest'
+    KickParticipantRequest:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/KickParticipantRequest'
+    ParticipantResponse:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/ParticipantResponse'
+    VoiceEvent:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/VoiceEvent'
+    VoiceEventsResponse:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/VoiceEventsResponse'
+    LobbyEvent:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/LobbyEvent'
+    ChannelStatsResponse:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/ChannelStatsResponse'
+    ParticipantStatsResponse:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/ParticipantStatsResponse'
+    QualityStatsResponse:
+      $ref: 'voice-chat-proximity-events-stats-schemas.yaml#/components/schemas/QualityStatsResponse'
+
