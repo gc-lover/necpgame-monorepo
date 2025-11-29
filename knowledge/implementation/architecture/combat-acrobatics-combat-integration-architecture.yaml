@@ -1,0 +1,517 @@
+metadata:
+  id: combat-acrobatics-combat-integration-architecture
+  title: Архитектура боевой акробатики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T14:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - movement
+    - acrobatics
+    - freerun
+    - combos
+  related_systems:
+    - gameplay-service
+    - movement-service
+    - character-service
+  related_documents:
+    - id: combat-freerun-architecture
+      relation: extends
+    - id: combat-basic-acrobatics-architecture
+      relation: extends
+    - id: combat-advanced-acrobatics-architecture
+      relation: extends
+    - id: combat-combos-synergies-architecture
+      relation: integrates
+    - id: combat-abilities-architecture
+      relation: integrates
+  github_issue: 1512
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - client
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру интеграции элементов акробатики с боевой системой:
+    - Атаки в движении (Wall Run, Slide, Air, Vault)
+    - Комбо из движения (цепочки движений с бонусами)
+    - Мобильные способности (активация способностей во время движения)
+    Все элементы должны интегрироваться с боевой системой, комбо-системой и системой способностей.
+  goal: |
+    Создать архитектурную схему боевой акробатики с определением:
+    - Компонентов для атак в движении
+    - Системы комбо из движения
+    - Интеграции мобильных способностей
+    - API endpoints для управления
+    - Структуры БД для отслеживания
+    - Технического задания для реализации
+  essence: |
+    Детальная архитектура интеграции акробатики с боевой системой для создания
+    динамичного боевого геймплея с атаками в движении и комбо.
+
+architecture:
+  overview: |
+    Архитектура боевой акробатики состоит из следующих компонентов:
+    1. Movement Combat Integrator - интеграция боя с движением
+    2. Acrobatics Attack System - система атак в движении
+    3. Movement Combo System - система комбо из движения
+    4. Mobile Ability Integrator - интеграция мобильных способностей
+    5. Combat Accuracy Modifier - модификаторы точности в движении
+    6. Movement Attack Analytics - аналитика атак в движении
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка боевой акробатики:
+        - Интеграция боя с элементами акробатики
+        - Управление атаками в движении
+        - Обработка комбо из движения
+        - Интеграция мобильных способностей
+        - Модификация точности в движении
+        - Сбор аналитики
+      components:
+        - movement-combat-integrator: интеграция боя с движением
+        - acrobatics-attack-system: система атак в движении
+        - movement-combo-system: система комбо из движения
+        - mobile-ability-integrator: интеграция мобильных способностей
+        - combat-accuracy-modifier: модификаторы точности
+        - movement-attack-analytics: аналитика атак
+      endpoints:
+        - POST /api/v1/gameplay/combat/acrobatics/attack/wall-run - атака во время Wall Run
+        - POST /api/v1/gameplay/combat/acrobatics/attack/slide - атака во время Slide
+        - POST /api/v1/gameplay/combat/acrobatics/attack/air - атака в воздухе
+        - POST /api/v1/gameplay/combat/acrobatics/attack/vault - атака во время Vault
+        - POST /api/v1/gameplay/combat/acrobatics/combo/movement - комбо из движения
+        - GET /api/v1/gameplay/combat/acrobatics/combo/available - доступные комбо
+        - POST /api/v1/gameplay/combat/acrobatics/mobile-ability - мобильная способность
+        - GET /api/v1/gameplay/combat/acrobatics/accuracy-modifiers - модификаторы точности
+        - GET /api/v1/gameplay/combat/acrobatics/analytics - аналитика атак
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/acrobatics/combat/{sessionId} - поток боевых событий
+      events_published:
+        - combat.acrobatics.attack.wall-run: атака во время Wall Run
+        - combat.acrobatics.attack.slide: атака во время Slide
+        - combat.acrobatics.attack.air: атака в воздухе
+        - combat.acrobatics.attack.vault: атака во время Vault
+        - combat.acrobatics.combo.movement: комбо из движения
+        - combat.acrobatics.mobile-ability: мобильная способность
+      events_subscribed:
+        - combat.acrobatics.wall-run.started: начало Wall Run
+        - combat.acrobatics.slide.started: начало Slide
+        - combat.acrobatics.air-dash: выполнение Air Dash
+        - combat.acrobatics.vault: выполнение Vault
+        - combat.ability.activated: активация способности
+        - combat.weapon.fired: выстрел из оружия
+
+  movement_attacks:
+    wall_run_attacks:
+      description: |
+        Атаки во время Wall Run (стрельба, удары, специальные атаки).
+      mechanics:
+        shooting: |
+          - Возможность стрельбы во время Wall Run
+          - Снижение точности (баланс)
+          - Модификаторы точности зависят от навыков
+        melee: |
+          - Возможность ударов во время Wall Run
+          - Специальные атаки при отталкивании от стены
+          - Интеграция с Wall Kick для комбо
+        special: |
+          - Специальные атаки при отталкивании от стены
+          - Увеличенный урон при wall kick → attack
+          - Визуальные эффекты
+      accuracy_modifiers: |
+        - Базовое снижение точности: -20%
+        - Модификаторы от навыков: до +10%
+        - Импланты могут улучшать точность
+
+    slide_attacks:
+      description: |
+        Атаки во время Slide (стрельба, скользящие атаки, выход из Slide).
+      mechanics:
+        shooting: |
+          - Возможность стрельбы во время Slide
+          - Сохранение точности или небольшое снижение
+        melee: |
+          - Скользящие атаки (удары во время Slide)
+          - Специальные атаки при выходе из Slide
+          - Увеличение скорости атаки (баланс)
+        special: |
+          - Специальные атаки при выходе из Slide
+          - Бонусы за комбо: Slide → Attack
+          - Визуальные эффекты
+      accuracy_modifiers: |
+        - Базовое снижение точности: -10%
+        - Модификаторы от навыков: до +15%
+        - Бонус скорости атаки: +25%
+
+    air_attacks:
+      description: |
+        Атаки в воздухе (стрельба, удары, атаки во время Air Dash).
+      mechanics:
+        shooting: |
+          - Возможность стрельбы в воздухе
+          - Снижение точности в зависимости от высоты
+          - Интеграция с Air Dash
+        melee: |
+          - Возможность ударов в воздухе
+          - Атаки во время Air Dash
+          - Специальные атаки при приземлении
+        special: |
+          - Специальные атаки при приземлении
+          - Бонусы за комбо: Air Dash → Attack
+          - Визуальные эффекты
+      accuracy_modifiers: |
+        - Базовое снижение точности: -15%
+        - Дополнительное снижение на высоте: -5% за 10м
+        - Модификаторы от навыков: до +10%
+
+    vault_attacks:
+      description: |
+        Атаки во время Vault (стрельба, удары, выход из Vault).
+      mechanics:
+        shooting: |
+          - Возможность стрельбы во время Vault
+          - Сохранение точности
+        melee: |
+          - Возможность ударов во время Vault
+          - Атаки при выходе из Vault
+        special: |
+          - Специальные атаки при выходе из Vault
+          - Бонусы за комбо: Vault → Attack
+          - Визуальные эффекты
+      accuracy_modifiers: |
+        - Базовое снижение точности: -5%
+        - Модификаторы от навыков: до +10%
+
+  movement_combos:
+    description: |
+      Комбо из движения с бонусами урона, скорости атаки и специальными эффектами.
+    combo_chains:
+      - chain: "Wall Run → Wall Kick → Air Dash → Attack"
+        description: Вертикальная цепочка с бонусами
+        bonuses:
+          - damage_boost: +30%
+          - attack_speed: +20%
+          - special_effects: [stun, knockback]
+      - chain: "Slide → Vault → Attack"
+        description: Горизонтальная цепочка с бонусами
+        bonuses:
+          - damage_boost: +25%
+          - attack_speed: +15%
+          - special_effects: [knockback]
+      - chain: "Double Jump → Air Dash → Attack"
+        description: Воздушная цепочка с бонусами
+        bonuses:
+          - damage_boost: +20%
+          - attack_speed: +10%
+          - special_effects: [stun]
+      - chain: "Wall Run → Jump → Slide → Attack"
+        description: Смешанная цепочка с бонусами
+        bonuses:
+          - damage_boost: +35%
+          - attack_speed: +25%
+          - special_effects: [stun, knockback]
+    integration:
+      combos_synergies_system: |
+        - Интеграция с системой комбо и синергий
+        - Бонусы за комбо из движения
+        - Специальные эффекты (stun, knockback)
+        - Визуальные эффекты
+      freerun_combo_system: |
+        - Интеграция с Freerun Combo System
+        - Общие компоненты для комбо
+        - Синхронизация состояний
+
+  mobile_abilities:
+    description: |
+      Активация способностей во время движения (Wall Run, Slide, Air Dash).
+    mechanics:
+      activation: |
+        - Возможность активировать способности во время движения
+        - Модификация способностей для движения (мобильные версии)
+        - Ограничения по типу способностей
+        - Интеграция с Mobile Ability Integrator
+      modifications: |
+        - Мобильные версии способностей
+        - Корректировка затрат способностей
+        - Изменение эффектов для движения
+        - Ограничения по типу способностей
+    integration:
+      ability_system: |
+        - Интеграция с системой способностей
+        - Получение мобильных версий способностей
+        - Корректировка затрат способностей
+      mobile_ability_integrator: |
+        - Использование Mobile Ability Integrator из freerun
+        - Проверка совместимости способностей
+        - Применение мобильных версий
+
+  data_flows:
+    wall_run_attack_flow: |
+      1. Игрок в Wall Run активирует атаку
+      2. Movement Combat Integrator проверяет состояние Wall Run
+      3. Combat Accuracy Modifier применяет модификаторы точности
+      4. Acrobatics Attack System обрабатывает атаку
+      5. Combat System выполняет атаку с модификаторами
+      6. Movement Combo System проверяет комбо
+      7. Публикация события и отправка обновления клиентам
+
+    slide_attack_flow: |
+      1. Игрок в Slide активирует атаку
+      2. Movement Combat Integrator проверяет состояние Slide
+      3. Combat Accuracy Modifier применяет модификаторы
+      4. Acrobatics Attack System обрабатывает атаку
+      5. Combat System выполняет атаку с бонусами скорости
+      6. Movement Combo System проверяет комбо
+      7. Публикация события и отправка обновления
+
+    movement_combo_flow: |
+      1. Игрок выполняет цепочку движений
+      2. Movement Combo System отслеживает последовательность
+      3. Проверка соответствия комбо-цепочке
+      4. Применение бонусов (урон, скорость, эффекты)
+      5. Интеграция с Combos Synergies System
+      6. Публикация события и отправка обновления
+
+    mobile_ability_flow: |
+      1. Игрок активирует способность во время движения
+      2. Mobile Ability Integrator проверяет совместимость
+      3. Получение мобильной версии способности
+      4. Корректировка затрат способности
+      5. Активация мобильной способности
+      6. Публикация события и отправка обновления
+
+  database_structure:
+    tables:
+      - name: acrobatics_combat_attacks
+        description: История атак в движении
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - movement_type: ENUM (wall_run, slide, air, vault)
+          - attack_type: ENUM (shooting, melee, special)
+          - accuracy_modifier: DECIMAL(5,2)
+          - damage_dealt: INTEGER
+          - combo_triggered: BOOLEAN
+          - timestamp: TIMESTAMP
+
+      - name: acrobatics_movement_combos
+        description: История комбо из движения
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - combo_chain: JSONB
+          - bonuses_applied: JSONB
+          - damage_boost: DECIMAL(5,2)
+          - attack_speed_boost: DECIMAL(5,2)
+          - special_effects: JSONB
+          - timestamp: TIMESTAMP
+
+      - name: acrobatics_mobile_abilities
+        description: История мобильных способностей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - ability_id: UUID
+          - movement_type: ENUM (wall_run, slide, air_dash)
+          - mobile_version_applied: BOOLEAN
+          - cost_adjusted: DECIMAL(5,2)
+          - timestamp: TIMESTAMP
+
+  integrations:
+    basic_acrobatics: |
+      - Интеграция с базовыми элементами акробатики
+      - Атаки во время Wall Run, Slide
+      - Комбо из базовых элементов
+
+    advanced_acrobatics: |
+      - Интеграция с продвинутыми элементами
+      - Атаки во время Air Dash, Vault
+      - Комбо из продвинутых элементов
+
+    combat_system: |
+      - Интеграция с боевой системой
+      - Обработка атак с модификаторами
+      - Применение бонусов урона и скорости
+
+    combos_synergies_system: |
+      - Интеграция с системой комбо и синергий
+      - Бонусы за комбо из движения
+      - Специальные эффекты
+
+    abilities_system: |
+      - Интеграция с системой способностей
+      - Мобильные версии способностей
+      - Корректировка затрат
+
+    animation_system: |
+      - Анимации атак в движении
+      - Визуальные эффекты комбо
+      - Плавные переходы между состояниями
+
+    realtime_gateway: |
+      - Отправка realtime обновлений боевых событий
+      - Синхронизация атак и комбо
+      - Уведомления о событиях
+
+technical_specification:
+  subtasks:
+    - id: movement-combat-integrator
+      title: Реализация интегратора боя с движением
+      description: |
+        Реализация Movement Combat Integrator с интеграцией боевой системы
+        с элементами акробатики и обработкой состояний.
+      dependencies: []
+      estimated_effort: 5 days
+      file_size_estimate: 350 lines
+
+    - id: acrobatics-attack-system
+      title: Реализация системы атак в движении
+      description: |
+        Реализация Acrobatics Attack System с обработкой атак во время
+        Wall Run, Slide, Air, Vault и применением модификаторов.
+      dependencies: [movement-combat-integrator]
+      estimated_effort: 6 days
+      file_size_estimate: 400 lines
+
+    - id: movement-combo-system
+      title: Реализация системы комбо из движения
+      description: |
+        Реализация Movement Combo System с отслеживанием цепочек движений,
+        применением бонусов и интеграцией с комбо-системой.
+      dependencies: [movement-combat-integrator]
+      estimated_effort: 5 days
+      file_size_estimate: 350 lines
+
+    - id: mobile-ability-integrator
+      title: Реализация интегратора мобильных способностей
+      description: |
+        Реализация Mobile Ability Integrator с проверкой совместимости,
+        получением мобильных версий и корректировкой затрат.
+      dependencies: [movement-combat-integrator]
+      estimated_effort: 4 days
+      file_size_estimate: 300 lines
+
+    - id: combat-accuracy-modifier
+      title: Реализация модификаторов точности
+      description: |
+        Реализация Combat Accuracy Modifier с расчетом модификаторов
+        точности в зависимости от движения и навыков.
+      dependencies: [acrobatics-attack-system]
+      estimated_effort: 3 days
+      file_size_estimate: 250 lines
+
+    - id: movement-attack-analytics
+      title: Реализация аналитики атак в движении
+      description: |
+        Реализация Movement Attack Analytics с логированием атак,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [acrobatics-attack-system]
+      estimated_effort: 3 days
+      file_size_estimate: 200 lines
+
+    - id: acrobatics-combat-api-endpoints
+      title: Реализация API endpoints для боевой акробатики
+      description: |
+        Реализация REST API endpoints для управления атаками в движении,
+        комбо и мобильными способностями.
+      dependencies: [acrobatics-attack-system, movement-combo-system]
+      estimated_effort: 2 days
+      file_size_estimate: 180 lines
+
+    - id: acrobatics-combat-websocket
+      title: Реализация WebSocket каналов для боевой акробатики
+      description: |
+        Реализация WebSocket каналов для realtime обновлений боевых событий,
+        синхронизации атак и комбо.
+      dependencies: [movement-combat-integrator]
+      estimated_effort: 2 days
+      file_size_estimate: 150 lines
+
+    - id: acrobatics-combat-event-bus
+      title: Интеграция с Event Bus для боевой акробатики
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов боевой акробатики.
+      dependencies: [acrobatics-attack-system, movement-combo-system]
+      estimated_effort: 2 days
+      file_size_estimate: 120 lines
+
+    - id: acrobatics-combat-database-schema
+      title: Создание схемы БД для боевой акробатики
+      description: |
+        Создание таблиц БД для атак в движении, комбо и мобильных способностей
+        с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+      file_size_estimate: 100 lines
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> MCI[Movement Combat Integrator]
+        GameplayService --> AAS[Acrobatics Attack System]
+        GameplayService --> MCS[Movement Combo System]
+        GameplayService --> MAI[Mobile Ability Integrator]
+        GameplayService --> CAM[Combat Accuracy Modifier]
+        GameplayService --> MAA[Movement Attack Analytics]
+        
+        AAS --> CS[Combat System]
+        MCS --> CSS[Combos Synergies System]
+        MAI --> AS[Abilities System]
+        
+        MCI --> WRM[Wall Run Manager]
+        MCI --> SM[Slide Manager]
+        MCI --> ADM[Air Dash Manager]
+        MCI --> VM[Vault Manager]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSCombat[WebSocket<br/>Combat Acrobatics]
+        WSCombat --> GameplayService
+    ```
+
+  movement_attack_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant MCI as Movement Combat Integrator
+        participant AAS as Acrobatics Attack System
+        participant CAM as Accuracy Modifier
+        participant CS as Combat System
+        participant MCS as Movement Combo System
+        participant EB as Event Bus
+        
+        C->>MCI: POST /attack/wall-run
+        MCI->>MCI: Check movement state
+        MCI->>CAM: Get accuracy modifiers
+        CAM-->>MCI: Modifiers
+        MCI->>AAS: Process attack
+        AAS->>CS: Execute attack with modifiers
+        CS-->>AAS: Attack result
+        AAS->>MCS: Check combo
+        MCS-->>AAS: Combo status
+        AAS->>EB: Publish attack event
+        AAS-->>C: Attack executed
+    ```
+
