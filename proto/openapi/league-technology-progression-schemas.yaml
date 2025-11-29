@@ -1,0 +1,273 @@
+openapi: 3.0.3
+info:
+  title: Technology Progression System - Schemas
+  description: Схемы данных для Technology Progression System
+  version: 1.0.0
+
+components:
+  schemas:
+    Technology:
+      type: object
+      required:
+        - tech_id
+        - name
+        - unlock_year
+        - unlock_conditions
+        - availability
+      properties:
+        tech_id:
+          type: string
+          description: Уникальный идентификатор технологии
+          example: "braindance"
+        name:
+          type: string
+          description: Название технологии
+          example: "Braindance"
+        description:
+          type: string
+          description: Описание технологии
+          example: "Технология записи и воспроизведения переживаний"
+        unlock_year:
+          type: integer
+          description: Год разблокировки технологии в лиге
+          minimum: 2020
+          maximum: 2093
+          example: 2030
+        unlock_phase:
+          type: string
+          description: Фаза лиги для разблокировки
+          enum: [Start, Rise, Crisis, Endgame, Finale]
+          example: "Rise"
+        unlock_conditions:
+          $ref: '#/components/schemas/UnlockConditions'
+        availability:
+          $ref: '#/components/schemas/TechnologyAvailability'
+        metadata:
+          type: object
+          description: Дополнительные метаданные технологии
+          additionalProperties: true
+          example:
+            category: "entertainment"
+            examples: ["Braindance Player", "Braindance Recorder"]
+
+    UnlockConditions:
+      type: object
+      description: Условия разблокировки технологии
+      properties:
+        time_based:
+          type: object
+          description: Условия на основе времени лиги
+          properties:
+            league_year:
+              type: integer
+              minimum: 2020
+              maximum: 2093
+            league_phase:
+              type: string
+              enum: [Start, Rise, Crisis, Endgame, Finale]
+        quest_based:
+          type: object
+          description: Условия на основе квестов
+          properties:
+            quest_id:
+              type: string
+            required:
+              type: boolean
+        reputation_based:
+          type: object
+          description: Условия на основе репутации
+          properties:
+            corporation:
+              type: string
+            min_reputation:
+              type: integer
+        event_based:
+          type: object
+          description: Условия на основе событий мира
+          properties:
+            event_id:
+              type: string
+            required:
+              type: boolean
+
+    TechnologyAvailability:
+      type: object
+      description: Доступность технологии через различных торговцев
+      properties:
+        vendors:
+          type: array
+          items:
+            type: string
+          description: Список типов торговцев, у которых доступна технология
+          example: ["entertainment_vendors", "tech_vendors"]
+        corporations:
+          type: array
+          items:
+            type: string
+          description: Список корпораций, предоставляющих доступ
+          example: ["Arasaka", "Militech"]
+        black_market:
+          type: boolean
+          description: Доступна ли технология на чёрном рынке
+          example: true
+
+    AvailableTechnology:
+      type: object
+      required:
+        - tech_id
+        - name
+        - unlocked
+      properties:
+        tech_id:
+          type: string
+          example: "braindance"
+        name:
+          type: string
+          example: "Braindance"
+        unlocked:
+          type: boolean
+          description: Разблокирована ли технология
+        unlocked_at:
+          type: string
+          format: date-time
+          description: Дата и время разблокировки
+          nullable: true
+        unlock_type:
+          type: string
+          description: Тип разблокировки
+          enum: [time_based, quest_based, reputation_based, event_based]
+          nullable: true
+
+    UnlockStatus:
+      type: object
+      required:
+        - tech_id
+        - character_id
+        - unlocked
+        - can_unlock
+      properties:
+        tech_id:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+        unlocked:
+          type: boolean
+          description: Разблокирована ли технология
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+        unlock_type:
+          type: string
+          enum: [time_based, quest_based, reputation_based, event_based]
+          nullable: true
+        unlock_source:
+          type: string
+          nullable: true
+        can_unlock:
+          type: boolean
+          description: Можно ли разблокировать технологию сейчас
+        missing_conditions:
+          type: array
+          items:
+            type: string
+          description: Список недостающих условий для разблокировки
+
+    UnlockRequest:
+      type: object
+      required:
+        - character_id
+        - unlock_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        unlock_type:
+          type: string
+          enum: [time_based, quest_based, reputation_based, event_based]
+        unlock_source:
+          type: string
+          description: Источник разблокировки (automatic, quest, admin)
+          example: "automatic"
+        metadata:
+          type: object
+          description: Дополнительные метаданные разблокировки
+          additionalProperties: true
+
+    UnlockResponse:
+      type: object
+      required:
+        - tech_id
+        - character_id
+        - unlocked
+        - unlocked_at
+      properties:
+        tech_id:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+        unlocked:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+        unlock_type:
+          type: string
+          enum: [time_based, quest_based, reputation_based, event_based]
+
+    AvailabilityCheckRequest:
+      type: object
+      required:
+        - character_id
+        - tech_ids
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        tech_ids:
+          type: array
+          items:
+            type: string
+          description: Список идентификаторов технологий для проверки
+          minItems: 1
+          example: ["braindance", "relic"]
+        context:
+          type: string
+          description: Контекст проверки (inventory_item, character_implant)
+          enum: [inventory_item, character_implant]
+          example: "inventory_item"
+
+    AvailabilityCheckResult:
+      type: object
+      required:
+        - tech_id
+        - available
+      properties:
+        tech_id:
+          type: string
+        available:
+          type: boolean
+          description: Доступна ли технология
+        unlocked:
+          type: boolean
+          description: Разблокирована ли технология
+        reason:
+          type: string
+          description: Причина недоступности (если available = false)
+          nullable: true
+
+    AvailabilityCheckResponse:
+      type: object
+      required:
+        - character_id
+        - results
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailabilityCheckResult'

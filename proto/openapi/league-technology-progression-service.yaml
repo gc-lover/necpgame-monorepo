@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Technology Progression System - Service API
+  description: API для управления технологиями и их разблокировкой
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8093/api/v1
+      description: League Service (Technology Progression)
+
+paths:
+  /league/technologies:
+    get:
+      summary: Получить список всех технологий
+      description: Возвращает список всех технологий в системе
+      operationId: listTechnologies
+      tags:
+        - Technology Progression
+      parameters:
+        - $ref: "common-parameters.yaml#/components/parameters/Limit"
+        - $ref: "common-parameters.yaml#/components/parameters/Offset"
+        - name: unlock_year
+          in: query
+          description: Фильтр по году разблокировки
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+        - name: unlock_phase
+          in: query
+          description: Фильтр по фазе лиги
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Список технологий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "league-technology-progression-schemas.yaml#/components/schemas/Technology"
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  has_more:
+                    type: boolean
+        "400":
+          $ref: "common-responses.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common-responses.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common-responses.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /league/technologies/available:
+    get:
+      summary: Получить доступные технологии для игрока
+      description: Возвращает список технологий, доступных для указанного персонажа
+      operationId: getAvailableTechnologies
+      tags:
+        - Technology Progression
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common-parameters.yaml#/components/parameters/Limit"
+        - $ref: "common-parameters.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список доступных технологий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "league-technology-progression-schemas.yaml#/components/schemas/Technology"
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  has_more:
+                    type: boolean
+        "400":
+          $ref: "common-responses.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common-responses.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common-responses.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common-responses.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /league/technologies/{tech_id}:
+    get:
+      summary: Получить информацию о технологии
+      description: Возвращает детальную информацию о конкретной технологии
+      operationId: getTechnology
+      tags:
+        - Technology Progression
+      parameters:
+        - name: tech_id
+          in: path
+          required: true
+          description: ID технологии
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о технологии
+          content:
+            application/json:
+              schema:
+                $ref: "league-technology-progression-schemas.yaml#/components/schemas/Technology"
+        "400":
+          $ref: "common-responses.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common-responses.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common-responses.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common-responses.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /league/technologies/{tech_id}/unlock-status:
+    get:
+      summary: Получить статус разблокировки технологии
+      description: Возвращает статус разблокировки технологии для указанного персонажа
+      operationId: getUnlockStatus
+      tags:
+        - Technology Progression
+      parameters:
+        - name: tech_id
+          in: path
+          required: true
+          description: ID технологии
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус разблокировки
+          content:
+            application/json:
+              schema:
+                $ref: "league-technology-progression-schemas.yaml#/components/schemas/UnlockStatus"
+        "400":
+          $ref: "common-responses.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common-responses.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common-responses.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common-responses.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /league/technologies/{tech_id}/unlock:
+    post:
+      summary: Разблокировать технологию
+      description: Разблокирует технологию для персонажа (admin/event)
+      operationId: unlockTechnology
+      tags:
+        - Technology Progression
+      parameters:
+        - name: tech_id
+          in: path
+          required: true
+          description: ID технологии
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "league-technology-progression-schemas.yaml#/components/schemas/UnlockRequest"
+      responses:
+        "200":
+          description: Технология успешно разблокирована
+          content:
+            application/json:
+              schema:
+                $ref: "league-technology-progression-schemas.yaml#/components/schemas/UnlockResponse"
+        "400":
+          $ref: "common-responses.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common-responses.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common-responses.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common-responses.yaml#/components/responses/NotFound"
+        "409":
+          description: Технология уже разблокирована
+          content:
+            application/json:
+              schema:
+                $ref: "common-base.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common-responses.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /league/technologies/check-availability:
+    post:
+      summary: Проверить доступность технологий
+      description: |
+        Проверяет доступность технологий для указанного персонажа.
+        Используется Inventory Service и Character Service для проверки
+        доступности предметов и имплантатов перед покупкой/установкой.
+      operationId: checkTechnologyAvailability
+      tags:
+        - Technology Progression
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "league-technology-progression-schemas.yaml#/components/schemas/AvailabilityCheckRequest"
+            example:
+              character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              tech_ids: ["braindance", "relic"]
+              context: "inventory_item"
+      responses:
+        "200":
+          description: Результат проверки доступности
+          content:
+            application/json:
+              schema:
+                $ref: "league-technology-progression-schemas.yaml#/components/schemas/AvailabilityCheckResponse"
+        "400":
+          $ref: "common-responses.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common-responses.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common-responses.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
