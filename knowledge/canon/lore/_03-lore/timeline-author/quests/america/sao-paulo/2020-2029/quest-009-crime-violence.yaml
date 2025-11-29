@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: quest
   status: approved
-  version: '1.1.0'
-  last_updated: 2025-11-11T15:52:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-11T15:52:00Z
   owners:
@@ -20,9 +20,14 @@ metadata:
     - survival
     - ethics
   related_systems:
-    - security-system
+    - risk-assessment-system
+    - security-protocol-building-system
+    - stealth-system
+    - awareness-mini-game-system
+    - crime-network-mapping-system
     - reputation-system
-    - decision-system
+    - world-state-system
+    - quest-engine
   related_documents:
     - id: canon-quest-sao-paulo-mega-city
       relation: contrasts
@@ -46,50 +51,149 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Сценарий криминального ландшафта Сан-Паулу был вне YAML и не активировал системы безопасности."
-  goal: "Структурировать угрозы PCC, правила выживания и решения игрока в YAML."
-  essence: "Игрок анализирует отчёты, проходит зоны риска и выбирает стратегию взаимодействия с полицией, сообществами или бандами."
+  problem: "Квест survival guide требует детализации risk assessment system, security protocol building, stealth и awareness mini-games, crime network mapping."
+  goal: "Создать полноценный контентный квест с механиками выживания, протоколами безопасности и выбором между сотрудничеством с городом и самостоятельными мерами."
+  essence: "Игрок формирует survival guide по опасному Сан-Паулу: встреча с аналитиком безопасности, разведка в районах PCC, сбор советов, формирование протокола, тестирование в симуляции и выбор стратегии."
   key_points:
-    - Рассмотрены экспресс-похищения, риски на светофорах и влияние PCC.
-    - security-, reputation-, decision-system фиксируют последствия.
-    - Награда даёт титул «Уличный выживший» и усиливает ресурс выживания.
+    - Risk assessment system для анализа опасных районов и инцидентов.
+    - Security protocol building для команды.
+    - Stealth и awareness mini-games для разведки.
+    - Crime network mapping для PCC.
+    - Выбор: сотрудничать с городскими программами или полагаться на собственные меры.
+quest_definition:
+  quest_type: side
+  level_min: 25
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: meet_security_analyst
+      text: "Встретиться с аналитиком безопасности, получить карту инцидентов"
+      type: interact
+      target: security_analyst_npc
+      count: 1
+      optional: false
+    - id: recon_pcc_areas
+      text: "Провести разведку в районах активности PCC (фавелы, перекрёстки, торговые зоны)"
+      type: investigate
+      target: pcc_controlled_zones
+      count: 5
+      optional: false
+    - id: gather_survival_tips
+      text: "Собрать советы от журналистов, полиции, жителей"
+      type: collect
+      target: survival_tips
+      count: 10
+      optional: false
+    - id: build_security_protocol
+      text: "Сформировать протокол безопасности для команды"
+      type: interact
+      target: protocol_building
+      count: 1
+      optional: false
+    - id: test_simulation
+      text: "Протестировать протокол в симуляции"
+      type: interact
+      target: security_simulation
+      count: 1
+      optional: false
+    - id: make_final_choice
+      text: "Выбрать: сотрудничать с городскими программами или полагаться на собственные меры"
+      type: choice
+      target: security_strategy_choice
+      count: 1
+      optional: false
+  rewards:
+    experience: 3000
+    money: 0
+    items:
+      - item_id: achievement_street_survivor
+        quantity: 1
+    reputation: {}
+    unlocks:
+      - survival_skills
+      - security_protocols
+  branches:
+    - branch_id: cooperate_city_programs
+      description: "Сотрудничать с городскими программами безопасности"
+      consequences:
+        world_state:
+          city_cooperation: true
+          security_improved: true
+        reputation:
+          City_Administration: +30
+          Police: +20
+        experience: 3000
+        unlocks:
+          - city_security_programs
+    - branch_id: self_reliant
+      description: "Полагаться на собственные меры безопасности"
+      consequences:
+        world_state:
+          independent_security: true
+          protocol_refined: true
+        reputation:
+          Independent_Operators: +25
+          City_Administration: -10
+        experience: 3000
+        unlocks:
+          - advanced_survival_skills
 content:
   sections:
     - id: quest_profile
       title: 'Параметры квеста'
       body: |
-        Тип: survival. Сложность: hard. Формат: solo. Длительность: 2–4 часа.
-        Награды: 3 000 XP, +25 к ресурсу выживания, титул «Уличный выживший».
+        Тип: side quest (survival, security). Сложность: hard. Формат: solo. Длительность: 3-4 часа.
+        Награды: 3 000 XP, навык «Выживание в мегаполисе» +25, ачивка «Уличный выживший», разблокировка survival skills и security protocols.
       mechanics_links: []
       assets: []
     - id: stages
-      title: 'Этапы'
+      title: 'Этапы квеста'
       body: |
-        1. Собрать данные: отчёты о PCC, статистика преступности, сигналы от полиции и жителей.
-        2. Провести разведку в опасных районах, соблюдая протоколы безопасности и избегая демонстрации ценностей.
-        3. Выбрать стратегию влияния: поддержать силовиков, инвестировать в сообщества или заключить сделку с бандами.
-        4. Зафиксировать последствия и обновить карту угроз.
+        1. Встретиться с аналитиком безопасности, получить карту инцидентов от PCC, экспресс-похищений, грабежей.
+        2. Провести разведку в 5 районах активности PCC: фавелы, перекрёстки, торговые зоны, соблюдая протоколы безопасности.
+        3. Собрать 10 советов от журналистов, полиции, жителей: не демонстрировать гаджеты, знать опасные районы, избегать ночных маршрутов.
+        4. Сформировать протокол безопасности для команды на основе собранных данных.
+        5. Протестировать протокол в симуляции опасных ситуаций.
+        6. Выбрать стратегию: сотрудничать с городскими программами (видеонаблюдение, общинная полиция) или полагаться на собственные меры.
       mechanics_links: []
       assets: []
     - id: systems_hooks
       title: 'Системные крючки'
       body: |
-        security-system моделирует риск-проверки и патрули, reputation-system изменяет отношение полиции, жителей и криминала,
-        decision-system фиксирует выбранные подходы и их долгосрочные эффекты.
+        risk-assessment-system обрабатывает анализ опасных районов и инцидентов, security-protocol-building-system управляет созданием протоколов безопасности, stealth-system обрабатывает скрытную разведку, awareness-mini-game-system управляет проверками внимательности, crime-network-mapping-system отслеживает активность PCC, reputation-system обновляет отношения с City_Administration/Police/Independent_Operators, world-state-system фиксирует стратегию безопасности.
       mechanics_links: []
       assets: []
-    - id: outcomes
-      title: 'Исходы'
+    - id: regional_details
+      title: 'Региональные детали'
       body: |
-        - Поддержка полиции: усиление патрулей, рост риска мести PCC, бонус репутации силовиков.
-        - Укрепление сообществ: снижение преступности, средние бонусы, расширение гражданских сетей.
-        - Кооптация криминала: доступ к теневым ресурсам, потеря репутации, усиление влияния PCC.
+        PCC (Primeiro Comando da Capital) контролирует часть фавел. Экспресс-похищения на светофорах, грабежи, насилие остаются рисками несмотря на улучшение статистики. Город вводит видеонаблюдение и общинную полицию, но требуется personal awareness. Не демонстрировать гаджеты, знать опасные районы, избегать ночных маршрутов. Карта инцидентов показывает hotspots преступности и активности PCC.
+      mechanics_links: []
+      assets: []
+    - id: survival_protocol
+      title: 'Протокол выживания'
+      body: |
+        Сбор советов: не демонстрировать гаджеты на улице, знать опасные районы (фавелы, перекрёстки), избегать ночных маршрутов, иметь план эвакуации, знать контакты полиции и экстренных служб.
+        Разведка: stealth и awareness mini-games для безопасного прохождения опасных зон. Отслеживание активности PCC, понимание их зон контроля.
+        Формирование протокола: компиляция советов в единый документ безопасности для команды.
+      mechanics_links: []
+      assets: []
+    - id: strategy_choices
+      title: 'Стратегические выборы'
+      body: |
+        Сотрудничать с городскими программами: видеонаблюдение, общинная полиция, программы улучшения безопасности. Репутация City Administration +30, Police +20. Разблокировка city_security_programs. 3 000 XP.
+        Полагаться на собственные меры: независимые протоколы, продвинутые навыки выживания, самодостаточность. Репутация Independent Operators +25, City Administration -10. Разблокировка advanced_survival_skills. 3 000 XP.
       mechanics_links: []
       assets: []
     - id: rewards
       title: 'Награды и последствия'
       body: |
-        3 000 XP, +25 к ресурсу выживания, титул «Уличный выживший», разблокировка миссий по реформе безопасности или криминальным схемам.
+        Награды: 3 000 XP, навык «Выживание в мегаполисе» +25, ачивка «Уличный выживший», разблокировка survival skills и security protocols.
+        World state изменяется: city_cooperation/independent_security, security_improved, protocol_refined в зависимости от выбора.
+        Разблокировка: city_security_programs или advanced_survival_skills.
       mechanics_links: []
       assets: []
 appendix:
@@ -101,12 +205,16 @@ appendix:
       link: https://www.ssp.sp.gov.br
   decisions: []
 implementation:
-  github_issue: 366
+  github_issue: 249
   needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Выжить в мегаполисе". Добавлены risk assessment system, security protocol building, stealth и awareness mini-games, crime network mapping, стратегические выборы между сотрудничеством с городом и самостоятельными мерами. Интеграция с системами безопасности, выживания и world state.'
   - version: '1.1.0'
     date: 2025-11-11
     author: narrative_team
