@@ -1,6 +1,6 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps
 
-SERVICE_NAME := world-events-service
+SERVICE_NAME := world-events-core-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
