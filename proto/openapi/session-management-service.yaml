@@ -1,0 +1,583 @@
+openapi: 3.0.3
+info:
+  title: Session Management Service API
+  description: |
+    API для управления игровыми сессиями: жизненный цикл, heartbeat, переподключения,
+    состояние, очистка, безопасность и мониторинг.
+
+    **Основные возможности:**
+    - Session Lifecycle Manager - управление жизненным циклом сессий
+    - Session Heartbeat Handler - обработка heartbeat
+    - Session Reconnection Manager - управление переподключениями
+    - Session State Manager - управление состоянием сессий
+    - Session Cleanup Service - очистка сессий
+    - Session Security Manager - безопасность сессий
+    - Session Monitoring Service - мониторинг сессий
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Auth Service (локальная разработка)
+  - url: https://api.necpgame.com/api/v1
+    description: Auth Service (продакшн)
+
+tags:
+  - name: Session Lifecycle
+    description: Управление жизненным циклом сессий
+  - name: Heartbeat
+    description: Обработка heartbeat запросов
+  - name: Reconnection
+    description: Управление переподключениями
+  - name: Session State
+    description: Управление состоянием сессий
+  - name: Cleanup
+    description: Очистка сессий
+  - name: Security
+    description: Безопасность сессий
+  - name: Monitoring
+    description: Мониторинг сессий
+
+paths:
+  /auth/session/create:
+    post:
+      tags:
+        - Session Lifecycle
+      summary: Создать сессию
+      description: |
+        Создаёт новую игровую сессию для игрока.
+        Если у игрока уже есть активная сессия, она закрывается (стратегия One Session Per Player).
+      operationId: createSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "session-management-schemas.yaml#/components/schemas/CreateSessionRequest"
+      responses:
+        "200":
+          description: Сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/Session"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/logout:
+    post:
+      tags:
+        - Session Lifecycle
+      summary: Закрыть сессию
+      description: |
+        Закрывает текущую сессию игрока.
+      operationId: logoutSession
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                  format: uuid
+                  description: ID сессии (если не указан, используется текущая)
+      responses:
+        "200":
+          description: Сессия закрыта
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/LogoutResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/{session_id}:
+    get:
+      tags:
+        - Session Lifecycle
+      summary: Получить информацию о сессии
+      description: |
+        Возвращает информацию о сессии по её ID.
+      operationId: getSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии
+      responses:
+        "200":
+          description: Информация о сессии
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/Session"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/heartbeat:
+    post:
+      tags:
+        - Heartbeat
+      summary: Отправить heartbeat
+      description: |
+        Отправляет heartbeat для обновления времени последней активности сессии.
+        Рекомендуемый интервал: 30 секунд.
+      operationId: sendHeartbeat
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                  format: uuid
+                  description: ID сессии (если не указан, используется текущая)
+      responses:
+        "200":
+          description: Heartbeat обработан
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/HeartbeatResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/heartbeat/status:
+    get:
+      tags:
+        - Heartbeat
+      summary: Получить статус heartbeat
+      description: |
+        Возвращает статус heartbeat для текущей сессии.
+      operationId: getHeartbeatStatus
+      responses:
+        "200":
+          description: Статус heartbeat
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/HeartbeatStatus"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/reconnect:
+    post:
+      tags:
+        - Reconnection
+      summary: Переподключиться к сессии
+      description: |
+        Переподключается к существующей сессии в течение окна переподключения (5 минут).
+        Восстанавливает состояние сессии.
+      operationId: reconnectSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "session-management-schemas.yaml#/components/schemas/ReconnectRequest"
+      responses:
+        "200":
+          description: Переподключение успешно
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/ReconnectResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "410":
+          description: Окно переподключения истекло
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/reconnect/status:
+    get:
+      tags:
+        - Reconnection
+      summary: Получить статус переподключения
+      description: |
+        Возвращает статус переподключения для текущей сессии.
+      operationId: getReconnectStatus
+      responses:
+        "200":
+          description: Статус переподключения
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/ReconnectStatus"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/{session_id}/state:
+    get:
+      tags:
+        - Session State
+      summary: Получить состояние сессии
+      description: |
+        Возвращает состояние сессии из Redis или PostgreSQL.
+      operationId: getSessionState
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии
+      responses:
+        "200":
+          description: Состояние сессии
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/SessionState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/{session_id}/state/update:
+    post:
+      tags:
+        - Session State
+      summary: Обновить состояние сессии
+      description: |
+        Обновляет состояние сессии в Redis и PostgreSQL.
+      operationId: updateSessionState
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "session-management-schemas.yaml#/components/schemas/UpdateSessionStateRequest"
+      responses:
+        "200":
+          description: Состояние обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/SessionState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/cleanup:
+    post:
+      tags:
+        - Cleanup
+      summary: Выполнить очистку сессий
+      description: |
+        Выполняет ручную очистку истекших сессий. Обычно выполняется автоматически каждые 5 минут.
+        Только для администраторов.
+      operationId: cleanupSessions
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force:
+                  type: boolean
+                  description: Принудительная очистка (игнорировать проверки)
+                  default: false
+      responses:
+        "200":
+          description: Очистка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/CleanupResult"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/cleanup/stats:
+    get:
+      tags:
+        - Cleanup
+      summary: Получить статистику очистки
+      description: |
+        Возвращает статистику очистки сессий.
+      operationId: getCleanupStats
+      responses:
+        "200":
+          description: Статистика очистки
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/CleanupStats"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/security/validate:
+    post:
+      tags:
+        - Security
+      summary: Валидация безопасности сессии
+      description: |
+        Проверяет безопасность сессии (IP binding, токен, rate limiting).
+      operationId: validateSessionSecurity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "session-management-schemas.yaml#/components/schemas/SecurityValidationRequest"
+      responses:
+        "200":
+          description: Валидация выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/SecurityValidationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/security/rotate-token:
+    post:
+      tags:
+        - Security
+      summary: Ротация токена сессии
+      description: |
+        Выполняет ротацию токена сессии для повышения безопасности.
+      operationId: rotateSessionToken
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                  format: uuid
+                  description: ID сессии (если не указан, используется текущая)
+      responses:
+        "200":
+          description: Токен ротирован
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/TokenRotationResult"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/monitoring/stats:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить статистику сессий
+      description: |
+        Возвращает агрегированную статистику сессий.
+      operationId: getMonitoringStats
+      parameters:
+        - name: time_range
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - hour
+              - day
+              - week
+              - month
+            description: Временной диапазон для статистики
+            default: day
+      responses:
+        "200":
+          description: Статистика сессий
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/MonitoringStats"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/monitoring/active:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить активные сессии
+      description: |
+        Возвращает список активных сессий. Только для администраторов.
+      operationId: getActiveSessions
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список активных сессий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: "session-management-schemas.yaml#/components/schemas/Session"
+                  total:
+                    type: integer
+                    description: Общее количество активных сессий
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auth/session/admin/terminate:
+    post:
+      tags:
+        - Monitoring
+      summary: Принудительно закрыть сессию
+      description: |
+        Принудительно закрывает сессию. Только для администраторов.
+      operationId: terminateSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "session-management-schemas.yaml#/components/schemas/TerminateSessionRequest"
+      responses:
+        "200":
+          description: Сессия закрыта
+          content:
+            application/json:
+              schema:
+                $ref: "session-management-schemas.yaml#/components/schemas/Session"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  responses:
+    BadRequest:
+      $ref: "common.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "common.yaml#/components/responses/Unauthorized"
+    Forbidden:
+      $ref: "common.yaml#/components/responses/Forbidden"
+    NotFound:
+      $ref: "common.yaml#/components/responses/NotFound"
+    InternalServerError:
+      $ref: "common.yaml#/components/responses/InternalServerError"
+
+security:
+  - BearerAuth: []
