@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: Social Politics Structures Service
+  description: Управление политическими структурами (департаменты, комитеты, отделы)
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Political Structures
+    description: Управление политическими структурами
+
+paths:
+  /social/politics/{politicsId}/structures:
+    post:
+      tags:
+        - Political Structures
+      summary: Создать политическую структуру
+      description: |
+        Создает новую структуру внутри политической организации (департамент, комитет и т.д.).
+      operationId: createPoliticalStructure
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/CreatePoliticalStructureRequest'
+            example:
+              name: "Foreign Affairs Committee"
+              description: "Committee handling international relations"
+              type: "committee"
+      responses:
+        '201':
+          description: Структура успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalStructure'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Political Structures
+      summary: Список структур
+      description: |
+        Возвращает список всех структур политической организации.
+      operationId: listPoliticalStructures
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      responses:
+        '200':
+          description: Список структур
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  structures:
+                    type: array
+                    items:
+                      $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalStructure'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/politics/{politicsId}/structures/{structureId}:
+    put:
+      tags:
+        - Political Structures
+      summary: Обновить структуру
+      description: |
+        Обновляет информацию о политической структуре.
+      operationId: updatePoliticalStructure
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+        - name: structureId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID структуры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/UpdatePoliticalStructureRequest'
+      responses:
+        '200':
+          description: Структура успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalStructure'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

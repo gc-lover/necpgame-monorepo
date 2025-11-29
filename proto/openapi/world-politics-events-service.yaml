@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+  title: World Politics Events Service
+  description: Управление политическими событиями
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Political Events
+    description: Управление политическими событиями
+
+paths:
+  /world/politics/{politicsId}/events:
+    post:
+      tags:
+        - Political Events
+      summary: Создать политическое событие
+      description: |
+        Создает новое политическое событие (выборы, кризис, протест и т.д.).
+      operationId: createPoliticalEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/CreatePoliticalEventRequest'
+            example:
+              event_type: "election"
+              title: "Presidential Election"
+              description: "Annual presidential election for the political party"
+              impact:
+                political: 80.0
+                economic: 30.0
+                social: 50.0
+      responses:
+        '201':
+          description: Событие успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Political Events
+      summary: Список политических событий
+      description: |
+        Возвращает список всех политических событий.
+      operationId: listPoliticalEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - election
+              - crisis
+              - economic_change
+              - social_protest
+              - conflict
+          description: Фильтр по типу события
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - resolved
+              - cancelled
+          description: Фильтр по статусу
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalEvent'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/politics/{politicsId}/events/{eventId}/process:
+    post:
+      tags:
+        - Political Events
+      summary: Обработать политическое событие
+      description: |
+        Обрабатывает политическое событие, применяя его влияние и последствия.
+      operationId: processPoliticalEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/ProcessPoliticalEventRequest'
+      responses:
+        '200':
+          description: Событие успешно обработано
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

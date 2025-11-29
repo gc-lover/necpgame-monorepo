@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: Social Politics Forces Service
+  description: Управление политическими силами и их взаимодействием
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Political Forces
+    description: Управление политическими силами
+
+paths:
+  /social/politics/{politicsId}/forces:
+    post:
+      tags:
+        - Political Forces
+      summary: Создать политическую силу
+      description: |
+        Создает новую политическую силу внутри политической организации.
+      operationId: createPoliticalForce
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/CreatePoliticalForceRequest'
+            example:
+              name: "Progressive Wing"
+              description: "Progressive faction within the party"
+              strength: 65.5
+      responses:
+        '201':
+          description: Политическая сила успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalForce'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Political Forces
+      summary: Список политических сил
+      description: |
+        Возвращает список всех политических сил внутри организации.
+      operationId: listPoliticalForces
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      responses:
+        '200':
+          description: Список политических сил
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  forces:
+                    type: array
+                    items:
+                      $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalForce'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/politics/{politicsId}/forces/{forceId}/interact:
+    post:
+      tags:
+        - Political Forces
+      summary: Взаимодействие между политическими силами
+      description: |
+        Создает взаимодействие между двумя политическими силами (альянс, переговоры, конфликт и т.д.).
+      operationId: createPoliticalForceInteraction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+        - name: forceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической силы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/CreatePoliticalForceInteractionRequest'
+            example:
+              target_force_id: "bb0e8400-e29b-41d4-a716-446655440000"
+              interaction_type: "alliance"
+              details: "Forming an alliance for the upcoming election"
+      responses:
+        '201':
+          description: Взаимодействие успешно создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  interaction_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

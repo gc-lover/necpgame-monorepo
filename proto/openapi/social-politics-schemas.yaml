@@ -1,0 +1,391 @@
+openapi: 3.0.3
+info:
+  title: Social Politics Service - Schemas
+  description: Общие схемы данных для Social Politics Service
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+components:
+  schemas:
+    Politics:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID политической структуры
+        name:
+          type: string
+          description: Название политической структуры
+        type:
+          type: string
+          enum:
+            - party
+            - movement
+            - alliance
+            - government
+            - global_organization
+          description: Тип политической структуры
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - forming
+          description: Статус политической структуры
+        description:
+          type: string
+          description: Описание политической структуры
+        ideology:
+          type: string
+          enum:
+            - democratic
+            - authoritarian
+            - libertarian
+            - corporate
+            - anarchist
+          description: Политическая идеология
+        leader_id:
+          type: string
+          format: uuid
+          description: ID лидера
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PoliticalStructure:
+      type: object
+      required:
+        - id
+        - politics_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        politics_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+            - department
+            - committee
+            - branch
+            - division
+          description: Тип структуры
+        created_at:
+          type: string
+          format: date-time
+
+    PoliticalForce:
+      type: object
+      required:
+        - id
+        - politics_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        politics_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        strength:
+          type: number
+          format: float
+          description: Сила политической силы
+        influence:
+          type: number
+          format: float
+          description: Влияние
+        created_at:
+          type: string
+          format: date-time
+
+    PoliticalInfluence:
+      type: object
+      required:
+        - id
+        - politics_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        politics_id:
+          type: string
+          format: uuid
+        continents:
+          type: array
+          items:
+            type: object
+            properties:
+              continent_id:
+                type: string
+                format: uuid
+              influence_level:
+                type: number
+                format: float
+          description: Влияние на континенты
+        planets:
+          type: array
+          items:
+            type: object
+            properties:
+              planet_id:
+                type: string
+                format: uuid
+              influence_level:
+                type: number
+                format: float
+          description: Влияние на планеты
+        updated_at:
+          type: string
+          format: date-time
+
+    PoliticalEvent:
+      type: object
+      required:
+        - id
+        - politics_id
+        - event_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        politics_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - election
+            - crisis
+            - economic_change
+            - social_protest
+            - conflict
+          description: Тип события
+        status:
+          type: string
+          enum:
+            - active
+            - resolved
+            - cancelled
+        title:
+          type: string
+        description:
+          type: string
+        impact:
+          type: object
+          description: Влияние события
+          properties:
+            political:
+              type: number
+              format: float
+            economic:
+              type: number
+              format: float
+            social:
+              type: number
+              format: float
+        started_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CreatePoliticsRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        type:
+          type: string
+          enum:
+            - party
+            - movement
+            - alliance
+            - government
+            - global_organization
+        description:
+          type: string
+          maxLength: 1000
+        ideology:
+          type: string
+          enum:
+            - democratic
+            - authoritarian
+            - libertarian
+            - corporate
+            - anarchist
+
+    UpdatePoliticsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - forming
+
+    CreatePoliticalStructureRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        type:
+          type: string
+          enum:
+            - department
+            - committee
+            - branch
+            - division
+
+    UpdatePoliticalStructureRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+
+    CreatePoliticalForceRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        strength:
+          type: number
+          format: float
+          minimum: 0
+
+    CreatePoliticalForceInteractionRequest:
+      type: object
+      required:
+        - target_force_id
+        - interaction_type
+      properties:
+        target_force_id:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum:
+            - alliance
+            - negotiation
+            - conflict
+            - competition
+        details:
+          type: string
+          maxLength: 1000
+
+    ApplyInfluenceRequest:
+      type: object
+      required:
+        - target_id
+        - influence_level
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: ID континента или планеты
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния
+
+    CreatePoliticalEventRequest:
+      type: object
+      required:
+        - event_type
+        - title
+      properties:
+        event_type:
+          type: string
+          enum:
+            - election
+            - crisis
+            - economic_change
+            - social_protest
+            - conflict
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        impact:
+          type: object
+          properties:
+            political:
+              type: number
+              format: float
+            economic:
+              type: number
+              format: float
+            social:
+              type: number
+              format: float
+
+    ProcessPoliticalEventRequest:
+      type: object
+      properties:
+        resolution:
+          type: string
+          maxLength: 1000
+          description: Решение для обработки события
+
