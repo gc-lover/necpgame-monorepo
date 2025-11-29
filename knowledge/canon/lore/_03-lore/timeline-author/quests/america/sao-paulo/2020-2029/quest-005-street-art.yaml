@@ -1,11 +1,11 @@
 metadata:
   id: canon-quest-sao-paulo-street-art
-  title: 'Сан-Паулу — Уличное искусство'
+  title: 'Сан-Паулу — Стены говорят'
   document_type: canon
   category: quest
   status: approved
-  version: '1.1.0'
-  last_updated: 2025-11-11T15:50:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-11T15:50:00Z
   owners:
@@ -20,9 +20,13 @@ metadata:
     - community-expression
     - identity
   related_systems:
-    - tourism-system
+    - heist-preparation-system
+    - stealth-system
+    - hacking-system
+    - skill-check-engine
     - reputation-system
-    - memory-system
+    - world-state-system
+    - quest-engine
   related_documents:
     - id: canon-quest-sao-paulo-feijoada
       relation: complements
@@ -46,48 +50,155 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Тур по стрит-арту Сан-Паулу был в Markdown и не учитывал системные эффекты туризма и репутации."
-  goal: "Структурировать квест в YAML, указав ключевые муралы, артистов и влияние на отношения с арт-сценой."
-  essence: "Игрок исследует Beco do Batman и крупные муралы, знакомится с художниками и документирует легализованную культуру граффити."
+  problem: "Квест организации нелегального massive mural требует детализации heist-style preparation, stealth infiltration и quick choices под давлением."
+  goal: "Создать полноценный контентный квест с механиками подготовки операции, скрытного проникновения и моральными выборами о самопожертвовании."
+  essence: "Игрок помогает коллективу Voz das Ruas организовать нелегальный massive mural на здании мэрии как протест против уничтожения граффити: отключить камеры, доставить краску, отвлечь полицию, создать 50-метровый фасад за одну ночь."
   key_points:
-    - Этапы охватывают переулок Batman, муралы Os Gêmeos и политику города.
-    - tourism-, reputation-, memory-system фиксируют опыт и открывают новые арт-ветки.
-    - Награда повышает ресурс «искусство» и выдаёт титул «Уличный артист».
+    - Heist-style preparation: отключить камеры (hack/paint/loop), доставить 200 баллонов краски, отвлечь полицию.
+    - Stealth infiltration и quick choices под давлением.
+    - Три финальных выбора: завершить mural (аресты, но победа), сбежать всем (незаконченно, но движение жив), отвлечь полицию самому (ты арестован, но герой).
+    - World state change: ban reversed если успех.
+quest_definition:
+  quest_type: side
+  level_min: 20
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: meet_voz_das_ruas
+      text: "Встретиться с коллективом Voz das Ruas и узнать о плане операции"
+      type: interact
+      target: voz_das_ruas_collective
+      count: 1
+      optional: false
+    - id: disable_cameras
+      text: "Отключить камеры (hack/paint/loop)"
+      type: choice
+      target: camera_disabling
+      count: 1
+      optional: false
+    - id: deliver_paint
+      text: "Доставить 200 баллонов краски (курьер/DIY/inside job)"
+      type: choice
+      target: paint_delivery
+      count: 1
+      optional: false
+    - id: distract_police
+      text: "Отвлечь полицию (ложная тревога/вечеринка/взятка)"
+      type: choice
+      target: police_distraction
+      count: 1
+      optional: false
+    - id: deal_with_guard
+      text: "Справиться с охранником во время ночи граффити"
+      type: interact
+      target: security_guard
+      count: 1
+      optional: false
+    - id: make_final_choice
+      text: "Принять финальное решение: завершить mural/сбежать/отвлечь полицию самому"
+      type: choice
+      target: final_mural_choice
+      count: 1
+      optional: false
+  rewards:
+    experience: 3000
+    money: 0
+    items:
+      - item_id: achievement_art_martyr
+        quantity: 1
+    reputation: {}
+    unlocks:
+      - street_art_quests
+      - artist_collaboration_system
+  branches:
+    - branch_id: complete_mural
+      description: "Завершить mural (аресты, но победа)"
+      consequences:
+        world_state:
+          mural_completed: true
+          ban_reversed: true
+          artists_arrested: true
+        reputation:
+          Street_Artists: +50
+          Police: -30
+        experience: 8000
+    - branch_id: escape_together
+      description: "Сбежать всем (незаконченно, но движение жив)"
+      consequences:
+        world_state:
+          mural_incomplete: true
+          movement_alive: true
+        reputation:
+          Street_Artists: +30
+          Police: -10
+        experience: 3000
+    - branch_id: self_sacrifice
+      description: "Отвлечь полицию самому (ты арестован, но герой)"
+      consequences:
+        world_state:
+          mural_completed: true
+          player_arrested: true
+          movement_saved: true
+        reputation:
+          Street_Artists: +60
+          Police: -40
+        experience: 8000
+        achievement: art_martyr
 content:
   sections:
     - id: quest_profile
       title: 'Параметры квеста'
       body: |
-        Тип: culture-tour. Сложность: easy. Формат: solo. Длительность: 2–4 часа.
-        Награды: 1 500 XP, -30 едди, +25 к ресурсу «искусство», титул «Уличный артист».
+        Тип: side quest (heist-style, stealth). Сложность: hard. Формат: solo/group. Длительность: 3-4 часа.
+        Награды: 3 000-8 000 XP (зависит от выбора), ачивка «Мученик искусства» (за самопожертвование), репутация Street Artists +30-60.
       mechanics_links: []
       assets: []
     - id: stages
-      title: 'Этапы'
+      title: 'Этапы квеста'
       body: |
-        1. Посетить Beco do Batman, зафиксировать текущие работы и их авторов.
-        2. Отправиться на экскурсию по крупным муралам (Os Gêmeos, Kobra) и собрать истории.
-        3. Встретиться с арт-коллективами и властями, обсудив легализацию граффити.
-        4. Завершить тур созданием собственной тэг-подписи или фото-галереи.
+        1. Встретиться с коллективом Voz das Ruas, узнать о плане нелегального massive mural на здании мэрии.
+        2. Подготовить операцию: отключить камеры (hack/paint/loop), доставить 200 баллонов краски (курьер/DIY/inside job), отвлечь полицию (ложная тревога/вечеринка/взятка).
+        3. Ночь граффити: проникнуть на территорию мэрии, справиться с охранником, начать создание 50-метрового фасада.
+        4. Принять финальное решение: завершить mural (аресты, но победа), сбежать всем (незаконченно, но движение жив), отвлечь полицию самому (ты арестован, но герой).
       mechanics_links: []
       assets: []
     - id: systems_hooks
       title: 'Системные крючки'
       body: |
-        tourism-system начисляет очки туристического опыта, reputation-system меняет отношение художников и полиции,
-        memory-system добавляет фотографии в коллекцию «Murals of the World».
+        heist-preparation-system обрабатывает планирование операции, stealth-system управляет скрытным проникновением, hacking-system обрабатывает отключение камер, skill-check-system проверяет навыки stealth/hacking/social, reputation-system обновляет отношения с Street_Artists/Police, world-state-system изменяет состояние ban на граффити и статус движения.
       mechanics_links: []
       assets: []
     - id: regional_details
       title: 'Региональные детали'
       body: |
-        Описаны история Beco do Batman, участие Os Gêmeos и Kobra, муниципальная политика стрит-арта и влияние туризма на район Vila Madalena.
+        Vila Madalena — heart уличного искусства Сан-Паулу, Beco do Batman — икона. Но gentrification пришла: новые владельцы закрашивают муралы, полиция арестовывает художников. Коллектив Voz das Ruas планирует final stand — 50 художников, одна ночь, 50-метровый фасад мэрии. Illegal, risky, revolutionary. Сан-Паулу — мировая столица street art, но власти пытаются контролировать искусство.
+      mechanics_links: []
+      assets: []
+    - id: preparation_choices
+      title: 'Выборы подготовки'
+      body: |
+        Отключить камеры: hack (нужен hacking skill 0.7), paint (закрасить объективы), loop (зациклить видео).
+        Доставить краску: курьер (быстро, но дорого), DIY (самому, но риск), inside job (нужна репутация с сотрудниками).
+        Отвлечь полицию: ложная тревога (hack системы), вечеринка (social skill), взятка (деньги).
+      mechanics_links: []
+      assets: []
+    - id: final_choices
+      title: 'Финальные выборы и последствия'
+      body: |
+        Завершить mural: 50 художников создают 50-метровый фасад, но все арестованы. Ban reversed, движение побеждает, но ценой свободы. 8 000 XP, репутация Street Artists +50, Police -30.
+        Сбежать всем: mural незакончен, но все свободны. Движение живет, но протест не завершен. 3 000 XP, репутация Street Artists +30, Police -10.
+        Отвлечь полицию самому: ты арестован, но остальные завершают mural. Ты герой, но в тюрьме. 8 000 XP, ачивка «Мученик искусства», репутация Street Artists +60, Police -40.
       mechanics_links: []
       assets: []
     - id: rewards
       title: 'Награды и последствия'
       body: |
-        1 500 XP, -30 едди, +25 к ресурсу «искусство», титул «Уличный артист», разблокировка арт-ивентов и коллабораций.
+        Награды зависят от выбора: 3 000-8 000 XP, ачивка «Мученик искусства» (за самопожертвование), репутация Street Artists +30-60, Police -10-40.
+        World state изменяется: mural_completed/incomplete, ban_reversed, artists_arrested, player_arrested, movement_alive/saved в зависимости от выбора.
       mechanics_links: []
       assets: []
 appendix:
@@ -99,12 +210,16 @@ appendix:
       link: https://www.osgemeos.com.br
   decisions: []
 implementation:
-  github_issue: 365
+  github_issue: 249
   needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Стены говорят". Добавлены heist-style preparation mechanics, stealth infiltration, quick choices под давлением и моральные выборы о самопожертвовании. Интеграция с системами скрытности, взлома и world state.'
   - version: '1.1.0'
     date: 2025-11-11
     author: narrative_team
