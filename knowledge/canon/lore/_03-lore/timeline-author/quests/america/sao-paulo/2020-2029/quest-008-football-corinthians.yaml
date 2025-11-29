@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: quest
   status: approved
-  version: '1.1.0'
-  last_updated: 2025-11-11T15:51:30Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-11T15:51:30Z
   owners:
@@ -20,9 +20,13 @@ metadata:
     - working-class
     - identity
   related_systems:
-    - fan-system
+    - stadium-crowd-dynamics-system
+    - rhythm-mini-game-system
+    - social-check-system
     - reputation-system
-    - economy-system
+    - moral-choice-system
+    - crowd-emotion-system
+    - quest-engine
   related_documents:
     - id: canon-quest-sao-paulo-crime-violence
       relation: contrasts
@@ -46,48 +50,150 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Матч Corinthians находился вне базы знаний и не связывал фанатское давление, экономику стадиона и репутацию."
-  goal: "Структурировать визит на Neo Química Arena в YAML, описать ритуалы Fiel Torcida и выборы игрока."
-  essence: "Игрок готовится к матчу, встраивается в фанатскую культуру рабочего класса и поддерживает команду на стадионе."
+  problem: "Квест погружения в фанатскую культуру требует детализации stadium crowd dynamics, rhythm mini-game, social checks и моральных выборов в дерби."
+  goal: "Создать полноценный контентный квест с механиками стадиона, синхронизацией поддержки и выбором между социальными программами и подпольными дерби."
+  essence: "Игрок погружается в феномен torcida Fiel на матче Corinthians: встреча с лидерами, подготовка (флаги, барабаны, хореография), 90 минут на трибуне, послематчевое шествие и моральный выбор в дерби."
   key_points:
-    - Этапы включают музей клуба, фанатские ритуалы и поведение на трибунах.
-    - fan-, reputation-, economy-system реагируют на решения игрока.
-    - Награды открывают клубные ветки и титул «Фанат Fiel».
+    - Stadium crowd dynamics: 48,000 мест, синхронизация поддержки 80,000 фанатов.
+    - Rhythm mini-game: синхронизация песен и chants.
+    - Social checks с фанатскими фракциями.
+    - Репутация с футбольным сообществом Бразилии.
+    - Моральный выбор в дерби: вмешаться/наблюдать/уйти.
+quest_definition:
+  quest_type: side
+  level_min: 15
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: meet_torcida_leaders
+      text: "Встретиться с лидерами torcida Fiel"
+      type: interact
+      target: torcida_leaders
+      count: 1
+      optional: false
+    - id: prepare_match
+      text: "Подготовиться к матчу (флаги, барабаны, хореография, песни)"
+      type: interact
+      target: match_preparation
+      count: 1
+      optional: false
+    - id: attend_match
+      text: "Занять место на трибуне, синхронизировать поддержку"
+      type: interact
+      target: stadium_tribune
+      count: 1
+      optional: false
+    - id: experience_match_moments
+      text: "Переживать ключевые моменты матча, фиксировать эмоции 80,000 фанатов"
+      type: interact
+      target: match_events
+      count: 1
+      optional: false
+    - id: participate_march
+      text: "Участвовать в послематчевом шествии"
+      type: interact
+      target: post_match_march
+      count: 1
+      optional: false
+    - id: make_derby_choice
+      text: "Принять моральный выбор в дерби: вмешаться/наблюдать/уйти"
+      type: choice
+      target: derby_choice
+      count: 1
+      optional: false
+  rewards:
+    experience: 2500
+    money: -40
+    items:
+      - item_id: achievement_fiel_fan
+        quantity: 1
+    reputation:
+      Football_Community_Brazil: 30
+    unlocks:
+      - football_quests
+      - derby_events
+  branches:
+    - branch_id: intervene_derby
+      description: "Вмешаться в драку между фанатами"
+      consequences:
+        reputation:
+          Torcida_Fiel: +20
+          Rival_Fans: -20
+        experience: 3500
+        risks:
+          injury_chance: 0.4
+    - branch_id: observe_derby
+      description: "Наблюдать за дракой, не вмешиваться"
+      consequences:
+        reputation:
+          Torcida_Fiel: 0
+          Rival_Fans: 0
+        experience: 2500
+    - branch_id: leave_derby
+      description: "Уйти, избежать конфликта"
+      consequences:
+        reputation:
+          Torcida_Fiel: -10
+          Rival_Fans: +10
+        experience: 2000
 content:
   sections:
     - id: quest_profile
       title: 'Параметры квеста'
       body: |
-        Тип: sports-event. Сложность: medium. Формат: solo/group. Длительность: 4+ часа.
-        Награды: 2 500 XP, -40 едди, +30 к спортивному ресурсу, титул «Фанат Fiel».
+        Тип: side quest (sports, cultural immersion). Сложность: medium. Формат: solo/group. Длительность: 4-5 часов (90 минут матч + подготовка + шествие).
+        Награды: 2 500 XP (до 3 500), -40 едди, спортивный атрибут +30, ачивка «Фанат Fiel», репутация Football Community +30.
       mechanics_links: []
       assets: []
     - id: stages
-      title: 'Этапы'
+      title: 'Этапы квеста'
       body: |
-        1. Посетить музей Corinthians и изучить историю клубного сопротивления.
-        2. Подготовить мерч, выучить кричалки и встретиться с лидерами Fiel Torcida.
-        3. Поддержать команду во время матча, выбирая тактики поведения на секторе.
-        4. После игры определить курс: поддержать социальные программы клуба или уйти в подпольные дерби.
+        1. Встретиться с лидерами torcida Fiel, узнать о традициях и истории клуба.
+        2. Подготовиться к матчу: флаги, барабаны, хореография, песни, синхронизация с другими фанатами.
+        3. Занять место на трибуне Neo Química Arena (48,000 мест), синхронизировать поддержку с 80,000 фанатов.
+        4. Переживать ключевые моменты матча: эмоциональный rollercoaster, rhythm mini-game для синхронизации песен, фиксировать эмоции толпы.
+        5. Участвовать в послематчевом шествии: барабаны, флаги, песни, единение с сообществом.
+        6. Принять моральный выбор в дерби (драка между фанатами): вмешаться/наблюдать/уйти.
       mechanics_links: []
       assets: []
     - id: systems_hooks
       title: 'Системные крючки'
       body: |
-        fan-system моделирует лояльность и влияние Fiel Torcida, reputation-system обновляет отношения с клубами Бразилии,
-        economy-system учитывает расходы на билеты, мерч и ставки.
+        stadium-crowd-dynamics-system обрабатывает синхронизацию 80,000 фанатов, rhythm-mini-game-system управляет синхронизацией песен и chants, social-check-system проверяет взаимодействие с фанатскими фракциями, reputation-system обновляет отношения с Torcida_Fiel/Rival_Fans/Football_Community_Brazil, moral-choice-system обрабатывает решения в дерби, crowd-emotion-system фиксирует эмоции трибун.
       mechanics_links: []
       assets: []
     - id: regional_details
       title: 'Региональные детали'
       body: |
-        30 млн болельщиков, рабочие корни Corinthians, атмосфера Neo Química Arena, барабаны, флаги и пиротехника как часть идентичности.
+        Corinthians — клуб рабочего класса с 30+ миллионами фанатов. Torcida Fiel (Верные фанаты) — массовая база рабочего класса. Neo Química Arena (построена к ЧМ-2014, 48,000 мест) — temple футбола. Клуб исторически связан с социальными движениями. Дерби с Palmeiras или São Paulo FC — city stops. Passion, tribal unity, рёв трибун. Дым файеров, вибрация от барабанов, волны черно-белых флагов.
+      mechanics_links: []
+      assets: []
+    - id: match_experience
+      title: 'Опыт матча'
+      body: |
+        Подготовка: флаги, барабаны, хореография, песни. Синхронизация с другими фанатами перед матчем.
+        На трибуне: 90 минут эмоционального rollercoaster. Rhythm mini-game для синхронизации песен. Фиксирование эмоций 80,000 фанатов. Волны поддержки, реакция на ключевые моменты, единение с толпой.
+        После матча: послематчевое шествие, барабаны, флаги, песни, единение с сообществом.
+      mechanics_links: []
+      assets: []
+    - id: derby_choices
+      title: 'Моральные выборы в дерби'
+      body: |
+        Вмешаться: защитить своих, но риск травмы (40%). Репутация Torcida_Fiel +20, Rival_Fans -20. 3 500 XP.
+        Наблюдать: остаться нейтральным. Репутация не меняется. 2 500 XP.
+        Уйти: избежать конфликта, но потерять уважение. Репутация Torcida_Fiel -10, Rival_Fans +10. 2 000 XP.
       mechanics_links: []
       assets: []
     - id: rewards
       title: 'Награды и последствия'
       body: |
-        2 500 XP, -40 едди, +30 к спортивному ресурсу, титул «Фанат Fiel», открытие дерби и клубных миссий.
+        Базовые награды: 2 500 XP (до 3 500), -40 едди (билет, мерч), спортивный атрибут +30, ачивка «Фанат Fiel», репутация Football Community +30.
+        Ветвления влияют на репутацию: Torcida_Fiel +20 до -10, Rival_Fans +10 до -20 в зависимости от выбора в дерби.
+        Разблокировка: football_quests, derby_events, доступ к социальным программам клуба или подпольным дерби.
       mechanics_links: []
       assets: []
 appendix:
@@ -99,12 +205,16 @@ appendix:
       link: https://www.uol.com.br
   decisions: []
 implementation:
-  github_issue: 366
+  github_issue: 249
   needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Верные до конца". Добавлены stadium crowd dynamics, rhythm mini-game для синхронизации песен, social checks с фанатскими фракциями, моральные выборы в дерби и репутация с футбольным сообществом Бразилии. Интеграция с системами стадиона, толпы и репутации.'
   - version: '1.1.0'
     date: 2025-11-11
     author: narrative_team
