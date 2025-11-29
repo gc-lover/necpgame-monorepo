@@ -1,0 +1,461 @@
+metadata:
+  id: ui-engram-chips-system
+  title: Engram Chips System - UI/UX Design
+  document_type: design
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-29T15:50:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-29T15:50:00Z
+  owners:
+    - role: ui_ux_designer
+      contact: ui-ux@necp.game
+  tags:
+    - ui
+    - ux
+    - design
+    - engram
+    - progression
+  topics:
+    - ui-design
+    - user-experience
+    - cyberpunk-aesthetic
+  related_systems:
+    - progression-service
+    - character-service
+    - inventory-service
+  related_documents:
+    - id: engram-chips-system-concept
+      relation: based_on
+      path: knowledge/mechanics/progression/engram-chips-system-concept.md
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - frontend
+    - ue5
+  risk_level: medium
+review:
+  chain:
+    - role: ui_ux_designer
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходим детальный UI/UX дизайн для системы управления энграммами, визуализации влияния и HUD элементов.
+  goal: Создать интуитивный и визуально привлекательный интерфейс в стиле Cyberpunk 2077 для управления энграммами.
+  essence: Дизайн-документ описывает структуру интерфейсов, визуальный стиль, UX механики и анимации для системы энграмм.
+  key_points:
+    - Отдельное меню управления энграммами с визуализацией слотов
+    - HUD индикаторы влияния с градацией по уровням
+    - Визуальные образы энграмм в мире игры
+    - Интеграция с системой навыков и прогрессии
+content:
+  visual_design:
+    style: cyberpunk-2077
+    color_scheme:
+      background:
+        primary: '#0A0A0F'
+        secondary: '#151520'
+        accent: '#1A1A2E'
+      text:
+        primary: '#E0E0E0'
+        secondary: '#B0B0B0'
+        accent: '#00FF88'
+        warning: '#FF4444'
+        danger: '#FF0000'
+      engram_slots:
+        slot1_active: '#00FF88'
+        slot2_active: '#00AAFF'
+        slot3_active: '#AA00FF'
+        slot_inactive: '#333344'
+        slot_conflict: '#FF4444'
+      influence_levels:
+        low: '#00FF88'
+        medium: '#FFAA00'
+        high: '#FF6600'
+        critical: '#FF0000'
+        takeover: '#FF00FF'
+    typography:
+      font_family:
+        primary: 'Cyberpunk-Regular'
+        secondary: 'Roboto-Mono'
+        display: 'Cyberpunk-Bold'
+      sizes:
+        heading_large: 32px
+        heading_medium: 24px
+        heading_small: 18px
+        body_large: 16px
+        body_medium: 14px
+        body_small: 12px
+        caption: 10px
+    effects:
+      neon_glow:
+        color: '#00FF88'
+        intensity: medium
+        animation: pulse
+      hologram_effect:
+        opacity: 0.7
+        scanlines: true
+        distortion: low
+      glitch_effect:
+        frequency: low
+        intensity: medium
+        trigger: high_influence
+  interface_structure:
+    main_menu:
+      title: Engram Management
+      layout: fullscreen_overlay
+      sections:
+        - id: engram_slots
+          title: Active Engrams
+          position: top_center
+          width: 80%
+          height: 200px
+          components:
+            - type: slot_display
+              id: slot_1
+              position: left
+              size: large
+              visual: hologram_card
+            - type: slot_display
+              id: slot_2
+              position: center
+              size: medium
+              visual: hologram_card
+            - type: slot_display
+              id: slot_3
+              position: right
+              size: small
+              visual: hologram_card
+        - id: engram_inventory
+          title: Available Engrams
+          position: center
+          width: 70%
+          height: 400px
+          components:
+            - type: grid_list
+              items_per_row: 3
+              item_template: engram_card
+              filters:
+                - tier
+                - compatibility
+                - status
+              sort_options:
+                - name
+                - tier
+                - influence
+        - id: engram_details
+          title: Engram Details
+          position: right_sidebar
+          width: 30%
+          height: 100%
+          components:
+            - type: engram_info_panel
+            - type: influence_meter
+            - type: skills_list
+            - type: conflict_indicator
+            - type: action_buttons
+      navigation:
+        tabs:
+          - id: management
+            label: Management
+            icon: chip
+          - id: skills
+            label: Skills
+            icon: skill_tree
+          - id: interactions
+            label: Interactions
+            icon: dialogue
+          - id: settings
+            label: Settings
+            icon: gear
+    skills_integration:
+      location: progression_menu
+      section_title: Engram Skills
+      display_mode: category_tab
+      visual_style: highlighted
+      components:
+        - type: skill_category_filter
+          categories:
+            - all_engrams
+            - slot_1_engram
+            - slot_2_engram
+            - slot_3_engram
+        - type: skill_tree_view
+          show_source: true
+          highlight_engram_skills: true
+    interactions_menu:
+      title: Engram Interactions
+      layout: timeline_view
+      components:
+        - type: interaction_history
+          format: timeline
+          filters:
+            - date
+            - engram
+            - type
+        - type: influence_tracking
+          display: graph
+          period: last_30_days
+        - type: conflict_log
+          display: list
+          highlight_active: true
+  hud_elements:
+    influence_indicator:
+      position: top_right
+      size: small
+      display_conditions:
+        - influence: '>= 0%'
+          visibility: always
+        - influence: '>= 70%'
+          size: medium
+          animation: pulse
+        - influence: '>= 90%'
+          size: large
+          animation: urgent_pulse
+          color: warning
+      components:
+        - type: circular_progress
+          value: influence_percentage
+          color: dynamic_by_level
+          glow: true
+        - type: engram_icon
+          position: center
+          opacity: 0.8
+        - type: conflict_badge
+          condition: has_conflicts
+          position: top_right
+    conflict_indicator:
+      position: top_right
+      offset_y: 60px
+      display_condition: has_active_conflicts
+      components:
+        - type: warning_icon
+          animation: blink
+        - type: conflict_count
+          format: badge
+    quick_access:
+      position: bottom_right
+      trigger: keybind_or_button
+      components:
+        - type: engram_quick_menu
+          layout: radial
+          items:
+            - install_engram
+            - remove_engram
+            - view_details
+            - manage_conflicts
+  world_visualization:
+    engram_appearances:
+      influence_0_20:
+        frequency: rare
+        visual_style: ghost_transparent
+        opacity: 0.3
+        trigger_events:
+          - important_decisions
+          - story_moments
+      influence_20_50:
+        frequency: occasional
+        visual_style: ghost_semi_transparent
+        opacity: 0.5
+        trigger_events:
+          - important_decisions
+          - story_moments
+          - combat_high_stress
+      influence_50_70:
+        frequency: regular
+        visual_style: hologram_active
+        opacity: 0.7
+        trigger_events:
+          - all_important_moments
+          - dialogue_choices
+          - combat
+      influence_70_90:
+        frequency: frequent
+        visual_style: hologram_intrusive
+        opacity: 0.8
+        trigger_events:
+          - most_gameplay_moments
+          - constant_presence
+      influence_90_100:
+        frequency: constant
+        visual_style: hologram_dominant
+        opacity: 0.9
+        trigger_events:
+          - always_visible
+    special_scenes:
+      death_scene:
+        engram_approaches: true
+        monologue: true
+        visual_effect: fade_in_from_distance
+        duration: 5-10_seconds
+      romance_scene:
+        engram_peeks: true
+        comments: true
+        visual_effect: subtle_appearance
+        position: background
+      decision_moment:
+        engram_appears: true
+        comments: true
+        visual_effect: hologram_popup
+        position: near_player
+      conflict_scene:
+        multiple_engrams: true
+        visual_effect: arguing_holograms
+        animation: conflict_animation
+    visual_effects:
+      hallucinations:
+        trigger: influence >= 50%
+        intensity: scales_with_influence
+        effects:
+          - world_distortion
+          - visual_glitches
+          - color_shift
+          - scanlines
+      conflicts:
+        trigger: multiple_engrams_active
+        visual_effect: competing_holograms
+        animation: struggle_animation
+        audio: overlapping_voices
+  ux_mechanics:
+    navigation:
+      primary_method: mouse_keyboard
+      secondary_method: controller
+      shortcuts:
+        open_menu: 'E'
+        quick_access: 'Q'
+        cycle_engrams: 'Tab'
+    interactions:
+      install_engram:
+        flow:
+          1. select_engram_from_inventory
+          2. select_slot
+          3. check_compatibility
+          4. preview_changes
+          5. confirm_installation
+        validation:
+          - slot_available
+          - compatibility_check
+          - influence_warning
+        feedback:
+          - success_animation
+          - influence_change_notification
+          - skill_unlock_notification
+      remove_engram:
+        flow:
+          1. select_active_engram
+          2. show_removal_warning
+          3. select_removal_method
+          4. confirm_removal
+        warnings:
+          - skill_loss
+          - temporary_debuffs
+          - removal_risks
+    feedback_systems:
+      notifications:
+        types:
+          - influence_increase
+          - conflict_detected
+          - skill_unlocked
+          - warning_threshold
+        display: toast_notifications
+        position: top_center
+        duration: 3-5_seconds
+      tooltips:
+        trigger: hover
+        content:
+          - engram_info
+          - skill_details
+          - compatibility_info
+          - influence_explanation
+    accessibility:
+      color_blind_support: true
+      text_scaling: true
+      high_contrast_mode: true
+      screen_reader_support: true
+  animations:
+    transitions:
+      menu_open:
+        duration: 300ms
+        easing: ease_out_cubic
+        effect: slide_from_right
+      menu_close:
+        duration: 250ms
+        easing: ease_in_cubic
+        effect: slide_to_right
+      engram_install:
+        duration: 1000ms
+        easing: ease_in_out
+        effect: hologram_manifestation
+      engram_remove:
+        duration: 800ms
+        easing: ease_in
+        effect: hologram_dissolve
+    state_changes:
+      influence_increase:
+        duration: 500ms
+        effect: pulse_glow
+      conflict_trigger:
+        duration: 300ms
+        effect: glitch_shake
+      skill_unlock:
+        duration: 600ms
+        effect: neon_flash
+    world_appearances:
+      engram_appear:
+        duration: 1000ms
+        effect: hologram_fade_in
+        audio: hologram_activation
+      engram_disappear:
+        duration: 800ms
+        effect: hologram_fade_out
+        audio: hologram_deactivation
+      conflict_visualization:
+        duration: 2000ms
+        effect: competing_holograms
+        loop: true
+  responsive_design:
+    breakpoints:
+      mobile: 480px
+      tablet: 768px
+      desktop: 1920px
+      ultrawide: 2560px
+    adaptations:
+      mobile:
+        menu_layout: fullscreen
+        hud_elements: simplified
+        grid_columns: 2
+      tablet:
+        menu_layout: overlay
+        hud_elements: standard
+        grid_columns: 3
+      desktop:
+        menu_layout: overlay
+        hud_elements: full
+        grid_columns: 4
+implementation:
+  needs_task: true
+  github_issue: 1544
+  queue_reference: []
+  blockers: []
+  technical_requirements:
+    - 3d_hologram_rendering
+    - real_time_influence_tracking
+    - conflict_detection_system
+    - skill_integration_api
+  performance_targets:
+    menu_open_time: '< 100ms'
+    animation_fps: '>= 60fps'
+    hud_update_rate: '10hz'
+history:
+  - version: '1.0.0'
+    date: 2025-11-29
+    author: UI/UX Designer
+    changes: Initial UI/UX design document created
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
