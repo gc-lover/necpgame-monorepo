@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: World Politics Influence Service
+  description: Управление влиянием политических структур на континенты и планеты
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Political Influence
+    description: Управление влиянием политических структур
+
+paths:
+  /world/politics/{politicsId}/influence/continents:
+    post:
+      tags:
+        - Political Influence
+      summary: Применить влияние на континент
+      description: |
+        Применяет влияние политической структуры на континент.
+      operationId: applyContinentInfluence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/ApplyInfluenceRequest'
+            example:
+              target_id: "bb0e8400-e29b-41d4-a716-446655440000"
+              influence_level: 75.5
+      responses:
+        '200':
+          description: Влияние успешно применено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalInfluence'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/politics/{politicsId}/influence/planets:
+    post:
+      tags:
+        - Political Influence
+      summary: Применить влияние на планету
+      description: |
+        Применяет влияние политической структуры на планету.
+      operationId: applyPlanetInfluence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/ApplyInfluenceRequest'
+            example:
+              target_id: "bb0e8400-e29b-41d4-a716-446655440001"
+              influence_level: 60.0
+      responses:
+        '200':
+          description: Влияние успешно применено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalInfluence'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/politics/{politicsId}/influence:
+    get:
+      tags:
+        - Political Influence
+      summary: Текущее влияние
+      description: |
+        Возвращает информацию о текущем влиянии политической структуры на континенты и планеты.
+      operationId: getPoliticalInfluence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      responses:
+        '200':
+          description: Текущее влияние
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/PoliticalInfluence'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+

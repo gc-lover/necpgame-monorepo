@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: Social Politics Core Service
+  description: Основные endpoints для управления политическими структурами
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Politics
+    description: Управление политическими структурами
+
+paths:
+  /social/politics:
+    post:
+      tags:
+        - Politics
+      summary: Создать политическую структуру
+      description: |
+        Создает новую политическую структуру (партию, движение, альянс и т.д.).
+      operationId: createPolitics
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/CreatePoliticsRequest'
+            example:
+              name: "United Progressive Party"
+              type: "party"
+              description: "A political party focused on technological progress"
+              ideology: "democratic"
+      responses:
+        '201':
+          description: Политическая структура успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/Politics'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /social/politics/{politicsId}:
+    get:
+      tags:
+        - Politics
+      summary: Информация о политической структуре
+      description: |
+        Возвращает детальную информацию о политической структуре по её ID.
+      operationId: getPolitics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      responses:
+        '200':
+          description: Информация о политической структуре
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/Politics'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Politics
+      summary: Обновить политическую структуру
+      description: |
+        Обновляет информацию о политической структуре.
+      operationId: updatePolitics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-politics-schemas.yaml#/components/schemas/UpdatePoliticsRequest'
+      responses:
+        '200':
+          description: Политическая структура успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: 'social-politics-schemas.yaml#/components/schemas/Politics'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Politics
+      summary: Удалить политическую структуру
+      description: |
+        Удаляет политическую структуру.
+      operationId: deletePolitics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: politicsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID политической структуры
+      responses:
+        '204':
+          description: Политическая структура успешно удалена
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+
