@@ -142,6 +142,10 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 	social.HandleFunc("/chat/reports", server.getReports).Methods("GET")
 	social.HandleFunc("/chat/reports/{id}/resolve", server.resolveReport).Methods("POST")
 
+	chatCommandService := NewChatCommandService()
+	chatCommandHandlers := NewChatCommandHandlers(chatCommandService)
+	social.HandleFunc("/chat/commands/execute", chatCommandHandlers.executeChatCommand).Methods("POST")
+
 	social.HandleFunc("/mail/send", server.sendMail).Methods("POST")
 	social.HandleFunc("/mail/inbox", server.getMails).Methods("GET")
 	social.HandleFunc("/mail/{mail_id}", server.getMail).Methods("GET")
