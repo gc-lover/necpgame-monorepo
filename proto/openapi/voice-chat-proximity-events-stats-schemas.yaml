@@ -1,0 +1,221 @@
+components:
+  schemas:
+    UpdateProximityPositionRequest:
+      type: object
+      required:
+        - player_id
+        - position_x
+        - position_y
+        - position_z
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+
+    ProximityUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        player_id:
+          type: string
+          format: uuid
+        nearby_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    NearbyPlayersResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        nearby_players:
+          type: array
+          items:
+            $ref: 'voice-chat-channels-schemas.yaml#/components/schemas/VoiceParticipant'
+        radius:
+          type: number
+          format: float
+
+    MuteParticipantRequest:
+      type: object
+      required:
+        - channel_id
+        - muted_by
+        - is_muted
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        muted_by:
+          type: string
+          format: uuid
+        is_muted:
+          type: boolean
+
+    DeafenParticipantRequest:
+      type: object
+      required:
+        - channel_id
+        - deafened_by
+        - is_deafened
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        deafened_by:
+          type: string
+          format: uuid
+        is_deafened:
+          type: boolean
+
+    KickParticipantRequest:
+      type: object
+      required:
+        - channel_id
+        - kicked_by
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        kicked_by:
+          type: string
+          format: uuid
+
+    ParticipantResponse:
+      type: object
+      properties:
+        participant:
+          $ref: 'voice-chat-channels-schemas.yaml#/components/schemas/VoiceParticipant'
+
+    VoiceEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - voice:channel-joined
+            - voice:channel-left
+            - voice:participant-joined
+            - voice:participant-left
+            - voice:participant-muted
+            - voice:participant-speaking
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    VoiceEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    LobbyEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lobby_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - voice-lobby:created
+            - voice-lobby:player-joined
+            - voice-lobby:player-left
+            - voice-lobby:subchannel-created
+            - voice-lobby:subchannel-deleted
+            - voice-lobby:permission-changed
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ChannelStatsResponse:
+      type: object
+      properties:
+        channel_type:
+          type: string
+          enum:
+            - PARTY
+            - GUILD
+            - RAID
+            - PROXIMITY
+        active_channels:
+          type: integer
+        total_participants:
+          type: integer
+        average_quality_score:
+          type: number
+          format: float
+
+    ParticipantStatsResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        total_participants:
+          type: integer
+        active_participants:
+          type: integer
+        muted_participants:
+          type: integer
+        speaking_participants:
+          type: integer
+
+    QualityStatsResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+          nullable: true
+        audio_latency_ms:
+          type: integer
+        packet_loss_percent:
+          type: number
+          format: float
+        quality_score:
+          type: number
+          format: float
+        recorded_at:
+          type: string
+          format: date-time
+

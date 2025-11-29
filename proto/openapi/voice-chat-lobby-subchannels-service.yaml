@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Lobby Subchannels Service API
+  description: |
+    API для управления подканалами в голосовых лобби.
+    
+    Система поддерживает:
+    - Создание и удаление подканалов
+    - Присоединение и покидание подканалов
+    - Управление списком подканалов
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Lobby Subchannels
+    description: Управление подканалами в лобби
+
+paths:
+  /social/voice-lobby/{lobby_id}/subchannels:
+    post:
+      tags:
+        - Lobby Subchannels
+      summary: Создание подканала
+      operationId: createSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/CreateSubchannelRequest'
+      responses:
+        '201':
+          description: Подканал создан
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/LobbySubchannel'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Lobby Subchannels
+      summary: Список подканалов
+      operationId: listSubchannels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список подканалов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subchannels:
+                    type: array
+                    items:
+                      $ref: 'voice-chat-service.yaml#/components/schemas/LobbySubchannel'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/subchannels/{subchannel_id}/join:
+    post:
+      tags:
+        - Lobby Subchannels
+      summary: Присоединение к подканалу
+      operationId: joinSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/JoinSubchannelRequest'
+      responses:
+        '200':
+          description: Присоединение к подканалу выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: joined
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/subchannels/{subchannel_id}/leave:
+    post:
+      tags:
+        - Lobby Subchannels
+      summary: Покидание подканала
+      operationId: leaveSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/LeaveSubchannelRequest'
+      responses:
+        '200':
+          description: Покидание подканала выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+

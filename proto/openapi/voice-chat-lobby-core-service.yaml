@@ -1,0 +1,441 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Lobby Core Service API
+  description: |
+    API для основных операций с голосовыми лобби.
+    
+    Система поддерживает:
+    - Создание, обновление и удаление лобби
+    - Поиск и каталог лобби
+    - Присоединение и покидание лобби
+    - Интеграцию с party и guild системами
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Voice Lobby
+    description: Управление голосовыми лобби
+
+paths:
+  /social/voice-lobby/directory:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Каталог лобби
+      operationId: getLobbyDirectory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVITY
+              - CLAN_GUILD
+              - RAID
+              - TOURNAMENT
+        - name: is_private
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Каталог лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobby'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/voice-lobby/search:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Поиск лобби
+      operationId: searchLobbies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lobby_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVITY
+              - CLAN_GUILD
+              - RAID
+              - TOURNAMENT
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobby'
+                  total:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/voice-lobby/available:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Доступные лобби
+      operationId: getAvailableLobbies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: lobby_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVITY
+              - CLAN_GUILD
+              - RAID
+              - TOURNAMENT
+      responses:
+        '200':
+          description: Доступные лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobby'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/voice-lobby:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Создание лобби
+      operationId: createLobby
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/CreateLobbyRequest'
+      responses:
+        '201':
+          description: Лобби создано
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobby'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/voice-lobby/{lobby_id}:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Информация о лобби
+      operationId: getLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о лобби
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobbyDetail'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - Voice Lobby
+      summary: Обновление лобби
+      operationId: updateLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/UpdateLobbyRequest'
+      responses:
+        '200':
+          description: Лобби обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobby'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Voice Lobby
+      summary: Удаление лобби
+      operationId: deleteLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лобби удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/join:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Присоединение к лобби
+      operationId: joinLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/JoinLobbyRequest'
+      responses:
+        '200':
+          description: Присоединение успешно
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/LobbyParticipant'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/leave:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Покидание лобби
+      operationId: leaveLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/LeaveLobbyRequest'
+      responses:
+        '200':
+          description: Покидание выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/integration/party/{party_id}:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Создание лобби для группы
+      operationId: createLobbyForParty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/CreateLobbyForPartyRequest'
+      responses:
+        '201':
+          description: Лобби создано для группы
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobby'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/integration/guild/{guild_id}:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Создание лобби для гильдии
+      operationId: createLobbyForGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/CreateLobbyForGuildRequest'
+      responses:
+        '201':
+          description: Лобби создано для гильдии
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/VoiceLobby'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+

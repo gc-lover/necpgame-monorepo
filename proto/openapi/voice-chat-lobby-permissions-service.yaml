@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Lobby Permissions Service API
+  description: |
+    API для управления правами доступа к голосовым лобби.
+    
+    Система поддерживает:
+    - Получение прав доступа к лобби
+    - Назначение прав игрокам
+    - Проверку прав доступа
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Lobby Permissions
+    description: Управление правами доступа к лобби
+
+paths:
+  /social/voice-lobby/{lobby_id}/permissions:
+    get:
+      tags:
+        - Lobby Permissions
+      summary: Права доступа к лобби
+      operationId: getLobbyPermissions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Права доступа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      $ref: 'voice-chat-service.yaml#/components/schemas/LobbyPermission'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/permissions/{player_id}:
+    post:
+      tags:
+        - Lobby Permissions
+      summary: Назначение прав
+      operationId: setLobbyPermission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/SetPermissionRequest'
+      responses:
+        '200':
+          description: Права назначены
+          content:
+            application/json:
+              schema:
+                $ref: 'voice-chat-service.yaml#/components/schemas/LobbyPermission'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/permissions/check:
+    get:
+      tags:
+        - Lobby Permissions
+      summary: Проверка прав
+      operationId: checkLobbyPermission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: permission
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - CREATE_SUBCHANNEL
+              - DELETE_SUBCHANNEL
+              - MANAGE_MEMBERS
+              - KICK_MEMBERS
+              - MUTE_MEMBERS
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_permission:
+                    type: boolean
+                  role:
+                    type: string
+                    enum:
+                      - OWNER
+                      - ADMIN
+                      - MODERATOR
+                      - MEMBER
+                      - GUEST
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+

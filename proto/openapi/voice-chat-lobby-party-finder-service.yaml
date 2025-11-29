@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Lobby Party Finder Service API
+  description: |
+    API для подбора групп через Party Finder в голосовых лобби.
+    
+    Система поддерживает:
+    - Поиск игроков для группы
+    - Создание групп через Party Finder
+    - Приглашение игроков в группы
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Party Finder
+    description: Подбор групп для лобби
+
+paths:
+  /social/voice-lobby/party-finder/search:
+    post:
+      tags:
+        - Party Finder
+      summary: Поиск игроков для группы
+      operationId: searchPartyFinder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/PartyFinderSearchRequest'
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: 'voice-chat-service.yaml#/components/schemas/PartyFinderPlayer'
+                  total:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/voice-lobby/party-finder/create-group:
+    post:
+      tags:
+        - Party Finder
+      summary: Создание группы
+      operationId: createPartyFinderGroup
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/CreatePartyFinderGroupRequest'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group_id:
+                    type: string
+                    format: uuid
+                  lobby_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/voice-lobby/party-finder/invite:
+    post:
+      tags:
+        - Party Finder
+      summary: Приглашение игрока
+      operationId: invitePartyFinderPlayer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'voice-chat-service.yaml#/components/schemas/InvitePartyFinderRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: invited
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
