@@ -14,3 +14,4 @@ func HandlerFromMux(si api.ServerInterface, r *mux.Router) {
 	r.HandleFunc("/achievements/{achievementId}", wrapper.GetAchievement).Methods("GET")
 }
 
+

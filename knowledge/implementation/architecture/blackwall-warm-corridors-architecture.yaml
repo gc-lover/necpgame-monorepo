@@ -1,0 +1,415 @@
+metadata:
+  id: blackwall-warm-corridors-architecture
+  title: Архитектура тёплых коридоров через Blackwall
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - blackwall
+    - cooperation
+    - high-risk
+  related_documents:
+    - id: blackwall-systems-architecture
+      relation: extends
+  github_issues:
+    - 1473
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+
+summary:
+  problem: |
+    Квесты упоминают "тёплые коридоры" как механику проникновения, но детализированная игровая
+    механика отсутствует. Требуется система создания временных проходов, требующая координации
+    и создающая ощущение хрупкости и нестабильности.
+  goal: |
+    Спроектировать систему тёплых коридоров:
+    - Создание временных проходов через барьер
+    - Координация команды для поддержания
+    - Нестабильность и риски закрытия
+    - Интеграция с квестами
+    - Уникальные возможности для высокоуровневых игроков
+  essence: |
+    Тёплые коридоры — искусственно созданные временные проходы, требующие сложной подготовки,
+    координации и постоянного поддержания. Хрупкие и нестабильные, создают гонку со временем.
+
+architecture:
+  components:
+    - name: corridor-manager
+      location: blackwall-service (warm-corridor-manager)
+      responsibility: |
+        Управление тёплыми коридорами:
+        - Создание коридора
+        - Отслеживание стабильности
+        - Управление узлами
+        - Обработка закрытия
+      estimated_lines: 400
+      dependencies:
+        - blackwall-mapping-system
+        - social-service
+
+    - name: stability-system
+      location: blackwall-service (warm-corridor-manager)
+      responsibility: |
+        Система стабильности коридора:
+        - Расчёт стабильности
+        - Обработка деградации
+        - Реакция на атаки
+        - Предупреждения о нестабильности
+      estimated_lines: 350
+      dependencies:
+        - corridor-manager
+        - world-service
+
+    - name: team-coordinator
+      location: blackwall-service (warm-corridor-manager)
+      responsibility: |
+        Координация команды:
+        - Распределение ролей
+        - Синхронизация действий
+        - Управление нагрузкой
+        - Обработка выбывших
+      estimated_lines: 300
+      dependencies:
+        - social-service
+        - character-service
+
+    - name: threat-handler
+      location: blackwall-service (warm-corridor-manager)
+      responsibility: |
+        Обработка угроз коридору:
+        - Атаки rogue AI
+        - Обнаружение NetWatch
+        - Цифровые аномалии
+        - Защита коридора
+      estimated_lines: 350
+      dependencies:
+        - world-service
+        - blackwall-risk-calculator
+
+  corridor_creation:
+    preparation:
+      requirements:
+        - blackwall_map: "Map with marked weak zones"
+        - equipment: "Quantum stabilizers, relays"
+        - team_size: "2-3 players minimum"
+        - skills: "NETRUN, TECH, INT checks"
+      time_required: "1-3 hours game time"
+    
+    node_placement:
+      nodes_count: "3-5 nodes in cyberspace"
+      placement_checks:
+        - skill: NETRUN
+        - skill: TECH
+        - skill: INT
+      synchronization: "All nodes must be synchronized"
+      risk: "NetWatch detection during placement"
+    
+    activation:
+      simultaneous: "All nodes activate together"
+      result: "Unstable passage created"
+      lifetime: "15-60 minutes"
+      maintenance_required: true
+
+  stability_mechanics:
+    stability_levels:
+      range: 0-100
+      degradation_rate: "1-3% per minute"
+      attack_reduction: "10-30% per attack"
+      netwatch_detection: "Instant closure"
+    
+    maintenance_roles:
+      stabilizer:
+        responsibility: "Maintain node stability"
+        skill_check: "NETRUN + INT"
+        frequency: "Every 30-60 seconds"
+      
+      guard:
+        responsibility: "Protect from AI and NetWatch"
+        skill_check: "Combat or Hacking"
+        active: "During attacks"
+      
+      navigator:
+        responsibility: "Direct data flow through corridor"
+        skill_check: "NETRUN + PERCEPTION"
+        continuous: true
+      
+      coordinator:
+        responsibility: "Coordinate team actions"
+        skill_check: "Social skills"
+        role: "Team leader"
+
+  threats:
+    rogue_ai_attacks:
+      probability: "10-30% during lifetime"
+      wave_type: "Digital entities trying to breach"
+      stability_damage: "10-20% per wave"
+      protection: "Requires active defense"
+      psychological_effects: true
+    
+    netwatch_detection:
+      probability: "15-30% if not careful"
+      trigger: "High activity or patterns"
+      result: "Corridor closure, pursuit quest"
+      reputation_impact: "-100 NetWatch"
+    
+    digital_anomalies:
+      probability: "20-40% during lifetime"
+      effects:
+        - data_loss: "10-30%"
+        - temporary_disconnect: "5-15 seconds"
+        - visual_glitches: true
+      uncanny_valley: true
+
+  api_endpoints:
+    - path: POST /api/v1/blackwall/corridor/create
+      description: Создание тёплого коридора
+      request:
+        team_leader_id: UUID
+        team_members: [UUID]
+        location_id: UUID
+        map_id: UUID
+        weak_zone_id: UUID
+        equipment_ids: [UUID]
+      response:
+        corridor_id: UUID
+        preparation_required: boolean
+        estimated_prep_time: seconds
+        node_positions: [object]
+        risk_assessment: object
+
+    - path: POST /api/v1/blackwall/corridor/{corridorId}/nodes/place
+      description: Размещение узла коридора
+      request:
+        node_number: integer
+        position: object
+        character_id: UUID
+        skill_check: object
+      response:
+        node_placed: boolean
+        stability_contribution: integer
+        synchronization_status: object
+
+    - path: POST /api/v1/blackwall/corridor/{corridorId}/activate
+      description: Активация коридора
+      request:
+        all_nodes_ready: boolean
+      response:
+        corridor_active: boolean
+        initial_stability: 0-100
+        lifetime: seconds
+        warnings: [string]
+
+    - path: GET /api/v1/blackwall/corridor/{corridorId}/status
+      description: Статус активного коридора
+      response:
+        stability: 0-100
+        time_remaining: seconds
+        team_status: [object]
+        active_threats: [object]
+        warnings: [string]
+
+    - path: POST /api/v1/blackwall/corridor/{corridorId}/maintain
+      description: Поддержание коридора (мини-игра)
+      request:
+        character_id: UUID
+        role: enum [stabilizer, guard, navigator, coordinator]
+        action_data: object
+      response:
+        maintenance_success: boolean
+        stability_change: integer
+        team_sync: object
+
+    - path: POST /api/v1/blackwall/corridor/{corridorId}/use
+      description: Использование коридора (передача данных, проход)
+      request:
+        usage_type: enum [data_transfer, player_passage]
+        data_volume: integer (optional)
+        character_ids: [UUID] (optional)
+      response:
+        usage_result: object
+        stability_impact: integer
+        success: boolean
+        warnings: [string]
+
+    - path: POST /api/v1/blackwall/corridor/{corridorId}/close
+      description: Закрытие коридора (автоматическое или ручное)
+      response:
+        closure_reason: string
+        players_trapped: [UUID]
+        equipment_lost: [UUID]
+        consequences: object
+
+  database_schema:
+    tables:
+      - name: warm_corridors
+        columns:
+          - name: id
+            type: UUID
+            primary_key: true
+          - name: team_leader_id
+            type: UUID
+            foreign_key: characters.id
+          - name: location_id
+            type: UUID
+            foreign_key: locations.id
+          - name: map_id
+            type: UUID
+            foreign_key: blackwall_maps.id
+          - name: weak_zone_id
+            type: UUID
+            foreign_key: blackwall_zones.id
+          - name: status
+            type: VARCHAR(20)
+            values: [preparing, active, unstable, closed]
+          - name: stability
+            type: INTEGER
+            range: 0-100
+          - name: created_at
+            type: TIMESTAMP
+          - name: activated_at
+            type: TIMESTAMP
+            nullable: true
+          - name: closed_at
+            type: TIMESTAMP
+            nullable: true
+
+      - name: warm_corridor_nodes
+        columns:
+          - name: id
+            type: UUID
+            primary_key: true
+          - name: corridor_id
+            type: UUID
+            foreign_key: warm_corridors.id
+          - name: node_number
+            type: INTEGER
+          - name: position
+            type: JSONB
+          - name: stability_contribution
+            type: INTEGER
+          - name: placed_by
+            type: UUID
+            foreign_key: characters.id
+          - name: placed_at
+            type: TIMESTAMP
+
+      - name: warm_corridor_team_members
+        columns:
+          - name: corridor_id
+            type: UUID
+            foreign_key: warm_corridors.id
+          - name: character_id
+            type: UUID
+            foreign_key: characters.id
+          - name: role
+            type: VARCHAR(20)
+          - name: joined_at
+            type: TIMESTAMP
+          - name: status
+            type: VARCHAR(20)
+            values: [active, afk, disconnected]
+        primary_key: [corridor_id, character_id]
+
+      - name: warm_corridor_maintenance_log
+        columns:
+          - name: id
+            type: UUID
+            primary_key: true
+          - name: corridor_id
+            type: UUID
+            foreign_key: warm_corridors.id
+          - name: character_id
+            type: UUID
+            foreign_key: characters.id
+          - name: maintenance_type
+            type: VARCHAR(20)
+          - name: stability_change
+            type: INTEGER
+          - name: timestamp
+            type: TIMESTAMP
+
+      - name: warm_corridor_threats
+        columns:
+          - name: id
+            type: UUID
+            primary_key: true
+          - name: corridor_id
+            type: UUID
+            foreign_key: warm_corridors.id
+          - name: threat_type
+            type: VARCHAR(50)
+          - name: severity
+            type: INTEGER
+          - name: handled
+            type: BOOLEAN
+          - name: started_at
+            type: TIMESTAMP
+          - name: resolved_at
+            type: TIMESTAMP
+            nullable: true
+
+  class_roles:
+    netrunner:
+      primary_roles: [stabilizer, navigator]
+      effectiveness: high
+      risk_modifier: -10%
+    
+    techie:
+      primary_roles: [stabilizer, coordinator]
+      effectiveness: medium-high
+      special: "Equipment modifications for stability"
+    
+    solo:
+      primary_roles: [guard]
+      effectiveness: high
+      special: "Physical protection in real world"
+    
+    fixer:
+      primary_roles: [coordinator]
+      effectiveness: high
+      special: "Organization, negotiations with NetWatch"
+
+  rewards:
+    data_transfer:
+      experience: "1000-3000 XP"
+      currency: "20000-100000 еддис"
+      reputation: "+20-50 to factions"
+      items: "Rare data from beyond Blackwall"
+    
+    player_passage:
+      experience: "2000-5000 XP"
+      currency: "50000-200000 еддис"
+      reputation: "+30-70 to factions"
+      items: "Unique artifacts, legendary items"
+      unlocks: "Access to locations beyond Blackwall"
+
+  risks:
+    netwatch_detection:
+      reputation: "-100 NetWatch"
+      pursuit: "Quest pursuit triggered"
+      consequences: "Equipment loss, possible arrest"
+    
+    corridor_closure:
+      trapped_players: "Players beyond Blackwall may be trapped"
+      equipment_loss: "Equipment in corridor lost"
+      consequences: "Possible death or digital ghost transformation"
+    
+    ai_attack:
+      cyberpsychosis: "+10-30%"
+      neural_damage: "+15-25%"
+      stability_loss: "10-30%"
+    
+    digital_infection:
+      all_participants: true
+      debuffs: "10-20% to skills"
+      duration: "1-7 days"
+

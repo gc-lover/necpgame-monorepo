@@ -27,7 +27,13 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize paragon service")
 	}
 
-	httpServer := server.NewHTTPServer(addr, paragonService)
+	paragonRepo := server.NewParagonRepository(paragonService.GetDBPool())
+	prestigeService, err := server.NewPrestigeService(dbURL, redisURL, paragonRepo)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize prestige service")
+	}
+
+	httpServer := server.NewHTTPServer(addr, paragonService, prestigeService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

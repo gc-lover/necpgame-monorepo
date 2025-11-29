@@ -10,20 +10,22 @@ import (
 )
 
 type HTTPServer struct {
-	addr          string
-	router        *mux.Router
+	addr           string
+	router         *mux.Router
 	paragonService ParagonServiceInterface
-	logger        *logrus.Logger
-	server        *http.Server
+	prestigeService PrestigeServiceInterface
+	logger         *logrus.Logger
+	server         *http.Server
 }
 
-func NewHTTPServer(addr string, paragonService ParagonServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, paragonService ParagonServiceInterface, prestigeService PrestigeServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
-		addr:          addr,
-		router:        router,
+		addr:           addr,
+		router:         router,
 		paragonService: paragonService,
-		logger:        GetLogger(),
+		prestigeService: prestigeService,
+		logger:         GetLogger(),
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -32,11 +34,15 @@ func NewHTTPServer(addr string, paragonService ParagonServiceInterface) *HTTPSer
 
 	api := router.PathPrefix("/api/v1/progression").Subrouter()
 
-	handlers := NewParagonHandlers(paragonService)
-	
-	api.HandleFunc("/paragon/levels", handlers.GetParagonLevels).Methods("GET")
-	api.HandleFunc("/paragon/distribute", handlers.DistributeParagonPoints).Methods("POST")
-	api.HandleFunc("/paragon/stats", handlers.GetParagonStats).Methods("GET")
+	paragonHandlers := NewParagonHandlers(paragonService)
+	api.HandleFunc("/paragon/levels", paragonHandlers.GetParagonLevels).Methods("GET")
+	api.HandleFunc("/paragon/distribute", paragonHandlers.DistributeParagonPoints).Methods("POST")
+	api.HandleFunc("/paragon/stats", paragonHandlers.GetParagonStats).Methods("GET")
+
+	prestigeHandlers := NewPrestigeHandlers(prestigeService)
+	api.HandleFunc("/prestige/info", prestigeHandlers.GetPrestigeInfo).Methods("GET")
+	api.HandleFunc("/prestige/reset", prestigeHandlers.ResetPrestige).Methods("POST")
+	api.HandleFunc("/prestige/bonuses", prestigeHandlers.GetPrestigeBonuses).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

@@ -1,0 +1,455 @@
+openapi: 3.0.3
+info:
+  title: Combat Freerun Combat Integration Service API
+  description: API для интеграции элементов акробатики с боевой системой (атаки в движении, комбо из движения)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
+
+tags:
+  - name: Movement Attacks
+    description: Атаки во время движения
+  - name: Movement Combos
+    description: Комбо из движения
+
+paths:
+  /api/v1/gameplay/combat/freerun/movement-attack:
+    post:
+      tags:
+        - Movement Attacks
+      summary: Выполнить атаку во время движения
+      description: Выполняет атаку (стрельба или ближний бой) во время движения (Wall Run, Slide, Air, Vault)
+      operationId: performMovementAttack
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovementAttackRequest"
+            examples:
+              wall_run_shooting:
+                summary: Стрельба во время Wall Run
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  movement_type: "wall_run"
+                  attack_type: "shooting"
+                  target_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 50.0
+                  direction:
+                    x: 1.0
+                    y: 0.0
+                    z: 0.0
+              slide_melee:
+                summary: Удар во время Slide
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  movement_type: "slide"
+                  attack_type: "melee"
+                  target_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 20.0
+                  direction:
+                    x: 1.0
+                    y: 0.0
+                    z: 0.0
+              air_special:
+                summary: Специальная атака в воздухе
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  movement_type: "air"
+                  attack_type: "special"
+                  target_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 50.0
+                  direction:
+                    x: 0.0
+                    y: 0.0
+                    z: -1.0
+      responses:
+        "200":
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MovementAttackResponse"
+              examples:
+                success:
+                  summary: Успешная атака
+                  value:
+                    success: true
+                    attack_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+                    damage_dealt: 125
+                    combo_triggered: true
+                    stamina_consumed: 8
+                    effects_applied:
+                      - "stun"
+                      - "knockback"
+                    accuracy_modifier: -0.15
+                    damage_modifier: 1.0
+                    message: "Movement attack executed"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Движение не активно или недостаточно ресурсов
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          description: Цель не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/movement-combo:
+    post:
+      tags:
+        - Movement Combos
+      summary: Выполнить комбо из движения
+      description: Выполняет цепочку движений с атаками для получения бонусов
+      operationId: performMovementCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovementComboRequest"
+            examples:
+              wall_run_combo:
+                summary: Комбо Wall Run → Wall Kick → Air Dash → Attack
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  combo_chain:
+                    - movement_action: "wall_run"
+                      duration: 2.0
+                    - movement_action: "wall_kick"
+                      duration: 0.5
+                    - movement_action: "air_dash"
+                      duration: 0.3
+                    - attack_type: "melee"
+                      target_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  target_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 50.0
+              slide_combo:
+                summary: Комбо Slide → Vault → Attack
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  combo_chain:
+                    - movement_action: "slide"
+                      duration: 1.5
+                    - movement_action: "vault"
+                      duration: 0.8
+                    - attack_type: "shooting"
+                      target_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  target_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 20.0
+      responses:
+        "200":
+          description: Комбо выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MovementComboResponse"
+              examples:
+                success:
+                  summary: Успешное комбо
+                  value:
+                    success: true
+                    combo_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+                    combo_bonus: 1.25
+                    damage_dealt: 250
+                    effects_applied:
+                      - type: "stun"
+                        duration: 2.0
+                      - type: "knockback"
+                        force: 5.0
+                    visual_effects:
+                      - "particle_trail"
+                      - "screen_flash"
+                    chain_length: 4
+                    message: "Movement combo executed"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Комбо недоступно или недостаточно ресурсов
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          description: Цель не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    MovementAttackRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - movement_type
+        - attack_type
+        - target_id
+        - position
+        - direction
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        movement_type:
+          type: string
+          enum:
+            - wall_run
+            - slide
+            - air
+            - vault
+          description: Тип движения во время атаки
+        attack_type:
+          type: string
+          enum:
+            - shooting
+            - melee
+            - special
+          description: Тип атаки
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели атаки
+        position:
+          $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
+        direction:
+          $ref: "combat-freerun-acrobatics-base-service.yaml#/components/schemas/Vector3D"
+          description: Направление атаки
+
+    MovementAttackResponse:
+      type: object
+      required:
+        - success
+        - attack_id
+        - damage_dealt
+        - stamina_consumed
+      properties:
+        success:
+          type: boolean
+          description: Успешность атаки
+        attack_id:
+          type: string
+          format: uuid
+          description: ID атаки
+        damage_dealt:
+          type: integer
+          minimum: 0
+          description: Нанесенный урон
+        combo_triggered:
+          type: boolean
+          default: false
+          description: Было ли активировано комбо
+        stamina_consumed:
+          type: integer
+          minimum: 0
+          description: Потрачена выносливость
+        effects_applied:
+          type: array
+          items:
+            type: string
+          description: Примененные эффекты
+        accuracy_modifier:
+          type: number
+          format: double
+          description: Модификатор точности (отрицательный = снижение точности)
+        damage_modifier:
+          type: number
+          format: double
+          minimum: 0
+          default: 1.0
+          description: Модификатор урона
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    MovementComboRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - combo_chain
+        - target_id
+        - position
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        combo_chain:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComboChainAction"
+          minItems: 2
+          description: Цепочка действий комбо
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели комбо
+        position:
+          $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
+
+    ComboChainAction:
+      type: object
+      required:
+        - duration
+      properties:
+        movement_action:
+          type: string
+          enum:
+            - wall_run
+            - double_jump
+            - slide
+            - air_dash
+            - wall_kick
+            - vault
+          description: Действие движения (если это движение)
+        attack_type:
+          type: string
+          enum:
+            - shooting
+            - melee
+            - special
+          description: Тип атаки (если это атака)
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели (если это атака)
+        duration:
+          type: number
+          format: double
+          minimum: 0
+          description: Длительность действия (секунды)
+
+    MovementComboResponse:
+      type: object
+      required:
+        - success
+        - combo_id
+        - combo_bonus
+        - damage_dealt
+      properties:
+        success:
+          type: boolean
+          description: Успешность комбо
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо
+        combo_bonus:
+          type: number
+          format: double
+          minimum: 1.0
+          description: Множитель бонуса комбо
+        damage_dealt:
+          type: integer
+          minimum: 0
+          description: Нанесенный урон
+        effects_applied:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComboEffect"
+          description: Примененные эффекты
+        visual_effects:
+          type: array
+          items:
+            type: string
+          description: Визуальные эффекты
+        chain_length:
+          type: integer
+          minimum: 2
+          description: Длина цепочки комбо
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    ComboEffect:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - stun
+            - knockback
+            - speed_boost
+            - critical_chance
+            - aoe_damage
+          description: Тип эффекта
+        duration:
+          type: number
+          format: double
+          minimum: 0
+          description: Длительность эффекта (секунды)
+        force:
+          type: number
+          format: double
+          minimum: 0
+          description: Сила эффекта (для knockback)
+        value:
+          type: number
+          format: double
+          description: Значение эффекта (для speed_boost, critical_chance)
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: Blackwall ICE Adaptation & Analysis Service API
+  description: |
+    API для адаптации Blackwall ICE и анализа характеристик.
+    
+    **Основные возможности:**
+    - Система адаптации ICE к методам взлома
+    - Анализ типов и характеристик Blackwall ICE
+    
+    **Особенности:**
+    - Адаптация к методам взлома в реальном времени
+    - Предиктивное поведение и обучение на атаках
+    - Детальный анализ слабых мест и тактик обхода
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8092/api/v1/blackwall
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/blackwall
+    description: Продакшен сервер
+
+tags:
+  - name: ICE Adaptation
+    description: Система адаптации ICE
+  - name: ICE Analysis
+    description: Анализ характеристик Blackwall ICE
+
+paths:
+  /ice/{iceId}/adapt:
+    post:
+      tags:
+        - ICE Adaptation
+      summary: Запросить адаптацию ICE
+      description: |
+        Запрашивает адаптацию Blackwall ICE к последним атакам.
+        Обычно адаптация происходит автоматически, но может быть запрошена вручную.
+      operationId: requestICEAdaptation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: iceId
+          in: path
+          required: true
+          description: UUID Blackwall ICE
+          schema:
+            type: string
+            format: uuid
+            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICEAdaptationRequest'
+            example:
+              trigger_reason: "manual"
+              adaptation_type: "defensive"
+      responses:
+        '200':
+          description: Результат адаптации ICE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEAdaptationResponse'
+              example:
+                ice_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                adaptation_id: "ee0e8400-e29b-41d4-a716-446655440000"
+                new_stats:
+                  defense_multiplier: 1.25
+                  adaptation_level: 3
+                  attack_patterns: "adaptive"
+                new_behavior:
+                  pattern_recognition: true
+                  countermeasure_development: true
+                  knowledge_sharing: true
+                threat_level_increase: 1
+                adapted_at: "2025-12-01T10:30:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /ice/{iceId}/analysis:
+    get:
+      tags:
+        - ICE Analysis
+      summary: Анализ типа и характеристик Blackwall ICE
+      description: |
+        Возвращает детальный анализ Blackwall ICE: тип, уровень, характеристики,
+        слабые места и рекомендуемые тактики обхода.
+      operationId: analyzeICE
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: iceId
+          in: path
+          required: true
+          description: UUID Blackwall ICE
+          schema:
+            type: string
+            format: uuid
+            example: "bb0e8400-e29b-41d4-a716-446655440000"
+        - name: character_id
+          in: query
+          required: true
+          description: UUID персонажа, выполняющего анализ
+          schema:
+            type: string
+            format: uuid
+            example: "cc0e8400-e29b-41d4-a716-446655440000"
+        - name: analysis_demon
+          in: query
+          required: false
+          description: UUID демона для анализа (опционально)
+          schema:
+            type: string
+            format: uuid
+            example: "ff0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Результаты анализа Blackwall ICE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEAnalysisResponse'
+              example:
+                ice_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                ice_type: "guardian"
+                level: "alpha"
+                stats:
+                  attack_speed: "slow"
+                  defense: "high"
+                  adaptation_rate: "medium"
+                  aggression: "low"
+                  defense_multiplier: 1.15
+                  adaptation_level: 2
+                weaknesses:
+                  - "Медленная реакция на быстрые атаки"
+                  - "Уязвим к одновременным атакам с разных направлений"
+                recommended_tactics:
+                  - "Использовать быстрые демоны для обхода"
+                  - "Атаковать с нескольких направлений одновременно"
+                analysis_quality: "high"
+                analyzed_at: "2025-12-01T10:30:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ICEAdaptationRequest:
+      type: object
+      properties:
+        trigger_reason:
+          type: string
+          enum: [manual, automatic, threat_escalation]
+          description: Причина адаптации
+          example: "manual"
+        adaptation_type:
+          type: string
+          enum: [defensive, offensive, predictive]
+          description: Тип адаптации
+          example: "defensive"
+
+    ICEAdaptationResponse:
+      type: object
+      required:
+        - ice_id
+        - adaptation_id
+        - new_stats
+        - new_behavior
+        - threat_level_increase
+        - adapted_at
+      properties:
+        ice_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        adaptation_id:
+          type: string
+          format: uuid
+          example: "ee0e8400-e29b-41d4-a716-446655440000"
+        new_stats:
+          type: object
+          required:
+            - defense_multiplier
+            - adaptation_level
+            - attack_patterns
+          properties:
+            defense_multiplier:
+              type: number
+              format: float
+              minimum: 1.0
+              maximum: 2.0
+              example: 1.25
+            adaptation_level:
+              type: integer
+              minimum: 0
+              maximum: 10
+              example: 3
+            attack_patterns:
+              type: string
+              enum: [basic, adaptive, advanced, expert]
+              example: "adaptive"
+        new_behavior:
+          type: object
+          properties:
+            pattern_recognition:
+              type: boolean
+              example: true
+            countermeasure_development:
+              type: boolean
+              example: true
+            knowledge_sharing:
+              type: boolean
+              example: true
+        threat_level_increase:
+          type: integer
+          description: Увеличение уровня угрозы
+          minimum: 0
+          example: 1
+        adapted_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:30:00Z"
+
+    ICEAnalysisResponse:
+      type: object
+      required:
+        - ice_id
+        - ice_type
+        - level
+        - stats
+        - weaknesses
+        - recommended_tactics
+        - analysis_quality
+        - analyzed_at
+      properties:
+        ice_id:
+          type: string
+          format: uuid
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        ice_type:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEType'
+        level:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICELevel'
+        stats:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEStats'
+        weaknesses:
+          type: array
+          description: Слабые места ICE
+          items:
+            type: string
+          example:
+            - "Медленная реакция на быстрые атаки"
+            - "Уязвим к одновременным атакам с разных направлений"
+        recommended_tactics:
+          type: array
+          description: Рекомендуемые тактики обхода
+          items:
+            type: string
+          example:
+            - "Использовать быстрые демоны для обхода"
+            - "Атаковать с нескольких направлений одновременно"
+        analysis_quality:
+          type: string
+          enum: [low, medium, high, perfect]
+          description: Качество анализа
+          example: "high"
+        analyzed_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:30:00Z"
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

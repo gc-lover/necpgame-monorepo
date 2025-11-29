@@ -100,6 +100,7 @@ async function findIdeaWriterTasks() {
    - UE5: `agent:ue5`
    - QA: `agent:qa`
    - Release: `agent:release`
+   - Stats: `agent:stats`
 
 2. **ОБЯЗАТЕЛЬНО: Используй поиск с кэшированием:**
    ```javascript
