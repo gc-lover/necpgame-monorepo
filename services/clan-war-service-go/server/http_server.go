@@ -1,6 +1,8 @@
+// Issue: #141888786
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -172,10 +174,21 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(data); err != nil {
+		s.logger.WithError(err).Error("Failed to encode JSON response")
+		// Send error response to client
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errorResponse := map[string]string{"error": "Failed to encode response"}
+		json.NewEncoder(w).Encode(errorResponse)
+		return
+	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		s.logger.WithError(err).Error("Failed to encode response")
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		s.logger.WithError(err).Error("Failed to write JSON response")
 	}
 }
 
