@@ -8,26 +8,26 @@
 
 ## Реализация
 
-Агент должен использовать MCP GitHub инструменты для поиска Issues с меткой `ci-report`:
+Агент должен использовать MCP GitHub инструменты для поиска Issues по заголовку `[CI]`:
 
 ```javascript
 // Получить открытые CI отчёты
 const reports = await mcp_github_search_issues({
-  query: 'repo:gc-lover/necpgame-monorepo label:ci-report is:open',
+  query: 'repo:gc-lover/necpgame-monorepo is:issue is:open title:"[CI]"',
   perPage: 10,
   sort: 'updated',
   order: 'desc'
 });
 
-// Получить отчёты для конкретного коммита
+// Получить отчёты для конкретного коммита (по SHA в заголовке)
 const commitReports = await mcp_github_search_issues({
-  query: `repo:gc-lover/necpgame-monorepo label:ci-report-${shortSha} is:open`,
+  query: `repo:gc-lover/necpgame-monorepo is:issue is:open title:"${shortSha}"`,
   perPage: 5
 });
 
-// Найти failed jobs
+// Найти failed jobs (в заголовке или теле Issue)
 const failedReports = await mcp_github_search_issues({
-  query: 'repo:gc-lover/necpgame-monorepo label:ci-report is:open title:"FAILURE" OR title:"❌"',
+  query: 'repo:gc-lover/necpgame-monorepo is:issue is:open title:"[CI]" title:"FAILURE"',
   perPage: 10
 });
 ```
