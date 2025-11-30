@@ -1,3 +1,4 @@
+// Issue: #141889261
 package server
 
 import (
@@ -183,7 +184,11 @@ func (ns *NotificationSubscriber) buildNotificationMessage(notification Notifica
 		response["data"] = notification.Data
 	}
 
-	message, _ := json.Marshal(response)
+	message, err := json.Marshal(response)
+	if err != nil {
+		ns.logger.WithError(err).Error("Failed to marshal notification message")
+		return nil
+	}
 	return message
 }
 

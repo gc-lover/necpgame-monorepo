@@ -1,3 +1,4 @@
+// Issue: #141889273
 package server
 
 import (
@@ -235,11 +236,13 @@ func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 				ci.clientConn.mu.Lock()
 				ci.conn.SetWriteDeadline(deadline)
 				if err := ci.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
-					logger.WithError(err).Debug("Failed to broadcast delta to client")
-				} else {
-					atomic.AddInt64(&successCount, 1)
-					deltaState.SetLastState(CopyGameStateData(newState))
+					logger.WithError(err).Error("Failed to broadcast delta to client")
+					ci.clientConn.mu.Unlock()
+					h.RemoveClientConnection(ci.conn)
+					continue
 				}
+				atomic.AddInt64(&successCount, 1)
+				deltaState.SetLastState(CopyGameStateData(newState))
 				ci.clientConn.mu.Unlock()
 			}
 		}()
@@ -298,15 +301,17 @@ func (h *GatewayHandler) BroadcastToClientsParallel(data []byte) {
 		go func(cc *ClientConnection) {
 			defer wg.Done()
 			cc.mu.Lock()
-			defer cc.mu.Unlock()
 			cc.conn.SetWriteDeadline(deadline)
 			if err := cc.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
-				logger.WithError(err).Debug("Failed to broadcast to client")
-			} else {
-				mu.Lock()
-				successCount++
-				mu.Unlock()
+				logger.WithError(err).Error("Failed to broadcast to client")
+				cc.mu.Unlock()
+				h.RemoveClientConnection(cc.conn)
+				return
 			}
+			mu.Lock()
+			successCount++
+			mu.Unlock()
+			cc.mu.Unlock()
 		}(clientConn)
 	}
 	
@@ -385,6 +390,9 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 				if conn != nil {
 					conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 					if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+						logger := GetLogger()
+						logger.WithError(err).Error("Failed to write WebSocket ping message")
+						h.RemoveClientConnection(conn)
 						return
 					}
 				}
