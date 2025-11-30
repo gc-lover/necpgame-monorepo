@@ -36,8 +36,13 @@ jobs:
           fi
           
           changed_files=$(git diff --name-only --diff-filter=ACMR $BASE_SHA $HEAD_SHA)
+          echo "Changed files: $changed_files"
+          
           proto_changed=$(echo "$changed_files" | grep -qE '^proto/' && echo "true" || echo "false")
           changed_service_dirs=$(echo "$changed_files" | grep -E '^services/[^/]+-go/' | cut -d'/' -f1-2 | sort -u | sed 's|services/||')
+          
+          echo "Proto changed: $proto_changed"
+          echo "Changed service dirs: $changed_service_dirs"
           
           all_services=$(find services -maxdepth 1 -type d -name "*-go" -exec basename {} \;)
           valid_services=""
@@ -50,6 +55,7 @@ jobs:
           
           if [ "$proto_changed" = "true" ] && [ -z "$changed_service_dirs" ]; then
             services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+            echo "Proto changed, using all services"
           elif [ -n "$changed_service_dirs" ]; then
             filtered_services=""
             while IFS= read -r service; do
@@ -58,28 +64,21 @@ jobs:
               fi
             done <<< "$valid_services"
             services=$(echo -e "$filtered_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+            echo "Using filtered changed services"
           else
-            if [ -n "$changed_service_dirs" ]; then
-              filtered_services=""
-              while IFS= read -r service; do
-                if echo "$changed_service_dirs" | grep -q "^${service}$"; then
-                  filtered_services="${filtered_services}${service}\n"
-                fi
-              done <<< "$valid_services"
-              services=$(echo -e "$filtered_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
-            else
-              services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
-            fi
+            services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+            echo "No changes detected, using all services"
           fi
           
           if [ -z "$services" ] || [ "$services" = "[]" ] || [ "$services" = "" ]; then
-            echo "No services to process"
-            services="[]"
+            echo "WARNING: No services to process, using all valid services as fallback"
+            services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
           fi
           
-          echo "Changed files: $changed_files"
-          echo "Changed service dirs: $changed_service_dirs"
-          echo "Proto changed: $proto_changed"
+          if [ -z "$services" ] || [ "$services" = "[]" ]; then
+            echo "ERROR: Still no services found after fallback"
+            services="[]"
+          fi
           
           echo "services=$services" >> $GITHUB_OUTPUT
           echo "Found services: $services"
