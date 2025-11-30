@@ -1,0 +1,473 @@
+<!-- Issue: #57 -->
+metadata:
+  id: combat-hacking-integration-architecture
+  title: Архитектура боевой интеграции взлома
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-01T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - hacking
+    - networks
+    - realtime
+  related_systems:
+    - gameplay-service
+    - hacking-service
+    - combat-service
+    - realtime-service
+  related_documents:
+    - id: combat-hacking-types
+      relation: implements
+    - id: combat-hacking-networks
+      relation: implements
+    - id: combat-hacking-combat-integration
+      relation: implements
+    - id: combat-extended-mechanics-architecture
+      relation: extends
+  github_issue: 57
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+    - network
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру боевой интеграции взлома, включающую
+    типы взлома, сети и интеграцию взлома в боевые сценарии. Механики взлома
+    должны быть интегрированы с combat-service и hacking-service.
+  goal: |
+    Создать архитектурную схему боевой интеграции взлома с определением:
+    - Компонентов для управления типами взлома и сетями
+    - REST, WebSocket и Event Bus контрактов
+    - Синхронизации данных между слоями (Event Sourcing, CQRS)
+    - Тикрейта и требований к сетевой нагрузке
+    - Интеграций с боевой системой
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Детальная архитектура боевой интеграции взлома, интегрирующая типы взлома,
+    сети и боевые сценарии в единую систему с поддержкой realtime синхронизации.
+
+architecture:
+  overview: |
+    Архитектура боевой интеграции взлома состоит из следующих компонентов:
+    1. Hacking Types Manager - управление типами взлома (враги, устройства, инфраструктура, боевой сценарий)
+    2. Hacking Networks Manager - управление сетями (локальные, корпоративные, городские, персональные)
+    3. Hacking Combat Integration - интеграция взлома в боевые сценарии
+    4. Hacking Overheat Manager - управление перегревом и охлаждением
+    5. Hacking Access Control - контроль доступа к сетям
+    6. Hacking Realtime Sync - realtime синхронизация взлома
+
+  microservices:
+    - name: hacking-service
+      port: 8086
+      responsibility: |
+        Обработка боевой интеграции взлома:
+        - Управление типами взлома
+        - Управление сетями для взлома
+        - Интеграция взлома в боевые сценарии
+        - Управление перегревом
+        - Контроль доступа к сетям
+      components:
+        - hacking-types-manager: управление типами взлома
+        - hacking-networks-manager: управление сетями
+        - hacking-combat-integration: интеграция в бой
+        - hacking-overheat-manager: управление перегревом
+        - hacking-access-control: контроль доступа
+      endpoints:
+        - GET /api/v1/hacking/types - типы взлома
+        - GET /api/v1/hacking/types/{typeId} - информация о типе взлома
+        - GET /api/v1/hacking/networks - доступные сети
+        - GET /api/v1/hacking/networks/{networkId} - информация о сети
+        - POST /api/v1/hacking/networks/{networkId}/access - доступ к сети
+        - POST /api/v1/hacking/combat/execute - выполнение взлома в бою
+        - POST /api/v1/hacking/combat/overheat/check - проверка перегрева
+        - POST /api/v1/hacking/combat/cooling - охлаждение системы
+      websocket_channels:
+        - wss://api.necp.game/v1/hacking/combat/{sessionId} - live события взлома
+        - wss://api.necp.game/v1/hacking/networks/{characterId} - обновления сетей
+      events_published:
+        - hacking.type-executed: выполнение типа взлома
+        - hacking.network-accessed: доступ к сети
+        - hacking.combat-integrated: интеграция в бой
+        - hacking.overheat-triggered: перегрев системы
+        - hacking.cooling-applied: применение охлаждения
+      events_subscribed:
+        - combat.session.started: начало боевой сессии
+        - combat.ability.activated: активация способности
+        - progression.skill-updated: обновление навыков
+
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Интеграция взлома с боевой системой:
+        - Координация взлома в боевых сценариях
+        - Применение эффектов взлома
+        - Интеграция с системой способностей
+      components:
+        - hacking-combat-coordinator: координация взлома в бою
+        - hacking-effects-applier: применение эффектов взлома
+      endpoints:
+        - POST /api/v1/gameplay/combat/hacking/execute - выполнение взлома в бою
+        - GET /api/v1/gameplay/combat/hacking/effects - эффекты активного взлома
+      events_published:
+        - combat.hacking.executed: выполнение взлома в бою
+        - combat.hacking.effects-applied: применение эффектов взлома
+      events_subscribed:
+        - hacking.type-executed: выполнение типа взлома
+        - hacking.network-accessed: доступ к сети
+
+    - name: realtime-service
+      port: 8085
+      responsibility: |
+        Realtime синхронизация взлома:
+        - Синхронизация взлома в реальном времени
+        - Синхронизация эффектов взлома
+        - Синхронизация перегрева
+      components:
+        - hacking-realtime-sync: синхронизация взлома
+        - hacking-effects-sync: синхронизация эффектов
+        - hacking-overheat-sync: синхронизация перегрева
+      endpoints:
+        - POST /api/v1/realtime/combat/hacking/sync - синхронизация взлома
+        - POST /api/v1/realtime/combat/hacking/overheat/sync - синхронизация перегрева
+      websocket_channels:
+        - wss://api.necp.game/v1/realtime/combat/{sessionId} - realtime события
+      events_published:
+        - realtime.combat.hacking-synced: синхронизация взлома
+        - realtime.combat.hacking-overheat-synced: синхронизация перегрева
+      events_subscribed:
+        - hacking.type-executed: выполнение типа взлома
+        - hacking.overheat-triggered: перегрев системы
+
+  data_synchronization:
+    strategy: Event Sourcing + CQRS
+    event_store: |
+      Все события взлома сохраняются в Event Store:
+      - hacking.type-executed
+      - hacking.network-accessed
+      - hacking.combat-integrated
+      - hacking.overheat-triggered
+      - hacking.cooling-applied
+      - combat.hacking.executed
+      - combat.hacking.effects-applied
+    command_side: |
+      Command Side (Write Model):
+      - hacking-service: обработка команд взлома, доступа к сетям
+      - gameplay-service: обработка команд интеграции взлома в бой
+      - realtime-service: обработка realtime синхронизации
+    query_side: |
+      Query Side (Read Model):
+      - hacking-service: получение типов взлома, сетей, статуса доступа
+      - gameplay-service: получение статуса взлома в бою, эффектов
+      - realtime-service: получение состояния синхронизации
+    saga_pattern: |
+      Saga для боевой интеграции взлома:
+      1. Start Hacking Combat Saga
+      2. Check Network Access
+      3. Validate Hacking Type
+      4. Check Overheat Status
+      5. Execute Hacking
+      6. Apply Effects
+      7. If failure: Compensate (rollback доступа, восстановление состояния)
+    consistency: |
+      Strong Consistency для критичных операций:
+      - Доступ к сетям
+      - Выполнение взлома
+      - Применение эффектов
+      - Управление перегревом
+      Eventual Consistency для:
+      - Визуальные эффекты
+      - Realtime синхронизация (клиентская)
+      - Статистика использования
+
+  network_requirements:
+    tick_rate:
+      hacking_execution: |
+        - Протокол: WebSocket (TCP)
+        - Тикрейт: 10-20 Hz
+        - Задержка: <50 мс
+        - Оптимизация: Батчинг запросов взлома
+      network_access: |
+        - Протокол: HTTP REST + WebSocket
+        - Тикрейт: on-demand (при изменении)
+        - Задержка: <100 мс
+        - Оптимизация: Кэширование сетей
+      overheat_sync: |
+        - Протокол: WebSocket (TCP)
+        - Тикрейт: 5-10 Hz (при активном перегреве)
+        - Задержка: <100 мс
+        - Оптимизация: Агрегация обновлений
+    bandwidth_optimization: |
+      - Батчинг запросов взлома для оптимизации
+      - Кэширование сетей и типов взлома
+      - Агрегация обновлений перегрева
+      - Сжатие данных для WebSocket
+      - Rate limiting для предотвращения злоупотреблений
+
+  data_flows:
+    hacking_execution_flow: |
+      1. Игрок активирует взлом в бою
+      2. Hacking Combat Integration проверяет доступные сети
+      3. Hacking Combat Integration проверяет требования (класс, навыки)
+      4. Hacking Types Manager проверяет тип взлома
+      5. Hacking Overheat Manager проверяет перегрев
+      6. Hacking Service выполняет взлом
+      7. Hacking Service применяет эффекты взлома
+      8. Hacking Service обновляет перегрев
+      9. Gameplay Service публикует событие combat.hacking.executed
+      10. Realtime Service синхронизирует эффекты взлома
+      11. Realtime Gateway отправляет обновление клиентам
+
+    network_access_flow: |
+      1. Игрок запрашивает доступ к сети
+      2. Hacking Networks Manager проверяет доступность сети
+      3. Hacking Access Control проверяет требования (уровень защиты, навыки)
+      4. Hacking Networks Manager предоставляет доступ
+      5. Hacking Service публикует событие hacking.network-accessed
+      6. Realtime Gateway отправляет обновление клиентам
+
+    overheat_management_flow: |
+      1. Игрок выполняет взлом
+      2. Hacking Overheat Manager рассчитывает нагрев
+      3. Hacking Overheat Manager проверяет порог перегрева
+      4. Если перегрев: Hacking Overheat Manager блокирует взлом
+      5. Игрок применяет охлаждение
+      6. Hacking Overheat Manager снижает нагрев
+      7. Hacking Service публикует событие hacking.cooling-applied
+      8. Realtime Service синхронизирует состояние перегрева
+      9. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: hacking_types
+        description: Типы взлома
+        columns:
+          - id: UUID PRIMARY KEY
+          - type_name: VARCHAR(100)
+          - category: ENUM (enemy, device, infrastructure, combat_scenario)
+          - class_requirement: VARCHAR(50)
+          - skill_requirement: JSONB
+          - overheat_cost: INTEGER
+          - cooldown_duration: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: hacking_networks
+        description: Сети для взлома
+        columns:
+          - id: UUID PRIMARY KEY
+          - network_name: VARCHAR(255)
+          - network_type: ENUM (local, corporate, city, personal)
+          - security_level: INTEGER
+          - access_method: ENUM (remote, physical, hybrid)
+          - protection_levels: JSONB
+          - available_demons: JSONB
+          - created_at: TIMESTAMP
+
+      - name: combat_hacking_executions
+        description: Выполнения взлома в бою
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - session_id: UUID FOREIGN KEY
+          - hacking_type_id: UUID FOREIGN KEY
+          - network_id: UUID FOREIGN KEY
+          - target_id: UUID (nullable)
+          - target_type: ENUM (player, npc, device, infrastructure)
+          - executed_at: TIMESTAMP
+          - effects_applied: JSONB
+          - overheat_generated: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: hacking_overheat_state
+        description: Состояние перегрева
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - session_id: UUID FOREIGN KEY
+          - current_heat: INTEGER
+          - max_heat: INTEGER
+          - is_overheated: BOOLEAN
+          - cooling_applied: INTEGER
+          - last_update: TIMESTAMP
+          - created_at: TIMESTAMP
+
+      - name: hacking_network_access
+        description: Доступ к сетям
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - network_id: UUID FOREIGN KEY
+          - access_level: INTEGER
+          - access_method: ENUM (remote, physical, hybrid)
+          - granted_at: TIMESTAMP
+          - expires_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+
+  integrations:
+    combat_service: |
+      Получение данных о боевых сессиях, применение урона и эффектов
+    progression_service: |
+      Проверка навыков и требований для взлома, обновление прогрессии
+    inventory_service: |
+      Проверка наличия кибердеков и гаджетов для взлома
+    realtime_service: |
+      Синхронизация взлома в реальном времени, валидация действий
+    analytics_service: |
+      Логирование всех действий взлома, сбор метрик использования
+
+technical_specification:
+  subtasks:
+    - id: hacking-types-manager
+      title: Реализация менеджера типов взлома
+      description: |
+        Реализация Hacking Types Manager с управлением типами взлома,
+        требованиями к классам и навыкам, механикой перегрева.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: hacking-networks-manager
+      title: Реализация менеджера сетей
+      description: |
+        Реализация Hacking Networks Manager с управлением сетями,
+        уровнями защиты и методами доступа.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: hacking-combat-integration
+      title: Реализация боевой интеграции взлома
+      description: |
+        Реализация Hacking Combat Integration с интеграцией взлома
+        в боевые сценарии и применением эффектов.
+      dependencies: [hacking-types-manager, hacking-networks-manager]
+      estimated_effort: 5 days
+
+    - id: hacking-overheat-manager
+      title: Реализация менеджера перегрева
+      description: |
+        Реализация Hacking Overheat Manager с управлением перегревом
+        и охлаждением системы.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: hacking-access-control
+      title: Реализация контроля доступа
+      description: |
+        Реализация Hacking Access Control с проверкой требований
+        и управлением доступом к сетям.
+      dependencies: [hacking-networks-manager]
+      estimated_effort: 3 days
+
+    - id: hacking-realtime-sync
+      title: Реализация realtime синхронизации
+      description: |
+        Реализация Hacking Realtime Sync с синхронизацией взлома
+        в реальном времени.
+      dependencies: [hacking-combat-integration]
+      estimated_effort: 4 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений взлома.
+      dependencies: [hacking-realtime-sync]
+      estimated_effort: 2 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов боевой интеграции взлома.
+      dependencies: [hacking-combat-integration]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для типов взлома, сетей, выполнений взлома,
+        перегрева и доступа с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> HackingService[Hacking Service<br/>8086]
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        Gateway --> RealtimeService[Realtime Service<br/>8085]
+        
+        HackingService --> HTM[Hacking Types Manager]
+        HackingService --> HNM[Hacking Networks Manager]
+        HackingService --> HCI[Hacking Combat Integration]
+        HackingService --> HOM[Hacking Overheat Manager]
+        HackingService --> HAC[Hacking Access Control]
+        
+        GameplayService --> HCC[Hacking Combat Coordinator]
+        GameplayService --> HEA[Hacking Effects Applier]
+        
+        RealtimeService --> HRS[Hacking Realtime Sync]
+        RealtimeService --> HES[Hacking Effects Sync]
+        RealtimeService --> HOS[Hacking Overheat Sync]
+        
+        HCI --> HTM
+        HCI --> HNM
+        HCI --> HOM
+        HCI --> HAC
+        
+        HackingService --> CombatService[Combat Service]
+        HackingService --> ProgressionService[Progression Service]
+        HackingService --> InventoryService[Inventory Service]
+        HackingService --> AnalyticsService[Analytics Service]
+        
+        HackingService --> EventBus[Event Bus<br/>Kafka]
+        GameplayService --> EventBus
+        RealtimeService --> EventBus
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        HackingService --> DB[(Hacking DB)]
+        GameplayService --> DB
+        RealtimeService --> DB
+        
+        Client --> WSHacking[WebSocket<br/>Hacking]
+        WSHacking --> HackingService
+        WSHacking --> GameplayService
+        WSHacking --> RealtimeService
+    ```
+
+  hacking_execution_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant HCI as Hacking Combat Integration
+        participant HTM as Hacking Types Manager
+        participant HNM as Hacking Networks Manager
+        participant HOM as Hacking Overheat Manager
+        participant HS as Hacking Service
+        participant RS as Realtime Service
+        
+        P->>HCI: Execute hacking in combat
+        HCI->>HNM: Check available networks
+        HNM-->>HCI: Networks available
+        HCI->>HTM: Check hacking type
+        HTM-->>HCI: Type validated
+        HCI->>HOM: Check overheat
+        HOM-->>HCI: Overheat status
+        HCI->>HS: Execute hacking
+        HS->>HS: Apply effects
+        HS->>HOM: Update overheat
+        HS->>RS: Sync hacking
+        RS->>P: Hacking executed
+    ```
+
