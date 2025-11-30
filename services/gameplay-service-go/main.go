@@ -52,6 +52,8 @@ func main() {
 
 	implantsStatsService := server.NewImplantsStatsService(progressionService.GetDBPool())
 
+	implantsMaintenanceService := server.NewImplantsMaintenanceService(progressionService.GetDBPool())
+
 	weaponMechanicsService, err := server.NewWeaponMechanicsService(progressionService.GetDBPool(), redisURL)
 	if err != nil {
 		logger.WithError(err).Warn("Failed to initialize weapon mechanics service")
@@ -70,7 +72,7 @@ func main() {
 		logger.Info("Progression experience subscriber started")
 	}
 
-	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService, timeTrialService, comboService, implantsStatsService, weaponMechanicsService)
+	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService, timeTrialService, comboService, implantsStatsService, implantsMaintenanceService, weaponMechanicsService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

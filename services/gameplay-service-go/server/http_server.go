@@ -12,6 +12,7 @@ import (
 	"github.com/necpgame/gameplay-service-go/models"
 	"github.com/necpgame/gameplay-service-go/pkg/api"
 	"github.com/necpgame/gameplay-service-go/pkg/combosapi"
+	"github.com/necpgame/gameplay-service-go/pkg/implantsmaintenanceapi"
 	"github.com/necpgame/gameplay-service-go/pkg/implantsstatsapi"
 	"github.com/sirupsen/logrus"
 )
@@ -45,12 +46,13 @@ type HTTPServer struct {
 	timeTrialService TimeTrialServiceInterface
 	comboService     ComboServiceInterface
 	implantsStatsService ImplantsStatsServiceInterface
+	implantsMaintenanceService ImplantsMaintenanceServiceInterface
 	weaponMechanicsService WeaponMechanicsServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, implantsStatsService ImplantsStatsServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, implantsStatsService ImplantsStatsServiceInterface, implantsMaintenanceService ImplantsMaintenanceServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
@@ -61,6 +63,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		timeTrialService: timeTrialService,
 		comboService:     comboService,
 		implantsStatsService: implantsStatsService,
+		implantsMaintenanceService: implantsMaintenanceService,
 		weaponMechanicsService: weaponMechanicsService,
 		logger:           GetLogger(),
 	}
@@ -102,13 +105,16 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	comboHandlers := NewComboHandlers(comboService)
 	comboAPI := router.PathPrefix("/api/v1/gameplay/combat/combos").Subrouter()
 	combosapi.HandlerFromMux(comboHandlers, comboAPI)
-
 	if implantsStatsService != nil {
 		implantsStatsHandlers := NewImplantsStatsHandlers(implantsStatsService)
 		implantsStatsAPI := router.PathPrefix("/api/v1/gameplay/combat/implants").Subrouter()
 		implantsstatsapi.HandlerFromMux(implantsStatsHandlers, implantsStatsAPI)
 	}
-
+	if implantsMaintenanceService != nil {
+		implantsMaintenanceHandlers := NewImplantsMaintenanceHandlers(implantsMaintenanceService)
+		implantsMaintenanceAPI := router.PathPrefix("/api/v1/gameplay/combat/implants").Subrouter()
+		implantsmaintenanceapi.HandlerFromMux(implantsMaintenanceHandlers, implantsMaintenanceAPI)
+	}
 	if weaponMechanicsService != nil {
 		// TODO: After running `make generate-all-weapon-apis`, uncomment these lines:
 		// weaponCoreHandlers := NewWeaponCoreHandlers(weaponMechanicsService)
@@ -122,9 +128,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		// weaponadvancedapi.HandlerFromMux(weaponAdvancedHandlers, weaponAPI)
 		_ = weaponMechanicsService
 	}
-
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
-
 	return server
 }
 
@@ -136,7 +140,6 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
-
 	errChan := make(chan error, 1)
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -151,14 +154,12 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 		return s.Shutdown(context.Background())
 	}
 }
-
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	if s.server != nil {
 		return s.server.Shutdown(ctx)
 	}
 	return nil
 }
-
 func (s *HTTPServer) getProgression(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	characterID, err := uuid.Parse(vars["character_id"])
@@ -593,7 +594,6 @@ type statusRecorder struct {
 	http.ResponseWriter
 	statusCode int
 }
-
 func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
