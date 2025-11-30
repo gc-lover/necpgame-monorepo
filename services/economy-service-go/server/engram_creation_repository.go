@@ -1,3 +1,4 @@
+// Issue: #141887883
 package server
 
 import (
@@ -52,10 +53,18 @@ func NewEngramCreationRepository(db *pgxpool.Pool) *EngramCreationRepository {
 }
 
 func (r *EngramCreationRepository) CreateCreationLog(ctx context.Context, creation *EngramCreation) error {
-	customAttitudeJSON, _ := json.Marshal(creation.CustomAttitudeSettings)
-	reputationJSON, _ := json.Marshal(creation.ReputationSnapshot)
+	customAttitudeJSON, err := json.Marshal(creation.CustomAttitudeSettings)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal custom attitude settings JSON")
+		return err
+	}
+	reputationJSON, err := json.Marshal(creation.ReputationSnapshot)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal reputation snapshot JSON")
+		return err
+	}
 
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`INSERT INTO economy.engram_creation_log 
 		 (id, creation_id, engram_id, character_id, target_person_id, chip_tier, attitude_type,
 		  custom_attitude_settings, creation_stage, data_loss_percent, is_complete, creation_cost,
@@ -107,10 +116,16 @@ func (r *EngramCreationRepository) GetCreationLogByCreationID(ctx context.Contex
 	}
 
 	if customAttitudeJSON != nil {
-		json.Unmarshal(customAttitudeJSON, &creation.CustomAttitudeSettings)
+		if err := json.Unmarshal(customAttitudeJSON, &creation.CustomAttitudeSettings); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal custom attitude settings JSON")
+			return nil, err
+		}
 	}
 	if reputationJSON != nil {
-		json.Unmarshal(reputationJSON, &creation.ReputationSnapshot)
+		if err := json.Unmarshal(reputationJSON, &creation.ReputationSnapshot); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal reputation snapshot JSON")
+			return nil, err
+		}
 	}
 	creation.TargetPersonID = targetPersonID
 	creation.CompletedAt = completedAt
@@ -151,10 +166,16 @@ func (r *EngramCreationRepository) GetCreationLogByEngramID(ctx context.Context,
 	}
 
 	if customAttitudeJSON != nil {
-		json.Unmarshal(customAttitudeJSON, &creation.CustomAttitudeSettings)
+		if err := json.Unmarshal(customAttitudeJSON, &creation.CustomAttitudeSettings); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal custom attitude settings JSON")
+			return nil, err
+		}
 	}
 	if reputationJSON != nil {
-		json.Unmarshal(reputationJSON, &creation.ReputationSnapshot)
+		if err := json.Unmarshal(reputationJSON, &creation.ReputationSnapshot); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal reputation snapshot JSON")
+			return nil, err
+		}
 	}
 	creation.TargetPersonID = targetPersonID
 	creation.CompletedAt = completedAt

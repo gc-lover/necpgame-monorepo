@@ -1,3 +1,4 @@
+// Issue: #141887883
 package server
 
 import (
@@ -127,6 +128,9 @@ func (s *TradeService) GetActiveTrades(ctx context.Context, characterID uuid.UUI
 		var sessions []models.TradeSession
 		if err := json.Unmarshal([]byte(cached), &sessions); err == nil {
 			return sessions, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached trade sessions JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 
@@ -346,6 +350,9 @@ func (s *TradeService) GetTradeHistory(ctx context.Context, characterID uuid.UUI
 		var response models.TradeHistoryListResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached trade history JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 
