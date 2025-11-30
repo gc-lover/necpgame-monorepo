@@ -1,3 +1,4 @@
+// Issue: #141887950
 package server
 
 import (
@@ -191,7 +192,10 @@ func (r *EngramChipsRepository) GetChipDecay(ctx context.Context, chipID uuid.UU
 	}
 
 	if decayEffectsJSON != nil {
-		json.Unmarshal(decayEffectsJSON, &decay.DecayEffects)
+		if err := json.Unmarshal(decayEffectsJSON, &decay.DecayEffects); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal decay effects JSON")
+			decay.DecayEffects = []string{}
+		}
 	}
 
 	decay.TimeUntilCriticalHours = timeUntilCritical

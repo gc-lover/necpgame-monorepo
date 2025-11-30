@@ -1,3 +1,4 @@
+// Issue: #141887950
 package server
 
 import (
@@ -70,6 +71,9 @@ func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UU
 		var response models.InventoryResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached inventory JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 
