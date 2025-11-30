@@ -85,15 +85,6 @@
   - `create_issue` - создавать ли Issue
 - **Автоматически:** Issue добавляется в Project через `project-status-automation.yml`
 
-## Utility Workflows
-
-### `dependency-review.yml`
-- **Триггер:** При создании Pull Requests
-- **Действия:** Проверка зависимостей на уязвимости
-
-### `check-file-size.yml`
-- **Триггер:** Push в `main` или `develop`, или Pull Request
-- **Действия:** Проверка размера файлов (максимум 500 строк, настраивается в `.github/file-size-config.sh`)
 
 ## Настройка секретов
 
