@@ -1,3 +1,4 @@
+// Issue: #141886477
 package server
 
 import (
@@ -23,7 +24,11 @@ func NewResetRepository(db *pgxpool.Pool) *ResetRepository {
 }
 
 func (r *ResetRepository) Create(ctx context.Context, record *models.ResetRecord) error {
-	metadataJSON, _ := json.Marshal(record.Metadata)
+	metadataJSON, err := json.Marshal(record.Metadata)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal metadata JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO operations.reset_records (
@@ -32,7 +37,7 @@ func (r *ResetRepository) Create(ctx context.Context, record *models.ResetRecord
 			$1, $2, $3, $4, $5, $6, $7
 		)`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		record.ID, record.Type, record.Status, record.StartedAt,
 		record.CompletedAt, record.Error, metadataJSON,
 	)
@@ -41,14 +46,18 @@ func (r *ResetRepository) Create(ctx context.Context, record *models.ResetRecord
 }
 
 func (r *ResetRepository) Update(ctx context.Context, record *models.ResetRecord) error {
-	metadataJSON, _ := json.Marshal(record.Metadata)
+	metadataJSON, err := json.Marshal(record.Metadata)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal metadata JSON")
+		return err
+	}
 
 	query := `
 		UPDATE operations.reset_records
 		SET status = $1, completed_at = $2, error = $3, metadata = $4
 		WHERE id = $5`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		record.Status, record.CompletedAt, record.Error, metadataJSON,
 		record.ID,
 	)
@@ -80,7 +89,10 @@ func (r *ResetRepository) GetLastReset(ctx context.Context, resetType models.Res
 	}
 
 	if len(metadataJSON) > 0 {
-		json.Unmarshal(metadataJSON, &record.Metadata)
+		if err := json.Unmarshal(metadataJSON, &record.Metadata); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+			return nil, err
+		}
 	}
 
 	return &record, nil
@@ -127,7 +139,10 @@ func (r *ResetRepository) List(ctx context.Context, resetType *models.ResetType,
 		}
 
 		if len(metadataJSON) > 0 {
-			json.Unmarshal(metadataJSON, &record.Metadata)
+			if err := json.Unmarshal(metadataJSON, &record.Metadata); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+				return nil, err
+			}
 		}
 
 		records = append(records, record)
