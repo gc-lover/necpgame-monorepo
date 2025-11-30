@@ -1,0 +1,89 @@
+# Issue: #305
+metadata:
+  id: player-orders-economy
+  title: Архитектура системы заказов от игроков - Экономика
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:55:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - player-orders
+    - economy
+  related_documents:
+    - id: player-orders-core
+      relation: extends
+  github_issue: 305
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+
+architecture:
+  economy_models:
+    payment_types:
+      - fixed: "фиксированная сумма"
+      - hourly: "почасовая оплата"
+      - percentage: "процент от результата"
+      - hybrid: "гибридная модель"
+
+    fees:
+      - platform_commission: "комиссия платформы"
+      - broker_commission: "комиссия брокера"
+      - npc_commission: "комиссия NPC"
+      - arbitration_fee: "плата за арбитраж"
+
+    deposits:
+      - customer_deposit: "депозит заказчика"
+      - executor_deposit: "депозит исполнителя"
+      - escrow: "условное депонирование"
+
+  data_flows:
+    order_creation_flow: |
+      1. Заказчик создает заказ через Order Creation Manager
+      2. Order Creation Manager проверяет требования и баланс
+      3. Order Creation Manager создает заказ в БД
+      4. Order Manager публикует заказ
+      5. Social Service публикует событие social.player-order.created
+      6. Realtime Gateway отправляет уведомление потенциальным исполнителям
+
+    order_execution_flow: |
+      1. Исполнитель принимает заказ
+      2. Order Execution Manager проверяет требования
+      3. Order Execution Manager блокирует депозиты через Economy Service
+      4. Заказ начинается
+      5. Order Execution Manager отслеживает прогресс
+      6. Заказ завершается
+      7. Order Execution Manager проверяет выполнение
+      8. Order Economy Manager распределяет награды
+      9. Order Reputation Manager обновляет репутацию
+      10. Social Service публикует событие social.player-order.completed
+      11. Realtime Gateway отправляет обновление клиентам
+
+    auction_flow: |
+      1. Заказчик создает аукцион через Auction Manager
+      2. Auction Manager публикует аукцион
+      3. Исполнители делают ставки
+      4. Auction Manager обрабатывает ставки
+      5. Аукцион закрывается
+      6. Auction Manager определяет победителя
+      7. Order Manager создает заказ для победителя
+      8. Social Service публикует событие social.player-order.auction.closed
+      9. Realtime Gateway отправляет обновление клиентам
+
+    arbitration_flow: |
+      1. Одна из сторон подает запрос на арбитраж через Arbitration Manager
+      2. Arbitration Manager собирает доказательства (логи, подтверждения NPC)
+      3. Arbitration Manager анализирует доказательства
+      4. Arbitration Manager выносит решение
+      5. Order Economy Manager исполняет решение (компенсации, штрафы)
+      6. Order Reputation Manager обновляет репутацию
+      7. Social Service публикует событие social.player-order.arbitration.resolved
+      8. Realtime Gateway отправляет обновление клиентам
+

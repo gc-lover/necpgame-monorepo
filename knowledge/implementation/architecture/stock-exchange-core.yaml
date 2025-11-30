@@ -1,0 +1,180 @@
+# Issue: #393
+metadata:
+  id: stock-exchange-core
+  title: Архитектура системы фондовой биржи - Основная структура
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - stock-exchange
+    - trading
+    - investment
+  related_systems:
+    - economy-service
+    - analytics-service
+    - world-service
+    - social-service
+    - quest-service
+  related_documents:
+    - id: stock-exchange-overview
+      relation: implements
+    - id: stock-exchange-trading
+      relation: extends
+    - id: stock-exchange-dividends
+      relation: extends
+    - id: stock-exchange-analytics
+      relation: extends
+    - id: stock-exchange-compliance
+      relation: extends
+    - id: stock-exchange-integrations
+      relation: extends
+    - id: stock-exchange-database
+      relation: extends
+    - id: stock-exchange-events
+      relation: extends
+    - id: stock-exchange-technical
+      relation: extends
+  github_issue: 393
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы фондовой биржи, которая включает:
+    - Торговлю акциями корпораций
+    - Систему дивидендов и пассивного дохода
+    - Реакцию на игровые события
+    - Индексы и аналитику
+    - Защиту от манипуляций
+    - Интеграции с квестами, фракциями и мировыми событиями
+  goal: |
+    Создать архитектурную схему системы фондовой биржи с определением:
+    - Компонентов для торговли, дивидендов, событий, индексов и аналитики
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД для акций, портфелей, ордеров и дивидендов
+    - Технического задания для реализации
+  essence: |
+    Система фондовой биржи обеспечивает торговлю акциями корпораций, выплату дивидендов,
+    реакцию на игровые события, расчет индексов и аналитику. Интегрируется с экономикой,
+    квестами, фракциями и мировыми событиями через Event Bus.
+
+architecture:
+  overview: |
+    Система фондовой биржи состоит из следующих компонентов:
+    1. Stock Trading Engine - исполнение ордеров и matching
+    2. Stock Pricing Engine - расчет цен на основе спроса/предложения и событий
+    3. Dividend Service - расчет и выплата дивидендов
+    4. Stock Events Handler - обработка влияния игровых событий на цены
+    5. Index Calculator - расчет биржевых индексов
+    6. Stock Analytics Engine - аналитика и метрики
+    7. Compliance Monitor - защита от манипуляций
+    8. Portfolio Manager - управление портфелями игроков
+    9. Corporation Registry - реестр корпораций и их акций
+
+  microservices:
+    - name: economy-service
+      port: 8085
+      responsibility: |
+        Основной сервис для системы фондовой биржи:
+        - Управление корпорациями и их акциями
+        - Торговля акциями (matching engine)
+        - Расчет цен на основе спроса/предложения
+        - Управление портфелями игроков
+        - Интеграция с другими экономическими системами
+      components:
+        - Stock Trading Engine
+        - Stock Pricing Engine
+        - Portfolio Manager
+        - Corporation Registry
+        - Order Book Manager
+        - Trade Executor
+      endpoints:
+        - GET /api/v1/economy/stocks - список акций
+        - GET /api/v1/economy/stocks/{symbol} - детали акции
+        - GET /api/v1/economy/stocks/{symbol}/price - текущая цена
+        - GET /api/v1/economy/stocks/{symbol}/history - история цен
+        - POST /api/v1/economy/stocks/orders - создать ордер
+        - GET /api/v1/economy/stocks/orders/{id} - детали ордера
+        - DELETE /api/v1/economy/stocks/orders/{id} - отменить ордер
+        - GET /api/v1/economy/stocks/portfolio - портфель игрока
+        - GET /api/v1/economy/stocks/portfolio/history - история портфеля
+        - GET /api/v1/economy/stocks/corporations - список корпораций
+        - GET /api/v1/economy/stocks/corporations/{id} - детали корпорации
+
+    - name: dividend-service
+      port: 8088
+      responsibility: |
+        Управление дивидендами:
+        - Расчет дивидендов по корпорациям
+        - Распределение выплат игрокам
+        - Управление DRIP (Dividend Reinvestment Plan)
+        - Налоговый учет дивидендов
+        - Уведомления о выплатах
+      components:
+        - Dividend Calculator
+        - Dividend Scheduler
+        - DRIP Manager
+        - Dividend Distributor
+        - Tax Calculator
+      endpoints:
+        - GET /api/v1/dividends/schedule - расписание дивидендов
+        - GET /api/v1/dividends/pending - ожидающие выплаты
+        - GET /api/v1/dividends/history - история выплат
+        - POST /api/v1/dividends/{id}/reinvest - реинвестировать дивиденды
+        - GET /api/v1/dividends/player/{player_id} - дивиденды игрока
+
+    - name: stock-analytics-service
+      port: 8089
+      responsibility: |
+        Аналитика и метрики биржи:
+        - Расчет индексов (S&P 500 аналог)
+        - P/E, P/B и другие метрики
+        - Технический анализ
+        - Тренды и прогнозы
+        - Рыночная капитализация
+      components:
+        - Index Calculator
+        - Metrics Calculator
+        - Technical Analyzer
+        - Trend Analyzer
+        - Market Cap Calculator
+      endpoints:
+        - GET /api/v1/analytics/stocks/indices - список индексов
+        - GET /api/v1/analytics/stocks/indices/{id} - детали индекса
+        - GET /api/v1/analytics/stocks/{symbol}/metrics - метрики акции
+        - GET /api/v1/analytics/stocks/{symbol}/technical - технический анализ
+        - GET /api/v1/analytics/stocks/trends - рыночные тренды
+
+    - name: compliance-service
+      port: 8091
+      responsibility: |
+        Защита от манипуляций:
+        - Мониторинг подозрительных сделок
+        - Обнаружение инсайдерской торговли
+        - Circuit breakers
+        - Лимиты на позиции
+        - Временные ограничения
+      components:
+        - Trade Monitor
+        - Insider Trading Detector
+        - Circuit Breaker Manager
+        - Position Limit Enforcer
+        - Suspicious Activity Reporter
+      endpoints:
+        - GET /api/v1/compliance/alerts - алерты о нарушениях
+        - POST /api/v1/compliance/circuit-breaker/{symbol} - активировать circuit breaker
+        - GET /api/v1/compliance/limits/{player_id} - лимиты игрока
+        - POST /api/v1/compliance/report - сообщить о нарушении
+

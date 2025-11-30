@@ -1,0 +1,180 @@
+# Issue: #305
+metadata:
+  id: player-orders-database
+  title: Архитектура системы заказов от игроков - База данных
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:55:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - player-orders
+    - database
+  related_documents:
+    - id: player-orders-core
+      relation: extends
+  github_issue: 305
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - database
+
+architecture:
+  database_structure:
+    tables:
+      - name: player_orders
+        description: Заказы от игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - customer_id: UUID FOREIGN KEY
+          - executor_id: UUID FOREIGN KEY
+          - order_type: ENUM (combat, hacking, trade, political, research, social)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - complexity: INTEGER
+          - risk_level: ENUM (low, medium, high)
+          - reward_amount: DECIMAL(10,2)
+          - payment_model: ENUM (fixed, hourly, percentage, hybrid)
+          - deadline: TIMESTAMP
+          - status: ENUM (created, published, accepted, in-progress, completed, cancelled, failed)
+          - format: ENUM (public, selective, private, auction)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: multi_executor_orders
+        description: Мульти-исполнительные заказы
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - team_leader_id: UUID FOREIGN KEY
+          - required_roles: JSONB
+          - executor_ids: UUID[]
+          - role_assignments: JSONB
+          - reward_distribution: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: order_auctions
+        description: Аукционы заказов
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - auction_type: ENUM (ascending, descending, sealed)
+          - start_price: DECIMAL(10,2)
+          - current_price: DECIMAL(10,2)
+          - reserve_price: DECIMAL(10,2)
+          - start_time: TIMESTAMP
+          - end_time: TIMESTAMP
+          - status: ENUM (open, closed, cancelled)
+          - winner_id: UUID FOREIGN KEY
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: auction_bids
+        description: Ставки на аукционах
+        columns:
+          - id: UUID PRIMARY KEY
+          - auction_id: UUID FOREIGN KEY
+          - bidder_id: UUID FOREIGN KEY
+          - bid_amount: DECIMAL(10,2)
+          - bid_conditions: JSONB
+          - bid_time: TIMESTAMP
+          - status: ENUM (active, outbid, winning, lost)
+
+      - name: order_options
+        description: Опционы на заказы
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - option_type: ENUM (customer_cancellation, executor_cancellation, mutual_cancellation)
+          - buyer_id: UUID FOREIGN KEY
+          - premium: DECIMAL(10,2)
+          - compensation_amount: DECIMAL(10,2)
+          - purchased_at: TIMESTAMP
+          - exercised_at: TIMESTAMP
+          - status: ENUM (active, exercised, expired)
+
+      - name: order_arbitration
+        description: Арбитраж заказов
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - complainant_id: UUID FOREIGN KEY
+          - defendant_id: UUID FOREIGN KEY
+          - reason: TEXT
+          - evidence: JSONB
+          - status: ENUM (pending, in-review, resolved, dismissed)
+          - decision: JSONB
+          - resolved_at: TIMESTAMP
+          - created_at: TIMESTAMP
+
+      - name: order_insurance
+        description: Страхование заказов
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - insurance_type: ENUM (mission_failure, cargo, delay, comprehensive)
+          - buyer_id: UUID FOREIGN KEY
+          - premium: DECIMAL(10,2)
+          - coverage_amount: DECIMAL(10,2)
+          - purchased_at: TIMESTAMP
+          - claimed_at: TIMESTAMP
+          - status: ENUM (active, claimed, expired)
+
+      - name: order_ratings
+        description: Рейтинги заказов
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - rater_id: UUID FOREIGN KEY
+          - rated_id: UUID FOREIGN KEY
+          - rating_type: ENUM (customer, executor)
+          - completion_rate: DECIMAL(3,2)
+          - quality_score: DECIMAL(3,2)
+          - timeliness: DECIMAL(3,2)
+          - communication: DECIMAL(3,2)
+          - cooperation: DECIMAL(3,2)
+          - overall_rating: DECIMAL(3,2)
+          - review_text: TEXT
+          - created_at: TIMESTAMP
+
+      - name: order_reputation
+        description: Репутация в заказах
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - reputation_type: ENUM (customer, executor)
+          - order_count: INTEGER
+          - completion_rate: DECIMAL(5,4)
+          - average_rating: DECIMAL(3,2)
+          - arbitration_cases: INTEGER
+          - insurance_claims: INTEGER
+          - trust_level: DECIMAL(3,2)
+          - last_update: TIMESTAMP
+
+      - name: order_economy
+        description: Экономика заказов
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - transaction_type: ENUM (deposit, payment, commission, refund, penalty)
+          - amount: DECIMAL(10,2)
+          - from_id: UUID FOREIGN KEY
+          - to_id: UUID FOREIGN KEY
+          - transaction_date: TIMESTAMP
+
+      - name: order_telemetry
+        description: Телеметрия заказов
+        columns:
+          - id: UUID PRIMARY KEY
+          - order_id: UUID FOREIGN KEY
+          - event_type: VARCHAR(50)
+          - event_data: JSONB
+          - created_at: TIMESTAMP
+

@@ -1,0 +1,89 @@
+# Issue: #104
+metadata:
+  id: game-mechanics-economy
+  title: Архитектура систем игровых механик - Экономические системы
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - mechanics
+    - economy
+  related_documents:
+    - id: game-mechanics-core
+      relation: extends
+  github_issue: 104
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+
+architecture:
+  microservices:
+    - name: economy-service
+      port: 8085
+      responsibility: |
+        Экономические механики:
+        - Торговля (игроковый рынок, аукционы, биржа)
+        - Крафт и производство
+        - Валюты и ресурсы
+        - Инвентарь
+        - Торговые маршруты
+        - Инвестиции и аналитика
+      components:
+        - trading-engine: обработка торговли
+        - crafting-system: система крафта
+        - inventory-manager: управление инвентарем
+        - currency-manager: управление валютами
+        - market-manager: управление рынками
+        - auction-house: аукционный дом
+        - stock-exchange: биржа
+        - production-chains: производственные цепочки
+        - resource-manager: управление ресурсами
+      endpoints:
+        - GET /api/v1/economy/inventory - инвентарь игрока
+        - POST /api/v1/economy/inventory/move - перемещение предмета
+        - POST /api/v1/economy/trading/sell - продажа предмета
+        - POST /api/v1/economy/trading/buy - покупка предмета
+        - GET /api/v1/economy/market/listings - список предложений
+        - POST /api/v1/economy/market/create-listing - создание предложения
+        - POST /api/v1/economy/crafting/craft - создание предмета
+        - GET /api/v1/economy/crafting/recipes - доступные рецепты
+        - GET /api/v1/economy/auction/list - список аукционов
+        - POST /api/v1/economy/auction/bid - ставка на аукционе
+        - GET /api/v1/economy/stock/list - список акций
+        - POST /api/v1/economy/stock/buy - покупка акций
+        - POST /api/v1/economy/stock/sell - продажа акций
+        - GET /api/v1/economy/currencies - валюты игрока
+        - POST /api/v1/economy/currencies/exchange - обмен валют
+
+  data_flows:
+    trading_flow: |
+      1. Игрок создает предложение на рынке
+      2. Economy Service валидирует предложение
+      3. Economy Service создает листинг в БД
+      4. Economy Service публикует событие economy:listing-created
+      5. Другие игроки видят предложение
+      6. Игрок покупает предмет
+      7. Economy Service проверяет наличие средств
+      8. Economy Service переводит предмет и валюту
+      9. Economy Service публикует событие economy:transaction-completed
+      10. Social Service обновляет репутацию (если применимо)
+
+    crafting_flow: |
+      1. Игрок выбирает рецепт для крафта
+      2. Economy Service проверяет наличие ресурсов
+      3. Economy Service проверяет навыки игрока через Progression Service
+      4. Economy Service рассчитывает шанс успеха
+      5. Economy Service списывает ресурсы
+      6. Economy Service генерирует предмет
+      7. Economy Service добавляет предмет в инвентарь
+      8. Progression Service обновляет опыт крафта
+      9. Economy Service публикует событие economy:item-crafted
+

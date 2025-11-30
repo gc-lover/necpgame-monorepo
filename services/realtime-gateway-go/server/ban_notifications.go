@@ -1,3 +1,4 @@
+// Issue: #140899117
 package server
 
 import (
@@ -48,6 +49,7 @@ func (bns *BanNotificationSubscriber) Start() error {
 		"events:chat:ban:created",
 		"events:chat:ban:auto:spam",
 		"events:chat:ban:auto:severe",
+		"events:chat:ban:removed",
 	}
 
 	bns.pubsub = bns.redis.Subscribe(bns.ctx, channels...)
@@ -96,10 +98,12 @@ func (bns *BanNotificationSubscriber) handleBanEvent(channel string, data []byte
 		"ban_id":       notification.BanID,
 	}).Info("Received ban notification event")
 
-	bns.sendBanNotification(notification)
+	// Determine notification type based on channel
+	isRemoved := channel == "events:chat:ban:removed"
+	bns.sendBanNotification(notification, isRemoved)
 }
 
-func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotification) {
+func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotification, isRemoved bool) {
 	characterID, err := uuid.Parse(notification.CharacterID)
 	if err != nil {
 		bns.logger.WithError(err).WithField("character_id", notification.CharacterID).Error("Invalid character_id in ban notification")
@@ -145,17 +149,21 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 		}
 
 		if match {
-			notificationMessage := bns.buildNotificationMessage(notification)
+			notificationMessage := bns.buildNotificationMessage(notification, isRemoved)
 			
 			clientConn.mu.Lock()
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := conn.WriteMessage(websocket.TextMessage, notificationMessage); err != nil {
 				bns.logger.WithError(err).WithField("character_id", notification.CharacterID).Error("Failed to send ban notification")
 			} else {
+				action := "ban notification"
+				if isRemoved {
+					action = "ban removal notification"
+				}
 				bns.logger.WithFields(logrus.Fields{
 					"character_id": notification.CharacterID,
 					"ban_id":       notification.BanID,
-				}).Info("Sent ban notification to player")
+				}).Info("Sent " + action + " to player")
 				found = true
 			}
 			clientConn.mu.Unlock()
@@ -168,12 +176,21 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 	}
 }
 
-func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanNotification) []byte {
+func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanNotification, isRemoved bool) []byte {
+	notificationType := "ban_notification"
+	if isRemoved {
+		notificationType = "ban_removed"
+	}
+
 	response := map[string]interface{}{
-		"type":        "ban_notification",
+		"type":        notificationType,
 		"ban_id":      notification.BanID,
-		"reason":      notification.Reason,
 		"timestamp":   notification.Timestamp,
+	}
+
+	// Only include reason for ban notifications, not removals
+	if !isRemoved && notification.Reason != "" {
+		response["reason"] = notification.Reason
 	}
 
 	if notification.ExpiresAt != nil {

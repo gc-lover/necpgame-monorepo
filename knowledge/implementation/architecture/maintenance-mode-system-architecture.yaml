@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-23T23:59:00Z
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:55:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -287,6 +287,104 @@ architecture:
       10. Maintenance Status Manager обновляет статус на "completed"
       11. Maintenance Notification Manager отправляет уведомление о завершении
       12. Infrastructure Service публикует событие maintenance.ended
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций (создание окна, начало/завершение обслуживания)
+    mechanisms:
+      - ACID транзакции для создания окон обслуживания, обновления статуса и управления graceful shutdown
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении статуса
+      - Валидация перед созданием окна обслуживания и началом обслуживания
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (начало обслуживания, graceful shutdown, завершение обслуживания)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния режима обслуживания (создание окна, обновление статуса, начало обслуживания,
+      завершение обслуживания, отправка уведомлений) записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: MaintenanceWindowCreatedEvent, MaintenanceStartedEvent, MaintenanceEndedEvent, GracefulShutdownStartedEvent, NotificationSentEvent.
+    cqrs_pattern: |
+      Разделение команд (создание окна, начало обслуживания, завершение обслуживания) и запросов
+      (получение статуса, получение списка окон, получение уведомлений) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как начало обслуживания (обновление статуса, блокировка соединений,
+      начало graceful shutdown, отправка уведомлений) или завершение обслуживания (завершение graceful shutdown,
+      разблокировка соединений, обновление статуса, отправка уведомлений), используется Saga Pattern
+      для обеспечения атомарности операций между Infrastructure Service, API Gateway, Notification Service и Realtime Gateway.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    status_operations:
+      tickrate: Event-based (on-demand) + 1-5 Hz для обновления статуса во время обслуживания
+      network_load: |
+        - Получение статуса: event-based, ~0.01-0.05 requests/sec на клиента
+        - Обновление статуса: 1-5 Hz во время обслуживания, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на клиента для операций статуса
+      latency_requirements: < 20-50ms для получения статуса, < 50-100ms для обновления статуса
+      sync_strategy: Strong Consistency (ACID транзакции) для обновления статуса
+
+    window_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание окна: event-based, ~0.001-0.01 events/sec (административные операции)
+        - Получение списка окон: event-based, ~0.001-0.01 requests/sec
+        - Обновление окна: event-based, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций окон
+      latency_requirements: < 100-200ms для создания окна, < 30-100ms для получения списка
+      sync_strategy: Strong Consistency (ACID транзакции) для операций с окнами
+
+    maintenance_operations:
+      tickrate: Event-based (on-demand при начале/завершении обслуживания)
+      network_load: |
+        - Начало обслуживания: event-based, ~0.001-0.01 events/sec
+        - Завершение обслуживания: event-based, ~0.001-0.01 events/sec
+        - Экстренное обслуживание: event-based, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций обслуживания
+      latency_requirements: < 200-500ms для начала обслуживания, < 200-500ms для завершения
+      sync_strategy: Strong Consistency (ACID транзакции) для операций обслуживания
+
+    graceful_shutdown_operations:
+      tickrate: Event-based (on-demand при начале shutdown) + 1-10 Hz для мониторинга прогресса
+      network_load: |
+        - Начало graceful shutdown: event-based, ~0.001-0.01 events/sec
+        - Мониторинг прогресса: 1-10 Hz, ~0.01-0.05 events/sec
+        - Завершение graceful shutdown: event-based, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций graceful shutdown
+      latency_requirements: < 100-300ms для начала shutdown, < 30-100ms для мониторинга
+      sync_strategy: Strong Consistency (ACID транзакции) для graceful shutdown
+
+    connection_blocking_operations:
+      tickrate: Event-based (on-demand при изменении статуса) + 1-5 Hz для проверки статуса
+      network_load: |
+        - Блокировка соединений: event-based, ~0.001-0.01 events/sec
+        - Проверка статуса блокировки: 1-5 Hz, ~0.01-0.05 requests/sec
+        - Разблокировка соединений: event-based, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций блокировки
+      latency_requirements: < 50-100ms для блокировки/разблокировки, < 10-30ms для проверки статуса
+      sync_strategy: Strong Consistency (ACID транзакции) для блокировки соединений
+
+    notification_operations:
+      tickrate: Event-based (on-demand при событиях обслуживания) + cron-triggered для заблаговременных уведомлений
+      network_load: |
+        - Отправка уведомлений: event-based, ~0.01-0.1 events/sec
+        - Получение списка уведомлений: event-based, ~0.001-0.01 requests/sec
+        - Заблаговременные уведомления: cron-triggered, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec для операций уведомлений
+      latency_requirements: < 100-300ms для отправки уведомлений, < 30-100ms для получения списка
+      sync_strategy: Eventual Consistency для уведомлений (через Notification Service)
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий обслуживания: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_structure:
     tables:
@@ -570,3 +668,31 @@ diagrams:
         MSM->>MNM: Send completion notification
         MSM->>EB: Publish maintenance.ended
     ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния режима обслуживания
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (начало обслуживания, graceful shutdown, завершение обслуживания)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для статуса, окон, обслуживания, graceful shutdown, блокировки соединений, уведомлений и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы режима обслуживания:
+      - Определены компоненты (Maintenance Manager, Maintenance Window Manager, Maintenance Status Manager, Scheduled Maintenance Manager, Emergency Maintenance Manager, Graceful Shutdown Manager, Connection Blocker, Maintenance Notification Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (maintenance_windows, maintenance_status, maintenance_notifications, maintenance_telemetry)
+      - Спроектирована система планового обслуживания
+      - Спроектирована система экстренного обслуживания
+      - Спроектирована система graceful shutdown
+      - Спроектирована система уведомлений
+      - Создано техническое задание
+      - Разбито на подзадачи

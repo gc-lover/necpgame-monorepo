@@ -1,0 +1,260 @@
+# Issue: #393
+metadata:
+  id: stock-exchange-technical
+  title: Архитектура системы фондовой биржи - Технические задачи и диаграммы
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - stock-exchange
+    - technical
+  related_documents:
+    - id: stock-exchange-core
+      relation: extends
+  github_issue: 393
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+
+architecture:
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Базовая инфраструктура
+        tasks:
+          - Создание таблиц БД
+          - Настройка миграций Liquibase
+          - Базовая структура economy-service для stocks
+          - Интеграция с Event Bus
+          - Настройка Redis для кэширования
+        estimated_effort: 5 days
+
+      phase_2:
+        name: Торговый движок
+        tasks:
+          - Реализация Order Book Manager
+          - Реализация Stock Trading Engine
+          - Реализация Trade Executor
+          - Реализация Portfolio Manager
+          - Тестирование matching логики
+        estimated_effort: 8 days
+
+      phase_3:
+        name: Pricing Engine
+        tasks:
+          - Реализация Stock Pricing Engine
+          - Расчет цен на основе спроса/предложения
+          - История цен
+          - Realtime обновления через WebSocket
+        estimated_effort: 5 days
+
+      phase_4:
+        name: Dividend Service
+        tasks:
+          - Реализация Dividend Calculator
+          - Реализация Dividend Scheduler
+          - Реализация DRIP Manager
+          - Интеграция с Event Scheduler Service
+          - Автоматические выплаты
+        estimated_effort: 6 days
+
+      phase_5:
+        name: Events Handler
+        tasks:
+          - Реализация Stock Events Handler
+          - Подписка на world events
+          - Подписка на quest events
+          - Расчет price impact
+          - Применение модификаторов
+        estimated_effort: 5 days
+
+      phase_6:
+        name: Analytics Service
+        tasks:
+          - Реализация Index Calculator
+          - Реализация Metrics Calculator
+          - Реализация Technical Analyzer
+          - Расчет индексов
+          - Перебалансировка
+        estimated_effort: 6 days
+
+      phase_7:
+        name: Compliance Service
+        tasks:
+          - Реализация Trade Monitor
+          - Реализация Insider Trading Detector
+          - Реализация Circuit Breaker Manager
+          - Лимиты на позиции
+          - Алерты и блокировки
+        estimated_effort: 5 days
+
+      phase_8:
+        name: Интеграции
+        tasks:
+          - Интеграция с World Service
+          - Интеграция с Quest Service
+          - Интеграция с Social Service
+          - Интеграция с Analytics Service
+          - WebSocket каналы
+        estimated_effort: 4 days
+
+    total_estimated_effort: 44 days
+
+  tickrate_and_network_requirements:
+    stock_trading:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание ордера: event-based, ~0.1-0.5 events/sec
+        - Исполнение ордера: event-based, ~0.1-0.3 events/sec
+        - Обновление цен: event-based, ~1-5 events/sec (пиковая)
+        - Общий трафик: ~0.5-2 KB/sec на игрока
+      sync_strategy: Strong Consistency (ACID транзакции)
+
+    stock_prices:
+      tickrate: 1-10 Hz (обновление цен)
+      network_load: |
+        - Обновление цен: 1-10 updates/sec
+        - WebSocket обновления: 1-10 updates/sec
+        - Общий трафик: ~0.3-1 KB/sec на игрока
+      sync_strategy: Eventual Consistency для цен, Strong для сделок
+
+    dividend_payments:
+      tickrate: Event-based (по расписанию)
+      network_load: |
+        - Выплата дивидендов: event-based, ~0.01-0.1 events/sec
+        - Обновление портфеля: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    stock_analytics:
+      tickrate: 1-5 Hz (расчет индексов)
+      network_load: |
+        - Расчет индексов: 1-5 updates/sec
+        - Обновление метрик: 1-5 updates/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Eventual Consistency
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> EconomyService[Economy Service<br/>8085]
+        Gateway --> DividendService[Dividend Service<br/>8088]
+        Gateway --> AnalyticsService[Stock Analytics Service<br/>8089]
+        Gateway --> ComplianceService[Compliance Service<br/>8091]
+        
+        EconomyService --> STE[Stock Trading Engine]
+        EconomyService --> SPE[Stock Pricing Engine]
+        EconomyService --> PM[Portfolio Manager]
+        EconomyService --> CR[Corporation Registry]
+        EconomyService --> OBM[Order Book Manager]
+        EconomyService --> TE[Trade Executor]
+        
+        DividendService --> DC[Dividend Calculator]
+        DividendService --> DS[Dividend Scheduler]
+        DividendService --> DRIP[DRIP Manager]
+        DividendService --> DD[Dividend Distributor]
+        
+        AnalyticsService --> IC[Index Calculator]
+        AnalyticsService --> MC[Metrics Calculator]
+        AnalyticsService --> TA[Technical Analyzer]
+        
+        ComplianceService --> TM[Trade Monitor]
+        ComplianceService --> ITD[Insider Trading Detector]
+        ComplianceService --> CBM[Circuit Breaker Manager]
+        
+        EconomyService --> WorldService[World Service<br/>8086]
+        EconomyService --> QuestService[Quest Service]
+        EconomyService --> SocialService[Social Service<br/>8084]
+        
+        EconomyService --> EventBus[Event Bus<br/>Kafka]
+        DividendService --> EventBus
+        AnalyticsService --> EventBus
+        ComplianceService --> EventBus
+        
+        EconomyService --> DB[(Stock Exchange DB)]
+        DividendService --> DB
+        AnalyticsService --> DB
+        ComplianceService --> DB
+        
+        EconomyService --> Cache[(Redis Cache)]
+        EconomyService --> WalletService[Wallet Service]
+        EconomyService --> NotificationService[Notification Service]
+        
+        Client --> WSStocks[WebSocket<br/>Stock Prices]
+        WSStocks --> EconomyService
+    ```
+
+  trading_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant Client
+        participant EconomyService
+        participant OrderBook
+        participant TradingEngine
+        participant Portfolio
+        participant Wallet
+        participant EventBus
+        
+        Client->>EconomyService: POST /orders (BUY)
+        EconomyService->>OrderBook: Add order
+        OrderBook->>TradingEngine: Check for matches
+        TradingEngine->>OrderBook: Find matching SELL order
+        TradingEngine->>Portfolio: Update buyer portfolio
+        TradingEngine->>Portfolio: Update seller portfolio
+        TradingEngine->>Wallet: Transfer funds
+        TradingEngine->>Wallet: Charge commissions
+        TradingEngine->>EventBus: Publish trade.matched
+        TradingEngine->>EventBus: Publish price.updated
+        EconomyService->>Client: Order executed
+    ```
+
+  dividend_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant Scheduler
+        participant DividendService
+        participant Calculator
+        participant Portfolio
+        participant Wallet
+        participant EventBus
+        
+        Scheduler->>DividendService: Payment date reached
+        DividendService->>Calculator: Calculate dividends
+        Calculator->>Portfolio: Get shareholders
+        Calculator->>Calculator: Calculate per player
+        DividendService->>Wallet: Transfer dividends
+        DividendService->>EventBus: Publish dividend.paid
+        DividendService->>NotificationService: Notify players
+    ```
+
+  event_impact_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant WorldService
+        participant EventBus
+        participant StockEventsHandler
+        participant PricingEngine
+        participant EconomyService
+        participant Client
+        
+        WorldService->>EventBus: world.event.started
+        EventBus->>StockEventsHandler: Event notification
+        StockEventsHandler->>StockEventsHandler: Calculate impact
+        StockEventsHandler->>PricingEngine: Apply price modifier
+        PricingEngine->>EconomyService: Update prices
+        EconomyService->>EventBus: Publish price.updated
+        EconomyService->>Client: WebSocket notification
+    ```
+

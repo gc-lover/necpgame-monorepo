@@ -1,0 +1,114 @@
+# Issue: #104
+metadata:
+  id: game-mechanics-integrations
+  title: Архитектура систем игровых механик - Интеграции
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - mechanics
+    - integrations
+  related_documents:
+    - id: game-mechanics-core
+      relation: extends
+  github_issue: 104
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+
+architecture:
+  integrations:
+    character_service: |
+      - Получение данных персонажа для проверок
+      - Обновление прогресса персонажа
+      - Проверка требований для действий
+
+    economy_service: |
+      - Выдача наград
+      - Проверка наличия валюты
+      - Генерация лута
+      - Управление инвентарем
+
+    social_service: |
+      - Обновление репутации
+      - Проверка отношений с NPC
+      - Управление гильдиями
+
+    world_service: |
+      - Получение информации о событиях
+      - Участие в рейдах
+      - Управление территориями
+
+    progression_service: |
+      - Получение данных навыков
+      - Обновление опыта
+      - Проверка требований навыков
+
+    narrative_service: |
+      - Интеграция с квестами
+      - Управление сюжетными линиями
+      - Интеграция с лигами
+
+    realtime_gateway: |
+      - Отправка уведомлений
+      - Реалтайм обновления состояния
+      - Синхронизация боевых действий
+
+  tickrate_and_network_requirements:
+    gameplay_mechanics:
+      tickrate: 60-128 Hz (боевые действия)
+      network_load: |
+        - Боевые действия: 60-128 updates/sec
+        - Способности: event-based, ~5-10 events/sec
+        - Импланты: event-based, ~0.1-0.5 events/sec
+        - Паркур: 60-128 updates/sec
+        - Общий трафик: ~10-20 KB/sec на игрока
+      sync_strategy: Strong Consistency для боевых действий, Eventual для статистики
+
+    economy_mechanics:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Торговля: event-based, ~0.5-2 events/sec
+        - Крафт: event-based, ~0.1-0.5 events/sec
+        - Инвентарь: event-based, ~1-3 events/sec
+        - Рынок: event-based, ~0.5-1 events/sec
+        - Общий трафик: ~0.5-2 KB/sec на игрока
+      sync_strategy: Strong Consistency (ACID транзакции)
+
+    social_mechanics:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Отношения: event-based, ~0.1-0.3 events/sec
+        - Найм NPC: event-based, ~0.05-0.1 events/sec
+        - Заказы: event-based, ~0.1-0.5 events/sec
+        - Репутация: event-based, ~0.1-0.3 events/sec
+        - Общий трафик: ~0.3-0.8 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    world_mechanics:
+      tickrate: 1-10 Hz (мировые события)
+      network_load: |
+        - Мировые события: 1-10 updates/sec
+        - Рейды: event-based, ~0.1-0.5 events/sec
+        - Боссы: 20-30 Hz (в бою)
+        - Состояние мира: 1-5 Hz
+        - Общий трафик: ~1-3 KB/sec на игрока
+      sync_strategy: Eventual Consistency для событий, Strong для участия
+
+    progression_mechanics:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Обновление опыта: event-based, ~0.5-2 events/sec
+        - Уровни навыков: event-based, ~0.1-0.3 events/sec
+        - Перки: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Strong Consistency
+

@@ -1,3 +1,4 @@
+// Issue: #140899117
 package server
 
 import (
@@ -14,6 +15,7 @@ import (
 type ModerationRepositoryInterface interface {
 	CreateBan(ctx context.Context, ban *models.ChatBan) error
 	GetActiveBan(ctx context.Context, characterID uuid.UUID, channelID *uuid.UUID) (*models.ChatBan, error)
+	GetBanByID(ctx context.Context, banID uuid.UUID) (*models.ChatBan, error)
 	GetBans(ctx context.Context, characterID *uuid.UUID, limit, offset int) ([]models.ChatBan, int, error)
 	DeactivateBan(ctx context.Context, banID uuid.UUID) error
 	CreateReport(ctx context.Context, report *models.ChatReport) error
@@ -83,6 +85,38 @@ func (r *ModerationRepository) GetActiveBan(ctx context.Context, characterID uui
 	}
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to get active ban")
+		return nil, err
+	}
+
+	ban.ChannelID = channelIDPtr
+	ban.ChannelType = channelType
+	ban.AdminID = adminID
+	ban.ExpiresAt = expiresAt
+
+	return &ban, nil
+}
+
+func (r *ModerationRepository) GetBanByID(ctx context.Context, banID uuid.UUID) (*models.ChatBan, error) {
+	var ban models.ChatBan
+	var channelIDPtr *uuid.UUID
+	var channelType *models.ChannelType
+	var adminID *uuid.UUID
+	var expiresAt *time.Time
+
+	query := `SELECT id, character_id, channel_id, channel_type, reason, admin_id, expires_at, created_at, is_active
+			  FROM social.chat_bans
+			  WHERE id = $1`
+
+	err := r.db.QueryRow(ctx, query, banID).Scan(
+		&ban.ID, &ban.CharacterID, &channelIDPtr, &channelType, &ban.Reason,
+		&adminID, &expiresAt, &ban.CreatedAt, &ban.IsActive,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to get ban by ID")
 		return nil, err
 	}
 

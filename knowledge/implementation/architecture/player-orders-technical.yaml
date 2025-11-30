@@ -1,0 +1,240 @@
+# Issue: #305
+metadata:
+  id: player-orders-technical
+  title: Архитектура системы заказов от игроков - Технические задачи и диаграммы
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:55:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - player-orders
+    - technical
+  related_documents:
+    - id: player-orders-core
+      relation: extends
+  github_issue: 305
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+
+architecture:
+  technical_specification:
+    subtasks:
+      - id: order-manager
+        title: Реализация менеджера заказов
+        description: |
+          Реализация Order Manager с управлением заказами,
+          жизненным циклом и интеграцией с другими компонентами.
+        dependencies: []
+        estimated_effort: 5 days
+
+      - id: order-creation-manager
+        title: Реализация менеджера создания заказов
+        description: |
+          Реализация Order Creation Manager с созданием заказов,
+          проверкой требований и публикацией.
+        dependencies: [order-manager]
+        estimated_effort: 4 days
+
+      - id: order-execution-manager
+        title: Реализация менеджера выполнения заказов
+        description: |
+          Реализация Order Execution Manager с отслеживанием прогресса,
+          проверкой выполнения и завершением заказов.
+        dependencies: [order-manager]
+        estimated_effort: 4 days
+
+      - id: multi-executor-manager
+        title: Реализация менеджера мульти-исполнительных заказов
+        description: |
+          Реализация Multi-Executor Manager с управлением командами,
+          распределением ролей и наград.
+        dependencies: [order-manager]
+        estimated_effort: 5 days
+
+      - id: auction-manager
+        title: Реализация менеджера аукционов
+        description: |
+          Реализация Auction Manager с поддержкой типов аукционов,
+          обработкой ставок и определением победителей.
+        dependencies: [order-manager]
+        estimated_effort: 5 days
+
+      - id: options-manager
+        title: Реализация менеджера опционов
+        description: |
+          Реализация Options Manager с покупкой опционов,
+          расчетом премий и использованием опционов.
+        dependencies: [order-manager]
+        estimated_effort: 4 days
+
+      - id: arbitration-manager
+        title: Реализация менеджера арбитража
+        description: |
+          Реализация Arbitration Manager с обработкой жалоб,
+          сбором доказательств и вынесением решений.
+        dependencies: [order-manager]
+        estimated_effort: 5 days
+
+      - id: insurance-manager
+        title: Реализация менеджера страхования
+        description: |
+          Реализация Insurance Manager с покупкой страховки,
+          расчетом премий и обработкой страховых случаев.
+        dependencies: [order-manager]
+        estimated_effort: 4 days
+
+      - id: order-rating-manager
+        title: Реализация менеджера рейтингов
+        description: |
+          Реализация Order Rating Manager с управлением рейтингами,
+          расчетом средних оценок и выдачей бейджей.
+        dependencies: [order-manager]
+        estimated_effort: 3 days
+
+      - id: order-reputation-manager
+        title: Реализация менеджера репутации
+        description: |
+          Реализация Order Reputation Manager с управлением репутацией,
+          расчетом уровня доверия и влиянием на доступ.
+        dependencies: [order-manager]
+        estimated_effort: 4 days
+
+      - id: order-economy-manager
+        title: Реализация менеджера экономики заказов
+        description: |
+          Реализация Order Economy Manager с расчетом стоимости,
+          обработкой платежей и комиссий.
+        dependencies: [order-manager]
+        estimated_effort: 4 days
+
+      - id: order-telemetry-collector
+        title: Реализация сборщика телеметрии
+        description: |
+          Реализация Order Telemetry Collector с логированием операций,
+          сбором метрик и интеграцией с Analytics Service.
+        dependencies: [order-manager]
+        estimated_effort: 3 days
+
+      - id: websocket-channels
+        title: Реализация WebSocket каналов
+        description: |
+          Реализация WebSocket каналов для realtime обновлений заказов,
+          аукционов и уведомлений.
+        dependencies: [order-manager, auction-manager]
+        estimated_effort: 3 days
+
+      - id: event-bus-integration
+        title: Интеграция с Event Bus
+        description: |
+          Реализация публикации и подписки на события через Kafka
+          для всех компонентов системы заказов.
+        dependencies: [order-manager]
+        estimated_effort: 2 days
+
+      - id: database-schema
+        title: Создание схемы БД
+        description: |
+          Создание таблиц БД для заказов, мульти-исполнителей, аукционов,
+          опционов, арбитража, страхования, рейтингов, репутации, экономики
+          и телеметрии с миграциями Liquibase.
+        dependencies: []
+        estimated_effort: 4 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        
+        SocialService --> OM[Order Manager]
+        SocialService --> OCM[Order Creation Manager]
+        SocialService --> OEM[Order Execution Manager]
+        SocialService --> MEM[Multi-Executor Manager]
+        SocialService --> AM[Auction Manager]
+        SocialService --> OPM[Options Manager]
+        SocialService --> ARM[Arbitration Manager]
+        SocialService --> IM[Insurance Manager]
+        SocialService --> ORM[Order Rating Manager]
+        SocialService --> ORPM[Order Reputation Manager]
+        SocialService --> OEM2[Order Economy Manager]
+        SocialService --> OTC[Order Telemetry Collector]
+        
+        OM --> OCM
+        OM --> OEM
+        OM --> MEM
+        OM --> AM
+        OM --> OPM
+        OM --> ARM
+        OM --> IM
+        OM --> ORM
+        OM --> ORPM
+        OM --> OEM2
+        
+        SocialService --> EconomyService[Economy Service]
+        SocialService --> ReputationService[Reputation Service]
+        SocialService --> QuestService[Quest Service]
+        SocialService --> WorldService[World Service]
+        SocialService --> GameplayService[Gameplay Service]
+        SocialService --> NPCService[NPC Service]
+        SocialService --> AnalyticsService[Analytics Service]
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SocialService --> DB[(Social DB)]
+        
+        Client --> WSOrders[WebSocket<br/>Orders]
+        WSOrders --> SocialService
+    ```
+
+  order_lifecycle_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Customer
+        participant OCM as Order Creation Manager
+        participant OM as Order Manager
+        participant E as Executor
+        participant OEM as Order Execution Manager
+        participant EB as Event Bus
+        
+        C->>OCM: Create order
+        OCM->>OCM: Validate requirements
+        OCM->>OM: Publish order
+        OM->>EB: Publish social.player-order.created
+        E->>OM: Accept order
+        OM->>OEM: Start execution
+        OEM->>OEM: Track progress
+        OEM->>OEM: Complete order
+        OEM->>EB: Publish social.player-order.completed
+    ```
+
+  auction_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Customer
+        participant AM as Auction Manager
+        participant B1 as Bidder 1
+        participant B2 as Bidder 2
+        participant EB as Event Bus
+        
+        C->>AM: Create auction
+        AM->>AM: Publish auction
+        B1->>AM: Place bid
+        AM->>EB: Publish social.player-order.auction.bid-placed
+        B2->>AM: Place bid
+        AM->>EB: Publish social.player-order.auction.bid-placed
+        AM->>AM: Close auction
+        AM->>EB: Publish social.player-order.auction.closed
+    ```
+

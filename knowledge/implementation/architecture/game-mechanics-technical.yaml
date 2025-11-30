@@ -1,0 +1,218 @@
+# Issue: #104
+metadata:
+  id: game-mechanics-technical
+  title: Архитектура систем игровых механик - Технические задачи и диаграммы
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - mechanics
+    - technical
+  related_documents:
+    - id: game-mechanics-core
+      relation: extends
+  github_issue: 104
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+
+architecture:
+  technical_specification:
+    subtasks:
+      - id: gameplay-service-core
+        title: Реализация основного функционала gameplay-service
+        description: |
+          Реализация базовой инфраструктуры gameplay-service с поддержкой боевых механик,
+          способностей, имплантов и интеграции с другими сервисами.
+        dependencies: []
+        estimated_effort: 7 days
+
+      - id: combat-engine
+        title: Реализация боевого движка
+        description: |
+          Реализация Combat Engine с обработкой атак, способностей, стелса, паркура
+          и интеграцией с progression-service.
+        dependencies: [gameplay-service-core]
+        estimated_effort: 5 days
+
+      - id: economy-service-core
+        title: Реализация основного функционала economy-service
+        description: |
+          Реализация базовой инфраструктуры economy-service с поддержкой торговли,
+          крафта, инвентаря и валют.
+        dependencies: []
+        estimated_effort: 7 days
+
+      - id: trading-system
+        title: Реализация системы торговли
+        description: |
+          Реализация Trading Engine с поддержкой рынка, аукционов, биржи
+          и интеграцией с inventory-manager.
+        dependencies: [economy-service-core]
+        estimated_effort: 5 days
+
+      - id: crafting-system
+        title: Реализация системы крафта
+        description: |
+          Реализация Crafting System с поддержкой рецептов, производственных цепочек
+          и интеграцией с progression-service для проверки навыков.
+        dependencies: [economy-service-core]
+        estimated_effort: 4 days
+
+      - id: social-service-core
+        title: Реализация основного функционала social-service
+        description: |
+          Реализация базовой инфраструктуры social-service с поддержкой отношений,
+          найма NPC, заказов и гильдий.
+        dependencies: []
+        estimated_effort: 6 days
+
+      - id: npc-systems
+        title: Реализация систем работы с NPC
+        description: |
+          Реализация Relationship Manager, NPC Hiring System и Player Orders System
+          с интеграцией с economy-service и progression-service.
+        dependencies: [social-service-core]
+        estimated_effort: 5 days
+
+      - id: world-service-core
+        title: Реализация основного функционала world-service
+        description: |
+          Реализация базовой инфраструктуры world-service с поддержкой событий,
+          рейдов, боссов и синхронизации состояния мира.
+        dependencies: []
+        estimated_effort: 6 days
+
+      - id: progression-service-core
+        title: Реализация основного функционала progression-service
+        description: |
+          Реализация базовой инфраструктуры progression-service с поддержкой атрибутов,
+          навыков, перков и классов.
+        dependencies: []
+        estimated_effort: 5 days
+
+      - id: database-schema
+        title: Создание схемы БД для механик
+        description: |
+          Создание таблиц БД для всех систем механик с миграциями Liquibase.
+        dependencies: []
+        estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service]
+        Gateway --> EconomyService[Economy Service]
+        Gateway --> SocialService[Social Service]
+        Gateway --> WorldService[World Service]
+        Gateway --> ProgressionService[Progression Service]
+        
+        GameplayService --> CombatEngine[Combat Engine]
+        GameplayService --> AbilitySystem[Ability System]
+        GameplayService --> ImplantManager[Implant Manager]
+        GameplayService --> StealthSystem[Stealth System]
+        GameplayService --> FreerunSystem[Freerun System]
+        
+        EconomyService --> TradingEngine[Trading Engine]
+        EconomyService --> CraftingSystem[Crafting System]
+        EconomyService --> InventoryManager[Inventory Manager]
+        EconomyService --> MarketManager[Market Manager]
+        EconomyService --> AuctionHouse[Auction House]
+        
+        SocialService --> RelationshipManager[Relationship Manager]
+        SocialService --> NPCHiringSystem[NPC Hiring System]
+        SocialService --> PlayerOrdersSystem[Player Orders System]
+        SocialService --> MentorshipSystem[Mentorship System]
+        SocialService --> GuildManager[Guild Manager]
+        
+        WorldService --> EventManager[Event Manager]
+        WorldService --> RaidManager[Raid Manager]
+        WorldService --> BossManager[Boss Manager]
+        WorldService --> TerritoryManager[Territory Manager]
+        
+        ProgressionService --> AttributeManager[Attribute Manager]
+        ProgressionService --> SkillManager[Skill Manager]
+        ProgressionService --> PerkManager[Perk Manager]
+        ProgressionService --> ClassManager[Class Manager]
+        
+        GameplayService --> ProgressionService
+        EconomyService --> ProgressionService
+        SocialService --> EconomyService
+        WorldService --> EconomyService
+        WorldService --> GameplayService
+        
+        GameplayService --> CharacterService[Character Service]
+        EconomyService --> CharacterService
+        SocialService --> CharacterService
+        WorldService --> CharacterService
+        ProgressionService --> CharacterService
+        
+        GameplayService --> EventBus[Event Bus]
+        EconomyService --> EventBus
+        SocialService --> EventBus
+        WorldService --> EventBus
+        ProgressionService --> EventBus
+        
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB1[(Gameplay DB)]
+        EconomyService --> DB2[(Economy DB)]
+        SocialService --> DB3[(Social DB)]
+        WorldService --> DB4[(World DB)]
+        ProgressionService --> DB5[(Progression DB)]
+    ```
+
+  mechanics_interaction_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant GS as Gameplay Service
+        participant ES as Economy Service
+        participant SS as Social Service
+        participant PS as Progression Service
+        participant EB as Event Bus
+        
+        C->>GS: POST /combat/attack
+        GS->>GS: Process combat action
+        GS->>EB: Publish combat:action-executed
+        GS-->>C: Combat result
+        
+        EB->>PS: combat:action-executed
+        PS->>PS: Calculate XP
+        PS->>PS: Update skills
+        PS->>EB: Publish progression:skill-leveled
+        
+        EB->>ES: combat:enemy-killed
+        ES->>ES: Generate loot
+        ES->>ES: Add to inventory
+        ES->>EB: Publish economy:loot-generated
+        
+        EB->>SS: combat:action-executed
+        SS->>SS: Update reputation (if applicable)
+        
+        Note over C,EB: Player crafts item
+        
+        C->>ES: POST /crafting/craft
+        ES->>PS: Check skills
+        PS-->>ES: Skills data
+        ES->>ES: Calculate success chance
+        ES->>ES: Consume resources
+        ES->>ES: Generate item
+        ES->>EB: Publish economy:item-crafted
+        ES-->>C: Craft result
+        
+        EB->>PS: economy:item-crafted
+        PS->>PS: Update crafting XP
+    ```
+

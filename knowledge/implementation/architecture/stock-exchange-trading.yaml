@@ -1,0 +1,111 @@
+# Issue: #393
+metadata:
+  id: stock-exchange-trading
+  title: Архитектура системы фондовой биржи - Торговый движок
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - stock-exchange
+    - trading
+  related_documents:
+    - id: stock-exchange-core
+      relation: extends
+  github_issue: 393
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+
+architecture:
+  components:
+    - name: Stock Trading Engine
+      location: economy-service
+      responsibility: |
+        Исполнение ордеров на покупку/продажу:
+        - Matching buy и sell ордеров
+        - Исполнение сделок по best price
+        - Обновление портфелей игроков
+        - Расчет комиссий
+        - Логирование всех сделок
+      dependencies:
+        - Order Book Manager
+        - Portfolio Manager
+        - Wallet Service
+        - Event Bus
+
+    - name: Stock Pricing Engine
+      location: economy-service
+      responsibility: |
+        Расчет цен на акции:
+        - Цена на основе спроса/предложения
+        - Реакция на события (price impact)
+        - Волатильность и spread
+        - Обновление цен в реальном времени
+        - История цен
+      dependencies:
+        - Order Book Manager
+        - Stock Events Handler
+        - Event Bus
+
+    - name: Portfolio Manager
+      location: economy-service
+      responsibility: |
+        Управление портфелями игроков:
+        - Хранение позиций игроков
+        - Расчет стоимости портфеля
+        - История транзакций
+        - P&L (прибыль/убыток)
+        - Средняя цена покупки
+      dependencies:
+        - Stock Pricing Engine
+        - Database
+
+    - name: Corporation Registry
+      location: economy-service
+      responsibility: |
+        Реестр корпораций и их акций:
+        - Список корпораций на бирже
+        - Типы акций (Common, Preferred)
+        - IPO и делистинг
+        - Базовая информация о корпорациях
+        - Связь с фракциями
+      dependencies:
+        - Database
+        - Social Service (фракции)
+
+    - name: Order Book Manager
+      location: economy-service
+      responsibility: |
+        Управление ордербуком:
+        - Хранение активных ордеров
+        - Сортировка по цене и времени
+        - Matching логика
+        - Частичное исполнение
+        - Time-in-force (GTC, IOC, FOK)
+      dependencies:
+        - Database
+        - Redis (для realtime)
+
+    - name: Trade Executor
+      location: economy-service
+      responsibility: |
+        Исполнение сделок:
+        - Создание trade records
+        - Обновление балансов
+        - Расчет комиссий
+        - Публикация событий
+        - Уведомления игрокам
+      dependencies:
+        - Wallet Service
+        - Notification Service
+        - Event Bus
+

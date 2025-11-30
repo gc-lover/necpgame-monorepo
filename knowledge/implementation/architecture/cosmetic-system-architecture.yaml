@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-23T23:59:00Z
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:50:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -297,6 +297,110 @@ architecture:
       7. Notification Service отправляет уведомления игрокам
       8. Realtime Gateway отправляет обновление клиентам
 
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций (покупка, экипировка)
+    mechanisms:
+      - ACID транзакции для покупки косметики, экипировки и ротации магазина
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении экипировки
+      - Валидация перед покупкой косметики и экипировкой
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (покупка косметики, экипировка, ротация магазина)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния косметики (покупка, экипировка, снятие, ротация магазина,
+      разблокировка редкости) записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: CosmeticPurchasedEvent, CosmeticEquippedEvent, CosmeticUnequippedEvent, ShopRotatedEvent, RarityUnlockedEvent.
+    cqrs_pattern: |
+      Разделение команд (покупка косметики, экипировка, ротация магазина) и запросов
+      (получение каталога, получение списка косметики, получение экипированной косметики) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как покупка косметики (проверка баланса, списание валюты,
+      выдача владения, уведомление игрока) или экипировка косметики (проверка владения, снятие текущей,
+      применение новой, обновление статистики, уведомление игрока), используется Saga Pattern
+      для обеспечения атомарности операций между Cosmetic Service, Economy Service, Character Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    catalog_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Получение каталога: event-based, ~0.01-0.05 requests/sec на игрока
+        - Получение информации о косметике: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций каталога
+      latency_requirements: < 30-100ms для получения каталога, < 20-50ms для получения информации
+      sync_strategy: Eventual Consistency для каталога (кэширование в Redis)
+
+    shop_operations:
+      tickrate: Event-based (on-demand) + cron-triggered для ротации (ежедневно/еженедельно)
+      network_load: |
+        - Получение магазина: event-based, ~0.01-0.05 requests/sec на игрока
+        - Получение информации о ротации: event-based, ~0.001-0.01 requests/sec на игрока
+        - Ротация магазина: cron-triggered, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций магазина
+      latency_requirements: < 30-100ms для получения магазина, < 50-200ms для ротации
+      sync_strategy: Strong Consistency (ACID транзакции) для ротации, Eventual Consistency для получения магазина
+
+    purchase_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Покупка косметики: event-based, ~0.001-0.01 events/sec на игрока
+        - Проверка владения: event-based, ~0.01-0.05 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций покупки
+      latency_requirements: < 200-300ms для покупки косметики, < 30-100ms для проверки владения
+      sync_strategy: Strong Consistency (ACID транзакции) для покупки косметики
+
+    equip_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Экипировка косметики: event-based, ~0.01-0.05 events/sec на игрока
+        - Снятие косметики: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение экипированной косметики: event-based, ~0.01-0.05 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций экипировки
+      latency_requirements: < 100-200ms для экипировки/снятия косметики, < 30-100ms для получения экипированной
+      sync_strategy: Strong Consistency (ACID транзакции) для экипировки косметики
+
+    preview_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Предпросмотр косметики: event-based, ~0.01-0.05 requests/sec на игрока
+        - 3D предпросмотр: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций предпросмотра
+      latency_requirements: < 100-200ms для предпросмотра, < 200-300ms для 3D предпросмотра
+      sync_strategy: Eventual Consistency для предпросмотра (кэширование)
+
+    rarity_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Получение списка редкостей: event-based, ~0.001-0.01 requests/sec на игрока
+        - Разблокировка редкости: event-based, ~0.001-0.01 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций редкостей
+      latency_requirements: < 30-100ms для получения списка, < 50-150ms для разблокировки
+      sync_strategy: Strong Consistency (ACID транзакции) для разблокировки редкости
+
+    stats_operations:
+      tickrate: Event-based (on-demand при изменении) + 1-5 Hz для обновления статистики
+      network_load: |
+        - Получение статистики: event-based, ~0.01-0.02 requests/sec на игрока
+        - Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций статистики
+      latency_requirements: < 30-100ms для получения статистики, < 50-100ms для обновления
+      sync_strategy: Eventual Consistency для статистики (кэширование в Redis)
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий косметики: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
+
   database_structure:
     tables:
       - name: cosmetic_items
@@ -585,3 +689,31 @@ diagrams:
         CEM->>CEM: Apply cosmetic
         CEM->>EB: Publish cosmetic.equipped
     ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния косметики
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (покупка косметики, экипировка, ротация магазина)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для каталога, магазина, покупки, экипировки, предпросмотра, редкостей, статистики и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы косметики:
+      - Определены компоненты (Cosmetic Manager, Cosmetic Catalog Manager, Cosmetic Ownership Manager, Cosmetic Shop Manager, Cosmetic Equip Manager, Cosmetic Rarity Manager, Cosmetic Purchase Manager, Cosmetic Preview Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (cosmetic_items, player_cosmetics, player_equipped_cosmetics, cosmetic_shop_rotations, cosmetic_telemetry)
+      - Спроектирована система покупки косметики
+      - Спроектирована система экипировки косметики
+      - Спроектирована система магазина и ротации
+      - Спроектирована система редкостей
+      - Создано техническое задание
+      - Разбито на подзадачи

@@ -1,0 +1,158 @@
+# Issue: #305
+metadata:
+  id: player-orders-mechanics
+  title: Архитектура системы заказов от игроков - Механики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:55:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - player-orders
+  related_documents:
+    - id: player-orders-core
+      relation: extends
+  github_issue: 305
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+
+architecture:
+  multi_executor_mechanics:
+    roles:
+      - name: team_leader
+        description: "Лидер команды - создает заказ и приглашает исполнителей"
+        bonus: 0.1
+        responsibilities:
+          - order_creation
+          - team_coordination
+          - reward_distribution
+
+      - name: specialist
+        description: "Специалист - выполняет конкретную роль"
+        bonus: 0.15
+        responsibilities:
+          - role_execution
+          - task_completion
+
+      - name: support
+        description: "Поддержка - обеспечивает логистику, разведку, прикрытие"
+        bonus: 0.05
+        responsibilities:
+          - logistics
+          - reconnaissance
+          - cover
+
+    reward_distribution:
+      factors:
+        - contribution_percentage: "процент выполнения задач"
+        - role_complexity: "сложность роли"
+        - reputation: "репутация исполнителя"
+        - risk: "риск операции"
+      formula: |
+        reward = base_reward * (contribution_percentage * role_complexity * (1 + reputation_bonus) * (1 + risk_bonus))
+
+  auction_mechanics:
+    types:
+      - name: ascending
+        description: "Прямой аукцион - ставки растут"
+        mechanics: |
+          - Ставки увеличиваются
+          - Победитель - самая высокая ставка или лучшие условия
+          - Таймер на каждую ставку
+
+      - name: descending
+        description: "Голландский аукцион - цена снижается"
+        mechanics: |
+          - Цена начинается высокой
+          - Постепенно снижается
+          - Первый согласившийся получает контракт
+
+      - name: sealed
+        description: "Закрытый аукцион - все ставки одновременно"
+        mechanics: |
+          - Все ставки подаются одновременно
+          - Победитель определяется по лучшему соотношению цена/качество
+          - Результаты объявляются после закрытия
+
+    fees:
+      - organizer_commission: "5-10% от суммы контракта"
+      - deposit: "гарантийный депозит"
+      - registration_fee: "плата за участие"
+
+  options_mechanics:
+    types:
+      - name: customer_cancellation
+        description: "Опцион на отмену заказчиком"
+        protection: "защищает исполнителя от отмены заказа заказчиком"
+        compensation: "часть вознаграждения"
+
+      - name: executor_cancellation
+        description: "Опцион на отмену исполнителем"
+        protection: "позволяет исполнителю отменить заказ с минимальными потерями"
+        compensation: "возврат части депозита"
+
+      - name: mutual_cancellation
+        description: "Взаимный опцион"
+        protection: "защищает обе стороны от отмены"
+        compensation: "компенсация обеим сторонам"
+
+    pricing_factors:
+      - order_amount: "сумма заказа"
+      - customer_reputation: "репутация заказчика"
+      - order_complexity: "сложность заказа"
+      - cancellation_history: "история отмен"
+
+  arbitration_mechanics:
+    triggers:
+      - order_violation: "нарушение условий заказа"
+      - quality_dispute: "споры о качестве выполнения"
+      - deadline_violation: "нарушение сроков"
+      - fraud: "обман или мошенничество"
+
+    process:
+      - complaint_filing: "подача жалобы"
+      - evidence_collection: "сбор доказательств"
+      - analysis: "анализ арбитражной палатой"
+      - decision: "вынесение решения"
+      - enforcement: "исполнение решения"
+
+    decisions:
+      - compensation: "выплата пострадавшей стороне"
+      - penalty: "наказание для нарушителя"
+      - reputation_change: "обновление репутации"
+      - ban: "временный запрет на создание/принятие заказов"
+
+  insurance_mechanics:
+    types:
+      - name: mission_failure
+        description: "Страхование провала миссии"
+        coverage: "убытки при неудачном выполнении"
+
+      - name: cargo
+        description: "Страхование груза"
+        coverage: "утрата или повреждение груза"
+
+      - name: delay
+        description: "Страхование задержек"
+        coverage: "убытки от просрочки"
+
+      - name: comprehensive
+        description: "Комплексная страховка"
+        coverage: "все риски"
+
+    premium_calculation:
+      factors:
+        - order_complexity: "сложность заказа"
+        - executor_reputation: "репутация исполнителя"
+        - failure_statistics: "статистика провалов"
+        - world_stability: "текущая обстановка в городе"
+        - order_amount: "сумма заказа"
+

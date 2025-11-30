@@ -1,0 +1,81 @@
+# Issue: #393
+metadata:
+  id: stock-exchange-analytics
+  title: Архитектура системы фондовой биржи - Аналитика
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - stock-exchange
+    - analytics
+  related_documents:
+    - id: stock-exchange-core
+      relation: extends
+  github_issue: 393
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+
+architecture:
+  components:
+    - name: Stock Events Handler
+      location: economy-service
+      responsibility: |
+        Обработка влияния событий на цены:
+        - Подписка на игровые события
+        - Расчет price impact
+        - Применение модификаторов
+        - Длительность эффектов
+        - История влияний
+      dependencies:
+        - World Service (события)
+        - Quest Service (квесты)
+        - Social Service (фракции)
+        - Event Bus
+
+    - name: Index Calculator
+      location: stock-analytics-service
+      responsibility: |
+        Расчет биржевых индексов:
+        - Методики расчета (price-weighted, market-cap weighted)
+        - Перебалансировка
+        - История индексов
+        - Состав индексов
+      dependencies:
+        - Stock Pricing Engine
+        - Market Cap Calculator
+
+    - name: Metrics Calculator
+      location: stock-analytics-service
+      responsibility: |
+        Расчет финансовых метрик:
+        - P/E (Price-to-Earnings)
+        - P/B (Price-to-Book)
+        - Dividend Yield
+        - Market Cap
+        - Volume и turnover
+      dependencies:
+        - Stock Pricing Engine
+        - Dividend Service
+
+    - name: Technical Analyzer
+      location: stock-analytics-service
+      responsibility: |
+        Технический анализ:
+        - Moving averages
+        - RSI, MACD
+        - Support/Resistance уровни
+        - Тренды
+        - Паттерны
+      dependencies:
+        - Stock Pricing Engine (история цен)
+
