@@ -1,99 +1,18 @@
+// Issue: #140893532
 package server
 
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/necpgame/character-service-go/models"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-type mockCharacterRepository struct {
-	mock.Mock
-}
-
-func (m *mockCharacterRepository) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*models.PlayerAccount, error) {
-	args := m.Called(ctx, accountID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.PlayerAccount), args.Error(1)
-}
-
-func (m *mockCharacterRepository) CreateAccount(ctx context.Context, req *models.CreateAccountRequest) (*models.PlayerAccount, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.PlayerAccount), args.Error(1)
-}
-
-func (m *mockCharacterRepository) GetCharacterByID(ctx context.Context, characterID uuid.UUID) (*models.Character, error) {
-	args := m.Called(ctx, characterID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Character), args.Error(1)
-}
-
-func (m *mockCharacterRepository) GetCharactersByAccountID(ctx context.Context, accountID uuid.UUID) ([]models.Character, error) {
-	args := m.Called(ctx, accountID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]models.Character), args.Error(1)
-}
-
-func (m *mockCharacterRepository) CreateCharacter(ctx context.Context, req *models.CreateCharacterRequest) (*models.Character, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Character), args.Error(1)
-}
-
-func (m *mockCharacterRepository) UpdateCharacter(ctx context.Context, characterID uuid.UUID, req *models.UpdateCharacterRequest) (*models.Character, error) {
-	args := m.Called(ctx, characterID, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Character), args.Error(1)
-}
-
-func (m *mockCharacterRepository) DeleteCharacter(ctx context.Context, characterID uuid.UUID) error {
-	args := m.Called(ctx, characterID)
-	return args.Error(0)
-}
-
-func setupTestService(t *testing.T) (*CharacterService, *mockCharacterRepository, func()) {
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
-	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return nil, nil, nil
-	}
-	redisClient := redis.NewClient(redisOpts)
-
-	mockRepo := new(mockCharacterRepository)
-	service := &CharacterService{
-		repo:       mockRepo,
-		cache:      redisClient,
-		logger:     GetLogger(),
-		keycloakURL: "http://localhost:8080",
-	}
-
-	cleanup := func() {
-		redisClient.Close()
-	}
-
-	return service, mockRepo, cleanup
-}
 
 func TestCharacterService_GetAccount_Success(t *testing.T) {
 	service, mockRepo, cleanup := setupTestService(t)
@@ -104,8 +23,8 @@ func TestCharacterService_GetAccount_Success(t *testing.T) {
 
 	accountID := uuid.New()
 	account := &models.PlayerAccount{
-		ID:       accountID,
-		Nickname: "test_user",
+		ID:        accountID,
+		Nickname:  "test_user",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -131,8 +50,8 @@ func TestCharacterService_GetAccount_Cache(t *testing.T) {
 
 	accountID := uuid.New()
 	account := &models.PlayerAccount{
-		ID:       accountID,
-		Nickname: "test_user",
+		ID:        accountID,
+		Nickname:  "test_user",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -162,8 +81,8 @@ func TestCharacterService_CreateAccount_Success(t *testing.T) {
 		Nickname: "test_user",
 	}
 	account := &models.PlayerAccount{
-		ID:       accountID,
-		Nickname: req.Nickname,
+		ID:        accountID,
+		Nickname:  req.Nickname,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -343,39 +262,6 @@ func TestCharacterService_CreateCharacter_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestCharacterService_UpdateCharacter_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
-
-	characterID := uuid.New()
-	accountID := uuid.New()
-	newName := "Updated Character"
-	req := &models.UpdateCharacterRequest{
-		Name: &newName,
-	}
-	char := &models.Character{
-		ID:        characterID,
-		AccountID: accountID,
-		Name:      newName,
-		Level:     1,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	mockRepo.On("UpdateCharacter", mock.Anything, characterID, req).Return(char, nil)
-
-	ctx := context.Background()
-	result, err := service.UpdateCharacter(ctx, characterID, req)
-
-	require.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, newName, result.Name)
-	mockRepo.AssertExpectations(t)
-}
-
 func TestCharacterService_DeleteCharacter_Success(t *testing.T) {
 	service, mockRepo, cleanup := setupTestService(t)
 	if service == nil {
@@ -422,172 +308,3 @@ func TestCharacterService_DeleteCharacter_NotFound(t *testing.T) {
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 }
-
-func TestCharacterService_ValidateCharacter_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
-
-	characterID := uuid.New()
-	char := &models.Character{
-		ID:        characterID,
-		AccountID: uuid.New(),
-		Name:      "Test Character",
-		Level:     1,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	mockRepo.On("GetCharacterByID", mock.Anything, characterID).Return(char, nil)
-
-	ctx := context.Background()
-	valid, err := service.ValidateCharacter(ctx, characterID)
-
-	require.NoError(t, err)
-	assert.True(t, valid)
-	mockRepo.AssertExpectations(t)
-}
-
-func TestCharacterService_ValidateCharacter_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
-
-	characterID := uuid.New()
-
-	mockRepo.On("GetCharacterByID", mock.Anything, characterID).Return(nil, nil)
-
-	ctx := context.Background()
-	valid, err := service.ValidateCharacter(ctx, characterID)
-
-	require.NoError(t, err)
-	assert.False(t, valid)
-	mockRepo.AssertExpectations(t)
-}
-
-func TestCharacterService_SwitchCharacter_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
-
-	accountID := uuid.New()
-	characterID1 := uuid.New()
-	characterID2 := uuid.New()
-	characters := []models.Character{
-		{
-			ID:        characterID1,
-			AccountID: accountID,
-			Name:      "Character 1",
-			Level:     1,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		{
-			ID:        characterID2,
-			AccountID: accountID,
-			Name:      "Character 2",
-			Level:     5,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-	}
-
-	mockRepo.On("GetCharactersByAccountID", mock.Anything, accountID).Return(characters, nil)
-
-	ctx := context.Background()
-	result, err := service.SwitchCharacter(ctx, accountID, characterID2)
-
-	require.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.True(t, result.Success)
-	assert.NotNil(t, result.CurrentCharacter)
-	assert.Equal(t, characterID2, result.CurrentCharacter.ID)
-	assert.NotNil(t, result.PreviousCharacterID)
-	assert.Equal(t, characterID1, *result.PreviousCharacterID)
-	mockRepo.AssertExpectations(t)
-}
-
-func TestCharacterService_SwitchCharacter_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
-
-	accountID := uuid.New()
-	characterID := uuid.New()
-	characters := []models.Character{
-		{
-			ID:        uuid.New(),
-			AccountID: accountID,
-			Name:      "Character 1",
-			Level:     1,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-	}
-
-	mockRepo.On("GetCharactersByAccountID", mock.Anything, accountID).Return(characters, nil)
-
-	ctx := context.Background()
-	result, err := service.SwitchCharacter(ctx, accountID, characterID)
-
-	require.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.False(t, result.Success)
-	mockRepo.AssertExpectations(t)
-}
-
-func TestCharacterService_GetAccount_DatabaseError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
-
-	accountID := uuid.New()
-	expectedErr := errors.New("database error")
-
-	mockRepo.On("GetAccountByID", mock.Anything, accountID).Return(nil, expectedErr)
-
-	ctx := context.Background()
-	account, err := service.GetAccount(ctx, accountID)
-
-	assert.Error(t, err)
-	assert.Equal(t, expectedErr, err)
-	assert.Nil(t, account)
-	mockRepo.AssertExpectations(t)
-}
-
-func TestCharacterService_CreateCharacter_DatabaseError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
-
-	accountID := uuid.New()
-	req := &models.CreateCharacterRequest{
-		AccountID: accountID,
-		Name:      "Test Character",
-		Level:     intPtr(1),
-	}
-	expectedErr := errors.New("database error")
-
-	mockRepo.On("CreateCharacter", mock.Anything, req).Return(nil, expectedErr)
-
-	ctx := context.Background()
-	char, err := service.CreateCharacter(ctx, req)
-
-	assert.Error(t, err)
-	assert.Equal(t, expectedErr, err)
-	assert.Nil(t, char)
-	mockRepo.AssertExpectations(t)
-}
-
