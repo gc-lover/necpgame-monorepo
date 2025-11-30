@@ -1,0 +1,135 @@
+# Issue: #316
+openapi: 3.0.3
+info:
+  title: Maintenance Admin Service API
+  description: Административный API для управления обслуживанием
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8097/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Maintenance Admin
+    description: Административный API для управления обслуживанием
+
+paths:
+  /admin/maintenance/windows:
+    post:
+      tags:
+        - Maintenance Admin
+      summary: Создать окно обслуживания (admin)
+      operationId: adminCreateMaintenanceWindow
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/CreateMaintenanceWindowRequest'
+      responses:
+        '201':
+          description: Окно обслуживания создано
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав администратора
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /admin/maintenance/start:
+    post:
+      tags:
+        - Maintenance Admin
+      summary: Принудительно запустить обслуживание (admin)
+      operationId: adminStartMaintenance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/AdminStartMaintenanceRequest'
+      responses:
+        '200':
+          description: Обслуживание запущено
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав администратора
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /admin/maintenance/stop:
+    post:
+      tags:
+        - Maintenance Admin
+      summary: Принудительно остановить обслуживание (admin)
+      operationId: adminStopMaintenance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/AdminStopMaintenanceRequest'
+      responses:
+        '200':
+          description: Обслуживание остановлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: stopped
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав администратора
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

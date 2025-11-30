@@ -1,0 +1,137 @@
+# Issue: #316
+openapi: 3.0.3
+info:
+  title: Maintenance Status Service API
+  description: API для управления статусом обслуживания и планирования
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8097/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Maintenance Status
+    description: Управление статусом обслуживания
+  - name: Maintenance Scheduler
+    description: Планирование обслуживания
+
+paths:
+  /infrastructure/maintenance/status:
+    get:
+      tags:
+        - Maintenance Status
+      summary: Получить текущий статус обслуживания
+      operationId: getMaintenanceStatus
+      responses:
+        '200':
+          description: Текущий статус обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceStatus'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Maintenance Status
+      summary: Обновить статус обслуживания
+      operationId: updateMaintenanceStatus
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/UpdateMaintenanceStatusRequest'
+      responses:
+        '200':
+          description: Статус обслуживания обновлён
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceStatus'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/schedule:
+    post:
+      tags:
+        - Maintenance Scheduler
+      summary: Запланировать обслуживание
+      operationId: scheduleMaintenance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/ScheduleMaintenanceRequest'
+      responses:
+        '201':
+          description: Обслуживание запланировано
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/schedule/next:
+    get:
+      tags:
+        - Maintenance Scheduler
+      summary: Получить следующее запланированное обслуживание
+      operationId: getNextMaintenance
+      responses:
+        '200':
+          description: Следующее обслуживание
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindow'
+                nullable: true
+        '404':
+          description: Нет запланированного обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

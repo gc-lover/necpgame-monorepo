@@ -1,0 +1,131 @@
+# Issue: #316
+openapi: 3.0.3
+info:
+  title: Maintenance Notifications Service API
+  description: API для управления уведомлениями и событиями обслуживания
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8097/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Maintenance Notifications
+    description: Управление уведомлениями об обслуживании
+  - name: Maintenance Events
+    description: События обслуживания
+
+paths:
+  /infrastructure/maintenance/notify:
+    post:
+      tags:
+        - Maintenance Notifications
+      summary: Отправить уведомление об обслуживании
+      operationId: sendMaintenanceNotification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/SendMaintenanceNotificationRequest'
+      responses:
+        '200':
+          description: Уведомление отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: sent
+                  recipients_count:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/notifications/{window_id}:
+    get:
+      tags:
+        - Maintenance Notifications
+      summary: Получить уведомления для окна обслуживания
+      operationId: getMaintenanceNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceNotificationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/events/{window_id}:
+    get:
+      tags:
+        - Maintenance Events
+      summary: Получить события для окна обслуживания
+      operationId: getMaintenanceEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
