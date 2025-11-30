@@ -18,9 +18,9 @@ Search open tasks for DevOps via MCP GitHub Project, including CI/CD monitoring.
 
 2. **Search CI Reports:**
    ```javascript
-   // Get recent CI reports with failures
+   // Get recent CI reports (by title starting with [CI])
    await mcp_github_search_issues({
-     query: 'repo:gc-lover/necpgame-monorepo label:ci-report is:open',
+     query: 'repo:gc-lover/necpgame-monorepo is:issue is:open title:"[CI]"',
      perPage: 10,
      sort: 'updated',
      order: 'desc'
@@ -28,7 +28,7 @@ Search open tasks for DevOps via MCP GitHub Project, including CI/CD monitoring.
    
    // Get only failed CI reports
    await mcp_github_search_issues({
-     query: 'repo:gc-lover/necpgame-monorepo label:ci-report is:open title:"FAILURE"',
+     query: 'repo:gc-lover/necpgame-monorepo is:issue is:open title:"[CI]" title:"FAILURE"',
      perPage: 10
    });
    ```
