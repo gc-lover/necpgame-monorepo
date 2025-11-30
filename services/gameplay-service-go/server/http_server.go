@@ -12,6 +12,7 @@ import (
 	"github.com/necpgame/gameplay-service-go/models"
 	"github.com/necpgame/gameplay-service-go/pkg/api"
 	"github.com/necpgame/gameplay-service-go/pkg/combosapi"
+	"github.com/necpgame/gameplay-service-go/pkg/implantsstatsapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,12 +44,13 @@ type HTTPServer struct {
 	affixService     AffixServiceInterface
 	timeTrialService TimeTrialServiceInterface
 	comboService     ComboServiceInterface
+	implantsStatsService ImplantsStatsServiceInterface
 	weaponMechanicsService WeaponMechanicsServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, implantsStatsService ImplantsStatsServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
@@ -58,6 +60,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		affixService:     affixService,
 		timeTrialService: timeTrialService,
 		comboService:     comboService,
+		implantsStatsService: implantsStatsService,
 		weaponMechanicsService: weaponMechanicsService,
 		logger:           GetLogger(),
 	}
@@ -99,6 +102,12 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	comboHandlers := NewComboHandlers(comboService)
 	comboAPI := router.PathPrefix("/api/v1/gameplay/combat/combos").Subrouter()
 	combosapi.HandlerFromMux(comboHandlers, comboAPI)
+
+	if implantsStatsService != nil {
+		implantsStatsHandlers := NewImplantsStatsHandlers(implantsStatsService)
+		implantsStatsAPI := router.PathPrefix("/api/v1/gameplay/combat/implants").Subrouter()
+		implantsstatsapi.HandlerFromMux(implantsStatsHandlers, implantsStatsAPI)
+	}
 
 	if weaponMechanicsService != nil {
 		// TODO: After running `make generate-all-weapon-apis`, uncomment these lines:
@@ -589,4 +598,3 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
-

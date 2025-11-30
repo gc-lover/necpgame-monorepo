@@ -1,4 +1,4 @@
-.PHONY: generate-api clean verify-api check-deps install-deps generate-weapon-core-api generate-weapon-combat-api generate-weapon-effects-api generate-weapon-advanced-api generate-all-weapon-apis verify-weapon-apis
+.PHONY: generate-api clean verify-api check-deps install-deps generate-weapon-core-api generate-weapon-combat-api generate-weapon-effects-api generate-weapon-advanced-api generate-all-weapon-apis verify-weapon-apis generate-implants-stats-api
 
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
@@ -10,6 +10,7 @@ WEAPON_CORE_SPEC := gameplay-weapon-special-mechanics-core-service
 WEAPON_COMBAT_SPEC := gameplay-weapon-special-mechanics-combat-service
 WEAPON_EFFECTS_SPEC := gameplay-weapon-special-mechanics-effects-service
 WEAPON_ADVANCED_SPEC := gameplay-weapon-special-mechanics-advanced-service
+IMPLANTS_STATS_SPEC := combat-implants-stats-service
 
 check-deps:
 	@echo "Checking dependencies..."
@@ -31,7 +32,12 @@ verify-weapon-apis: check-deps
 	@$(REDOCLY_CLI) lint $(SPEC_DIR)/$(WEAPON_ADVANCED_SPEC).yaml || { echo "WARNING  $(WEAPON_ADVANCED_SPEC) validation failed"; exit 1; }
 	@echo "OK All weapon mechanics specs are valid"
 
-verify-api: verify-weapon-apis
+verify-implants-stats-api: check-deps
+	@echo "Verifying implants stats OpenAPI spec..."
+	@$(REDOCLY_CLI) lint $(SPEC_DIR)/$(IMPLANTS_STATS_SPEC).yaml || { echo "WARNING  $(IMPLANTS_STATS_SPEC) validation failed"; exit 1; }
+	@echo "OK $(IMPLANTS_STATS_SPEC) spec is valid"
+
+verify-api: verify-weapon-apis verify-implants-stats-api
 	@echo "OK All OpenAPI specs verified"
 
 generate-weapon-core-api: check-deps
@@ -65,10 +71,17 @@ generate-weapon-advanced-api: check-deps
 generate-all-weapon-apis: generate-weapon-core-api generate-weapon-combat-api generate-weapon-effects-api generate-weapon-advanced-api
 	@echo "OK All weapon mechanics APIs generated"
 
-generate-api: generate-all-weapon-apis
+generate-implants-stats-api: check-deps
+	@echo "Generating implants stats API..."
+	@mkdir -p pkg/implantsstatsapi
+	@$(REDOCLY_CLI) bundle $(SPEC_DIR)/$(IMPLANTS_STATS_SPEC).yaml -o pkg/implantsstatsapi/$(IMPLANTS_STATS_SPEC).bundled.yaml || { echo "❌ Failed to bundle $(IMPLANTS_STATS_SPEC)"; exit 1; }
+	@$(OAPI_CODEGEN) -package implantsstatsapi -generate types,$(ROUTER_TYPE) -o pkg/implantsstatsapi/api.gen.go pkg/implantsstatsapi/$(IMPLANTS_STATS_SPEC).bundled.yaml || { echo "❌ Failed to generate $(IMPLANTS_STATS_SPEC)"; exit 1; }
+	@echo "OK Generated $(IMPLANTS_STATS_SPEC)"
+
+generate-api: generate-all-weapon-apis generate-implants-stats-api
 	@echo "OK All APIs generated"
 
 clean:
 	@echo "Cleaning generated files"
-	@rm -rf pkg/weaponcoreapi pkg/weaponcombatapi pkg/weaponeffectsapi pkg/weaponadvancedapi
+	@rm -rf pkg/weaponcoreapi pkg/weaponcombatapi pkg/weaponeffectsapi pkg/weaponadvancedapi pkg/implantsstatsapi
 	@echo "OK Cleaned generated files"
