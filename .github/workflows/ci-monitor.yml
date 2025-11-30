@@ -43,11 +43,23 @@ jobs:
             } else {
               console.log('No workflow_run event, searching for latest Backend CI run...');
               
-              const workflowName = 'Backend CI';
-              const { data: workflows } = await github.rest.actions.listWorkflowRunsForRepo({
+              const { data: workflowsList } = await github.rest.actions.listWorkflowsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              
+              const backendWorkflow = workflowsList.workflows.find(w => w.name === 'Backend CI' || w.path.endsWith('ci-backend.yml'));
+              
+              if (!backendWorkflow) {
+                console.log('Backend CI workflow not found');
+                core.setOutput('should_create_issue', 'false');
+                return;
+              }
+              
+              const { data: workflows } = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: workflowName,
+                workflow_id: backendWorkflow.id,
                 per_page: 1
               });
               
