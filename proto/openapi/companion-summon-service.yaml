@@ -1,0 +1,139 @@
+# Issue: #314
+openapi: 3.0.3
+info:
+  title: Companion Summon Service API
+  description: |
+    API для призыва и отзыва компаньонов.
+    
+    **Основные возможности:**
+    - Призыв компаньона
+    - Отзыв компаньона
+    - Получение активного компаньона игрока
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Summon
+    description: Призыв и отзыв компаньонов
+
+paths:
+  /gameplay/companions/{companion_id}/summon:
+    post:
+      tags:
+        - Companion Summon
+      summary: Призвать компаньона
+      operationId: summonCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "companion-schemas.yaml#/components/schemas/SummonCompanionRequest"
+      responses:
+        "200":
+          description: Компаньон призван
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/PlayerCompanion"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/dismiss:
+    post:
+      tags:
+        - Companion Summon
+      summary: Отозвать компаньона
+      operationId: dismissCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "companion-schemas.yaml#/components/schemas/DismissCompanionRequest"
+      responses:
+        "200":
+          description: Компаньон отозван
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/PlayerCompanion"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/active/{player_id}:
+    get:
+      tags:
+        - Companion Summon
+      summary: Получить активного компаньона игрока
+      operationId: getActiveCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Активный компаньон
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/PlayerCompanion"
+          nullable: true
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

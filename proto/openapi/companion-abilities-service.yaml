@@ -1,0 +1,113 @@
+# Issue: #314
+openapi: 3.0.3
+info:
+  title: Companion Abilities Service API
+  description: |
+    API для управления способностями компаньонов.
+    
+    **Основные возможности:**
+    - Получение способностей компаньона
+    - Использование способности компаньона
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Abilities
+    description: Способности компаньонов
+
+paths:
+  /gameplay/companions/{companion_id}/abilities:
+    get:
+      tags:
+        - Companion Abilities
+      summary: Получить способности компаньона
+      operationId: getCompanionAbilities
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: ability_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - PASSIVE
+      responses:
+        "200":
+          description: Способности компаньона
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/CompanionAbilitiesResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/abilities/{ability_id}/use:
+    post:
+      tags:
+        - Companion Abilities
+      summary: Использовать способность компаньона
+      operationId: useCompanionAbility
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: ability_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "companion-schemas.yaml#/components/schemas/UseAbilityRequest"
+      responses:
+        "200":
+          description: Способность использована
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/AbilityUsageResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+
