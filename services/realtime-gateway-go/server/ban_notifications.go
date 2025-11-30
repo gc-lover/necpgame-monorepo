@@ -1,4 +1,4 @@
-// Issue: #140899117
+// Issue: #140899117, #141889261
 package server
 
 import (
@@ -205,7 +205,11 @@ func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanN
 		response["ban_type"] = *notification.Type
 	}
 
-	message, _ := json.Marshal(response)
+	message, err := json.Marshal(response)
+	if err != nil {
+		bns.logger.WithError(err).Error("Failed to marshal ban notification message")
+		return nil
+	}
 	return message
 }
 
