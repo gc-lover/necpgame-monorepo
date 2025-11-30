@@ -1,0 +1,146 @@
+# Issue: #314
+openapi: 3.0.3
+info:
+  title: Companion Customization Service API
+  description: |
+    API для кастомизации компаньонов.
+    
+    **Основные возможности:**
+    - Переименование компаньона
+    - Экипировка предметов компаньону
+    - Кастомизация компаньона
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Customization
+    description: Кастомизация компаньонов
+
+paths:
+  /gameplay/companions/{companion_id}/rename:
+    post:
+      tags:
+        - Companion Customization
+      summary: Переименовать компаньона
+      operationId: renameCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "companion-schemas.yaml#/components/schemas/RenameCompanionRequest"
+      responses:
+        "200":
+          description: Компаньон переименован
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/PlayerCompanion"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/equip:
+    post:
+      tags:
+        - Companion Customization
+      summary: Экипировать предмет компаньону
+      operationId: equipCompanionItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "companion-schemas.yaml#/components/schemas/EquipCompanionItemRequest"
+      responses:
+        "200":
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/PlayerCompanion"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/customize:
+    post:
+      tags:
+        - Companion Customization
+      summary: Кастомизировать компаньона
+      operationId: customizeCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "companion-schemas.yaml#/components/schemas/CustomizeCompanionRequest"
+      responses:
+        "200":
+          description: Компаньон кастомизирован
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/PlayerCompanion"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

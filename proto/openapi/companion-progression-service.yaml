@@ -1,0 +1,100 @@
+# Issue: #314
+openapi: 3.0.3
+info:
+  title: Companion Progression Service API
+  description: |
+    API для прогрессии компаньонов.
+    
+    **Основные возможности:**
+    - Добавление опыта компаньону
+    - Получение прогрессии компаньона
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Progression
+    description: Прогрессия компаньонов
+
+paths:
+  /gameplay/companions/{companion_id}/add-xp:
+    post:
+      tags:
+        - Companion Progression
+      summary: Добавить опыт компаньону
+      operationId: addCompanionXP
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "companion-schemas.yaml#/components/schemas/AddXPRequest"
+      responses:
+        "200":
+          description: Опыт добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/PlayerCompanion"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/progression:
+    get:
+      tags:
+        - Companion Progression
+      summary: Получить прогрессию компаньона
+      operationId: getCompanionProgression
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Прогрессия компаньона
+          content:
+            application/json:
+              schema:
+                $ref: "companion-schemas.yaml#/components/schemas/CompanionProgressionResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

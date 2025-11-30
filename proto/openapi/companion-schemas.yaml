@@ -1,0 +1,432 @@
+# Issue: #314
+openapi: 3.0.3
+info:
+  title: Companion Common Schemas
+  description: Общие схемы для системы компаньонов
+  version: 1.0.0
+
+components:
+  schemas:
+    CompanionType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 255
+        category:
+          type: string
+          enum:
+            - COMBAT_DRONE
+            - UTILITY
+            - SOCIAL_PET
+        subcategory:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        base_health:
+          type: integer
+        base_damage:
+          type: integer
+        base_xp:
+          type: integer
+        max_level:
+          type: integer
+          default: 50
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionAbility'
+        stats:
+          type: object
+          additionalProperties: true
+        cost:
+          type: integer
+          format: int64
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CompanionAbility:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+          format: uuid
+        ability_type:
+          type: string
+          enum:
+            - ACTIVE
+            - PASSIVE
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        cooldown_seconds:
+          type: integer
+          nullable: true
+        effects:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+
+    PlayerCompanion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+          format: uuid
+        companion_type:
+          $ref: '#/components/schemas/CompanionType'
+        name:
+          type: string
+          maxLength: 255
+        level:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 1
+        experience:
+          type: integer
+          minimum: 0
+          default: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        health:
+          type: integer
+        damage:
+          type: integer
+        is_summoned:
+          type: boolean
+          default: false
+        summoned_at:
+          type: string
+          format: date-time
+          nullable: true
+        equipment:
+          type: object
+          additionalProperties: true
+          nullable: true
+        customization:
+          type: object
+          additionalProperties: true
+          nullable: true
+        purchased_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PurchaseCompanionRequest:
+      type: object
+      required:
+        - player_id
+        - companion_type_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+          format: uuid
+
+    SummonCompanionRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    DismissCompanionRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    AddXPRequest:
+      type: object
+      required:
+        - player_id
+        - amount
+        - source
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          maxLength: 100
+          enum:
+            - enemy_killed
+            - combat_assistance
+            - loot_collected
+            - hack_completed
+            - craft_completed
+
+    UseAbilityRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    RenameCompanionRequest:
+      type: object
+      required:
+        - player_id
+        - name
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+
+    EquipCompanionItemRequest:
+      type: object
+      required:
+        - player_id
+        - item_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+
+    CustomizeCompanionRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        customization:
+          type: object
+          additionalProperties: true
+
+    CompanionAttackRequest:
+      type: object
+      required:
+        - player_id
+        - target_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+
+    CompanionDefendRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    AvailableCompanionsResponse:
+      type: object
+      properties:
+        companions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionType'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    OwnedCompanionsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        companions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerCompanion'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    CompanionProgressionResponse:
+      type: object
+      properties:
+        companion_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+        experience:
+          type: integer
+        experience_to_next_level:
+          type: integer
+        health:
+          type: integer
+        damage:
+          type: integer
+        leveled_up:
+          type: boolean
+
+    CompanionAbilitiesResponse:
+      type: object
+      properties:
+        companion_id:
+          type: string
+          format: uuid
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionAbility'
+
+    AbilityUsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ability_id:
+          type: string
+          format: uuid
+        cooldown_until:
+          type: string
+          format: date-time
+          nullable: true
+        effects_applied:
+          type: object
+          additionalProperties: true
+
+    CompanionAttackResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        damage_dealt:
+          type: integer
+        target_id:
+          type: string
+          format: uuid
+
+    CompanionDefendResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        defense_active:
+          type: boolean
+        defense_duration_seconds:
+          type: integer
+
+    CompanionShopCatalogResponse:
+      type: object
+      properties:
+        companions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionType'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    CompanionEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companion_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - companion:purchased
+            - companion:summoned
+            - companion:dismissed
+            - companion:level-up
+            - companion:ability-used
+            - companion:customized
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    CompanionEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
