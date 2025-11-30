@@ -38,6 +38,7 @@ export EXCLUDED_PATTERNS=(
   "*/pkg/api/api.gen.go"
   "*.bundled.yaml"
   "*.merged.yaml"
+  "docker-compose*.yml"
   "client/UE5/*"
   "*.uasset"
   "*.umap"
