@@ -45,6 +45,9 @@ func main() {
 	worldEventsRepo := server.NewWorldEventsRepository(db)
 	worldEventsService := server.NewWorldEventsService(worldEventsRepo)
 
+	worldStateRepo := server.NewWorldStateRepository(db)
+	worldStateService := server.NewWorldStateService(worldStateRepo)
+
 	jwtIssuer := getEnv("JWT_ISSUER", "")
 	jwksURL := getEnv("JWKS_URL", "")
 	authEnabled := jwtIssuer != "" && jwksURL != ""
@@ -54,7 +57,7 @@ func main() {
 		jwtValidator = server.NewJwtValidator(jwtIssuer, jwksURL, logger)
 	}
 
-	httpServer := server.NewHTTPServer(addr, worldService, worldEventsService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, worldService, worldEventsService, worldStateService, jwtValidator, authEnabled)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

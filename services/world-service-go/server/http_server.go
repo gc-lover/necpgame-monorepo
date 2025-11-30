@@ -16,19 +16,21 @@ type HTTPServer struct {
 	router            *mux.Router
 	worldService      WorldService
 	worldEventsService WorldEventsServiceInterface
+	worldStateService  WorldStateServiceInterface
 	logger            *logrus.Logger
 	server            *http.Server
 	jwtValidator      *JwtValidator
 	authEnabled       bool
 }
 
-func NewHTTPServer(addr string, worldService WorldService, worldEventsService WorldEventsServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, worldService WorldService, worldEventsService WorldEventsServiceInterface, worldStateService WorldStateServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:              addr,
 		router:            router,
 		worldService:      worldService,
 		worldEventsService: worldEventsService,
+		worldStateService:  worldStateService,
 		logger:            GetLogger(),
 		jwtValidator:      jwtValidator,
 		authEnabled:       authEnabled,
@@ -79,6 +81,13 @@ func NewHTTPServer(addr string, worldService WorldService, worldEventsService Wo
 	worldAPI.HandleFunc("/travel-events/probability", server.calculateTravelEventProbability).Methods("GET")
 	worldAPI.HandleFunc("/travel-events/rewards/{eventId}", server.getTravelEventRewards).Methods("GET")
 	worldAPI.HandleFunc("/travel-events/penalties/{eventId}", server.getTravelEventPenalties).Methods("GET")
+
+	// World State endpoints
+	worldAPI.HandleFunc("/state/{key}", server.getStateByKey).Methods("GET")
+	worldAPI.HandleFunc("/state/{key}", server.updateState).Methods("PUT")
+	worldAPI.HandleFunc("/state/{key}", server.deleteState).Methods("DELETE")
+	worldAPI.HandleFunc("/state/category/{category}", server.getStateByCategory).Methods("GET")
+	worldAPI.HandleFunc("/state/batch", server.batchUpdateState).Methods("POST")
 
 	worldEventsAPI := router.PathPrefix("/api/v1").Subrouter()
 	if authEnabled {

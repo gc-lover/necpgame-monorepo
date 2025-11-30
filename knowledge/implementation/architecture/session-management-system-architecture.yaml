@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:30:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:05:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -275,6 +275,75 @@ architecture:
       - Синхронизация состояния сессий
       - Уведомления о событиях
       - Управление WebSocket соединениями
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для создания сессий, обновления состояния и закрытия сессий
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед созданием сессии и переподключением
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание сессии, освобождение ресурсов при закрытии)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния сессий (создание сессии, обновление heartbeat, переподключение, закрытие)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: SessionCreatedEvent, SessionHeartbeatEvent, SessionReconnectedEvent, SessionExpiredEvent, SessionClosedEvent.
+    cqrs_pattern: |
+      Разделение команд (создание сессии, обновление heartbeat, переподключение, закрытие) и запросов
+      (получение информации о сессии, получение состояния сессии, статистика) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как создание сессии (создание сессии, синхронизация с Character Service,
+      обновление состояния в World Service) или закрытие сессии (закрытие сессии, освобождение ресурсов в Gameplay Service,
+      Social Service, Economy Service), используется Saga Pattern для обеспечения атомарности операций
+      между Auth Service и другими сервисами.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    session_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание сессии: event-based, ~0.01-0.05 events/sec на игрока
+        - Закрытие сессии: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение информации о сессии: event-based, ~0.1-0.3 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 50-200ms для операций с сессиями
+      sync_strategy: Strong Consistency (ACID транзакции) для создания и закрытия сессий
+
+    heartbeat_operations:
+      tickrate: 1-2 Hz (каждые 30-60 секунд)
+      network_load: |
+        - Heartbeat запросы: 1-2 Hz, ~0.1-0.2 KB/sec на игрока
+        - Обновление состояния: 1-2 Hz, ~0.1-0.2 KB/sec на игрока
+        - Batch обновления в БД: 1-5 Hz, ~0.5-1 KB/sec (на все сессии)
+        - Общий трафик: ~0.2-0.4 KB/sec на игрока
+      latency_requirements: < 20-50ms для обработки heartbeat
+      sync_strategy: Eventual Consistency для heartbeat (batch обновления в БД каждые 100 запросов)
+
+    reconnection_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Переподключение: event-based, ~0.01-0.05 events/sec на игрока
+        - Восстановление состояния: event-based, ~0.1-0.3 KB/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 100-300ms для переподключения
+      sync_strategy: Strong Consistency (ACID транзакции) для переподключения
+
+    state_synchronization:
+      tickrate: Event-based (on-demand) + 1-5 Hz для синхронизации состояния
+      network_load: |
+        - Синхронизация состояния: 1-5 Hz, ~0.1-0.3 KB/sec на игрока
+        - Обновление состояния в Redis: 1-5 Hz, ~0.1-0.2 KB/sec на игрока
+        - Синхронизация с БД: 1-5 Hz, ~0.1-0.2 KB/sec (на все сессии)
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      latency_requirements: < 30-100ms для синхронизации состояния
+      sync_strategy: Eventual Consistency для синхронизации состояния (Redis + периодическая синхронизация с БД)
 
   database_schema:
     tables:
@@ -577,6 +646,17 @@ next_steps:
   - Определение формата состояний и событий
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния сессий
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание сессии, закрытие сессии с освобождением ресурсов)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для операций с сессиями, heartbeat, переподключений и синхронизации состояния
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

@@ -1,0 +1,69 @@
+# Issue: #141889941
+openapi: 3.0.3
+info:
+  title: Cosmetic Events Service API
+  description: API для событий косметики
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Events
+    description: События косметики
+
+paths:
+  /monetization/cosmetic/events/{player_id}:
+    get:
+      tags:
+        - Events
+      summary: Получить события косметики игрока
+      operationId: getCosmeticEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - cosmetic:purchased
+              - cosmetic:equipped
+              - cosmetic:unequipped
+              - cosmetic:shop-rotated
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: События косметики
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/CosmeticEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

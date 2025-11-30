@@ -260,3 +260,31 @@ type TravelEventPenaltiesResponse struct {
 	Penalties []TravelEventPenalty `json:"penalties"`
 }
 
+// Global State models (Issue: #140876058)
+type GlobalState struct {
+	Key       string                 `json:"key" db:"key"`
+	Category  string                 `json:"category" db:"category"`
+	Value     map[string]interface{} `json:"value" db:"value"`
+	Version   int                    `json:"version" db:"version"`
+	SyncType  string                 `json:"sync_type" db:"sync_type"`
+	CreatedAt time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time              `json:"updated_at" db:"updated_at"`
+}
+
+type StateUpdateRequest struct {
+	Value    map[string]interface{} `json:"value"`
+	Version  *int                   `json:"version,omitempty"`
+	SyncType *string                `json:"sync_type,omitempty"`
+}
+
+type BatchStateUpdateRequest struct {
+	Updates []BatchStateUpdate `json:"updates"`
+}
+
+type BatchStateUpdate struct {
+	Key      string                 `json:"key"`
+	Value    map[string]interface{} `json:"value"`
+	Version  *int                   `json:"version,omitempty"`
+	SyncType *string                `json:"sync_type,omitempty"`
+}
+

@@ -1,0 +1,224 @@
+# Issue: #141665240
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Stealth Achievements Service API
+  description: |
+    API для достижений стелса, карты угроз и репутационных последствий.
+    
+    **Основные возможности:**
+    - Достижения стелса
+    - Карта угроз
+    - Расчет репутационных последствий
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Achievements
+    description: Достижения стелса
+  - name: Threat Map
+    description: Карта угроз
+  - name: Reputation
+    description: Репутационные последствия
+
+paths:
+  /gameplay/combat/stealth/achievements:
+    get:
+      tags:
+        - Achievements
+      summary: Получить достижения стелса
+      operationId: getStealthAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Достижения стелса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthAchievementsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/threat-map:
+    get:
+      tags:
+        - Threat Map
+      summary: Получить карту угроз
+      operationId: getThreatMap
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Карта угроз
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreatMapResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/reputation/calculate:
+    post:
+      tags:
+        - Reputation
+      summary: Рассчитать репутационные последствия
+      operationId: calculateReputationImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculateReputationImpactRequest"
+      responses:
+        "200":
+          description: Репутационные последствия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReputationImpactResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    StealthAchievementsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/StealthAchievement"
+
+    StealthAchievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        achievement_type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        unlocked_at:
+          type: string
+          format: date-time
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    ThreatMapResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        threats:
+          type: array
+          items:
+            $ref: "#/components/schemas/Threat"
+        threat_level:
+          type: string
+          enum: [low, medium, high, critical]
+
+    Threat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        threat_type:
+          type: string
+          enum: [guard, camera, alarm, npc, network]
+        position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        detection_range:
+          type: number
+          minimum: 0
+        threat_level:
+          type: string
+          enum: [low, medium, high, critical]
+        active:
+          type: boolean
+
+    CalculateReputationImpactRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [cover, shadows, disguise, ambush_kill, distraction, crowd, camera_hack, network_signature]
+        target_faction:
+          type: string
+        witnesses:
+          type: integer
+          minimum: 0
+
+    ReputationImpactResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        faction_impacts:
+          type: array
+          items:
+            type: object
+            properties:
+              faction:
+                type: string
+              impact:
+                type: number
+                description: Изменение репутации (может быть отрицательным)
+        total_impact:
+          type: number
+
+security:
+  - BearerAuth: []
+

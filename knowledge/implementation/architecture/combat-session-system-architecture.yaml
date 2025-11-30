@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T19:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:30:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -182,6 +182,64 @@ architecture:
       - Realtime синхронизация состояния боя
       - Push уведомления о событиях боя
       - Синхронизация действий участников
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для создания и обновления боевых сессий
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед выполнением действий в бою
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание сессии, распределение наград)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния боевых сессий (создание, действия, завершение)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: CombatSessionCreatedEvent, CombatActionPerformedEvent, CombatSessionEndedEvent.
+    cqrs_pattern: |
+      Разделение команд (создание сессии, выполнение действий) и запросов (получение сессии,
+      история действий) для оптимизации производительности и масштабируемости.
+      Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как завершение боя (расчет наград,
+      распределение лута, обновление прогресса квестов), используется
+      Saga Pattern для обеспечения атомарности операций между Gameplay Service,
+      Economy Service и Quest Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    combat_actions:
+      tickrate: Event-based (on-demand) + 60-128 Hz для синхронизации состояния
+      network_load: |
+        - Выполнение действий: event-based, ~5-20 events/sec на сессию
+        - Синхронизация состояния: 60-128 Hz, ~3-5 KB/sec на участника
+        - Обновление позиций: 60-128 Hz, ~2-3 KB/sec на участника
+        - Общий трафик: ~5-10 KB/sec на участника
+      latency_requirements: < 30-100ms для обработки действий
+      sync_strategy: Strong Consistency для действий, Eventual Consistency для статистики
+
+    damage_calculation:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Расчет урона: event-based, ~5-10 events/sec на сессию
+        - Обновление здоровья: event-based, ~2-5 events/sec на участника
+        - Общий трафик: ~0.5-1 KB/sec на участника
+      latency_requirements: < 10-50ms для расчета урона
+      sync_strategy: Strong Consistency
+
+    turn_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Смена хода: event-based, ~0.1-0.5 events/sec на сессию
+        - Обновление порядка ходов: event-based, ~0.1-0.2 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на сессию
+      latency_requirements: < 50-200ms для смены хода
+      sync_strategy: Strong Consistency
 
   database_schema:
     tables:
@@ -503,6 +561,17 @@ next_steps:
   - Создание request/response схем
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния боевых сессий
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (завершение боя, распределение наград)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для боевых действий, расчета урона и управления ходами
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

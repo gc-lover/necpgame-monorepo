@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-23T20:00:00Z
+  version: "1.1.0"
+  last_updated: 2025-11-30T19:25:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -25,7 +25,7 @@ metadata:
       relation: implements
     - id: analysis-combat-freerun-brief
       relation: extends
-  github_issue: 160
+  github_issue: 1513
   visibility: internal
   audience:
     - architect
@@ -88,7 +88,15 @@ architecture:
       endpoints:
         - POST /api/v1/gameplay/combat/freerun/actions - выполнение действия паркура
         - GET /api/v1/gameplay/combat/freerun/actions/available - доступные действия
+        - POST /api/v1/gameplay/combat/freerun/actions/wall-run - активация Wall Run
+        - POST /api/v1/gameplay/combat/freerun/actions/double-jump - выполнение Double Jump
+        - POST /api/v1/gameplay/combat/freerun/actions/slide - активация Slide
+        - POST /api/v1/gameplay/combat/freerun/actions/air-dash - выполнение Air Dash
+        - POST /api/v1/gameplay/combat/freerun/actions/wall-kick - выполнение Wall Kick
+        - POST /api/v1/gameplay/combat/freerun/actions/vault - выполнение Vault
         - POST /api/v1/gameplay/combat/freerun/combo - выполнение комбо паркура
+        - POST /api/v1/gameplay/combat/freerun/movement-attack - атака во время движения
+        - POST /api/v1/gameplay/combat/freerun/movement-combo - комбо из движения
         - GET /api/v1/gameplay/combat/freerun/stamina - состояние выносливости
         - POST /api/v1/gameplay/combat/freerun/stamina/recover - восстановление выносливости
         - GET /api/v1/gameplay/combat/freerun/loadout - получение лоадаута паркура
@@ -102,7 +110,17 @@ architecture:
         - wss://api.necp.game/v1/gameplay/combat/freerun/telemetry/{characterId} - телеметрия тренировки
       events_published:
         - combat.freerun.action: выполнение действия паркура
+        - combat.freerun.wall-run.started: начало Wall Run
+        - combat.freerun.wall-run.ended: окончание Wall Run
+        - combat.freerun.double-jump: выполнение Double Jump
+        - combat.freerun.slide.started: начало Slide
+        - combat.freerun.slide.ended: окончание Slide
+        - combat.freerun.air-dash: выполнение Air Dash
+        - combat.freerun.wall-kick: выполнение Wall Kick
+        - combat.freerun.vault: выполнение Vault
         - combat.freerun.combo: выполнение комбо паркура
+        - combat.freerun.movement-attack: атака во время движения
+        - combat.freerun.movement-combo: комбо из движения
         - combat.freerun.stamina: изменение выносливости
         - combat.freerun.mobile-ability: активация мобильной способности
         - combat.freerun.route-created: создание пользовательского маршрута
@@ -149,6 +167,44 @@ architecture:
       description: Использование имплантов для ног
       stamina_cost: 18
       automation_level: "auto/manual"
+
+    - name: wall_run
+      description: Бег по стенам
+      stamina_cost: 15
+      stamina_per_second: 15
+      automation_level: "auto/manual"
+      category: "basic_acrobatics"
+
+    - name: double_jump
+      description: Двойной прыжок
+      stamina_cost: 12
+      automation_level: "auto/manual"
+      category: "basic_acrobatics"
+
+    - name: slide
+      description: Скольжение
+      stamina_cost: 6
+      automation_level: "auto/manual"
+      category: "basic_acrobatics"
+
+    - name: air_dash
+      description: Воздушный рывок
+      stamina_cost: 12
+      cooldown: 2.0
+      automation_level: "manual"
+      category: "advanced_acrobatics"
+
+    - name: wall_kick
+      description: Отталкивание от стены
+      stamina_cost: 8
+      automation_level: "auto/manual"
+      category: "advanced_acrobatics"
+
+    - name: vault
+      description: Перепрыгивание
+      stamina_cost: 5
+      automation_level: "auto/manual"
+      category: "basic_acrobatics"
 
   control_modes:
     - name: basic
@@ -219,7 +275,7 @@ architecture:
         columns:
           - id: UUID PRIMARY KEY
           - character_id: UUID FOREIGN KEY
-          - action_type: ENUM (roof_jump, wall_climb, wire_slide, rock_climb, hook_grab, gravibot, leg_implant)
+          - action_type: ENUM (roof_jump, wall_climb, wire_slide, rock_climb, hook_grab, gravibot, leg_implant, wall_run, double_jump, slide, air_dash, wall_kick, vault)
           - position_before: JSONB
           - position_after: JSONB
           - stamina_cost: INTEGER
@@ -334,177 +390,119 @@ architecture:
       - Синхронизация состояния выносливости
       - Уведомления о комбо и мобильных способностях
 
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для создания действий паркура и обновления состояния
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед выполнением действий паркура
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (действие паркура, расход stamina, комбо)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния паркура (выполнение действий, изменение stamina, комбо)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: FreerunActionExecutedEvent, StaminaChangedEvent, ComboTriggeredEvent.
+    cqrs_pattern: |
+      Разделение команд (выполнение действий паркура, обновление stamina) и запросов
+      (получение состояния паркура, история действий) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как выполнение действия паркура (проверка stamina,
+      выполнение действия, расход stamina, проверка комбо, интеграция с боем), используется
+      Saga Pattern для обеспечения атомарности операций между Gameplay Service,
+      Stamina Manager и Combat Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_and_network_requirements:
+    freerun_actions:
+      tickrate: 60-128 Hz
+      network_load: |
+        - Позиции персонажа: 60-128 updates/sec
+        - Состояние действий: event-based, ~10-20 events/sec
+        - Обновление stamina: 20-30 updates/sec
+        - Общий трафик: ~5-10 KB/sec на игрока
+      sync_strategy: Strong Consistency для позиций, Eventual для статистики
+
+    wall_run:
+      tickrate: 60-128 Hz
+      network_load: |
+        - Позиция во время Wall Run: 60-128 updates/sec
+        - События начала/окончания: event-based
+        - Общий трафик: ~2-3 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    double_jump:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Событие прыжка: event-based, ~1-2 events/sec
+        - Обновление позиции: 60-128 updates/sec
+        - Общий трафик: ~0.5-1 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    slide:
+      tickrate: 60-128 Hz
+      network_load: |
+        - Позиция во время Slide: 60-128 updates/sec
+        - События начала/окончания: event-based
+        - Общий трафик: ~2-3 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    air_dash:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Событие Air Dash: event-based, ~0.5-1 events/sec
+        - Обновление позиции: 60-128 updates/sec
+        - Общий трафик: ~0.5-1 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    movement_attacks:
+      tickrate: 60-128 Hz
+      network_load: |
+        - Атаки в движении: event-based, ~5-10 events/sec
+        - Обновление позиции: 60-128 updates/sec
+        - Общий трафик: ~3-5 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    movement_combos:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Комбо из движения: event-based, ~1-3 events/sec
+        - Обновление состояния: event-based
+        - Общий трафик: ~0.5-1 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
 technical_specification:
-  subtasks:
-    - id: freerun-action-manager
-      title: Реализация менеджера действий паркура
-      description: |
-        Реализация Freerun Action Manager с обработкой всех типов действий паркура,
-        валидацией доступности и интеграцией с боевой сессией.
-      dependencies: []
-      estimated_effort: 5 days
-
-    - id: stamina-manager
-      title: Реализация менеджера выносливости
-      description: |
-        Реализация Stamina Manager с расчетом расхода, восстановления и модификаторов
-        выносливости на основе навыков и имплантов.
-      dependencies: []
-      estimated_effort: 4 days
-
-    - id: freerun-combo-system
-      title: Реализация системы комбо паркура
-      description: |
-        Реализация Freerun Combo System с отслеживанием последовательностей действий,
-        применением бонусов и интеграцией с боевыми комбо.
-      dependencies: [freerun-action-manager]
-      estimated_effort: 4 days
-
-    - id: route-manager
-      title: Реализация менеджера маршрутов
-      description: |
-        Реализация Route Manager с созданием, валидацией и управлением пользовательскими
-        маршрутами паркура.
-      dependencies: [freerun-action-manager]
-      estimated_effort: 4 days
-
-    - id: mobile-ability-integrator
-      title: Реализация интегратора мобильных способностей
-      description: |
-        Реализация Mobile Ability Integrator с проверкой совместимости способностей
-        с паркуром и применением мобильных версий.
-      dependencies: [freerun-action-manager]
-      estimated_effort: 4 days
-
-    - id: freerun-telemetry-collector
-      title: Реализация сборщика телеметрии
-      description: |
-        Реализация Freerun Telemetry Collector с логированием действий, сбором метрик
-        и интеграцией с Analytics Service.
-      dependencies: [freerun-action-manager]
-      estimated_effort: 3 days
-
-    - id: anti-cheat-validator
-      title: Реализация валидатора античит
-      description: |
-        Реализация Anti-Cheat Validator с проверкой действий паркура на подозрительность,
-        валидацией физической возможности и детектом эксплойтов.
-      dependencies: [freerun-action-manager]
-      estimated_effort: 5 days
-
-    - id: websocket-channels
-      title: Реализация WebSocket каналов
-      description: |
-        Реализация WebSocket каналов для realtime обновлений действий паркура,
-        состояния выносливости и телеметрии.
-      dependencies: [freerun-action-manager, stamina-manager]
-      estimated_effort: 3 days
-
-    - id: event-bus-integration
-      title: Интеграция с Event Bus
-      description: |
-        Реализация публикации и подписки на события через Kafka
-        для всех компонентов системы Freerun.
-      dependencies: [freerun-action-manager, freerun-combo-system]
-      estimated_effort: 2 days
-
-    - id: database-schema
-      title: Создание схемы БД
-      description: |
-        Создание таблиц БД для действий паркура, профилей, комбо, выносливости, маршрутов,
-        телеметрии и аудита с миграциями Liquibase.
-      dependencies: []
-      estimated_effort: 2 days
+  reference: combat-freerun-architecture-spec.yaml
 
 diagrams:
-  component_diagram: |
-    ```mermaid
-    graph TB
-        Client[UE5 Client] --> Gateway[API Gateway]
-        
-        Gateway --> GameplayService[Gameplay Service<br/>8083]
-        
-        GameplayService --> FAM[Freerun Action Manager]
-        GameplayService --> SM[Stamina Manager]
-        GameplayService --> FCS[Freerun Combo System]
-        GameplayService --> RM[Route Manager]
-        GameplayService --> MAI[Mobile Ability Integrator]
-        GameplayService --> FTC[Freerun Telemetry Collector]
-        GameplayService --> ACV[Anti-Cheat Validator]
-        
-        FAM --> SM
-        FAM --> FCS
-        FAM --> ACV
-        FCS --> MAI
-        
-        GameplayService --> CombatSession[Combat Session]
-        GameplayService --> AbilityService[Ability Service]
-        GameplayService --> ImplantService[Implant Service]
-        GameplayService --> ProgressionService[Progression Service]
-        GameplayService --> QuestService[Quest Service]
-        GameplayService --> AnalyticsService[Analytics Service]
-        GameplayService --> InventoryService[Inventory Service]
-        
-        GameplayService --> EventBus[Event Bus<br/>Kafka]
-        EventBus --> RealtimeGateway[Realtime Gateway]
-        
-        GameplayService --> DB[(Gameplay DB)]
-        
-        Client --> WSFreerun[WebSocket<br/>Freerun]
-        WSFreerun --> GameplayService
-    ```
+  reference: combat-freerun-architecture-spec.yaml
 
-  freerun_action_flow_diagram: |
-    ```mermaid
-    sequenceDiagram
-        participant C as Client
-        participant FAM as Freerun Action Manager
-        participant SM as Stamina Manager
-        participant ACV as Anti-Cheat Validator
-        participant FCS as Freerun Combo System
-        participant MAI as Mobile Ability Integrator
-        participant EB as Event Bus
-        
-        C->>FAM: POST /freerun/actions
-        FAM->>FAM: Check action availability
-        FAM->>SM: Check stamina
-        SM-->>FAM: Stamina status
-        FAM->>ACV: Validate action
-        ACV-->>FAM: Validation result
-        FAM->>FAM: Execute action
-        FAM->>SM: Consume stamina
-        FAM->>FCS: Check combo
-        FCS-->>FAM: Combo status
-        FAM->>MAI: Check mobile abilities
-        MAI-->>FAM: Mobile ability status
-        FAM->>EB: Publish combat.freerun.action
-        FAM-->>C: Action result
-    ```
-
-  stamina_recovery_diagram: |
-    ```mermaid
-    sequenceDiagram
-        participant SM as Stamina Manager
-        participant PS as Progression Service
-        participant IS as Implant Service
-        participant ES as Economy Service
-        participant EB as Event Bus
-        
-        Note over SM: Action performed, stamina consumed
-        SM->>SM: Calculate stamina consumption
-        SM->>PS: Get skill bonuses
-        PS-->>SM: Skill data
-        SM->>IS: Get implant bonuses
-        IS-->>SM: Implant data
-        SM->>SM: Apply modifiers
-        SM->>SM: Update stamina state
-        
-        alt Stamina depleted
-            SM->>SM: Block actions
-            SM->>SM: Start recovery timer
-        end
-        
-        SM->>SM: Natural recovery
-        SM->>EB: Publish combat.freerun.stamina
-    ```
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния паркура
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана базовая архитектура системы Freerun:
+      - Определены компоненты для управления паркуром
+      - Описаны API endpoints и WebSocket каналы
+      - Спроектированы потоки данных
+      - Определена структура БД
+      - Добавлены элементы акробатики (wall_run, double_jump, slide, air_dash, wall_kick, vault)
+      - Добавлена спецификация тикрейта и сетевой нагрузки
 

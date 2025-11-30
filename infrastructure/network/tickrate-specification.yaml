@@ -1,0 +1,384 @@
+# Issue: #142109960
+# Tick Rate Specification for Different Game Mechanics and Activity Types
+# Network Engineer - Specification of tick rates for different scenarios
+
+tickrate_specification:
+  version: "1.0.0"
+  last_updated: "2025-11-30"
+  description: |
+    Спецификация тикрейта для различных механик и типов активностей игры.
+    Определяет требования к частоте обновлений для оптимальной производительности
+    и игрового опыта в различных сценариях.
+
+  zone_types:
+    pve_zones:
+      name: "PvE зоны (MMORPG)"
+      protocol: "WebSocket (TCP)"
+      base_tickrate: 30
+      min_tickrate: 20
+      max_tickrate: 30
+      latency_target_ms: 100
+      max_players_per_zone: 500
+      network_load_per_player_kbps: 10
+      description: |
+        Безопасные зоны и PvE контент в открытом мире.
+        Использует надежный TCP протокол для стабильности.
+      
+      mechanics:
+        combat:
+          tickrate: 30
+          network_load: "10-15 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+        
+        movement:
+          tickrate: 30
+          network_load: "2-5 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+        
+        inventory:
+          tickrate: "Event-based"
+          network_load: "0.5-1 KB/sec на игрока"
+          sync_strategy: "Strong Consistency (ACID)"
+        
+        chat:
+          tickrate: "Event-based"
+          network_load: "1-3 KB/sec на игрока"
+          sync_strategy: "Eventual Consistency"
+        
+        quests:
+          tickrate: "Event-based"
+          network_load: "0.2-0.4 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+        
+        trading:
+          tickrate: "Event-based"
+          network_load: "0.5-2 KB/sec на игрока"
+          sync_strategy: "Strong Consistency (ACID)"
+
+    pvp_small:
+      name: "PvP small (5-20 игроков)"
+      protocol: "UDP"
+      base_tickrate: 128
+      min_tickrate: 60
+      max_tickrate: 128
+      latency_target_ms: 30
+      max_players: 20
+      network_load_per_player_kbps: 20
+      description: |
+        Небольшие PvP арены и инстансы.
+        Требует высокой частоты обновлений для отзывчивости.
+      
+      mechanics:
+        combat:
+          tickrate: 128
+          network_load: "15-25 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+          priority: "Highest"
+        
+        movement:
+          tickrate: 128
+          network_load: "5-10 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+          priority: "Highest"
+        
+        abilities:
+          tickrate: "Event-based (60-128 Hz)"
+          network_load: "2-5 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+        
+        health:
+          tickrate: 128
+          network_load: "1-2 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+          priority: "Highest"
+        
+        spatial_partitioning:
+          enabled: false
+          reason: "Все игроки видят всех (мало игроков)"
+
+    gvg_200:
+      name: "GvG 200 (100v100)"
+      protocol: "UDP"
+      base_tickrate: 80
+      min_tickrate: 60
+      max_tickrate: 80
+      latency_target_ms: 40
+      max_players: 200
+      network_load_per_player_kbps: 15
+      description: |
+        Средние GvG битвы.
+        Использует spatial partitioning для оптимизации трафика.
+      
+      mechanics:
+        combat:
+          tickrate: 80
+          network_load: "10-20 KB/sec на игрока (с оптимизацией)"
+          sync_strategy: "Strong Consistency"
+          spatial_partitioning:
+            enabled: true
+            grid_size_meters: 100
+            visibility_range: "3x3 cells (своя + 8 соседних)"
+            traffic_reduction_percent: 85
+        
+        movement:
+          tickrate: 80
+          network_load: "3-8 KB/sec на игрока (только видимые)"
+          sync_strategy: "Strong Consistency"
+        
+        abilities:
+          tickrate: "Event-based (60-80 Hz)"
+          network_load: "2-4 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+        
+        spatial_partitioning:
+          enabled: true
+          grid_size_meters: 100
+          update_frequency: 80
+          max_visible_players: 50
+
+    gvg_400:
+      name: "GvG 400 (200v200)"
+      protocol: "UDP"
+      base_tickrate: 60
+      min_tickrate: 40
+      max_tickrate: 60
+      latency_target_ms: 50
+      max_players: 400
+      network_load_per_player_kbps: 12
+      description: |
+        Большие GvG битвы.
+        Использует spatial sharding для масштабирования.
+      
+      mechanics:
+        combat:
+          tickrate: 60
+          network_load: "8-15 KB/sec на игрока (с sharding)"
+          sync_strategy: "Strong Consistency"
+          spatial_sharding:
+            enabled: true
+            shard_count: 4
+            shard_size_meters: 200
+            edge_buffer_meters: 50
+            traffic_reduction_percent: 88
+        
+        movement:
+          tickrate: 60
+          network_load: "2-6 KB/sec на игрока (только свой shard)"
+          sync_strategy: "Strong Consistency"
+        
+        abilities:
+          tickrate: "Event-based (40-60 Hz)"
+          network_load: "1-3 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+        
+        event_aggregation:
+          enabled: true
+          batch_window_ms: 100
+          max_events_per_batch: 50
+
+    massive_war:
+      name: "Massive war (2000+ игроков)"
+      protocol: "UDP"
+      base_tickrate: 40
+      min_tickrate: 20
+      max_tickrate: 40
+      latency_target_ms: 100
+      max_players: 2000
+      network_load_per_player_kbps: 8
+      description: |
+        Масштабные войны.
+        Использует кластерную архитектуру с несколькими серверами.
+      
+      mechanics:
+        combat:
+          tickrate: 40
+          network_load: "5-10 KB/sec на игрока (с оптимизацией)"
+          sync_strategy: "Strong Consistency (внутри shard)"
+          cluster_architecture:
+            enabled: true
+            server_count: 8
+            players_per_server: 250
+            shard_count: 10
+            shard_size_meters: 300
+            edge_buffer_meters: 100
+        
+        movement:
+          tickrate: 30
+          network_load: "1-4 KB/sec на игрока"
+          sync_strategy: "Strong Consistency (внутри shard)"
+        
+        abilities:
+          tickrate: "Event-based (20-40 Hz)"
+          network_load: "1-2 KB/sec на игрока"
+          sync_strategy: "Strong Consistency"
+        
+        lod_system:
+          enabled: true
+          levels:
+            - distance_meters: 50
+              tickrate: 40
+              detail: "Full"
+            - distance_meters: 100
+              tickrate: 30
+              detail: "Reduced"
+            - distance_meters: 200
+              tickrate: 20
+              detail: "Minimal"
+        
+        event_aggregation:
+          enabled: true
+          batch_window_ms: 200
+          max_events_per_batch: 100
+
+  adaptive_tickrate:
+    enabled: true
+    description: |
+      Адаптивный тикрейт автоматически снижается при большом количестве игроков
+      и повышается для критичных механик.
+    
+    adjustment_factors:
+      player_count:
+        weight: 0.6
+        thresholds:
+          - players: 0
+            multiplier: 1.0
+          - players: 50
+            multiplier: 1.0
+          - players: 100
+            multiplier: 0.8
+          - players: 200
+            multiplier: 0.6
+          - players: 400
+            multiplier: 0.5
+          - players: 1000
+            multiplier: 0.4
+      
+      network_latency:
+        weight: 0.3
+        thresholds:
+          - latency_ms: 0
+            multiplier: 1.0
+          - latency_ms: 50
+            multiplier: 0.9
+          - latency_ms: 100
+            multiplier: 0.7
+          - latency_ms: 200
+            multiplier: 0.5
+      
+      cpu_usage:
+        weight: 0.1
+        thresholds:
+          - cpu_percent: 0
+            multiplier: 1.0
+          - cpu_percent: 50
+            multiplier: 0.95
+          - cpu_percent: 70
+            multiplier: 0.8
+          - cpu_percent: 90
+            multiplier: 0.6
+    
+    adjustment_frequency_seconds: 5
+    min_tickrate: 20
+    max_tickrate: 128
+
+  bandwidth_calculations:
+    per_player:
+      pve_zones: "10-20 KB/sec"
+      pvp_small: "20-30 KB/sec"
+      gvg_200: "15-25 KB/sec (с оптимизацией)"
+      gvg_400: "12-20 KB/sec (с sharding)"
+      massive_war: "8-15 KB/sec (с кластером)"
+    
+    per_zone:
+      pve_zones: "5-10 MB/sec (500 игроков)"
+      pvp_small: "400-600 KB/sec (20 игроков)"
+      gvg_200: "3-5 MB/sec (200 игроков, с оптимизацией)"
+      gvg_400: "4.8-8 MB/sec (400 игроков, с sharding)"
+      massive_war: "16-30 MB/sec (2000 игроков, с кластером)"
+    
+    optimization_techniques:
+      spatial_partitioning:
+        traffic_reduction: "80-90%"
+        max_visible_players: 50
+        
+      spatial_sharding:
+        traffic_reduction: "85-90%"
+        players_per_shard: 100-200
+        
+      event_aggregation:
+        traffic_reduction: "60-70%"
+        batch_window_ms: 100-200
+        
+      lod_system:
+        traffic_reduction: "50-70%"
+        levels: 3
+
+  network_load_by_mechanics:
+    gameplay_mechanics:
+      tickrate: "60-128 Hz"
+      network_load: "10-20 KB/sec на игрока"
+      mechanics:
+        - name: "Боевые действия"
+          tickrate: "60-128 Hz"
+          updates_per_sec: "60-128"
+        - name: "Способности"
+          tickrate: "Event-based"
+          events_per_sec: "5-10"
+        - name: "Импланты"
+          tickrate: "Event-based"
+          events_per_sec: "0.1-0.5"
+        - name: "Паркур"
+          tickrate: "60-128 Hz"
+          updates_per_sec: "60-128"
+    
+    economy_mechanics:
+      tickrate: "Event-based"
+      network_load: "0.5-2 KB/sec на игрока"
+      mechanics:
+        - name: "Торговля"
+          tickrate: "Event-based"
+          events_per_sec: "0.5-2"
+        - name: "Крафт"
+          tickrate: "Event-based"
+          events_per_sec: "0.1-0.5"
+        - name: "Инвентарь"
+          tickrate: "Event-based"
+          events_per_sec: "1-3"
+        - name: "Рынок"
+          tickrate: "Event-based"
+          events_per_sec: "0.5-1"
+    
+    social_mechanics:
+      tickrate: "Event-based"
+      network_load: "0.3-0.8 KB/sec на игрока"
+      mechanics:
+        - name: "Отношения"
+          tickrate: "Event-based"
+          events_per_sec: "0.1-0.3"
+        - name: "Найм NPC"
+          tickrate: "Event-based"
+          events_per_sec: "0.05-0.1"
+        - name: "Заказы"
+          tickrate: "Event-based"
+          events_per_sec: "0.1-0.5"
+        - name: "Репутация"
+          tickrate: "Event-based"
+          events_per_sec: "0.1-0.3"
+    
+    world_mechanics:
+      tickrate: "1-10 Hz"
+      network_load: "1-3 KB/sec на игрока"
+      mechanics:
+        - name: "Мировые события"
+          tickrate: "1-10 Hz"
+          updates_per_sec: "1-10"
+        - name: "Рейды"
+          tickrate: "Event-based"
+          events_per_sec: "0.1-0.5"
+        - name: "Боссы (в бою)"
+          tickrate: "20-30 Hz"
+          updates_per_sec: "20-30"
+        - name: "Состояние мира"
+          tickrate: "1-5 Hz"
+          updates_per_sec: "1-5"
+

@@ -1,0 +1,175 @@
+// Issue: #140876058
+package server
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"time"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/necpgame/world-service-go/models"
+)
+
+type WorldStateRepository interface {
+	GetStateByKey(ctx context.Context, key string) (*models.GlobalState, error)
+	GetStateByCategory(ctx context.Context, category string) ([]models.GlobalState, error)
+	CreateState(ctx context.Context, state *models.GlobalState) error
+	UpdateState(ctx context.Context, key string, value map[string]interface{}, version *int, syncType *string) (*models.GlobalState, error)
+	DeleteState(ctx context.Context, key string) error
+	BatchUpdateState(ctx context.Context, updates []StateUpdate) ([]models.GlobalState, error)
+}
+
+type StateUpdate struct {
+	Key      string
+	Value    map[string]interface{}
+	Version  *int
+	SyncType *string
+}
+
+type worldStateRepository struct {
+	db *sqlx.DB
+}
+
+func NewWorldStateRepository(db *sqlx.DB) WorldStateRepository {
+	return &worldStateRepository{db: db}
+}
+
+func (r *worldStateRepository) GetStateByKey(ctx context.Context, key string) (*models.GlobalState, error) {
+	var state models.GlobalState
+	var valueJSON []byte
+
+	query := `
+		SELECT key, category, value, version, sync_type, created_at, updated_at
+		FROM world.global_state
+		WHERE key = $1
+	`
+	row := r.db.QueryRowContext(ctx, query, key)
+	err := row.Scan(&state.Key, &state.Category, &valueJSON, &state.Version,
+		&state.SyncType, &state.CreatedAt, &state.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(valueJSON, &state.Value); err != nil {
+		return nil, err
+	}
+
+	return &state, nil
+}
+
+func (r *worldStateRepository) GetStateByCategory(ctx context.Context, category string) ([]models.GlobalState, error) {
+	var states []models.GlobalState
+	query := `
+		SELECT key, category, value, version, sync_type, created_at, updated_at
+		FROM world.global_state
+		WHERE category = $1
+		ORDER BY updated_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query, category)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var state GlobalState
+		var valueJSON []byte
+
+		if err := rows.Scan(
+			&state.Key, &state.Category, &valueJSON, &state.Version,
+			&state.SyncType, &state.CreatedAt, &state.UpdatedAt,
+		); err != nil {
+			continue
+		}
+
+		if err := json.Unmarshal(valueJSON, &state.Value); err != nil {
+			continue
+		}
+
+		states = append(states, state)
+	}
+
+	return states, nil
+}
+
+func (r *worldStateRepository) CreateState(ctx context.Context, state *models.GlobalState) error {
+	valueJSON, err := json.Marshal(state.Value)
+	if err != nil {
+		return err
+	}
+
+	query := `
+		INSERT INTO world.global_state (key, category, value, version, sync_type, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`
+	_, err = r.db.ExecContext(ctx, query,
+		state.Key, state.Category, valueJSON, state.Version, state.SyncType,
+		state.CreatedAt, state.UpdatedAt)
+	return err
+}
+
+func (r *worldStateRepository) UpdateState(ctx context.Context, key string, value map[string]interface{}, version *int, syncType *string) (*models.GlobalState, error) {
+	valueJSON, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get current state
+	currentState, err := r.GetStateByKey(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	if currentState == nil {
+		return nil, sql.ErrNoRows
+	}
+
+	// Update version if provided
+	newVersion := currentState.Version
+	if version != nil {
+		newVersion = *version
+	} else {
+		newVersion++
+	}
+
+	// Update sync_type if provided
+	newSyncType := currentState.SyncType
+	if syncType != nil {
+		newSyncType = *syncType
+	}
+
+	query := `
+		UPDATE world.global_state
+		SET value = $2, version = $3, sync_type = $4, updated_at = $5
+		WHERE key = $1
+	`
+	_, err = r.db.ExecContext(ctx, query, key, valueJSON, newVersion, newSyncType, time.Now())
+	if err != nil {
+		return nil, err
+	}
+
+	// Return updated state
+	return r.GetStateByKey(ctx, key)
+}
+
+func (r *worldStateRepository) DeleteState(ctx context.Context, key string) error {
+	query := `DELETE FROM world.global_state WHERE key = $1`
+	_, err := r.db.ExecContext(ctx, query, key)
+	return err
+}
+
+func (r *worldStateRepository) BatchUpdateState(ctx context.Context, updates []StateUpdate) ([]models.GlobalState, error) {
+	var results []models.GlobalState
+	for _, update := range updates {
+		state, err := r.UpdateState(ctx, update.Key, update.Value, update.Version, update.SyncType)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, *state)
+	}
+	return results, nil
+}
+

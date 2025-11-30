@@ -1,0 +1,417 @@
+# Issue: #141665206
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Shooting Loadouts Service API
+  description: |
+    API для управления лоадаутами, кастомизацией оружия, баллистикой и телеметрией.
+    
+    **Основные возможности:**
+    - Управление лоадаутами оружия
+    - Кастомизация оружия (моды, слоты)
+    - Симуляция баллистики (рикошеты, закрученные выстрелы)
+    - Телеметрия стрельбы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Loadouts
+    description: Управление лоадаутами оружия
+  - name: Customization
+    description: Кастомизация оружия
+  - name: Ballistics
+    description: Симуляция баллистики
+  - name: Telemetry
+    description: Телеметрия стрельбы
+
+paths:
+  /gameplay/combat/shooting/loadouts:
+    get:
+      tags:
+        - Loadouts
+      summary: Получить лоадауты оружия
+      operationId: getWeaponLoadouts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Лоадауты оружия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponLoadoutsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Loadouts
+      summary: Сохранить лоадаут оружия
+      operationId: saveWeaponLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveLoadoutRequest"
+      responses:
+        "201":
+          description: Лоадаут сохранен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponLoadout"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/shooting/weapons/{weaponId}/customization:
+    get:
+      tags:
+        - Customization
+      summary: Получить кастомизацию оружия
+      operationId: getWeaponCustomization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Кастомизация оружия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponCustomizationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Customization
+      summary: Обновить кастомизацию оружия
+      operationId: updateWeaponCustomization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomizationRequest"
+      responses:
+        "200":
+          description: Кастомизация обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponCustomizationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/shooting/ballistics/simulate:
+    post:
+      tags:
+        - Ballistics
+      summary: Симулировать баллистику
+      operationId: simulateBallistics
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BallisticsSimulationRequest"
+      responses:
+        "200":
+          description: Результат симуляции баллистики
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BallisticsSimulationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/shooting/telemetry:
+    get:
+      tags:
+        - Telemetry
+      summary: Получить телеметрию стрельбы
+      operationId: getShootingTelemetry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: session_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Телеметрия стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShootingTelemetryResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    WeaponLoadoutsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        loadouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeaponLoadout"
+
+    WeaponLoadout:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        mods:
+          type: object
+          additionalProperties:
+            type: string
+            format: uuid
+          description: Слоты кастомизации (barrel, sight, stock, chip, magazine)
+
+    SaveLoadoutRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_id
+        - name
+        - mods
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        mods:
+          type: object
+          additionalProperties:
+            type: string
+            format: uuid
+
+    WeaponCustomizationResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        mods:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/WeaponMod"
+          description: Слоты кастомизации (barrel, sight, stock, chip, magazine)
+        mod_levels:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [MK_I, MK_II, MK_III]
+
+    WeaponMod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+          enum: [barrel, sight, stock, chip, magazine]
+        level:
+          type: string
+          enum: [MK_I, MK_II, MK_III]
+        stats:
+          type: object
+          additionalProperties: true
+
+    UpdateCustomizationRequest:
+      type: object
+      required:
+        - mods
+      properties:
+        mods:
+          type: object
+          additionalProperties:
+            type: string
+            format: uuid
+
+    BallisticsSimulationRequest:
+      type: object
+      required:
+        - weapon_id
+        - start_position
+        - target_position
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        start_position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        target_position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        enable_ricochet:
+          type: boolean
+          default: false
+        enable_curved_shot:
+          type: boolean
+          default: false
+        max_ricochets:
+          type: integer
+          minimum: 0
+          maximum: 3
+          default: 1
+
+    BallisticsSimulationResponse:
+      type: object
+      properties:
+        trajectory:
+          type: array
+          items:
+            $ref: "common.yaml#/components/schemas/Position3D"
+        hit_position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        ricochets:
+          type: array
+          items:
+            type: object
+            properties:
+              position:
+                $ref: "common.yaml#/components/schemas/Position3D"
+              angle:
+                type: number
+        distance:
+          type: number
+          minimum: 0
+        damage_at_distance:
+          type: number
+          minimum: 0
+
+    ShootingTelemetryResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        telemetry:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShootingTelemetryEntry"
+        total:
+          type: integer
+
+    ShootingTelemetryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        shots_fired:
+          type: integer
+          minimum: 0
+        hits:
+          type: integer
+          minimum: 0
+        accuracy:
+          type: number
+          minimum: 0
+          maximum: 1
+        average_damage:
+          type: number
+          minimum: 0
+        timestamp:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

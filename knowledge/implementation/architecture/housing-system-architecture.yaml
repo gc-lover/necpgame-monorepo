@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T01:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:35:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -294,6 +294,97 @@ architecture:
       - Синхронизация состояния квартир
       - Уведомления о событиях
       - Обновления в реальном времени
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для покупки квартир, размещения мебели, расчёта престижа и применения бонусов
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед покупкой квартиры и размещением мебели
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (покупка квартиры, размещение мебели, применение бонусов)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния жилья (покупка квартиры, размещение мебели, удаление мебели,
+      обновление престижа, применение бонусов, посещение квартиры) записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: ApartmentPurchasedEvent, FurniturePlacedEvent, FurnitureRemovedEvent, PrestigeUpdatedEvent, BonusAppliedEvent, ApartmentVisitedEvent.
+    cqrs_pattern: |
+      Разделение команд (покупка квартиры, размещение мебели, применение бонусов) и запросов
+      (получение информации о квартире, получение каталога мебели, получение престижа) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как покупка квартиры (проверка средств, списание валюты,
+      создание квартиры, уведомление игрока) или размещение мебели (проверка слотов, размещение мебели,
+      пересчёт престижа, обновление бонусов, уведомление игрока), используется Saga Pattern
+      для обеспечения атомарности операций между World Service, Economy Service, Character Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    apartment_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Покупка квартиры: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение информации о квартире: event-based, ~0.01-0.05 requests/sec на игрока
+        - Обновление настроек доступа: event-based, ~0.001-0.01 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций квартир
+      latency_requirements: < 200-300ms для покупки квартиры, < 30-100ms для получения информации
+      sync_strategy: Strong Consistency (ACID транзакции) для покупки квартир
+
+    furniture_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Покупка мебели: event-based, ~0.01-0.05 events/sec на игрока
+        - Размещение мебели: event-based, ~0.01-0.1 events/sec на игрока
+        - Перемещение мебели: event-based, ~0.01-0.1 events/sec на игрока
+        - Удаление мебели: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение каталога мебели: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций мебели
+      latency_requirements: < 100-200ms для размещения мебели, < 30-100ms для получения каталога
+      sync_strategy: Strong Consistency (ACID транзакции) для размещения мебели
+
+    prestige_operations:
+      tickrate: Event-based (on-demand при изменении мебели) + 1-5 Hz для обновления лидерборда
+      network_load: |
+        - Расчёт престижа: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение престижа: event-based, ~0.01-0.02 requests/sec на игрока
+        - Обновление лидерборда: 1-5 Hz, ~0.05-0.2 KB/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций престижа
+      latency_requirements: < 50-100ms для расчёта престижа, < 30-100ms для получения престижа
+      sync_strategy: Strong Consistency (ACID транзакции) для расчёта престижа, Eventual Consistency для лидерборда
+
+    bonus_operations:
+      tickrate: Event-based (on-demand при изменении мебели)
+      network_load: |
+        - Агрегация бонусов: event-based, ~0.01-0.05 events/sec на игрока
+        - Применение бонусов: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение бонусов: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций бонусов
+      latency_requirements: < 50-150ms для применения бонусов, < 30-100ms для получения бонусов
+      sync_strategy: Strong Consistency (ACID транзакции) для применения бонусов
+
+    visit_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Посещение квартиры: event-based, ~0.01-0.05 events/sec на игрока
+        - Загрузка состояния квартиры: event-based, ~0.01-0.05 requests/sec на игрока
+        - Получение истории посещений: event-based, ~0.001-0.01 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций посещений
+      latency_requirements: < 200-300ms для посещения квартиры, < 100-200ms для загрузки состояния
+      sync_strategy: Strong Consistency (ACID транзакции) для посещений
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий жилья: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_schema:
     tables:
@@ -626,6 +717,17 @@ next_steps:
   - Определение формата размещения мебели и бонусов
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния жилья
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (покупка квартиры, размещение мебели, применение бонусов)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для квартир, мебели, престижа, бонусов, посещений и обработки событий
   - version: '1.0.0'
     date: 2025-11-23
     author: Architect Agent

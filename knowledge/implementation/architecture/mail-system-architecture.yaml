@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T22:15:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:45:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -193,6 +193,65 @@ architecture:
       - Push уведомления о новых письмах
       - Обновления статуса писем
       - Синхронизация состояния
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для отправки писем и получения вложений
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед отправкой письма и получением вложений
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (отправка письма с вложениями, получение вложений, обновление инвентаря)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния почтовой системы (отправка письма, получение вложений, истечение)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: MailSentEvent, MailReadEvent, AttachmentClaimedEvent, MailExpiredEvent.
+    cqrs_pattern: |
+      Разделение команд (отправка письма, получение вложений, удаление письма) и запросов
+      (получение списка писем, получение письма, количество непрочитанных) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как отправка письма с вложениями (списание предметов/валюты,
+      создание письма, уведомление получателя) или получение вложений (проверка баланса для COD,
+      добавление предметов в инвентарь, добавление валюты), используется Saga Pattern для обеспечения
+      атомарности операций между Mail Service, Inventory Service и Economy Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    mail_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Отправка письма: event-based, ~0.1-0.3 events/sec на игрока
+        - Получение списка писем: event-based, ~0.1-0.5 requests/sec на игрока
+        - Получение вложений: event-based, ~0.1-0.2 events/sec на игрока
+        - Обновление статуса письма: event-based, ~0.1-0.2 events/sec на игрока
+        - Общий трафик: ~0.3-0.7 KB/sec на игрока
+      latency_requirements: < 50-200ms для операций с почтой
+      sync_strategy: Strong Consistency (ACID транзакции) для отправки писем и получения вложений
+
+    realtime_notifications:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Уведомления о новых письмах: event-based, ~0.1-0.2 events/sec на игрока
+        - Обновление количества непрочитанных: event-based, ~0.1-0.2 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 30-100ms для уведомлений
+      sync_strategy: Eventual Consistency для уведомлений
+
+    expiration_processing:
+      tickrate: 1-5 Hz для проверки истечения
+      network_load: |
+        - Проверка истечения: 1-5 Hz, ~0.1-0.2 KB/sec
+        - Возврат вложений: event-based, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.1-0.2 KB/sec
+      latency_requirements: < 100-500ms для обработки истечения
+      sync_strategy: Eventual Consistency для фоновой обработки
 
   database_schema:
     tables:
@@ -456,6 +515,17 @@ next_steps:
   - Определение правил истечения
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния почтовой системы
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (отправка письма с вложениями, получение вложений)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для почтовых операций, realtime уведомлений и обработки истечения
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

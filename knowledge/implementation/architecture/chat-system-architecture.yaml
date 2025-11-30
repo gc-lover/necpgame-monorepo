@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:15:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:15:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -445,6 +445,75 @@ technical_specification:
     - Оптимизация запросов к БД (batch, индексы)
     - Кэширование каналов и истории в Redis
 
+  data_consistency:
+    strategy: Eventual Consistency (для сообщений) + Strong Consistency (для модерации)
+    mechanisms:
+      - ACID транзакции для критичных операций (модерация, баны)
+      - Оптимистичные блокировки для предотвращения конфликтов
+      - Валидация перед отправкой сообщений
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (модерация, баны)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения чата записываются как события:
+      - MessageSentEvent - сообщение отправлено
+      - MessageReceivedEvent - сообщение получено
+      - ChannelJoinedEvent - присоединение к каналу
+      - ChannelLeftEvent - выход из канала
+      - UserBannedEvent - пользователь забанен
+      - MessageModeratedEvent - сообщение отмодерировано
+      
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния чата
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Message Processor обрабатывает команды (send, join, leave)
+      - Read Model: Оптимизированные представления для быстрого чтения сообщений
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для распределенных операций:
+      - Moderation Saga: координация между chat, moderation, notification сервисами
+      - Ban Saga: координация между chat, moderation, session сервисами
+      
+      Компенсирующие транзакции:
+      - Откат операций при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    chat_operations:
+      tickrate: Event-based (on-demand) + 20-30 Hz для синхронизации сообщений
+      description: |
+        Операции с чатом выполняются по требованию (event-based),
+        но требуется периодическая синхронизация сообщений для всех участников канала.
+      network_load: |
+        - Отправка сообщений: event-based, ~10-50 messages/sec на сервер
+        - Синхронизация сообщений: 20-30 updates/sec для всех участников канала
+        - Модерация: event-based, ~1-5 events/sec
+        - Команды: event-based, ~1-3 events/sec
+        - Общий трафик: ~1-3 KB/sec на игрока в активном чате
+      sync_strategy: Eventual Consistency (для сообщений) + Strong Consistency (для модерации)
+      latency_requirements: |
+        - Отправка сообщения: < 50ms
+        - Получение истории: < 100ms
+        - Обработка команды: < 30ms
+        - Модерация сообщения: < 100ms
+        - Синхронизация сообщений: < 50ms
+
 subtasks:
   - id: chat-channel-manager-module
     title: Реализация модуля Chat Channel Manager
@@ -666,6 +735,15 @@ next_steps:
   - Определение формата команд и форматирования
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы чата:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с чатом
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

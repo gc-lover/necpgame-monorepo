@@ -1,3 +1,4 @@
+# Issue: #1335
 openapi: 3.0.3
 info:
   title: Feedback Board Service API
@@ -23,9 +24,19 @@ paths:
       tags:
         - Feedback Board
       summary: Получить доску идей
+      description: |
+        Доска идей (публичные предложения).
+        
+        **Публичный доступ:** Не требует аутентификации.
+        
+        **Параметры фильтрации:**
+        - type - тип обращения
+        - category - категория
+        - status - статус обращения
+        - sort - сортировка (votes, date, status)
+        - search - поиск по заголовку и описанию
+        - limit, offset - пагинация
       operationId: getFeedbackBoard
-      security:
-        - BearerAuth: []
       parameters:
         - name: type
           in: query
@@ -37,12 +48,22 @@ paths:
           schema:
             type: string
             enum: [gameplay, balance, content, technical, lore, ui_ux, other]
-        - name: sort_by
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate, merged]
+        - name: sort
           in: query
           schema:
             type: string
             enum: [votes, date, status]
             default: votes
+        - name: search
+          in: query
+          schema:
+            type: string
+            description: Поиск по заголовку и описанию
         - $ref: 'common.yaml#/components/parameters/Limit'
         - $ref: 'common.yaml#/components/parameters/Offset'
       responses:
@@ -52,16 +73,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FeedbackBoardResponse'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
 components:
-  securitySchemes:
-    BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
   schemas:
     FeedbackBoardResponse:
       allOf:
@@ -93,7 +108,7 @@ components:
               minimum: 0
             status:
               type: string
-              enum: [pending, in_review, approved]
+              enum: [pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate, merged]
             github_issue_number:
               type: integer
               nullable: true
@@ -101,8 +116,5 @@ components:
               type: string
               format: uri
               nullable: true
-
-security:
-  - BearerAuth: []
 
 

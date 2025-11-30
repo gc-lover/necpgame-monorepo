@@ -1,0 +1,104 @@
+# Issue: #141889972
+openapi: 3.0.3
+info:
+  title: Stock Indices History Service API
+  description: |
+    API для получения истории значений фондовых индексов.
+    
+    Функционал:
+    - Получение истории значений индекса за период
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: indices
+    description: Операции с фондовыми индексами
+
+paths:
+  /stocks/indices/{code}/history:
+    get:
+      tags:
+        - indices
+      summary: Получить историю значений индекса
+      description: |
+        Возвращает исторические значения индекса за указанный период.
+      operationId: getIndexHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса
+          schema:
+            type: string
+            pattern: ^[A-Z0-9]+$
+        - name: from_date
+          in: query
+          required: false
+          description: Начало периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          description: Конец периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: interval
+          in: query
+          required: false
+          description: Интервал агрегации
+          schema:
+            type: string
+            enum:
+              - 1m
+              - 5m
+              - 15m
+              - 1h
+              - 4h
+              - 1d
+              - 1w
+            default: 1h
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История индекса успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-indices-schemas.yaml#/components/schemas/IndexHistoryEntry"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

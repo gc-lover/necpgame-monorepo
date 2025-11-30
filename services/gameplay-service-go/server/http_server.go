@@ -12,6 +12,7 @@ import (
 	"github.com/necpgame/gameplay-service-go/models"
 	"github.com/necpgame/gameplay-service-go/pkg/api"
 	"github.com/necpgame/gameplay-service-go/pkg/combosapi"
+	"github.com/necpgame/gameplay-service-go/pkg/damageapi"
 	"github.com/necpgame/gameplay-service-go/pkg/implantsmaintenanceapi"
 	"github.com/necpgame/gameplay-service-go/pkg/implantsstatsapi"
 	"github.com/sirupsen/logrus"
@@ -47,12 +48,13 @@ type HTTPServer struct {
 	comboService     ComboServiceInterface
 	implantsStatsService ImplantsStatsServiceInterface
 	implantsMaintenanceService ImplantsMaintenanceServiceInterface
+	damageService DamageServiceInterface
 	weaponMechanicsService WeaponMechanicsServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, implantsStatsService ImplantsStatsServiceInterface, implantsMaintenanceService ImplantsMaintenanceServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, implantsStatsService ImplantsStatsServiceInterface, implantsMaintenanceService ImplantsMaintenanceServiceInterface, damageService DamageServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
@@ -64,6 +66,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		comboService:     comboService,
 		implantsStatsService: implantsStatsService,
 		implantsMaintenanceService: implantsMaintenanceService,
+		damageService: damageService,
 		weaponMechanicsService: weaponMechanicsService,
 		logger:           GetLogger(),
 	}
@@ -114,6 +117,11 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		implantsMaintenanceHandlers := NewImplantsMaintenanceHandlers(implantsMaintenanceService)
 		implantsMaintenanceAPI := router.PathPrefix("/api/v1/gameplay/combat/implants").Subrouter()
 		implantsmaintenanceapi.HandlerFromMux(implantsMaintenanceHandlers, implantsMaintenanceAPI)
+	}
+	if damageService != nil {
+		damageHandlers := NewDamageHandlers(damageService)
+		damageAPI := router.PathPrefix("/api/v1/gameplay/combat").Subrouter()
+		damageapi.HandlerFromMux(damageHandlers, damageAPI)
 	}
 	if weaponMechanicsService != nil {
 		// TODO: After running `make generate-all-weapon-apis`, uncomment these lines:

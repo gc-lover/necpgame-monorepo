@@ -11,4 +11,18 @@ Import content quest YAML to database.
 5. Verify: quest loaded, data correct, accessible via API
 6. Handoff to QA: Update Status to `QA - Todo`
 
+**Update Status:**
+```javascript
+mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: project_item_id,
+  updated_field: {
+    id: 239690516  // число,
+    value: '{option_id}'  // id опции 'QA - Todo' из list_project_fields
+  }
+});
+```
+
 **Important:** All content quests MUST be imported to DB before testing.

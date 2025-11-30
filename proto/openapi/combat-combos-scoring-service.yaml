@@ -1,0 +1,90 @@
+# Issue: #141890005
+openapi: 3.0.3
+info:
+  title: Combat Combos Scoring Service API
+  description: |
+    API для системы scoring комбо.
+    
+    **Основные возможности:**
+    - Отправка результатов scoring комбо
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Combo Scoring
+    description: Система scoring комбо
+
+paths:
+  /gameplay/combat/combos/score:
+    post:
+      tags:
+        - Combo Scoring
+      summary: Отправить результаты scoring комбо
+      description: |
+        Отправляет результаты scoring для активированного комбо.
+        Система рассчитывает общий score и определяет категорию (Bronze/Silver/Gold/Platinum/Legendary).
+        Может выдать награды на основе score.
+      operationId: submitComboScore
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "combat-combos-schemas.yaml#/components/schemas/SubmitScoreRequest"
+            example:
+              activation_id: "550e8400-e29b-41d4-a716-446655440005"
+              execution_difficulty: 85
+              damage_output: 5000
+              visual_impact: 90
+              team_coordination: 75
+      responses:
+        "200":
+          description: Score отправлен
+          content:
+            application/json:
+              schema:
+                $ref: "combat-combos-schemas.yaml#/components/schemas/ScoreSubmissionResponse"
+              example:
+                success: true
+                score:
+                  activation_id: "550e8400-e29b-41d4-a716-446655440005"
+                  execution_difficulty: 85
+                  damage_output: 5000
+                  visual_impact: 90
+                  team_coordination: 75
+                  total_score: 7500
+                  category: "Gold"
+                rewards:
+                  experience: 500
+                  currency: 100
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Активация не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

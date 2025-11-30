@@ -1,0 +1,266 @@
+# Issue: #141665240
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Stealth Disguise Service API
+  description: |
+    API для управления маскировкой и взломом сетевых узлов.
+    
+    **Основные возможности:**
+    - Маскировка под NPC
+    - Взлом сетевых узлов и камер
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Disguise
+    description: Маскировка
+  - name: Network
+    description: Взлом сетевых узлов
+
+paths:
+  /gameplay/combat/stealth/disguise:
+    post:
+      tags:
+        - Disguise
+      summary: Активировать маскировку
+      operationId: activateDisguise
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateDisguiseRequest"
+      responses:
+        "200":
+          description: Маскировка активирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DisguiseResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/disguise/{disguiseId}:
+    get:
+      tags:
+        - Disguise
+      summary: Получить маскировку
+      operationId: getDisguise
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: disguiseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Маскировка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DisguiseResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/network/hack:
+    post:
+      tags:
+        - Network
+      summary: Взломать сетевой узел
+      operationId: hackNetworkNode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HackNetworkNodeRequest"
+      responses:
+        "200":
+          description: Сетевой узел взломан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkHackResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/network/nodes:
+    get:
+      tags:
+        - Network
+      summary: Получить сетевые узлы
+      operationId: getNetworkNodes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Сетевые узлы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkNodesResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ActivateDisguiseRequest:
+      type: object
+      required:
+        - character_id
+        - disguise_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        disguise_type:
+          type: string
+          enum: [npc_disguise, faction_disguise, social_engineering]
+        target_faction:
+          type: string
+        duration_seconds:
+          type: integer
+          minimum: 1
+
+    DisguiseResponse:
+      type: object
+      properties:
+        disguise_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        disguise_type:
+          type: string
+          enum: [npc_disguise, faction_disguise, social_engineering]
+        target_faction:
+          type: string
+        compatibility:
+          type: number
+          minimum: 0
+          maximum: 1
+        detection_reduction:
+          type: number
+          minimum: 0
+          maximum: 1
+        active:
+          type: boolean
+        activated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    HackNetworkNodeRequest:
+      type: object
+      required:
+        - character_id
+        - node_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        node_id:
+          type: string
+          format: uuid
+        hack_type:
+          type: string
+          enum: [camera_hack, network_signature, alarm_disable]
+
+    NetworkHackResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        node_id:
+          type: string
+          format: uuid
+        hack_type:
+          type: string
+          enum: [camera_hack, network_signature, alarm_disable]
+        detection_impact:
+          type: number
+          minimum: 0
+          maximum: 100
+        hacked_at:
+          type: string
+          format: date-time
+
+    NetworkNodesResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/NetworkNode"
+        total:
+          type: integer
+
+    NetworkNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        node_type:
+          type: string
+          enum: [camera, alarm, network_access_point, security_system]
+        position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        hacked:
+          type: boolean
+        hack_difficulty:
+          type: integer
+          minimum: 1
+          maximum: 10
+
+security:
+  - BearerAuth: []
+

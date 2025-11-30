@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T22:30:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:50:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -197,6 +197,66 @@ architecture:
       - Push уведомления о запросах
       - Обновления онлайн-статуса в реальном времени
       - Синхронизация списка друзей
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для создания дружеских связей и блокировок
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед созданием дружеской связи
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание дружеской связи, обновление статуса)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния системы друзей (отправка запроса, принятие запроса, блокировка)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: FriendRequestSentEvent, FriendRequestAcceptedEvent, FriendBlockedEvent, FriendOnlineEvent.
+    cqrs_pattern: |
+      Разделение команд (отправка запроса, принятие запроса, блокировка) и запросов
+      (получение списка друзей, получение статуса друга, проверка блокировки) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как создание дружеской связи (создание запроса,
+      уведомление получателя, обновление статуса) или обновление онлайн-статуса (получение события от Session Service,
+      обновление статуса, уведомление друзей), используется Saga Pattern для обеспечения
+      атомарности операций между Social Service и Session Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    friend_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Отправка запроса на дружбу: event-based, ~0.1-0.2 events/sec на игрока
+        - Принятие/отклонение запроса: event-based, ~0.1-0.2 events/sec на игрока
+        - Получение списка друзей: event-based, ~0.1-0.5 requests/sec на игрока
+        - Блокировка/разблокировка: event-based, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      latency_requirements: < 50-200ms для операций с друзьями
+      sync_strategy: Strong Consistency (ACID транзакции) для создания дружеских связей и блокировок
+
+    online_status_updates:
+      tickrate: Event-based (on-demand) + 1-5 Hz для обновления статуса
+      network_load: |
+        - Обновление онлайн-статуса: event-based, ~0.1-0.3 events/sec на игрока
+        - Получение статуса друга: event-based, ~0.1-0.5 requests/sec на игрока
+        - Batch получение статусов: event-based, ~0.1-0.2 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 30-100ms для обновления статуса
+      sync_strategy: Eventual Consistency для онлайн-статуса (кэш Redis)
+
+    realtime_notifications:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Уведомления о запросах на дружбу: event-based, ~0.1-0.2 events/sec на игрока
+        - Уведомления об изменении статуса друга: event-based, ~0.1-0.3 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 30-100ms для уведомлений
+      sync_strategy: Eventual Consistency для уведомлений
 
   database_schema:
     tables:
@@ -455,6 +515,17 @@ next_steps:
   - Определение правил блокировок
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния системы друзей
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание дружеской связи, обновление статуса)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для операций с друзьями, обновления онлайн-статуса и realtime уведомлений
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

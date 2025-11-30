@@ -49,6 +49,9 @@ func main() {
 	engramRomanceRepo := server.NewEngramRomanceRepository(dbPool)
 	engramRomanceService := server.NewEngramRomanceService(engramRomanceRepo, redisClient)
 
+	romanceCoreRepo := server.NewRomanceCoreRepository(dbPool)
+	romanceCoreService := server.NewRomanceCoreService(romanceCoreRepo)
+
 	if socialService != nil {
 		notificationSubscriber := socialService.GetNotificationSubscriber()
 		if notificationSubscriber != nil {
@@ -73,7 +76,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, socialService, partyService, jwtValidator, authEnabled, engramRomanceService)
+	httpServer := server.NewHTTPServer(addr, socialService, partyService, jwtValidator, authEnabled, engramRomanceService, romanceCoreService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

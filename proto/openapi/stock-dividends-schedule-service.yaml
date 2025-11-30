@@ -1,0 +1,113 @@
+# Issue: #141889962
+openapi: 3.0.3
+info:
+  title: Stock Dividends Schedule Service API
+  description: |
+    API для управления расписанием выплат дивидендов на фондовой бирже.
+    
+    Функционал:
+    - Получение расписания дивидендов акции
+    - Создание расписания дивидендов (admin)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: dividends
+    description: Операции с дивидендами
+  - name: admin
+    description: Административные операции
+
+paths:
+  /stocks/{stock_id}/dividends/schedule:
+    get:
+      tags:
+        - dividends
+      summary: Получить расписание дивидендов акции
+      description: |
+        Возвращает график выплат дивидендов для указанной акции.
+        Включает ключевые даты: declaration, ex-dividend, record, payment.
+      operationId: getDividendSchedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          description: ID акции
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Расписание дивидендов успешно получено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-dividends-schemas.yaml#/components/schemas/DividendSchedule"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/dividends/schedules:
+    post:
+      tags:
+        - admin
+      summary: Создать расписание дивидендов
+      description: |
+        Админ endpoint для создания нового расписания выплаты дивидендов.
+        Требуется роль admin.
+      operationId: createDividendSchedule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "stock-dividends-schemas.yaml#/components/schemas/DividendScheduleCreate"
+      responses:
+        "201":
+          description: Расписание успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "stock-dividends-schemas.yaml#/components/schemas/DividendSchedule"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

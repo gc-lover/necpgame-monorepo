@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T20:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T18:45:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -299,10 +299,72 @@ technical_specification:
     - Кэширование активных инвентарей в памяти (Redis)
 
   data_consistency:
-    - ACID транзакции для операций с предметами
-    - Оптимистичные блокировки для предотвращения конфликтов
-    - Валидация перед сохранением изменений
-    - Синхронизация с character-service
+    strategy: Strong Consistency (ACID транзакции)
+    mechanisms:
+      - ACID транзакции для операций с предметами
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед сохранением изменений
+      - Синхронизация с character-service через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных транзакций (trade, loot)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения инвентаря записываются как события:
+      - ItemAddedEvent - предмет добавлен
+      - ItemRemovedEvent - предмет удален
+      - ItemMovedEvent - предмет перемещен
+      - ItemEquippedEvent - предмет экипирован
+      - ItemUnequippedEvent - предмет снят
+      - StackMergedEvent - стеки объединены
+      - StackSplitEvent - стек разделен
+      
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния инвентаря
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Inventory Manager обрабатывает команды (add, remove, move, equip)
+      - Read Model: Оптимизированные представления для быстрого чтения
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для распределенных транзакций:
+      - Trade Saga: обмен предметами между игроками
+      - Loot Saga: получение предметов после боя/квестов
+      - Storage Transfer Saga: перемещение между инвентарём и хранилищем
+      
+      Компенсирующие транзакции:
+      - Откат изменений при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    inventory_operations:
+      tickrate: Event-based (on-demand)
+      description: |
+        Операции с инвентарём выполняются по требованию (event-based),
+        не требуют постоянного тикрейта.
+      network_load: |
+        - Изменения инвентаря: event-based, ~5-10 events/sec
+        - Синхронизация состояния: при изменении, ~1-2 updates/sec
+        - Общий трафик: ~0.5-1 KB/sec на игрока
+      sync_strategy: Strong Consistency (ACID транзакции)
+      latency_requirements: |
+        - Получение инвентаря: < 50ms
+        - Добавление предмета: < 30ms
+        - Экипировка предмета: < 50ms
+        - Перемещение предмета: < 30ms
 
 subtasks:
   - id: inventory-manager-module
@@ -516,6 +578,15 @@ next_steps:
   - Создание request/response схем
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы инвентаря:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с инвентарём
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

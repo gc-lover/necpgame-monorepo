@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T21:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T18:55:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -277,6 +277,72 @@ technical_specification:
     - Оптимизация запросов к БД (batch, индексы)
     - Кэширование активных групп в памяти (Redis)
 
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции)
+    mechanisms:
+      - ACID транзакции для операций с группами
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед сохранением изменений
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределения лута (multi-service)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения групп записываются как события:
+      - PartyCreatedEvent - группа создана
+      - MemberJoinedEvent - участник присоединился
+      - MemberLeftEvent - участник покинул группу
+      - LeaderChangedEvent - лидер изменен
+      - LootDistributedEvent - лут распределен
+      
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния группы
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Party Manager обрабатывает команды (create, invite, join, leave)
+      - Read Model: Оптимизированные представления для быстрого чтения групп
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для распределения лута:
+      - Loot Distribution Saga: координация между economy, inventory, notification сервисами
+      - Multi-service Saga: распределение предметов между участниками
+      
+      Компенсирующие транзакции:
+      - Откат распределения при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    party_operations:
+      tickrate: Event-based (on-demand) + 20-30 Hz для синхронизации состояния
+      description: |
+        Операции с группами выполняются по требованию (event-based),
+        но требуется периодическая синхронизация состояния для всех участников.
+      network_load: |
+        - Изменения группы: event-based, ~2-5 events/sec на группу
+        - Синхронизация состояния: 20-30 updates/sec для всех участников
+        - Распределение лута: event-based, ~1-3 events/sec
+        - Общий трафик: ~1-2 KB/sec на игрока в группе
+      sync_strategy: Strong Consistency (ACID транзакции) для операций, Eventual для статистики
+      latency_requirements: |
+        - Создание группы: < 50ms
+        - Добавление участника: < 30ms
+        - Распределение лута: < 100ms
+        - Синхронизация состояния: < 50ms
+
 subtasks:
   - id: party-manager-module
     title: Реализация модуля Party Manager
@@ -493,6 +559,15 @@ next_steps:
   - Создание request/response схем
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы групп:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с группами
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

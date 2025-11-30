@@ -81,18 +81,19 @@ type SocialServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr              string
-	router            *mux.Router
-	socialService     SocialServiceInterface
-	partyService      PartyServiceInterface
+	addr                string
+	router              *mux.Router
+	socialService       SocialServiceInterface
+	partyService        PartyServiceInterface
 	engramRomanceService EngramRomanceServiceInterface
-	logger            *logrus.Logger
-	server            *http.Server
-	jwtValidator      *JwtValidator
-	authEnabled       bool
+	romanceCoreService  RomanceCoreServiceInterface
+	logger              *logrus.Logger
+	server              *http.Server
+	jwtValidator        *JwtValidator
+	authEnabled         bool
 }
 
-func NewHTTPServer(addr string, socialService SocialServiceInterface, partyService PartyServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramRomanceService EngramRomanceServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, socialService SocialServiceInterface, partyService PartyServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramRomanceService EngramRomanceServiceInterface, romanceCoreService RomanceCoreServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:                addr,
@@ -100,6 +101,7 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, partyServi
 		socialService:       socialService,
 		partyService:        partyService,
 		engramRomanceService: engramRomanceService,
+		romanceCoreService:  romanceCoreService,
 		logger:              GetLogger(),
 		jwtValidator:        jwtValidator,
 		authEnabled:         authEnabled,

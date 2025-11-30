@@ -1,0 +1,99 @@
+# Issue: #141890005
+openapi: 3.0.3
+info:
+  title: Combat Combos Analytics Service API
+  description: |
+    API для аналитики эффективности комбо.
+    
+    **Основные возможности:**
+    - Получение аналитики эффективности комбо
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Combo Analytics
+    description: Аналитика эффективности комбо
+
+paths:
+  /gameplay/combat/combos/analytics:
+    get:
+      tags:
+        - Combo Analytics
+      summary: Получить аналитику эффективности комбо
+      description: |
+        Возвращает аналитику эффективности комбо за указанный период.
+        Включает статистику активаций, успешность, средний score, используемые синергии.
+      operationId: getComboAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: combo_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по ID комбо
+        - name: character_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по ID персонажа
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Аналитика комбо
+          content:
+            application/json:
+              schema:
+                $ref: "combat-combos-schemas.yaml#/components/schemas/AnalyticsResponse"
+              example:
+                analytics:
+                  - combo_id: "550e8400-e29b-41d4-a716-446655440000"
+                    total_activations: 1250
+                    success_rate: 0.85
+                    average_score: 6500
+                    average_category: "Gold"
+                    most_used_synergies:
+                      - synergy_id: "550e8400-e29b-41d4-a716-446655440002"
+                        synergy_type: "ability"
+                        usage_count: 800
+                    chain_combo_count: 150
+                period_start: "2025-11-01T00:00:00Z"
+                period_end: "2025-11-29T23:59:59Z"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,72 @@
+# Issue: #141889941
+openapi: 3.0.3
+info:
+  title: Cosmetic Shop Service API
+  description: API для магазина косметики
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Shop
+    description: Магазин косметики
+
+paths:
+  /monetization/cosmetic/shop/daily:
+    get:
+      tags:
+        - Shop
+      summary: Получить ежедневный магазин косметики
+      operationId: getDailyShop
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ежедневный магазин
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/DailyShopResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/shop/history:
+    get:
+      tags:
+        - Shop
+      summary: Получить историю ротаций магазина
+      operationId: getShopHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История ротаций
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/ShopHistoryResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

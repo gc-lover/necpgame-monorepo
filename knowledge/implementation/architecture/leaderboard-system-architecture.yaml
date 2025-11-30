@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T21:15:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:00:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -384,6 +384,70 @@ technical_specification:
     - Периодическая синхронизация (каждые 5 минут)
     - Инвалидация кэша при обновлениях
 
+  data_consistency:
+    strategy: Eventual Consistency (Redis) + Strong Consistency (PostgreSQL)
+    mechanisms:
+      - Redis для hot data с периодической синхронизацией
+      - PostgreSQL для персистентного хранения с ACID транзакциями
+      - Оптимистичные блокировки для обновления позиций
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для сезонных операций (multi-service)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения рейтингов записываются как события:
+      - ScoreUpdatedEvent - очки обновлены
+      - RankChangedEvent - позиция изменена
+      - SeasonStartedEvent - сезон начался
+      - SeasonEndedEvent - сезон завершен
+      
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния рейтингов
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Ranking Engine обрабатывает команды (update score, update rank)
+      - Read Model: Оптимизированные представления для быстрого чтения рейтингов
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для сезонных операций:
+      - Season Reset Saga: координация между world, achievement, economy сервисами
+      - Reward Distribution Saga: распределение наград по тирам
+      
+      Компенсирующие транзакции:
+      - Откат сезонных изменений при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    leaderboard_operations:
+      tickrate: Event-based (on-demand) + 1-5 Hz для синхронизации
+      description: |
+        Операции с лидербордами выполняются по требованию (event-based),
+        но требуется периодическая синхронизация Redis ↔ PostgreSQL.
+      network_load: |
+        - Обновление очков: event-based, ~10-50 events/sec на сервер
+        - Синхронизация Redis ↔ PostgreSQL: 1-5 updates/sec
+        - Запросы лидербордов: on-demand, ~5-20 requests/sec
+        - Общий трафик: ~0.5-1 KB/sec на игрока
+      sync_strategy: Eventual Consistency (Redis) + Strong Consistency (PostgreSQL)
+      latency_requirements: |
+        - Получение топ-100: < 10ms (из Redis)
+        - Получение позиции игрока: < 5ms (из Redis)
+        - Обновление позиции: < 50ms
+        - Синхронизация Redis ↔ PostgreSQL: < 200ms (асинхронно)
+
 subtasks:
   - id: leaderboard-manager-module
     title: Реализация модуля Leaderboard Manager
@@ -602,6 +666,15 @@ next_steps:
   - Определение стратегии кэширования
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы лидербордов:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с лидербордами
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

@@ -41,7 +41,11 @@ WARNING **Task returned: {reason}**
 **Correct agent:** {Agent Name}
 
 **Status updated:** `{CorrectAgent} - Returned`
+
+**Issue:** #{number}
 ```
+
+**Важно:** В комментариях всегда указывай номер Issue в формате `#{number}` (например, `Issue: #123`), а не `item_id` (project_item_id). Номер Issue используется для идентификации задачи в комментариях, сообщениях и документации.
 
 ## Agent-Specific Returns
 

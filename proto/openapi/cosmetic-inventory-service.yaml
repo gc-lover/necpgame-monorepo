@@ -1,0 +1,114 @@
+# Issue: #141889941
+openapi: 3.0.3
+info:
+  title: Cosmetic Inventory Service API
+  description: API для инвентаря косметики
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory
+    description: Инвентарь косметики
+
+paths:
+  /monetization/cosmetic/inventory/{player_id}:
+    get:
+      tags:
+        - Inventory
+      summary: Получить инвентарь косметики игрока
+      operationId: getCosmeticInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - CHARACTER_SKIN
+              - WEAPON_SKIN
+              - EMOTE
+              - TITLE
+              - NAME_PLATE
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum:
+              - COMMON
+              - UNCOMMON
+              - RARE
+              - EPIC
+              - LEGENDARY
+              - EXOTIC
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Инвентарь косметики
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/CosmeticInventoryResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/inventory/{player_id}/owned:
+    get:
+      tags:
+        - Inventory
+      summary: Проверить владение косметикой
+      operationId: checkCosmeticOwnership
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: cosmetic_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус владения
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/OwnershipStatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

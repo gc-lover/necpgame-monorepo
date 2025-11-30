@@ -9,25 +9,25 @@ import (
 )
 
 type EnergyStatus struct {
-	Current      float32
-	Max          float32
-	Consumption  float32
-	Overheated   bool
-	CoolingRate  float32
+	Current     float32
+	Max         float32
+	Consumption float32
+	Overheated  bool
+	CoolingRate float32
 }
 
 type HumanityStatus struct {
-	Current           float32
-	Max               float32
+	Current            float32
+	Max                float32
 	CyberpsychosisRisk float32
-	ImplantCount      int
+	ImplantCount       int
 }
 
 type CompatibilityResult struct {
-	Compatible   bool
-	Conflicts    []Conflict
-	Warnings     []string
-	EnergyCheck  EnergyCheck
+	Compatible    bool
+	Conflicts     []Conflict
+	Warnings      []string
+	EnergyCheck   EnergyCheck
 	HumanityCheck HumanityCheck
 }
 
@@ -53,9 +53,9 @@ type SetBonuses struct {
 }
 
 type ActiveSet struct {
-	Brand        string
+	Brand         string
 	ImplantsCount int
-	Bonuses      []Bonus
+	Bonuses       []Bonus
 }
 
 type Bonus struct {
@@ -83,7 +83,7 @@ func NewImplantsStatsRepository(db *pgxpool.Pool) *ImplantsStatsRepository {
 
 func (r *ImplantsStatsRepository) GetEnergyStatus(ctx context.Context, characterID uuid.UUID) (*EnergyStatus, error) {
 	var status EnergyStatus
-	
+
 	err := r.db.QueryRow(ctx, `
 		SELECT 
 			COALESCE(current_energy, 0.0)::float,
@@ -100,7 +100,7 @@ func (r *ImplantsStatsRepository) GetEnergyStatus(ctx context.Context, character
 		&status.Overheated,
 		&status.CoolingRate,
 	)
-	
+
 	if err != nil {
 		return &EnergyStatus{
 			Current:     0.0,
@@ -110,14 +110,14 @@ func (r *ImplantsStatsRepository) GetEnergyStatus(ctx context.Context, character
 			CoolingRate: 1.0,
 		}, nil
 	}
-	
+
 	return &status, nil
 }
 
 func (r *ImplantsStatsRepository) GetHumanityStatus(ctx context.Context, characterID uuid.UUID) (*HumanityStatus, error) {
 	var status HumanityStatus
 	var implantCount *int
-	
+
 	err := r.db.QueryRow(ctx, `
 		SELECT 
 			COALESCE(current_humanity, 100.0)::float,
@@ -132,24 +132,24 @@ func (r *ImplantsStatsRepository) GetHumanityStatus(ctx context.Context, charact
 		&status.CyberpsychosisRisk,
 		&implantCount,
 	)
-	
+
 	if err != nil {
 		count := 0
 		if implantCount != nil {
 			count = *implantCount
 		}
 		return &HumanityStatus{
-			Current:           100.0,
-			Max:               100.0,
+			Current:            100.0,
+			Max:                100.0,
 			CyberpsychosisRisk: 0.0,
-			ImplantCount:      count,
+			ImplantCount:       count,
 		}, nil
 	}
-	
+
 	if implantCount != nil {
 		status.ImplantCount = *implantCount
 	}
-	
+
 	return &status, nil
 }
 
@@ -159,10 +159,10 @@ func (r *ImplantsStatsRepository) CheckCompatibility(ctx context.Context, charac
 		Conflicts:  []Conflict{},
 		Warnings:   []string{},
 	}
-	
+
 	var energyAvailable, energyRequired float32
 	var humanityAvailable, humanityRequired float32
-	
+
 	err := r.db.QueryRow(ctx, `
 		SELECT 
 			COALESCE(available_energy, 0.0)::float,
@@ -177,7 +177,7 @@ func (r *ImplantsStatsRepository) CheckCompatibility(ctx context.Context, charac
 		&humanityAvailable,
 		&humanityRequired,
 	)
-	
+
 	if err != nil {
 		result.EnergyCheck = EnergyCheck{
 			Available:  100.0,
@@ -186,28 +186,28 @@ func (r *ImplantsStatsRepository) CheckCompatibility(ctx context.Context, charac
 		}
 		result.HumanityCheck = HumanityCheck{
 			Available:  100.0,
-			Required:  0.0,
+			Required:   0.0,
 			Sufficient: true,
 		}
 		return result, nil
 	}
-	
+
 	result.EnergyCheck = EnergyCheck{
 		Available:  energyAvailable,
 		Required:   energyRequired,
 		Sufficient: energyAvailable >= energyRequired,
 	}
-	
+
 	result.HumanityCheck = HumanityCheck{
 		Available:  humanityAvailable,
 		Required:   humanityRequired,
 		Sufficient: humanityAvailable >= humanityRequired,
 	}
-	
+
 	if !result.EnergyCheck.Sufficient || !result.HumanityCheck.Sufficient {
 		result.Compatible = false
 	}
-	
+
 	return result, nil
 }
 
@@ -226,24 +226,23 @@ func (r *ImplantsStatsRepository) GetSetBonuses(ctx context.Context, characterID
 		GROUP BY brand
 		HAVING COUNT(*) >= 2
 	`, characterID)
-	
+
 	if err != nil {
 		return &SetBonuses{ActiveSets: []ActiveSet{}}, nil
 	}
 	defer rows.Close()
-	
+
 	var activeSets []ActiveSet
 	for rows.Next() {
 		var set ActiveSet
 		var bonusesJSON string
-		
+
 		if err := rows.Scan(&set.Brand, &set.ImplantsCount, &bonusesJSON); err != nil {
 			continue
 		}
-		
+
 		activeSets = append(activeSets, set)
 	}
-	
+
 	return &SetBonuses{ActiveSets: activeSets}, nil
 }
-

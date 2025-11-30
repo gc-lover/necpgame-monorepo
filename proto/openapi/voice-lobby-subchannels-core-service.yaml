@@ -1,0 +1,384 @@
+# Issue: #1445
+openapi: 3.0.3
+info:
+  title: Voice Lobby Subchannels Core Service API
+  description: |
+    API для CRUD операций с подканалами в голосовых лобби.
+    
+    **Основные возможности:**
+    - Создание подканалов
+    - Получение списка подканалов
+    - Получение информации о подканале
+    - Обновление подканала
+    - Удаление подканала
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Subchannels Core
+    description: CRUD операции для подканалов
+
+paths:
+  /voice-lobbies/{lobbyId}/subchannels:
+    post:
+      tags:
+        - Subchannels Core
+      summary: Создать подканал
+      operationId: createSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID лобби
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubchannelRequest'
+      responses:
+        '201':
+          description: Подканал создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subchannel'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Subchannels Core
+      summary: Получить список подканалов
+      operationId: listSubchannels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID лобби
+      responses:
+        '200':
+          description: Список подканалов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subchannels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subchannel'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /voice-lobbies/{lobbyId}/subchannels/{subchannelId}:
+    get:
+      tags:
+        - Subchannels Core
+      summary: Получить информацию о подканале
+      operationId: getSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID лобби
+        - name: subchannelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID подканала
+      responses:
+        '200':
+          description: Информация о подканале
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subchannel'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Subchannels Core
+      summary: Обновить подканал
+      operationId: updateSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID лобби
+        - name: subchannelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID подканала
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubchannelRequest'
+      responses:
+        '200':
+          description: Подканал обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subchannel'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Subchannels Core
+      summary: Удалить подканал
+      operationId: deleteSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID лобби
+        - name: subchannelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID подканала
+      responses:
+        '204':
+          description: Подканал удален
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreateSubchannelRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Название подканала
+          example: "Командирский канал"
+        type:
+          type: string
+          enum:
+            - main
+            - role_based
+            - commander
+            - party
+          description: Тип подканала
+          example: "commander"
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Максимальное количество участников
+          example: 8
+        role_restrictions:
+          type: array
+          items:
+            type: string
+            enum:
+              - leader
+              - commander
+              - party_leader
+              - officer
+              - member
+          description: Ограничения по ролям
+          example: ["commander", "party_leader"]
+        description:
+          type: string
+          maxLength: 1000
+          description: Описание подканала
+          example: "Канал для координации командиров"
+
+    UpdateSubchannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Название подканала
+          example: "Командирский канал"
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Максимальное количество участников
+          example: 8
+        role_restrictions:
+          type: array
+          items:
+            type: string
+            enum:
+              - leader
+              - commander
+              - party_leader
+              - officer
+              - member
+          description: Ограничения по ролям
+          example: ["commander", "party_leader"]
+        description:
+          type: string
+          maxLength: 1000
+          description: Описание подканала
+          example: "Канал для координации командиров"
+
+    Subchannel:
+      type: object
+      required:
+        - id
+        - lobby_id
+        - name
+        - type
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID подканала
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          description: Название подканала
+          example: "Командирский канал"
+        type:
+          type: string
+          enum:
+            - main
+            - role_based
+            - commander
+            - party
+          description: Тип подканала
+          example: "commander"
+        max_participants:
+          type: integer
+          nullable: true
+          description: Максимальное количество участников
+          example: 8
+        role_restrictions:
+          type: array
+          nullable: true
+          items:
+            type: string
+            enum:
+              - leader
+              - commander
+              - party_leader
+              - officer
+              - member
+          description: Ограничения по ролям
+          example: ["commander", "party_leader"]
+        description:
+          type: string
+          nullable: true
+          description: Описание подканала
+          example: "Канал для координации командиров"
+        voice_provider_channel_id:
+          type: string
+          nullable: true
+          description: ID канала в голосовом провайдере
+          example: "channel_123456"
+        participant_count:
+          type: integer
+          description: Текущее количество участников
+          example: 3
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2025-11-30T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата обновления
+          example: "2025-11-30T12:30:00Z"
+

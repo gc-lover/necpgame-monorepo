@@ -1,3 +1,4 @@
+# Issue: #142109884
 openapi: 3.0.3
 info:
   title: Combat Damage Service API
@@ -206,7 +207,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  applied_effects:
+                  effects:
                     type: array
                     items:
                       $ref: "#/components/schemas/CombatEffect"
@@ -214,14 +215,12 @@ paths:
                 success:
                   summary: Эффекты применены
                   value:
-                    applied_effects:
-                      - id: 123e4567-e89b-12d3-a456-426614174002
-                        effect_type: buff
+                    effects:
+                      - effect_type: buff
                         effect_name: strength_boost
                         duration: 3
                         remaining_turns: 3
                         value: 20
-                        applied_at: "2025-11-26T20:00:00Z"
         "400":
           $ref: "common.yaml#/components/responses/BadRequest"
         "401":
@@ -252,8 +251,16 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
+        "200":
           description: Эффект удалён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "removed"
         "401":
           $ref: "common.yaml#/components/responses/Unauthorized"
         "404":
@@ -298,7 +305,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CombatEffect"
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "extended"
         "400":
           $ref: "common.yaml#/components/responses/BadRequest"
         "401":

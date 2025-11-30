@@ -1,0 +1,301 @@
+# Issue: #141665240
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Stealth Actions Service API
+  description: |
+    API для выполнения действий стелса, управления обнаружением и профилями.
+    
+    **Основные возможности:**
+    - Выполнение действий стелса (укрытия, тени, маскировка, убийства из засады, отвлечения, взлом камер)
+    - Система обнаружения (визуальные, аудиальные, технологические, сетевые каналы)
+    - Управление профилями стелса
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Stealth Actions
+    description: Действия стелса
+  - name: Detection
+    description: Система обнаружения
+  - name: Stealth Profile
+    description: Профили стелса
+
+paths:
+  /gameplay/combat/stealth/actions:
+    post:
+      tags:
+        - Stealth Actions
+      summary: Выполнить действие стелса
+      operationId: performStealthAction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StealthActionRequest"
+      responses:
+        "200":
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthActionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/detection:
+    get:
+      tags:
+        - Detection
+      summary: Получить состояние обнаружения
+      operationId: getStealthDetection
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние обнаружения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthDetectionState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/detection/recalculate:
+    post:
+      tags:
+        - Detection
+      summary: Пересчитать обнаружение
+      operationId: recalculateStealthDetection
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecalculateDetectionRequest"
+      responses:
+        "200":
+          description: Обнаружение пересчитано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthDetectionState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/stealth/profile:
+    get:
+      tags:
+        - Stealth Profile
+      summary: Получить профиль стелса
+      operationId: getStealthProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Профиль стелса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthProfile"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Stealth Profile
+      summary: Обновить профиль стелса
+      operationId: updateStealthProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStealthProfileRequest"
+      responses:
+        "200":
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthProfile"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    StealthActionRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [cover, shadows, disguise, ambush_kill, distraction, crowd, camera_hack, network_signature]
+        position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        target_id:
+          type: string
+          format: uuid
+
+    StealthActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        action_id:
+          type: string
+          format: uuid
+        detection_impact:
+          type: number
+          minimum: 0
+          maximum: 100
+        detection_state:
+          $ref: "#/components/schemas/StealthDetectionState"
+
+    StealthDetectionState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_stage:
+          type: string
+          enum: [undetected, suspicious, partially_detected, fully_detected]
+        detection_level:
+          type: number
+          minimum: 0
+          maximum: 100
+        channel_detection:
+          type: object
+          properties:
+            visual:
+              type: number
+              minimum: 0
+              maximum: 100
+            audio:
+              type: number
+              minimum: 0
+              maximum: 100
+            technological:
+              type: number
+              minimum: 0
+              maximum: 100
+            network:
+              type: number
+              minimum: 0
+              maximum: 100
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              value:
+                type: number
+
+    RecalculateDetectionRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+
+    StealthProfile:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        detection_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+        preferred_elements:
+          type: array
+          items:
+            type: string
+            enum: [cover, shadows, disguise, ambush_kill, distraction, crowd, camera_hack, network_signature]
+
+    UpdateStealthProfileRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        detection_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+        preferred_elements:
+          type: array
+          items:
+            type: string
+            enum: [cover, shadows, disguise, ambush_kill, distraction, crowd, camera_hack, network_signature]
+
+security:
+  - BearerAuth: []
+

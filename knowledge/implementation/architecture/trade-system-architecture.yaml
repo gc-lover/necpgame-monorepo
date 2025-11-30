@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T19:30:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:35:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -186,6 +186,57 @@ architecture:
       - Realtime синхронизация состояния торговли
       - Push уведомления о событиях
       - Синхронизация предложений в реальном времени
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для создания и выполнения торговых сессий
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед выполнением обмена
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание сессии, выполнение обмена, обновление инвентаря)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния торговых сессий (создание, добавление предложений, подтверждения, выполнение)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: TradeSessionCreatedEvent, TradeOfferAddedEvent, TradeConfirmedEvent, TradeCompletedEvent.
+    cqrs_pattern: |
+      Разделение команд (создание сессии, добавление предложений, подтверждение, выполнение обмена)
+      и запросов (получение сессии, история торговли) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как выполнение обмена (проверка владения,
+      блокировка предметов, перемещение предметов, обновление инвентаря), используется
+      Saga Pattern для обеспечения атомарности операций между Economy Service
+      и Inventory Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    trade_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание сессии: event-based, ~0.1-0.3 events/sec на игрока
+        - Добавление предложений: event-based, ~0.2-0.5 events/sec на сессию
+        - Подтверждения: event-based, ~0.1-0.2 events/sec на сессию
+        - Выполнение обмена: event-based, ~0.1-0.2 events/sec на сессию
+        - Синхронизация состояния: event-based, ~0.2-0.5 updates/sec на сессию
+        - Общий трафик: ~0.5-1 KB/sec на сессию
+      latency_requirements: < 50-200ms для операций с торговлей
+      sync_strategy: Strong Consistency (ACID транзакции) для создания сессий и выполнения обмена
+
+    realtime_sync:
+      tickrate: Event-based (on-demand) + 1-5 Hz для обновления состояния
+      network_load: |
+        - Обновление предложений: event-based, ~0.2-0.5 events/sec на сессию
+        - Статус подтверждений: event-based, ~0.1-0.2 events/sec на сессию
+        - Общий трафик: ~0.2-0.5 KB/sec на сессию
+      latency_requirements: < 30-100ms для синхронизации состояния
+      sync_strategy: Eventual Consistency для обновлений состояния
 
   database_schema:
     tables:
@@ -503,6 +554,17 @@ next_steps:
   - Создание request/response схем
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния торговых сессий
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (выполнение обмена, обновление инвентаря)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для торговых операций и realtime синхронизации
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

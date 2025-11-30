@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T00:45:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:30:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -301,6 +301,95 @@ architecture:
       - Синхронизация состояния войны
       - Уведомления о событиях
       - Обновления в реальном времени
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для объявления войны, создания битв, начисления очков и распределения наград
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед объявлением войны и созданием битв
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (объявление войны, завершение войны, распределение наград)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния клановых войн (объявление войны, переход фаз, создание битв, начисление очков,
+      захват территорий, завершение войны, распределение наград) записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: WarDeclaredEvent, PhaseChangedEvent, BattleStartedEvent, TerritoryCapturedEvent, WarEndedEvent, RewardsDistributedEvent.
+    cqrs_pattern: |
+      Разделение команд (объявление войны, создание битв, начисление очков, распределение наград) и запросов
+      (получение информации о войне, получение очков, получение наград) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как объявление войны (проверка требований, создание войны,
+      настройка фаз, уведомление участников) или завершение войны (расчёт очков, определение победителя,
+      передача территорий, распределение наград, уведомление участников), используется Saga Pattern
+      для обеспечения атомарности операций между World Service, Guild Service, Economy Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    war_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Объявление войны: event-based, ~0.001-0.01 events/sec
+        - Переход фаз: event-based, ~0.001-0.01 events/sec
+        - Завершение войны: event-based, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.1-0.5 KB/sec для операций войны
+      latency_requirements: < 200-500ms для объявления войны, < 100-300ms для перехода фаз
+      sync_strategy: Strong Consistency (ACID транзакции) для операций войны
+
+    battle_operations:
+      tickrate: Event-based (on-demand) + 20-60 Hz для активных битв
+      network_load: |
+        - Создание битвы: event-based, ~0.01-0.1 events/sec
+        - Запуск битвы: event-based, ~0.01-0.1 events/sec
+        - Завершение битвы: event-based, ~0.01-0.1 events/sec
+        - Обновление состояния битвы: 20-60 Hz, ~0.5-2 KB/sec на битву
+        - Общий трафик: ~0.2-1 KB/sec для операций битвы, ~0.5-2 KB/sec для активных битв
+      latency_requirements: < 100-200ms для создания битвы, < 50-100ms для обновления состояния
+      sync_strategy: Strong Consistency (ACID транзакции) для создания битв, Eventual Consistency для обновлений состояния
+
+    scoring_operations:
+      tickrate: Event-based (on-demand при событиях)
+      network_load: |
+        - Начисление очков: event-based, ~0.1-1 events/sec на войну
+        - Получение очков: event-based, ~0.01-0.05 requests/sec на войну
+        - Обновление очков: event-based + 1-5 Hz, ~0.1-0.3 KB/sec на войну
+        - Общий трафик: ~0.2-0.5 KB/sec для операций очков
+      latency_requirements: < 50-100ms для начисления очков, < 30-100ms для получения очков
+      sync_strategy: Strong Consistency (ACID транзакции) для начисления очков
+
+    territory_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Захват территории: event-based, ~0.01-0.05 events/sec
+        - Получение информации о территории: event-based, ~0.01-0.02 requests/sec
+        - Обновление ресурсов: event-based + 1-5 Hz, ~0.05-0.2 KB/sec на территорию
+        - Общий трафик: ~0.1-0.3 KB/sec для операций территорий
+      latency_requirements: < 100-200ms для захвата территории, < 30-100ms для получения информации
+      sync_strategy: Strong Consistency (ACID транзакции) для захвата территорий
+
+    reward_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Распределение наград: event-based, ~0.001-0.01 events/sec на войну
+        - Получение наград: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.2 KB/sec для операций наград
+      latency_requirements: < 200-500ms для распределения наград, < 50-150ms для получения наград
+      sync_strategy: Strong Consistency (ACID транзакции) для распределения наград
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий войны: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_schema:
     tables:
@@ -647,6 +736,17 @@ next_steps:
   - Определение формата фаз и событий
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния клановых войн
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (объявление войны, завершение войны, распределение наград)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для войн, битв, очков, территорий, наград и обработки событий
   - version: '1.0.0'
     date: 2025-11-23
     author: Architect Agent

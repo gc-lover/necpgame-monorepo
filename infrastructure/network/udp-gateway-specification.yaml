@@ -1,0 +1,400 @@
+# Issue: #142109960
+# UDP Gateway Module Specification
+# Network Engineer - Specification for UDP Gateway with reliability over UDP
+
+udp_gateway_specification:
+  version: "1.0.0"
+  last_updated: "2025-11-30"
+  description: |
+    Спецификация модуля UDP Gateway для обработки UDP соединений
+    в PvP зонах с собственной системой надежности поверх UDP.
+    Используется для зон с высокими требованиями к задержке и пропускной способности.
+
+  supported_zone_types:
+    - name: "Small PvP zones"
+      player_count: 5-20
+      tickrate_hz: 60-128
+      latency_target_ms: 5-30
+      protocol: "UDP with reliability"
+    
+    - name: "GvG 200"
+      player_count: 100v100
+      tickrate_hz: 60-80
+      latency_target_ms: 30-40
+      protocol: "UDP with reliability + Spatial Partitioning"
+    
+    - name: "GvG 400"
+      player_count: 200v200
+      tickrate_hz: 40-60
+      latency_target_ms: 40-50
+      protocol: "UDP with reliability + Spatial Sharding"
+    
+    - name: "Massive war"
+      player_count: 2000+
+      tickrate_hz: 20-40
+      latency_target_ms: 50-100
+      protocol: "UDP with reliability + Cluster + Sharding"
+
+  reliability_system:
+    name: "Custom UDP Reliability Layer"
+    description: |
+      Собственная система надежности поверх UDP вместо QUIC из-за
+      проблем совместимости между MsQuic (UE5) и quic-go (Go).
+    
+    sequence_numbers:
+      type: "uint32"
+      purpose: "Порядковый номер пакета для отслеживания порядка доставки"
+      range: "1 to 4294967295"
+      wrap_around: "Автоматическое переполнение с обработкой"
+      initialization: "Случайное начальное значение для безопасности"
+    
+    acknowledgment_system:
+      type: "Selective ACK (SACK)"
+      ack_message_type: "UDPAck"
+      nack_message_type: "UDPNack"
+      ack_delay_ms: 10-50
+      duplicate_ack_threshold: 3
+      ack_frequency: "Каждый пакет или батч каждые 50-100мс"
+      
+      selective_ack:
+        enabled: true
+        max_ranges: 8
+        range_encoding: "Компактное кодирование диапазонов"
+    
+    packet_ordering:
+      in_order_delivery: false
+      out_of_order_tolerance_ms: 100
+      buffer_size: 64
+      reordering_window: 1024
+    
+    retransmission:
+      enabled: true
+      strategy: "Fast retransmit + timeout"
+      timeout_ms: 100-500
+      max_retries: 3
+      exponential_backoff: true
+      backoff_multiplier: 1.5
+      max_timeout_ms: 2000
+
+  packet_structure:
+    header_size_bytes: 16
+    max_packet_size_bytes: 1472
+    header_fields:
+      - name: "sequence_number"
+        type: "uint32"
+        bytes: 4
+        description: "Порядковый номер пакета"
+      
+      - name: "ack_number"
+        type: "uint32"
+        bytes: 4
+        description: "Последний подтвержденный пакет"
+      
+      - name: "ack_bitfield"
+        type: "uint64"
+        bytes: 8
+        description: "Битовая маска для подтверждения пакетов (SACK)"
+      
+      - name: "flags"
+        type: "uint8"
+        bytes: 1
+        description: "Флаги (reliable, unordered, heartbeat)"
+      
+      - name: "payload_type"
+        type: "uint8"
+        bytes: 1
+        description: "Тип полезной нагрузки (Protobuf message type)"
+    
+    payload:
+      encoding: "Protocol Buffers"
+      compression: "optional gzip for large packets"
+      max_size_bytes: 1456
+
+  connection_management:
+    connection_lifecycle:
+      handshake:
+        type: "3-way UDP handshake"
+        steps:
+          - "Client -> Server: ConnectionRequest"
+          - "Server -> Client: ConnectionAck + session_token"
+          - "Client -> Server: ConnectionConfirm"
+        timeout_ms: 5000
+        max_attempts: 3
+      
+      authentication:
+        method: "JWT token from WebSocket session"
+        token_validation: "Via Session Manager"
+        token_refresh: "Every 30 minutes"
+      
+      heartbeat:
+        interval_ms: 5000
+        timeout_ms: 15000
+        max_misses: 3
+        action_on_timeout: "Disconnect and cleanup"
+      
+      teardown:
+        type: "Graceful shutdown"
+        final_ack_timeout_ms: 2000
+        cleanup_delay_ms: 5000
+    
+    connection_state:
+      states:
+        - "disconnected"
+        - "connecting"
+        - "authenticating"
+        - "connected"
+        - "disconnecting"
+      
+      state_machine:
+        transitions:
+          - from: "disconnected"
+            to: "connecting"
+            trigger: "ConnectionRequest"
+          
+          - from: "connecting"
+            to: "authenticating"
+            trigger: "ConnectionAck"
+          
+          - from: "authenticating"
+            to: "connected"
+            trigger: "AuthenticationSuccess"
+          
+          - from: "connected"
+            to: "disconnecting"
+            trigger: "DisconnectRequest or Timeout"
+          
+          - from: "any"
+            to: "disconnected"
+            trigger: "ConnectionError"
+
+  qos_management:
+    packet_priorities:
+      critical:
+        priority: 0
+        types: ["PlayerInput", "CombatAction", "HealthUpdate"]
+        guaranteed_delivery: true
+        max_latency_ms: 20
+      
+      high:
+        priority: 1
+        types: ["PlayerMovement", "EntityState", "DamageEvent"]
+        guaranteed_delivery: true
+        max_latency_ms: 50
+      
+      normal:
+        priority: 2
+        types: ["EntityUpdate", "ZoneUpdate", "StatusEffect"]
+        guaranteed_delivery: false
+        max_latency_ms: 100
+      
+      low:
+        priority: 3
+        types: ["ChatMessage", "Emote", "AmbientSound"]
+        guaranteed_delivery: false
+        max_latency_ms: 500
+    
+    packet_ordering:
+      per_priority: true
+      cross_priority: false
+      ordering_strategy: "FIFO within priority"
+    
+    bandwidth_management:
+      max_bandwidth_per_connection_kbps: 200
+      adaptive_throttling: true
+      congestion_control: true
+      backpressure_handling: true
+
+  anti_cheat_validation:
+    packet_validation:
+      sequence_validation:
+        check_duplicates: true
+        check_gaps: true
+        max_gap_tolerance: 1024
+      
+      rate_limiting:
+        max_packets_per_second: 128
+        max_bytes_per_second: 200000
+        burst_tolerance: 1.5
+        action_on_exceed: "Disconnect"
+      
+      payload_validation:
+        size_limits: true
+        type_validation: true
+        schema_validation: true
+      
+      source_validation:
+        ip_whitelist: false
+        session_token_validation: true
+        timestamp_validation: true
+        replay_attack_prevention: true
+    
+    anomaly_detection:
+      latency_anomaly:
+        threshold_ms: 500
+        detection_window: 60
+      
+      packet_loss_anomaly:
+        threshold_percent: 50
+        detection_window: 10
+      
+      bandwidth_anomaly:
+        threshold_multiplier: 3.0
+        detection_window: 30
+
+  endpoints:
+    udp_endpoints:
+      - port: 18080
+        purpose: "Основной UDP endpoint для всех PvP зон"
+        load_balancing: "Round-robin"
+      
+      - port: 18081
+        purpose: "UDP endpoint для Small PvP zones"
+        load_balancing: "Least connections"
+      
+      - port: 18082
+        purpose: "UDP endpoint для GvG zones"
+        load_balancing: "Least connections"
+    
+    http_endpoints:
+      - method: "GET"
+        path: "/api/v1/udp/connections/{id}/stats"
+        purpose: "Статистика UDP соединения"
+        response: "ConnectionStats (packets sent/received, latency, loss)"
+      
+      - method: "POST"
+        path: "/api/v1/udp/test"
+        purpose: "Тест UDP соединения"
+        request: "TestConnectionRequest"
+        response: "TestConnectionResponse"
+
+  performance_requirements:
+    connection_capacity:
+      max_concurrent_connections: 10000
+      connections_per_core: 1000
+      memory_per_connection_kb: 64
+    
+    throughput:
+      packets_per_second_per_connection: 128
+      bytes_per_second_per_connection: 200000
+      total_packets_per_second: 1280000
+    
+    latency:
+      p50_ms: 10
+      p95_ms: 30
+      p99_ms: 50
+      max_ms: 100
+    
+    packet_loss:
+      target_percent: 0.1
+      acceptable_percent: 1.0
+      max_percent: 5.0
+
+  error_handling:
+    network_errors:
+      connection_timeout:
+        action: "Retry with exponential backoff"
+        max_retries: 3
+    
+      packet_loss:
+        action: "Retransmit with SACK"
+        max_retries: 3
+    
+      out_of_order:
+        action: "Buffer and reorder"
+        max_buffer_size: 64
+    
+    application_errors:
+      invalid_packet:
+        action: "Log and drop"
+        log_level: "warning"
+      
+      authentication_failure:
+        action: "Disconnect immediately"
+        log_level: "error"
+      
+      rate_limit_exceeded:
+        action: "Disconnect after warning"
+        log_level: "warning"
+
+  integration:
+    with_session_manager:
+      purpose: "Получение информации о сессии для аутентификации"
+      methods:
+        - "ValidateSessionToken(token)"
+        - "GetSessionState(session_id)"
+        - "UpdateSessionProtocol(session_id, protocol)"
+    
+    with_zone_manager:
+      purpose: "Получение информации о зоне для настройки QoS"
+      methods:
+        - "GetZoneConfig(zone_id)"
+        - "GetZoneTickrate(zone_id)"
+        - "GetZonePlayerCount(zone_id)"
+    
+    with_protocol_switch_manager:
+      purpose: "Координация переключения с WebSocket"
+      methods:
+        - "SyncSessionState(session_id)"
+        - "NotifyProtocolSwitch(session_id, new_protocol)"
+
+  monitoring:
+    metrics:
+      connection_metrics:
+        - "active_connections"
+        - "new_connections_per_second"
+        - "disconnections_per_second"
+        - "connection_duration_seconds"
+      
+      packet_metrics:
+        - "packets_sent_total"
+        - "packets_received_total"
+        - "packets_retransmitted_total"
+        - "packets_dropped_total"
+        - "packet_loss_percent"
+      
+      latency_metrics:
+        - "latency_p50_ms"
+        - "latency_p95_ms"
+        - "latency_p99_ms"
+        - "rtt_ms"
+      
+      reliability_metrics:
+        - "ack_received_count"
+        - "nack_received_count"
+        - "duplicate_packets_count"
+        - "out_of_order_packets_count"
+      
+      qos_metrics:
+        - "priority_queue_size"
+        - "high_priority_packets_dropped"
+        - "bandwidth_utilization_percent"
+    
+    logging:
+      log_level: "info"
+      log_packets: false
+      log_errors: true
+      log_warnings: true
+      log_connection_events: true
+
+  implementation_notes:
+    language: "Go 1.21+"
+    dependencies:
+      - "golang.org/x/net/udp"
+      - "google.golang.org/protobuf"
+      - "github.com/golang/snappy (optional compression)"
+    
+    goroutine_management:
+      per_connection_goroutine: true
+      goroutine_pool_size: 1000
+      max_concurrent_goroutines: 10000
+    
+    memory_management:
+      packet_buffer_pool: true
+      connection_state_pool: true
+      gc_optimization: "Tune for low latency"
+    
+    cpu_optimization:
+      batch_processing: true
+      zero_copy_where_possible: true
+      cpu_affinity: "Optional for high performance"
+

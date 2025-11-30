@@ -1,0 +1,312 @@
+# Issue: #1435
+openapi: 3.0.3
+info:
+  title: Social Corporation Hierarchy Service API
+  description: API для управления иерархией должностей в корпорациях
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Corporation Hierarchy
+    description: Управление иерархией должностей
+
+paths:
+  /social/corporations/{corporationId}/positions:
+    post:
+      tags:
+        - Corporation Hierarchy
+      summary: Создать должность
+      operationId: createPosition
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePositionRequest"
+      responses:
+        "201":
+          description: Должность создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporationPosition"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    get:
+      tags:
+        - Corporation Hierarchy
+      summary: Получить список должностей
+      operationId: listPositions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список должностей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CorporationPosition"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/corporations/{corporationId}/positions/{positionId}/assign:
+    post:
+      tags:
+        - Corporation Hierarchy
+      summary: Назначить должность
+      operationId: assignPosition
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: positionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignPositionRequest"
+      responses:
+        "200":
+          description: Должность назначена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporationEmployee"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/corporations/{corporationId}/positions/{positionId}:
+    delete:
+      tags:
+        - Corporation Hierarchy
+      summary: Удалить должность
+      operationId: deletePosition
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: positionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Должность удалена
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CorporationPosition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        corporation_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        position_type:
+          type: string
+          enum:
+            - CEO
+            - COO
+            - CFO
+            - CTO
+            - MANAGER
+            - SPECIALIST
+            - INTERN
+        hierarchy_level:
+          type: integer
+          minimum: 0
+        parent_position_id:
+          type: string
+          format: uuid
+          nullable: true
+        salary_type:
+          type: string
+          enum:
+            - FIXED
+            - PERCENTAGE
+            - BONUS
+        salary_amount:
+          type: number
+          format: decimal
+        permissions:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreatePositionRequest:
+      type: object
+      required:
+        - name
+        - position_type
+        - hierarchy_level
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        position_type:
+          type: string
+          enum:
+            - CEO
+            - COO
+            - CFO
+            - CTO
+            - MANAGER
+            - SPECIALIST
+            - INTERN
+        hierarchy_level:
+          type: integer
+          minimum: 0
+        parent_position_id:
+          type: string
+          format: uuid
+        salary_type:
+          type: string
+          enum:
+            - FIXED
+            - PERCENTAGE
+            - BONUS
+        salary_amount:
+          type: number
+          format: decimal
+          minimum: 0
+        permissions:
+          type: object
+          additionalProperties: true
+
+    AssignPositionRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+
+    CorporationEmployee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        corporation_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        position_id:
+          type: string
+          format: uuid
+        hired_at:
+          type: string
+          format: date-time
+        last_active_at:
+          type: string
+          format: date-time
+          nullable: true
+        performance_score:
+          type: number
+          format: decimal
+        total_salary_paid:
+          type: number
+          format: decimal
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

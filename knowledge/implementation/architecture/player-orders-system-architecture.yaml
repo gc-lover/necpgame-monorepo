@@ -657,6 +657,41 @@ architecture:
       - Синхронизация аукционов
       - Уведомления о событиях
 
+  tickrate_and_network_requirements:
+    order_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание заказа: event-based, ~0.1-0.5 events/sec
+        - Принятие заказа: event-based, ~0.1-0.3 events/sec
+        - Обновление прогресса: event-based, ~0.5-1 events/sec
+        - Общий трафик: ~0.3-0.8 KB/sec на игрока
+      sync_strategy: Strong Consistency (ACID транзакции)
+
+    order_auctions:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание аукциона: event-based, ~0.05-0.1 events/sec
+        - Ставки: event-based, ~0.1-0.5 events/sec (пиковая)
+        - Обновления аукциона: event-based, ~0.2-0.5 events/sec
+        - Общий трафик: ~0.2-0.6 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    order_execution:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Отслеживание прогресса: event-based, ~0.5-1 events/sec
+        - Завершение заказа: event-based, ~0.1-0.3 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    order_economy:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Платежи: event-based, ~0.1-0.3 events/sec
+        - Комиссии: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      sync_strategy: Strong Consistency (Saga Pattern для распределенных транзакций)
+
 technical_specification:
   subtasks:
     - id: order-manager

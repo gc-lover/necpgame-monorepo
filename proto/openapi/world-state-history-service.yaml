@@ -1,0 +1,225 @@
+# Issue: #53
+openapi: 3.0.3
+info:
+  title: World State History Service API
+  description: API для истории изменений состояния и time travel функциональности
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: World State History
+    description: История изменений и time travel
+
+paths:
+  /world/state/{key}/history:
+    get:
+      tags:
+        - World State History
+      summary: Получить историю изменений
+      operationId: getStateHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: История изменений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StateEvent"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/state/{key}/at-time:
+    get:
+      tags:
+        - World State History
+      summary: Получить состояние на момент времени
+      operationId: getStateAtTime
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timestamp
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Состояние на момент времени
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/state/replay:
+    post:
+      tags:
+        - World State History
+      summary: Replay событий для восстановления
+      operationId: replayStateEvents
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplayRequest"
+      responses:
+        "200":
+          description: Replay выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    StateEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        event_type:
+          type: string
+        old_value:
+          type: object
+          additionalProperties: true
+          nullable: true
+        new_value:
+          type: object
+          additionalProperties: true
+        version:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        actor_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    ReplayRequest:
+      type: object
+      required:
+        - key
+        - from_timestamp
+        - to_timestamp
+      properties:
+        key:
+          type: string
+        from_timestamp:
+          type: string
+          format: date-time
+        to_timestamp:
+          type: string
+          format: date-time
+        include_snapshots:
+          type: boolean
+          default: true
+
+    ReplayResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        replayed_events:
+          type: integer
+        final_state:
+          $ref: "#/components/schemas/GlobalState"
+        duration_ms:
+          type: integer
+
+    GlobalState:
+      type: object
+      properties:
+        key:
+          type: string
+        category:
+          type: string
+        value:
+          type: object
+          additionalProperties: true
+        version:
+          type: integer
+        sync_type:
+          type: string
+          enum:
+            - SERVER_WIDE
+            - PLAYER_SPECIFIC
+            - PHASED
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

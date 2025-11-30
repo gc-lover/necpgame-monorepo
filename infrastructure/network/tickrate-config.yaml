@@ -1,0 +1,337 @@
+# Issue: #142109960
+# Tick Rate Configuration for Network Infrastructure
+# Network Engineer - Runtime configuration for tick rates
+
+tickrate_config:
+  version: "1.0.0"
+  
+  zones:
+    safe_zones:
+      zone_type: "safe"
+      protocol: "websocket"
+      tickrate:
+        base: 30
+        min: 20
+        max: 30
+        adaptive: false
+      latency:
+        target_ms: 100
+        max_ms: 150
+      players:
+        max_per_zone: 500
+      network:
+        bandwidth_per_player_kbps: 15
+    
+    open_world_pve:
+      zone_type: "open_world"
+      protocol: "websocket"
+      tickrate:
+        base: 30
+        min: 20
+        max: 30
+        adaptive: false
+      latency:
+        target_ms: 100
+        max_ms: 150
+      players:
+        max_per_zone: 500
+      network:
+        bandwidth_per_player_kbps: 15
+      protocol_switching:
+        enabled: true
+        switch_to_udp_on_combat: true
+    
+    open_world_pvp:
+      zone_type: "open_world"
+      protocol: "udp"
+      tickrate:
+        base: 60
+        min: 40
+        max: 80
+        adaptive: true
+      latency:
+        target_ms: 40
+        max_ms: 60
+      players:
+        max_per_zone: 200
+      network:
+        bandwidth_per_player_kbps: 18
+      spatial_partitioning:
+        enabled: true
+        grid_size_meters: 100
+    
+    pvp_small:
+      zone_type: "pvp"
+      protocol: "udp"
+      tickrate:
+        base: 128
+        min: 60
+        max: 128
+        adaptive: true
+      latency:
+        target_ms: 30
+        max_ms: 50
+      players:
+        min: 5
+        max: 20
+      network:
+        bandwidth_per_player_kbps: 25
+      spatial_partitioning:
+        enabled: false
+    
+    gvg_200:
+      zone_type: "gvg"
+      protocol: "udp"
+      tickrate:
+        base: 80
+        min: 60
+        max: 80
+        adaptive: true
+      latency:
+        target_ms: 40
+        max_ms: 60
+      players:
+        min: 100
+        max: 200
+      network:
+        bandwidth_per_player_kbps: 18
+      spatial_partitioning:
+        enabled: true
+        grid_size_meters: 100
+        visibility_range: "3x3"
+    
+    gvg_400:
+      zone_type: "gvg"
+      protocol: "udp"
+      tickrate:
+        base: 60
+        min: 40
+        max: 60
+        adaptive: true
+      latency:
+        target_ms: 50
+        max_ms: 80
+      players:
+        min: 200
+        max: 400
+      network:
+        bandwidth_per_player_kbps: 15
+      spatial_sharding:
+        enabled: true
+        shard_count: 4
+        shard_size_meters: 200
+        edge_buffer_meters: 50
+      event_aggregation:
+        enabled: true
+        batch_window_ms: 100
+    
+    massive_war:
+      zone_type: "massive_war"
+      protocol: "udp"
+      tickrate:
+        base: 40
+        min: 20
+        max: 40
+        adaptive: true
+      latency:
+        target_ms: 100
+        max_ms: 150
+      players:
+        min: 1000
+        max: 2000
+      network:
+        bandwidth_per_player_kbps: 10
+      cluster:
+        enabled: true
+        servers_per_cluster: 8
+        players_per_server: 250
+      spatial_sharding:
+        enabled: true
+        shard_count: 10
+        shard_size_meters: 300
+        edge_buffer_meters: 100
+      lod_system:
+        enabled: true
+        levels:
+          - distance_meters: 50
+            tickrate: 40
+            detail: "full"
+          - distance_meters: 100
+            tickrate: 30
+            detail: "reduced"
+          - distance_meters: 200
+            tickrate: 20
+            detail: "minimal"
+      event_aggregation:
+        enabled: true
+        batch_window_ms: 200
+
+  mechanics:
+    combat:
+      pve:
+        tickrate: 30
+        network_load_kbps: 12
+        sync_strategy: "strong_consistency"
+      pvp_small:
+        tickrate: 128
+        network_load_kbps: 22
+        sync_strategy: "strong_consistency"
+        priority: "highest"
+      gvg:
+        tickrate: 60
+        network_load_kbps: 16
+        sync_strategy: "strong_consistency"
+        spatial_optimization: true
+      massive_war:
+        tickrate: 40
+        network_load_kbps: 10
+        sync_strategy: "strong_consistency"
+        lod_enabled: true
+    
+    movement:
+      pve:
+        tickrate: 30
+        network_load_kbps: 4
+        sync_strategy: "strong_consistency"
+      pvp_small:
+        tickrate: 128
+        network_load_kbps: 8
+        sync_strategy: "strong_consistency"
+        priority: "highest"
+      gvg:
+        tickrate: 60
+        network_load_kbps: 5
+        sync_strategy: "strong_consistency"
+        spatial_optimization: true
+      massive_war:
+        tickrate: 30
+        network_load_kbps: 3
+        sync_strategy: "strong_consistency"
+        lod_enabled: true
+    
+    abilities:
+      pve:
+        tickrate: "event_based"
+        network_load_kbps: 2
+        sync_strategy: "strong_consistency"
+      pvp_small:
+        tickrate: "event_based_128hz"
+        network_load_kbps: 4
+        sync_strategy: "strong_consistency"
+      gvg:
+        tickrate: "event_based_60hz"
+        network_load_kbps: 3
+        sync_strategy: "strong_consistency"
+      massive_war:
+        tickrate: "event_based_40hz"
+        network_load_kbps: 2
+        sync_strategy: "strong_consistency"
+    
+    inventory:
+      all_zones:
+        tickrate: "event_based"
+        network_load_kbps: 0.8
+        sync_strategy: "strong_consistency_acid"
+    
+    trading:
+      all_zones:
+        tickrate: "event_based"
+        network_load_kbps: 1.5
+        sync_strategy: "strong_consistency_acid"
+    
+    chat:
+      all_zones:
+        tickrate: "event_based"
+        network_load_kbps: 2
+        sync_strategy: "eventual_consistency"
+    
+    quests:
+      all_zones:
+        tickrate: "event_based"
+        network_load_kbps: 0.3
+        sync_strategy: "strong_consistency"
+
+  adaptive_tickrate:
+    enabled: true
+    adjustment_interval_seconds: 5
+    min_tickrate: 20
+    max_tickrate: 128
+    
+    factors:
+      player_count:
+        weight: 0.6
+        thresholds:
+          - players: 0
+            multiplier: 1.0
+          - players: 50
+            multiplier: 1.0
+          - players: 100
+            multiplier: 0.8
+          - players: 200
+            multiplier: 0.6
+          - players: 400
+            multiplier: 0.5
+          - players: 1000
+            multiplier: 0.4
+      
+      network_latency:
+        weight: 0.3
+        thresholds:
+          - latency_ms: 0
+            multiplier: 1.0
+          - latency_ms: 50
+            multiplier: 0.9
+          - latency_ms: 100
+            multiplier: 0.7
+          - latency_ms: 200
+            multiplier: 0.5
+      
+      cpu_usage:
+        weight: 0.1
+        thresholds:
+          - cpu_percent: 0
+            multiplier: 1.0
+          - cpu_percent: 50
+            multiplier: 0.95
+          - cpu_percent: 70
+            multiplier: 0.8
+          - cpu_percent: 90
+            multiplier: 0.6
+    
+    priority_mechanics:
+      - combat
+      - movement
+      - health
+    
+    protected_mechanics:
+      - inventory
+      - trading
+      - quests
+
+  optimization:
+    spatial_partitioning:
+      enabled: true
+      grid_size_meters: 100
+      traffic_reduction_percent: 85
+      max_visible_cells: 9
+      update_frequency_multiplier: 1.0
+    
+    spatial_sharding:
+      enabled: true
+      shard_size_meters: 200
+      edge_buffer_meters: 50
+      traffic_reduction_percent: 88
+      sync_frequency_ms: 100
+    
+    event_aggregation:
+      enabled: true
+      batch_window_ms: 100
+      max_events_per_batch: 50
+      traffic_reduction_percent: 65
+    
+    lod_system:
+      enabled: true
+      levels: 3
+      traffic_reduction_percent: 60
+      update_frequency_multiplier: 0.5
+

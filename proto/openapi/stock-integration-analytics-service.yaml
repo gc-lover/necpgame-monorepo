@@ -1,0 +1,111 @@
+# Issue: #141889954
+openapi: 3.0.3
+info:
+  title: Stock Integration Analytics Service API
+  description: |
+    API для интеграции биржи с аналитическими системами.
+    
+    Функционал:
+    - Метрики вовлеченности игроков
+    - Метрики торгового объема
+    - Метрики ROI
+    - Метрики здоровья рынка
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: analytics-integration
+    description: Интеграция с аналитическими системами
+
+paths:
+  /analytics/stocks/engagement:
+    get:
+      tags:
+        - analytics-integration
+      summary: Получить метрики вовлеченности игроков
+      description: |
+        Возвращает метрики вовлеченности игроков в биржевую торговлю.
+        Включает количество активных трейдеров, средний объем торгов, частоту сделок.
+      operationId: getStockEngagementMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          required: false
+          description: Период анализа
+          schema:
+            type: string
+            enum:
+              - day
+              - week
+              - month
+            default: week
+        - name: stock_id
+          in: query
+          required: false
+          description: Фильтр по акции
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Метрики вовлеченности успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: string
+                  active_traders:
+                    type: integer
+                    description: Количество активных трейдеров
+                  total_trades:
+                    type: integer
+                    description: Общее количество сделок
+                  average_trade_volume:
+                    type: number
+                    format: double
+                    description: Средний объем сделки
+                  daily_active_users:
+                    type: integer
+                    description: Ежедневно активные пользователи
+                  weekly_active_users:
+                    type: integer
+                    description: Еженедельно активные пользователи
+                  monthly_active_users:
+                    type: integer
+                    description: Ежемесячно активные пользователи
+                  average_session_duration:
+                    type: number
+                    format: double
+                    description: Средняя длительность сессии (минуты)
+                  retention_rate:
+                    type: number
+                    format: double
+                    description: Процент удержания игроков
+                    minimum: 0
+                    maximum: 100
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

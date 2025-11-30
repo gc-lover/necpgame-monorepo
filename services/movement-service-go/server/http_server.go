@@ -84,6 +84,9 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 func HandlerFromMux(si api.ServerInterface, r *mux.Router) {
 	wrapper := &api.ServerInterfaceWrapper{
 		Handler: si,
+		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		},
 	}
 
 	r.HandleFunc("/movement/{characterId}/history", wrapper.GetPositionHistory).Methods("GET")

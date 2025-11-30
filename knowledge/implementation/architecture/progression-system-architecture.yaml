@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:00:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -245,6 +245,86 @@ architecture:
       - Синхронизация прогрессии в реальном времени
       - Обновления опыта и уровня
       - Уведомления о событиях
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для начисления опыта, повышения уровня и распределения очков
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед начислением опыта и распределением очков
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (повышение уровня, обновление характеристик, проверка достижений)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния прогрессии (начисление опыта, повышение уровня, распределение очков)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: ExperienceGainedEvent, LevelUpEvent, AttributePointsDistributedEvent, SkillLevelUpEvent.
+    cqrs_pattern: |
+      Разделение команд (начисление опыта, повышение уровня, распределение очков) и запросов
+      (получение уровня, получение опыта, получение атрибутов) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как повышение уровня (проверка опыта, повышение уровня,
+      выдача очков, обновление характеристик, проверка достижений) или распределение очков атрибутов
+      (валидация, распределение, обновление атрибутов, пересчёт характеристик), используется Saga Pattern
+      для обеспечения атомарности операций между Gameplay Service, Character Service и Achievement Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    experience_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Начисление опыта: event-based, ~0.1-0.5 events/sec на игрока
+        - Получение опыта: event-based, ~0.1-0.3 requests/sec на игрока
+        - Расчёт опыта: event-based, ~0.1-0.2 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      latency_requirements: < 30-100ms для начисления опыта
+      sync_strategy: Strong Consistency (ACID транзакции) для начисления опыта
+
+    level_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Повышение уровня: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение уровня: event-based, ~0.1-0.3 requests/sec на игрока
+        - Проверка повышения уровня: event-based, ~0.1-0.2 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 50-150ms для повышения уровня
+      sync_strategy: Strong Consistency (ACID транзакции) для повышения уровня
+
+    attribute_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Распределение очков атрибутов: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение атрибутов: event-based, ~0.1-0.3 requests/sec на игрока
+        - Получение доступных очков: event-based, ~0.1-0.2 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 50-150ms для распределения очков
+      sync_strategy: Strong Consistency (ACID транзакции) для распределения очков
+
+    skill_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Начисление опыта навыку: event-based, ~0.1-0.3 events/sec на игрока
+        - Повышение уровня навыка: event-based, ~0.01-0.05 events/sec на игрока
+        - Разблокировка навыка: event-based, ~0.01-0.02 events/sec на игрока
+        - Получение навыков: event-based, ~0.1-0.3 requests/sec на игрока
+        - Общий трафик: ~0.2-0.4 KB/sec на игрока
+      latency_requirements: < 50-150ms для операций с навыками
+      sync_strategy: Strong Consistency (ACID транзакции) для операций с навыками
+
+    realtime_updates:
+      tickrate: Event-based (on-demand) + 1-5 Hz для синхронизации состояния
+      network_load: |
+        - Синхронизация прогрессии: 1-5 Hz, ~0.1-0.3 KB/sec на игрока
+        - Уведомления о повышении уровня: event-based, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      latency_requirements: < 30-100ms для синхронизации состояния
+      sync_strategy: Eventual Consistency для синхронизации состояния
 
   database_schema:
     tables:
@@ -530,6 +610,17 @@ next_steps:
   - Определение формул опыта и уровней
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния прогрессии
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (повышение уровня, распределение очков)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для операций с опытом, уровнями, атрибутами, навыками и realtime обновлений
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

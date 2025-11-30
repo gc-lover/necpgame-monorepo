@@ -1,4 +1,4 @@
-.PHONY: generate-api clean verify-api check-deps install-deps generate-weapon-core-api generate-weapon-combat-api generate-weapon-effects-api generate-weapon-advanced-api generate-all-weapon-apis verify-weapon-apis generate-implants-stats-api generate-implants-maintenance-api verify-implants-maintenance-api
+.PHONY: generate-api clean verify-api check-deps install-deps generate-weapon-core-api generate-weapon-combat-api generate-weapon-effects-api generate-weapon-advanced-api generate-all-weapon-apis verify-weapon-apis generate-implants-stats-api generate-implants-maintenance-api verify-implants-maintenance-api generate-damage-api verify-damage-api
 
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
@@ -12,6 +12,7 @@ WEAPON_EFFECTS_SPEC := gameplay-weapon-special-mechanics-effects-service
 WEAPON_ADVANCED_SPEC := gameplay-weapon-special-mechanics-advanced-service
 IMPLANTS_STATS_SPEC := combat-implants-stats-service
 IMPLANTS_MAINTENANCE_SPEC := combat-implants-maintenance-service
+DAMAGE_SPEC := combat-damage-service
 
 check-deps:
 	@echo "Checking dependencies..."
@@ -43,7 +44,12 @@ verify-implants-maintenance-api: check-deps
 	@$(REDOCLY_CLI) lint $(SPEC_DIR)/$(IMPLANTS_MAINTENANCE_SPEC).yaml || { echo "WARNING  $(IMPLANTS_MAINTENANCE_SPEC) validation failed"; exit 1; }
 	@echo "OK $(IMPLANTS_MAINTENANCE_SPEC) spec is valid"
 
-verify-api: verify-weapon-apis verify-implants-stats-api verify-implants-maintenance-api
+verify-damage-api: check-deps
+	@echo "Verifying damage OpenAPI spec..."
+	@$(REDOCLY_CLI) lint $(SPEC_DIR)/$(DAMAGE_SPEC).yaml || { echo "WARNING  $(DAMAGE_SPEC) validation failed"; exit 1; }
+	@echo "OK $(DAMAGE_SPEC) spec is valid"
+
+verify-api: verify-weapon-apis verify-implants-stats-api verify-implants-maintenance-api verify-damage-api
 	@echo "OK All OpenAPI specs verified"
 
 generate-weapon-core-api: check-deps
@@ -91,10 +97,17 @@ generate-implants-maintenance-api: check-deps
 	@$(OAPI_CODEGEN) -package implantsmaintenanceapi -generate types,$(ROUTER_TYPE) -o pkg/implantsmaintenanceapi/api.gen.go pkg/implantsmaintenanceapi/$(IMPLANTS_MAINTENANCE_SPEC).bundled.yaml || { echo "❌ Failed to generate $(IMPLANTS_MAINTENANCE_SPEC)"; exit 1; }
 	@echo "OK Generated $(IMPLANTS_MAINTENANCE_SPEC)"
 
-generate-api: generate-all-weapon-apis generate-implants-stats-api generate-implants-maintenance-api
+generate-damage-api: check-deps
+	@echo "Generating damage API..."
+	@mkdir -p pkg/damageapi
+	@$(REDOCLY_CLI) bundle $(SPEC_DIR)/$(DAMAGE_SPEC).yaml -o pkg/damageapi/$(DAMAGE_SPEC).bundled.yaml || { echo "❌ Failed to bundle $(DAMAGE_SPEC)"; exit 1; }
+	@$(OAPI_CODEGEN) -package damageapi -generate types,$(ROUTER_TYPE) -o pkg/damageapi/api.gen.go pkg/damageapi/$(DAMAGE_SPEC).bundled.yaml || { echo "❌ Failed to generate $(DAMAGE_SPEC)"; exit 1; }
+	@echo "OK Generated $(DAMAGE_SPEC)"
+
+generate-api: generate-all-weapon-apis generate-implants-stats-api generate-implants-maintenance-api generate-damage-api
 	@echo "OK All APIs generated"
 
 clean:
 	@echo "Cleaning generated files"
-	@rm -rf pkg/weaponcoreapi pkg/weaponcombatapi pkg/weaponeffectsapi pkg/weaponadvancedapi pkg/implantsstatsapi pkg/implantsmaintenanceapi
+	@rm -rf pkg/weaponcoreapi pkg/weaponcombatapi pkg/weaponeffectsapi pkg/weaponadvancedapi pkg/implantsstatsapi pkg/implantsmaintenanceapi pkg/damageapi
 	@echo "OK Cleaned generated files"

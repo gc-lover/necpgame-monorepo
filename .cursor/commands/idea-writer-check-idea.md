@@ -17,3 +17,17 @@ Check idea readiness and determine task type for handoff.
 **Result:**
 - OK Ready → handoff to determined agent, update Status
 - ❌ Not ready → fix issues, don't handoff
+
+**Update Status:**
+```javascript
+mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: project_item_id,
+  updated_field: {
+    id: 239690516  // число,
+    value: '{option_id}'  // id опции 'Architect - Todo' из list_project_fields  // или 'UI/UX - Todo' или 'Content Writer - Todo'
+  }
+});
+```

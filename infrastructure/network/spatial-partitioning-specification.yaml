@@ -1,0 +1,349 @@
+# Issue: #142109960
+# Spatial Partitioning Engine Specification
+# Network Engineer - Specification for spatial partitioning optimization
+
+spatial_partitioning_specification:
+  version: "1.0.0"
+  last_updated: "2025-11-30"
+  description: |
+    Спецификация модуля Spatial Partitioning Engine для оптимизации
+    сетевого трафика в средних битвах (100-400 игроков) путем разделения
+    зоны на сетку и фильтрации обновлений по близости.
+
+  target_scenarios:
+    - name: "GvG 200 (100v100)"
+      player_count: 200
+      expected_reduction: "80-90%"
+      tickrate_hz: 60-80
+    
+    - name: "GvG 400 (200v200)"
+      player_count: 400
+      expected_reduction: "85-90%"
+      tickrate_hz: 40-60
+    
+    - name: "Medium PvP battles"
+      player_count: 50-200
+      expected_reduction: "70-85%"
+      tickrate_hz: 60-100
+
+  grid_configuration:
+    cell_size_meters: 100
+    description: |
+      Размер ячейки сетки 100x100 метров.
+      Оптимизирован для баланса между детализацией
+      и производительностью.
+    
+    visibility_radius:
+      cells: 3
+      pattern: "3x3 grid"
+      description: |
+        Игрок видит обновления только в своей ячейке
+        и 8 соседних ячейках (всего 9 ячеек).
+      total_cells: 9
+    
+    grid_calculation:
+      zone_size_meters:
+        small: "500x500"
+        medium: "1000x1000"
+        large: "2000x2000"
+      
+      cells_per_dimension:
+        small: "5x5 = 25 cells"
+        medium: "10x10 = 100 cells"
+        large: "20x20 = 400 cells"
+      
+      example_1000x1000:
+        total_cells: 100
+        cells_per_axis: 10
+        cell_size_meters: 100
+
+  player_tracking:
+    cell_assignment:
+      method: "Continuous coordinate-based"
+      update_frequency: "Every player movement update"
+      threshold_distance_meters: 5
+      description: |
+        Игрок привязывается к ячейке на основе координат.
+        При перемещении более чем на 5 метров проверяется
+        необходимость смены ячейки.
+    
+    cell_membership:
+      storage: "In-memory map: cell_id -> []player_id"
+      concurrent_access: "Thread-safe with mutex/RWLock"
+      update_strategy: "Lazy update on position change"
+    
+    neighbor_detection:
+      method: "Grid-based calculation"
+      cells_to_check: 9
+      calculation:
+        - "Get current cell (x, y)"
+        - "Calculate 8 neighbor cells"
+        - "Add current cell (total 9 cells)"
+        - "Get all players from these cells"
+
+  update_filtering:
+    visible_players:
+      calculation:
+        - "Get player's current cell"
+        - "Get all cells in 3x3 visibility radius"
+        - "Aggregate all players from these cells"
+        - "Remove duplicates"
+      
+      max_visible_players: 50-100
+      description: |
+        Максимальное количество видимых игроков ограничено
+        для предотвращения перегрузки сети.
+    
+    update_prioritization:
+      distance_based: true
+      priority_levels:
+        - name: "immediate"
+          distance_meters: 0-50
+          update_frequency: "Every tick"
+        
+        - name: "near"
+          distance_meters: 50-100
+          update_frequency: "Every tick"
+        
+        - name: "medium"
+          distance_meters: 100-200
+          update_frequency: "Every 2 ticks"
+        
+        - name: "far"
+          distance_meters: 200-300
+          update_frequency: "Every 3-4 ticks"
+      
+      priority_mechanics:
+        - "Combat actions: always immediate"
+        - "Movement: distance-based"
+        - "Status effects: immediate if in range"
+    
+    culling_strategy:
+      behind_wall: false
+      description: |
+        Простая версия не учитывает стены/препятствия.
+        Расширенная версия может добавить line-of-sight проверки.
+      
+      max_distance_meters: 300
+      description: "Игроки дальше 300 метров не обновляются"
+
+  traffic_reduction:
+    without_partitioning:
+      example_200_players:
+        updates_per_tick: "200 * 199 = 39,800"
+        bandwidth_mbps: "~80-120"
+        description: "Каждый игрок получает обновления о всех остальных"
+    
+    with_partitioning:
+      example_200_players:
+        updates_per_tick: "~200 * 20 = 4,000"
+        bandwidth_mbps: "~8-12"
+        reduction_percent: "90%"
+        description: |
+          Каждый игрок получает обновления только от
+          игроков в видимых ячейках (в среднем 20 игроков)
+    
+    calculation_formula:
+      without: "N * (N - 1)"
+      with: "N * avg_visible_players"
+      reduction: "1 - (avg_visible_players / (N - 1))"
+      
+      example:
+        n: 200
+        avg_visible: 20
+        without: "200 * 199 = 39,800"
+        with: "200 * 20 = 4,000"
+        reduction: "1 - (20 / 199) = 89.9%"
+
+  cell_management:
+    cell_data_structure:
+      type: "Map[int32]Cell"
+      key: "cell_id (calculated from x, y coordinates)"
+      value:
+        - "cell_id: int32"
+        - "x: int32"
+        - "y: int32"
+        - "players: []player_id"
+        - "entities: []entity_id"
+        - "last_update: timestamp"
+    
+    cell_updates:
+      on_player_join:
+        - "Calculate cell coordinates from player position"
+        - "Add player to cell's player list"
+        - "Notify neighbor cells (if needed)"
+      
+      on_player_move:
+        - "Calculate new cell coordinates"
+        - "If cell changed: remove from old, add to new"
+        - "Update neighbor subscriptions"
+      
+      on_player_leave:
+        - "Remove player from cell's player list"
+        - "Clean up subscriptions"
+
+  neighbor_subscriptions:
+    subscription_management:
+      when_player_joins_cell:
+        - "Get all cells in 3x3 visibility radius"
+        - "Subscribe player to updates from these cells"
+        - "Store subscription mapping: player_id -> []cell_id"
+      
+      when_player_leaves_cell:
+        - "Unsubscribe player from old cells"
+        - "Subscribe player to new cells"
+        - "Update subscription mapping"
+    
+    update_distribution:
+      method: "Publish-subscribe pattern"
+      steps:
+        - "Player moves/acts in cell"
+        - "Get all players subscribed to this cell"
+        - "Send update only to subscribed players"
+      efficiency: "O(1) lookup for subscribers"
+
+  performance_optimization:
+    spatial_indexing:
+      method: "Grid-based spatial hash"
+      lookup_complexity: "O(1)"
+      memory_overhead: "Minimal (just grid map)"
+    
+    batch_processing:
+      enabled: true
+      batch_window_ms: 16
+      description: |
+        Группировка обновлений игроков в одной ячейке
+        для снижения количества отправок.
+    
+    caching:
+      neighbor_cache:
+        enabled: true
+        ttl_ms: 100
+        description: "Кэширование списка соседних ячеек"
+      
+      visible_players_cache:
+        enabled: true
+        ttl_ms: 50
+        description: "Кэширование списка видимых игроков"
+
+  integration:
+    with_zone_manager:
+      methods:
+        - "GetZoneBounds(zone_id) -> Bounds"
+        - "GetZonePlayerCount(zone_id) -> int"
+        - "GetZoneType(zone_id) -> ZoneType"
+    
+    with_udp_gateway:
+      methods:
+        - "GetPlayersInCells(cell_ids) -> []player_id"
+        - "SendUpdatesToPlayers(player_ids, updates)"
+        - "FilterUpdatesByVisibility(player_id, updates) -> filtered"
+    
+    with_game_server:
+      methods:
+        - "GetPlayerPosition(player_id) -> Position"
+        - "GetPlayerUpdates(player_ids) -> []Update"
+        - "NotifyCellChange(player_id, old_cell, new_cell)"
+
+  endpoints:
+    http_endpoints:
+      - method: "GET"
+        path: "/api/v1/spatial/{zone_id}/cells"
+        response: "SpatialCellsResponse"
+        purpose: "Получить информацию о ячейках зоны"
+      
+      - method: "GET"
+        path: "/api/v1/spatial/{zone_id}/cells/{x}/{y}/players"
+        response: "CellPlayersResponse"
+        purpose: "Получить игроков в ячейке"
+      
+      - method: "POST"
+        path: "/api/v1/spatial/{zone_id}/update"
+        request: "SpatialUpdateRequest"
+        response: "SpatialUpdateResponse"
+        purpose: "Обновить позицию игрока в сетке"
+      
+      - method: "GET"
+        path: "/api/v1/spatial/{zone_id}/stats"
+        response: "SpatialStatsResponse"
+        purpose: "Статистика spatial partitioning"
+    
+    websocket_endpoints:
+      - path: "/ws/spatial/{zone_id}/updates"
+        purpose: "Реалтайм обновления позиций игроков"
+        messages:
+          - "CellUpdate"
+          - "PlayerCellChange"
+          - "NeighborUpdate"
+
+  monitoring:
+    metrics:
+      partitioning_metrics:
+        - "cells_total"
+        - "players_per_cell_avg"
+        - "players_per_cell_max"
+        - "cells_with_players"
+        - "empty_cells"
+      
+      traffic_metrics:
+        - "updates_without_partitioning_estimated"
+        - "updates_with_partitioning_actual"
+        - "traffic_reduction_percent"
+        - "bandwidth_saved_mbps"
+      
+      performance_metrics:
+        - "cell_lookup_time_ms"
+        - "neighbor_calculation_time_ms"
+        - "update_filtering_time_ms"
+        - "subscription_update_time_ms"
+    
+    logging:
+      log_level: "info"
+      log_cell_changes: false
+      log_performance: true
+      log_traffic_stats: true
+
+  configuration:
+    grid_size_meters: 100
+    visibility_radius_cells: 3
+    max_visible_players: 100
+    max_update_distance_meters: 300
+    cell_update_threshold_meters: 5
+    batch_window_ms: 16
+    cache_ttl_ms: 100
+    
+    adaptive_settings:
+      enabled: true
+      adjust_by_player_count: true
+      adjust_by_latency: true
+      
+      thresholds:
+        - player_count: 100
+          grid_size_meters: 100
+          visibility_radius_cells: 3
+        
+        - player_count: 200
+          grid_size_meters: 100
+          visibility_radius_cells: 3
+        
+        - player_count: 400
+          grid_size_meters: 150
+          visibility_radius_cells: 2
+
+  implementation_notes:
+    language: "Go 1.21+"
+    data_structures:
+      - "sync.RWMutex for thread-safe cell access"
+      - "map[int32]*Cell for cell storage"
+      - "map[player_id][]cell_id for subscriptions"
+    
+    goroutine_management:
+      per_zone_goroutine: true
+      update_goroutine_pool: true
+      max_concurrent_updates: 1000
+    
+    memory_optimization:
+      cell_pooling: true
+      player_list_pooling: true
+      update_buffer_pooling: true
+

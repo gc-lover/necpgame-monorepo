@@ -1,0 +1,248 @@
+# Issue: #1547
+metadata:
+  id: quest-london-2078-2093-lost-control
+  title: 'London 2078-2093 — Потеря контроля'
+  document_type: canon
+  category: quests
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-30T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - london
+    - engram
+    - influence
+    - control
+    - side-quest
+  topics:
+    - influence-management
+    - control-loss
+    - psychological-drama
+  related_systems:
+    - narrative-service
+    - quest-service
+    - character-service
+    - engram-system
+  related_documents:
+    - id: engram-chips-system-concept
+      relation: implements
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - liveops
+  risk_level: high
+
+review:
+  chain:
+    - role: content_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+
+summary:
+  problem: |
+    У игрока энграмма достигла критического уровня влияния (90%+) и пытается взять контроль
+    над персонажем. Игрок должен вернуть контроль и восстановить баланс.
+  goal: |
+    Вернуть контроль от энграммы, снизить уровень влияния, и восстановить баланс между
+    персонажем и энграммой.
+  essence: |
+    Квест на возврат контроля от энграммы. Игрок сталкивается с потерей контроля при высоком
+    влиянии, должен бороться за контроль и восстановить баланс через специальные процедуры.
+  key_points:
+    - Критический уровень влияния (90%+)
+    - Борьба за контроль
+    - Специальные процедуры восстановления
+    - Последствия потери контроля
+
+quest_definition:
+  quest_type: side
+  level_min: 25
+  level_max: null
+  requirements:
+    required_quests:
+      - quest-night-city-2070-2077-first-engram
+    required_flags:
+      - first_engram_created
+      - engram_influence_high
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: experience_control_loss
+      text: "Пережить потерю контроля: энграмма принимает решения вместо игрока"
+      type: interact
+      target: control_loss_event
+      count: 1
+      optional: false
+    - id: realize_danger
+      text: "Осознать опасность ситуации и необходимость действий"
+      type: interact
+      target: danger_realization
+      count: 1
+      optional: false
+    - id: find_specialist
+      text: "Найти специалиста в London для помощи с потерей контроля"
+      type: explore
+      target: london_control_specialist
+      count: 1
+      optional: false
+    - id: consult_specialist
+      text: "Проконсультироваться со специалистом о методах возврата контроля"
+      type: interact
+      target: specialist_consultation
+      count: 1
+      optional: false
+    - id: choose_method
+      text: "Выбрать метод возврата контроля: блокаторы, терапия, или удаление энграммы"
+      type: interact
+      target: control_recovery_method
+      count: 1
+      optional: false
+    - id: implement_solution
+      text: "Реализовать выбранное решение: установить блокаторы, пройти терапию, или удалить энграмму"
+      type: interact
+      target: control_recovery_implementation
+      count: 1
+      optional: false
+    - id: fight_for_control
+      text: "Бороться за контроль в психологической битве с энграммой"
+      type: interact
+      target: control_battle
+      count: 1
+      optional: false
+    - id: restore_balance
+      text: "Восстановить баланс и снизить уровень влияния до безопасного уровня"
+      type: interact
+      target: balance_restoration
+      count: 1
+      optional: false
+  rewards:
+    experience: 10000
+    currency: 20000
+    items:
+      - id: control_restoration_implant
+        name: "Control Restoration Implant"
+        quantity: 1
+      - id: influence_reduction_tool
+        name: "Influence Reduction Tool"
+        quantity: 1
+    reputation:
+      london: 15
+    flags:
+      - control_restored
+      - influence_management_learned
+  branches:
+    - id: blocker_path
+      condition: "player_choice == 'blocker'"
+      objectives:
+        - id: install_high_tier_blocker
+          text: "Установить высокий тир блокатора для снижения влияния"
+          type: interact
+          target: high_tier_blocker_installation
+          count: 1
+          optional: false
+      rewards:
+        experience: 3000
+        items:
+          - id: tier_4_blocker
+            name: "Tier 4 Blocker Implant"
+            quantity: 1
+    - id: therapy_path
+      condition: "player_choice == 'therapy'"
+      objectives:
+        - id: complete_therapy
+          text: "Пройти курс терапии для снижения влияния"
+          type: interact
+          target: therapy_sessions
+          count: 1
+          optional: false
+      rewards:
+        experience: 5000
+        currency: 10000
+    - id: removal_path
+      condition: "player_choice == 'removal'"
+      objectives:
+        - id: safely_remove_engram
+          text: "Безопасно удалить энграмму (риск 5-10%)"
+          type: interact
+          target: safe_engram_removal
+          count: 1
+          optional: false
+      rewards:
+        experience: 2000
+        currency: 5000
+
+content:
+  sections:
+    - id: overview
+      title: Обзор квеста
+      body: |
+        Квест на возврат контроля от энграммы. Игрок сталкивается с потерей контроля при высоком
+        влиянии, должен бороться за контроль и восстановить баланс через специальные процедуры.
+      mechanics_links:
+        - mechanics/progression/engram-chips-system-concept.md
+      assets: []
+    - id: control_loss
+      title: Потеря контроля
+      body: |
+        При влиянии 90%+ энграмма может:
+        - Принимать решения вместо игрока
+        - Контролировать действия персонажа
+        - Искажать реальность
+        - Создавать галлюцинации
+        Игрок должен вернуть контроль.
+      mechanics_links: []
+      assets: []
+    - id: recovery_methods
+      title: Методы восстановления
+      body: |
+        Игрок может:
+        - Установить блокаторы (быстро, дорого)
+        - Пройти терапию (медленно, эффективно)
+        - Удалить энграмму (радикально, со штрафами)
+      mechanics_links: []
+      assets: []
+    - id: psychological_battle
+      title: Психологическая битва
+      body: |
+        Борьба за контроль включает:
+        - Мини-игру/серию выборов
+        - Психологические проверки
+        - Сопротивление влиянию энграммы
+        - Восстановление собственной идентичности
+      mechanics_links: []
+      assets: []
+
+appendix:
+  glossary:
+    - term: Потеря контроля
+      definition: "Критическое состояние, когда энграмма контролирует действия персонажа"
+  references:
+    - id: engram-chips-system-concept
+      type: concept
+      relation: references
+  decisions: []
+
+implementation:
+  github_issue: 1547
+  needs_task: false
+  queue_reference: []
+  blockers: []
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-30
+    author: content_writer
+    changes: 'Создан квест "Потеря контроля" - возврат контроля от энграммы в London'
+
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

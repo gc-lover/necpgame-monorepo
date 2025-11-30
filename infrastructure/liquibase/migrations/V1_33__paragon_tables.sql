@@ -1,3 +1,4 @@
+-- Issue: #1519
 CREATE TABLE IF NOT EXISTS progression.paragon_levels (
   character_id UUID PRIMARY KEY,
   paragon_level INTEGER NOT NULL DEFAULT 0,

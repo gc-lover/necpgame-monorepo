@@ -1,3 +1,4 @@
+# Issue: #1335
 openapi: 3.0.3
 info:
   title: Feedback Voting Service API
@@ -23,6 +24,14 @@ paths:
       tags:
         - Feedback Voting
       summary: Проголосовать за обращение
+      description: |
+        Голосование за предложение.
+        
+        **Требует:** Аутентификация.
+        
+        **Rate limiting:** 10 голосов в минуту на игрока.
+        
+        **Возвращает:** Обновленный счетчик голосов.
       operationId: voteForFeedback
       security:
         - BearerAuth: []
@@ -46,6 +55,8 @@ paths:
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
+        '429':
+          $ref: 'common.yaml#/components/responses/TooManyRequests'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 

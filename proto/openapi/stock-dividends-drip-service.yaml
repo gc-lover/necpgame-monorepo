@@ -1,0 +1,93 @@
+# Issue: #141889962
+openapi: 3.0.3
+info:
+  title: Stock Dividends DRIP Service API
+  description: |
+    API для управления DRIP (Dividend Reinvestment Plan) - реинвестированием дивидендов на фондовой бирже.
+    
+    Функционал:
+    - Получение настроек DRIP игрока
+    - Обновление настроек DRIP игрока
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: drip
+    description: Управление DRIP (реинвестирование)
+
+paths:
+  /players/{player_id}/dividends/drip:
+    get:
+      tags:
+        - drip
+      summary: Получить настройки DRIP игрока
+      description: |
+        Возвращает конфигурацию DRIP (Dividend Reinvestment Plan) игрока.
+        DRIP автоматически реинвестирует дивиденды в покупку новых акций.
+      operationId: getPlayerDRIPSettings
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+      responses:
+        "200":
+          description: Настройки DRIP успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "stock-dividends-schemas.yaml#/components/schemas/DRIPSettings"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+    put:
+      tags:
+        - drip
+      summary: Обновить настройки DRIP игрока
+      description: |
+        Обновляет конфигурацию DRIP для игрока.
+        Можно включить/выключить глобально или для конкретных акций.
+      operationId: updatePlayerDRIPSettings
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "stock-dividends-schemas.yaml#/components/schemas/DRIPSettingsUpdate"
+      responses:
+        "200":
+          description: Настройки DRIP успешно обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "stock-dividends-schemas.yaml#/components/schemas/DRIPSettings"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

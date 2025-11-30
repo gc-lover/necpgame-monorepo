@@ -1,0 +1,136 @@
+# Issue: #141889941
+openapi: 3.0.3
+info:
+  title: Cosmetic Equipment Service API
+  description: API для экипировки косметики
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Equipment
+    description: Экипировка косметики
+
+paths:
+  /monetization/cosmetic/{cosmetic_id}/equip:
+    post:
+      tags:
+        - Equipment
+      summary: Экипировать косметический предмет
+      operationId: equipCosmetic
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cosmetic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'cosmetic-service-schemas.yaml#/components/schemas/EquipCosmeticRequest'
+      responses:
+        '200':
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/EquippedCosmetics'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/{cosmetic_id}/unequip:
+    post:
+      tags:
+        - Equipment
+      summary: Снять косметический предмет
+      operationId: unequipCosmetic
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cosmetic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'cosmetic-service-schemas.yaml#/components/schemas/UnequipCosmeticRequest'
+      responses:
+        '200':
+          description: Предмет снят
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unequipped
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/equipped/{player_id}:
+    get:
+      tags:
+        - Equipment
+      summary: Получить экипированную косметику игрока
+      operationId: getEquippedCosmetics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Экипированная косметика
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/EquippedCosmetics'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

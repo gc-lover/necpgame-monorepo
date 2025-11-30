@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-23T23:59:00Z
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:45:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -265,6 +265,115 @@ architecture:
       5. Companion Effects Applier применяет эффекты способности
       6. Companion Service публикует событие companion.ability-activated
       7. Realtime Gateway отправляет обновление клиенту
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций (покупка, призыв, прогрессия)
+    mechanisms:
+      - ACID транзакции для покупки компаньонов, призыва/отзыва, прогрессии и активации способностей
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении статистики
+      - Валидация перед покупкой компаньона, призывом и активацией способностей
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (покупка компаньона, призыв, применение эффектов)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния компаньонов (покупка, призыв, отзыв, прогрессия, активация способностей,
+      кастомизация, применение эффектов) записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: CompanionPurchasedEvent, CompanionSummonedEvent, CompanionDismissedEvent, CompanionLevelUpEvent, CompanionAbilityActivatedEvent, CompanionCustomizedEvent.
+    cqrs_pattern: |
+      Разделение команд (покупка компаньона, призыв, активация способностей, кастомизация) и запросов
+      (получение каталога, получение списка компаньонов, получение статистики) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как покупка компаньона (проверка баланса, списание валюты,
+      создание записи владения, уведомление игрока) или призыв компаньона (проверка владения, отзыв активного,
+      спавн в мире, применение эффектов, уведомление игрока), используется Saga Pattern
+      для обеспечения атомарности операций между Companion Service, Economy Service, World Service, Combat Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    companion_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Покупка компаньона: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение каталога: event-based, ~0.01-0.02 requests/sec на игрока
+        - Получение списка компаньонов: event-based, ~0.01-0.05 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций компаньонов
+      latency_requirements: < 200-300ms для покупки компаньона, < 30-100ms для получения каталога
+      sync_strategy: Strong Consistency (ACID транзакции) для покупки компаньонов
+
+    summon_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Призыв компаньона: event-based, ~0.01-0.05 events/sec на игрока
+        - Отзыв компаньона: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение активного компаньона: event-based, ~0.01-0.05 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций призыва
+      latency_requirements: < 100-200ms для призыва/отзыва компаньона, < 30-100ms для получения активного
+      sync_strategy: Strong Consistency (ACID транзакции) для призыва/отзыва
+
+    progression_operations:
+      tickrate: Event-based (on-demand при получении опыта) + 1-5 Hz для обновления статистики
+      network_load: |
+        - Получение опыта: event-based, ~0.01-0.1 events/sec на игрока
+        - Повышение уровня: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение прогрессии: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций прогрессии
+      latency_requirements: < 50-100ms для получения опыта, < 30-100ms для получения прогрессии
+      sync_strategy: Strong Consistency (ACID транзакции) для прогрессии
+
+    ability_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Активация способности: event-based, ~0.01-0.1 events/sec на игрока
+        - Получение списка способностей: event-based, ~0.01-0.02 requests/sec на игрока
+        - Обновление кулдаунов: event-based + 1-5 Hz, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций способностей
+      latency_requirements: < 50-100ms для активации способности, < 30-100ms для получения списка
+      sync_strategy: Strong Consistency (ACID транзакции) для активации способностей
+
+    customization_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Кастомизация компаньона: event-based, ~0.001-0.01 events/sec на игрока
+        - Переименование: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение кастомизации: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций кастомизации
+      latency_requirements: < 100-200ms для кастомизации, < 30-100ms для получения кастомизации
+      sync_strategy: Strong Consistency (ACID транзакции) для кастомизации
+
+    stats_operations:
+      tickrate: Event-based (on-demand при изменении) + 1-5 Hz для обновления статистики
+      network_load: |
+        - Расчет статистики: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение статистики: event-based, ~0.01-0.05 requests/sec на игрока
+        - Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций статистики
+      latency_requirements: < 50-100ms для расчета статистики, < 30-100ms для получения статистики
+      sync_strategy: Strong Consistency (ACID транзакции) для расчета статистики
+
+    effects_operations:
+      tickrate: Event-based (on-demand при призыве/отзыве/активации способностей) + 20-60 Hz для активных эффектов в бою
+      network_load: |
+        - Применение эффектов: event-based, ~0.01-0.05 events/sec на игрока
+        - Обновление эффектов в бою: 20-60 Hz, ~0.5-2 KB/sec на игрока
+        - Получение эффектов: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций эффектов (без боя), ~0.5-2 KB/sec в бою
+      latency_requirements: < 50-100ms для применения эффектов, < 10-50ms для обновления эффектов в бою
+      sync_strategy: Strong Consistency (ACID транзакции) для применения эффектов, Eventual Consistency для обновлений в бою
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий компаньонов: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_structure:
     tables:
@@ -556,3 +665,31 @@ diagrams:
         CPM->>CEA: Update effects
         CPM->>EB: Publish companion.level-up
     ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния компаньонов
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (покупка компаньона, призыв, применение эффектов)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для компаньонов, призыва, прогрессии, способностей, кастомизации, статистики, эффектов и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы компаньонов:
+      - Определены компоненты (Companion Manager, Companion Catalog Manager, Companion Ownership Manager, Companion Summon Manager, Companion Progression Manager, Companion Ability Manager, Companion Customization Manager, Companion Stats Calculator, Companion Effects Applier, Companion Telemetry Collector)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (companion_types, player_companions, companion_abilities, companion_progression_history, companion_telemetry)
+      - Спроектирована система призыва/отзыва компаньонов
+      - Спроектирована система прогрессии компаньонов
+      - Спроектирована система способностей (активные/пассивные)
+      - Спроектирована система кастомизации
+      - Создано техническое задание
+      - Разбито на подзадачи

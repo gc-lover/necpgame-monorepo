@@ -6,15 +6,14 @@ Show statistics for all agents.
 
 1. Search Project items with Status field:
    ```javascript
-   // Project config: .cursor/GITHUB_PROJECT_CONFIG.md
-   await mcp_github_list_project_items({
+   mcp_github_list_project_items({
      owner_type: 'user',
      owner: 'gc-lover',
      project_number: 1,
-     query: 'is:issue',
-     fields: ['Status', 'Title']
+     query: ''
    });
    ```
+   **Note:** Для сбора статистики по всем задачам используй пустой query или фильтр по конкретным статусам. Не используй `is:issue` - `list_project_items` работает только с issues. Не указывай `fields` - вернутся все поля.
 
 2. Group by Status, count: total, open, done, in progress, returned
 

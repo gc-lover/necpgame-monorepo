@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T00:30:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:25:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -299,6 +299,93 @@ architecture:
       - Отправка метрик в Prometheus
       - Логирование в Loki
       - Трейсинг в Tempo
+
+  data_consistency:
+    strategy: Eventual Consistency (для каналов и участников) + Strong Consistency (для критичных операций)
+    mechanisms:
+      - ACID транзакции для создания каналов и управления участниками
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед присоединением к каналу
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание канала, присоединение к каналу, уведомление участников)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния голосового чата (создание канала, присоединение к каналу, выход из канала,
+      изменение состояния участника, обновление позиции для proximity) записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: ChannelCreatedEvent, ChannelJoinedEvent, ChannelLeftEvent, ParticipantMutedEvent, PositionUpdatedEvent.
+    cqrs_pattern: |
+      Разделение команд (создание канала, присоединение к каналу, изменение состояния участника) и запросов
+      (получение списка каналов, получение участников канала, получение статистики) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как присоединение к каналу (проверка прав, создание WebRTC соединения,
+      добавление участника, настройка маршрутизации, уведомление участников) или создание канала (создание канала,
+      настройка WebRTC, уведомление участников), используется Saga Pattern для обеспечения атомарности операций
+      между Voice Chat Service, Social Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    webrtc_operations:
+      tickrate: 20-50 Hz для аудио потока (WebRTC)
+      network_load: |
+        - Аудио поток: 20-50 Hz, ~10-50 KB/sec на участника (зависит от качества)
+        - Сигналинг: event-based, ~0.1-0.5 KB/sec на участника
+        - Общий трафик: ~10-50 KB/sec на участника для аудио
+      latency_requirements: < 100ms для аудио (критично для realtime)
+      sync_strategy: Eventual Consistency для аудио потока (WebRTC)
+
+    channel_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание канала: event-based, ~0.01-0.05 events/sec
+        - Присоединение к каналу: event-based, ~0.1-0.5 events/sec на участника
+        - Выход из канала: event-based, ~0.1-0.5 events/sec на участника
+        - Общий трафик: ~0.2-1 KB/sec на участника для операций канала
+      latency_requirements: < 200-500ms для присоединения к каналу, < 100-200ms для выхода
+      sync_strategy: Strong Consistency (ACID транзакции) для операций канала
+
+    participant_operations:
+      tickrate: Event-based (on-demand) + 1-5 Hz для обновления состояния
+      network_load: |
+        - Изменение состояния участника: event-based, ~0.1-0.5 events/sec на участника
+        - Обновление позиции (proximity): 1-5 Hz, ~0.1-0.3 KB/sec на участника
+        - Обновление состояния (mute, deaf, speaking): 1-5 Hz, ~0.05-0.2 KB/sec на участника
+        - Общий трафик: ~0.2-0.5 KB/sec на участника для операций участника
+      latency_requirements: < 50-150ms для изменения состояния, < 30-100ms для обновления позиции
+      sync_strategy: Eventual Consistency для обновлений состояния, Strong Consistency для критичных операций
+
+    proximity_operations:
+      tickrate: 1-5 Hz для обновления позиций
+      network_load: |
+        - Обновление позиции: 1-5 Hz, ~0.1-0.3 KB/sec на участника
+        - Расчёт расстояний: 1-5 Hz, ~0.05-0.1 KB/sec на участника
+        - Обновление списка участников: event-based, ~0.01-0.05 events/sec на участника
+        - Общий трафик: ~0.2-0.4 KB/sec на участника для proximity
+      latency_requirements: < 50-200ms для обновления позиции, < 100-300ms для обновления списка участников
+      sync_strategy: Eventual Consistency для обновлений позиции
+
+    quality_operations:
+      tickrate: 1-2 Hz для мониторинга качества
+      network_load: |
+        - Мониторинг качества: 1-2 Hz, ~0.05-0.1 KB/sec на участника
+        - Адаптация качества: event-based, ~0.01-0.05 events/sec на участника
+        - Общий трафик: ~0.1-0.2 KB/sec на участника для качества
+      latency_requirements: < 100-300ms для адаптации качества
+      sync_strategy: Eventual Consistency для мониторинга качества
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий голосового чата: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_schema:
     tables:
@@ -606,6 +693,17 @@ next_steps:
   - Определение формата WebRTC токенов и событий
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния голосового чата
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание канала, присоединение к каналу)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для WebRTC, каналов, участников, proximity, качества и обработки событий
   - version: '1.0.0'
     date: 2025-11-23
     author: Architect Agent

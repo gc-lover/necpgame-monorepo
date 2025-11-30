@@ -1,0 +1,235 @@
+# Issue: #1435
+openapi: 3.0.3
+info:
+  title: Economy Corporation Salary Service API
+  description: API для управления зарплатами в корпорациях
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Corporation Salary
+    description: Управление зарплатами
+
+paths:
+  /economy/corporations/{corporationId}/salaries:
+    post:
+      tags:
+        - Corporation Salary
+      summary: Настроить зарплаты
+      operationId: configureSalaries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigureSalariesRequest"
+      responses:
+        "200":
+          description: Зарплаты настроены
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/corporations/{corporationId}/salaries/pay:
+    post:
+      tags:
+        - Corporation Salary
+      summary: Выплатить зарплаты
+      operationId: paySalaries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaySalariesRequest"
+      responses:
+        "200":
+          description: Зарплаты выплачены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalaryPaymentResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/corporations/{corporationId}/salaries/fund:
+    get:
+      tags:
+        - Corporation Salary
+      summary: Получить зарплатный фонд
+      operationId: getSalaryFund
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Зарплатный фонд
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalaryFundResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ConfigureSalariesRequest:
+      type: object
+      required:
+        - position_id
+        - salary_type
+        - salary_amount
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        salary_type:
+          type: string
+          enum:
+            - FIXED
+            - PERCENTAGE
+            - BONUS
+        salary_amount:
+          type: number
+          format: decimal
+          minimum: 0
+
+    PaySalariesRequest:
+      type: object
+      properties:
+        employee_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        payment_type:
+          type: string
+          enum:
+            - SALARY
+            - BONUS
+            - PREMIUM
+
+    SalaryPaymentResponse:
+      type: object
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SalaryPayment"
+        total_amount:
+          type: number
+          format: decimal
+        total_tax:
+          type: number
+          format: decimal
+        net_amount:
+          type: number
+          format: decimal
+
+    SalaryPayment:
+      type: object
+      properties:
+        employee_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: decimal
+        currency_type:
+          type: string
+        payment_type:
+          type: string
+          enum:
+            - SALARY
+            - BONUS
+            - PREMIUM
+        tax_amount:
+          type: number
+          format: decimal
+        net_amount:
+          type: number
+          format: decimal
+        paid_at:
+          type: string
+          format: date-time
+
+    SalaryFundResponse:
+      type: object
+      properties:
+        corporation_id:
+          type: string
+          format: uuid
+        total_fund:
+          type: number
+          format: decimal
+        allocated_fund:
+          type: number
+          format: decimal
+        available_fund:
+          type: number
+          format: decimal
+        currency_type:
+          type: string
+
+security:
+  - BearerAuth: []
+

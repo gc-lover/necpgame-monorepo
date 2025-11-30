@@ -1,0 +1,194 @@
+# Issue: #1445
+openapi: 3.0.3
+info:
+  title: Voice Lobby Subchannels Participants Service API
+  description: |
+    API для управления участниками подканалов в голосовых лобби.
+    
+    **Основные возможности:**
+    - Перемещение участника в подканал
+    - Получение списка участников подканала
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Subchannels Participants
+    description: Управление участниками подканалов
+
+paths:
+  /voice-lobbies/{lobbyId}/subchannels/{subchannelId}/move:
+    post:
+      tags:
+        - Subchannels Participants
+      summary: Переместить участника в подканал
+      operationId: moveParticipantToSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID лобби
+        - name: subchannelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID подканала назначения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveParticipantRequest'
+      responses:
+        '200':
+          description: Участник перемещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participant'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /voice-lobbies/{lobbyId}/subchannels/{subchannelId}/participants:
+    get:
+      tags:
+        - Subchannels Participants
+      summary: Получить список участников подканала
+      operationId: listSubchannelParticipants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID лобби
+        - name: subchannelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID подканала
+      responses:
+        '200':
+          description: Список участников подканала
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Participant'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MoveParticipantRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа для перемещения
+          example: "550e8400-e29b-41d4-a716-446655440002"
+
+    Participant:
+      type: object
+      required:
+        - id
+        - lobby_id
+        - character_id
+        - role
+        - joined_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID участника
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        role:
+          type: string
+          enum:
+            - leader
+            - commander
+            - party_leader
+            - officer
+            - member
+          description: Роль участника
+          example: "commander"
+        subchannel_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID текущего подканала
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        is_muted:
+          type: boolean
+          description: Микрофон отключен
+          example: false
+        is_deafened:
+          type: boolean
+          description: Звук отключен
+          example: false
+        joined_at:
+          type: string
+          format: date-time
+          description: Дата присоединения
+          example: "2025-11-30T12:00:00Z"
+        left_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата выхода
+          example: null
+

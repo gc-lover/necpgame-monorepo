@@ -1,0 +1,272 @@
+# Issue: #1435
+openapi: 3.0.3
+info:
+  title: Social Corporation Activity Service API
+  description: API для управления официальной деятельностью корпораций
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Corporation Activity
+    description: Управление официальной деятельностью
+
+paths:
+  /social/corporations/{corporationId}/activities:
+    post:
+      tags:
+        - Corporation Activity
+      summary: Зарегистрировать деятельность
+      operationId: registerActivity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterActivityRequest"
+      responses:
+        "201":
+          description: Деятельность зарегистрирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporationActivity"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    get:
+      tags:
+        - Corporation Activity
+      summary: Получить список деятельности
+      operationId: listActivities
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: activity_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - PRODUCTION
+              - TRADING
+              - SERVICES
+              - RESEARCH
+              - SECURITY
+              - TRANSPORT
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - SUSPENDED
+              - TERMINATED
+      responses:
+        "200":
+          description: Список деятельности
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CorporationActivity"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/corporations/{corporationId}/activities/{activityId}/report:
+    post:
+      tags:
+        - Corporation Activity
+      summary: Создать отчет по деятельности
+      operationId: createActivityReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportRequest"
+      responses:
+        "201":
+          description: Отчет создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporationReport"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CorporationActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        corporation_id:
+          type: string
+          format: uuid
+        activity_type:
+          type: string
+          enum:
+            - PRODUCTION
+            - TRADING
+            - SERVICES
+            - RESEARCH
+            - SECURITY
+            - TRANSPORT
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - SUSPENDED
+            - TERMINATED
+        registered_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RegisterActivityRequest:
+      type: object
+      required:
+        - activity_type
+        - description
+      properties:
+        activity_type:
+          type: string
+          enum:
+            - PRODUCTION
+            - TRADING
+            - SERVICES
+            - RESEARCH
+            - SECURITY
+            - TRANSPORT
+        description:
+          type: string
+
+    CreateReportRequest:
+      type: object
+      required:
+        - report_type
+        - period_start
+        - period_end
+        - data
+      properties:
+        report_type:
+          type: string
+          enum:
+            - FINANCIAL
+            - ACTIVITY
+            - PERFORMANCE
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        data:
+          type: object
+          additionalProperties: true
+
+    CorporationReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        corporation_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+          enum:
+            - FINANCIAL
+            - ACTIVITY
+            - PERFORMANCE
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

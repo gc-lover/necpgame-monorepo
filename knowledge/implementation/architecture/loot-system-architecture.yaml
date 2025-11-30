@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T21:45:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:10:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -387,6 +387,75 @@ technical_specification:
     - Оптимизация запросов к БД (batch, индексы)
     - Кэширование loot tables
 
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для генерации и распределения лута
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед выдачей предметов
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (генерация, распределение, выдача)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения лута записываются как события:
+      - LootGeneratedEvent - лут сгенерирован
+      - LootDistributedEvent - лут распределен
+      - LootRollCreatedEvent - roll сессия создана
+      - LootRollCompletedEvent - roll сессия завершена
+      - WorldDropCreatedEvent - world drop создан
+      - WorldDropPickedUpEvent - world drop подобран
+      
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния лута
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Loot Generator обрабатывает команды (generate, distribute)
+      - Read Model: Оптимизированные представления для быстрого чтения лута
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для распределенных операций:
+      - Loot Generation Saga: координация между loot, inventory, economy сервисами
+      - Loot Distribution Saga: координация между loot, party, inventory сервисами
+      - World Drop Pickup Saga: координация между loot, inventory, world сервисами
+      
+      Компенсирующие транзакции:
+      - Откат операций при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    loot_operations:
+      tickrate: Event-based (on-demand)
+      description: |
+        Операции с лутом выполняются по требованию (event-based),
+        не требуют постоянного тикрейта.
+      network_load: |
+        - Генерация лута: event-based, ~5-10 events/sec на сервер
+        - Распределение лута: event-based, ~3-5 events/sec
+        - Roll сессии: event-based, ~1-3 events/sec
+        - World drops: event-based, ~0.5-1 events/sec
+        - Общий трафик: ~0.5-1 KB/sec на игрока
+      sync_strategy: Strong Consistency (ACID транзакции) для операций, Eventual для статистики
+      latency_requirements: |
+        - Генерация лута: < 50ms
+        - Распределение лута: < 100ms
+        - Создание roll сессии: < 30ms
+        - Подбор world drop: < 50ms
+
 subtasks:
   - id: loot-generator-module
     title: Реализация модуля Loot Generator
@@ -578,6 +647,15 @@ next_steps:
   - Определение алгоритмов генерации лута
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы лута:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с лутом
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

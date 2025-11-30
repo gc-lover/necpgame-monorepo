@@ -1,0 +1,132 @@
+# Issue: #141889954
+openapi: 3.0.3
+info:
+  title: Stock Integration Quest Service API
+  description: |
+    API для интеграции биржи с системой квестов.
+    
+    Функционал:
+    - Влияние квестов на акции
+    - Применение влияния квестов на корпорации
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: quest-integration
+    description: Интеграция с системой квестов
+
+paths:
+  /quests/{quest_id}/stock-impact:
+    post:
+      tags:
+        - quest-integration
+      summary: Применить влияние квеста на акции
+      description: |
+        Применяет влияние завершенного квеста на акции корпораций.
+        Влияние зависит от исхода квеста (успех/провал) и типа квеста.
+      operationId: applyQuestStockImpact
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - outcome
+                - affected_corporations
+              properties:
+                outcome:
+                  type: string
+                  enum:
+                    - success
+                    - failure
+                    - partial
+                  description: Исход квеста
+                affected_corporations:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - corporation_id
+                      - impact_percent
+                    properties:
+                      corporation_id:
+                        type: string
+                        format: uuid
+                        description: ID корпорации
+                      impact_percent:
+                        type: number
+                        format: double
+                        description: Влияние в процентах
+                        minimum: -100
+                        maximum: 100
+                quest_type:
+                  type: string
+                  enum:
+                    - corporate_scandal
+                    - corporate_success
+                    - market_manipulation
+                    - regulatory_change
+                  description: Тип квеста
+      responses:
+        "200":
+          description: Влияние квеста успешно применено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quest_id:
+                    type: string
+                    format: uuid
+                  impacts_applied:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        corporation_id:
+                          type: string
+                          format: uuid
+                        stock_id:
+                          type: string
+                          format: uuid
+                        price_change:
+                          type: number
+                          format: double
+                        impact_id:
+                          type: string
+                          format: uuid
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
