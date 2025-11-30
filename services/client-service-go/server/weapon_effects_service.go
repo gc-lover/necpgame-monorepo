@@ -49,3 +49,7 @@ func (s *WeaponEffectsService) GetEffect(ctx context.Context, effectID uuid.UUID
 	return map[string]interface{}{}, nil
 }
 
+
+
+
+

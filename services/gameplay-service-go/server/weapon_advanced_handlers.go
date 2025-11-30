@@ -47,3 +47,7 @@ func (h *WeaponAdvancedHandlers) respondError(w http.ResponseWriter, status int,
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
+
+
+
+

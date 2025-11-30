@@ -40,21 +40,19 @@ func (r *SubchannelRepository) CreateSubchannel(ctx context.Context, lobbyID uui
 	var subchannel models.Subchannel
 	subchannel.LobbyID = lobbyID
 	subchannel.Name = req.Name
-	subchannel.Description = req.Description
-	subchannel.SubchannelType = req.SubchannelType
+	subchannelType := models.SubchannelTypeCustom
+	subchannel.SubchannelType = subchannelType
 	subchannel.MaxParticipants = req.MaxParticipants
-	subchannel.IsLocked = req.IsLocked
+	subchannel.IsLocked = false
 	subchannel.CurrentParticipants = 0
 
 	var roleRestrictions interface{}
-	if req.RequiredRole != nil {
-		roleRestrictions = map[string]interface{}{"required_role": *req.RequiredRole}
-	}
+	// roleRestrictions can be added to Settings if needed
 
 	err := r.db.QueryRow(ctx, query,
-		lobbyID, req.Name, req.Description, req.SubchannelType,
+		lobbyID, req.Name, "", string(subchannelType),
 		req.MaxParticipants, roleRestrictions,
-	).Scan(&subchannel.SubchannelID, &subchannel.CreatedAt, &subchannel.UpdatedAt)
+	).Scan(&subchannel.ID, &subchannel.CreatedAt, &subchannel.UpdatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create subchannel: %w", err)
@@ -73,12 +71,16 @@ func (r *SubchannelRepository) GetSubchannel(ctx context.Context, lobbyID, subch
 		FROM social.lobby_subchannels
 		WHERE id = $1 AND lobby_id = $2`
 
+	var description string
+	var subchannelTypeStr string
 	err := r.db.QueryRow(ctx, query, subchannelID, lobbyID).Scan(
-		&subchannel.SubchannelID, &subchannel.LobbyID, &subchannel.Name,
-		&subchannel.Description, &subchannel.SubchannelType,
+		&subchannel.ID, &subchannel.LobbyID, &subchannel.Name,
+		&description, &subchannelTypeStr,
 		&subchannel.MaxParticipants, &roleRestrictions,
 		&subchannel.CreatedAt, &subchannel.UpdatedAt,
 	)
+	
+	subchannel.SubchannelType = models.SubchannelType(subchannelTypeStr)
 
 	if err == pgx.ErrNoRows {
 		return nil, nil
@@ -87,12 +89,12 @@ func (r *SubchannelRepository) GetSubchannel(ctx context.Context, lobbyID, subch
 		return nil, fmt.Errorf("failed to get subchannel: %w", err)
 	}
 
-	if roleMap, ok := roleRestrictions.(map[string]interface{}); ok {
-		if role, exists := roleMap["required_role"]; exists {
-			if roleStr, ok := role.(string); ok {
-				subchannel.RequiredRole = &roleStr
-			}
+	// roleRestrictions can be stored in Settings if needed
+	if roleRestrictions != nil {
+		if subchannel.Settings == nil {
+			subchannel.Settings = make(map[string]interface{})
 		}
+		subchannel.Settings["role_restrictions"] = roleRestrictions
 	}
 
 	count, err := r.CountParticipants(ctx, subchannelID)
@@ -124,9 +126,11 @@ func (r *SubchannelRepository) ListSubchannels(ctx context.Context, lobbyID uuid
 		var subchannel models.Subchannel
 		var roleRestrictions interface{}
 
+		var description string
+		var subchannelTypeStr string
 		err := rows.Scan(
-			&subchannel.SubchannelID, &subchannel.LobbyID, &subchannel.Name,
-			&subchannel.Description, &subchannel.SubchannelType,
+			&subchannel.ID, &subchannel.LobbyID, &subchannel.Name,
+			&description, &subchannelTypeStr,
 			&subchannel.MaxParticipants, &roleRestrictions,
 			&subchannel.CreatedAt, &subchannel.UpdatedAt,
 		)
@@ -134,15 +138,17 @@ func (r *SubchannelRepository) ListSubchannels(ctx context.Context, lobbyID uuid
 			return nil, fmt.Errorf("failed to scan subchannel: %w", err)
 		}
 
-		if roleMap, ok := roleRestrictions.(map[string]interface{}); ok {
-			if role, exists := roleMap["required_role"]; exists {
-				if roleStr, ok := role.(string); ok {
-					subchannel.RequiredRole = &roleStr
-				}
+		subchannel.SubchannelType = models.SubchannelType(subchannelTypeStr)
+		
+		// roleRestrictions can be stored in Settings if needed
+		if roleRestrictions != nil {
+			if subchannel.Settings == nil {
+				subchannel.Settings = make(map[string]interface{})
 			}
+			subchannel.Settings["role_restrictions"] = roleRestrictions
 		}
 
-		count, err := r.CountParticipants(ctx, subchannel.SubchannelID)
+		count, err := r.CountParticipants(ctx, subchannel.ID)
 		if err != nil {
 			r.logger.WithError(err).Warn("Failed to count participants")
 		} else {
@@ -165,20 +171,9 @@ func (r *SubchannelRepository) UpdateSubchannel(ctx context.Context, lobbyID, su
 		args = append(args, *req.Name)
 		argIndex++
 	}
-	if req.Description != nil {
-		updates = append(updates, fmt.Sprintf("description = $%d", argIndex))
-		args = append(args, *req.Description)
-		argIndex++
-	}
 	if req.MaxParticipants != nil {
 		updates = append(updates, fmt.Sprintf("max_participants = $%d", argIndex))
 		args = append(args, *req.MaxParticipants)
-		argIndex++
-	}
-	if req.RequiredRole != nil {
-		roleRestrictions := map[string]interface{}{"required_role": *req.RequiredRole}
-		updates = append(updates, fmt.Sprintf("role_restrictions = $%d", argIndex))
-		args = append(args, roleRestrictions)
 		argIndex++
 	}
 	if req.IsLocked != nil {
@@ -213,9 +208,11 @@ func (r *SubchannelRepository) UpdateSubchannel(ctx context.Context, lobbyID, su
 	var subchannel models.Subchannel
 	var roleRestrictions interface{}
 
+	var description string
+	var subchannelTypeStr string
 	err := r.db.QueryRow(ctx, query, args...).Scan(
-		&subchannel.SubchannelID, &subchannel.LobbyID, &subchannel.Name,
-		&subchannel.Description, &subchannel.SubchannelType,
+		&subchannel.ID, &subchannel.LobbyID, &subchannel.Name,
+		&description, &subchannelTypeStr,
 		&subchannel.MaxParticipants, &roleRestrictions,
 		&subchannel.CreatedAt, &subchannel.UpdatedAt,
 	)
@@ -227,15 +224,17 @@ func (r *SubchannelRepository) UpdateSubchannel(ctx context.Context, lobbyID, su
 		return nil, fmt.Errorf("failed to update subchannel: %w", err)
 	}
 
-	if roleMap, ok := roleRestrictions.(map[string]interface{}); ok {
-		if role, exists := roleMap["required_role"]; exists {
-			if roleStr, ok := role.(string); ok {
-				subchannel.RequiredRole = &roleStr
-			}
+	subchannel.SubchannelType = models.SubchannelType(subchannelTypeStr)
+	
+	// roleRestrictions can be stored in Settings if needed
+	if roleRestrictions != nil {
+		if subchannel.Settings == nil {
+			subchannel.Settings = make(map[string]interface{})
 		}
+		subchannel.Settings["role_restrictions"] = roleRestrictions
 	}
 
-	count, err := r.CountParticipants(ctx, subchannelID)
+	count, err := r.CountParticipants(ctx, subchannel.ID)
 	if err != nil {
 		r.logger.WithError(err).Warn("Failed to count participants")
 	} else {
@@ -294,14 +293,12 @@ func (r *SubchannelRepository) GetParticipants(ctx context.Context, subchannelID
 	var participants []models.SubchannelParticipant
 	for rows.Next() {
 		var participant models.SubchannelParticipant
-		var role *string
 
-		err := rows.Scan(&participant.CharacterID, &participant.CharacterName, &role, &participant.JoinedAt)
+		err := rows.Scan(&participant.CharacterID, &participant.JoinedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan participant: %w", err)
 		}
 
-		participant.Role = role
 		participants = append(participants, participant)
 	}
 

@@ -26,24 +26,26 @@ type VoiceServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr         string
-	router       *mux.Router
-	voiceService VoiceServiceInterface
-	logger       *logrus.Logger
-	server       *http.Server
-	jwtValidator *JwtValidator
-	authEnabled  bool
+	addr             string
+	router           *mux.Router
+	voiceService     VoiceServiceInterface
+	subchannelService SubchannelServiceInterface
+	logger           *logrus.Logger
+	server           *http.Server
+	jwtValidator     *JwtValidator
+	authEnabled      bool
 }
 
 func NewHTTPServer(addr string, voiceService VoiceServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
-		addr:         addr,
-		router:       router,
-		voiceService: voiceService,
-		logger:       GetLogger(),
-		jwtValidator: jwtValidator,
-		authEnabled:  authEnabled,
+		addr:             addr,
+		router:           router,
+		voiceService:     voiceService,
+		subchannelService: nil, // Can be set later if needed
+		logger:           GetLogger(),
+		jwtValidator:     jwtValidator,
+		authEnabled:      authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)

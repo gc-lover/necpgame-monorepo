@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/google/uuid"
 	feedbackapi "github.com/necpgame/feedback-service-go/pkg/api"
 	"github.com/necpgame/feedback-service-go/models"
 	openapi_types "github.com/oapi-codegen/runtime/types"

@@ -1,4 +1,4 @@
-services:
+﻿services:
   postgres:
     image: postgres:15
     environment:
@@ -108,28 +108,451 @@ services:
     volumes:
       - nexus-data:/nexus-data
 
-  realtime-gateway:
-    build:
-      context: ./services/realtime-gateway-go
-      dockerfile: Dockerfile
-    depends_on:
-      - keycloak
-    ports:
-      - "18080:18080/tcp"
-      - "9093:9090"
+  mcp-github:
+    image: ghcr.io/github/github-mcp-server:latest
+    environment:
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
+      - GITHUB_TOOLSETS=default,projects
+    stdin_open: true
+    tty: true
     restart: unless-stopped
 
-  ws-lobby:
+  achievement-service:
     build:
-      context: ./services/ws-lobby-go
+      context: .
+      dockerfile: services/achievement-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+            - ADDR=0.0.0.0:8100
+            - METRICS_ADDR=:9200
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/13
+            - KEYCLOAK_URL=http://keycloak:8080
+            - KEYCLOAK_REALM=necpgame
+            - AUTH_ENABLED=true
+    ports:
+      - "8100:8100"
+      - "9200:9200"
+    restart: unless-stopped
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: services/admin-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+            - ADDR=0.0.0.0:8101
+            - METRICS_ADDR=:9201
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/14
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
+    ports:
+      - "8101:8101"
+      - "9201:9201"
+    restart: unless-stopped
+
+  battle-pass-service:
+    build:
+      context: .
+      dockerfile: services/battle-pass-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+            - ADDR=0.0.0.0:8102
+            - METRICS_ADDR=:9202
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/15
+            - KEYCLOAK_URL=http://keycloak:8080
+            - KEYCLOAK_REALM=necpgame
+            - AUTH_ENABLED=true
+    ports:
+      - "8102:8102"
+      - "9202:9202"
+    restart: unless-stopped
+
+  character-engram-compatibility-service:
+    build:
+      context: .
+      dockerfile: services/character-engram-compatibility-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8103
+            - METRICS_ADDR=:9203
+            - LOG_LEVEL=info
+    ports:
+      - "8103:8103"
+      - "9203:9203"
+    restart: unless-stopped
+
+  character-engram-core-service:
+    build:
+      context: .
+      dockerfile: services/character-engram-core-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8104
+            - METRICS_ADDR=:9204
+            - LOG_LEVEL=info
+    ports:
+      - "8104:8104"
+      - "9204:9204"
+    restart: unless-stopped
+
+  character-engram-cyberpsychosis-service:
+    build:
+      context: .
+      dockerfile: services/character-engram-cyberpsychosis-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8105
+            - METRICS_ADDR=:9205
+            - LOG_LEVEL=info
+    ports:
+      - "8105:8105"
+      - "9205:9205"
+    restart: unless-stopped
+
+  character-engram-historical-service:
+    build:
+      context: .
+      dockerfile: services/character-engram-historical-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8106
+            - METRICS_ADDR=:9206
+            - LOG_LEVEL=info
+    ports:
+      - "8106:8106"
+      - "9206:9206"
+    restart: unless-stopped
+
+  character-engram-security-service:
+    build:
+      context: .
+      dockerfile: services/character-engram-security-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8107
+            - METRICS_ADDR=:9207
+            - LOG_LEVEL=info
+    ports:
+      - "8107:8107"
+      - "9207:9207"
+    restart: unless-stopped
+
+  character-service:
+    build:
+      context: .
+      dockerfile: services/character-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+            - ADDR=0.0.0.0:8108
+            - METRICS_ADDR=:9208
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/21
+            - KEYCLOAK_URL=http://keycloak:8080
+            - KEYCLOAK_REALM=necpgame
+            - AUTH_ENABLED=true
+    ports:
+      - "8108:8108"
+      - "9208:9208"
+    restart: unless-stopped
+
+  clan-war-service:
+    build:
+      context: .
+      dockerfile: services/clan-war-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/22
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
+            - HTTP_ADDR=:8109
+    ports:
+      - "8109:8109"
+      - "9209:9209"
+    restart: unless-stopped
+
+  client-service:
+    build:
+      context: .
+      dockerfile: services/client-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8110
+            - METRICS_ADDR=:9210
+            - LOG_LEVEL=info
+    ports:
+      - "8110:8110"
+      - "9210:9210"
+    restart: unless-stopped
+
+  combat-damage-service:
+    build:
+      context: .
+      dockerfile: services/combat-damage-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8111
+            - METRICS_ADDR=:9211
+            - LOG_LEVEL=info
+    ports:
+      - "8111:8111"
+      - "9211:9211"
+    restart: unless-stopped
+
+  combat-hacking-service:
+    build:
+      context: .
+      dockerfile: services/combat-hacking-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8112
+            - METRICS_ADDR=:9212
+            - LOG_LEVEL=info
+    ports:
+      - "8112:8112"
+      - "9212:9212"
+    restart: unless-stopped
+
+  combat-implants-maintenance-service:
+    build:
+      context: .
+      dockerfile: services/combat-implants-maintenance-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8113
+            - METRICS_ADDR=:9213
+            - LOG_LEVEL=info
+    ports:
+      - "8113:8113"
+      - "9213:9213"
+    restart: unless-stopped
+
+  combat-implants-stats-service:
+    build:
+      context: .
+      dockerfile: services/combat-implants-stats-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8114
+            - METRICS_ADDR=:9214
+            - LOG_LEVEL=info
+    ports:
+      - "8114:8114"
+      - "9214:9214"
+    restart: unless-stopped
+
+  combat-sandevistan-service:
+    build:
+      context: .
+      dockerfile: services/combat-sandevistan-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8115
+            - METRICS_ADDR=:9215
+            - LOG_LEVEL=info
+    ports:
+      - "8115:8115"
+      - "9215:9215"
+    restart: unless-stopped
+
+  companion-service:
+    build:
+      context: .
+      dockerfile: services/companion-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+            - ADDR=0.0.0.0:8116
+            - METRICS_ADDR=:9216
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/29
+    ports:
+      - "8116:8116"
+      - "9216:9216"
+    restart: unless-stopped
+
+  cosmetic-service:
+    build:
+      context: .
+      dockerfile: services/cosmetic-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - keycloak
+    environment:
+            - ADDR=0.0.0.0:8117
+            - METRICS_ADDR=:9217
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
+    ports:
+      - "8117:8117"
+      - "9217:9217"
+    restart: unless-stopped
+
+  economy-service:
+    build:
+      context: ./services/economy-service-go
       dockerfile: Dockerfile
     depends_on:
+      - postgres
+      - redis
       - keycloak
-    ports:
-      - "18081:18081"
-      - "9091:9090"
     environment:
-      - PORT=18081
+            - ADDR=0.0.0.0:8118
+            - METRICS_ADDR=:9218
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/31
+            - KEYCLOAK_URL=http://keycloak:8080
+            - KEYCLOAK_REALM=necpgame
+            - AUTH_ENABLED=true
+    ports:
+      - "8118:8118"
+      - "9218:9218"
+    restart: unless-stopped
+
+  feedback-service:
+    build:
+      context: .
+      dockerfile: services/feedback-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - keycloak
+    environment:
+            - ADDR=0.0.0.0:8119
+            - METRICS_ADDR=:9219
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - KEYCLOAK_URL=http://keycloak:8080
+            - KEYCLOAK_REALM=necpgame
+            - AUTH_ENABLED=true
+            - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "8119:8119"
+      - "9219:9219"
+    restart: unless-stopped
+
+  gameplay-service:
+    build:
+      context: ./services/gameplay-service-go
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+            - ADDR=0.0.0.0:8120
+            - METRICS_ADDR=:9220
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/33
+    ports:
+      - "8120:8120"
+      - "9220:9220"
+    restart: unless-stopped
+
+  hacking-core-service:
+    build:
+      context: .
+      dockerfile: services/hacking-core-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8121
+            - METRICS_ADDR=:9221
+            - LOG_LEVEL=info
+    ports:
+      - "8121:8121"
+      - "9221:9221"
+    restart: unless-stopped
+
+  housing-service:
+    build:
+      context: .
+      dockerfile: services/housing-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/35
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
+            - HTTP_ADDR=:8122
+    ports:
+      - "8122:8122"
+      - "9222:9222"
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+            - ADDR=0.0.0.0:8123
+            - METRICS_ADDR=:9223
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/36
+    ports:
+      - "8123:8123"
+      - "9223:9223"
+    restart: unless-stopped
+
+  leaderboard-service:
+    build:
+      context: .
+      dockerfile: services/leaderboard-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+            - ADDR=0.0.0.0:8124
+            - METRICS_ADDR=:9224
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/37
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
+    ports:
+      - "8124:8124"
+      - "9224:9224"
+    restart: unless-stopped
+
+  maintenance-service:
+    build:
+      context: .
+      dockerfile: services/maintenance-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8125
+            - METRICS_ADDR=:9225
+            - LOG_LEVEL=info
+    ports:
+      - "8125:8125"
+      - "9225:9225"
     restart: unless-stopped
 
   matchmaking:
@@ -146,24 +569,6 @@ services:
       - "9092:9090"
     restart: unless-stopped
 
-  inventory-service:
-    build:
-      context: .
-      dockerfile: services/inventory-service-go/Dockerfile
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      - ADDR=0.0.0.0:8085
-      - METRICS_ADDR=:9090
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/0
-      - LOG_LEVEL=info
-    ports:
-      - "8085:8085"
-      - "9094:9090"
-    restart: unless-stopped
-
   movement-service:
     build:
       context: .
@@ -173,38 +578,229 @@ services:
       - redis
       - realtime-gateway
     environment:
-      - ADDR=0.0.0.0:8086
-      - METRICS_ADDR=:9091
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/1
-      - GATEWAY_URL=ws://realtime-gateway:18080/client
-      - UPDATE_INTERVAL=5s
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8127
+            - METRICS_ADDR=:9227
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/40
+            - GATEWAY_URL=ws://realtime-gateway:18080/client
     ports:
-      - "8086:8086"
-      - "9095:9091"
+      - "8127:8127"
+      - "9227:9227"
     restart: unless-stopped
 
-  character-service:
+  progression-paragon-service:
     build:
       context: .
-      dockerfile: services/character-service-go/Dockerfile
+      dockerfile: services/progression-paragon-service-go/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+            - ADDR=0.0.0.0:8128
+            - METRICS_ADDR=:9228
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/41
+    ports:
+      - "8128:8128"
+      - "9228:9228"
+    restart: unless-stopped
+
+  quest-core-service:
+    build:
+      context: .
+      dockerfile: services/quest-core-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8129
+            - METRICS_ADDR=:9229
+            - LOG_LEVEL=info
+    ports:
+      - "8129:8129"
+      - "9229:9229"
+    restart: unless-stopped
+
+  quest-rewards-events-service:
+    build:
+      context: .
+      dockerfile: services/quest-rewards-events-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8130
+            - METRICS_ADDR=:9230
+            - LOG_LEVEL=info
+    ports:
+      - "8130:8130"
+      - "9230:9230"
+    restart: unless-stopped
+
+  quest-skill-checks-conditions-service:
+    build:
+      context: .
+      dockerfile: services/quest-skill-checks-conditions-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8131
+            - METRICS_ADDR=:9231
+            - LOG_LEVEL=info
+    ports:
+      - "8131:8131"
+      - "9231:9231"
+    restart: unless-stopped
+
+  quest-state-dialogue-service:
+    build:
+      context: .
+      dockerfile: services/quest-state-dialogue-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8132
+            - METRICS_ADDR=:9232
+            - LOG_LEVEL=info
+    ports:
+      - "8132:8132"
+      - "9232:9232"
+    restart: unless-stopped
+
+  realtime-gateway:
+    build:
+      context: ./services/realtime-gateway-go
+      dockerfile: Dockerfile
+    depends_on:
+      - keycloak
+    environment:
+      - LOG_LEVEL=info
+    ports:
+      - "18080:18080/tcp"
+      - "9093:9090"
+    restart: unless-stopped
+
+  referral-service:
+    build:
+      context: .
+      dockerfile: services/referral-service-go/Dockerfile
     depends_on:
       - postgres
       - redis
       - keycloak
     environment:
-      - ADDR=0.0.0.0:8087
-      - METRICS_ADDR=:9092
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/2
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=necpgame
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8134
+            - METRICS_ADDR=:9234
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/47
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
     ports:
-      - "8087:8087"
-      - "9096:9092"
+      - "8134:8134"
+      - "9234:9234"
+    restart: unless-stopped
+
+  reset-service:
+    build:
+      context: ./services/reset-service-go
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+            - ADDR=0.0.0.0:8135
+            - METRICS_ADDR=:9235
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/48
+    ports:
+      - "8135:8135"
+      - "9235:9235"
+    restart: unless-stopped
+
+  seasonal-challenges-service:
+    build:
+      context: .
+      dockerfile: services/seasonal-challenges-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8136
+            - METRICS_ADDR=:9236
+            - LOG_LEVEL=info
+    ports:
+      - "8136:8136"
+      - "9236:9236"
+    restart: unless-stopped
+
+  social-chat-channels-service:
+    build:
+      context: .
+      dockerfile: services/social-chat-channels-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8137
+            - METRICS_ADDR=:9237
+            - LOG_LEVEL=info
+    ports:
+      - "8137:8137"
+      - "9237:9237"
+    restart: unless-stopped
+
+  social-chat-commands-service:
+    build:
+      context: .
+      dockerfile: services/social-chat-commands-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8138
+            - METRICS_ADDR=:9238
+            - LOG_LEVEL=info
+    ports:
+      - "8138:8138"
+      - "9238:9238"
+    restart: unless-stopped
+
+  social-chat-format-service:
+    build:
+      context: .
+      dockerfile: services/social-chat-format-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8139
+            - METRICS_ADDR=:9239
+            - LOG_LEVEL=info
+    ports:
+      - "8139:8139"
+      - "9239:9239"
+    restart: unless-stopped
+
+  social-chat-history-service:
+    build:
+      context: .
+      dockerfile: services/social-chat-history-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8140
+            - METRICS_ADDR=:9240
+            - LOG_LEVEL=info
+    ports:
+      - "8140:8140"
+      - "9240:9240"
+    restart: unless-stopped
+
+  social-chat-messages-service:
+    build:
+      context: .
+      dockerfile: services/social-chat-messages-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8141
+            - METRICS_ADDR=:9241
+            - LOG_LEVEL=info
+    ports:
+      - "8141:8141"
+      - "9241:9241"
+    restart: unless-stopped
+
+  social-chat-moderation-service:
+    build:
+      context: .
+      dockerfile: services/social-chat-moderation-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8142
+            - METRICS_ADDR=:9242
+            - LOG_LEVEL=info
+    ports:
+      - "8142:8142"
+      - "9242:9242"
     restart: unless-stopped
 
   social-service:
@@ -216,61 +812,134 @@ services:
       - redis
       - keycloak
     environment:
-      - ADDR=0.0.0.0:8084
-      - METRICS_ADDR=:9094
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/3
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=necpgame
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8143
+            - METRICS_ADDR=:9243
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/56
+            - KEYCLOAK_URL=http://keycloak:8080
+            - KEYCLOAK_REALM=necpgame
+            - AUTH_ENABLED=true
     ports:
-      - "8084:8084"
-      - "9097:9094"
+      - "8143:8143"
+      - "9243:9243"
     restart: unless-stopped
 
-  achievement-service:
+  stock-analytics-charts-service:
     build:
       context: .
-      dockerfile: services/achievement-service-go/Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - keycloak
+      dockerfile: services/stock-analytics-charts-service-go/Dockerfile
     environment:
-      - ADDR=0.0.0.0:8085
-      - METRICS_ADDR=:9095
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/4
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=necpgame
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8144
+            - METRICS_ADDR=:9244
+            - LOG_LEVEL=info
     ports:
-      - "8085:8085"
-      - "9098:9095"
+      - "8144:8144"
+      - "9244:9244"
     restart: unless-stopped
 
-  economy-service:
+  stock-analytics-tools-service:
     build:
-      context: ./services/economy-service-go
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - keycloak
+      context: .
+      dockerfile: services/stock-analytics-tools-service-go/Dockerfile
     environment:
-      - ADDR=0.0.0.0:8086
-      - METRICS_ADDR=:9096
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/5
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=necpgame
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8145
+            - METRICS_ADDR=:9245
+            - LOG_LEVEL=info
     ports:
-      - "8086:8086"
-      - "9099:9096"
+      - "8145:8145"
+      - "9245:9245"
+    restart: unless-stopped
+
+  stock-dividends-service:
+    build:
+      context: .
+      dockerfile: services/stock-dividends-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8146
+            - METRICS_ADDR=:9246
+            - LOG_LEVEL=info
+    ports:
+      - "8146:8146"
+      - "9246:9246"
+    restart: unless-stopped
+
+  stock-events-service:
+    build:
+      context: .
+      dockerfile: services/stock-events-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8147
+            - METRICS_ADDR=:9247
+            - LOG_LEVEL=info
+    ports:
+      - "8147:8147"
+      - "9247:9247"
+    restart: unless-stopped
+
+  stock-futures-service:
+    build:
+      context: .
+      dockerfile: services/stock-futures-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8148
+            - METRICS_ADDR=:9248
+            - LOG_LEVEL=info
+    ports:
+      - "8148:8148"
+      - "9248:9248"
+    restart: unless-stopped
+
+  stock-indices-service:
+    build:
+      context: .
+      dockerfile: services/stock-indices-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8149
+            - METRICS_ADDR=:9249
+            - LOG_LEVEL=info
+    ports:
+      - "8149:8149"
+      - "9249:9249"
+    restart: unless-stopped
+
+  stock-margin-service:
+    build:
+      context: .
+      dockerfile: services/stock-margin-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8150
+            - METRICS_ADDR=:9250
+            - LOG_LEVEL=info
+    ports:
+      - "8150:8150"
+      - "9250:9250"
+    restart: unless-stopped
+
+  stock-options-service:
+    build:
+      context: .
+      dockerfile: services/stock-options-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8151
+            - METRICS_ADDR=:9251
+            - LOG_LEVEL=info
+    ports:
+      - "8151:8151"
+      - "9251:9251"
+    restart: unless-stopped
+
+  stock-protection-service:
+    build:
+      context: .
+      dockerfile: services/stock-protection-service-go/Dockerfile
+    environment:
+            - ADDR=0.0.0.0:8152
+            - METRICS_ADDR=:9252
+            - LOG_LEVEL=info
+    ports:
+      - "8152:8152"
+      - "9252:9252"
     restart: unless-stopped
 
   support-service:
@@ -282,123 +951,17 @@ services:
       - redis
       - keycloak
     environment:
-      - ADDR=0.0.0.0:8087
-      - METRICS_ADDR=:9097
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/6
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=necpgame
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8153
+            - METRICS_ADDR=:9253
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/66
+            - KEYCLOAK_URL=http://keycloak:8080
+            - KEYCLOAK_REALM=necpgame
+            - AUTH_ENABLED=true
     ports:
-      - "8087:8087"
-      - "9100:9097"
-    restart: unless-stopped
-
-  reset-service:
-    build:
-      context: ./services/reset-service-go
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - keycloak
-    environment:
-      - ADDR=0.0.0.0:8088
-      - METRICS_ADDR=:9098
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/7
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=necpgame
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
-    ports:
-      - "8088:8088"
-      - "9101:9098"
-    restart: unless-stopped
-
-  gameplay-service:
-    build:
-      context: ./services/gameplay-service-go
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - keycloak
-    environment:
-      - ADDR=0.0.0.0:8083
-      - METRICS_ADDR=:9093
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/8
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=necpgame
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
-    ports:
-      - "8083:8083"
-      - "9102:9093"
-    restart: unless-stopped
-
-  admin-service:
-    build:
-      context: .
-      dockerfile: services/admin-service-go/Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - keycloak
-    environment:
-      - ADDR=0.0.0.0:8090
-      - METRICS_ADDR=:9100
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/10
-      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
-      - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
-    ports:
-      - "8090:8090"
-      - "9103:9100"
-    restart: unless-stopped
-
-  clan-war-service:
-    build:
-      context: .
-      dockerfile: services/clan-war-service-go/Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - keycloak
-    environment:
-      - HTTP_ADDR=:8092
-      - METRICS_ADDR=:9092
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/11
-      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
-      - KEYCLOAK_JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
-    ports:
-      - "8092:8092"
-      - "9104:9092"
-    restart: unless-stopped
-
-  companion-service:
-    build:
-      context: .
-      dockerfile: services/companion-service-go/Dockerfile
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      - ADDR=0.0.0.0:8089
-      - METRICS_ADDR=:9099
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/9
-      - LOG_LEVEL=info
-    ports:
-      - "8089:8089"
-      - "9105:9099"
+      - "8153:8153"
+      - "9253:9253"
     restart: unless-stopped
 
   voice-chat-service:
@@ -410,55 +973,57 @@ services:
       - redis
       - keycloak
     environment:
-      - ADDR=0.0.0.0:8091
-      - METRICS_ADDR=:9101
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/11
-      - WEBRTC_URL=wss://voice.necp.game
-      - WEBRTC_KEY=
-      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
-      - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8154
+            - METRICS_ADDR=:9254
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/67
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
+            - WEBRTC_URL=wss://voice.necp.game
+            - WEBRTC_KEY=
     ports:
-      - "8091:8091"
-      - "9106:9101"
+      - "8154:8154"
+      - "9254:9254"
     restart: unless-stopped
 
-  housing-service:
+  world-service:
     build:
-      context: .
-      dockerfile: services/housing-service-go/Dockerfile
+      context: ./services/world-service-go
+      dockerfile: Dockerfile
     depends_on:
       - postgres
       - redis
       - keycloak
     environment:
-      - HTTP_ADDR=:8093
-      - METRICS_ADDR=:9093
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-      - REDIS_URL=redis://redis:6379/12
-      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
-      - KEYCLOAK_JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
-      - AUTH_ENABLED=true
-      - LOG_LEVEL=info
+            - ADDR=0.0.0.0:8155
+            - METRICS_ADDR=:9255
+            - LOG_LEVEL=info
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+            - REDIS_URL=redis://redis:6379/68
+            - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+            - JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+            - AUTH_ENABLED=true
     ports:
-      - "8093:8093"
-      - "9107:9093"
+      - "8155:8155"
+      - "9255:9255"
     restart: unless-stopped
 
-  mcp-github:
-    image: ghcr.io/github/github-mcp-server:latest
+  ws-lobby:
+    build:
+      context: ./services/ws-lobby-go
+      dockerfile: Dockerfile
+    depends_on:
+      - keycloak
     environment:
-      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
-      - GITHUB_TOOLSETS=default,projects
-    stdin_open: true
-    tty: true
+      - PORT=18081
+    ports:
+      - "18081:18081/tcp"
+      - "9091:9090"
     restart: unless-stopped
 
 volumes:
   pgdata:
   redisdata:
   nexus-data:
-
-

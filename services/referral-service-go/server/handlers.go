@@ -156,9 +156,9 @@ func (h *ReferralHandlers) GetReferralMilestones(w http.ResponseWriter, r *http.
 		apiMilestones[i] = toAPIReferralMilestone(&ms)
 	}
 
-	var currentMilestone *string
+	var currentMilestone *api.ReferralMilestonesResponseCurrentMilestone
 	if currentType != nil {
-		mt := string(*currentType)
+		mt := api.ReferralMilestonesResponseCurrentMilestone(*currentType)
 		currentMilestone = &mt
 	}
 
@@ -286,9 +286,9 @@ func (h *ReferralHandlers) GetPublicReferralStats(w http.ResponseWriter, r *http
 func (h *ReferralHandlers) GetReferralLeaderboard(w http.ResponseWriter, r *http.Request, params api.GetReferralLeaderboardParams) {
 	ctx := r.Context()
 
-	leaderboardType := models.ReferralLeaderboardTypeTotal
-	if params.Type != nil {
-		leaderboardType = models.ReferralLeaderboardType(*params.Type)
+	leaderboardType := models.LeaderboardTypeTopReferrers
+	if params.LeaderboardType != nil {
+		leaderboardType = models.ReferralLeaderboardType(*params.LeaderboardType)
 	}
 
 	limit := 100
@@ -339,8 +339,9 @@ func (h *ReferralHandlers) GetLeaderboardPosition(w http.ResponseWriter, r *http
 		return
 	}
 
+	entryValue := toAPILeaderboardEntry(entry)
 	response := api.LeaderboardPositionResponse{
-		Entry:    toAPILeaderboardEntry(entry),
+		Entry:    &entryValue,
 		Position: &position,
 	}
 
@@ -396,9 +397,10 @@ func (h *ReferralHandlers) respondJSON(w http.ResponseWriter, status int, data i
 }
 
 func (h *ReferralHandlers) respondError(w http.ResponseWriter, status int, message string) {
+	errorText := http.StatusText(status)
 	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
+		Error:   &errorText,
+		Message: &message,
 	}
 	h.respondJSON(w, status, errorResponse)
 }
