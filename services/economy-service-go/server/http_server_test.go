@@ -186,7 +186,7 @@ func TestHTTPServer_CreateTrade(t *testing.T) {
 		tradeHistory: make(map[uuid.UUID]*models.TradeHistoryListResponse),
 	}
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	initiatorID := uuid.New()
 	recipientID := uuid.New()
@@ -238,7 +238,7 @@ func TestHTTPServer_GetTrade(t *testing.T) {
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	req := httptest.NewRequest("GET", "/api/v1/economy/trade/"+tradeID.String(), nil)
 	w := httptest.NewRecorder()
@@ -289,7 +289,7 @@ func TestHTTPServer_GetActiveTrades(t *testing.T) {
 
 	mockService.activeTrades[characterID] = []models.TradeSession{trade1, trade2}
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	req := createRequestWithUserID("GET", "/api/v1/economy/trade", nil, characterID)
 	w := httptest.NewRecorder()
@@ -335,7 +335,7 @@ func TestHTTPServer_UpdateOffer(t *testing.T) {
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	reqBody := models.UpdateTradeOfferRequest{
 		Items: []map[string]interface{}{
@@ -380,7 +380,7 @@ func TestHTTPServer_ConfirmTrade(t *testing.T) {
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	req := createRequestWithUserID("POST", "/api/v1/economy/trade/"+tradeID.String()+"/confirm", nil, characterID)
 	w := httptest.NewRecorder()
@@ -414,7 +414,7 @@ func TestHTTPServer_CompleteTrade(t *testing.T) {
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	req := httptest.NewRequest("POST", "/api/v1/economy/trade/"+tradeID.String()+"/complete", nil)
 	w := httptest.NewRecorder()
@@ -447,7 +447,7 @@ func TestHTTPServer_CancelTrade(t *testing.T) {
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	req := createRequestWithUserID("POST", "/api/v1/economy/trade/"+tradeID.String()+"/cancel", nil, characterID)
 	w := httptest.NewRecorder()
@@ -484,7 +484,7 @@ func TestHTTPServer_GetTradeHistory(t *testing.T) {
 
 	mockService.tradeHistory[characterID] = history
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	req := createRequestWithUserID("GET", "/api/v1/economy/trade/history", nil, characterID)
 	w := httptest.NewRecorder()
@@ -513,7 +513,7 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		tradeHistory: make(map[uuid.UUID]*models.TradeHistoryListResponse),
 	}
 
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()
