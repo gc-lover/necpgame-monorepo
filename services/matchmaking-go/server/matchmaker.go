@@ -1,3 +1,4 @@
+// Issue: #141889181
 package server
 
 import (
@@ -86,15 +87,27 @@ func (m *Matchmaker) popTickets(ctx context.Context, count int) []string {
 
 func (m *Matchmaker) allocate(ctx context.Context, tickets []string) {
 	instanceId := uuid.New().String()
+	logger := GetLogger()
 
-	playersJson, _ := json.Marshal(tickets)
+	playersJson, err := json.Marshal(tickets)
+	if err != nil {
+		logger.WithError(err).Error("Failed to marshal tickets JSON")
+		RecordError("marshal_tickets")
+		return
+	}
+	
 	payload := map[string]interface{}{
 		"instance": instanceId,
 		"mode":     m.config.Mode,
 		"players":  string(playersJson),
 	}
 
-	payloadJson, _ := json.Marshal(payload)
+	payloadJson, err := json.Marshal(payload)
+	if err != nil {
+		logger.WithError(err).Error("Failed to marshal payload JSON")
+		RecordError("marshal_payload")
+		return
+	}
 
 	args := redis.XAddArgs{
 		Stream: redisKeys.allocations(),
@@ -105,7 +118,6 @@ func (m *Matchmaker) allocate(ctx context.Context, tickets []string) {
 		},
 	}
 
-	logger := GetLogger()
 	if err := m.client.XAdd(ctx, &args).Err(); err != nil {
 		logger.WithError(err).Error("Error allocating match")
 		RecordError("allocate_match")
