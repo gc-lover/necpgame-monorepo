@@ -1,0 +1,471 @@
+<!-- Issue: #43 -->
+metadata:
+  id: social-mechanics-architecture
+  title: Архитектура социальных механик - отношения, заказы, найм NPC
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-01T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - relationships
+    - player-orders
+    - npc-hiring
+    - reputation
+  related_systems:
+    - social-service
+    - narrative-service
+    - economy-service
+    - npc-service
+    - reputation-service
+  related_documents:
+    - id: npc-relationships-system
+      relation: implements
+    - id: family-relationships-system
+      relation: implements
+    - id: mentorship-mechanics
+      relation: implements
+    - id: player-orders-system-detailed
+      relation: implements
+    - id: npc-hiring-system
+      relation: implements
+    - id: reputation-formulas
+      relation: implements
+    - id: relationships-system-architecture
+      relation: extends
+    - id: player-orders-core
+      relation: extends
+    - id: npc-hiring-system-architecture
+      relation: extends
+  github_issue: 43
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+    - network
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру социальных механик, объединяющую
+    отношения с NPC, семейные отношения, наставничество, заказы игроков и найм NPC.
+    Все механики должны быть интегрированы с social-service и narrative-service.
+  goal: |
+    Создать архитектурную схему социальных механик с определением:
+    - Компонентов для управления отношениями, заказами и наймом
+    - REST, WebSocket и Event Bus контрактов
+    - Синхронизации данных между слоями (Event Sourcing, CQRS)
+    - Тикрейта и требований к сетевой нагрузке
+    - Интеграций между компонентами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура социальных механик, интегрирующая отношения,
+    заказы игроков и найм NPC в единую систему с поддержкой narrative-service
+    и realtime синхронизации.
+
+architecture:
+  overview: |
+    Архитектура социальных механик состоит из следующих компонентов:
+    1. Relationship System - система отношений (NPC, семейные, наставничество)
+    2. Player Orders System - система заказов от игроков
+    3. NPC Hiring System - система найма NPC
+    4. Reputation System - система репутации
+    5. Social Orchestrator - оркестратор социальных механик
+    6. Narrative Integration - интеграция с narrative-service
+
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Обработка социальных механик:
+        - Управление отношениями с NPC
+        - Управление семейными отношениями
+        - Управление наставничеством
+        - Управление заказами игроков
+        - Управление наймом NPC
+        - Управление репутацией
+        - Оркестрация социальных механик
+      components:
+        - relationship-system: система отношений
+        - player-orders-system: система заказов
+        - npc-hiring-system: система найма NPC
+        - reputation-system: система репутации
+        - social-orchestrator: оркестратор механик
+        - narrative-integration: интеграция с narrative
+      endpoints:
+        - GET /api/v1/social/relationships/{characterId} - отношения персонажа
+        - POST /api/v1/social/relationships/{characterId}/set - установка отношения
+        - GET /api/v1/social/relationships/family/{characterId} - семейные отношения
+        - POST /api/v1/social/relationships/mentorship/create - создание наставничества
+        - GET /api/v1/social/orders - получение заказов
+        - POST /api/v1/social/orders - создание заказа
+        - POST /api/v1/social/orders/{orderId}/accept - принятие заказа
+        - POST /api/v1/social/orders/{orderId}/complete - выполнение заказа
+        - GET /api/v1/social/npc-hiring/candidates - поиск кандидатов для найма
+        - POST /api/v1/social/npc-hiring/contract/create - создание контракта найма
+        - GET /api/v1/social/npc-hiring/contracts - список контрактов
+        - GET /api/v1/social/reputation/{characterId} - репутация персонажа
+      websocket_channels:
+        - wss://api.necp.game/v1/social/relationships/{characterId} - обновления отношений
+        - wss://api.necp.game/v1/social/orders/{orderId} - события заказа
+        - wss://api.necp.game/v1/social/npc-hiring/{contractId} - события найма
+      events_published:
+        - social.relationship.updated: обновление отношения
+        - social.relationship.family-updated: обновление семейного отношения
+        - social.relationship.mentorship-created: создание наставничества
+        - social.order.created: создание заказа
+        - social.order.accepted: принятие заказа
+        - social.order.completed: выполнение заказа
+        - social.npc-hiring.contract-created: создание контракта найма
+        - social.npc-hiring.contract-updated: обновление контракта
+        - social.reputation.updated: обновление репутации
+      events_subscribed:
+        - quest.completed: завершение квеста
+        - economy.trade.completed: завершение торговли
+        - combat.session.completed: завершение боевой сессии
+
+  data_synchronization:
+    strategy: Event Sourcing + CQRS
+    event_store: |
+      Все события социальных механик сохраняются в Event Store:
+      - social.relationship.updated
+      - social.relationship.family-updated
+      - social.relationship.mentorship-created
+      - social.order.created
+      - social.order.accepted
+      - social.order.completed
+      - social.npc-hiring.contract-created
+      - social.npc-hiring.contract-updated
+      - social.reputation.updated
+    command_side: |
+      Command Side (Write Model):
+      - social-service: обработка команд отношений, заказов, найма, репутации
+    query_side: |
+      Query Side (Read Model):
+      - social-service: получение статуса отношений, заказов, контрактов, репутации
+    saga_pattern: |
+      Saga для социальных операций:
+      1. Start Social Operation Saga
+      2. Validate Requirements (репутация, уровень, ресурсы)
+      3. Reserve Resources (валюты, предметы)
+      4. Execute Operation (отношение/заказ/найм)
+      5. Update Reputation (обновление репутации)
+      6. If failure: Compensate (rollback, возврат ресурсов)
+    consistency: |
+      Strong Consistency для критичных операций:
+      - Установка отношений
+      - Создание заказов
+      - Принятие заказов
+      - Создание контрактов найма
+      - Обновление репутации
+      Eventual Consistency для:
+      - Поиск заказов
+      - Поиск кандидатов для найма
+      - Статистика отношений
+
+  network_requirements:
+    tick_rate:
+      relationship_updates: |
+        - Протокол: HTTP REST + WebSocket
+        - Тикрейт: on-demand (при изменении)
+        - Задержка: <200 мс
+        - Оптимизация: Кэширование отношений
+      order_updates: |
+        - Протокол: WebSocket (TCP)
+        - Тикрейт: 5-10 Hz (при активных заказах)
+        - Задержка: <150 мс
+        - Оптимизация: Батчинг обновлений
+      npc_hiring_updates: |
+        - Протокол: HTTP REST + WebSocket
+        - Тикрейт: on-demand (при изменении)
+        - Задержка: <200 мс
+        - Оптимизация: Кэширование контрактов
+      reputation_updates: |
+        - Протокол: HTTP REST
+        - Тикрейт: on-demand (при изменении)
+        - Задержка: <300 мс
+        - Оптимизация: Батчинг обновлений репутации
+    bandwidth_optimization: |
+      - Кэширование отношений и репутации
+      - Пагинация результатов поиска
+      - Агрегация обновлений
+      - Сжатие данных для WebSocket
+      - Rate limiting для предотвращения злоупотреблений
+
+  data_flows:
+    relationship_update_flow: |
+      1. Игрок взаимодействует с NPC или игроком
+      2. Relationship System рассчитывает изменение отношения
+      3. Relationship System обновляет уровень отношения
+      4. Relationship System применяет эффекты отношения
+      5. Social Service публикует событие social.relationship.updated
+      6. Narrative Service получает событие для обновления диалогов
+      7. Realtime Gateway отправляет обновление клиентам
+
+    order_creation_flow: |
+      1. Игрок создает заказ
+      2. Player Orders System проверяет требования (уровень, репутация)
+      3. Player Orders System резервирует награду
+      4. Player Orders System публикует заказ
+      5. Social Service публикует событие social.order.created
+      6. Realtime Gateway отправляет обновление клиентам
+
+    order_execution_flow: |
+      1. Исполнитель принимает заказ
+      2. Player Orders System проверяет доступность заказа
+      3. Player Orders System блокирует заказ
+      4. Исполнитель выполняет заказ
+      5. Player Orders System проверяет выполнение
+      6. Player Orders System выплачивает награду
+      7. Player Orders System обновляет репутацию
+      8. Social Service публикует событие social.order.completed
+      9. Realtime Gateway отправляет обновление клиентам
+
+    npc_hiring_flow: |
+      1. Игрок ищет кандидатов для найма
+      2. NPC Hiring System фильтрует кандидатов по требованиям
+      3. Игрок начинает переговоры
+      4. NPC Hiring System рассчитывает условия контракта
+      5. Игрок создает контракт
+      6. NPC Hiring System резервирует ресурсы
+      7. NPC Hiring System активирует контракт
+      8. Social Service публикует событие social.npc-hiring.contract-created
+      9. Narrative Service получает событие для обновления диалогов
+      10. Realtime Gateway отправляет обновление клиентам
+
+    reputation_update_flow: |
+      1. Происходит событие, влияющее на репутацию
+      2. Reputation System рассчитывает изменение репутации
+      3. Reputation System обновляет уровень репутации
+      4. Reputation System проверяет пороговые значения
+      5. Reputation System применяет эффекты репутации
+      6. Social Service публикует событие social.reputation.updated
+      7. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: character_relationships
+        description: Отношения между персонажами
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - target_id: UUID FOREIGN KEY
+          - target_type: ENUM (player, npc)
+          - relationship_type: ENUM (friend, close_ally, pact, enemy, nemesis, family, mentor, student)
+          - relationship_level: INTEGER
+          - trust_level: INTEGER
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: family_relationships
+        description: Семейные отношения
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - family_member_id: UUID FOREIGN KEY
+          - relationship_type: ENUM (parent, child, sibling, spouse, extended)
+          - relationship_quality: DECIMAL(3,2)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: mentorship_relationships
+        description: Отношения наставничества
+        columns:
+          - id: UUID PRIMARY KEY
+          - mentor_id: UUID FOREIGN KEY
+          - student_id: UUID FOREIGN KEY
+          - status: ENUM (active, completed, terminated)
+          - progress: DECIMAL(5,2)
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+      - name: player_orders
+        description: Заказы от игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - creator_id: UUID FOREIGN KEY
+          - executor_id: UUID FOREIGN KEY (nullable)
+          - order_type: ENUM (combat, hacking, trade, political, research, social)
+          - status: ENUM (open, accepted, in_progress, completed, cancelled, failed)
+          - reward: JSONB
+          - requirements: JSONB
+          - created_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+      - name: npc_hiring_contracts
+        description: Контракты найма NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - npc_id: UUID FOREIGN KEY
+          - contract_type: ENUM (merchant, fixer, bodyguard, mercenary, diplomat, engineer, hacker)
+          - salary: JSONB
+          - duration: INTEGER
+          - status: ENUM (active, completed, terminated)
+          - started_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+
+      - name: character_reputation
+        description: Репутация персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - faction_id: UUID FOREIGN KEY (nullable)
+          - reputation_level: DECIMAL(5,2)
+          - reputation_points: INTEGER
+          - last_update: TIMESTAMP
+          - created_at: TIMESTAMP
+
+  integrations:
+    narrative_service: |
+      Получение событий для обновления диалогов, интеграция с квестами
+    economy_service: |
+      Проверка баланса, резервирование валюты, выплата наград
+    npc_service: |
+      Получение данных о NPC, обновление состояния NPC
+    reputation_service: |
+      Получение и обновление репутации, применение эффектов репутации
+    world_service: |
+      Получение данных о мире, влияние на мир
+    quest_service: |
+      Интеграция заказов с квестами, триггеры квестов
+
+technical_specification:
+  subtasks:
+    - id: relationship-system
+      title: Реализация системы отношений
+      description: |
+        Реализация Relationship System с управлением отношениями с NPC,
+        семейными отношениями и наставничеством.
+      dependencies: []
+      estimated_effort: 6 days
+
+    - id: player-orders-system
+      title: Реализация системы заказов игроков
+      description: |
+        Реализация Player Orders System с созданием, принятием и выполнением заказов,
+        управлением рейтингами и репутацией.
+      dependencies: []
+      estimated_effort: 7 days
+
+    - id: npc-hiring-system
+      title: Реализация системы найма NPC
+      description: |
+        Реализация NPC Hiring System с поиском кандидатов, переговорами,
+        созданием контрактов и управлением персоналом.
+      dependencies: []
+      estimated_effort: 6 days
+
+    - id: reputation-system
+      title: Реализация системы репутации
+      description: |
+        Реализация Reputation System с расчетом репутации, применением эффектов
+        и интеграцией с другими системами.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: social-orchestrator
+      title: Реализация оркестратора социальных механик
+      description: |
+        Реализация Social Orchestrator с координацией всех социальных механик
+        и управлением сагами.
+      dependencies: [relationship-system, player-orders-system, npc-hiring-system, reputation-system]
+      estimated_effort: 5 days
+
+    - id: narrative-integration
+      title: Интеграция с narrative-service
+      description: |
+        Реализация Narrative Integration с отправкой событий в narrative-service
+        для обновления диалогов и квестов.
+      dependencies: [social-orchestrator]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений отношений,
+        заказов и найма.
+      dependencies: [social-orchestrator]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов социальных механик.
+      dependencies: [social-orchestrator]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для отношений, заказов, найма и репутации
+        с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        
+        SocialService --> RS[Relationship System]
+        SocialService --> POS[Player Orders System]
+        SocialService --> NHS[NPC Hiring System]
+        SocialService --> RepS[Reputation System]
+        SocialService --> SO[Social Orchestrator]
+        SocialService --> NI[Narrative Integration]
+        
+        SO --> RS
+        SO --> POS
+        SO --> NHS
+        SO --> RepS
+        
+        SocialService --> NarrativeService[Narrative Service]
+        SocialService --> EconomyService[Economy Service]
+        SocialService --> NPCService[NPC Service]
+        SocialService --> ReputationService[Reputation Service]
+        SocialService --> WorldService[World Service]
+        SocialService --> QuestService[Quest Service]
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SocialService --> DB[(Social DB)]
+        
+        Client --> WSSocial[WebSocket<br/>Social]
+        WSSocial --> SocialService
+    ```
+
+  relationship_update_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant RS as Relationship System
+        participant RepS as Reputation System
+        participant NS as Narrative Service
+        participant EB as Event Bus
+        
+        P->>RS: Interact with NPC
+        RS->>RS: Calculate relationship change
+        RS->>RS: Update relationship level
+        RS->>RepS: Update reputation
+        RepS->>RepS: Calculate reputation change
+        RS->>EB: Publish social.relationship.updated
+        EB->>NS: social.relationship.updated
+        NS->>NS: Update dialogues
+        RS->>P: Relationship updated
+    ```
+
