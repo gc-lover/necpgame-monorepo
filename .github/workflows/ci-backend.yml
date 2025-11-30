@@ -59,19 +59,34 @@ jobs:
             done <<< "$valid_services"
             services=$(echo -e "$filtered_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
           else
-            services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+            if [ -n "$changed_service_dirs" ]; then
+              filtered_services=""
+              while IFS= read -r service; do
+                if echo "$changed_service_dirs" | grep -q "^${service}$"; then
+                  filtered_services="${filtered_services}${service}\n"
+                fi
+              done <<< "$valid_services"
+              services=$(echo -e "$filtered_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+            else
+              services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+            fi
           fi
           
-          if [ -z "$services" ] || [ "$services" = "[]" ]; then
+          if [ -z "$services" ] || [ "$services" = "[]" ] || [ "$services" = "" ]; then
             echo "No services to process"
             services="[]"
           fi
+          
+          echo "Changed files: $changed_files"
+          echo "Changed service dirs: $changed_service_dirs"
+          echo "Proto changed: $proto_changed"
           
           echo "services=$services" >> $GITHUB_OUTPUT
           echo "Found services: $services"
 
   test:
     needs: discover-services
+    if: needs.discover-services.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -96,6 +111,7 @@ jobs:
 
   lint:
     needs: discover-services
+    if: needs.discover-services.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
