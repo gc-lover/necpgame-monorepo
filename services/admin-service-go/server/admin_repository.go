@@ -1,3 +1,4 @@
+// Issue: #141888650
 package server
 
 import (
@@ -67,7 +68,10 @@ func (r *AdminRepository) GetAuditLog(ctx context.Context, logID uuid.UUID) (*mo
 	}
 
 	if len(detailsJSON) > 0 {
-		json.Unmarshal(detailsJSON, &log.Details)
+		if err := json.Unmarshal(detailsJSON, &log.Details); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal details JSON")
+			log.Details = make(map[string]interface{})
+		}
 	} else {
 		log.Details = make(map[string]interface{})
 	}
