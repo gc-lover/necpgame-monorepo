@@ -1,3 +1,4 @@
+// Issue: #141888878, #141888890
 package server
 
 import (
@@ -181,8 +182,12 @@ func (s *LobbyServer) addClientToRoom(client *Client, roomName string) {
 }
 
 func (s *LobbyServer) removeClientFromRoom(client *Client) {
+	client.mu.Lock()
+	roomName := client.room
+	client.mu.Unlock()
+
 	s.mu.RLock()
-	room, exists := s.rooms[client.room]
+	room, exists := s.rooms[roomName]
 	s.mu.RUnlock()
 
 	if !exists {
@@ -191,11 +196,12 @@ func (s *LobbyServer) removeClientFromRoom(client *Client) {
 
 	room.mu.Lock()
 	delete(room.clients, client)
+	clientCount := len(room.clients)
 	room.mu.Unlock()
 
-	if len(room.clients) == 0 {
+	if clientCount == 0 {
 		s.mu.Lock()
-		delete(s.rooms, client.room)
+		delete(s.rooms, roomName)
 		roomCount := len(s.rooms)
 		s.mu.Unlock()
 		RecordWebSocketRoom(roomCount)
@@ -267,7 +273,10 @@ func (c *Client) writePump() {
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+					logger := GetLogger()
+					logger.WithError(err).Error("Failed to write WebSocket close message")
+				}
 				return
 			}
 
@@ -287,25 +296,47 @@ func (c *Client) writePump() {
 
 			w, err := c.conn.NextWriter(messageType)
 			if err != nil {
+				logger := GetLogger()
+				logger.WithError(err).Error("Failed to get WebSocket writer")
 				return
 			}
-			w.Write(message)
+			
+			if _, err := w.Write(message); err != nil {
+				logger := GetLogger()
+				logger.WithError(err).Error("Failed to write WebSocket message")
+				w.Close()
+				return
+			}
 
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				nextMsg := <-c.send
 				if messageType == websocket.TextMessage {
-					w.Write([]byte{'\n'})
+					if _, err := w.Write([]byte{'\n'}); err != nil {
+						logger := GetLogger()
+						logger.WithError(err).Error("Failed to write WebSocket newline")
+						w.Close()
+						return
+					}
 				}
-				w.Write(nextMsg)
+				if _, err := w.Write(nextMsg); err != nil {
+					logger := GetLogger()
+					logger.WithError(err).Error("Failed to write WebSocket next message")
+					w.Close()
+					return
+				}
 			}
 
 			if err := w.Close(); err != nil {
+				logger := GetLogger()
+				logger.WithError(err).Error("Failed to close WebSocket writer")
 				return
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				logger := GetLogger()
+				logger.WithError(err).Error("Failed to write WebSocket ping message")
 				return
 			}
 		}
