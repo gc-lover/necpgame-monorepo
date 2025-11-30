@@ -2,12 +2,19 @@
 
 WORKDIR /app
 
-RUN apk add --no-cache make git ca-certificates tzdata
+RUN apk add --no-cache make nodejs npm git ca-certificates tzdata dos2unix
 
-COPY go.mod go.sum ./
+COPY services/maintenance-service-go/go.mod services/maintenance-service-go/go.sum ./
 RUN go mod download
 
-COPY . .
+RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+
+COPY services/maintenance-service-go ./services/maintenance-service-go
+COPY proto ./proto
+
+WORKDIR /app/services/maintenance-service-go
+
+RUN find . -name '*.go' -exec dos2unix {} \;
 
 RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o maintenance-service -ldflags="-w -s -extldflags '-static'" .
@@ -21,7 +28,7 @@ WORKDIR /app
 RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser
 
-COPY --from=builder /app/maintenance-service /app/
+COPY --from=builder /app/services/maintenance-service-go/maintenance-service /app/maintenance-service
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 RUN chown -R appuser:appuser /app

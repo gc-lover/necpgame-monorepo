@@ -91,24 +91,3 @@ func convertFeedbackCategoryToFeedbackBoardItemCategory(c models.FeedbackCategor
 	}
 }
 
-func convertFeedbackCategoryToFeedbackBoardItemCategory(c models.FeedbackCategory) feedbackapi.FeedbackBoardItemCategory {
-	switch c {
-	case models.FeedbackCategoryGameplay:
-		return feedbackapi.FeedbackBoardItemCategoryGameplay
-	case models.FeedbackCategoryBalance:
-		return feedbackapi.FeedbackBoardItemCategoryBalance
-	case models.FeedbackCategoryContent:
-		return feedbackapi.FeedbackBoardItemCategoryContent
-	case models.FeedbackCategoryTechnical:
-		return feedbackapi.FeedbackBoardItemCategoryTechnical
-	case models.FeedbackCategoryLore:
-		return feedbackapi.FeedbackBoardItemCategoryLore
-	case models.FeedbackCategoryUIUX:
-		return feedbackapi.FeedbackBoardItemCategoryUiUx
-	case models.FeedbackCategoryOther:
-		return feedbackapi.FeedbackBoardItemCategoryOther
-	default:
-		return feedbackapi.FeedbackBoardItemCategoryOther
-	}
-}
-

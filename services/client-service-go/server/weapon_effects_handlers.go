@@ -49,3 +49,7 @@ func (h *WeaponEffectsHandlers) respondError(w http.ResponseWriter, status int, 
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
+
+
+
+

@@ -1,13 +1,10 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/necpgame/cosmetic-service-go/models"
-	"github.com/sirupsen/logrus"
 )
 
 func (s *HTTPServer) getCosmeticCatalog(w http.ResponseWriter, r *http.Request) {
