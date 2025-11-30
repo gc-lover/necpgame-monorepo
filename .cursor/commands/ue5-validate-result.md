@@ -1,30 +1,15 @@
-# UE5 Developer: Валидировать результат работы
+# Validate Result
 
-Проверить готовность клиента перед передачей QA.
+Check UE5 implementation readiness before handoff to QA.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности клиента:**
-   - [ ] Клиент реализован
-   - [ ] Интеграция с бекендом работает
-   - [ ] UI готов (если применимо)
-   - [ ] Игровая механика работает
+- [ ] UE5 code implemented
+- [ ] Backend integration working
+- [ ] Tests passed
 
-2. **Проверь наличие созданных файлов:**
-   - Код в `client/UE5/`
+**Result:**
+- OK Ready → handoff to QA
+- ❌ Not ready → fix issues
 
-3. **Покажи результат валидации:**
-   - OK Все критерии выполнены → можно передавать QA
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Если валидация не пройдена
-
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
-
-## Ссылки
-
-- `.cursor/rules/agent-ue5.mdc` - правила UE5 Developer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**On handoff:** Update Status to `QA - Todo`

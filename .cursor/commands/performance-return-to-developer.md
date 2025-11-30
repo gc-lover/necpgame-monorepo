@@ -1,34 +1,13 @@
-# Performance Engineer: Вернуть задачу разработчику
+# Return to Developer
 
-Вернуть задачу разработчику после оптимизации производительности.
+Return task after optimization.
 
-## Инструкции
+## Return To
 
-1. **Прочитай Issue через MCP GitHub (используй кэширование)**
+- Backend → Backend
+- Client → UE5
 
-2. **Определи, кому вернуть:**
-   - Если оптимизировался бекенд → `agent:backend`
-   - Если оптимизировался клиент → `agent:ue5`
-   - Если оптимизировались оба → верни обоим
+## Steps
 
-3. **Обнови метки Issue:**
-   - Удали: `agent:performance`, `stage:performance`
-   - Добавь: `agent:{developer}`, `stage:{developer-stage}`
-
-4. **Добавь комментарий:**
-   ```markdown
-   OK Оптимизация производительности завершена
-   
-   **Выполнено:**
-   - Производительность улучшена
-   - Бенчмарки показывают улучшение
-   - Отчет создан
-   - Рекомендации даны
-   ```
-
-5. **Используй батчинг для >=3 Issues**
-
-## Ссылки
-
-- `.cursor/rules/AGENT_LABEL_MANAGEMENT.md` - управление метками
-- `.cursor/rules/agent-performance.mdc` - правила Performance Engineer
+1. Update Status to `{CorrectAgent} - Todo`
+2. Add comment: `OK Optimization completed` + details

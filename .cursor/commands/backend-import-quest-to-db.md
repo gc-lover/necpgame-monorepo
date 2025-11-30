@@ -1,40 +1,14 @@
-# Backend Developer: Импортировать контентный квест в БД
+# Import Quest to DB
 
-Импортировать YAML файл контентного квеста в базу данных.
+Import content quest YAML to database.
 
-## Инструкции
+## Steps
 
-1. **Проверь, что это контентный квест:**
-   - Метки: `canon`, `lore`, `quest`, `content`
-   - От Content Writer
+1. Verify Status is `Backend - In Progress`
+2. Check: labels `canon`, `lore`, `quest`, from Content Writer
+3. Find YAML: `knowledge/canon/lore/timeline-author/quests/.../quest-*.yaml`
+4. Import: `POST /api/v1/gameplay/quests/content/reload` to `quest_definitions`
+5. Verify: quest loaded, data correct, accessible via API
+6. Handoff to QA: Update Status to `QA - Todo`
 
-2. **Найди YAML файл квеста:**
-   - Путь: `knowledge/canon/lore/timeline-author/quests/.../quest-*.yaml`
-   - Указан в Issue или комментариях Content Writer
-
-3. **Импортируй квест в БД:**
-   - Используй API endpoint: `POST /api/v1/gameplay/quests/content/reload`
-   - Или используй скрипт импорта (если есть)
-   - Импортируй в таблицу `quest_definitions`
-
-4. **Проверь импорт:**
-   - Убедись, что квест загружен в БД
-   - Проверь, что все данные корректны
-   - Проверь, что квест доступен через API
-
-5. **После импорта передай QA вручную через MCP GitHub:**
-   - Удали метку `agent:backend`
-   - Добавь метки `agent:qa`, `stage:testing`
-   - Добавь комментарий о готовности к тестированию
-
-## Важно
-
-- Все контентные квесты ДОЛЖНЫ быть импортированы в БД перед тестированием
-- Без импорта в БД контент не попадет в игру
-- Это обязательный этап workflow для всех контентных квестов
-
-## Ссылки
-
-- `.cursor/rules/agent-backend.mdc` - правила Backend Developer (раздел "Работа с контентными квестами")
-- `.cursor/rules/agent-content-writer.mdc` - workflow контентных квестов
-
+**Important:** All content quests MUST be imported to DB before testing.

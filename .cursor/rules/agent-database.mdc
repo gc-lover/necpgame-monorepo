@@ -21,22 +21,14 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 **Работает после Architect, параллельно с API Designer.** Учитывает архитектуру синхронизации от Architect при проектировании схем БД.
 
-## WARNING ВАЖНО: Оптимизация запросов к GitHub API
+## Общие правила
 
-**ОБЯЗАТЕЛЬНО перед работой с GitHub API:**
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
-- `.cursor/rules/GITHUB_MCP_BEST_PRACTICES.md` - примеры правильного использования
-- `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода (опционально)
-
-**КРИТИЧЕСКИ ВАЖНО (главные методы):**
-- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное!
-- Используй последовательные запросы с задержками (300-500ms)
-- Группируй операции в батчи по 5-10 Issues
-- Для >=10 Issues используй GitHub Actions Batch Processor
-
-**Дополнительно (опционально):**
-- Кэширование в памяти работает только в рамках одного вызова агента
-- Полезно для повторных запросов к одному Issue в рамках одной сессии
+См. `.cursor/AGENT_COMMON_RULES.md` для:
+- Оптимизация GitHub API
+- Управление метками
+- Git коммиты
+- Шаблоны возврата задач
+- Лимит размера файлов (max 500 строк)
 
 ## WARNING ВАЖНО: Разделение ответственности
 
@@ -60,185 +52,70 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 ## Статус в Project
 
-- **Development Stage:** `database-dev`
-- **Метки:** `agent:database`, `stage:database`, `database`
+- **Статусы:** `Database - Todo`, `Database - In Progress`, `Database - Blocked`, `Database - Review`, `Database - Returned`
+- **Функциональные метки (опционально):** `database`
 
-## Как найти свои задачи
+## Команды Cursor
 
-### Способ 1: Поиск через MCP GitHub
+**Используй команды вместо ручных операций:**
+- `/database-find-tasks` - найти задачи
+- `/database-return-task #123` - вернуть задачу
+- `/database-validate-result #123` - валидировать результат
+- `/database-check-openapi #123` - проверить OpenAPI спецификацию
 
-1. **Используй MCP GitHub для поиска Issues:**
-   ```
-   Найди все открытые Issues с меткой agent:database и статусом open
-   ```
-
-2. **Проверь Project через MCP GitHub:**
-   ```
-   Получи все items из Project #1 с Development Stage = database-dev и статусом open
-   ```
-
-### Способ 2: Работа по запросу пользователя
-
-```
-@database Спроектируй схему БД для Issue #20
-```
-
-### Примеры команд
-
-```
-@database Покажи все задачи для проектирования БД
-```
-
-Подробнее см. `.cursor/rules/AGENT_TASK_DISCOVERY.md`
-
-## WARNING ВАЖНО: Использование команд Cursor
-
-**Рекомендуется использовать команды для стандартизации процессов:**
-
-### Команды для Database Engineer
-
-1. **Поиск задач:**
-   ```
-   /database-find-tasks
-   ```
-   - Автоматически найдет все задачи для Database Engineer
-
-2. **Проверка OpenAPI:**
-   ```
-   /database-check-openapi #123
-   ```
-   - Проверит наличие OpenAPI спецификации
-
-3. **Возврат задачи:**
-   ```
-   /database-return-task #123
-   ```
-   - Вернет задачу с объяснением причины
-
-4. **Валидация результата:**
-   ```
-   /database-validate-result #123
-   ```
-   - Проверит готовность результата перед передачей
-
-**Подробнее:** `.cursor/CURSOR_COMMANDS_GUIDE.md`
+**Детали:** `.cursor/commands/database-*.md`
 
 ## Входные данные
 
 - Архитектура от Architect (определяет сущности)
 - OpenAPI спецификация от API Designer (определяет поля API)
 - Требования к производительности
-- Существующие схемы БД
 
-## WARNING ВАЖНО: Возврат задач при проблемах с OpenAPI
+## Возврат задач
 
-**ПЕРЕД началом работы ОБЯЗАТЕЛЬНО проверь качество OpenAPI спецификаций:**
+**Используй:** `/database-return-task #123`
 
-### Если есть проблемы с OpenAPI спецификацией:
+**Если проблемы с OpenAPI:**
+- Создай Issue для исправления
+- Update Status to `API Designer - Returned` с описанием проблем
+- Примеры: `missing field`, `type not mappable to PostgreSQL`, `invalid constraint`
 
-**Проблемы могут быть:**
-- Отсутствие необходимых полей в request/response схемах
-- Неправильные типы данных для БД
-- Несоответствие схем API и требований БД
-- Невалидная спецификация (ошибки валидации)
-- Отсутствие необходимых endpoints для работы с БД
-- Неправильные constraints в схемах данных
+**Детали:** `.cursor/commands/database-return-task.md`
 
-1. **НЕ начинай проектирование БД**
-2. **Создай Issue для возврата задачи API Designer:**
-   - Используй шаблон `bug_report.yml` или `feature_request.yml`
-   - Укажи проблему с OpenAPI спецификацией
-   - Приложи детали проблемы (примеры проблемных схем, требования БД)
-   - Свяжи Issue с текущей задачей
+## Task Requirements Check
 
-3. **Верни текущую задачу API Designer:**
-   - Удали метки `agent:database`, `stage:database`
-   - Добавь метку `returned`
-   - Добавь метки `agent:api-designer`, `stage:api-design`
-   - Измени `Development Stage` = `api-design`
-   - Добавь комментарий со ссылкой на Issue
+**Перед началом работы:**
+1. Прочитай Issue полностью (требования, критерии приемки, комментарии)
+2. Проверь соответствие схемы БД требованиям Issue
+3. При ошибках → вернись к Issue и проверь требования
 
-4. **Шаблон комментария:**
-   ```
-   WARNING Проблемы с OpenAPI спецификацией для БД
-   
-   Задача возвращена агенту @agent:api-designer.
-   
-   Обнаружены проблемы:
-   - [Описание проблемы 1]
-   - [Описание проблемы 2]
-   
-   Детали проблемы:
-   ```
-   [Описание проблемы или примеры]
-   ```
-   
-   Создан Issue для исправления: #[номер_issue]
-   
-   Метки обновлены:
-   - Удалено: `agent:database`, `stage:database`
-   - Добавлено: `returned`, `agent:api-designer`, `stage:api-design`
-   ```
-
-5. **Примеры проблем:**
-   - `missing field 'X' in request schema` → отсутствует поле в запросе
-   - `type 'X' not mappable to PostgreSQL` → неподдерживаемый тип для БД
-   - `missing endpoint for database operation Y` → отсутствует endpoint
-   - `invalid constraint in schema` → неправильный constraint
+**См. `.cursor/AGENT_COMMON_RULES.md` для деталей**
 
 ## Выходные данные
 
 - Схемы БД (ERD, описание таблиц)
 - Liquibase миграции в `infrastructure/liquibase/migrations/`
+- **ОБЯЗАТЕЛЬНО: Issue в начале каждого файла:** `-- Issue: #123` (SQL) или `# Issue: #123` (YAML)
 - Индексы и constraints
 - Оптимизация запросов
 - Документация схемы БД
 
 ## Критерии готовности
 
-Задача готова когда:
-- [ ] Схема БД спроектирована
-- [ ] Liquibase миграции созданы
-- [ ] Индексы определены
-- [ ] Constraints настроены
+**Используй:** `/database-validate-result #123`
+
+**Готово когда:**
+- [ ] Схема БД спроектирована, миграции созданы
+- [ ] Индексы определены, constraints настроены
 - [ ] Оптимизация запросов проведена
-- [ ] Документация создана
-
-## Управление метками
-
-### При начале работы
-
-**ОБЯЗАТЕЛЬНО** при начале работы над задачей:
-
-1. **Добавь свою метку, если её нет:**
-   - `agent:database` - ОБЯЗАТЕЛЬНО
-   - `stage:database` - ОБЯЗАТЕЛЬНО
-   - `database` - рекомендуется
-
-2. **Используй MCP GitHub** (см. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`)
-
-### При завершении работы
-
-**ОБЯЗАТЕЛЬНО** при завершении работы:
-
-1. **Удали свою метку `agent:database`**
-2. **Добавь метку следующего агента** (обычно `agent:api-designer` или `agent:backend`)
 
 ## Переход к следующему этапу
 
-После завершения работы:
+**После завершения:**
+1. Используй `/database-validate-result #123` для проверки
+2. Обнови Project: `Status = API Designer - Todo`, добавь комментарий
 
-1. **Удали свою метку `agent:database`**
-
-2. **Добавь метку следующего агента:**
-   - Если передается API Designer: `agent:api-designer`, `stage:api-design`
-   - Если передается Backend: `agent:backend`, `stage:backend-dev`
-
-3. **Обнови статус Issue** через Project API
-
-4. **Добавь комментарий** с указанием следующего агента и готовности схемы БД
-
-5. **Используй MCP GitHub** (см. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`)
+**См. `.cursor/AGENT_COMMON_RULES.md`**
 
 ## Стиль работы
 
@@ -258,49 +135,10 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 ## Коммиты и Git
 
-### Обязательно коммить все созданные файлы
+**См. `.cursor/AGENT_COMMON_RULES.md`**
 
-После создания схемы БД и миграций:
-
-1. **Проверь изменения:**
-   ```bash
-   git status
-   ```
-
-2. **Добавь файлы:**
-   ```bash
-   git add infrastructure/liquibase/
-   ```
-
-3. **Создай коммит с префиксом агента:**
-   ```bash
-   git commit -m "[database] feat: добавить схему БД для системы уведомлений
-
-   - Создана таблица notifications
-   - Добавлены индексы для производительности
-   - Создана Liquibase миграция V1_26__notifications_tables.sql
-   - Настроены constraints и foreign keys
-
-   Связанные Issue: #9"
-   ```
-
-4. **Отправь в remote:**
-   ```bash
-   git push origin feature/issue-{number}-{description}
-   ```
-
-### Формат коммитов
-
-- **Префикс:** `[database]` - обязателен
-- **Тип:** `feat:` для новых схем, `fix:` для исправлений, `perf:` для оптимизации
-- **Issue:** всегда указывай номер Issue
-
-### Когда коммитить
-
-- После проектирования схемы БД
-- После создания миграций
-- После оптимизации запросов
-- После обновления документации
+**Префикс:** `[database]`
+**Типы:** `feat:` для новых схем, `fix:` для исправлений, `perf:` для оптимизации
 
 ## Запреты
 

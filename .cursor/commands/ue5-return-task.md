@@ -1,26 +1,13 @@
-# UE5 Developer: Вернуть задачу
+# Return Task
 
-Вернуть задачу разработчику с объяснением причины возврата.
+Return task if not ready.
 
-## Инструкции
+## Return Reasons
 
-1. **Прочитай Issue через MCP GitHub (используй кэширование)**
+- No backend → Backend
+- No UI design (for UI tasks) → UI/UX Designer
 
-2. **Определи причину возврата:**
-   - Нет готового бекенда → верни Backend Developer
-   - Нет дизайн-документа (для UI задач) → верни UI/UX Designer
+## Steps
 
-3. **Обнови метки Issue:**
-   - Удали: `agent:ue5`, `stage:client-dev`
-   - Добавь: `returned`
-   - Добавь: `agent:{correct-agent}`, `stage:{correct-stage}`
-
-4. **Добавь комментарий с объяснением**
-
-5. **Используй батчинг для >=3 Issues**
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - полная документация возврата задач
-- `.cursor/rules/AGENT_LABEL_MANAGEMENT.md` - управление метками
-
+1. Update Status to `{CorrectAgent} - Returned`
+2. Add comment with reason

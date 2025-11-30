@@ -1,21 +1,12 @@
-# Game Balance Agent: Валидировать результат работы
+# Validate Result
 
-Проверить готовность балансировки перед передачей QA.
+Check game balance readiness before handoff to Release.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности:**
-   - [ ] Балансировка проведена
-   - [ ] Конфигурационные файлы обновлены
-   - [ ] Формулы настроены
-   - [ ] Экономика сбалансирована
+- [ ] Balance completed, config files updated
+- [ ] Formulas configured, economy balanced
 
-2. **Покажи результат валидации:**
-   - OK Балансировка завершена → можно передавать QA
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Ссылки
-
-- `.cursor/rules/agent-game-balance.mdc` - правила Game Balance Agent
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:**
+- OK Ready → handoff to Release, Update Status to `Release - Todo`
+- ❌ Not ready → fix issues, don't handoff

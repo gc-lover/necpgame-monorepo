@@ -1,38 +1,13 @@
-# UE5 Developer: Проверить готовность бекенда
+# Check Backend Ready
 
-Проверить, готов ли бекенд для интеграции с клиентом.
+Check backend readiness for UE5.
 
-## Инструкции
+## Check
 
-1. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
+- [ ] Status is `UE5 - Todo` or `UE5 - In Progress`
+- [ ] Backend implemented, API working
+- [ ] For UI tasks: design doc exists in `knowledge/design/ui/`
 
-2. **Проверь наличие готового бекенда:**
-   - Код реализован в `services/`
-   - API работает согласно спецификации
-   - Тесты написаны и пройдены
-
-3. **Проверь наличие OpenAPI спецификации:**
-   - Файл в `proto/openapi/`
-   - Спецификация валидна
-
-4. **Проверь наличие дизайн-документа (для UI задач):**
-   - Если это UI задача (метки `ui`, `ux`) → должен быть дизайн-документ от UI/UX Designer
-   - Файл в `knowledge/design/ui/`
-
-5. **Покажи результат:**
-   - OK Бекенд готов → можно начинать работу
-   - ❌ Бекенд не готов → верни задачу Backend Developer
-
-## Если бекенд не готов
-
-- Используй `/return-task` для возврата задачи Backend Developer
-- Добавь комментарий с объяснением
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - процесс возврата задач
-- `.cursor/rules/agent-ue5.mdc` - правила UE5 Developer
-
+**Result:**
+- OK Ready → can start
+- ❌ Not ready → return to Backend, Update Status to `Backend - Returned`

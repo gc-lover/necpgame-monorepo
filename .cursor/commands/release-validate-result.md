@@ -1,21 +1,12 @@
-# Release: Валидировать результат работы
+# Validate Result
 
-Проверить готовность релиза перед закрытием Issue.
+Check release readiness.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности релиза:**
-   - [ ] Release notes созданы
-   - [ ] GitHub Release создан
-   - [ ] Деплой выполнен
-   - [ ] Мониторинг настроен
+- [ ] Release notes created
+- [ ] GitHub Release created
+- [ ] Deployment successful
+- [ ] Monitoring configured
 
-2. **Покажи результат валидации:**
-   - OK Релиз готов → можно закрывать Issue
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Ссылки
-
-- `.cursor/rules/agent-release.mdc` - правила Release
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:** OK Ready / ❌ Not ready

@@ -70,7 +70,8 @@ func (s *HTTPServer) getEngramCreationCost(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	chipTierStr := r.URL.Query().Get("chip_tier")
+	vars := mux.Vars(r)
+	chipTierStr := vars["chip_tier"]
 	if chipTierStr == "" {
 		s.respondError(w, http.StatusBadRequest, "chip_tier is required")
 		return

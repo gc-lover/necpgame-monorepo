@@ -1,31 +1,21 @@
-# Backend Developer: Валидировать результат работы
+# Validate Result
 
-Проверить готовность бекенда перед передачей следующему агенту.
+Check backend readiness and determine next agent.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности бекенда:**
-   - [ ] Код реализован
-   - [ ] API работает согласно спецификации
-   - [ ] Тесты написаны и пройдены
-   - [ ] Код компилируется без ошибок
+- [ ] Backend implemented, API works
+- [ ] Tests passed, code meets standards
+- [ ] Metrics and health checks configured
 
-2. **Проверь наличие созданных файлов:**
-   - Код в `services/`
-   - Тесты созданы
+## Determine Next Agent
 
-3. **Покажи результат валидации:**
-   - OK Все критерии выполнены → можно передавать следующему агенту
-   - ❌ Критерии не выполнены → нужно доработать
+**Content quest (labels `canon`, `lore`, `quest`):**
+- OK Ready → handoff to QA, Update Status to `QA - Todo`
+- ❌ Not ready → fix issues, don't handoff
 
-## Если валидация не пройдена
+**System task:**
+- OK Ready → handoff to Network, Update Status to `Network - Todo`
+- ❌ Not ready → fix issues, don't handoff
 
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
-
-## Ссылки
-
-- `.cursor/rules/agent-backend.mdc` - правила Backend Developer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:** OK Ready → handoff to determined agent / ❌ Not ready → fix issues

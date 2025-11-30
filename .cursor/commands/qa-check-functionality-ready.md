@@ -1,35 +1,25 @@
-# QA: Проверить готовность функционала
+# Check Functionality Ready
 
-Проверить, готов ли функционал (бекенд + клиент) для тестирования.
+Check if functionality is ready for QA.
 
-## Инструкции
+## Check
 
-1. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
+- [ ] Status is `QA - Todo` or `QA - In Progress`
+- [ ] Backend ready (from Backend Developer)
+- [ ] Client ready (from UE5 Developer, if applicable)
+- [ ] NOT content quest (YAML) - if labels `canon`, `lore`, `quest` → return to Content Writer
 
-2. **Проверь наличие готового функционала:**
-   - Бекенд реализован (код в `services/`)
-   - Клиент реализован (код в `client/UE5/`)
-   - API работает согласно спецификации
-   - Интеграция работает
+## Return To
 
-3. **Проверь, что это НЕ контентный квест (YAML файл):**
-   - Если метки `canon`, `lore`, `quest` И это YAML файл → верни Content Writer
-   - QA тестирует только готовый функционал (после импорта в БД)
+**Content quest (YAML):**
+- ❌ Return to Content Writer, Update Status to `Content Writer - Returned`
 
-4. **Покажи результат:**
-   - OK Функционал готов → можно начинать тестирование
-   - ❌ Функционал не готов → верни задачу разработчику
+**Backend bugs:**
+- ❌ Return to Backend, Update Status to `Backend - Returned`
 
-## Если функционал не готов
+**Client bugs:**
+- ❌ Return to UE5, Update Status to `UE5 - Returned`
 
-- Используй `/return-task` для возврата задачи разработчику
-- Укажи, что именно не готово (бекенд/клиент/оба)
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - процесс возврата задач
-- `.cursor/rules/agent-qa.mdc` - правила QA
-
+**Result:**
+- OK Ready → can start QA
+- ❌ Not ready → return to determined agent, Update Status accordingly

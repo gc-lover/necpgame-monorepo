@@ -1,32 +1,25 @@
-# Idea Writer: Валидировать результат работы
+# Validate Result
 
-Проверить готовность идеи перед передачей следующему агенту.
+Check idea readiness and determine next agent.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности идеи:**
-   - [ ] Идея полностью описана текстом
-   - [ ] Лор проработан и согласован
-   - [ ] Квест структурирован (если применимо)
-   - [ ] Игровая механика описана понятно
-   - [ ] Все текстовые материалы готовы
+- [ ] Idea described, lore developed
+- [ ] Quest structured (if applicable)
+- [ ] Game mechanics described
 
-2. **Проверь наличие созданных файлов:**
-   - Файлы в `knowledge/`
-   - Документация идеи создана
+## Determine Next Agent
 
-3. **Покажи результат валидации:**
-   - OK Все критерии выполнены → можно передавать следующему агенту
-   - ❌ Критерии не выполнены → нужно доработать
+**System task (default):**
+- OK Ready → handoff to Architect, Update Status to `Architect - Todo`
+- ❌ Not ready → fix issues, don't handoff
 
-## Если валидация не пройдена
+**UI/UX task (labels `ui`, `ux`, `client`):**
+- OK Ready → handoff to UI/UX Designer, Update Status to `UI/UX - Todo`
+- ❌ Not ready → fix issues, don't handoff
 
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
+**Content quest (labels `canon`, `lore`, `quest`):**
+- OK Ready → handoff to Content Writer, Update Status to `Content Writer - Todo`
+- ❌ Not ready → fix issues, don't handoff
 
-## Ссылки
-
-- `.cursor/rules/agent-idea-writer.mdc` - правила Idea Writer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:** OK Ready → handoff to determined agent / ❌ Not ready → fix issues

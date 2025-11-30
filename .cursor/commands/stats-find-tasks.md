@@ -1,34 +1,21 @@
-# Stats Agent: Найти мои задачи
+# Find Tasks
 
-Найти все открытые задачи для Stats Agent через MCP GitHub с оптимизацией запросов.
+Search all tasks for Stats Agent (statistics).
 
-## Инструкции
+## Steps
 
-1. **Используй поиск с кэшированием (ОБЯЗАТЕЛЬНО):**
-
+1. **Search in Project:**
    ```javascript
-   // Один запрос для всех Issues с метками агентов
-   const query = 'is:issue label:agent:*';
-   const result = await mcp_github_search_issues({
-     query: query,
-     perPage: 100
+   // Project config: .cursor/GITHUB_PROJECT_CONFIG.md
+   await mcp_github_list_project_items({
+     owner_type: 'user',
+     owner: 'gc-lover',
+     project_number: 1,
+     query: 'is:issue',
+     fields: ['Status', 'Title']
    });
    ```
 
-2. **Обработай результаты:**
-   - Группируй Issues по меткам агентов
-   - Подсчитывай: всего, открыто, закрыто, в работе, возвращено
+2. **Process:** Group by agent, count stats
 
-3. **Составь таблицу статистики**
-
-## Оптимизация
-
-- **КРИТИЧЕСКИ ВАЖНО:** Один запрос поиска вместо множественных `issue_read`
-- Кэшируй результаты поиска (TTL: 2 минуты)
-- Используй задержки между запросами (500ms)
-
-## Ссылки
-
-- `.cursor/rules/agent-stats.mdc` - полная документация Stats Agent
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
-
+**For statistics only - shows all tasks grouped by agent.**

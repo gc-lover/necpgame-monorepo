@@ -1,35 +1,15 @@
-# Architect: Валидировать результат работы
+# Validate Result
 
-Проверить готовность архитектуры перед передачей API Designer.
+Check architecture readiness before handoff to API Designer.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности архитектуры:**
-   - [ ] Архитектура спроектирована
-   - [ ] Компоненты определены
-   - [ ] Микросервисы идентифицированы
-   - [ ] API endpoints описаны (высокоуровнево)
-   - [ ] Техническое задание готово
-   - [ ] Синхронизация данных спроектирована
-   - [ ] Тикрейт и требования к сетевой нагрузке определены
+- [ ] Architecture designed, components defined
+- [ ] Microservices identified, API endpoints described
+- [ ] Requirements ready, data sync designed
 
-2. **Проверь наличие архитектурных документов:**
-   - Файлы в `knowledge/implementation/architecture/`
-   - Диаграммы компонентов
-   - Описание микросервисов
+**Result:**
+- OK Ready → handoff to API Designer
+- ❌ Not ready → fix issues, don't handoff
 
-3. **Покажи результат валидации:**
-   - OK Все критерии выполнены → можно передавать API Designer
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Если валидация не пройдена
-
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
-
-## Ссылки
-
-- `.cursor/rules/agent-architect.mdc` - правила Architect
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**On handoff:** Update Status to `API Designer - Todo`

@@ -1,30 +1,15 @@
-# UI/UX Designer: Валидировать результат работы
+# Validate Result
 
-Проверить готовность дизайна перед передачей UE5 Developer.
+Check UI/UX design readiness before handoff to UE5.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности дизайна:**
-   - [ ] Дизайн-документ создан
-   - [ ] Визуальный дизайн проработан
-   - [ ] UX механики описаны
-   - [ ] Анимации и переходы определены
+- [ ] Design doc created
+- [ ] UX mechanics described
+- [ ] Files in `knowledge/design/ui/`
 
-2. **Проверь наличие созданных файлов:**
-   - Файлы в `knowledge/design/ui/`
+**Result:**
+- OK Ready → handoff to UE5
+- ❌ Not ready → fix issues
 
-3. **Покажи результат валидации:**
-   - OK Дизайн готов → можно передавать UE5 Developer
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Если валидация не пройдена
-
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
-
-## Ссылки
-
-- `.cursor/rules/agent-ui-ux-designer.mdc` - правила UI/UX Designer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**On handoff:** Update Status to `UE5 - Todo`

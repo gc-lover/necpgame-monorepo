@@ -2,7 +2,7 @@ name: Project Status Automation
 
 on:
   issues:
-    types: [opened, edited, labeled, unlabeled]
+    types: [opened, edited]
   issue_comment:
     types: [created]
   pull_request:
@@ -19,36 +19,53 @@ jobs:
       pull-requests: write
       contents: read
     steps:
-      - name: Get Project ID
+      - name: Get Project Info
         id: project
         uses: actions/github-script@v7
         with:
           script: |
-            const { data: projects } = await github.rest.projects.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            
-            if (projects.length === 0) {
-              core.setOutput('project_id', '');
-              core.setOutput('project_node_id', '');
-              return;
-            }
-            
-            const project = projects.find(p => p.number == ${{ env.PROJECT_NUMBER }}) || projects[0];
-            core.setOutput('project_id', project.id);
-            core.setOutput('project_number', project.number);
-            
             const { data: projectV2 } = await github.graphql(`
               query($owner: String!, $number: Int!) {
                 organization(login: $owner) {
                   projectV2(number: $number) {
                     id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2Field {
+                          id
+                          name
+                        }
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
                   }
                 }
                 user(login: $owner) {
                   projectV2(number: $number) {
                     id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2Field {
+                          id
+                          name
+                        }
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -57,14 +74,28 @@ jobs:
               number: ${{ env.PROJECT_NUMBER }}
             });
             
-            const projectNodeId = projectV2.organization?.projectV2?.id || 
-                                  projectV2.user?.projectV2?.id || '';
+            const project = projectV2.organization?.projectV2 || projectV2.user?.projectV2;
             
-            if (projectNodeId) {
-              core.setOutput('project_node_id', projectNodeId);
-            } else {
+            if (!project) {
               core.setOutput('project_node_id', '');
+              core.setOutput('status_field_id', '');
+              return;
             }
+            
+            const statusField = project.fields.nodes.find(f => f.name === 'Status');
+            const statusFieldId = statusField?.id || '';
+            
+            core.setOutput('project_node_id', project.id);
+            core.setOutput('status_field_id', statusFieldId);
+            
+            const statusOptions = {};
+            if (statusField && statusField.options) {
+              statusField.options.forEach(opt => {
+                statusOptions[opt.name] = opt.id;
+              });
+            }
+            
+            core.setOutput('status_options', JSON.stringify(statusOptions));
 
       - name: Add Issue to Project
         if: github.event_name == 'issues' && github.event.action == 'opened'
@@ -72,6 +103,8 @@ jobs:
         with:
           script: |
             const projectNodeId = '${{ steps.project.outputs.project_node_id }}';
+            const statusFieldId = '${{ steps.project.outputs.status_field_id }}';
+            const statusOptions = JSON.parse('${{ steps.project.outputs.status_options }}' || '{}');
             const issueNumber = context.payload.issue.number;
             
             if (!projectNodeId || !issueNumber) {
@@ -93,8 +126,16 @@ jobs:
               number: issueNumber
             });
             
-            if (issue.repository.issue) {
-              await github.graphql(`
+            if (!issue.repository.issue) {
+              console.log(`Issue #${issueNumber} not found`);
+              return;
+            }
+            
+            const issueNodeId = issue.repository.issue.id;
+            
+            let projectItemId;
+            try {
+              const { data: addResult } = await github.graphql(`
                 mutation($projectId: ID!, $contentId: ID!) {
                   addProjectV2ItemById(input: {
                     projectId: $projectId
@@ -107,382 +148,63 @@ jobs:
                 }
               `, {
                 projectId: projectNodeId,
-                contentId: issue.repository.issue.id
+                contentId: issueNodeId
               });
               
-              console.log(`Added issue #${issueNumber} to project`);
-            }
-
-      - name: Get Development Stage Field
-        id: stage_field
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const projectNodeId = '${{ steps.project.outputs.project_node_id }}';
-            if (!projectNodeId) {
-              core.setOutput('field_id', '');
+              projectItemId = addResult?.addProjectV2ItemById?.item?.id;
+              
+              if (!projectItemId) {
+                console.log(`Failed to add issue #${issueNumber} to project`);
+                return;
+              }
+            } catch (error) {
+              console.error(`Error adding issue to project: ${error.message}`);
               return;
             }
             
-            const { data: fields } = await github.graphql(`
-              query($projectId: ID!) {
-                node(id: $projectId) {
-                  ... on ProjectV2 {
-                    fields(first: 20) {
-                      nodes {
-                        ... on ProjectV2Field {
-                          id
-                          name
-                        }
-                        ... on ProjectV2SingleSelectField {
-                          id
-                          name
-                          options {
-                            id
-                            name
-                          }
-                        }
+            if (statusFieldId && statusOptions['Todo'] && projectItemId) {
+              try {
+                await github.graphql(`
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $valueId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: {
+                        singleSelectOptionId: $valueId
                       }
-                    }
-                  }
-                }
-              }
-            `, { projectId: projectNodeId });
-            
-            const stageField = fields?.node?.fields?.nodes?.find(f => f.name === 'Developmen Stage' || f.name === 'Development Stage');
-            if (stageField) {
-              core.setOutput('field_id', stageField.id);
-            }
-
-      - name: Determine Stage from Labels
-        id: determine_stage
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const labels = context.payload.issue?.labels || context.payload.pull_request?.labels || [];
-            const labelNames = labels.map(l => l.name);
-            
-            let stage = '';
-            let agent = '';
-            
-            if (labelNames.some(l => l.includes('content-writer') || l.includes('content'))) {
-              stage = 'content-writer';
-              agent = 'content-writer';
-            } else if (labelNames.some(l => l.includes('idea-writer') || l.includes('idea'))) {
-              stage = 'idea-writer';
-              agent = 'idea-writer';
-            } else if (labelNames.some(l => l.includes('architect') || l.includes('architecture'))) {
-              stage = 'architect';
-              agent = 'architect';
-            } else if (labelNames.some(l => l.includes('database'))) {
-              stage = 'database-dev';
-              agent = 'database';
-            } else if (labelNames.some(l => l.includes('api-designer') || l.includes('api'))) {
-              stage = 'api-designer';
-              agent = 'api-designer';
-            } else if (labelNames.some(l => l.includes('backend'))) {
-              stage = 'backend-dev';
-              agent = 'backend';
-            } else if (labelNames.some(l => l.includes('network'))) {
-              stage = 'network-dev';
-              agent = 'network';
-            } else if (labelNames.some(l => l.includes('security'))) {
-              stage = 'security';
-              agent = 'security';
-            } else if (labelNames.some(l => l.includes('devops'))) {
-              stage = 'devops';
-              agent = 'devops';
-            } else if (labelNames.some(l => l.includes('performance'))) {
-              stage = 'performance';
-              agent = 'performance';
-            } else if (labelNames.some(l => l.includes('ue5') || l.includes('client'))) {
-              stage = 'ue5-dev';
-              agent = 'ue5';
-            } else if (labelNames.some(l => l.includes('qa') || l.includes('testing'))) {
-              stage = 'testing';
-              agent = 'qa';
-            } else if (labelNames.some(l => l.includes('game-balance'))) {
-              stage = 'game-balance';
-              agent = 'game-balance';
-            } else if (labelNames.some(l => l.includes('release'))) {
-              stage = 'release';
-              agent = 'release';
-            }
-            
-            core.setOutput('stage', stage);
-            core.setOutput('agent', agent);
-
-      - name: Update Project Item Status
-        if: steps.determine_stage.outputs.stage != ''
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const projectNodeId = '${{ steps.project.outputs.project_node_id }}';
-            const fieldId = '${{ steps.stage_field.outputs.field_id }}';
-            const stage = '${{ steps.determine_stage.outputs.stage }}';
-            const issueNumber = context.payload.issue?.number || context.payload.pull_request?.number;
-            
-            if (!projectNodeId || !fieldId || !issueNumber) {
-              console.log('Missing required data:', { projectNodeId, fieldId, issueNumber });
-              return;
-            }
-            
-            const { data: project } = await github.graphql(`
-              query($owner: String!, $repo: String!, $number: Int!) {
-                repository(owner: $owner, name: $repo) {
-                  issueOrPullRequest(number: $number) {
-                    ... on Issue {
-                      id
-                    }
-                    ... on PullRequest {
-                      id
-                    }
-                  }
-                }
-              }
-            `, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              number: issueNumber
-            });
-            
-            const itemId = project.repository.issueOrPullRequest.id;
-            
-            const { data: projectV2 } = await github.graphql(`
-              query($projectId: ID!, $itemId: ID!) {
-                node(id: $projectId) {
-                  ... on ProjectV2 {
-                    items(first: 100) {
-                      nodes {
+                    }) {
+                      projectV2Item {
                         id
-                        content {
-                          ... on Issue {
-                            number
-                          }
-                          ... on PullRequest {
-                            number
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            `, {
-              projectId: projectNodeId,
-              itemId: itemId
-            });
-            
-            const projectItem = projectV2.node.items.nodes.find(item => 
-              item.content && item.content.number === issueNumber
-            );
-            
-            if (!projectItem) {
-              console.log(`Issue #${issueNumber} not found in project, adding...`);
-              await github.graphql(`
-                mutation($projectId: ID!, $contentId: ID!) {
-                  addProjectV2ItemById(input: {
-                    projectId: $projectId
-                    contentId: $contentId
-                  }) {
-                    item {
-                      id
-                    }
-                  }
-                }
-              `, {
-                projectId: projectNodeId,
-                contentId: itemId
-              });
-              
-              const { data: newProjectV2 } = await github.graphql(`
-                query($projectId: ID!, $contentId: ID!) {
-                  node(id: $projectId) {
-                    ... on ProjectV2 {
-                      items(first: 100) {
-                        nodes {
-                          id
-                          content {
-                            ... on Issue {
-                              number
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              `, {
-                projectId: projectNodeId,
-                contentId: itemId
-              });
-              
-              const newItem = newProjectV2.node.items.nodes.find(item => 
-                item.content && item.content.number === issueNumber
-              );
-              
-              if (newItem) {
-                const { data: fieldOptions } = await github.graphql(`
-                  query($projectId: ID!, $fieldId: ID!) {
-                    node(id: $projectId) {
-                      ... on ProjectV2 {
-                        field(id: $fieldId) {
-                          ... on ProjectV2SingleSelectField {
-                            options {
-                              id
-                              name
-                            }
-                          }
-                        }
                       }
                     }
                   }
                 `, {
                   projectId: projectNodeId,
-                  fieldId: fieldId
+                  itemId: projectItemId,
+                  fieldId: statusFieldId,
+                  valueId: statusOptions['Todo']
                 });
                 
-                const option = fieldOptions.node.field.options.find(opt => 
-                  opt.name.toLowerCase().replace(/\s+/g, '-') === stage
-                );
-                
-                if (option) {
-                  await github.graphql(`
-                    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-                      updateProjectV2ItemFieldValue(
-                        input: {
-                          projectId: $projectId
-                          itemId: $itemId
-                          fieldId: $fieldId
-                          value: {
-                            singleSelectOptionId: $optionId
-                          }
-                        }
-                      ) {
-                        clientMutationId
-                      }
-                    }
-                  `, {
-                    projectId: projectNodeId,
-                    itemId: newItem.id,
-                    fieldId: fieldId,
-                    optionId: option.id
-                  });
-                  
-                  console.log(`Added and updated issue #${issueNumber} to stage: ${stage}`);
-                }
+                console.log(`Added issue #${issueNumber} to project with status: Todo`);
+              } catch (error) {
+                console.error(`Error setting status: ${error.message}`);
               }
-              return;
-            }
-            
-            const { data: fieldOptions } = await github.graphql(`
-              query($projectId: ID!, $fieldId: ID!) {
-                node(id: $projectId) {
-                  ... on ProjectV2 {
-                    field(id: $fieldId) {
-                      ... on ProjectV2SingleSelectField {
-                        options {
-                          id
-                          name
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            `, {
-              projectId: projectNodeId,
-              fieldId: fieldId
-            });
-            
-            const option = fieldOptions.node.field.options.find(opt => 
-              opt.name.toLowerCase().replace(/\s+/g, '-') === stage
-            );
-            
-            if (option) {
-              await github.graphql(`
-                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-                  updateProjectV2ItemFieldValue(
-                    input: {
-                      projectId: $projectId
-                      itemId: $itemId
-                      fieldId: $fieldId
-                      value: {
-                        singleSelectOptionId: $optionId
-                      }
-                    }
-                  ) {
-                    clientMutationId
-                  }
-                }
-              `, {
-                projectId: projectNodeId,
-                itemId: projectItem.id,
-                fieldId: fieldId,
-                optionId: option.id
-              });
-              
-              console.log(`Updated project item ${projectItem.id} to stage: ${stage}`);
+            } else {
+              console.log(`Added issue #${issueNumber} to project`);
             }
 
-      - name: Add Agent Label
-        if: steps.determine_stage.outputs.agent != ''
+      - name: Check Task Readiness and Transition
+        if: github.event_name == 'issue_comment' && (contains(github.event.comment.body, '[x]') || contains(github.event.comment.body, '- [x]'))
         uses: actions/github-script@v7
         with:
           script: |
-            const issueNumber = context.payload.issue?.number || context.payload.pull_request?.number;
-            const agent = '${{ steps.determine_stage.outputs.agent }}';
-            const stage = '${{ steps.determine_stage.outputs.stage }}';
-            
-            if (issueNumber && agent) {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                labels: [`agent:${agent}`]
-              });
-              
-              const agentNames = {
-                'idea-writer': '🎨 Idea Writer',
-                'content-writer': '✍️ Content Writer',
-                'architect': '📐 Architect',
-                'api-designer': '📋 API Designer',
-                'backend': '⚙️ Backend Developer',
-                'network': '🌐 Network Engineer',
-                'devops': '🐳 DevOps',
-                'performance': '⚡ Performance Engineer',
-                'ue5': '🎮 UE5 Developer',
-                'qa': '🧪 QA/Testing',
-                'release': '🚀 Release Manager'
-              };
-              
-              const agentName = agentNames[agent] || agent;
-              
-              const comment = '## OK Задача передана агенту: ' + agentName + '\n\n' +
-                '**Этап:** `' + stage + '`\n\n' +
-                'Задача автоматически назначена агенту для обработки. Агент начнет работу согласно правилам в `.cursor/rules/agent-' + agent + '.mdc`.\n\n' +
-                '**Следующие шаги:**\n' +
-                '- Агент проанализирует задачу\n' +
-                '- Выполнит необходимые действия\n' +
-                '- Обновит статус при готовности к следующему этапу\n\n' +
-                '---\n' +
-                '*Автоматическое уведомление от системы агентов*';
-              
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                body: comment
-              });
-            }
-
-      - name: Check Task Readiness
-        if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '[x]') || contains(github.event.comment.body, '- [x]')
-        uses: actions/github-script@v7
-        with:
-          script: |
+            const projectNodeId = '${{ steps.project.outputs.project_node_id }}';
+            const statusFieldId = '${{ steps.project.outputs.status_field_id }}';
+            const statusOptions = JSON.parse('${{ steps.project.outputs.status_options }}' || '{}');
             const issueNumber = context.payload.issue?.number;
-            if (!issueNumber) return;
+            
+            if (!projectNodeId || !issueNumber) return;
             
             const { data: issue } = await github.rest.issues.get({
               owner: context.repo.owner,
@@ -495,158 +217,162 @@ jobs:
             const checked = checkboxes.filter(cb => cb.includes('x')).length;
             const total = checkboxes.length;
             
-            if (total > 0 && checked === total) {
-              const labels = issue.labels.map(l => l.name);
-              const labelNames = labels.map(l => l.name);
-              
-              const hasContentLabels = labelNames.some(l => ['canon', 'lore', 'quest'].includes(l));
-              const isContentQuest = hasContentLabels && (labelNames.some(l => l.includes('idea-writer')) || labelNames.some(l => l.includes('content')));
-              
-              const stageTransitions = {
-                'idea-writer': isContentQuest ? 'content-writer' : 'architect',
-                'content-writer': 'testing',
-                'architect': 'database-dev',
-                'database-dev': 'api-designer',
-                'api-designer': 'backend-dev',
-                'backend-dev': 'network-dev',
-                'network-dev': 'security',
-                'security': 'devops',
-                'devops': 'ue5-dev',
-                'ue5-dev': 'testing',
-                'testing': 'game-balance',
-                'game-balance': 'release',
-                'performance': null
-              };
-              
-              let currentStage = '';
-              if (labelNames.some(l => l.includes('content-writer') || l.includes('content'))) currentStage = 'content-writer';
-              else if (labelNames.some(l => l.includes('idea-writer'))) currentStage = 'idea-writer';
-              else if (labelNames.some(l => l.includes('architect'))) currentStage = 'architect';
-              else if (labelNames.some(l => l.includes('database'))) currentStage = 'database-dev';
-              else if (labelNames.some(l => l.includes('api-designer'))) currentStage = 'api-designer';
-              else if (labelNames.some(l => l.includes('backend'))) currentStage = 'backend-dev';
-              else if (labelNames.some(l => l.includes('network'))) currentStage = 'network-dev';
-              else if (labelNames.some(l => l.includes('security'))) currentStage = 'security';
-              else if (labelNames.some(l => l.includes('devops'))) currentStage = 'devops';
-              else if (labelNames.some(l => l.includes('ue5') || l.includes('client'))) currentStage = 'ue5-dev';
-              else if (labelNames.some(l => l.includes('testing') || l.includes('qa'))) currentStage = 'testing';
-              else if (labelNames.some(l => l.includes('game-balance'))) currentStage = 'game-balance';
-              
-              const nextStage = stageTransitions[currentStage];
-              
-              if (nextStage) {
-                const nextAgentLabels = {
-                  'content-writer': ['agent:content-writer', 'stage:content'],
-                  'architect': ['agent:architect', 'stage:design'],
-                  'database-dev': ['agent:database', 'stage:database'],
-                  'api-designer': ['agent:api-designer', 'stage:api-design'],
-                  'backend-dev': ['agent:backend', 'stage:backend-dev'],
-                  'network-dev': ['agent:network', 'stage:network'],
-                  'security': ['agent:security', 'stage:security'],
-                  'devops': ['agent:devops', 'stage:infrastructure'],
-                  'ue5-dev': ['agent:ue5', 'stage:client-dev'],
-                  'testing': ['agent:qa', 'stage:testing'],
-                  'game-balance': ['agent:game-balance', 'stage:balance'],
-                  'release': ['agent:release', 'stage:release']
-                };
-                
-                const nextLabels = nextAgentLabels[nextStage] || [`stage:${nextStage}`];
-                
-                await github.rest.issues.addLabels({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  labels: nextLabels
-                });
-                
-                const agentNames = {
-                  'content-writer': '✍️ Content Writer',
-                  'architect': '📐 Architect',
-                  'database-dev': '🗄️ Database Engineer',
-                  'api-designer': '📋 API Designer',
-                  'backend-dev': '⚙️ Backend Developer',
-                  'network-dev': '🌐 Network Engineer',
-                  'security': '🔒 Security Agent',
-                  'devops': '🐳 DevOps',
-                  'ue5-dev': '🎮 UE5 Developer',
-                  'testing': '🧪 QA/Testing',
-                  'game-balance': '⚖️ Game Balance Agent',
-                  'release': '🚀 Release Manager'
-                };
-                
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  body: '## OK Все критерии приемки выполнены!\n\n' +
-                    '**Текущий этап:** `' + currentStage + '` → **Следующий этап:** `' + nextStage + '`\n\n' +
-                    'Задача автоматически передана следующему агенту: **' + (agentNames[nextStage] || nextStage) + '**\n\n' +
-                    '---\n' +
-                    '*Автоматический переход от системы агентов*'
-                });
-              }
-            }
-
-      - name: Auto-transition on PR Merge
-        if: github.event.pull_request.merged == true
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const labels = context.payload.pull_request.labels || [];
-            const labelNames = labels.map(l => l.name);
+            if (total === 0 || checked !== total) return;
             
-                const stageTransitions = {
-              'backend': 'network-dev',
-              'network': 'security',
-              'security': 'devops',
-              'devops': 'ue5-dev',
-              'ue5': 'testing',
-              'client': 'testing',
-              'api': 'backend-dev',
-              'database': 'api-designer'
+            const { data: issueNode } = await github.graphql(`
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  issue(number: $number) {
+                    id
+                  }
+                }
+              }
+            `, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              number: issueNumber
+            });
+            
+            const issueNodeId = issueNode.repository.issue.id;
+            
+            const { data: projectItem } = await github.graphql(`
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  issue(number: $number) {
+                    projectItems(first: 20) {
+                      nodes {
+                        id
+                        project {
+                          ... on ProjectV2 {
+                            number
+                            id
+                          }
+                        }
+                        fieldValues(first: 20) {
+                          nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              field {
+                                ... on ProjectV2FieldCommon {
+                                  name
+                                }
+                              }
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              number: issueNumber
+            });
+            
+            const projectItems = projectItem.repository.issue.projectItems.nodes || [];
+            
+            if (projectItems.length === 0) {
+              console.log(`Issue #${issueNumber} has no project items`);
+              return;
+            }
+            
+            console.log(`Found ${projectItems.length} project item(s) for issue #${issueNumber}`);
+            console.log(`Looking for project ID: ${projectNodeId}`);
+            
+            const item = projectItems.find(
+              i => i.project && i.project.id === projectNodeId
+            );
+            
+            if (!item) {
+              console.log(`Issue #${issueNumber} not found in project ${projectNodeId}`);
+              console.log(`Available projects: ${projectItems.map(i => i.project?.id || 'no-id').join(', ')}`);
+              return;
+            }
+            
+            const currentStatusValue = item.fieldValues.nodes.find(
+              fv => fv.field.name === 'Status'
+            );
+            const currentStatus = currentStatusValue?.name || '';
+            
+            const hasContentLabels = issue.labels.some(l => ['canon', 'lore', 'quest'].includes(l.name));
+            
+            const statusTransitions = {
+              'Idea Writer - Review': hasContentLabels ? 'Content Writer - Todo' : 'Architect - Todo',
+              'Content Writer - Review': 'Backend - Todo',
+              'Architect - Review': 'Database - Todo',
+              'Database - Review': 'API Designer - Todo',
+              'API Designer - Review': 'Backend - Todo',
+              'Backend - Review': hasContentLabels ? 'QA - Todo' : 'Network - Todo',
+              'Network - Review': 'Security - Todo',
+              'Security - Review': 'DevOps - Todo',
+              'DevOps - Review': 'UE5 - Todo',
+              'UE5 - Review': 'QA - Todo',
+              'QA - Review': 'Game Balance - Todo',
+              'Game Balance - Review': 'Release - Todo'
             };
             
-            let nextStage = '';
-            for (const [key, value] of Object.entries(stageTransitions)) {
-              if (labelNames.some(l => l.includes(key))) {
-                nextStage = value;
-                break;
-              }
+            const nextStatus = statusTransitions[currentStatus];
+            
+            if (!nextStatus || !statusOptions[nextStatus]) {
+              console.log(`No transition found for status: ${currentStatus}`);
+              return;
             }
             
-            if (nextStage) {
-              const linkedIssues = context.payload.pull_request.body?.match(/#\d+/g) || [];
-              const nextAgentLabels = {
-                'network-dev': ['agent:network', 'stage:network'],
-                'security': ['agent:security', 'stage:security'],
-                'devops': ['agent:devops', 'stage:infrastructure'],
-                'ue5-dev': ['agent:ue5', 'stage:client-dev'],
-                'testing': ['agent:qa', 'stage:testing'],
-                'backend-dev': ['agent:backend', 'stage:backend-dev'],
-                'api-designer': ['agent:api-designer', 'stage:api-design']
-              };
-              
-              const nextLabels = nextAgentLabels[nextStage] || [`stage:${nextStage}`];
-              
-              for (const issueRef of linkedIssues) {
-                const issueNumber = parseInt(issueRef.replace('#', ''));
-                await github.rest.issues.addLabels({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  labels: nextLabels
-                });
-                
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  body: '## OK PR объединен, задача переходит к следующему этапу\n\n' +
-                    '**Следующий этап:** `' + nextStage + '`\n\n' +
-                    'Связанный PR #' + context.payload.pull_request.number + ' был успешно объединен. Задача автоматически передана следующему агенту.\n\n' +
-                    '---\n' +
-                    '*Автоматический переход от системы агентов*'
-                });
-              }
+            try {
+              await github.graphql(`
+                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $valueId: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $projectId
+                    itemId: $itemId
+                    fieldId: $fieldId
+                    value: {
+                      singleSelectOptionId: $valueId
+                    }
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }
+              `, {
+                projectId: projectNodeId,
+                itemId: item.id,
+                fieldId: statusFieldId,
+                valueId: statusOptions[nextStatus]
+              });
+            } catch (error) {
+              console.error(`Error updating status: ${error.message}`);
+              return;
             }
-
+            
+            const agentNames = {
+              'Content Writer - Todo': '✍️ Content Writer',
+              'Architect - Todo': '📐 Architect',
+              'Database - Todo': '🗄️ Database Engineer',
+              'API Designer - Todo': '📋 API Designer',
+              'Backend - Todo': '⚙️ Backend Developer',
+              'Network - Todo': '🌐 Network Engineer',
+              'Security - Todo': '🔒 Security Agent',
+              'DevOps - Todo': '🐳 DevOps',
+              'UE5 - Todo': '🎮 UE5 Developer',
+              'QA - Todo': '🧪 QA/Testing',
+              'Game Balance - Todo': '⚖️ Game Balance Agent',
+              'Release - Todo': '🚀 Release Manager'
+            };
+            
+            const agentName = agentNames[nextStatus] || nextStatus;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: '## OK Все критерии приемки выполнены!\n\n' +
+                '**Текущий статус:** `' + currentStatus + '` → **Следующий статус:** `' + nextStatus + '`\n\n' +
+                'Задача автоматически передана следующему агенту: **' + agentName + '**\n\n' +
+                '---\n' +
+                '*Автоматический переход от системы агентов*'
+            });
+            
+            console.log(`Transitioned issue #${issueNumber} from ${currentStatus} to ${nextStatus}`);

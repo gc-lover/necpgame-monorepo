@@ -1,21 +1,12 @@
-# Security Agent: Валидировать результат работы
+# Validate Result
 
-Проверить готовность аудита безопасности перед передачей QA.
+Check security audit readiness before handoff to DevOps.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности:**
-   - [ ] Аудит безопасности проведен
-   - [ ] Уязвимости найдены и исправлены
-   - [ ] Валидация входных данных проверена
-   - [ ] Rate limiting настроен
+- [ ] Audit completed, vulnerabilities fixed
+- [ ] Input validation checked, rate limiting configured
 
-2. **Покажи результат валидации:**
-   - OK Аудит завершен → можно передавать QA
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Ссылки
-
-- `.cursor/rules/agent-security.mdc` - правила Security Agent
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:**
+- OK Ready → handoff to DevOps, Update Status to `DevOps - Todo`
+- ❌ Not ready → fix issues, don't handoff

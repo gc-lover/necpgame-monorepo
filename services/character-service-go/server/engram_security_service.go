@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	ErrEngramNotFound       = errors.New("engram not found")
 	ErrInvalidProtectionTier = errors.New("invalid protection tier (must be 1-5)")
 )
 

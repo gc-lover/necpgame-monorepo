@@ -1,21 +1,12 @@
-# DevOps: Валидировать результат работы
+# Validate Result
 
-Проверить готовность инфраструктуры перед передачей QA.
+Check infrastructure readiness before handoff to UE5.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности:**
-   - [ ] Docker образы созданы
-   - [ ] K8s манифесты готовы
-   - [ ] CI/CD настроен
-   - [ ] Observability настроена
+- [ ] Docker images created, K8s manifests ready
+- [ ] CI/CD configured, observability set up
 
-2. **Покажи результат валидации:**
-   - OK Инфраструктура готова → можно передавать QA
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Ссылки
-
-- `.cursor/rules/agent-devops.mdc` - правила DevOps
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:**
+- OK Ready → handoff to UE5, Update Status to `UE5 - Todo`
+- ❌ Not ready → fix issues, don't handoff

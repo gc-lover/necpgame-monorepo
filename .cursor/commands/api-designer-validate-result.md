@@ -1,38 +1,15 @@
-# API Designer: Валидировать результат работы
+# Validate Result
 
-Проверить готовность OpenAPI спецификации перед передачей Backend Developer.
+Check OpenAPI spec readiness before handoff to Backend.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности OpenAPI:**
-   - [ ] OpenAPI спецификация создана
-   - [ ] Все endpoints описаны
-   - [ ] Схемы данных определены
-   - [ ] Примеры запросов добавлены
-   - [ ] Спецификация валидирована (`swagger-cli validate`)
+- [ ] OpenAPI spec created, validated
+- [ ] All endpoints described, schemas defined
+- [ ] Quality checklist passed
 
-2. **Проверь наличие файлов:**
-   - Файлы в `proto/openapi/`
-   - Используются общие компоненты из `common.yaml`
-   - Файлы не превышают 500 строк (если больше - разбиты)
+**Result:**
+- OK Ready → handoff to Backend
+- ❌ Not ready → fix issues, don't handoff
 
-3. **Проверь валидацию:**
-   ```bash
-   swagger-cli validate proto/openapi/{service-name}.yaml
-   ```
-
-4. **Покажи результат валидации:**
-   - OK Спецификация готова → можно передавать Backend Developer
-   - ❌ Спецификация не готова → нужно доработать
-
-## Если валидация не пройдена
-
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
-
-## Ссылки
-
-- `.cursor/rules/agent-api-designer.mdc` - правила API Designer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**On handoff:** Update Status to `Backend - Todo`

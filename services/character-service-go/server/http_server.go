@@ -79,15 +79,14 @@ func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtV
 	api.HandleFunc("/characters/{characterId}/validate", server.validateCharacter).Methods("GET")
 	api.HandleFunc("/characters/switch", server.switchCharacter).Methods("POST")
 
-	if engramService != nil {
-		engramHandlers := NewEngramHandlers(engramService, characterService)
-		api.HandleFunc("/character/characters/{characterId}/engrams/slots", engramHandlers.GetEngramSlots).Methods("GET")
-		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/install", engramHandlers.InstallEngram).Methods("POST")
-		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/remove", engramHandlers.RemoveEngram).Methods("DELETE")
-		api.HandleFunc("/character/characters/{characterId}/engrams/active", engramHandlers.GetActiveEngrams).Methods("GET")
-		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence", engramHandlers.GetEngramInfluence).Methods("GET")
-		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence/update", engramHandlers.UpdateEngramInfluence).Methods("POST")
-		api.HandleFunc("/character/characters/{characterId}/engrams/influence/levels", engramHandlers.GetEngramInfluenceLevels).Methods("GET")
+	if server.engramService != nil {
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots", server.getEngramSlots).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/install", server.installEngram).Methods("POST")
+		api.HandleFunc("/character/characters/{characterId}/engrams/slots/{slotId}/remove", server.removeEngram).Methods("DELETE")
+		api.HandleFunc("/character/characters/{characterId}/engrams/active", server.getActiveEngrams).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence", server.getEngramInfluence).Methods("GET")
+		api.HandleFunc("/character/characters/{characterId}/engrams/{engramId}/influence/update", server.updateEngramInfluence).Methods("POST")
+		api.HandleFunc("/character/characters/{characterId}/engrams/influence/levels", server.getEngramInfluenceLevels).Methods("GET")
 	}
 
 	if engramSecurityService != nil {

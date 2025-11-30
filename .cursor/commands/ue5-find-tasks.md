@@ -1,40 +1,23 @@
-# UE5 Developer: Найти мои задачи
+# Find Tasks
 
-Найти все открытые задачи для UE5 Developer через MCP GitHub с оптимизацией запросов.
+Search open tasks for UE5 Developer via MCP GitHub Project.
 
-## Инструкции
+## Steps
 
-1. **Используй поиск с кэшированием (ОБЯЗАТЕЛЬНО):**
-
+1. **Search in Project by Status:**
    ```javascript
-   const query = 'is:issue is:open label:agent:ue5';
-   const result = await mcp_github_search_issues({
-     query: query,
-     perPage: 100
+   // Project config: .cursor/GITHUB_PROJECT_CONFIG.md
+   await mcp_github_list_project_items({
+     owner_type: 'user',
+     owner: 'gc-lover',
+     project_number: 1,
+     query: 'is:issue Status:"UE5 - Todo" OR Status:"UE5 - In Progress"',
+     fields: ['Status', 'Title']
    });
    ```
 
-2. **Проверь готовность входных данных:**
-   - Должен быть готовый бекенд (от Backend Developer)
-   - Для UI задач: должен быть дизайн-документ (от UI/UX Designer)
+2. **Check readiness:** Backend ready, UI design ready (if UI task)
 
-3. **Отфильтруй и покажи список задач:**
-   - Номер Issue
-   - Название
-   - Есть ли готовый бекенд
-   - Есть ли дизайн-документ (для UI задач)
-   - Приоритет
+3. **Show list:** number, title, backend/design status, priority, Status
 
-4. **Спроси пользователя, с какой задачей работать**
-
-## Оптимизация
-
-- **КРИТИЧЕСКИ ВАЖНО:** Используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read`
-- Используй кэширование для повторных запросов
-- Добавляй задержки между запросами (500ms)
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - полная документация поиска задач
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
-
+**Primary filter: Project Status. Status determines the stage.**

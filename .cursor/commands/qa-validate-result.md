@@ -1,30 +1,15 @@
-# QA: Валидировать результат тестирования
+# Validate Result
 
-Проверить готовность результата тестирования перед передачей Release.
+Check QA completion before handoff to Release.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности:**
-   - [ ] Все функциональные тесты пройдены
-   - [ ] Интеграционные тесты пройдены
-   - [ ] API тесты пройдены
-   - [ ] Edge cases обработаны корректно
-   - [ ] Баги не найдены (или исправлены)
+- [ ] All tests passed
+- [ ] Test report created
+- [ ] No critical bugs
 
-2. **Проверь наличие отчетов:**
-   - Отчет о тестировании создан
+**Result:**
+- OK Ready → handoff to Release
+- ❌ Not ready → fix bugs
 
-3. **Покажи результат валидации:**
-   - OK Все тесты пройдены → можно передавать Release
-   - ❌ Есть баги → верни разработчику
-
-## Если валидация не пройдена
-
-- Используй `/qa-return-to-developer` для возврата задачи
-- Укажи найденные баги
-
-## Ссылки
-
-- `.cursor/rules/agent-qa.mdc` - правила QA
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**On handoff:** Update Status to `Release - Todo`

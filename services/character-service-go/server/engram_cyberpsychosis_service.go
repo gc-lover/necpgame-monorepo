@@ -119,14 +119,8 @@ func (s *EngramCyberpsychosisService) UpdateCyberpsychosisRisk(ctx context.Conte
 			EngramID:   slot.EngramID,
 		})
 
-		if slot.ChipTier < 3 {
-			engramRisk += 5.0
-			riskFactors = append(riskFactors, &RiskFactor{
-				FactorType: "low_tier_chip",
-				RiskAmount: 5.0,
-				EngramID:   slot.EngramID,
-			})
-		}
+		// TODO: Add chip tier check when engram data includes chip tier
+		// Chip tier should be retrieved from engram metadata, not from slot
 
 		if slot.InfluenceLevel > 50.0 {
 			engramRisk += 15.0

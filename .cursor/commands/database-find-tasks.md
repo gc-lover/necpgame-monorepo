@@ -1,38 +1,23 @@
-# Database Engineer: Найти мои задачи
+# Find Tasks
 
-Найти все открытые задачи для Database Engineer через MCP GitHub с оптимизацией запросов.
+Search open tasks for Database Engineer via MCP GitHub Project.
 
-## Инструкции
+## Steps
 
-1. **Используй поиск с кэшированием (ОБЯЗАТЕЛЬНО):**
-
+1. **Search in Project by Status:**
    ```javascript
-   const query = 'is:issue is:open label:agent:database';
-   const result = await mcp_github_search_issues({
-     query: query,
-     perPage: 100
+   // Project config: .cursor/GITHUB_PROJECT_CONFIG.md
+   await mcp_github_list_project_items({
+     owner_type: 'user',
+     owner: 'gc-lover',
+     project_number: 1,
+     query: 'is:issue Status:"Database - Todo" OR Status:"Database - In Progress"',
+     fields: ['Status', 'Title']
    });
    ```
 
-2. **Проверь готовность входных данных:**
-   - Должна быть OpenAPI спецификация (от API Designer)
+2. **Check readiness:** OpenAPI spec exists
 
-3. **Отфильтруй и покажи список задач:**
-   - Номер Issue
-   - Название
-   - Есть ли OpenAPI спецификация
-   - Приоритет
+3. **Show list:** number, title, OpenAPI status, priority, Status
 
-4. **Спроси пользователя, с какой задачей работать**
-
-## Оптимизация
-
-- **КРИТИЧЕСКИ ВАЖНО:** Используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read`
-- Используй кэширование для повторных запросов
-- Добавляй задержки между запросами (500ms)
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - полная документация поиска задач
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
-
+**Primary filter: Project Status. Status determines the stage.**

@@ -1,39 +1,13 @@
-# Backend Developer: Проверить наличие OpenAPI спецификации
+# Check OpenAPI
 
-Проверить, есть ли OpenAPI спецификация для задачи перед началом работы.
+Check if OpenAPI spec exists before starting.
 
-## Инструкции
+## Check
 
-1. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
+1. Verify Status is `Backend - Todo` or `Backend - In Progress`
+2. Check file: `proto/openapi/{service-name}.yaml`
+3. Validate: `npx -y @redocly/cli lint proto/openapi/{service-name}.yaml`
 
-2. **Определи имя сервиса:**
-   - Из названия Issue
-   - Из меток Issue
-   - Из описания Issue
-
-3. **Проверь наличие файла:**
-   - Путь: `proto/openapi/{service-name}.yaml`
-   - Или: `proto/openapi/{service-name}-*.yaml` (для множественных спецификаций)
-
-4. **Проверь валидность спецификации:**
-   ```bash
-   npx -y @redocly/cli lint proto/openapi/{service-name}.yaml
-   ```
-
-5. **Покажи результат:**
-   - OK Спецификация найдена и валидна → можно начинать работу
-   - ❌ Спецификация не найдена → верни задачу API Designer
-
-## Если спецификация не найдена
-
-- Используй `/return-task` для возврата задачи API Designer
-- Добавь комментарий с объяснением
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - процесс возврата задач
-- `.cursor/rules/agent-backend.mdc` - правила Backend Developer
-
+**Result:**
+- OK Found and valid → can start
+- ❌ Not found → return to API Designer, Update Status to `API Designer - Returned`

@@ -2,446 +2,109 @@
 alwaysApply: false
 ---
 
-# API Designer Agent Rules
+# API Designer Agent
 
-## Роль агента
+## Role
 
-API Designer создает OpenAPI спецификацию, описывает все endpoints, определяет схемы данных и документирует API.
+Creates OpenAPI 3.0 specs, describes endpoints, defines data schemas.
 
-## Область ответственности
+## Common Rules
 
-- Создание OpenAPI 3.0 спецификации
-- Описание всех endpoints
-- Определение request/response схем
-- Документирование API
-- Валидация спецификации
+See `.cursor/AGENT_COMMON_RULES.md`
 
-## Статус в Project
+## Status in Project
 
-- **Development Stage:** `api-designer`
-- **Метки:** `agent:api-designer`, `stage:api-design`, `protocol`
+- **Status:** `API Designer - Todo`, `API Designer - In Progress`, `API Designer - Blocked`, `API Designer - Review`, `API Designer - Returned`
+- **Functional labels (optional):** `protocol`
 
-## WARNING ВАЖНО: Оптимизация запросов к GitHub API
+## Commands
 
-**ОБЯЗАТЕЛЬНО перед работой с GitHub API:**
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
-- `.cursor/rules/GITHUB_MCP_BEST_PRACTICES.md` - примеры правильного использования
-- `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода (опционально)
+Use commands from `.cursor/commands/api-designer-*.md`
 
-**КРИТИЧЕСКИ ВАЖНО (главные методы):**
-- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное!
-- Используй последовательные запросы с задержками (300-500ms)
-- Группируй операции в батчи по 5-10 Issues
-- Для >=10 Issues используй GitHub Actions Batch Processor
+## Responsibilities
 
-**Дополнительно (опционально):**
-- Кэширование в памяти работает только в рамках одного вызова агента
-- Полезно для повторных запросов к одному Issue в рамках одной сессии
+- Create OpenAPI 3.0 specs
+- Describe all endpoints
+- Define request/response schemas
+- Document API
+- Validate specs
 
-## WARNING ВАЖНО: Контентные Issues не требуют API дизайна
+## Input
 
-**ПЕРЕД началом работы ОБЯЗАТЕЛЬНО проверь:**
+- Architecture from Architect
+- API requirements
+- Existing OpenAPI specs
 
-Если Issue имеет метки `canon`, `lore`, `quest` И является контентным квестом:
+## Task Requirements Check
 
-1. **Контентные квесты НЕ требуют API дизайна** - они используют готовую архитектуру
-2. **НЕМЕДЛЕННО передай Issue агенту Content Writer:**
-   - Удали метку `agent:api-designer`
-   - Удали метку `stage:api-design`
-   - Добавь метки `agent:content-writer`, `stage:content`
-   - Добавь комментарий о передаче
+**Before starting:**
+1. Read Issue completely (requirements, acceptance criteria, comments)
+2. Check that OpenAPI spec matches Issue requirements
+3. On errors → return to Issue and check requirements
 
-## Как найти свои задачи
+**See `.cursor/AGENT_COMMON_RULES.md` for details**
 
-### Использование команды `/find-my-tasks`
+## Output
 
-**Рекомендуется использовать команду:**
-```
-@api-designer /find-my-tasks
-```
+- OpenAPI 3.0 YAML in `proto/openapi/`
+- **REQUIRED: Issue at file start:** `# Issue: #123`
+- All endpoints described
+- Request/Response schemas
+- Validated spec
 
-Команда автоматически:
-- Определит метку агента (`agent:api-designer`)
-- Выполнит поиск через MCP GitHub с оптимизацией
-- Покажет список задач с приоритетами и статусами
-- Спросит, с какой задачей работать
+## Important: Use Common Components
 
-### Способ 1: Поиск через MCP GitHub
+**ALWAYS use components from `common.yaml`:**
+- Error schema: `$ref: 'common.yaml#/components/schemas/Error'`
+- Responses: `$ref: 'common.yaml#/components/responses/BadRequest'`
+- SecuritySchemes: `$ref: 'common.yaml#/components/securitySchemes/BearerAuth'`
+- Pagination: `PaginationParams`/`PaginationResponse` from `common.yaml`
 
-1. **Используй команду `/find-my-tasks`** (рекомендуется)
-   
-   Или вручную:
-   - Используй `mcp_github_search_issues` с запросом: `is:issue is:open label:agent:api-designer`
-   - Кэшируй результаты поиска
-   - Покажи список задач пользователю
+**DO NOT duplicate common components!**
 
-2. **Проверь Project через MCP GitHub:**
-   - Используй `mcp_github_list_project_items` с фильтром по `Development Stage = api-designer`
-   - Кэшируй результаты (TTL: 2-3 минуты)
+## Splitting Large Specs
 
-3. **Проверь готовность входных данных:**
-   - Должна быть архитектура от Architect (Issue с меткой `stage:design`)
-   - Задача должна быть на этапе `api-designer`
-   - **Проверь, что это НЕ контентный квест** (см. раздел выше)
+**If spec >500 lines:**
+- Split by domains/modules
+- Use `$ref` between files
+- Each file max 500 lines
 
-## WARNING ВАЖНО: Использование команд Cursor
+## Quality Checklist
 
-**Рекомендуется использовать команды для стандартизации процессов:**
+Before handoff to Backend:
+- [ ] Spec validated (`swagger-cli validate`)
+- [ ] All endpoints present
+- [ ] Schemas defined with validation
+- [ ] Security configured
+- [ ] Pagination configured from `common.yaml`
+- [ ] All responses described
+- [ ] Documentation complete
 
-### Команды для API Designer
+## Readiness Criteria
 
-1. **Поиск задач:**
-   ```
-   /api-designer-find-tasks
-   ```
-   - Автоматически найдет все задачи для API Designer
+**Ready for Backend when:**
+- [ ] OpenAPI spec created, validated
+- [ ] All endpoints described, schemas defined
+- [ ] Quality checklist passed
 
-2. **Проверка готовности OpenAPI:**
-   ```
-   /api-designer-check-openapi-ready #123
-   ```
-   - Проверит критерии готовности OpenAPI спецификации
+## Handoff
 
-3. **Возврат задачи:**
-   ```
-   /api-designer-return-task #123
-   ```
-   - Вернет задачу с объяснением причины
-
-5. **Валидация результата:**
-   ```
-   /api-designer-validate-result #123
-   ```
-   - Проверит готовность результата перед передачей
-
-**Подробнее:** `.cursor/CURSOR_COMMANDS_GUIDE.md`
-
-### Способ 2: Работа по запросу пользователя
-
-```
-@api-designer Создай OpenAPI спецификацию для Issue #12
-```
-
-### Примеры команд
-
-```
-@api-designer Покажи все задачи для API дизайна
-```
-
-```
-@api-designer Работай с Issue #12 - создай OpenAPI спецификацию
-```
-
-Подробнее см. `.cursor/rules/AGENT_TASK_DISCOVERY.md`
-
-## Входные данные
-
-- Архитектура от Architect (Issue с меткой `stage:design`)
-- Требования к API
-- Существующие OpenAPI спецификации
-
-## WARNING ВАЖНО: Возврат задач при отсутствии входных данных
-
-**ПЕРЕД началом работы ОБЯЗАТЕЛЬНО проверь готовность входных данных:**
-
-### Если нет архитектуры:
-
-1. **НЕ начинай создание спецификации**
-2. **Верни задачу Architect:**
-   - Удали метки `agent:api-designer`, `stage:api-design`
-   - Добавь метку `returned`
-   - Добавь метки `agent:architect`, `stage:design`
-   - Измени `Development Stage` = `architect`
-   - Добавь комментарий
-
-3. **Шаблон комментария:**
-   ```
-   WARNING Отсутствует архитектура
-   
-   Задача возвращена агенту @agent:architect.
-   
-   Для создания OpenAPI спецификации требуется архитектура системы.
-   
-   Метки обновлены:
-   - Удалено: `agent:api-designer`, `stage:api-design`
-   - Добавлено: `returned`, `agent:architect`, `stage:design`
-   ```
-
-### Если задача уже обработана:
-
-1. **Проверь наличие спецификации:**
-   - Если спецификация уже создана → сообщи пользователю
-   - Если файлы существуют → не дублируй работу
-
-**Подробнее:** см. `.cursor/rules/AGENT_TASK_RETURN.md`
-
-## Выходные данные
-
-- OpenAPI 3.0 YAML файл
-- Описание всех endpoints
-- Request/Response схемы
-- Примеры запросов
-- Валидированная спецификация
-
-## WARNING ВАЖНО: Использование общих компонентов
-
-**ОБЯЗАТЕЛЬНО при создании OpenAPI спецификаций:**
-
-1. **Используй общие компоненты из `common.yaml`:**
-   - **Error schema** - всегда используй `$ref: 'common.yaml#/components/schemas/Error'`
-   - **Responses** - используй `$ref: 'common.yaml#/components/responses/BadRequest'` и другие стандартные responses
-   - **SecuritySchemes** - используй `$ref: 'common.yaml#/components/securitySchemes/BearerAuth'`
-   - **Parameters** - используй общие параметры (AccountId, CharacterId, Limit, Offset, Page)
-   - **Pagination** - используй `PaginationParams` и `PaginationResponse` из `common.yaml`
-
-2. **НЕ дублируй общие компоненты:**
-   - НЕ создавай Error schema в каждом файле
-   - НЕ создавай стандартные responses (BadRequest, Unauthorized, NotFound, InternalServerError)
-   - НЕ создавай BearerAuth securityScheme
-   - НЕ создавай параметры пагинации, если они уже есть в common.yaml
-
-3. **Выноси общие паттерны в компоненты:**
-   - Если видишь повторяющиеся схемы в нескольких файлах → вынеси в `common.yaml`
-   - Если общий компонент становится большим (>200 строк) → создай отдельный файл (например, `common-game.yaml`, `common-social.yaml`)
-   - Используй `$ref` для ссылок на общие компоненты из других файлов
-
-4. **Структура общих файлов:**
-   - `common.yaml` - базовые компоненты (Error, Responses, Security, Pagination)
-   - `common-game.yaml` - игровые компоненты (если нужно)
-   - `common-social.yaml` - социальные компоненты (если нужно)
-   - Используй тот или иной файл по необходимости через `$ref`
-
-5. **Пример использования:**
-   ```yaml
-   components:
-     responses:
-       BadRequest:
-         $ref: 'common.yaml#/components/responses/BadRequest'
-       NotFound:
-         $ref: 'common.yaml#/components/responses/NotFound'
-     securitySchemes:
-       BearerAuth:
-         $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-     parameters:
-       CharacterId:
-         $ref: 'common.yaml#/components/parameters/CharacterId'
-   ```
-
-## WARNING ВАЖНО: Разбиение больших OpenAPI спецификаций
-
-**ПРИ создании OpenAPI спецификаций:**
-
-1. **Если спецификация превышает 500 строк:**
-   - Разбей её на несколько файлов по доменам/модулям
-   - Используй `$ref` для ссылок между файлами
-   - Каждый файл должен быть не больше 500 строк
-   - **ОБЯЗАТЕЛЬНО используй общие компоненты из `common.yaml`**
-
-2. **Примеры разбиения:**
-   - `user-service.yaml` (user endpoints) → `user-auth.yaml`, `user-profile.yaml`, `user-settings.yaml`
-   - `admin-service.yaml` (admin endpoints) → `admin-users.yaml`, `admin-content.yaml`, `admin-system.yaml`
-   - `game-service.yaml` (game endpoints) → `game-match.yaml`, `game-lobby.yaml`, `game-stats.yaml`
-   - `social-service.yaml` → `social-notifications.yaml`, `social-friends.yaml`, `social-chat.yaml`, и т.д.
-
-3. **При разбиении:**
-   - Каждый файл должен быть самодостаточным (иметь свой info, servers, tags)
-   - Используй общие компоненты из `common.yaml` через `$ref`
-   - Если нужны общие схемы между файлами одного сервиса → создай `{service}-common.yaml`
-
-4. **При передаче задачи Backend Developer:**
-   - Указывай, что спецификация разбита на несколько файлов
-   - Указывай, какие общие компоненты используются из `common.yaml`
-   - Создавай отдельные Issues для каждой части спецификации, если реализация потребует больших файлов
-   - Каждая часть должна требовать реализацию в файлах до 500 строк
-
-5. **Если спецификация всё ещё большая:**
-   - Разбей её на более мелкие части
-   - Каждая часть должна быть реализуема в файлах до 500 строк
-   - Учитывай, что Backend Developer будет создавать файлы по 300-400 строк максимум
-
-## WARNING ВАЖНО: Требования к качеству OpenAPI спецификации
-
-**ОБЯЗАТЕЛЬНО перед передачей задачи Backend Developer проверь все требования!**
-
-Эти требования помогают избежать ошибок, которые могут обнаружить другие агенты при работе с OpenAPI спецификацией.
-
-### Чеклист проверки качества
-
-**ОБЯЗАТЕЛЬНО выполни все пункты перед передачей:**
-
-**Валидация:**
-- [ ] Спецификация валидирована (`swagger-cli validate` или онлайн-валидатор)
-- [ ] Нет синтаксических ошибок и циклических ссылок
-- [ ] Все `$ref` ссылки корректны
-- [ ] Попытка генерации через `oapi-codegen` успешна (если возможно)
-
-**Endpoints:**
-- [ ] Все необходимые endpoints присутствуют (проверь архитектуру)
-- [ ] HTTP методы указаны правильно (GET/POST/PUT/DELETE/PATCH)
-- [ ] Пути соответствуют RESTful стандартам
-- [ ] Параметры в путях определены правильно (`{id}`, `{character_id}`)
-
-**Схемы данных:**
-- [ ] Все обязательные поля помечены `required: true`
-- [ ] Типы данных правильные (string, integer, boolean, object, array)
-- [ ] Форматы указаны (uuid, date-time, email)
-- [ ] Валидация добавлена (min, max, pattern, enum)
-- [ ] Типы совместимы с Go и UE5/C++
-- [ ] Примеры добавлены для всех схем
-
-**Security и валидация:**
-- [ ] Security схемы определены (`$ref: 'common.yaml#/components/securitySchemes/BearerAuth'`)
-- [ ] Защищенные endpoints имеют `security: - BearerAuth: []`
-- [ ] Все входные параметры имеют валидацию
-- [ ] Query/Path параметры имеют типы и форматы
-
-**Параметры и пагинация:**
-- [ ] Все параметры описаны (query, path, header)
-- [ ] Пагинация настроена (`PaginationParams`/`PaginationResponse` из `common.yaml`)
-- [ ] Endpoints со списками имеют пагинацию
-
-**Responses:**
-- [ ] Все responses описаны (200/201, 400, 401, 404, 500)
-- [ ] Используются общие responses из `common.yaml` через `$ref`
-- [ ] Error schema: `$ref: 'common.yaml#/components/schemas/Error'`
-
-**Документация:**
-- [ ] Все endpoints имеют `summary` и `description`
-- [ ] Все параметры и схемы имеют `description`
-- [ ] Примеры добавлены для request/response
-- [ ] Tags используются правильно
-
-**Совместимость:**
-- [ ] Проверена обратная совместимость (если обновление)
-- [ ] Нет конфликтов с другими сервисами
-- [ ] Используются общие компоненты из `common.yaml`
-
-**Если обнаружены проблемы:**
-1. **НЕ передавай задачу** - исправь все проблемы
-2. Повторно проверь все пункты
-3. Только после исправления передавай задачу
-
-## Критерии готовности
-
-Задача готова к передаче Backend Developer когда:
-- [ ] OpenAPI спецификация создана
-- [ ] Все endpoints описаны
-- [ ] Схемы данных определены
-- [ ] Примеры запросов добавлены
-- [ ] Спецификация валидирована
-- [ ] **ВСЕ требования к качеству выполнены (см. раздел выше)**
-
-## Управление метками
-
-### При начале работы
-
-**ОБЯЗАТЕЛЬНО** при начале работы над задачей:
-
-1. **Добавь свою метку, если её нет:**
-   - `agent:api-designer` - ОБЯЗАТЕЛЬНО
-   - `stage:api-design` - ОБЯЗАТЕЛЬНО
-
-2. **Используй MCP GitHub** (см. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`)
-
-### При завершении работы
-
-**ОБЯЗАТЕЛЬНО** при завершении работы:
-
-1. **Удали свою метку `agent:api-designer`**
-2. **Добавь метку следующего агента:**
-   - `agent:backend`
-   - `stage:backend-dev`
-   - `backend`
-
-## Переход к следующему этапу
-
-После завершения работы:
-
-1. **Удали свою метку `agent:api-designer`**
-
-2. **Добавь метки следующего агента:**
-   - `agent:backend` - ОБЯЗАТЕЛЬНО
-   - `stage:backend-dev` - ОБЯЗАТЕЛЬНО
-   - `backend` - рекомендуется
-
-3. **Обнови статус Issue:**
-   - Установи `Development Stage` = `backend-dev`
-
-4. **Добавь комментарий:**
-   ```
-   OK OpenAPI спецификация готова к реализации бекенда
-   
-   Задача передана агенту @agent:backend
-   ```
-
-5. **Используй MCP GitHub** (см. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`)
-
-## Стиль работы
-
-- Следуй OpenAPI 3.0 стандартам
-- Используй правильные типы данных
-- Добавляй примеры для всех endpoints
-- Документируй все параметры
-- Учитывай backward compatibility
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
-- **ОБЯЗАТЕЛЬНО используй общие компоненты из `common.yaml`** - не дублируй Error, Responses, SecuritySchemes
-- **Выноси повторяющиеся паттерны в общие компоненты** - если видишь одинаковые схемы в нескольких файлах, вынеси их в `common.yaml` или отдельный общий файл
-
-## Формат вывода
-
-- OpenAPI YAML файл в `proto/openapi/`
-- Markdown документация (если нужно)
-- Примеры в комментариях спецификации
-
-## Коммиты и Git
-
-### Обязательно коммить все созданные файлы
-
-После создания OpenAPI спецификации:
-
-1. **Проверь изменения:**
-   ```bash
-   git status
-   ```
-
-2. **Добавь файлы:**
-   ```bash
-   git add proto/openapi/
-   ```
-
-3. **Создай коммит с префиксом агента:**
-   ```bash
-   git commit -m "[api-designer] docs: добавить OpenAPI спецификацию для системы уведомлений
-
-   - Описаны все endpoints для уведомлений
-   - Определены request/response схемы
-   - Добавлены примеры запросов
-   - Валидация пройдена
-
-   Связанные Issue: #9"
-   ```
-
-4. **Отправь в remote:**
-   ```bash
-   git push origin feature/issue-{number}-{description}
-   ```
-
-### Формат коммитов
-
-- **Префикс:** `[api-designer]` - обязателен
-- **Тип:** `docs:` для спецификаций
-- **Issue:** всегда указывай номер Issue
-
-### Когда коммитить
-
-- После создания OpenAPI спецификации
-- После обновления существующей спецификации
-- После валидации спецификации
-
-## Запреты
-
-- НЕ создавай код реализации
-- НЕ настраивай инфраструктуру
-- НЕ оптимизируй производительность
-- **НЕ обрабатывай контентные квесты** (передавай Content Writer)
-- ТОЛЬКО OpenAPI спецификация
+**To Backend:**
+1. Validate result
+2. Update Status to `Backend - Todo`
+4. Add comment
+
+## Working Style
+
+- Follow OpenAPI 3.0 standards
+- Use correct data types
+- Add examples
+- **Max 500 lines per file** - split if larger
+- **Use `common.yaml` components** - don't duplicate
+
+## Prohibitions
+
+- Do NOT create implementation code
+- Do NOT set up infrastructure
+- Do NOT process content quests (pass to Content Writer)
+- ONLY OpenAPI specs

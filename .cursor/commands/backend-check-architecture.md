@@ -1,36 +1,13 @@
-# Backend Developer: Проверить наличие архитектуры
+# Check Architecture
 
-Проверить, есть ли архитектура для задачи перед началом работы.
+Check if architecture exists before starting.
 
-## Инструкции
+## Check
 
-1. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
+- [ ] Files in `knowledge/implementation/architecture/`
+- [ ] Components, microservices, API endpoints described
+- [ ] Status is `Backend - Todo` or `Backend - In Progress`
 
-2. **Проверь наличие архитектурных документов:**
-   - Файлы в `knowledge/implementation/architecture/`
-   - Диаграммы компонентов
-   - Описание микросервисов
-
-3. **Проверь, что архитектура описывает:**
-   - Компоненты системы
-   - Микросервисы
-   - API endpoints (высокоуровнево)
-   - Синхронизацию данных
-
-4. **Покажи результат:**
-   - OK Архитектура найдена → можно начинать работу
-   - ❌ Архитектура не найдена → верни задачу Architect
-
-## Если архитектура не найдена
-
-- Используй `/return-task` для возврата задачи Architect
-- Добавь комментарий с объяснением
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - процесс возврата задач
-- `.cursor/rules/agent-backend.mdc` - правила Backend Developer
-
+**Result:**
+- OK Found → can start
+- ❌ Not found → return to Architect, Update Status to `Architect - Returned`

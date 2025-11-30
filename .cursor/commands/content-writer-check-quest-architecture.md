@@ -1,30 +1,12 @@
-# Content Writer: Проверить архитектуру системы квестов
+# Check Quest Architecture
 
-Проверить, что архитектура системы квестов существует перед созданием контентного квеста.
+Check quest architecture exists before starting.
 
-## Инструкции
+## Check
 
-1. **Проверь наличие архитектуры:**
-   - Файл: `knowledge/implementation/architecture/quest-system-architecture.yaml`
-   - Создана в Issue #103
+- [ ] Status is `Content Writer - Todo` or `Content Writer - In Progress`
+- [ ] Quest architecture exists in `knowledge/implementation/architecture/quests/`
 
-2. **Проверь, что архитектура описывает:**
-   - Структуру квеста
-   - Типы квестов
-   - Objectives и rewards
-   - Branches и диалоги
-
-3. **Покажи результат:**
-   - OK Архитектура найдена → можно создавать контентный квест
-   - ❌ Архитектура не найдена → сообщи пользователю (архитектура должна быть создана)
-
-## Важно
-
-- Content Writer НЕ создает архитектуру - использует существующую
-- Если архитектуры нет - это проблема, нужно сообщить пользователю
-
-## Ссылки
-
-- `.cursor/rules/agent-content-writer.mdc` - правила Content Writer
-- `knowledge/implementation/architecture/quest-system-architecture.yaml` - архитектура системы квестов
-
+**Result:**
+- OK Has architecture → can start
+- ❌ No architecture → return to Architect, Update Status to `Architect - Returned`

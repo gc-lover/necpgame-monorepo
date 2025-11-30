@@ -122,11 +122,14 @@ jobs:
               issueBody += `- **Теги:** ${metadata.tags.join(', ')}\n`;
             }
             
-            // Determine labels
-            const labels = ['agent:idea-writer', 'stage:idea', 'game-design'];
+            // Determine labels (functional only, no agent:* or stage:*)
+            const labels = ['game-design'];
             if (metadata.tags) {
               if (metadata.tags.includes('narrative') || metadata.tags.includes('lore')) {
-                labels.push('game-design');
+                labels.push('lore', 'content');
+              }
+              if (metadata.tags.includes('quest')) {
+                labels.push('quest', 'content');
               }
             }
             
@@ -162,6 +165,9 @@ jobs:
             console.log(`Created Issue #${issue.number}: ${issue.html_url}`);
             core.setOutput('issue_number', issue.number);
             core.setOutput('issue_url', issue.html_url);
+            
+            // Issue will be automatically added to Project by project-status-automation.yml
+            // with status "Todo", which will be changed to "Idea Writer - Todo" if needed
 
       - name: Update Idea File
         if: github.event.inputs.create_issue == 'true'

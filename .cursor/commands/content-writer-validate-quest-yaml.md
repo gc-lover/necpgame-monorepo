@@ -1,37 +1,14 @@
-# Content Writer: Валидировать YAML файл квеста
+# Validate Quest YAML
 
-Валидировать созданный YAML файл квеста перед завершением работы.
+Validate quest YAML file before handoff.
 
-## Инструкции
+## Validation
 
-1. **Проверь YAML синтаксис:**
-   ```bash
-   yamllint knowledge/canon/lore/timeline-author/quests/.../quest-*.yaml
-   ```
+1. YAML syntax: `yamllint quest-*.yaml`
+2. Structure: all required fields present
+3. Data correctness: IDs unique, types valid
+4. Size: file <=500 lines
 
-2. **Проверь структуру согласно архитектуре:**
-   - Все обязательные поля присутствуют (`metadata`, `summary`, `quest_definition`, `content`)
-   - Структура `quest_definition` соответствует архитектуре
-   - Все секции `content.sections` заполнены
-
-3. **Проверь корректность данных:**
-   - Все ID уникальны и валидны
-   - Ссылки на другие документы корректны
-   - Типы данных соответствуют ожидаемым
-   - `level_min`, `level_max` - валидные числа
-   - `objectives` - массив с правильной структурой
-   - `rewards` - правильная структура
-
-4. **Проверь размер файла:**
-   - Файл не превышает 500 строк
-   - Если превышает - разбит на несколько файлов
-
-5. **Покажи результат:**
-   - OK YAML валиден → можно передавать Backend для импорта
-   - ❌ YAML не валиден → нужно исправить ошибки
-
-## Ссылки
-
-- `.cursor/rules/agent-content-writer.mdc` - правила Content Writer (раздел "Валидация YAML файлов")
-- `knowledge/implementation/architecture/quest-system-architecture.yaml` - архитектура системы квестов
-
+**Result:**
+- OK Valid → handoff to Backend, Update Status to `Backend - Todo`
+- ❌ Invalid → fix errors, don't handoff

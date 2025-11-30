@@ -1,34 +1,13 @@
-# Architect: Проверить готовность архитектуры
+# Check Architecture
 
-Проверить, готова ли архитектура для передачи API Designer.
+Check architecture readiness before handoff to API Designer.
 
-## Инструкции
+## Criteria
 
-1. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
+- [ ] Architecture designed, components defined
+- [ ] Microservices identified, API endpoints described
+- [ ] Requirements ready
 
-2. **Проверь критерии готовности:**
-   - [ ] Архитектура спроектирована
-   - [ ] Компоненты определены
-   - [ ] Микросервисы идентифицированы
-   - [ ] API endpoints описаны (высокоуровнево)
-   - [ ] Техническое задание готово
-   - [ ] Синхронизация данных спроектирована (Event Sourcing, CQRS, Saga Pattern)
-   - [ ] Тикрейт и требования к сетевой нагрузке определены
-
-3. **Проверь наличие архитектурных документов:**
-   - Файлы в `knowledge/implementation/architecture/`
-   - Диаграммы компонентов
-   - Описание микросервисов
-
-4. **Покажи результат:**
-   - OK Архитектура готова → можно передавать API Designer
-   - ❌ Архитектура не готова → нужно доработать
-
-## Ссылки
-
-- `.cursor/rules/agent-architect.mdc` - правила Architect
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:**
+- OK Ready → handoff to API Designer, Update Status to `API Designer - Todo`
+- ❌ Not ready → fix issues, don't handoff

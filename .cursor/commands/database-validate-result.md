@@ -1,30 +1,12 @@
-# Database Engineer: Валидировать результат работы
+# Validate Result
 
-Проверить готовность схемы БД перед передачей Backend Developer.
+Check DB schema readiness before handoff to API Designer.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности схемы БД:**
-   - [ ] Схема БД спроектирована
-   - [ ] Liquibase миграции созданы
-   - [ ] Индексы определены
-   - [ ] Constraints настроены
+- [ ] DB schema designed
+- [ ] Liquibase migrations created
 
-2. **Проверь наличие созданных файлов:**
-   - Миграции в `infrastructure/liquibase/`
-
-3. **Покажи результат валидации:**
-   - OK Схема БД готова → можно передавать Backend Developer
-   - ❌ Критерии не выполнены → нужно доработать
-
-## Если валидация не пройдена
-
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
-
-## Ссылки
-
-- `.cursor/rules/agent-database.mdc` - правила Database Engineer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:**
+- OK Ready → handoff to API Designer, Update Status to `API Designer - Todo`
+- ❌ Not ready → fix issues, don't handoff

@@ -1,32 +1,19 @@
-# Idea Writer: Проверить готовность идеи
+# Check Idea
 
-Проверить, готова ли идея для передачи следующему агенту.
+Check idea readiness and determine task type for handoff.
 
-## Инструкции
+## Criteria
 
-1. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
+- [ ] Idea described, lore developed
+- [ ] Quest structured (if applicable)
+- [ ] Game mechanics described
 
-2. **Проверь критерии готовности:**
-   - [ ] Идея полностью описана текстом
-   - [ ] Лор проработан и согласован
-   - [ ] Квест структурирован (если применимо)
-   - [ ] Игровая механика описана понятно
-   - [ ] Все текстовые материалы готовы
+## Task Type (determine by labels or content)
 
-3. **Определи тип задачи:**
-   - **Системная задача** → передай Architect
-   - **UI/UX задача** (метки `ui`, `ux`, `client`) → передай UI/UX Designer
-   - **Контентный квест** (метки `canon`, `lore`, `quest`) → передай Content Writer
+- System task → Architect, Update Status to `Architect - Todo`
+- UI/UX (labels `ui`, `ux`, `client`) → UI/UX Designer, Update Status to `UI/UX - Todo`
+- Content quest (labels `canon`, `lore`, `quest`) → Content Writer, Update Status to `Content Writer - Todo`
 
-4. **Покажи результат:**
-   - OK Идея готова → можно передавать
-   - ❌ Идея не готова → нужно доработать
-
-## Ссылки
-
-- `.cursor/rules/agent-idea-writer.mdc` - правила Idea Writer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**Result:**
+- OK Ready → handoff to determined agent, update Status
+- ❌ Not ready → fix issues, don't handoff

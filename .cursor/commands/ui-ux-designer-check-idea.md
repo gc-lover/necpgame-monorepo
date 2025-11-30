@@ -1,34 +1,13 @@
-# UI/UX Designer: Проверить наличие концепции UI
+# Check UI Concept
 
-Проверить, есть ли концепция UI от Idea Writer для создания дизайна.
+Check if UI concept exists before starting.
 
-## Инструкции
+## Check
 
-1. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
+- [ ] Status is `UI/UX - Todo` or `UI/UX - In Progress`
+- [ ] UI description in Issue or files in `knowledge/`
+- [ ] Visual design, UX mechanics, user scenarios described
 
-2. **Проверь наличие концепции UI:**
-   - Описание интерфейса в Issue
-   - Или файлы в `knowledge/` с концепцией UI
-
-3. **Проверь, что концепция описывает:**
-   - Визуальный дизайн
-   - UX механики
-   - Пользовательские сценарии
-
-4. **Покажи результат:**
-   - OK Концепция найдена → можно создавать дизайн
-   - ❌ Концепция не найдена → верни задачу Idea Writer
-
-## Если концепция не найдена
-
-- Используй `/return-task` для возврата задачи Idea Writer
-- Добавь комментарий с объяснением
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - процесс возврата задач
-- `.cursor/rules/agent-ui-ux-designer.mdc` - правила UI/UX Designer
-
+**Result:**
+- OK Found → can create design
+- ❌ Not found → return to Idea Writer, Update Status to `Idea Writer - Returned`

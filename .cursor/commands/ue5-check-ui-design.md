@@ -1,35 +1,13 @@
-# UE5 Developer: Проверить наличие дизайн-документа
+# Check UI Design
 
-Проверить, есть ли дизайн-документ от UI/UX Designer для UI задач.
+Check UI design exists for UI tasks.
 
-## Инструкции
+## Check
 
-1. **Проверь, что это UI задача:**
-   - Метки: `ui`, `ux`, `client`
-   - Заголовок содержит `UI:`, `UX:`, `Интерфейс:`
+- [ ] Status is `UE5 - Todo` or `UE5 - In Progress`
+- [ ] Labels `ui`, `ux`, `client` or title contains `UI:`, `UX:`
+- [ ] Design doc exists in `knowledge/design/ui/`
 
-2. **Прочитай Issue через MCP GitHub:**
-   ```javascript
-   const issue = await getCachedIssue(issueNumber);
-   ```
-
-3. **Проверь наличие дизайн-документа:**
-   - Файлы в `knowledge/design/ui/`
-   - Описание визуального дизайна
-   - UX механики и пользовательские сценарии
-   - Анимации и переходы
-
-4. **Покажи результат:**
-   - OK Дизайн-документ найден → можно начинать работу
-   - ❌ Дизайн-документ не найден → верни задачу UI/UX Designer
-
-## Если дизайн-документ не найден
-
-- Используй `/return-task` для возврата задачи UI/UX Designer
-- Добавь комментарий с объяснением
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - процесс возврата задач
-- `.cursor/rules/agent-ue5.mdc` - правила UE5 Developer
-
+**Result:**
+- OK Has design → can start
+- ❌ No design → return to UI/UX Designer, Update Status to `UI/UX - Returned`

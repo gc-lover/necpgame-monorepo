@@ -1,33 +1,15 @@
-# Content Writer: Валидировать результат работы
+# Validate Result
 
-Проверить готовность YAML файла квеста перед передачей Backend для импорта.
+Check quest YAML readiness before handoff to Backend.
 
-## Инструкции
+## Criteria
 
-1. **Проверь критерии готовности:**
-   - [ ] YAML файл создан
-   - [ ] YAML синтаксис валиден
-   - [ ] Структура соответствует архитектуре
-   - [ ] Все обязательные поля заполнены
-   - [ ] Файл не превышает 500 строк
+- [ ] YAML created, syntax valid
+- [ ] Structure matches architecture
+- [ ] File <=500 lines
 
-2. **Проверь валидацию:**
-   ```bash
-   yamllint knowledge/canon/lore/timeline-author/quests/.../quest-*.yaml
-   ```
+**Result:**
+- OK Ready → handoff to Backend
+- ❌ Not ready → fix issues
 
-3. **Покажи результат валидации:**
-   - OK YAML валиден → можно передавать Backend для импорта
-   - ❌ YAML не валиден → нужно исправить ошибки
-
-## Если валидация не пройдена
-
-- Укажи, какие критерии не выполнены
-- Предложи, что нужно исправить
-- НЕ передавай задачу следующему агенту до исправления
-
-## Ссылки
-
-- `.cursor/rules/agent-content-writer.mdc` - правила Content Writer
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - критерии готовности
-
+**On handoff:** Update Status to `Backend - Todo`
