@@ -1,3 +1,4 @@
+// Issue: #1525
 package server
 
 import (
@@ -47,6 +48,10 @@ func (h *ComboHandlers) UpdateComboLoadout(w http.ResponseWriter, r *http.Reques
 	}
 
 	characterID := uuid.UUID(req.CharacterId)
+	if characterID == uuid.Nil {
+		h.respondError(w, http.StatusBadRequest, "character_id is required")
+		return
+	}
 
 	updateReq := convertUpdateLoadoutRequestFromAPI(&req)
 	loadout, err := h.service.UpdateLoadout(r.Context(), characterID, updateReq)
@@ -64,6 +69,32 @@ func (h *ComboHandlers) SubmitComboScore(w http.ResponseWriter, r *http.Request)
 	var req combosapi.SubmitComboScoreJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	activationID := uuid.UUID(req.ActivationId)
+	if activationID == uuid.Nil {
+		h.respondError(w, http.StatusBadRequest, "activation_id is required")
+		return
+	}
+
+	if req.ExecutionDifficulty < 0 || req.ExecutionDifficulty > 100 {
+		h.respondError(w, http.StatusBadRequest, "execution_difficulty must be between 0 and 100")
+		return
+	}
+
+	if req.DamageOutput < 0 {
+		h.respondError(w, http.StatusBadRequest, "damage_output must be non-negative")
+		return
+	}
+
+	if req.VisualImpact < 0 || req.VisualImpact > 100 {
+		h.respondError(w, http.StatusBadRequest, "visual_impact must be between 0 and 100")
+		return
+	}
+
+	if req.TeamCoordination != nil && (*req.TeamCoordination < 0 || *req.TeamCoordination > 100) {
+		h.respondError(w, http.StatusBadRequest, "team_coordination must be between 0 and 100")
 		return
 	}
 
@@ -98,11 +129,19 @@ func (h *ComboHandlers) GetComboAnalytics(w http.ResponseWriter, r *http.Request
 
 	limit := 20
 	if params.Limit != nil {
+		if *params.Limit < 1 || *params.Limit > 100 {
+			h.respondError(w, http.StatusBadRequest, "limit must be between 1 and 100")
+			return
+		}
 		limit = int(*params.Limit)
 	}
 
 	offset := 0
 	if params.Offset != nil {
+		if *params.Offset < 0 {
+			h.respondError(w, http.StatusBadRequest, "offset must be non-negative")
+			return
+		}
 		offset = int(*params.Offset)
 	}
 
