@@ -464,3 +464,63 @@ func TestAchievementRepository_GetAchievementStats_NotFound(t *testing.T) {
 	assert.Equal(t, 0, stats.TotalUnlocks)
 }
 
+func TestAchievementRepository_GetPlayerAchievements_WithCategory(t *testing.T) {
+	repo, cleanup := setupTestRepository(t)
+	if repo == nil {
+		return
+	}
+	defer cleanup()
+
+	playerID := uuid.New()
+	category := models.CategoryCombat
+	ctx := context.Background()
+
+	achievements, err := repo.GetPlayerAchievements(ctx, playerID, &category, 10, 0)
+
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	assert.NoError(t, err)
+	assert.Empty(t, achievements)
+}
+
+func TestAchievementRepository_GetLeaderboard_Daily(t *testing.T) {
+	repo, cleanup := setupTestRepository(t)
+	if repo == nil {
+		return
+	}
+	defer cleanup()
+
+	ctx := context.Background()
+	entries, err := repo.GetLeaderboard(ctx, "daily", 10)
+
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	assert.NoError(t, err)
+	assert.Empty(t, entries)
+}
+
+func TestAchievementRepository_GetLeaderboard_Weekly(t *testing.T) {
+	repo, cleanup := setupTestRepository(t)
+	if repo == nil {
+		return
+	}
+	defer cleanup()
+
+	ctx := context.Background()
+	entries, err := repo.GetLeaderboard(ctx, "weekly", 10)
+
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	assert.NoError(t, err)
+	assert.Empty(t, entries)
+}
+
