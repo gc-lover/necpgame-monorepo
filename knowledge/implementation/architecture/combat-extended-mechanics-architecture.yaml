@@ -1,0 +1,609 @@
+<!-- Issue: #41 -->
+metadata:
+  id: combat-extended-mechanics-architecture
+  title: Архитектура расширенных механик боевой системы
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-01T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - hacking
+    - implants
+    - shooting
+    - loadouts
+    - realtime
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - realtime-service
+    - hacking-service
+    - progression-service
+  related_documents:
+    - id: combat-overview
+      relation: implements
+    - id: combat-hacking-types
+      relation: implements
+    - id: combat-hacking-networks
+      relation: implements
+    - id: combat-hacking-combat-integration
+      relation: implements
+    - id: combat-implants
+      relation: implements
+    - id: combat-implants-types
+      relation: implements
+    - id: combat-implants-mechanics
+      relation: implements
+    - id: combat-implants-acquisition
+      relation: implements
+    - id: combat-implants-limits
+      relation: implements
+    - id: combat-implants-visuals
+      relation: implements
+    - id: combat-shooting-advanced
+      relation: implements
+    - id: combat-loadouts-system
+      relation: implements
+    - id: combat-implants-architecture
+      relation: extends
+    - id: combat-shooting-architecture
+      relation: extends
+    - id: combat-abilities-architecture
+      relation: extends
+  github_issue: 41
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+    - network
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру расширенных механик боевой системы,
+    объединяющую взлом и сети, импланты, продвинутую стрельбу и систему лоадаутов.
+    Все механики должны быть интегрированы с combat-service и сбалансированы
+    для киберспортивного геймплея.
+  goal: |
+    Создать архитектурную схему расширенных механик боевой системы с определением:
+    - Компонентов для управления всеми расширенными механиками
+    - REST, WebSocket и Event Bus контрактов
+    - Синхронизации данных между слоями (Event Sourcing, CQRS)
+    - Тикрейта и требований к сетевой нагрузке
+    - Интеграций между механиками
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура расширенных механик боевой системы, интегрирующая
+    взлом, импланты, продвинутую стрельбу и лоадауты в единую систему с поддержкой
+    киберспортивного геймплея и realtime синхронизации.
+
+architecture:
+  overview: |
+    Архитектура расширенных механик боевой системы состоит из следующих компонентов:
+    1. Hacking Combat Integration - интеграция взлома в бой
+    2. Implant Combat System - система боевых имплантов
+    3. Advanced Shooting System - продвинутая стрельба
+    4. Loadout Management System - управление лоадаутами
+    5. Combat Mechanics Orchestrator - оркестратор боевых механик
+    6. Realtime Combat Sync - realtime синхронизация боя
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка расширенных механик боевой системы:
+        - Интеграция взлома в бой (hacking combat integration)
+        - Управление боевыми имплантами
+        - Продвинутая стрельба (advanced shooting)
+        - Управление лоадаутами
+        - Оркестрация боевых механик
+      components:
+        - hacking-combat-integration: интеграция взлома в бой
+        - implant-combat-system: система боевых имплантов
+        - advanced-shooting-system: продвинутая стрельба
+        - loadout-management-system: управление лоадаутами
+        - combat-mechanics-orchestrator: оркестратор боевых механик
+      endpoints:
+        - POST /api/v1/gameplay/combat/hacking/execute - выполнение взлома в бою
+        - GET /api/v1/gameplay/combat/hacking/networks - доступные сети для взлома
+        - POST /api/v1/gameplay/combat/implants/activate - активация импланта в бою
+        - GET /api/v1/gameplay/combat/implants/effects - эффекты активных имплантов
+        - POST /api/v1/gameplay/combat/shooting/advanced/aim - продвинутое прицеливание
+        - POST /api/v1/gameplay/combat/shooting/advanced/recoil - управление отдачей
+        - GET /api/v1/gameplay/combat/loadouts - получение лоадаутов
+        - POST /api/v1/gameplay/combat/loadouts - создание/обновление лоадаута
+        - POST /api/v1/gameplay/combat/loadouts/equip - экипировка лоадаута
+        - GET /api/v1/gameplay/combat/mechanics/status - статус всех механик
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/{sessionId} - live события боя
+        - wss://api.necp.game/v1/gameplay/combat/loadouts/{characterId} - обновления лоадаутов
+      events_published:
+        - combat.hacking.executed: выполнение взлома в бою
+        - combat.hacking.network-accessed: доступ к сети
+        - combat.implant.activated: активация импланта
+        - combat.implant.effects-applied: применение эффектов импланта
+        - combat.shooting.advanced-aim: продвинутое прицеливание
+        - combat.shooting.recoil-controlled: управление отдачей
+        - combat.loadout.created: создание лоадаута
+        - combat.loadout.updated: обновление лоадаута
+        - combat.loadout.equipped: экипировка лоадаута
+        - combat.mechanics.orchestrated: оркестрация механик
+      events_subscribed:
+        - combat.ability.activated: активация способностей
+        - combat.weapon.fired: выстрел из оружия
+        - progression.attribute-updated: обновление атрибутов
+        - inventory.item-equipped: экипировка предмета
+
+    - name: hacking-service
+      port: 8086
+      responsibility: |
+        Обработка взлома и сетей:
+        - Управление типами взлома
+        - Управление сетями для взлома
+        - Интеграция взлома в боевые сценарии
+      components:
+        - hacking-types-manager: управление типами взлома
+        - hacking-networks-manager: управление сетями
+        - hacking-combat-integration: интеграция в бой
+      endpoints:
+        - GET /api/v1/hacking/types - типы взлома
+        - GET /api/v1/hacking/networks - доступные сети
+        - POST /api/v1/hacking/networks/access - доступ к сети
+        - POST /api/v1/hacking/combat/execute - выполнение взлома в бою
+      events_published:
+        - hacking.type-executed: выполнение типа взлома
+        - hacking.network-accessed: доступ к сети
+        - hacking.combat-integrated: интеграция в бой
+      events_subscribed:
+        - combat.session.started: начало боевой сессии
+        - combat.ability.activated: активация способности
+
+    - name: realtime-service
+      port: 8085
+      responsibility: |
+        Realtime синхронизация расширенных механик:
+        - Синхронизация взлома в реальном времени
+        - Синхронизация эффектов имплантов
+        - Синхронизация продвинутой стрельбы
+        - Синхронизация лоадаутов
+      components:
+        - hacking-realtime-sync: синхронизация взлома
+        - implant-effects-sync: синхронизация эффектов имплантов
+        - shooting-realtime-sync: синхронизация стрельбы
+        - loadout-realtime-sync: синхронизация лоадаутов
+      endpoints:
+        - POST /api/v1/realtime/combat/hacking/sync - синхронизация взлома
+        - POST /api/v1/realtime/combat/implants/sync - синхронизация имплантов
+        - POST /api/v1/realtime/combat/shooting/sync - синхронизация стрельбы
+        - POST /api/v1/realtime/combat/loadouts/sync - синхронизация лоадаутов
+      websocket_channels:
+        - wss://api.necp.game/v1/realtime/combat/{sessionId} - realtime события
+      events_published:
+        - realtime.combat.hacking-synced: синхронизация взлома
+        - realtime.combat.implants-synced: синхронизация имплантов
+        - realtime.combat.shooting-synced: синхронизация стрельбы
+        - realtime.combat.loadouts-synced: синхронизация лоадаутов
+      events_subscribed:
+        - combat.hacking.executed: выполнение взлома
+        - combat.implant.activated: активация импланта
+        - combat.shooting.advanced-aim: продвинутое прицеливание
+        - combat.loadout.equipped: экипировка лоадаута
+
+  data_synchronization:
+    strategy: Event Sourcing + CQRS
+    event_store: |
+      Все события расширенных механик сохраняются в Event Store:
+      - combat.hacking.executed
+      - combat.hacking.network-accessed
+      - combat.implant.activated
+      - combat.implant.effects-applied
+      - combat.shooting.advanced-aim
+      - combat.shooting.recoil-controlled
+      - combat.loadout.created
+      - combat.loadout.updated
+      - combat.loadout.equipped
+      - combat.mechanics.orchestrated
+    command_side: |
+      Command Side (Write Model):
+      - gameplay-service: обработка команд взлома, имплантов, стрельбы, лоадаутов
+      - hacking-service: обработка команд взлома
+      - realtime-service: обработка realtime синхронизации
+    query_side: |
+      Query Side (Read Model):
+      - gameplay-service: получение статуса механик, лоадаутов
+      - hacking-service: получение типов взлома, сетей
+      - realtime-service: получение состояния синхронизации
+    saga_pattern: |
+      Saga для оркестрации механик:
+      1. Start Combat Mechanics Saga
+      2. Check Loadout Requirements
+      3. Activate Implants
+      4. Initialize Hacking Networks
+      5. Setup Advanced Shooting
+      6. If failure: Compensate (rollback активации, восстановление состояния)
+    consistency: |
+      Strong Consistency для критичных операций:
+      - Активация имплантов
+      - Выполнение взлома
+      - Экипировка лоадаута
+      - Применение эффектов
+      Eventual Consistency для:
+      - Визуальные эффекты
+      - Realtime синхронизация (клиентская)
+      - Статистика использования
+
+  network_requirements:
+    tick_rate:
+      pve_zones: |
+        - Протокол: WebSocket (TCP)
+        - Тикрейт: 20-30 Hz
+        - Задержка: <100 мс
+        - Игроков: 100-500
+      pvp_small: |
+        - Протокол: UDP
+        - Тикрейт: 60-128 Hz
+        - Задержка: <30 мс
+        - Игроков: 5-20
+      pvp_gvg_200: |
+        - Протокол: UDP
+        - Тикрейт: 60-80 Hz
+        - Задержка: <40 мс
+        - Игроков: 200 (100v100)
+        - Оптимизация: Spatial partitioning
+      pvp_gvg_400: |
+        - Протокол: UDP
+        - Тикрейт: 40-60 Hz
+        - Задержка: <50 мс
+        - Игроков: 400 (200v200)
+        - Оптимизация: Spatial sharding (2-4 shards)
+      massive_war: |
+        - Протокол: UDP
+        - Тикрейт: 20-40 Hz
+        - Задержка: <100 мс
+        - Игроков: 2000+
+        - Архитектура: Cluster (5-10 servers)
+    hacking_network_sync: |
+      - Синхронизация сетей: 10-20 Hz
+      - Задержка доступа к сети: <50 мс
+      - Батчинг запросов взлома для оптимизации
+    implant_effects_sync: |
+      - Синхронизация эффектов: 30-60 Hz (зависит от типа эффекта)
+      - Задержка применения эффектов: <20 мс
+      - Event aggregation для множественных эффектов
+    advanced_shooting_sync: |
+      - Синхронизация прицеливания: 60-128 Hz (UDP)
+      - Синхронизация отдачи: 60-128 Hz (UDP)
+      - Задержка выстрела: <16 мс
+      - Квантование координат для уменьшения размера сообщений
+    loadout_sync: |
+      - Синхронизация лоадаутов: on-demand (при изменении)
+      - Задержка экипировки: <100 мс
+      - Кэширование лоадаутов на клиенте
+    bandwidth_optimization: |
+      - Spatial partitioning для снижения трафика на 80-90%
+      - Event aggregation (батчинг) для больших битв
+      - Адаптивный тикрейт в зависимости от количества игроков
+      - Квантование координат для уменьшения размера сообщений
+      - Сжатие данных для лоадаутов
+
+  data_flows:
+    hacking_combat_integration_flow: |
+      1. Игрок активирует взлом в бою
+      2. Hacking Combat Integration проверяет доступные сети
+      3. Hacking Combat Integration проверяет требования (класс, навыки)
+      4. Hacking Service выполняет взлом
+      5. Hacking Service применяет эффекты взлома
+      6. Gameplay Service публикует событие combat.hacking.executed
+      7. Realtime Service синхронизирует эффекты взлома
+      8. Realtime Gateway отправляет обновление клиентам
+
+    implant_activation_flow: |
+      1. Игрок активирует имплант в бою
+      2. Implant Combat System проверяет доступность импланта
+      3. Implant Combat System проверяет лимиты (энергия, человечность)
+      4. Implant Combat System активирует имплант
+      5. Implant Combat System применяет эффекты импланта
+      6. Implant Combat System обновляет киберпсихоз
+      7. Gameplay Service публикует событие combat.implant.activated
+      8. Realtime Service синхронизирует эффекты импланта
+      9. Realtime Gateway отправляет обновление клиентам
+
+    advanced_shooting_flow: |
+      1. Игрок выполняет продвинутое прицеливание
+      2. Advanced Shooting System рассчитывает точность
+      3. Advanced Shooting System применяет модификаторы отдачи
+      4. Advanced Shooting System синхронизирует с сервером
+      5. Realtime Service валидирует выстрел
+      6. Realtime Service применяет урон
+      7. Gameplay Service публикует событие combat.shooting.advanced-aim
+      8. Realtime Gateway отправляет обновление клиентам
+
+    loadout_equip_flow: |
+      1. Игрок выбирает лоадаут
+      2. Loadout Management System проверяет доступность лоадаута
+      3. Loadout Management System проверяет требования (уровень, репутация)
+      4. Loadout Management System экипирует лоадаут
+      5. Loadout Management System активирует способности из лоадаута
+      6. Loadout Management System применяет эффекты имплантов
+      7. Gameplay Service публикует событие combat.loadout.equipped
+      8. Realtime Service синхронизирует лоадаут
+      9. Realtime Gateway отправляет обновление клиентам
+
+    mechanics_orchestration_flow: |
+      1. Игрок входит в боевую сессию
+      2. Combat Mechanics Orchestrator загружает активный лоадаут
+      3. Combat Mechanics Orchestrator активирует импланты из лоадаута
+      4. Combat Mechanics Orchestrator инициализирует сети для взлома
+      5. Combat Mechanics Orchestrator настраивает продвинутую стрельбу
+      6. Combat Mechanics Orchestrator синхронизирует все механики
+      7. Gameplay Service публикует событие combat.mechanics.orchestrated
+      8. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: combat_hacking_executions
+        description: Выполнения взлома в бою
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - session_id: UUID FOREIGN KEY
+          - hacking_type: VARCHAR(100)
+          - network_id: UUID FOREIGN KEY
+          - target_id: UUID (nullable)
+          - target_type: ENUM (player, npc, device, infrastructure)
+          - executed_at: TIMESTAMP
+          - effects_applied: JSONB
+          - created_at: TIMESTAMP
+
+      - name: combat_hacking_networks
+        description: Сети для взлома
+        columns:
+          - id: UUID PRIMARY KEY
+          - network_name: VARCHAR(255)
+          - network_type: ENUM (enemy, device, infrastructure, combat_scenario)
+          - access_level: INTEGER
+          - requirements: JSONB
+          - available_demons: JSONB
+          - created_at: TIMESTAMP
+
+      - name: combat_implant_activations
+        description: Активации имплантов в бою
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - session_id: UUID FOREIGN KEY
+          - implant_id: UUID FOREIGN KEY
+          - activated_at: TIMESTAMP
+          - effects_applied: JSONB
+          - energy_used: INTEGER
+          - humanity_cost: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: combat_advanced_shooting_stats
+        description: Статистика продвинутой стрельбы
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - session_id: UUID FOREIGN KEY
+          - weapon_id: UUID FOREIGN KEY
+          - aim_accuracy: DECIMAL(5,2)
+          - recoil_control: DECIMAL(5,2)
+          - shots_fired: INTEGER
+          - hits_landed: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: combat_loadouts
+        description: Лоадауты боевой системы
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - name: VARCHAR(255)
+          - weapons: JSONB
+          - abilities: JSONB
+          - implants: JSONB
+          - equipment: JSONB
+          - is_active: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: combat_mechanics_state
+        description: Состояние всех механик в боевой сессии
+        columns:
+          - id: UUID PRIMARY KEY
+          - session_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - loadout_id: UUID FOREIGN KEY
+          - active_implants: JSONB
+          - active_hacking_networks: JSONB
+          - shooting_config: JSONB
+          - last_update: TIMESTAMP
+          - created_at: TIMESTAMP
+
+  integrations:
+    combat_service: |
+      - Получение данных о боевых сессиях
+      - Применение урона и эффектов
+      - Интеграция с системой способностей
+
+    hacking_service: |
+      - Получение типов взлома
+      - Доступ к сетям для взлома
+      - Выполнение взлома в боевых сценариях
+
+    implant_service: |
+      - Получение данных об имплантах
+      - Проверка лимитов имплантов
+      - Обновление состояния имплантов
+
+    progression_service: |
+      - Проверка требований для механик
+      - Обновление прогрессии
+      - Применение модификаторов
+
+    inventory_service: |
+      - Получение данных об экипировке
+      - Проверка наличия предметов
+      - Обновление инвентаря
+
+    realtime_service: |
+      - Синхронизация всех механик в реальном времени
+      - Валидация действий
+      - Применение эффектов
+
+    analytics_service: |
+      - Логирование всех действий
+      - Сбор метрик использования
+      - Античит мониторинг
+
+technical_specification:
+  subtasks:
+    - id: hacking-combat-integration
+      title: Реализация интеграции взлома в бой
+      description: |
+        Реализация Hacking Combat Integration с поддержкой типов взлома,
+        сетей и интеграции в боевые сценарии.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: implant-combat-system
+      title: Реализация системы боевых имплантов
+      description: |
+        Реализация Implant Combat System с активацией имплантов в бою,
+        применением эффектов и обновлением киберпсихоза.
+      dependencies: []
+      estimated_effort: 6 days
+
+    - id: advanced-shooting-system
+      title: Реализация продвинутой стрельбы
+      description: |
+        Реализация Advanced Shooting System с продвинутым прицеливанием,
+        управлением отдачей и синхронизацией выстрелов.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: loadout-management-system
+      title: Реализация системы управления лоадаутами
+      description: |
+        Реализация Loadout Management System с созданием, обновлением
+        и экипировкой лоадаутов.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: combat-mechanics-orchestrator
+      title: Реализация оркестратора боевых механик
+      description: |
+        Реализация Combat Mechanics Orchestrator с координацией всех
+        расширенных механик в боевой сессии.
+      dependencies: [hacking-combat-integration, implant-combat-system, advanced-shooting-system, loadout-management-system]
+      estimated_effort: 6 days
+
+    - id: realtime-combat-sync
+      title: Реализация realtime синхронизации
+      description: |
+        Реализация Realtime Combat Sync с синхронизацией всех механик
+        в реальном времени.
+      dependencies: [combat-mechanics-orchestrator]
+      estimated_effort: 5 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений всех механик.
+      dependencies: [realtime-combat-sync]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов расширенных механик.
+      dependencies: [combat-mechanics-orchestrator]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для взлома, имплантов, стрельбы, лоадаутов
+        и состояния механик с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        Gateway --> HackingService[Hacking Service<br/>8086]
+        Gateway --> RealtimeService[Realtime Service<br/>8085]
+        
+        GameplayService --> HCI[Hacking Combat Integration]
+        GameplayService --> ICS[Implant Combat System]
+        GameplayService --> ASS[Advanced Shooting System]
+        GameplayService --> LMS[Loadout Management System]
+        GameplayService --> CMO[Combat Mechanics Orchestrator]
+        
+        HackingService --> HTM[Hacking Types Manager]
+        HackingService --> HNM[Hacking Networks Manager]
+        HackingService --> HCI2[Hacking Combat Integration]
+        
+        RealtimeService --> HRS[Hacking Realtime Sync]
+        RealtimeService --> IES[Implant Effects Sync]
+        RealtimeService --> SRS[Shooting Realtime Sync]
+        RealtimeService --> LRS[Loadout Realtime Sync]
+        
+        CMO --> HCI
+        CMO --> ICS
+        CMO --> ASS
+        CMO --> LMS
+        
+        GameplayService --> CombatService[Combat Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> InventoryService[Inventory Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        HackingService --> EventBus
+        RealtimeService --> EventBus
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        HackingService --> DB
+        RealtimeService --> DB
+        
+        Client --> WSCombat[WebSocket<br/>Combat]
+        WSCombat --> GameplayService
+        WSCombat --> HackingService
+        WSCombat --> RealtimeService
+    ```
+
+  mechanics_orchestration_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant CMO as Combat Mechanics Orchestrator
+        participant LMS as Loadout Management System
+        participant ICS as Implant Combat System
+        participant HCI as Hacking Combat Integration
+        participant RS as Realtime Service
+        
+        C->>CMO: Enter combat session
+        CMO->>LMS: Load active loadout
+        LMS-->>CMO: Loadout data
+        CMO->>ICS: Activate implants
+        ICS-->>CMO: Implants activated
+        CMO->>HCI: Initialize hacking networks
+        HCI-->>CMO: Networks initialized
+        CMO->>RS: Sync all mechanics
+        CMO-->>C: Mechanics orchestrated
+    ```
+
