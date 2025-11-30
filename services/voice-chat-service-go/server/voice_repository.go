@@ -1,3 +1,4 @@
+// Issue: #141888700
 package server
 
 import (
@@ -67,7 +68,10 @@ func (r *VoiceRepository) GetChannel(ctx context.Context, channelID uuid.UUID) (
 	}
 
 	if len(settingsJSON) > 0 {
-		json.Unmarshal(settingsJSON, &channel.Settings)
+		if err := json.Unmarshal(settingsJSON, &channel.Settings); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal settings JSON")
+			channel.Settings = make(map[string]interface{})
+		}
 	} else {
 		channel.Settings = make(map[string]interface{})
 	}
@@ -181,13 +185,19 @@ func (r *VoiceRepository) GetParticipant(ctx context.Context, channelID, charact
 	}
 
 	if len(positionJSON) > 0 {
-		json.Unmarshal(positionJSON, &participant.Position)
+		if err := json.Unmarshal(positionJSON, &participant.Position); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal position JSON")
+			participant.Position = make(map[string]interface{})
+		}
 	} else {
 		participant.Position = make(map[string]interface{})
 	}
 
 	if len(statsJSON) > 0 {
-		json.Unmarshal(statsJSON, &participant.Stats)
+		if err := json.Unmarshal(statsJSON, &participant.Stats); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal stats JSON")
+			participant.Stats = make(map[string]interface{})
+		}
 	} else {
 		participant.Stats = make(map[string]interface{})
 	}
