@@ -1,3 +1,4 @@
+// Issue: #141886477, #141886485
 package server
 
 import (
@@ -43,8 +44,12 @@ func (h *ResetHandlers) GetResetHistory(w http.ResponseWriter, r *http.Request, 
 	}
 
 	limit := 50
-	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
-		limit = *params.Limit
+	if params.Limit != nil && *params.Limit > 0 {
+		if *params.Limit > 100 {
+			limit = 100
+		} else {
+			limit = *params.Limit
+		}
 	}
 
 	offset := 0
@@ -93,7 +98,9 @@ func (h *ResetHandlers) TriggerReset(w http.ResponseWriter, r *http.Request) {
 func (h *ResetHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (h *ResetHandlers) respondError(w http.ResponseWriter, status int, message string) {
