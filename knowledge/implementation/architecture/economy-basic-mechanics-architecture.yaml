@@ -1,0 +1,425 @@
+# Issue: #60
+metadata:
+  id: economy-basic-mechanics-architecture
+  title: Архитектура базовых экономических механик
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-01T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - trading
+    - currencies
+    - resources
+    - guilds
+    - world-impact
+  related_systems:
+    - economy-service
+    - social-service
+    - world-service
+    - wallet-service
+    - inventory-service
+  related_documents:
+    - id: economy-overview
+      relation: implements
+    - id: economy-trading
+      relation: implements
+    - id: economy-trading-guilds
+      relation: implements
+    - id: economy-currencies-resources
+      relation: implements
+    - id: economy-world-impact
+      relation: implements
+    - id: economy-trading-markets-auctions-architecture
+      relation: extends
+  github_issue: 60
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+    - network
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру базовых экономических механик:
+    - Обзор экономической системы
+    - Базовая P2P торговля
+    - Торговые гильдии
+    - Валюты и ресурсы
+    - Влияние экономики на игровой мир
+  goal: |
+    Создать архитектурную схему базовых экономических механик с определением:
+    - Компонентов для управления базовыми экономическими операциями
+    - REST, WebSocket и Event Bus контрактов
+    - Синхронизации данных между слоями (Event Sourcing, CQRS)
+    - Тикрейта и требований к сетевой нагрузке
+    - Интеграций между компонентами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Архитектура базовых экономических механик, обеспечивающая фундамент для
+    более сложных экономических систем (рынки, аукционы, биржа).
+
+architecture:
+  overview: |
+    Архитектура базовых экономических механик состоит из следующих компонентов:
+    1. Economy Overview Manager - управление обзором экономики
+    2. Basic Trading System - базовая P2P торговля
+    3. Trading Guilds System - система торговых гильдий
+    4. Currencies & Resources Manager - управление валютами и ресурсами
+    5. World Impact System - система влияния экономики на мир
+
+  microservices:
+    - name: economy-service
+      port: 8085
+      responsibility: |
+        Обработка базовых экономических механик:
+        - Обзор экономической системы
+        - Базовая P2P торговля между игроками
+        - Торговые гильдии
+        - Управление валютами и ресурсами
+        - Влияние экономики на игровой мир
+      components:
+        - economy-overview-manager: управление обзором экономики
+        - basic-trading-system: базовая P2P торговля
+        - trading-guilds-system: система торговых гильдий
+        - currencies-resources-manager: управление валютами и ресурсами
+        - world-impact-system: влияние экономики на мир
+      endpoints:
+        - GET /api/v1/economy/overview - обзор экономики
+        - GET /api/v1/economy/currencies - список валют
+        - GET /api/v1/economy/resources - список ресурсов
+        - POST /api/v1/economy/trade/initiate - инициация торговли
+        - POST /api/v1/economy/trade/accept - принятие торговли
+        - POST /api/v1/economy/trade/cancel - отмена торговли
+        - GET /api/v1/economy/guilds - список торговых гильдий
+        - POST /api/v1/economy/guilds/create - создание гильдии
+        - POST /api/v1/economy/guilds/{id}/join - вступление в гильдию
+        - GET /api/v1/economy/world-impact - влияние на мир
+      websocket_channels:
+        - wss://api.necp.game/v1/economy/trade/{sessionId} - live события торговли
+        - wss://api.necp.game/v1/economy/guilds/{guildId} - события гильдии
+        - wss://api.necp.game/v1/economy/world-impact - обновления влияния
+      events_published:
+        - economy.trade.initiated: инициация торговли
+        - economy.trade.completed: завершение торговли
+        - economy.trade.cancelled: отмена торговли
+        - economy.guild.created: создание гильдии
+        - economy.guild.member-joined: вступление в гильдию
+        - economy.currency.rate-updated: обновление курса валюты
+        - economy.resource.price-updated: обновление цены ресурса
+        - economy.world-impact.updated: обновление влияния на мир
+      events_subscribed:
+        - inventory.item-moved: перемещение предмета
+        - wallet.balance-updated: обновление баланса
+        - social.reputation-updated: обновление репутации
+        - world.event-triggered: триггер мирового события
+
+  data_synchronization:
+    strategy: Event Sourcing + CQRS
+    event_store: |
+      Все события базовых экономических механик сохраняются в Event Store:
+      - economy.trade.initiated
+      - economy.trade.completed
+      - economy.trade.cancelled
+      - economy.guild.created
+      - economy.guild.member-joined
+      - economy.currency.rate-updated
+      - economy.resource.price-updated
+      - economy.world-impact.updated
+    command_side: |
+      Command Side (Write Model):
+      - economy-service: обработка команд торговли, гильдий, валют, влияния
+    query_side: |
+      Query Side (Read Model):
+      - economy-service: получение обзора экономики, статуса операций, курсов валют
+    saga_pattern: |
+      Saga Pattern для распределенных транзакций:
+      - Trade Initiation Saga: инициация торговли → проверка инвентаря → блокировка предметов
+      - Trade Completion Saga: завершение торговли → обмен предметами → обновление балансов
+      - Guild Creation Saga: создание гильдии → проверка требований → создание структуры
+      - Currency Exchange Saga: обмен валют → проверка баланса → обновление курсов
+    consistency:
+      strong_consistency: |
+        Критичные операции требуют Strong Consistency:
+        - Торговые операции (инициация, завершение, отмена)
+        - Операции с гильдиями (создание, вступление)
+        - Обмен валют
+      eventual_consistency: |
+        Не критичные операции допускают Eventual Consistency:
+        - Обзор экономики
+        - Статистика гильдий
+        - Влияние на мир (обновляется периодически)
+
+  tick_rate_and_network_load:
+    trading_operations:
+      tick_rate: on-demand
+      protocol: WebSocket (TCP)
+      latency: <100ms
+      bandwidth: ~1-5 KB per operation
+      optimization: |
+        - Кэширование статуса торговых сессий
+        - Батчинг обновлений инвентаря
+    guild_operations:
+      tick_rate: on-demand
+      protocol: WebSocket (TCP)
+      latency: <100ms
+      bandwidth: ~1-3 KB per operation
+      optimization: |
+        - Кэширование структуры гильдий
+        - Ленивая загрузка членов гильдии
+    currency_updates:
+      tick_rate: 1-5 Hz (зависит от волатильности)
+      protocol: WebSocket (TCP)
+      latency: <200ms
+      bandwidth: ~0.5-1 KB per update
+      optimization: |
+        - Агрегация обновлений курсов
+        - Кэширование курсов валют
+    world_impact_updates:
+      tick_rate: 0.1-1 Hz (периодические обновления)
+      protocol: WebSocket (TCP)
+      latency: <500ms
+      bandwidth: ~2-5 KB per update
+      optimization: |
+        - Периодические обновления влияния
+        - Кэширование данных влияния
+
+  data_flows:
+    trade_flow: |
+      1. Инициация торговли: Client → economy-service → проверка инвентаря → блокировка предметов
+      2. Принятие торговли: Client → economy-service → проверка балансов → обмен предметами
+      3. Завершение торговли: economy-service → обновление инвентарей → обновление балансов → события
+    guild_flow: |
+      1. Создание гильдии: Client → economy-service → проверка требований → создание структуры
+      2. Вступление в гильдию: Client → economy-service → проверка условий → добавление члена
+      3. Обновление гильдии: economy-service → обновление структуры → события
+    currency_flow: |
+      1. Обмен валют: Client → economy-service → проверка баланса → обновление курсов → обмен
+      2. Обновление курсов: economy-service → расчет курсов → обновление кэша → события
+    world_impact_flow: |
+      1. Расчет влияния: economy-service → анализ экономических данных → расчет влияния
+      2. Обновление влияния: economy-service → обновление данных → события → world-service
+
+  integrations:
+    with_social_service: |
+      - Получение репутации игроков для торговли
+      - Интеграция с системой гильдий
+      - Влияние экономики на репутацию фракций
+    with_world_service: |
+      - Влияние экономики на регионы
+      - Триггеры мировых событий
+      - Обновление состояния мира
+    with_wallet_service: |
+      - Проверка балансов для торговли
+      - Обновление балансов после операций
+      - Управление валютами
+    with_inventory_service: |
+      - Проверка наличия предметов
+      - Блокировка предметов для торговли
+      - Обновление инвентарей после операций
+
+database:
+  tables:
+    - name: economy_overview
+      description: Обзор экономической системы
+      columns:
+        - id: UUID PRIMARY KEY
+        - region_id: UUID REFERENCES regions(id)
+        - currency_id: UUID REFERENCES currencies(id)
+        - total_volume: DECIMAL(20,2)
+        - active_trades: INTEGER
+        - active_guilds: INTEGER
+        - updated_at: TIMESTAMP
+    - name: trade_sessions
+      description: Торговые сессии
+      columns:
+        - id: UUID PRIMARY KEY
+        - initiator_id: UUID REFERENCES characters(id)
+        - target_id: UUID REFERENCES characters(id)
+        - status: VARCHAR(20) (pending, active, completed, cancelled)
+        - created_at: TIMESTAMP
+        - completed_at: TIMESTAMP
+    - name: trade_items
+      description: Предметы в торговой сессии
+      columns:
+        - id: UUID PRIMARY KEY
+        - session_id: UUID REFERENCES trade_sessions(id)
+        - character_id: UUID REFERENCES characters(id)
+        - item_id: UUID REFERENCES items(id)
+        - quantity: INTEGER
+    - name: trading_guilds
+      description: Торговые гильдии
+      columns:
+        - id: UUID PRIMARY KEY
+        - name: VARCHAR(100)
+        - leader_id: UUID REFERENCES characters(id)
+        - capital: DECIMAL(20,2)
+        - member_count: INTEGER
+        - created_at: TIMESTAMP
+    - name: guild_members
+      description: Члены торговых гильдий
+      columns:
+        - id: UUID PRIMARY KEY
+        - guild_id: UUID REFERENCES trading_guilds(id)
+        - character_id: UUID REFERENCES characters(id)
+        - role: VARCHAR(20) (member, officer, leader)
+        - joined_at: TIMESTAMP
+    - name: currencies
+      description: Валюты
+      columns:
+        - id: UUID PRIMARY KEY
+        - code: VARCHAR(10) UNIQUE
+        - name: VARCHAR(100)
+        - region_id: UUID REFERENCES regions(id)
+        - exchange_rate: DECIMAL(20,8)
+        - updated_at: TIMESTAMP
+    - name: resources
+      description: Ресурсы
+      columns:
+        - id: UUID PRIMARY KEY
+        - name: VARCHAR(100)
+        - category: VARCHAR(50)
+        - base_price: DECIMAL(20,2)
+        - current_price: DECIMAL(20,2)
+        - updated_at: TIMESTAMP
+    - name: world_economy_impact
+      description: Влияние экономики на мир
+      columns:
+        - id: UUID PRIMARY KEY
+        - region_id: UUID REFERENCES regions(id)
+        - faction_id: UUID REFERENCES factions(id)
+        - economic_power: DECIMAL(20,2)
+        - trade_volume: DECIMAL(20,2)
+        - influence_level: INTEGER
+        - updated_at: TIMESTAMP
+
+  indexes:
+    - table: trade_sessions
+      columns: [initiator_id, target_id, status]
+    - table: trade_items
+      columns: [session_id, character_id]
+    - table: trading_guilds
+      columns: [leader_id]
+    - table: guild_members
+      columns: [guild_id, character_id]
+    - table: currencies
+      columns: [code, region_id]
+    - table: resources
+      columns: [category, name]
+    - table: world_economy_impact
+      columns: [region_id, faction_id]
+
+subtasks:
+  - id: economy-overview-manager
+    title: Economy Overview Manager
+    description: Управление обзором экономической системы
+    effort_days: 3
+    dependencies: []
+  - id: basic-trading-system
+    title: Basic Trading System
+    description: Базовая P2P торговля между игроками
+    effort_days: 5
+    dependencies: [economy-overview-manager]
+  - id: trading-guilds-system
+    title: Trading Guilds System
+    description: Система торговых гильдий
+    effort_days: 5
+    dependencies: [basic-trading-system]
+  - id: currencies-resources-manager
+    title: Currencies & Resources Manager
+    description: Управление валютами и ресурсами
+    effort_days: 4
+    dependencies: [economy-overview-manager]
+  - id: world-impact-system
+    title: World Impact System
+    description: Система влияния экономики на мир
+    effort_days: 4
+    dependencies: [trading-guilds-system, currencies-resources-manager]
+  - id: trade-integration
+    title: Trade Integration
+    description: Интеграция торговли с другими системами
+    effort_days: 3
+    dependencies: [basic-trading-system]
+  - id: guild-integration
+    title: Guild Integration
+    description: Интеграция гильдий с социальными системами
+    effort_days: 3
+    dependencies: [trading-guilds-system]
+  - id: currency-integration
+    title: Currency Integration
+    description: Интеграция валют с кошельком и биржей
+    effort_days: 3
+    dependencies: [currencies-resources-manager]
+  - id: world-impact-integration
+    title: World Impact Integration
+    description: Интеграция влияния с мировыми событиями
+    effort_days: 3
+    dependencies: [world-impact-system]
+
+total_estimated_effort: 33 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            EOM[Economy Overview Manager]
+            BTS[Basic Trading System]
+            TGS[Trading Guilds System]
+            CRM[Currencies & Resources Manager]
+            WIS[World Impact System]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>economy_overview<br/>trade_sessions<br/>trading_guilds<br/>currencies<br/>resources<br/>world_economy_impact)]
+        end
+
+        subgraph "External Services"
+            SS[Social Service]
+            WS[World Service]
+            WLS[Wallet Service]
+            IS[Inventory Service]
+            RG[Realtime Gateway]
+            EB[Event Bus]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| EOM
+        CL -->|API requests| BTS
+        CL -->|API requests| TGS
+        CL -->|API requests| CRM
+        CL -->|API requests| WIS
+
+        EOM -->|store| DB
+        BTS -->|store| DB
+        TGS -->|store| DB
+        CRM -->|store| DB
+        WIS -->|store| DB
+
+        BTS -->|check inventory| IS
+        BTS -->|check balance| WLS
+        TGS -->|get reputation| SS
+        WIS -->|update world| WS
+        CRM -->|update balance| WLS
+
+        EOM -->|events| EB
+        BTS -->|events| EB
+        TGS -->|events| EB
+        CRM -->|events| EB
+        WIS -->|events| EB
+
+        EB -->|push| RG
+        RG -->|updates| CL
+    ```
+
