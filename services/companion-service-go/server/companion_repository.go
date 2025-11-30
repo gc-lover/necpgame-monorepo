@@ -1,3 +1,4 @@
+// Issue: #141886640
 package server
 
 import (
@@ -46,13 +47,19 @@ func (r *CompanionRepository) GetCompanionType(ctx context.Context, companionTyp
 	}
 
 	if len(statsJSON) > 0 {
-		json.Unmarshal(statsJSON, &companionType.Stats)
+		if err := json.Unmarshal(statsJSON, &companionType.Stats); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal stats JSON")
+			return nil, err
+		}
 	} else {
 		companionType.Stats = make(map[string]interface{})
 	}
 
 	if len(abilitiesJSON) > 0 {
-		json.Unmarshal(abilitiesJSON, &companionType.Abilities)
+		if err := json.Unmarshal(abilitiesJSON, &companionType.Abilities); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal abilities JSON")
+			return nil, err
+		}
 	} else {
 		companionType.Abilities = []string{}
 	}
@@ -102,13 +109,19 @@ func (r *CompanionRepository) ListCompanionTypes(ctx context.Context, category *
 		}
 
 		if len(statsJSON) > 0 {
-			json.Unmarshal(statsJSON, &companionType.Stats)
+			if err := json.Unmarshal(statsJSON, &companionType.Stats); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal stats JSON")
+				return nil, err
+			}
 		} else {
 			companionType.Stats = make(map[string]interface{})
 		}
 
 		if len(abilitiesJSON) > 0 {
-			json.Unmarshal(abilitiesJSON, &companionType.Abilities)
+			if err := json.Unmarshal(abilitiesJSON, &companionType.Abilities); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal abilities JSON")
+				return nil, err
+			}
 		} else {
 			companionType.Abilities = []string{}
 		}
@@ -137,8 +150,16 @@ func (r *CompanionRepository) CountCompanionTypes(ctx context.Context, category 
 }
 
 func (r *CompanionRepository) CreatePlayerCompanion(ctx context.Context, companion *models.PlayerCompanion) error {
-	equipmentJSON, _ := json.Marshal(companion.Equipment)
-	statsJSON, _ := json.Marshal(companion.Stats)
+	equipmentJSON, err := json.Marshal(companion.Equipment)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal equipment JSON")
+		return err
+	}
+	statsJSON, err := json.Marshal(companion.Stats)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal stats JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO gameplay.player_companions (
@@ -148,7 +169,7 @@ func (r *CompanionRepository) CreatePlayerCompanion(ctx context.Context, compani
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()
 		) RETURNING id, created_at, updated_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		companion.CharacterID, companion.CompanionTypeID, companion.CustomName,
 		companion.Level, companion.Experience, companion.Status,
 		equipmentJSON, statsJSON, companion.SummonedAt,
@@ -182,13 +203,19 @@ func (r *CompanionRepository) GetPlayerCompanion(ctx context.Context, companionI
 	}
 
 	if len(equipmentJSON) > 0 {
-		json.Unmarshal(equipmentJSON, &companion.Equipment)
+		if err := json.Unmarshal(equipmentJSON, &companion.Equipment); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal equipment JSON")
+			return nil, err
+		}
 	} else {
 		companion.Equipment = make(map[string]interface{})
 	}
 
 	if len(statsJSON) > 0 {
-		json.Unmarshal(statsJSON, &companion.Stats)
+		if err := json.Unmarshal(statsJSON, &companion.Stats); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal stats JSON")
+			return nil, err
+		}
 	} else {
 		companion.Stats = make(map[string]interface{})
 	}
@@ -222,13 +249,19 @@ func (r *CompanionRepository) GetActiveCompanion(ctx context.Context, characterI
 	}
 
 	if len(equipmentJSON) > 0 {
-		json.Unmarshal(equipmentJSON, &companion.Equipment)
+		if err := json.Unmarshal(equipmentJSON, &companion.Equipment); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal equipment JSON")
+			return nil, err
+		}
 	} else {
 		companion.Equipment = make(map[string]interface{})
 	}
 
 	if len(statsJSON) > 0 {
-		json.Unmarshal(statsJSON, &companion.Stats)
+		if err := json.Unmarshal(statsJSON, &companion.Stats); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal stats JSON")
+			return nil, err
+		}
 	} else {
 		companion.Stats = make(map[string]interface{})
 	}
@@ -237,8 +270,16 @@ func (r *CompanionRepository) GetActiveCompanion(ctx context.Context, characterI
 }
 
 func (r *CompanionRepository) UpdatePlayerCompanion(ctx context.Context, companion *models.PlayerCompanion) error {
-	equipmentJSON, _ := json.Marshal(companion.Equipment)
-	statsJSON, _ := json.Marshal(companion.Stats)
+	equipmentJSON, err := json.Marshal(companion.Equipment)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal equipment JSON")
+		return err
+	}
+	statsJSON, err := json.Marshal(companion.Stats)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal stats JSON")
+		return err
+	}
 
 	query := `
 		UPDATE gameplay.player_companions
@@ -246,7 +287,7 @@ func (r *CompanionRepository) UpdatePlayerCompanion(ctx context.Context, compani
 		    equipment = $5, stats = $6, summoned_at = $7, updated_at = NOW()
 		WHERE id = $8`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		companion.CustomName, companion.Level, companion.Experience,
 		companion.Status, equipmentJSON, statsJSON, companion.SummonedAt,
 		companion.ID,

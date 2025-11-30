@@ -1,0 +1,136 @@
+# Issue: #323
+metadata:
+  id: announcement-core
+  title: Архитектура системы объявлений - Основная структура
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - live-ops
+    - communications
+    - announcements
+  related_systems:
+    - announcement-service
+    - notification-service
+    - admin-api
+    - player-service
+  related_documents:
+    - id: backend-announcement-system
+      relation: implements
+    - id: announcement-mechanics
+      relation: extends
+    - id: announcement-data-flows
+      relation: extends
+    - id: announcement-database
+      relation: extends
+    - id: announcement-integrations
+      relation: extends
+    - id: announcement-technical
+      relation: extends
+  github_issue: 323
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - live-ops
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную архитектуру системы объявлений, включающую:
+    - Управление новостями, патчноутами, событиями
+    - Систему публикации объявлений
+    - Систему доставки объявлений (много канальная)
+    - Систему таргетинга
+    - Систему учёта прочтений
+    - Интеграции с уведомлениями и админ-панелью
+  goal: |
+    Создать архитектурную схему системы объявлений с определением:
+    - Компонентов для управления объявлениями
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы объявлений с поддержкой публикации, доставки,
+    таргетинга и учёта прочтений.
+
+architecture:
+  overview: |
+    Архитектура системы объявлений состоит из следующих компонентов:
+    1. Announcement Manager - управление системой объявлений
+    2. Announcement Publisher - публикация объявлений
+    3. Announcement Scheduler - планирование публикации
+    4. Announcement Delivery Manager - управление доставкой
+    5. Announcement Targeting Manager - управление таргетингом
+    6. Announcement Read Tracker - учёт прочтений
+    7. Patch Notes Manager - управление патчноутами
+    8. News Feed Manager - управление новостной лентой
+    9. Announcement Analytics Collector - сбор аналитики
+    10. Announcement Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: announcement-service
+      port: 8094
+      responsibility: |
+        Обработка системы объявлений:
+        - Управление системой объявлений
+        - Публикация объявлений
+        - Планирование публикации
+        - Управление доставкой
+        - Управление таргетингом
+        - Учёт прочтений
+        - Управление патчноутами
+        - Управление новостной лентой
+        - Сбор аналитики
+        - Сбор телеметрии
+      components:
+        - announcement-manager: управление системой объявлений
+        - announcement-publisher: публикация объявлений
+        - announcement-scheduler: планирование публикации
+        - announcement-delivery-manager: управление доставкой
+        - announcement-targeting-manager: управление таргетингом
+        - announcement-read-tracker: учёт прочтений
+        - patch-notes-manager: управление патчноутами
+        - news-feed-manager: управление новостной лентой
+        - announcement-analytics-collector: сбор аналитики
+        - announcement-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/announcements - список объявлений
+        - GET /api/v1/announcements/{announcementId} - информация об объявлении
+        - POST /api/v1/announcements - создание объявления
+        - PUT /api/v1/announcements/{announcementId} - обновление объявления
+        - DELETE /api/v1/announcements/{announcementId} - удаление объявления
+        - POST /api/v1/announcements/{announcementId}/publish - публикация объявления
+        - POST /api/v1/announcements/{announcementId}/schedule - планирование публикации
+        - GET /api/v1/announcements/{characterId}/feed - новостная лента персонажа
+        - GET /api/v1/announcements/{characterId}/unread - непрочитанные объявления
+        - POST /api/v1/announcements/{announcementId}/read - отметка о прочтении
+        - GET /api/v1/announcements/patch-notes - список патчноутов
+        - GET /api/v1/announcements/patch-notes/{version} - патчноут по версии
+        - POST /api/v1/announcements/patch-notes - создание патчноута
+        - GET /api/v1/announcements/{characterId}/stats - статистика объявлений
+      websocket_channels:
+        - wss://api.necp.game/v1/announcements/{characterId} - поток новых объявлений персонажа
+      events_published:
+        - announcement.created: создано объявление
+        - announcement.updated: обновлено объявление
+        - announcement.published: опубликовано объявление
+        - announcement.scheduled: запланировано объявление
+        - announcement.delivered: доставлено объявление
+        - announcement.read: прочитано объявление
+        - announcement.patch-notes-published: опубликован патчноут
+      events_subscribed:
+        - character.created: создан персонаж
+        - character.level-up: повышение уровня персонажа
+        - maintenance.started: начато обслуживание
+        - maintenance.ended: завершено обслуживание
+        - event.started: начато событие
+        - event.ended: завершено событие
+

@@ -1,0 +1,140 @@
+# Issue: #334
+metadata:
+  id: support-ticket-core
+  title: Архитектура системы тикетов поддержки - Основная структура
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:35:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - operations
+    - support
+    - tickets
+  related_systems:
+    - support-service
+    - notification-service
+    - accounts-service
+    - analytics-service
+  related_documents:
+    - id: support-ticket-system
+      relation: implements
+    - id: support-ticket-mechanics
+      relation: extends
+    - id: support-ticket-data-flows
+      relation: extends
+    - id: support-ticket-database
+      relation: extends
+    - id: support-ticket-integrations
+      relation: extends
+    - id: support-ticket-technical
+      relation: extends
+  github_issue: 334
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - operations
+    - support
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную архитектуру системы тикетов поддержки, включающую:
+    - Обработку обращений игроков
+    - Контроль приоритетов и SLA
+    - Очереди агентов
+    - Автокатегоризацию
+    - Уведомления
+    - Мониторинг SLA
+  goal: |
+    Создать архитектурную схему системы тикетов поддержки с определением:
+    - Компонентов для управления тикетами
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы тикетов поддержки с поддержкой создания тикетов,
+    автокатегоризации, назначения приоритетов, очередей агентов и SLA мониторинга.
+
+architecture:
+  overview: |
+    Архитектура системы тикетов поддержки состоит из следующих компонентов:
+    1. Support Ticket Manager - управление системой тикетов
+    2. Ticket Creator - создание тикетов
+    3. Auto Categorization Engine - автокатегоризация тикетов
+    4. Priority Assignment Engine - назначение приоритетов
+    5. Agent Queue Manager - управление очередями агентов
+    6. SLA Monitor - мониторинг SLA
+    7. Ticket Response Manager - управление ответами
+    8. Ticket Status Manager - управление статусами
+    9. Support Analytics Collector - сбор аналитики
+    10. Support Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: support-service
+      port: 8095
+      responsibility: |
+        Обработка системы тикетов поддержки:
+        - Управление системой тикетов
+        - Создание тикетов
+        - Автокатегоризация тикетов
+        - Назначение приоритетов
+        - Управление очередями агентов
+        - Мониторинг SLA
+        - Управление ответами
+        - Управление статусами
+        - Сбор аналитики
+        - Сбор телеметрии
+      components:
+        - support-ticket-manager: управление системой тикетов
+        - ticket-creator: создание тикетов
+        - auto-categorization-engine: автокатегоризация тикетов
+        - priority-assignment-engine: назначение приоритетов
+        - agent-queue-manager: управление очередями агентов
+        - sla-monitor: мониторинг SLA
+        - ticket-response-manager: управление ответами
+        - ticket-status-manager: управление статусами
+        - support-analytics-collector: сбор аналитики
+        - support-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/support/tickets - список тикетов
+        - GET /api/v1/support/tickets/{ticketId} - информация о тикете
+        - POST /api/v1/support/tickets - создание тикета
+        - PUT /api/v1/support/tickets/{ticketId} - обновление тикета
+        - DELETE /api/v1/support/tickets/{ticketId} - удаление тикета
+        - POST /api/v1/support/tickets/{ticketId}/assign - назначение агента
+        - POST /api/v1/support/tickets/{ticketId}/status - изменение статуса
+        - POST /api/v1/support/tickets/{ticketId}/priority - изменение приоритета
+        - GET /api/v1/support/tickets/{characterId}/my-tickets - тикеты персонажа
+        - GET /api/v1/support/tickets/{agentId}/assigned - назначенные тикеты агента
+        - GET /api/v1/support/tickets/queue - очередь тикетов
+        - POST /api/v1/support/tickets/{ticketId}/responses - добавление ответа
+        - GET /api/v1/support/tickets/{ticketId}/responses - список ответов
+        - POST /api/v1/support/tickets/{ticketId}/rate - оценка тикета
+        - GET /api/v1/support/tickets/{ticketId}/sla - информация о SLA
+        - GET /api/v1/support/tickets/stats - статистика тикетов
+      websocket_channels:
+        - wss://api.necp.game/v1/support/tickets/{ticketId} - поток обновлений тикета
+        - wss://api.necp.game/v1/support/agents/{agentId}/queue - поток очереди агента
+      events_published:
+        - support.ticket.created: создан тикет
+        - support.ticket.updated: обновлен тикет
+        - support.ticket.assigned: назначен агент
+        - support.ticket.status-changed: изменен статус
+        - support.ticket.priority-changed: изменен приоритет
+        - support.ticket.response-added: добавлен ответ
+        - support.ticket.rated: оценен тикет
+        - support.ticket.sla-warning: предупреждение SLA
+        - support.ticket.sla-breach: нарушение SLA
+      events_subscribed:
+        - character.created: создан персонаж
+        - character.banned: забанен персонаж
+        - payment.failed: неудачный платеж
+        - bug.reported: сообщен баг
+

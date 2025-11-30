@@ -1,0 +1,121 @@
+# Issue: #338
+metadata:
+  id: voice-lobby-mechanics
+  title: Архитектура системы голосовых лобби - Механики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:40:00Z
+  github_issue: 338
+  related_documents:
+    - id: voice-lobby-core
+      relation: extends
+
+lobby_types:
+  - name: activity
+    description: "Активность - для игровых активностей"
+    max_participants: 8
+    max_subchannels: 4
+    permissions: ["leader", "member"]
+
+  - name: clan
+    description: "Клан - для клановых лобби"
+    max_participants: 50
+    max_subchannels: 10
+    permissions: ["leader", "officer", "member"]
+
+  - name: guild
+    description: "Гильдия - для гильдийных лобби"
+    max_participants: 100
+    max_subchannels: 20
+    permissions: ["leader", "officer", "member"]
+
+  - name: raid
+    description: "Рейд - для рейдовых лобби"
+    max_participants: 24
+    max_subchannels: 6
+    permissions: ["leader", "commander", "party_leader", "member"]
+
+  - name: tournament
+    description: "Турнир - для турнирных лобби"
+    max_participants: 16
+    max_subchannels: 4
+    permissions: ["leader", "commander", "member"]
+
+subchannel_types:
+  - name: main
+    description: "Основной канал - главный канал лобби"
+    max_participants: null
+    auto_create: true
+
+  - name: role_based
+    description: "Ролевой канал - для определенных ролей"
+    max_participants: null
+    auto_create: false
+
+  - name: commander
+    description: "Командирский канал - для командиров"
+    max_participants: 8
+    auto_create: false
+
+  - name: party
+    description: "Групповой канал - для групп"
+    max_participants: 8
+    auto_create: false
+
+permissions:
+  roles:
+    - name: leader
+      description: "Лидер - полный контроль"
+      permissions: ["manage_lobby", "manage_subchannels", "manage_permissions", "kick", "mute", "move"]
+
+    - name: commander
+      description: "Командир - управление рейдом"
+      permissions: ["manage_subchannels", "kick", "mute", "move"]
+
+    - name: party_leader
+      description: "Лидер группы - управление группой"
+      permissions: ["manage_subchannels", "kick", "mute", "move"]
+
+    - name: officer
+      description: "Офицер - модерация"
+      permissions: ["kick", "mute", "move"]
+
+    - name: member
+      description: "Участник - базовые права"
+      permissions: ["speak", "listen"]
+
+  actions:
+    - manage_lobby: "управление лобби"
+    - manage_subchannels: "управление подканалами"
+    - manage_permissions: "управление правами"
+    - kick: "исключение участника"
+    - mute: "отключение микрофона"
+    - move: "перемещение в подканал"
+    - speak: "говорить"
+    - listen: "слушать"
+
+party_finder:
+  search_criteria:
+    - role: "роль игрока"
+    - rating: "рейтинг игрока"
+    - activity: "активность"
+    - region: "регион"
+    - language: "язык"
+    - min_level: "минимальный уровень"
+    - max_level: "максимальный уровень"
+
+  matching_algorithm:
+    - role_matching: "совпадение ролей"
+    - rating_range: "диапазон рейтинга (±100)"
+    - region_preference: "предпочтение региона"
+    - language_preference: "предпочтение языка"
+    - level_range: "диапазон уровней (±5)"
+
+  search_states:
+    - searching: "поиск активен"
+    - found: "группа найдена"
+    - cancelled: "поиск отменен"
+    - timeout: "таймаут поиска"
+

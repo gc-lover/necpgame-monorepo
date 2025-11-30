@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T05:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:45:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -263,6 +263,114 @@ architecture:
       - Синхронизация состояния персонажа
       - Уведомления о событиях
       - Обновления в реальном времени
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций (создание персонажа, удаление, переключение)
+    mechanisms:
+      - ACID транзакции для создания персонажей, удаления и переключения
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении персонажей
+      - Валидация перед созданием персонажа и переключением
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание персонажа, удаление, переключение, покупка слотов)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния персонажей (создание, удаление, восстановление, переключение, обновление статов)
+      записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: CharacterCreatedEvent, CharacterDeletedEvent, CharacterRestoredEvent, CharacterSwitchedEvent, CharacterStatsRecalculatedEvent.
+    cqrs_pattern: |
+      Разделение команд (создание персонажей, удаление, переключение, пересчёт статов) и запросов
+      (получение списка персонажей, получение информации о персонаже, получение слотов) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как создание персонажа (создание, выдача стартовых ресурсов,
+      создание инвентаря, выдача начальных квестов, уведомление игрока) или удаление персонажа (создание снапшота,
+      установка флага deleted, освобождение слота, очистка состояния в других сервисах), используется Saga Pattern
+      для обеспечения атомарности операций между Character Service, Inventory Service, Quest Service, Economy Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    character_creation_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание персонажа: event-based, ~0.01-0.1 events/sec на игрока
+        - Проверка имени: event-based, ~0.01-0.05 requests/sec на игрока
+        - Получение доступных слотов: event-based, ~0.001-0.01 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций создания
+      latency_requirements: < 500-1000ms для создания персонажа (включая интеграции), < 30-100ms для проверки имени
+      sync_strategy: Strong Consistency (ACID транзакции) для создания персонажей
+
+    character_deletion_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Удаление персонажа: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение статуса удаления: event-based, ~0.001-0.01 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec для операций удаления
+      latency_requirements: < 300-500ms для удаления персонажа (включая создание снапшота)
+      sync_strategy: Strong Consistency (ACID транзакции) для удаления персонажей
+
+    character_restoration_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Восстановление персонажа: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение списка удалённых: event-based, ~0.001-0.01 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec для операций восстановления
+      latency_requirements: < 300-500ms для восстановления персонажа (включая восстановление состояния)
+      sync_strategy: Strong Consistency (ACID транзакции) для восстановления персонажей
+
+    character_switching_operations:
+      tickrate: Event-based (on-demand при переключении) + 1-5 Hz для обновления сессии
+      network_load: |
+        - Переключение персонажа: event-based, ~0.01-0.1 events/sec на игрока
+        - Получение текущего персонажа: event-based, ~0.01-0.05 requests/sec на игрока
+        - Обновление сессии: 1-5 Hz, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec для операций переключения
+      latency_requirements: < 200-400ms для переключения персонажа (включая загрузку инвентаря и квестов)
+      sync_strategy: Strong Consistency (ACID транзакции) для переключения персонажей
+
+    slot_management_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Получение информации о слотах: event-based, ~0.001-0.01 requests/sec на игрока
+        - Покупка слота: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение доступных слотов: event-based, ~0.001-0.01 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec для операций слотов
+      latency_requirements: < 200-300ms для покупки слота, < 30-100ms для получения информации
+      sync_strategy: Strong Consistency (ACID транзакции) для покупки слотов
+
+    stats_recalculation_operations:
+      tickrate: Event-based (on-demand при изменении) + 1-5 Hz для периодического пересчёта
+      network_load: |
+        - Пересчёт статов: event-based, ~0.01-0.1 events/sec на персонажа
+        - Получение текущих статов: event-based, ~0.01-0.05 requests/sec на игрока
+        - Периодический пересчёт: 1-5 Hz, ~0.01-0.05 events/sec на персонажа
+        - Общий трафик: ~0.1-0.3 KB/sec для операций пересчёта статов
+      latency_requirements: < 50-100ms для пересчёта статов, < 30-100ms для получения статов
+      sync_strategy: Eventual Consistency для пересчёта статов (кэширование результатов)
+
+    state_management_operations:
+      tickrate: Event-based (on-demand при сохранении/загрузке) + 1-10 Hz для автосохранения
+      network_load: |
+        - Сохранение состояния: event-based, ~0.01-0.1 events/sec на персонажа
+        - Загрузка состояния: event-based, ~0.01-0.05 requests/sec на игрока
+        - Создание снапшота: event-based, ~0.001-0.01 events/sec на персонажа
+        - Автосохранение: 1-10 Hz, ~0.01-0.05 events/sec на персонажа
+        - Общий трафик: ~0.2-0.5 KB/sec для операций управления состоянием
+      latency_requirements: < 200-400ms для сохранения состояния, < 100-200ms для загрузки
+      sync_strategy: Strong Consistency (ACID транзакции) для сохранения состояния
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий персонажей: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_schema:
     tables:
@@ -561,6 +669,17 @@ next_steps:
   - Определение формата данных персонажей и слотов
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния персонажей
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание персонажа, удаление, переключение, покупка слотов)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для создания, удаления, восстановления, переключения, управления слотами, пересчёта статов, управления состоянием и обработки событий
   - version: '1.0.0'
     date: 2025-11-23
     author: Architect Agent

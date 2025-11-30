@@ -1,0 +1,164 @@
+# Issue: #323
+metadata:
+  id: announcement-data-flows
+  title: Архитектура системы объявлений - Потоки данных и синхронизация
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:30:00Z
+  github_issue: 323
+  related_documents:
+    - id: announcement-core
+      relation: extends
+
+data_flows:
+  publication_flow: |
+    1. Администратор создает объявление через Admin API
+    2. Announcement Publisher сохраняет объявление в БД
+    3. Announcement Targeting Manager настраивает таргетинг
+    4. Announcement Scheduler планирует публикацию (если запланировано)
+    5. Announcement Publisher публикует объявление
+    6. Announcement Delivery Manager определяет целевую аудиторию
+    7. Announcement Delivery Manager доставляет объявление через каналы
+    8. Announcement Service публикует событие announcement.published
+    9. Notification Service отправляет уведомления
+    10. Realtime Gateway отправляет обновление клиентам
+
+  delivery_flow: |
+    1. Объявление опубликовано или запланировано
+    2. Announcement Delivery Manager получает список целевой аудитории
+    3. Announcement Targeting Manager фильтрует аудиторию по критериям
+    4. Announcement Delivery Manager выбирает каналы доставки
+    5. Announcement Delivery Manager доставляет через in-game канал
+    6. Notification Service доставляет через push/email каналы
+    7. Announcement Read Tracker отслеживает доставку
+    8. Announcement Service публикует событие announcement.delivered
+    9. Realtime Gateway отправляет обновление клиентам
+
+  read_tracking_flow: |
+    1. Игрок видит объявление в клиенте
+    2. Клиент отправляет событие displayed
+    3. Announcement Read Tracker фиксирует отображение
+    4. Игрок читает объявление
+    5. Клиент отправляет событие read
+    6. Announcement Read Tracker фиксирует прочтение
+    7. Announcement Service публикует событие announcement.read
+    8. Analytics Service собирает метрики
+
+data_consistency:
+  strategy: Strong Consistency (ACID транзакции) для критичных операций (создание, публикация объявлений)
+  mechanisms:
+    - ACID транзакции для создания объявлений, публикации и планирования
+    - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении объявлений
+    - Валидация перед публикацией объявлений
+    - Синхронизация с другими сервисами через Event Bus
+    - Outbox Pattern для гарантированной доставки событий
+    - Saga Pattern для распределенных операций (публикация объявлений, доставка, отслеживание прочтений)
+
+data_synchronization:
+  event_sourcing: |
+    Все изменения состояния объявлений (создание, обновление, публикация, доставка, прочтение)
+    записываются как события в Event Store.
+    Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+    Примеры событий: AnnouncementCreatedEvent, AnnouncementPublishedEvent, AnnouncementDeliveredEvent, AnnouncementReadEvent.
+  cqrs_pattern: |
+    Разделение команд (создание объявлений, публикация, планирование) и запросов
+    (получение списка объявлений, получение новостной ленты, получение статистики) для оптимизации производительности
+    и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+  saga_pattern: |
+    Для распределенных транзакций, таких как публикация объявления (публикация, определение целевой аудитории,
+    доставка через каналы, уведомление игроков) или доставка объявления (фильтрация аудитории, выбор каналов,
+    доставка через in-game/push/email, отслеживание доставки), используется Saga Pattern
+    для обеспечения атомарности операций между Announcement Service, Notification Service, Character Service и Realtime Gateway.
+  outbox_pattern: |
+    Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+    который записывает события в транзакционную таблицу перед публикацией.
+
+tickrate_specification:
+  announcement_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Создание объявления: event-based, ~0.001-0.01 events/sec (административные операции)
+      - Получение списка объявлений: event-based, ~0.01-0.05 requests/sec на игрока
+      - Получение новостной ленты: event-based, ~0.01-0.05 requests/sec на игрока
+      - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций объявлений
+    latency_requirements: < 100-200ms для создания объявления, < 30-100ms для получения списка
+    sync_strategy: Strong Consistency (ACID транзакции) для создания объявлений, Eventual Consistency для получения списка
+
+  publication_operations:
+    tickrate: Event-based (on-demand при публикации) + cron-triggered для запланированных объявлений
+    network_load: |
+      - Публикация объявления: event-based, ~0.001-0.01 events/sec
+      - Планирование публикации: event-based, ~0.001-0.01 events/sec
+      - Запланированные публикации: cron-triggered, ~0.001-0.01 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций публикации
+    latency_requirements: < 200-300ms для публикации объявления, < 100-200ms для планирования
+    sync_strategy: Strong Consistency (ACID транзакции) для публикации объявлений
+
+  delivery_operations:
+    tickrate: Event-based (on-demand при публикации) + 1-5 Hz для обновления статуса доставки
+    network_load: |
+      - Доставка объявления: event-based, ~0.01-0.1 events/sec
+      - Обновление статуса доставки: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.2-0.5 KB/sec для операций доставки
+    latency_requirements: < 200-500ms для доставки объявления, < 50-100ms для обновления статуса
+    sync_strategy: Eventual Consistency для доставки объявлений (через Notification Service)
+
+  targeting_operations:
+    tickrate: Event-based (on-demand при публикации)
+    network_load: |
+      - Определение целевой аудитории: event-based, ~0.001-0.01 events/sec
+      - Фильтрация по критериям: event-based, ~0.001-0.01 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций таргетинга
+    latency_requirements: < 100-300ms для определения целевой аудитории
+    sync_strategy: Eventual Consistency для таргетинга (кэширование результатов)
+
+  read_tracking_operations:
+    tickrate: Event-based (on-demand при взаимодействии) + 1-5 Hz для обновления статистики
+    network_load: |
+      - Отметка о прочтении: event-based, ~0.01-0.1 events/sec на игрока
+      - Отслеживание взаимодействий: event-based, ~0.01-0.05 events/sec на игрока
+      - Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций отслеживания
+    latency_requirements: < 50-100ms для отметки о прочтении, < 30-100ms для обновления статистики
+    sync_strategy: Eventual Consistency для отслеживания прочтений (батчинг событий)
+
+  feed_operations:
+    tickrate: Event-based (on-demand) + 1-5 Hz для обновления новостной ленты
+    network_load: |
+      - Получение новостной ленты: event-based, ~0.01-0.05 requests/sec на игрока
+      - Обновление новостной ленты: 1-5 Hz, ~0.01-0.05 events/sec на игрока
+      - Получение непрочитанных: event-based, ~0.01-0.02 requests/sec на игрока
+      - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций новостной ленты
+    latency_requirements: < 30-100ms для получения новостной ленты, < 50-100ms для обновления
+    sync_strategy: Eventual Consistency для новостной ленты (кэширование в Redis)
+
+  patch_notes_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Получение списка патчноутов: event-based, ~0.001-0.01 requests/sec на игрока
+      - Получение патчноута по версии: event-based, ~0.001-0.01 requests/sec на игрока
+      - Создание патчноута: event-based, ~0.001-0.01 events/sec (административные операции)
+      - Общий трафик: ~0.1-0.3 KB/sec для операций патчноутов
+    latency_requirements: < 30-100ms для получения патчноутов, < 100-200ms для создания
+    sync_strategy: Strong Consistency (ACID транзакции) для создания патчноутов, Eventual Consistency для получения
+
+  stats_operations:
+    tickrate: Event-based (on-demand при запросе) + 1-5 Hz для обновления статистики
+    network_load: |
+      - Получение статистики: event-based, ~0.001-0.01 requests/sec на игрока
+      - Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций статистики
+    latency_requirements: < 30-100ms для получения статистики, < 50-100ms для обновления
+    sync_strategy: Eventual Consistency для статистики (кэширование в Redis)
+
+  event_handling:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Публикация событий объявлений: event-based, ~0.1-0.5 events/sec
+      - Подписка на события: event-based, ~0.05-0.2 events/sec
+      - Общий трафик: ~0.2-0.7 KB/sec для событий
+    latency_requirements: < 100-300ms для публикации событий
+    sync_strategy: Eventual Consistency для событий (через Event Bus)
+

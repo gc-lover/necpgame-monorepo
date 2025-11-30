@@ -1,3 +1,4 @@
+// Issue: #141886633, #141886669
 package server
 
 import (
@@ -69,8 +70,12 @@ func (h *CompanionHandlers) GetAvailableCompanions(w http.ResponseWriter, r *htt
 	}
 
 	limit := 50
-	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
-		limit = *params.Limit
+	if params.Limit != nil && *params.Limit > 0 {
+		if *params.Limit > 100 {
+			limit = 100
+		} else {
+			limit = *params.Limit
+		}
 	}
 
 	offset := 0
@@ -107,8 +112,12 @@ func (h *CompanionHandlers) GetOwnedCompanions(w http.ResponseWriter, r *http.Re
 	var status *models.CompanionStatus
 
 	limit := 50
-	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
-		limit = *params.Limit
+	if params.Limit != nil && *params.Limit > 0 {
+		if *params.Limit > 100 {
+			limit = 100
+		} else {
+			limit = *params.Limit
+		}
 	}
 
 	offset := 0
@@ -330,7 +339,9 @@ func (h *CompanionHandlers) GetCompanionAbilities(w http.ResponseWriter, r *http
 func (h *CompanionHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (h *CompanionHandlers) respondError(w http.ResponseWriter, status int, message string) {

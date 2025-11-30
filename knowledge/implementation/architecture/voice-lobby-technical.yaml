@@ -1,0 +1,219 @@
+# Issue: #338
+metadata:
+  id: voice-lobby-technical
+  title: Архитектура системы голосовых лобби - Техническое задание
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:40:00Z
+  github_issue: 338
+  related_documents:
+    - id: voice-lobby-core
+      relation: extends
+
+technical_specification:
+  subtasks:
+    - id: voice-lobby-manager
+      title: Реализация менеджера системы лобби
+      description: |
+        Реализация Voice Lobby Manager с управлением системой лобби
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: lobby-directory-manager
+      title: Реализация менеджера каталога лобби
+      description: |
+        Реализация Lobby Directory Manager с управлением каталогом лобби,
+        поиском и фильтрацией.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 4 days
+
+    - id: party-finder-engine
+      title: Реализация движка подбора групп
+      description: |
+        Реализация Party Finder Engine с подбором групп,
+        алгоритмом совпадений и управлением очередью.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 5 days
+
+    - id: subchannel-controller
+      title: Реализация контроллера подканалов
+      description: |
+        Реализация Subchannel Controller с управлением подканалами,
+        созданием и перемещением участников.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 4 days
+
+    - id: permissions-engine
+      title: Реализация движка прав доступа
+      description: |
+        Реализация Permissions Engine с управлением правами доступа,
+        проверкой прав и применением ограничений.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 4 days
+
+    - id: lobby-matchmaker
+      title: Реализация подбора лобби
+      description: |
+        Реализация Lobby Matchmaker с подбором лобби,
+        алгоритмом совпадений и управлением очередью.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 4 days
+
+    - id: voice-provider-integrator
+      title: Реализация интегратора голосового провайдера
+      description: |
+        Реализация Voice Provider Integrator с интеграцией голосового провайдера,
+        созданием комнат и управлением участниками.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 5 days
+
+    - id: lobby-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Lobby Analytics Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 3 days
+
+    - id: lobby-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Lobby Telemetry Collector с логированием событий,
+        сбором телеметрии и интеграцией с Analytics Service.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 2 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений лобби,
+        поиска групп и уведомлений.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы лобби.
+      dependencies: [voice-lobby-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для лобби, участников, подканалов,
+        поисков групп и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> VoiceLobbyService[Voice Lobby Service<br/>8096]
+        
+        VoiceLobbyService --> VLM[Voice Lobby Manager]
+        VoiceLobbyService --> LDM[Lobby Directory Manager]
+        VoiceLobbyService --> PFE[Party Finder Engine]
+        VoiceLobbyService --> SC[Subchannel Controller]
+        VoiceLobbyService --> PE[Permissions Engine]
+        VoiceLobbyService --> LM[Lobby Matchmaker]
+        VoiceLobbyService --> VPI[Voice Provider Integrator]
+        VoiceLobbyService --> LAC[Lobby Analytics Collector]
+        VoiceLobbyService --> LTC[Lobby Telemetry Collector]
+        
+        VLM --> LDM
+        VLM --> PFE
+        VLM --> SC
+        VLM --> PE
+        VLM --> LM
+        VLM --> VPI
+        
+        VoiceLobbyService --> VoiceService[Voice Service]
+        VoiceLobbyService --> PartyService[Party Service]
+        VoiceLobbyService --> GuildService[Guild Service]
+        VoiceLobbyService --> ClanService[Clan Service]
+        VoiceLobbyService --> CharacterService[Character Service]
+        VoiceLobbyService --> AnalyticsService[Analytics Service]
+        
+        VoiceLobbyService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        VoiceLobbyService --> DB[(Voice Lobby DB)]
+        
+        Client --> WSLobbies[WebSocket<br/>Lobbies]
+        WSLobbies --> VoiceLobbyService
+    ```
+
+  lobby_creation_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant Player as Player
+        participant VLM as Voice Lobby Manager
+        participant VPI as Voice Provider Integrator
+        participant LDM as Lobby Directory Manager
+        participant EB as Event Bus
+        
+        Player->>VLM: Create lobby
+        VLM->>VLM: Validate data
+        VLM->>VLM: Check limits
+        VLM->>VPI: Create voice room
+        VPI->>VPI: Create room in provider
+        VPI->>VLM: Return room ID
+        VLM->>VLM: Save to DB
+        VLM->>LDM: Add to directory
+        VLM->>EB: Publish voice-lobby.created
+    ```
+
+  party_finder_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant Player as Player
+        participant PFE as Party Finder Engine
+        participant LM as Lobby Matchmaker
+        participant VLM as Voice Lobby Manager
+        participant EB as Event Bus
+        
+        Player->>PFE: Start search
+        PFE->>PFE: Save search criteria
+        PFE->>PFE: Add to queue
+        LM->>LM: Check matches
+        LM->>LM: Find matching lobby
+        LM->>VLM: Join player to lobby
+        VLM->>EB: Publish party-finder.found
+    ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния лобби
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание лобби, присоединение, управление подканалами, Party Finder)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для лобби, присоединения/выхода, подканалов, Party Finder, прав, голосового провайдера, статистики и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы голосовых лобби:
+      - Определены компоненты (Voice Lobby Manager, Lobby Directory Manager, Party Finder Engine, Subchannel Controller, Permissions Engine, Lobby Matchmaker, Voice Provider Integrator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (voice_lobbies, lobby_participants, lobby_subchannels, party_finder_searches, lobby_telemetry)
+      - Спроектирована система лобби
+      - Спроектирована система Party Finder
+      - Спроектирована система управления подканалами
+      - Спроектирована система прав доступа
+      - Создано техническое задание
+      - Разбито на подзадачи
+

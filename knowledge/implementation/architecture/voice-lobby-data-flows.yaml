@@ -1,0 +1,161 @@
+# Issue: #338
+metadata:
+  id: voice-lobby-data-flows
+  title: Архитектура системы голосовых лобби - Потоки данных и синхронизация
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:40:00Z
+  github_issue: 338
+  related_documents:
+    - id: voice-lobby-core
+      relation: extends
+
+data_flows:
+  lobby_creation_flow: |
+    1. Игрок создает лобби через API
+    2. Voice Lobby Manager валидирует данные лобби
+    3. Voice Lobby Manager проверяет лимиты игрока
+    4. Voice Provider Integrator создает голосовую комнату
+    5. Voice Lobby Manager сохраняет лобби в БД
+    6. Lobby Directory Manager добавляет лобби в каталог
+    7. Voice Lobby Manager публикует событие voice-lobby.created
+    8. Realtime Gateway отправляет обновление клиентам
+
+  lobby_join_flow: |
+    1. Игрок присоединяется к лобби через API
+    2. Voice Lobby Manager проверяет доступность лобби
+    3. Permissions Engine проверяет права доступа
+    4. Voice Lobby Manager проверяет лимиты участников
+    5. Voice Provider Integrator добавляет игрока в голосовую комнату
+    6. Voice Lobby Manager добавляет участника в БД
+    7. Voice Lobby Manager публикует событие voice-lobby.joined
+    8. Realtime Gateway отправляет обновление всем участникам
+
+  party_finder_flow: |
+    1. Игрок начинает поиск группы через API
+    2. Party Finder Engine сохраняет критерии поиска
+    3. Party Finder Engine добавляет игрока в очередь поиска
+    4. Lobby Matchmaker периодически проверяет совпадения
+    5. Lobby Matchmaker находит подходящее лобби
+    6. Party Finder Engine присоединяет игрока к лобби
+    7. Voice Lobby Manager публикует событие party-finder.found
+    8. Realtime Gateway отправляет обновление игроку
+
+  subchannel_management_flow: |
+    1. Лидер создает подканал через API
+    2. Subchannel Controller валидирует данные подканала
+    3. Subchannel Controller проверяет лимиты подканалов
+    4. Voice Provider Integrator создает подканал в голосовом провайдере
+    5. Subchannel Controller сохраняет подканал в БД
+    6. Voice Lobby Manager публикует событие voice-lobby.subchannel-created
+    7. Realtime Gateway отправляет обновление всем участникам
+
+data_consistency:
+  strategy: Strong Consistency (ACID транзакции) для критичных операций (создание лобби, присоединение, управление подканалами)
+  mechanisms:
+    - ACID транзакции для создания лобби, присоединения к лобби и управления подканалами
+    - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении лобби
+    - Валидация перед созданием лобби и присоединением
+    - Синхронизация с другими сервисами через Event Bus
+    - Outbox Pattern для гарантированной доставки событий
+    - Saga Pattern для распределенных операций (создание лобби, присоединение, управление подканалами, Party Finder)
+
+data_synchronization:
+  event_sourcing: |
+    Все изменения состояния лобби (создание, обновление, присоединение, выход, создание подканала, перемещение)
+    записываются как события в Event Store.
+    Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+    Примеры событий: VoiceLobbyCreatedEvent, VoiceLobbyJoinedEvent, VoiceLobbySubchannelCreatedEvent.
+  cqrs_pattern: |
+    Разделение команд (создание лобби, присоединение, управление подканалами) и запросов
+    (получение списка лобби, получение участников, получение подканалов) для оптимизации производительности
+    и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+  saga_pattern: |
+    Для распределенных транзакций, таких как создание лобби (создание, интеграция с голосовым провайдером,
+    добавление в каталог, уведомление участников) или присоединение к лобби (проверка прав, добавление участника,
+    интеграция с голосовым провайдером, уведомление участников), используется Saga Pattern
+    для обеспечения атомарности операций между Voice Lobby Service, Voice Service, Party Service и Realtime Gateway.
+  outbox_pattern: |
+    Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+    который записывает события в транзакционную таблицу перед публикацией.
+
+tickrate_specification:
+  lobby_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Создание лобби: event-based, ~0.01-0.1 events/sec
+      - Получение списка лобби: event-based, ~0.01-0.05 requests/sec на игрока
+      - Получение информации о лобби: event-based, ~0.01-0.02 requests/sec на игрока
+      - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций лобби
+    latency_requirements: < 200-300ms для создания лобби, < 30-100ms для получения списка
+    sync_strategy: Strong Consistency (ACID транзакции) для создания лобби, Eventual Consistency для получения списка
+
+  join_leave_operations:
+    tickrate: Event-based (on-demand при присоединении/выходе) + 1-5 Hz для обновления участников
+    network_load: |
+      - Присоединение к лобби: event-based, ~0.01-0.1 events/sec на игрока
+      - Выход из лобби: event-based, ~0.01-0.05 events/sec на игрока
+      - Обновление участников: 1-5 Hz, ~0.01-0.05 events/sec на лобби
+      - Общий трафик: ~0.2-0.5 KB/sec для операций присоединения/выхода
+    latency_requirements: < 200-300ms для присоединения к лобби, < 100-200ms для выхода
+    sync_strategy: Strong Consistency (ACID транзакции) для присоединения/выхода
+
+  subchannel_operations:
+    tickrate: Event-based (on-demand при создании/перемещении) + 1-5 Hz для обновления подканалов
+    network_load: |
+      - Создание подканала: event-based, ~0.001-0.01 events/sec на лобби
+      - Перемещение в подканал: event-based, ~0.01-0.05 events/sec на игрока
+      - Получение списка подканалов: event-based, ~0.01-0.02 requests/sec на игрока
+      - Обновление подканалов: 1-5 Hz, ~0.01-0.05 events/sec на лобби
+      - Общий трафик: ~0.1-0.3 KB/sec для операций подканалов
+    latency_requirements: < 200-300ms для создания подканала, < 100-200ms для перемещения
+    sync_strategy: Strong Consistency (ACID транзакции) для создания подканалов, Eventual Consistency для перемещения
+
+  party_finder_operations:
+    tickrate: Event-based (on-demand при поиске) + 1-10 Hz для проверки совпадений
+    network_load: |
+      - Начало поиска: event-based, ~0.01-0.1 events/sec на игрока
+      - Проверка совпадений: 1-10 Hz, ~0.01-0.1 events/sec
+      - Отмена поиска: event-based, ~0.001-0.01 events/sec на игрока
+      - Общий трафик: ~0.1-0.3 KB/sec для операций Party Finder
+    latency_requirements: < 200-300ms для начала поиска, < 50-100ms для проверки совпадений
+    sync_strategy: Eventual Consistency для Party Finder (кэширование результатов поиска)
+
+  permissions_operations:
+    tickrate: Event-based (on-demand при изменении прав)
+    network_load: |
+      - Изменение прав: event-based, ~0.001-0.01 events/sec на лобби
+      - Получение прав: event-based, ~0.001-0.01 requests/sec на игрока
+      - Общий трафик: ~0.1-0.3 KB/sec для операций прав
+    latency_requirements: < 100-200ms для изменения прав, < 30-100ms для получения прав
+    sync_strategy: Strong Consistency (ACID транзакции) для изменения прав
+
+  voice_provider_operations:
+    tickrate: Event-based (on-demand при создании/обновлении комнаты) + 20-60 Hz для синхронизации состояния
+    network_load: |
+      - Создание голосовой комнаты: event-based, ~0.01-0.1 events/sec
+      - Обновление состояния: 20-60 Hz, ~0.1-0.5 events/sec на лобби
+      - Общий трафик: ~0.5-2 KB/sec для операций голосового провайдера
+    latency_requirements: < 200-500ms для создания комнаты, < 50-100ms для обновления состояния
+    sync_strategy: Eventual Consistency для голосового провайдера (синхронизация через WebRTC)
+
+  stats_operations:
+    tickrate: Event-based (on-demand при запросе) + 1-5 Hz для обновления статистики
+    network_load: |
+      - Получение статистики: event-based, ~0.001-0.01 requests/sec на игрока
+      - Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций статистики
+    latency_requirements: < 30-100ms для получения статистики, < 50-100ms для обновления
+    sync_strategy: Eventual Consistency для статистики (кэширование в Redis)
+
+  event_handling:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Публикация событий лобби: event-based, ~0.1-0.5 events/sec
+      - Подписка на события: event-based, ~0.05-0.2 events/sec
+      - Общий трафик: ~0.2-0.7 KB/sec для событий
+    latency_requirements: < 100-300ms для публикации событий
+    sync_strategy: Eventual Consistency для событий (через Event Bus)
+

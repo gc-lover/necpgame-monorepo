@@ -1,0 +1,141 @@
+# Issue: #338
+metadata:
+  id: voice-lobby-core
+  title: Архитектура системы голосовых лобби - Основная структура
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:40:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - voice-chat
+    - social
+    - party-finder
+  related_systems:
+    - voice-service
+    - party-service
+    - guild-service
+    - clan-service
+  related_documents:
+    - id: backend-voice-lobby-system
+      relation: implements
+    - id: voice-lobby-mechanics
+      relation: extends
+    - id: voice-lobby-data-flows
+      relation: extends
+    - id: voice-lobby-database
+      relation: extends
+    - id: voice-lobby-integrations
+      relation: extends
+    - id: voice-lobby-technical
+      relation: extends
+  github_issue: 338
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - voice-chat
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную архитектуру системы голосовых лобби, включающую:
+    - Управление голосовыми комнатами
+    - Подбор групп (Party Finder)
+    - Управление подканалами
+    - Интеграцию с party/guild системами
+    - Систему прав доступа
+  goal: |
+    Создать архитектурную схему системы голосовых лобби с определением:
+    - Компонентов для управления лобби
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы голосовых лобби с поддержкой лобби, Party Finder,
+    управления подканалами и прав доступа.
+
+architecture:
+  overview: |
+    Архитектура системы голосовых лобби состоит из следующих компонентов:
+    1. Voice Lobby Manager - управление системой лобби
+    2. Lobby Directory Manager - управление каталогом лобби
+    3. Party Finder Engine - подбор групп
+    4. Subchannel Controller - управление подканалами
+    5. Permissions Engine - управление правами доступа
+    6. Lobby Matchmaker - подбор лобби
+    7. Voice Provider Integrator - интеграция с голосовым провайдером
+    8. Lobby Analytics Collector - сбор аналитики
+    9. Lobby Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: voice-lobby-service
+      port: 8096
+      responsibility: |
+        Обработка системы голосовых лобби:
+        - Управление системой лобби
+        - Управление каталогом лобби
+        - Подбор групп
+        - Управление подканалами
+        - Управление правами доступа
+        - Подбор лобби
+        - Интеграция с голосовым провайдером
+        - Сбор аналитики
+        - Сбор телеметрии
+      components:
+        - voice-lobby-manager: управление системой лобби
+        - lobby-directory-manager: управление каталогом лобби
+        - party-finder-engine: подбор групп
+        - subchannel-controller: управление подканалами
+        - permissions-engine: управление правами доступа
+        - lobby-matchmaker: подбор лобби
+        - voice-provider-integrator: интеграция с голосовым провайдером
+        - lobby-analytics-collector: сбор аналитики
+        - lobby-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/voice-lobbies - список лобби
+        - GET /api/v1/voice-lobbies/{lobbyId} - информация о лобби
+        - POST /api/v1/voice-lobbies - создание лобби
+        - PUT /api/v1/voice-lobbies/{lobbyId} - обновление лобби
+        - DELETE /api/v1/voice-lobbies/{lobbyId} - удаление лобби
+        - POST /api/v1/voice-lobbies/{lobbyId}/join - присоединение к лобби
+        - POST /api/v1/voice-lobbies/{lobbyId}/leave - выход из лобби
+        - GET /api/v1/voice-lobbies/{lobbyId}/participants - участники лобби
+        - POST /api/v1/voice-lobbies/{lobbyId}/subchannels - создание подканала
+        - GET /api/v1/voice-lobbies/{lobbyId}/subchannels - список подканалов
+        - POST /api/v1/voice-lobbies/{lobbyId}/subchannels/{subchannelId}/move - перемещение в подканал
+        - POST /api/v1/voice-lobbies/{lobbyId}/permissions - изменение прав
+        - GET /api/v1/voice-lobbies/{lobbyId}/permissions - права доступа
+        - POST /api/v1/party-finder/search - поиск группы
+        - GET /api/v1/party-finder/{characterId}/active - активный поиск
+        - POST /api/v1/party-finder/{characterId}/cancel - отмена поиска
+        - GET /api/v1/voice-lobbies/{characterId}/my-lobbies - мои лобби
+      websocket_channels:
+        - wss://api.necp.game/v1/voice-lobbies/{lobbyId} - поток обновлений лобби
+        - wss://api.necp.game/v1/party-finder/{characterId} - поток обновлений поиска
+      events_published:
+        - voice-lobby.created: создано лобби
+        - voice-lobby.updated: обновлено лобби
+        - voice-lobby.deleted: удалено лобби
+        - voice-lobby.joined: присоединение к лобби
+        - voice-lobby.left: выход из лобби
+        - voice-lobby.subchannel-created: создан подканал
+        - voice-lobby.subchannel-moved: перемещение в подканал
+        - voice-lobby.permissions-changed: изменены права
+        - party-finder.started: начат поиск группы
+        - party-finder.found: найдена группа
+        - party-finder.cancelled: отменен поиск
+      events_subscribed:
+        - party.created: создана группа
+        - party.disbanded: распущена группа
+        - guild.created: создана гильдия
+        - guild.disbanded: распущена гильдия
+        - clan.created: создан клан
+        - clan.disbanded: распущен клан
+
