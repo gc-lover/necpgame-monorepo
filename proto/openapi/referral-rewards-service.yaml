@@ -1,0 +1,101 @@
+# Issue: #312
+openapi: 3.0.3
+info:
+  title: Referral Rewards Service API
+  description: |
+    API для распределения наград реферальной системы.
+    
+    **Основные возможности:**
+    - Распределение наград реферальной системы
+    - Получение истории наград игрока
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Rewards
+    description: Распределение наград
+
+paths:
+  /growth/referral/rewards/distribute:
+    post:
+      tags:
+        - Referral Rewards
+      summary: Распределить награды реферальной системы
+      operationId: distributeReferralRewards
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "referral-schemas.yaml#/components/schemas/DistributeRewardsRequest"
+      responses:
+        "200":
+          description: Награды распределены
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/DistributeRewardsResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/rewards/history/{player_id}:
+    get:
+      tags:
+        - Referral Rewards
+      summary: Получить историю наград игрока
+      operationId: getRewardHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reward_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - WELCOME_BONUS
+              - REFERRER_BONUS
+              - MILESTONE_BONUS
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История наград
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/RewardHistoryResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

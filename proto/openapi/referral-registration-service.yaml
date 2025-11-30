@@ -1,0 +1,102 @@
+# Issue: #312
+openapi: 3.0.3
+info:
+  title: Referral Registration Service API
+  description: |
+    API для регистрации по реферальному коду.
+    
+    **Основные возможности:**
+    - Регистрация по реферальному коду
+    - Получение статуса рефералов игрока
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Registration
+    description: Регистрация по реферальному коду
+
+paths:
+  /growth/referral/register:
+    post:
+      tags:
+        - Referral Registration
+      summary: Зарегистрироваться по реферальному коду
+      operationId: registerWithCode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "referral-schemas.yaml#/components/schemas/RegisterWithCodeRequest"
+      responses:
+        "201":
+          description: Регистрация по коду успешна
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/Referral"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/status/{player_id}:
+    get:
+      tags:
+        - Referral Registration
+      summary: Получить статус рефералов игрока
+      operationId: getReferralStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - ACTIVE
+              - COMPLETED
+              - INACTIVE
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Статус рефералов
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/ReferralStatusResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

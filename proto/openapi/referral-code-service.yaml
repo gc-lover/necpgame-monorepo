@@ -1,0 +1,123 @@
+# Issue: #312
+openapi: 3.0.3
+info:
+  title: Referral Code Service API
+  description: |
+    API для управления реферальными кодами.
+    
+    **Основные возможности:**
+    - Получение реферального кода игрока
+    - Генерация нового реферального кода
+    - Валидация реферального кода
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Code Manager
+    description: Управление реферальными кодами
+
+paths:
+  /growth/referral/code:
+    get:
+      tags:
+        - Referral Code Manager
+      summary: Получить реферальный код игрока
+      operationId: getReferralCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Реферальный код
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/ReferralCode"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/code/generate:
+    post:
+      tags:
+        - Referral Code Manager
+      summary: Сгенерировать новый реферальный код
+      operationId: generateReferralCode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "referral-schemas.yaml#/components/schemas/GenerateReferralCodeRequest"
+      responses:
+        "201":
+          description: Реферальный код создан
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/ReferralCode"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/code/{code}/validate:
+    get:
+      tags:
+        - Referral Code Manager
+      summary: Валидировать реферальный код
+      operationId: validateReferralCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 12
+      responses:
+        "200":
+          description: Код валиден
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/ReferralCodeValidationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+
