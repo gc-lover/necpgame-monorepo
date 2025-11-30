@@ -1,0 +1,68 @@
+# Issue: #393
+metadata:
+  id: stock-exchange-compliance
+  title: Архитектура системы фондовой биржи - Compliance
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - stock-exchange
+    - compliance
+    - security
+  related_documents:
+    - id: stock-exchange-core
+      relation: extends
+  github_issue: 393
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - security
+
+architecture:
+  components:
+    - name: Trade Monitor
+      location: compliance-service
+      responsibility: |
+        Мониторинг сделок:
+        - Обнаружение подозрительных паттернов
+        - Аномальные объемы
+        - Wash trading detection
+        - Price manipulation detection
+      dependencies:
+        - Stock Trading Engine
+        - Analytics Service
+
+    - name: Insider Trading Detector
+      location: compliance-service
+      responsibility: |
+        Обнаружение инсайдерской торговли:
+        - Корреляция сделок с событиями
+        - Анализ timing сделок
+        - Связь с квестами и фракциями
+        - Алерты и блокировки
+      dependencies:
+        - Stock Trading Engine
+        - Quest Service
+        - Social Service
+
+    - name: Circuit Breaker Manager
+      location: compliance-service
+      responsibility: |
+        Circuit breakers:
+        - Автоматическая остановка торговли
+        - Пороги падения цен
+        - Временные ограничения
+        - Восстановление торговли
+      dependencies:
+        - Stock Pricing Engine
+        - Stock Trading Engine
+

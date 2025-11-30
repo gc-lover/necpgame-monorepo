@@ -1,0 +1,65 @@
+# Issue: #393
+metadata:
+  id: stock-exchange-dividends
+  title: Архитектура системы фондовой биржи - Дивиденды
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - stock-exchange
+    - dividends
+  related_documents:
+    - id: stock-exchange-core
+      relation: extends
+  github_issue: 393
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+
+architecture:
+  components:
+    - name: Dividend Calculator
+      location: dividend-service
+      responsibility: |
+        Расчет дивидендов:
+        - Формулы расчета (фиксированные/переменные)
+        - Учет прибыльности корпорации
+        - Распределение по акциям
+        - Налоговые вычеты
+      dependencies:
+        - Corporation Registry
+        - Portfolio Manager
+
+    - name: Dividend Scheduler
+      location: dividend-service
+      responsibility: |
+        Расписание выплат:
+        - Квартальные и годовые графики
+        - Declaration, ex-dividend, record, payment даты
+        - Автоматические выплаты
+        - Уведомления игрокам
+      dependencies:
+        - Event Scheduler Service
+        - Notification Service
+
+    - name: DRIP Manager
+      location: dividend-service
+      responsibility: |
+        Dividend Reinvestment Plan:
+        - Автоматическое реинвестирование
+        - Настройки игроков
+        - Покупка акций на дивиденды
+        - Расчет количества акций
+      dependencies:
+        - Dividend Calculator
+        - Stock Trading Engine
+

@@ -1,0 +1,258 @@
+# Issue: #104
+metadata:
+  id: game-mechanics-database
+  title: Архитектура систем игровых механик - База данных
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - mechanics
+    - database
+  related_documents:
+    - id: game-mechanics-core
+      relation: extends
+  github_issue: 104
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - database
+
+architecture:
+  database_structure:
+    tables:
+      - name: combat_sessions
+        description: Боевые сессии
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - zone_id: UUID
+          - session_type: ENUM (pve, pvp, arena, extract)
+          - started_at: TIMESTAMP
+          - ended_at: TIMESTAMP
+          - stats: JSONB
+
+      - name: player_loadouts
+        description: Лоадауты игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - name: VARCHAR(255)
+          - weapons: JSONB
+          - abilities: JSONB
+          - implants: JSONB
+          - is_active: BOOLEAN
+          - created_at: TIMESTAMP
+
+      - name: installed_implants
+        description: Установленные импланты
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - implant_type: VARCHAR(100)
+          - implant_data: JSONB
+          - installed_at: TIMESTAMP
+          - cyberpsychosis_level: DECIMAL(3,2)
+
+      - name: inventory_items
+        description: Предметы в инвентаре
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - item_id: UUID
+          - quantity: INTEGER
+          - slot: INTEGER
+          - properties: JSONB
+
+      - name: market_listings
+        description: Предложения на рынке
+        columns:
+          - id: UUID PRIMARY KEY
+          - seller_id: UUID FOREIGN KEY
+          - item_id: UUID
+          - quantity: INTEGER
+          - price: DECIMAL(18,2)
+          - currency_type: VARCHAR(50)
+          - created_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+          - status: ENUM (active, sold, expired, cancelled)
+
+      - name: crafting_recipes
+        description: Рецепты крафта
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - category: VARCHAR(100)
+          - required_skills: JSONB
+          - required_items: JSONB
+          - result_item: UUID
+          - result_quantity: INTEGER
+          - success_chance: DECIMAL(3,2)
+
+      - name: crafting_history
+        description: История крафта
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - recipe_id: UUID FOREIGN KEY
+          - success: BOOLEAN
+          - crafted_at: TIMESTAMP
+
+      - name: npc_relationships
+        description: Отношения с NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - npc_id: UUID
+          - relationship_type: VARCHAR(100)
+          - reputation_value: INTEGER
+          - last_interaction: TIMESTAMP
+          - relationship_data: JSONB
+
+      - name: npc_contracts
+        description: Контракты найма NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - npc_id: UUID
+          - contract_type: VARCHAR(100)
+          - duration: INTEGER
+          - cost: DECIMAL(18,2)
+          - started_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+          - status: ENUM (active, completed, cancelled)
+
+      - name: player_orders
+        description: Заказы от игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - creator_id: UUID FOREIGN KEY
+          - executor_id: UUID FOREIGN KEY (nullable)
+          - order_type: VARCHAR(100)
+          - description: TEXT
+          - reward: JSONB
+          - requirements: JSONB
+          - status: ENUM (open, accepted, in_progress, completed, cancelled)
+          - created_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+      - name: mentorship_relationships
+        description: Отношения наставничества
+        columns:
+          - id: UUID PRIMARY KEY
+          - mentor_id: UUID FOREIGN KEY
+          - student_id: UUID FOREIGN KEY
+          - started_at: TIMESTAMP
+          - status: ENUM (active, completed, cancelled)
+
+      - name: guilds
+        description: Гильдии
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - leader_id: UUID FOREIGN KEY
+          - description: TEXT
+          - level: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: guild_members
+        description: Члены гильдий
+        columns:
+          - id: UUID PRIMARY KEY
+          - guild_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - role: VARCHAR(100)
+          - joined_at: TIMESTAMP
+
+      - name: world_events
+        description: Мировые события
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_type: VARCHAR(100)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - start_time: TIMESTAMP
+          - end_time: TIMESTAMP
+          - status: ENUM (scheduled, active, completed, cancelled)
+          - configuration: JSONB
+
+      - name: world_event_participants
+        description: Участники мировых событий
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - contribution: INTEGER
+          - rewards_received: JSONB
+          - joined_at: TIMESTAMP
+
+      - name: raids
+        description: Рейды
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - raid_type: VARCHAR(100)
+          - difficulty: VARCHAR(50)
+          - max_players: INTEGER
+          - status: ENUM (open, in_progress, completed, failed)
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+      - name: raid_participants
+        description: Участники рейдов
+        columns:
+          - id: UUID PRIMARY KEY
+          - raid_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - role: VARCHAR(100)
+          - joined_at: TIMESTAMP
+
+      - name: player_attributes
+        description: Атрибуты игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - strength: INTEGER
+          - reflexes: INTEGER
+          - body: INTEGER
+          - intelligence: INTEGER
+          - tech: INTEGER
+          - cool: INTEGER
+          - will: INTEGER
+          - agility: INTEGER
+          - empathy: INTEGER
+          - available_points: INTEGER
+
+      - name: player_skills
+        description: Навыки игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - skill_type: VARCHAR(100)
+          - level: INTEGER
+          - xp: INTEGER
+          - max_level: INTEGER
+
+      - name: player_perks
+        description: Перки игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - perk_id: UUID
+          - unlocked_at: TIMESTAMP
+
+      - name: player_classes
+        description: Классы игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - class_id: UUID
+          - level: INTEGER
+          - selected_at: TIMESTAMP
+

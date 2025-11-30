@@ -1,0 +1,74 @@
+# Issue: #104
+metadata:
+  id: game-mechanics-social
+  title: Архитектура систем игровых механик - Социальные системы
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - mechanics
+    - social
+  related_documents:
+    - id: game-mechanics-core
+      relation: extends
+  github_issue: 104
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+
+architecture:
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Социальные механики:
+        - Отношения с NPC
+        - Найм NPC
+        - Заказы от игроков
+        - Наставничество
+        - Репутация
+        - Гильдии и кланы
+        - Семейные отношения
+      components:
+        - relationship-manager: управление отношениями
+        - npc-hiring-system: система найма NPC
+        - player-orders-system: система заказов игроков
+        - mentorship-system: система наставничества
+        - reputation-manager: управление репутацией
+        - guild-manager: управление гильдиями
+        - family-system: семейные отношения
+        - notification-system: система уведомлений
+      endpoints:
+        - GET /api/v1/social/relationships - отношения игрока
+        - POST /api/v1/social/relationships/interact - взаимодействие с NPC
+        - GET /api/v1/social/npc-hiring/available - доступные NPC
+        - POST /api/v1/social/npc-hiring/hire - найм NPC
+        - GET /api/v1/social/orders/list - список заказов
+        - POST /api/v1/social/orders/create - создание заказа
+        - POST /api/v1/social/orders/accept - принятие заказа
+        - GET /api/v1/social/mentorship/mentors - наставники
+        - POST /api/v1/social/mentorship/request - запрос наставничества
+        - GET /api/v1/social/reputation/list - репутация игрока
+        - GET /api/v1/social/guilds/list - список гильдий
+        - POST /api/v1/social/guilds/create - создание гильдии
+        - POST /api/v1/social/guilds/join - присоединение к гильдии
+
+  data_flows:
+    npc_hiring_flow: |
+      1. Игрок просматривает доступных NPC
+      2. Social Service загружает список NPC с учетом репутации
+      3. Игрок нанимает NPC
+      4. Social Service проверяет требования (репутация, валюта)
+      5. Social Service списывает валюту через Economy Service
+      6. Social Service создает контракт найма
+      7. Social Service публикует событие social:npc-hired
+      8. NPC становится доступным для использования
+

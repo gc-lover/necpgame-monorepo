@@ -1,0 +1,102 @@
+# Issue: #393
+metadata:
+  id: stock-exchange-events
+  title: Архитектура системы фондовой биржи - События и WebSocket
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - stock-exchange
+    - events
+    - websocket
+  related_documents:
+    - id: stock-exchange-core
+      relation: extends
+  github_issue: 393
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+
+architecture:
+  event_bus:
+    topics:
+      - name: economy.stocks.order.created
+        description: Создан новый ордер
+        schema:
+          order_id: UUID
+          player_id: UUID
+          corporation_id: UUID
+          order_type: string
+          quantity: number
+          price: number
+
+      - name: economy.stocks.order.matched
+        description: Ордер исполнен
+        schema:
+          trade_id: UUID
+          buy_order_id: UUID
+          sell_order_id: UUID
+          price: number
+          quantity: number
+
+      - name: economy.stocks.price.updated
+        description: Обновлена цена акции
+        schema:
+          corporation_id: UUID
+          symbol: string
+          old_price: number
+          new_price: number
+          change_percent: number
+
+      - name: economy.stocks.dividend.declared
+        description: Объявлены дивиденды
+        schema:
+          dividend_schedule_id: UUID
+          corporation_id: UUID
+          amount_per_share: number
+          payment_date: timestamp
+
+      - name: economy.stocks.dividend.paid
+        description: Выплачены дивиденды
+        schema:
+          dividend_payment_id: UUID
+          player_id: UUID
+          corporation_id: UUID
+          amount: number
+
+      - name: economy.stocks.index.rebalanced
+        description: Перебалансирован индекс
+        schema:
+          index_id: UUID
+          old_value: number
+          new_value: number
+          change_percent: number
+
+      - name: economy.stocks.compliance.alert
+        description: Алерт о нарушении
+        schema:
+          alert_id: UUID
+          player_id: UUID
+          alert_type: string
+          severity: string
+
+  websocket:
+    channels:
+      - name: stocks.{symbol}.price
+        description: Realtime обновления цены акции
+      - name: stocks.portfolio.{player_id}
+        description: Realtime обновления портфеля игрока
+      - name: stocks.market.summary
+        description: Общая сводка рынка
+      - name: stocks.indices.{index_symbol}
+        description: Realtime обновления индекса
+

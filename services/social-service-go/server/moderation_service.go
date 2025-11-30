@@ -1,3 +1,4 @@
+// Issue: #140899117
 package server
 
 import (
@@ -316,15 +317,28 @@ func (s *ModerationService) GetBans(ctx context.Context, characterID *uuid.UUID,
 }
 
 func (s *ModerationService) RemoveBan(ctx context.Context, banID uuid.UUID) error {
-	err := s.repo.DeactivateBan(ctx, banID)
+	// Get ban info before deactivating for notification
+	ban, err := s.repo.GetBanByID(ctx, banID)
+	if err != nil {
+		return err
+	}
+	if ban == nil {
+		return errors.New("ban not found")
+	}
+
+	err = s.repo.DeactivateBan(ctx, banID)
 	if err != nil {
 		return err
 	}
 
 	if s.eventBus != nil {
 		payload := map[string]interface{}{
-			"ban_id":    banID.String(),
-			"timestamp": time.Now().Format(time.RFC3339),
+			"ban_id":       banID.String(),
+			"character_id": ban.CharacterID.String(),
+			"timestamp":    time.Now().Format(time.RFC3339),
+		}
+		if ban.ChannelID != nil {
+			payload["channel_id"] = ban.ChannelID.String()
 		}
 		s.eventBus.PublishEvent(ctx, "chat:ban:removed", payload)
 	}

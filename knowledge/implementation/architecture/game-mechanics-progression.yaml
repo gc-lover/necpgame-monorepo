@@ -1,0 +1,68 @@
+# Issue: #104
+metadata:
+  id: game-mechanics-progression
+  title: Архитектура систем игровых механик - Прогрессия
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - mechanics
+    - progression
+  related_documents:
+    - id: game-mechanics-core
+      relation: extends
+  github_issue: 104
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - progression
+
+architecture:
+  microservices:
+    - name: progression-service
+      port: 8087
+      responsibility: |
+        Прогрессия персонажа:
+        - Атрибуты и характеристики
+        - Навыки
+        - Перки
+        - Классы
+        - Перерождение
+        - Опыт и уровни
+      components:
+        - attribute-manager: управление атрибутами
+        - skill-manager: управление навыками
+        - perk-manager: управление перками
+        - class-manager: управление классами
+        - xp-calculator: расчет опыта
+        - rebirth-system: система перерождения
+      endpoints:
+        - GET /api/v1/progression/attributes - атрибуты персонажа
+        - POST /api/v1/progression/attributes/allocate - распределение очков
+        - GET /api/v1/progression/skills - навыки персонажа
+        - POST /api/v1/progression/skills/train - тренировка навыка
+        - GET /api/v1/progression/perks - доступные перки
+        - POST /api/v1/progression/perks/unlock - открытие перка
+        - GET /api/v1/progression/classes - классы
+        - POST /api/v1/progression/classes/select - выбор класса
+        - GET /api/v1/progression/xp - текущий опыт
+        - POST /api/v1/progression/rebirth - перерождение
+
+  data_flows:
+    progression_flow: |
+      1. Игрок выполняет действие (бой, крафт, квест)
+      2. Соответствующий сервис публикует событие с опытом
+      3. Progression Service получает событие
+      4. Progression Service рассчитывает опыт для навыков
+      5. Progression Service обновляет прогресс навыков
+      6. Если навык повысился, Progression Service проверяет доступные перки
+      7. Progression Service публикует событие progression:skill-leveled
+      8. Realtime Gateway отправляет уведомление игроку
+
