@@ -1,0 +1,74 @@
+# Issue: #312
+openapi: 3.0.3
+info:
+  title: Referral Events Service API
+  description: |
+    API для получения событий реферальной системы.
+    
+    **Основные возможности:**
+    - Получение событий реферальной системы игрока
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Events
+    description: События реферальной системы
+
+paths:
+  /growth/referral/events/{player_id}:
+    get:
+      tags:
+        - Referral Events
+      summary: Получить события реферальной системы игрока
+      operationId: getReferralEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - referral:code-generated
+              - referral:registered
+              - referral:level-10-reached
+              - referral:milestone-achieved
+              - referral:reward-distributed
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: События реферальной системы
+          content:
+            application/json:
+              schema:
+                $ref: "referral-schemas.yaml#/components/schemas/ReferralEventsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

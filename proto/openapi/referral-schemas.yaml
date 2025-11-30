@@ -1,0 +1,430 @@
+# Issue: #312
+openapi: 3.0.3
+info:
+  title: Referral Common Schemas
+  description: Общие схемы для реферальной системы
+  version: 1.0.0
+
+components:
+  schemas:
+    ReferralCode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 12
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+
+    GenerateReferralCodeRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    ReferralCodeValidationResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        is_valid:
+          type: boolean
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        message:
+          type: string
+          nullable: true
+
+    RegisterWithCodeRequest:
+      type: object
+      required:
+        - player_id
+        - referral_code
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        referral_code:
+          type: string
+          maxLength: 12
+
+    Referral:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        referrer_id:
+          type: string
+          format: uuid
+        referee_id:
+          type: string
+          format: uuid
+        referral_code_id:
+          type: string
+          format: uuid
+        registered_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - PENDING
+            - ACTIVE
+            - COMPLETED
+            - INACTIVE
+        level_10_reached:
+          type: boolean
+          default: false
+        level_10_reached_at:
+          type: string
+          format: date-time
+          nullable: true
+        welcome_bonus_given:
+          type: boolean
+          default: false
+        referrer_bonus_given:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReferralStatusResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        referrals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Referral'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ReferralMilestone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        milestone_type:
+          type: string
+          enum:
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+        milestone_value:
+          type: integer
+        achieved_at:
+          type: string
+          format: date-time
+        reward_claimed:
+          type: boolean
+          default: false
+        reward_claimed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReferralMilestonesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralMilestone'
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+
+    ClaimMilestoneRewardRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    MilestoneRewardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        milestone_id:
+          type: string
+          format: uuid
+        reward_amount:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+
+    DistributeRewardsRequest:
+      type: object
+      required:
+        - referral_id
+        - reward_type
+      properties:
+        referral_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+          enum:
+            - WELCOME_BONUS
+            - REFERRER_BONUS
+            - MILESTONE_BONUS
+
+    DistributeRewardsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        rewards_distributed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralReward'
+
+    ReferralReward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        referral_id:
+          type: string
+          format: uuid
+          nullable: true
+        reward_type:
+          type: string
+          enum:
+            - WELCOME_BONUS
+            - REFERRER_BONUS
+            - MILESTONE_BONUS
+        reward_amount:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+        distributed_at:
+          type: string
+          format: date-time
+
+    RewardHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralReward'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ReferralStats:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+        total_rewards:
+          type: integer
+          format: int64
+        last_updated:
+          type: string
+          format: date-time
+
+    PublicReferralStatsResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+
+    ReferralLeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+        total_rewards:
+          type: integer
+          format: int64
+
+    ReferralLeaderboardResponse:
+      type: object
+      properties:
+        leaderboard_type:
+          type: string
+          enum:
+            - TOP_REFERRERS
+            - TOP_MILESTONE
+            - TOP_REWARDS
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralLeaderboardEntry'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    LeaderboardPositionResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        leaderboard_type:
+          type: string
+          enum:
+            - TOP_REFERRERS
+            - TOP_MILESTONE
+            - TOP_REWARDS
+        position:
+          type: integer
+          nullable: true
+        entry:
+          $ref: '#/components/schemas/ReferralLeaderboardEntry'
+          nullable: true
+
+    ReferralEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - referral:code-generated
+            - referral:registered
+            - referral:level-10-reached
+            - referral:milestone-achieved
+            - referral:reward-distributed
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ReferralEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
