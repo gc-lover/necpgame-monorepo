@@ -1,3 +1,4 @@
+// Issue: #141887873
 package server
 
 import (
@@ -26,7 +27,9 @@ func (h *TradeHandlers) respondJSON(w http.ResponseWriter, status int, data inte
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if data != nil {
-		json.NewEncoder(w).Encode(data)
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			h.logger.WithError(err).Error("Failed to encode JSON response")
+		}
 	}
 }
 

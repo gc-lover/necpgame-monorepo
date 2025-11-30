@@ -130,7 +130,7 @@ func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 
-// Issue: #141886468
+// Issue: #141886468, #141887873
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
