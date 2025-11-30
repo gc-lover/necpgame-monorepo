@@ -1,0 +1,272 @@
+# Issue: #389
+metadata:
+  id: player-character-technical
+  title: Архитектура системы управления персонажами игроков - Техническое задание
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:45:00Z
+  github_issue: 389
+  related_documents:
+    - id: player-character-core
+      relation: extends
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в character-service-go:
+      - character-creation (создание персонажей)
+      - character-deletion (удаление персонажей)
+      - character-restoration (восстановление персонажей)
+      - character-switching (переключение персонажей)
+      - slot-management (управление слотами)
+      - stats-recalculation (пересчёт статов)
+      - character-state (сохранение и загрузка состояния)
+    - Интеграция с inventory-service для инвентаря
+    - Интеграция с quest-service для квестов
+    - Интеграция с session-service для сессий
+    - Интеграция с economy-service для валюты
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация состояния персонажа через WebSocket
+    - Уведомления о событиях
+    - Обновления в реальном времени
+
+  performance_requirements:
+    - Создание персонажа < 500ms
+    - Удаление персонажа < 300ms
+    - Переключение персонажа < 400ms
+    - Пересчёт статов < 200ms
+    - Загрузка состояния < 300ms
+    - Поддержка до 1M персонажей
+    - Поддержка до 100K одновременных переключений
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через character-service
+    - Распределение нагрузки на персонажей
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование состояния персонажей в Redis
+    - Оптимизация интеграций
+
+subtasks:
+  - id: character-creation-manager-module
+    title: Реализация модуля Character Creation Manager
+    description: |
+      Создание персонажей
+      Валидация данных
+      Проверка слотов
+      Выдача стартовых ресурсов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: character-deletion-manager
+    title: Реализация Character Deletion Manager
+    description: |
+      Удаление персонажей (soft delete)
+      Освобождение слотов
+      Установка окна восстановления
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: character-restoration-manager
+    title: Реализация Character Restoration Manager
+    description: |
+      Восстановление удалённых персонажей
+      Проверка окна восстановления
+      Возврат слотов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: character-switching-manager
+    title: Реализация Character Switching Manager
+    description: |
+      Переключение между персонажами
+      Сохранение текущего персонажа
+      Обновление сессии
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: slot-management-manager
+    title: Реализация Slot Management Manager
+    description: |
+      Управление слотами персонажей
+      Покупка дополнительных слотов
+      Отслеживание использования слотов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: stats-recalculation-manager
+    title: Реализация Stats Recalculation Manager
+    description: |
+      Пересчёт боевых статов
+      Учёт атрибутов, экипировки и бафов
+      Синхронизация здоровья и брони
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: character-state-manager
+    title: Реализация Character State Manager
+    description: |
+      Сохранение состояния персонажа
+      Загрузка состояния персонажа
+      Создание снапшотов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование состояния
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для управления персонажами
+      Интеграция с существующим API character-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты создания персонажей
+      Тесты удаления персонажей
+      Тесты переключения персонажей
+      Тесты управления слотами
+      Тесты пересчёта статов
+      Тесты интеграций
+    priority: high
+    estimated_time: 5-6 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Character Service"
+            CCM[Character Creation Manager]
+            CDM[Character Deletion Manager]
+            CRM[Character Restoration Manager]
+            CSM[Character Switching Manager]
+            SMM[Slot Management Manager]
+            SRM[Stats Recalculation Manager]
+            CSM2[Character State Manager]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>players<br/>characters<br/>character_slots<br/>character_snapshots)]
+        end
+
+        subgraph "External Services"
+            IS[Inventory Service]
+            QS[Quest Service]
+            SS[Session Service]
+            ES[Economy Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|create character| CCM
+        CL -->|switch character| CSM
+        CCM --> IS
+        CCM --> QS
+        CSM --> SS
+        SMM --> ES
+        CDM --> NS
+        CSM --> RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant CCM as Character Creation Manager
+        participant IS as Inventory Service
+        participant QS as Quest Service
+
+        P->>CCM: Create character
+        CCM->>IS: Create inventory
+        CCM->>QS: Assign initial quests
+        CCM->>P: Character created
+    ```
+
+decisions:
+  - id: adr-player-character-architecture
+    summary: |
+      Выбрана модульная архитектура внутри character-service-go для обеспечения
+      централизованного управления персонажами игроков.
+
+  - id: adr-soft-delete
+    summary: |
+      Использован soft delete для возможности восстановления персонажей в течение
+      30 дней, что улучшает пользовательский опыт.
+
+  - id: adr-slot-management
+    summary: |
+      Система слотов с базовыми и премиальными слотами обеспечивает гибкость
+      в управлении персонажами и монетизацию.
+
+  - id: adr-stats-recalculation
+    summary: |
+      Пересчёт статов с учётом атрибутов, экипировки и бафов обеспечивает
+      актуальность боевых характеристик персонажа.
+
+  - id: adr-character-state
+    summary: |
+      Система сохранения и загрузки состояния с снапшотами обеспечивает
+      надёжность и возможность восстановления данных.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата данных персонажей и слотов
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния персонажей
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание персонажа, удаление, переключение, покупка слотов)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для создания, удаления, восстановления, переключения, управления слотами, пересчёта статов, управления состоянием и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы управления персонажами игроков:
+      - Определены компоненты (Character Creation Manager, Character Deletion Manager, Character Restoration Manager, Character Switching Manager, Slot Management Manager, Stats Recalculation Manager, Character State Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (players, characters, character_slots, character_snapshots)
+      - Спроектирована система создания персонажей
+      - Спроектирована система удаления персонажей (soft delete)
+      - Спроектирована система восстановления персонажей
+      - Спроектирована система переключения персонажей
+      - Спроектирована система управления слотами
+      - Спроектирована система пересчёта статов
+      - Спроектирована система сохранения и загрузки состояния
+      - Создано техническое задание
+      - Разбито на подзадачи
+

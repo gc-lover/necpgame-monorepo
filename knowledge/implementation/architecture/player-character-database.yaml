@@ -1,0 +1,83 @@
+# Issue: #389
+metadata:
+  id: player-character-database
+  title: Архитектура системы управления персонажами игроков - База данных
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:45:00Z
+  github_issue: 389
+  related_documents:
+    - id: player-character-core
+      relation: extends
+
+database_schema:
+  tables:
+    - name: players
+      description: Профили игроков (аккаунты)
+      fields:
+        - id: UUID (PK)
+        - account_id: UUID (FK accounts)
+        - username: VARCHAR(255)
+        - email: VARCHAR(255)
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+      indexes:
+        - account_id
+        - username
+
+    - name: characters
+      description: Персонажи игроков
+      fields:
+        - id: UUID (PK)
+        - player_id: UUID (FK players)
+        - name: VARCHAR(255)
+        - class: VARCHAR(50)
+        - origin: VARCHAR(50)
+        - level: INTEGER (default: 1)
+        - attributes: JSONB
+        - skills: JSONB
+        - stats: JSONB
+        - current_zone: VARCHAR(100)
+        - deleted: BOOLEAN (default: false)
+        - deleted_at: TIMESTAMP (nullable)
+        - can_restore_until: TIMESTAMP (nullable)
+        - last_played_at: TIMESTAMP
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+      constraints: |
+        - UNIQUE(player_id, name)
+      indexes:
+        - player_id, deleted
+        - name
+        - deleted, can_restore_until
+
+    - name: character_slots
+      description: Слоты персонажей игроков
+      fields:
+        - id: UUID (PK)
+        - player_id: UUID (FK players)
+        - base_slots: INTEGER (default: 3)
+        - premium_slots: INTEGER (default: 0)
+        - total_slots: INTEGER (computed: base_slots + premium_slots)
+        - used_slots: INTEGER (default: 0)
+        - premium_slots_purchased: INTEGER (default: 0)
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+      constraints: |
+        - UNIQUE(player_id)
+        - CHECK(used_slots <= total_slots)
+      indexes:
+        - player_id
+
+    - name: character_snapshots
+      description: Снапшоты персонажей для восстановления
+      fields:
+        - id: UUID (PK)
+        - character_id: UUID (FK characters)
+        - snapshot_data: JSONB
+        - created_at: TIMESTAMP
+      indexes:
+        - character_id, created_at
+
