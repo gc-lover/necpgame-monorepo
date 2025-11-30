@@ -1,6 +1,6 @@
 # Find Tasks
 
-Search open tasks for DevOps via MCP GitHub Project.
+Search open tasks for DevOps via MCP GitHub Project, including CI/CD monitoring.
 
 ## Steps
 
@@ -16,6 +16,25 @@ Search open tasks for DevOps via MCP GitHub Project.
    });
    ```
 
-2. **Show list:** number, title, priority, Status
+2. **Search CI Reports:**
+   ```javascript
+   // Get recent CI reports with failures
+   await mcp_github_search_issues({
+     query: 'repo:gc-lover/necpgame-monorepo label:ci-report is:open',
+     perPage: 10,
+     sort: 'updated',
+     order: 'desc'
+   });
+   
+   // Get only failed CI reports
+   await mcp_github_search_issues({
+     query: 'repo:gc-lover/necpgame-monorepo label:ci-report is:open title:"FAILURE"',
+     perPage: 10
+   });
+   ```
+
+3. **Show list:** number, title, priority, Status, type (task or CI report)
 
 **Primary filter: Project Status. Status determines the stage.**
+
+**CI Reports:** Automatically created by `ci-monitor.yml` workflow, show CI/CD job statuses and failures.
