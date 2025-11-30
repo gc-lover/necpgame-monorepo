@@ -1,0 +1,235 @@
+# Issue: #334
+metadata:
+  id: support-ticket-technical
+  title: Архитектура системы тикетов поддержки - Техническое задание
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:35:00Z
+  github_issue: 334
+  related_documents:
+    - id: support-ticket-core
+      relation: extends
+
+technical_specification:
+  subtasks:
+    - id: support-ticket-manager
+      title: Реализация менеджера системы тикетов
+      description: |
+        Реализация Support Ticket Manager с управлением системой тикетов
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: ticket-creator
+      title: Реализация создателя тикетов
+      description: |
+        Реализация Ticket Creator с созданием тикетов,
+        валидацией данных и генерацией номеров.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
+
+    - id: auto-categorization-engine
+      title: Реализация движка автокатегоризации
+      description: |
+        Реализация Auto Categorization Engine с определением категорий,
+        анализом ключевых слов и машинным обучением.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 5 days
+
+    - id: priority-assignment-engine
+      title: Реализация движка назначения приоритетов
+      description: |
+        Реализация Priority Assignment Engine с назначением приоритетов,
+        применением правил и анализом контента.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 4 days
+
+    - id: agent-queue-manager
+      title: Реализация менеджера очередей агентов
+      description: |
+        Реализация Agent Queue Manager с управлением очередями,
+        назначением агентов и стратегиями распределения.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 5 days
+
+    - id: sla-monitor
+      title: Реализация монитора SLA
+      description: |
+        Реализация SLA Monitor с мониторингом SLA,
+        вычислением метрик и отправкой предупреждений.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 4 days
+
+    - id: ticket-response-manager
+      title: Реализация менеджера ответов
+      description: |
+        Реализация Ticket Response Manager с управлением ответами,
+        валидацией и управлением видимостью.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
+
+    - id: ticket-status-manager
+      title: Реализация менеджера статусов
+      description: |
+        Реализация Ticket Status Manager с управлением статусами,
+        валидацией переходов и обновлением метрик.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
+
+    - id: support-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Support Analytics Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
+
+    - id: support-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Support Telemetry Collector с логированием событий,
+        сбором телеметрии и интеграцией с Analytics Service.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 2 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений тикетов,
+        очереди агентов и уведомлений.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы тикетов.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для тикетов, ответов, очередей агентов,
+        метрик SLA и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SupportService[Support Service<br/>8095]
+        
+        SupportService --> STM[Support Ticket Manager]
+        SupportService --> TC[Ticket Creator]
+        SupportService --> ACE[Auto Categorization Engine]
+        SupportService --> PAE[Priority Assignment Engine]
+        SupportService --> AQM[Agent Queue Manager]
+        SupportService --> SLAM[SLA Monitor]
+        SupportService --> TRM[Ticket Response Manager]
+        SupportService --> TSM[Ticket Status Manager]
+        SupportService --> SAC[Support Analytics Collector]
+        SupportService --> STC[Support Telemetry Collector]
+        
+        STM --> TC
+        STM --> ACE
+        STM --> PAE
+        STM --> AQM
+        STM --> SLAM
+        STM --> TRM
+        STM --> TSM
+        
+        SupportService --> NotificationService[Notification Service]
+        SupportService --> AccountsService[Accounts Service]
+        SupportService --> CharacterService[Character Service]
+        SupportService --> AnalyticsService[Analytics Service]
+        
+        SupportService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SupportService --> DB[(Support DB)]
+        
+        Client --> WSTickets[WebSocket<br/>Tickets]
+        WSTickets --> SupportService
+    ```
+
+  ticket_creation_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant Player as Player
+        participant TC as Ticket Creator
+        participant ACE as Auto Categorization Engine
+        participant PAE as Priority Assignment Engine
+        participant STM as Support Ticket Manager
+        participant AQM as Agent Queue Manager
+        participant SLAM as SLA Monitor
+        participant NS as Notification Service
+        
+        Player->>TC: Create ticket
+        TC->>TC: Validate data
+        TC->>ACE: Categorize ticket
+        ACE->>ACE: Analyze keywords
+        ACE->>TC: Return category
+        TC->>PAE: Assign priority
+        PAE->>PAE: Apply rules
+        PAE->>TC: Return priority
+        TC->>STM: Save ticket
+        STM->>STM: Generate ticket number
+        STM->>AQM: Add to queue
+        STM->>SLAM: Start SLA monitoring
+        STM->>NS: Notify player
+    ```
+
+  ticket_assignment_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant AQM as Agent Queue Manager
+        participant STM as Support Ticket Manager
+        participant NS as Notification Service
+        participant SLAM as SLA Monitor
+        
+        AQM->>AQM: Select ticket from queue
+        AQM->>AQM: Select agent by strategy
+        AQM->>AQM: Check agent limits
+        AQM->>STM: Assign agent
+        STM->>STM: Update status to assigned
+        STM->>NS: Notify agent
+        STM->>NS: Notify player
+        STM->>SLAM: Update metrics
+    ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния тикетов
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание тикета, назначение агента, изменение статуса, мониторинг SLA)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для тикетов, назначения, ответов, мониторинга SLA, категоризации, приоритетов, статистики и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы тикетов поддержки:
+      - Определены компоненты (Support Ticket Manager, Ticket Creator, Auto Categorization Engine, Priority Assignment Engine, Agent Queue Manager, SLA Monitor, Ticket Response Manager, Ticket Status Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (support_tickets, ticket_responses, agent_queues, ticket_sla_metrics, support_telemetry)
+      - Спроектирована система создания тикетов
+      - Спроектирована система автокатегоризации
+      - Спроектирована система назначения приоритетов
+      - Спроектирована система очередей агентов
+      - Спроектирована система мониторинга SLA
+      - Создано техническое задание
+      - Разбито на подзадачи
+

@@ -1,0 +1,74 @@
+# Issue: #323
+metadata:
+  id: announcement-database
+  title: Архитектура системы объявлений - База данных
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:30:00Z
+  github_issue: 323
+  related_documents:
+    - id: announcement-core
+      relation: extends
+
+database_structure:
+  tables:
+    - name: announcements
+      description: Объявления
+      columns:
+        - id: UUID PRIMARY KEY
+        - type: ENUM (game_news, patch_notes, maintenance, event, promotion, community, emergency)
+        - priority: ENUM (low, medium, high, critical)
+        - display_style: ENUM (news_feed, popup, modal, banner, toast)
+        - title: VARCHAR(255)
+        - content: TEXT
+        - media_urls: JSONB
+        - targeting_criteria: JSONB
+        - delivery_channels: JSONB
+        - status: ENUM (draft, scheduled, published, archived)
+        - scheduled_publish_at: TIMESTAMP
+        - published_at: TIMESTAMP
+        - archived_at: TIMESTAMP
+        - created_by: UUID FOREIGN KEY
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: player_announcement_reads
+      description: Прочтения объявлений игроками
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - announcement_id: UUID FOREIGN KEY
+        - displayed_at: TIMESTAMP
+        - read_at: TIMESTAMP
+        - clicked_at: TIMESTAMP
+        - dismissed_at: TIMESTAMP
+        - engagement_time: INTEGER
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: patch_notes
+      description: Патчноуты
+      columns:
+        - id: UUID PRIMARY KEY
+        - version: VARCHAR(50) UNIQUE
+        - release_date: TIMESTAMP
+        - improvements: JSONB
+        - bug_fixes: JSONB
+        - known_issues: JSONB
+        - attachments: JSONB
+        - announcement_id: UUID FOREIGN KEY
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: announcement_telemetry
+      description: Телеметрия объявлений
+      columns:
+        - id: UUID PRIMARY KEY
+        - event_type: VARCHAR(50)
+        - announcement_id: UUID FOREIGN KEY
+        - character_id: UUID FOREIGN KEY
+        - event_data: JSONB
+        - created_at: TIMESTAMP
+

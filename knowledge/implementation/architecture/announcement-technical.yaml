@@ -1,0 +1,230 @@
+# Issue: #323
+metadata:
+  id: announcement-technical
+  title: Архитектура системы объявлений - Техническое задание
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:30:00Z
+  github_issue: 323
+  related_documents:
+    - id: announcement-core
+      relation: extends
+
+technical_specification:
+  subtasks:
+    - id: announcement-manager
+      title: Реализация менеджера системы объявлений
+      description: |
+        Реализация Announcement Manager с управлением системой объявлений
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: announcement-publisher
+      title: Реализация публикатора объявлений
+      description: |
+        Реализация Announcement Publisher с публикацией объявлений,
+        управлением статусами и валидацией.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
+
+    - id: announcement-scheduler
+      title: Реализация планировщика публикации
+      description: |
+        Реализация Announcement Scheduler с планированием публикации,
+        автоматическим запуском и управлением расписанием.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
+
+    - id: announcement-delivery-manager
+      title: Реализация менеджера доставки
+      description: |
+        Реализация Announcement Delivery Manager с управлением доставкой,
+        выбором каналов и интеграцией с Notification Service.
+      dependencies: [announcement-manager]
+      estimated_effort: 5 days
+
+    - id: announcement-targeting-manager
+      title: Реализация менеджера таргетинга
+      description: |
+        Реализация Announcement Targeting Manager с управлением таргетингом,
+        фильтрацией аудитории и проверкой критериев.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
+
+    - id: announcement-read-tracker
+      title: Реализация трекера прочтений
+      description: |
+        Реализация Announcement Read Tracker с учётом прочтений,
+        отслеживанием взаимодействий и сбором метрик.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
+
+    - id: patch-notes-manager
+      title: Реализация менеджера патчноутов
+      description: |
+        Реализация Patch Notes Manager с управлением патчноутами,
+        версионированием и отображением.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
+
+    - id: news-feed-manager
+      title: Реализация менеджера новостной ленты
+      description: |
+        Реализация News Feed Manager с управлением новостной лентой,
+        сортировкой и фильтрацией объявлений.
+      dependencies: [announcement-manager]
+      estimated_effort: 3 days
+
+    - id: announcement-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Announcement Analytics Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [announcement-manager]
+      estimated_effort: 3 days
+
+    - id: announcement-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Announcement Telemetry Collector с логированием событий,
+        сбором телеметрии и интеграцией с Analytics Service.
+      dependencies: [announcement-manager]
+      estimated_effort: 2 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений объявлений,
+        новостной ленты и уведомлений.
+      dependencies: [announcement-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы объявлений.
+      dependencies: [announcement-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для объявлений, прочтений, патчноутов
+        и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> AnnouncementService[Announcement Service<br/>8094]
+        
+        AnnouncementService --> AM[Announcement Manager]
+        AnnouncementService --> AP[Announcement Publisher]
+        AnnouncementService --> AS[Announcement Scheduler]
+        AnnouncementService --> ADM[Announcement Delivery Manager]
+        AnnouncementService --> ATM[Announcement Targeting Manager]
+        AnnouncementService --> ART[Announcement Read Tracker]
+        AnnouncementService --> PNM[Patch Notes Manager]
+        AnnouncementService --> NFM[News Feed Manager]
+        AnnouncementService --> AAC[Announcement Analytics Collector]
+        AnnouncementService --> ATC[Announcement Telemetry Collector]
+        
+        AM --> AP
+        AM --> AS
+        AM --> ADM
+        AM --> ATM
+        AM --> ART
+        AM --> PNM
+        AM --> NFM
+        
+        AnnouncementService --> AdminAPI[Admin API]
+        AnnouncementService --> NotificationService[Notification Service]
+        AnnouncementService --> PlayerService[Player Service]
+        AnnouncementService --> CharacterService[Character Service]
+        AnnouncementService --> MaintenanceService[Maintenance Service]
+        AnnouncementService --> EventService[Event Service]
+        AnnouncementService --> AnalyticsService[Analytics Service]
+        
+        AnnouncementService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        AnnouncementService --> DB[(Announcement DB)]
+        
+        Client --> WSAnnouncements[WebSocket<br/>Announcements]
+        WSAnnouncements --> AnnouncementService
+    ```
+
+  publication_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant Admin as Administrator
+        participant AP as Announcement Publisher
+        participant ATM as Announcement Targeting Manager
+        participant AS as Announcement Scheduler
+        participant ADM as Announcement Delivery Manager
+        participant EB as Event Bus
+        
+        Admin->>AP: Create announcement
+        AP->>AP: Save to DB
+        AP->>ATM: Setup targeting
+        AP->>AS: Schedule publication
+        AS->>AS: Wait for scheduled time
+        AS->>AP: Publish announcement
+        AP->>ADM: Deliver announcement
+        AP->>EB: Publish announcement.published
+    ```
+
+  delivery_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant ADM as Announcement Delivery Manager
+        participant ATM as Announcement Targeting Manager
+        participant NS as Notification Service
+        participant ART as Announcement Read Tracker
+        participant EB as Event Bus
+        
+        ADM->>ATM: Get target audience
+        ATM->>ATM: Filter by criteria
+        ADM->>ADM: Select delivery channels
+        ADM->>ADM: Deliver in-game
+        ADM->>NS: Deliver push/email
+        ADM->>ART: Track delivery
+        ADM->>EB: Publish announcement.delivered
+    ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния объявлений
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (публикация объявлений, доставка, отслеживание прочтений)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для объявлений, публикации, доставки, таргетинга, отслеживания прочтений, новостной ленты, патчноутов, статистики и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы объявлений:
+      - Определены компоненты (Announcement Manager, Announcement Publisher, Announcement Scheduler, Announcement Delivery Manager, Announcement Targeting Manager, Announcement Read Tracker, Patch Notes Manager, News Feed Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (announcements, player_announcement_reads, patch_notes, announcement_telemetry)
+      - Спроектирована система публикации объявлений
+      - Спроектирована система доставки объявлений
+      - Спроектирована система таргетинга
+      - Спроектирована система учёта прочтений
+      - Создано техническое задание
+      - Разбито на подзадачи
+

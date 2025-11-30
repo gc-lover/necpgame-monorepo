@@ -1,0 +1,169 @@
+# Issue: #323
+metadata:
+  id: announcement-mechanics
+  title: Архитектура системы объявлений - Механики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:30:00Z
+  github_issue: 323
+  related_documents:
+    - id: announcement-core
+      relation: extends
+
+announcement_types:
+  - name: game_news
+    description: "Новости игры - общие новости о игре"
+    display_style: "NEWS_FEED"
+    priority: "MEDIUM"
+
+  - name: patch_notes
+    description: "Патчноуты - информация об обновлениях"
+    display_style: "MODAL"
+    priority: "HIGH"
+
+  - name: maintenance
+    description: "Обслуживание - информация об обслуживании"
+    display_style: "POPUP"
+    priority: "HIGH"
+
+  - name: event
+    description: "События - информация о событиях"
+    display_style: "BANNER"
+    priority: "MEDIUM"
+
+  - name: promotion
+    description: "Промо - рекламные акции"
+    display_style: "BANNER"
+    priority: "MEDIUM"
+
+  - name: community
+    description: "Сообщество - новости сообщества"
+    display_style: "NEWS_FEED"
+    priority: "LOW"
+
+  - name: emergency
+    description: "Экстренные - срочные объявления"
+    display_style: "POPUP"
+    priority: "CRITICAL"
+
+priorities:
+  - name: low
+    description: "Низкий приоритет"
+    delivery_channels: ["NEWS_FEED"]
+
+  - name: medium
+    description: "Средний приоритет"
+    delivery_channels: ["NEWS_FEED", "BANNER"]
+
+  - name: high
+    description: "Высокий приоритет"
+    delivery_channels: ["NEWS_FEED", "BANNER", "POPUP"]
+
+  - name: critical
+    description: "Критический приоритет"
+    delivery_channels: ["NEWS_FEED", "BANNER", "POPUP", "PUSH", "EMAIL"]
+
+display_styles:
+  - name: news_feed
+    description: "Новостная лента - стандартное отображение"
+    modal: false
+    dismissible: true
+
+  - name: popup
+    description: "Всплывающее окно - важные объявления"
+    modal: false
+    dismissible: true
+
+  - name: modal
+    description: "Модальное окно - требует взаимодействия"
+    modal: true
+    dismissible: false
+
+  - name: banner
+    description: "Баннер - постоянное отображение"
+    modal: false
+    dismissible: true
+
+  - name: toast
+    description: "Уведомление - краткое сообщение"
+    modal: false
+    dismissible: true
+
+delivery_channels:
+  - name: in_game
+    description: "В игре - отображение в клиенте"
+    types: ["NEWS_FEED", "POPUP", "MODAL", "BANNER", "TOAST"]
+
+  - name: push
+    description: "Push уведомления - мобильные уведомления"
+    types: ["PUSH"]
+
+  - name: email
+    description: "Email - отправка на email"
+    types: ["EMAIL"]
+
+  - name: social_media
+    description: "Социальные сети - публикация в соцсетях"
+    types: ["SOCIAL_MEDIA"]
+
+targeting:
+  criteria:
+    - level_range: "диапазон уровней"
+    - region: "регион"
+    - language: "язык"
+    - platform: "платформа"
+    - character_class: "класс персонажа"
+    - faction: "фракция"
+    - subscription_status: "статус подписки"
+    - custom_tags: "пользовательские теги"
+  operators:
+    - equals: "равно"
+    - not_equals: "не равно"
+    - in: "в списке"
+    - not_in: "не в списке"
+    - greater_than: "больше"
+    - less_than: "меньше"
+    - range: "диапазон"
+
+publication_workflow:
+  statuses:
+    - draft: "черновик - редактирование"
+    - scheduled: "запланировано - ожидание публикации"
+    - published: "опубликовано - активно"
+    - archived: "архивировано - неактивно"
+  process:
+    - creation: "создание объявления"
+    - targeting_setup: "настройка таргетинга"
+    - scheduling: "планирование публикации"
+    - publication: "публикация объявления"
+    - delivery: "доставка объявления"
+    - tracking: "отслеживание прочтений"
+    - archiving: "архивирование объявления"
+
+patch_notes:
+  structure:
+    - version: "версия патча"
+    - release_date: "дата релиза"
+    - improvements: "улучшения"
+    - bug_fixes: "исправления багов"
+    - known_issues: "известные проблемы"
+    - attachments: "вложения"
+  display:
+    - modal_window: "модальное окно при входе"
+    - news_feed: "в новостной ленте"
+    - dedicated_page: "отдельная страница"
+
+read_tracking:
+  events:
+    - displayed: "отображено объявление"
+    - read: "прочитано объявление"
+    - clicked: "клик по объявлению"
+    - dismissed: "закрыто объявление"
+  analytics:
+    - read_rate: "процент прочтений"
+    - click_rate: "процент кликов"
+    - dismissal_rate: "процент закрытий"
+    - engagement_time: "время взаимодействия"
+
