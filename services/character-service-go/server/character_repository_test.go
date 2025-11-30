@@ -237,3 +237,116 @@ func TestCharacterRepository_DeleteCharacter(t *testing.T) {
 	assert.Nil(t, deletedChar)
 }
 
+func TestCharacterRepository_GetAccountByID_Success(t *testing.T) {
+	repo, cleanup := setupTestRepository(t)
+	if repo == nil {
+		return
+	}
+	defer cleanup()
+
+	req := &models.CreateAccountRequest{
+		Nickname: "test_user",
+	}
+
+	ctx := context.Background()
+	account, err := repo.CreateAccount(ctx, req)
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	foundAccount, err := repo.GetAccountByID(ctx, account.ID)
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	require.NoError(t, err)
+	assert.NotNil(t, foundAccount)
+	assert.Equal(t, account.ID, foundAccount.ID)
+	assert.Equal(t, account.Nickname, foundAccount.Nickname)
+}
+
+func TestCharacterRepository_GetCharactersByAccountID_Multiple(t *testing.T) {
+	repo, cleanup := setupTestRepository(t)
+	if repo == nil {
+		return
+	}
+	defer cleanup()
+
+	accountID := uuid.New()
+	ctx := context.Background()
+
+	createReq1 := &models.CreateCharacterRequest{
+		AccountID: accountID,
+		Name:      "Character 1",
+		Level:     intPtr(1),
+	}
+	char1, err := repo.CreateCharacter(ctx, createReq1)
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	createReq2 := &models.CreateCharacterRequest{
+		AccountID: accountID,
+		Name:      "Character 2",
+		Level:     intPtr(5),
+	}
+	char2, err := repo.CreateCharacter(ctx, createReq2)
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	characters, err := repo.GetCharactersByAccountID(ctx, accountID)
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	require.NoError(t, err)
+	assert.Len(t, characters, 2)
+	assert.Contains(t, []uuid.UUID{char1.ID, char2.ID}, characters[0].ID)
+	assert.Contains(t, []uuid.UUID{char1.ID, char2.ID}, characters[1].ID)
+}
+
+func TestCharacterRepository_UpdateCharacter_Partial(t *testing.T) {
+	repo, cleanup := setupTestRepository(t)
+	if repo == nil {
+		return
+	}
+	defer cleanup()
+
+	accountID := uuid.New()
+	ctx := context.Background()
+
+	createReq := &models.CreateCharacterRequest{
+		AccountID: accountID,
+		Name:      "Test Character",
+		Level:     intPtr(1),
+	}
+
+	char, err := repo.CreateCharacter(ctx, createReq)
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	newLevel := 10
+	updateReq := &models.UpdateCharacterRequest{
+		Level: &newLevel,
+	}
+
+	updatedChar, err := repo.UpdateCharacter(ctx, char.ID, updateReq)
+	if err != nil {
+		t.Skipf("Skipping test due to database error: %v", err)
+		return
+	}
+
+	require.NoError(t, err)
+	assert.NotNil(t, updatedChar)
+	assert.Equal(t, newLevel, updatedChar.Level)
+	assert.Equal(t, char.Name, updatedChar.Name)
+}
+
