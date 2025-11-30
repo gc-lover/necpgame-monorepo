@@ -1,0 +1,369 @@
+# Issue: #62
+metadata:
+  id: equipment-system-architecture
+  title: Архитектура системы оборудования
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-01T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - equipment
+    - catalog
+    - iconic
+    - procedural
+  related_systems:
+    - economy-service
+    - inventory-service
+    - gameplay-service
+    - narrative-service
+  related_documents:
+    - id: equipment-navigation
+      relation: implements
+    - id: equipment-catalog-manual
+      relation: implements
+    - id: equipment-iconic-timeline
+      relation: implements
+    - id: procedural-equipment-library
+      relation: implements
+    - id: procedural-equipment-matrix-architecture
+      relation: extends
+  github_issue: 62
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+    - network
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы оборудования, включающую:
+    - Каталог оборудования (ручной срез ключевых предметов)
+    - Временную линию культового оборудования (Iconic Equipment Timeline)
+    - Процедурную библиотеку генерации оборудования
+    - Интеграцию с inventory-service и economy-service
+  goal: |
+    Создать архитектурную схему системы оборудования с определением:
+    - Компонентов для управления каталогом, временной линией и процедурной генерацией
+    - REST, WebSocket и Event Bus контрактов
+    - Синхронизации данных между слоями (Event Sourcing, CQRS)
+    - Тикрейта и требований к сетевой нагрузке
+    - Интеграций между компонентами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы оборудования, интегрирующая каталог, временную линию
+    культового оборудования и процедурную генерацию в единую систему.
+
+architecture:
+  overview: |
+    Архитектура системы оборудования состоит из следующих компонентов:
+    1. Equipment Catalog Manager - управление каталогом оборудования
+    2. Iconic Timeline Manager - управление временной линией культового оборудования
+    3. Procedural Generator - процедурная генерация оборудования
+    4. Equipment Matrix Manager - управление матрицей характеристик
+    5. Equipment Analytics System - аналитика оборудования
+
+  microservices:
+    - name: economy-service
+      port: 8085
+      responsibility: |
+        Обработка системы оборудования:
+        - Управление каталогом оборудования
+        - Управление временной линией культового оборудования
+        - Процедурная генерация оборудования
+        - Управление матрицей характеристик
+        - Аналитика оборудования
+      components:
+        - equipment-catalog-manager: управление каталогом
+        - iconic-timeline-manager: управление временной линией
+        - procedural-generator: процедурная генерация
+        - equipment-matrix-manager: управление матрицей
+        - equipment-analytics-system: аналитика оборудования
+      endpoints:
+        - GET /api/v1/economy/equipment/catalog - каталог оборудования
+        - GET /api/v1/economy/equipment/catalog/{id} - предмет из каталога
+        - GET /api/v1/economy/equipment/iconic/timeline - временная линия культового
+        - GET /api/v1/economy/equipment/iconic/{id} - культовый предмет
+        - POST /api/v1/economy/equipment/generate - процедурная генерация
+        - GET /api/v1/economy/equipment/matrix - матрица характеристик
+        - GET /api/v1/economy/equipment/analytics - аналитика оборудования
+      websocket_channels:
+        - wss://api.necp.game/v1/economy/equipment/catalog/{characterId} - обновления каталога
+        - wss://api.necp.game/v1/economy/equipment/iconic/{characterId} - обновления культового
+      events_published:
+        - equipment.catalog.updated: обновление каталога
+        - equipment.iconic.unlocked: разблокировка культового предмета
+        - equipment.iconic.available: культовый предмет доступен
+        - equipment.generated: генерация предмета
+        - equipment.matrix-updated: обновление матрицы
+      events_subscribed:
+        - inventory.item-added: добавление предмета в инвентарь
+        - world.event-triggered: триггер мирового события
+        - narrative.quest-completed: завершение квеста
+
+  data_synchronization:
+    strategy: Event Sourcing + CQRS
+    event_store: |
+      Все события системы оборудования сохраняются в Event Store:
+      - equipment.catalog.updated
+      - equipment.iconic.unlocked
+      - equipment.iconic.available
+      - equipment.generated
+      - equipment.matrix-updated
+    command_side: |
+      Command Side (Write Model):
+      - economy-service: обработка команд каталога, временной линии, генерации
+    query_side: |
+      Query Side (Read Model):
+      - economy-service: получение каталога, временной линии, матрицы
+    saga_pattern: |
+      Saga Pattern для распределенных транзакций:
+      - Iconic Unlock Saga: разблокировка культового → проверка условий → добавление в инвентарь
+      - Equipment Generation Saga: генерация → проверка баланса → добавление в инвентарь
+    consistency:
+      strong_consistency: |
+        Критичные операции требуют Strong Consistency:
+        - Разблокировка культового оборудования
+        - Генерация предметов
+        - Обновление каталога
+      eventual_consistency: |
+        Не критичные операции допускают Eventual Consistency:
+        - Поиск в каталоге
+        - Аналитика оборудования
+        - Временная линия (обновляется периодически)
+
+  tick_rate_and_network_load:
+    catalog_operations:
+      tick_rate: on-demand
+      protocol: WebSocket (TCP)
+      latency: <100ms
+      bandwidth: ~2-5 KB per operation
+      optimization: |
+        - Кэширование каталога
+        - Ленивая загрузка деталей предметов
+    iconic_timeline_updates:
+      tick_rate: on-demand (при разблокировке)
+      protocol: WebSocket (TCP)
+      latency: <100ms
+      bandwidth: ~1-3 KB per update
+      optimization: |
+        - Кэширование временной линии
+        - Периодические обновления доступности
+    procedural_generation:
+      tick_rate: on-demand
+      protocol: REST (HTTP)
+      latency: <200ms
+      bandwidth: ~3-8 KB per generation
+      optimization: |
+        - Кэширование матрицы характеристик
+        - Батчинг генерации для массовых операций
+
+  data_flows:
+    catalog_flow: |
+      1. Получение каталога: Client → economy-service → кэш → каталог
+      2. Обновление каталога: economy-service → обновление БД → события → кэш
+    iconic_timeline_flow: |
+      1. Проверка доступности: economy-service → проверка условий → временная линия
+      2. Разблокировка: economy-service → проверка условий → разблокировка → события
+      3. Обновление доступности: economy-service → периодическая проверка → обновление
+    procedural_generation_flow: |
+      1. Генерация: Client → economy-service → матрица → генератор → предмет
+      2. Валидация: economy-service → проверка баланса → предмет
+      3. Сохранение: economy-service → сохранение в БД → события
+
+  integrations:
+    with_inventory_service: |
+      - Добавление предметов в инвентарь
+      - Проверка наличия предметов
+      - Обновление инвентаря после генерации
+    with_economy_service: |
+      - Интеграция с торговлей
+      - Интеграция с рынками
+      - Интеграция с аукционами
+    with_gameplay_service: |
+      - Расчет характеристик предметов
+      - Применение модификаторов
+      - Синергии с имплантами
+    with_narrative_service: |
+      - Разблокировка культового оборудования через квесты
+      - Интеграция с событиями мира
+
+database:
+  tables:
+    - name: equipment_catalog
+      description: Каталог оборудования
+      columns:
+        - id: UUID PRIMARY KEY
+        - name: VARCHAR(100)
+        - category: VARCHAR(50) (weapon, armor, cyberware, consumable)
+        - brand: VARCHAR(50)
+        - rarity: VARCHAR(20) (common, uncommon, rare, epic, legendary, iconic)
+        - stats: JSONB
+        - signature: TEXT
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+    - name: iconic_equipment_timeline
+      description: Временная линия культового оборудования
+      columns:
+        - id: UUID PRIMARY KEY
+        - equipment_id: UUID REFERENCES equipment_catalog(id)
+        - era_start: INTEGER (год начала эпохи)
+        - era_end: INTEGER (год конца эпохи)
+        - unlock_conditions: JSONB
+        - availability: VARCHAR(20) (always, seasonal, event, quest)
+        - unlock_date: TIMESTAMP
+        - created_at: TIMESTAMP
+    - name: iconic_unlocks
+      description: Разблокировки культового оборудования
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID REFERENCES characters(id)
+        - iconic_id: UUID REFERENCES iconic_equipment_timeline(id)
+        - unlocked_at: TIMESTAMP
+        - unlock_method: VARCHAR(50) (quest, event, purchase, drop)
+    - name: equipment_matrix
+      description: Матрица характеристик оборудования
+      columns:
+        - id: UUID PRIMARY KEY
+        - brand: VARCHAR(50)
+        - category: VARCHAR(50)
+        - rarity: VARCHAR(20)
+        - stat_pools: JSONB
+        - modifiers: JSONB
+        - version: INTEGER
+        - updated_at: TIMESTAMP
+    - name: generated_equipment
+      description: Процедурно сгенерированное оборудование
+      columns:
+        - id: UUID PRIMARY KEY
+        - seed: BIGINT
+        - brand: VARCHAR(50)
+        - category: VARCHAR(50)
+        - rarity: VARCHAR(20)
+        - stats: JSONB
+        - generated_at: TIMESTAMP
+
+  indexes:
+    - table: equipment_catalog
+      columns: [category, brand, rarity]
+    - table: iconic_equipment_timeline
+      columns: [equipment_id, era_start, era_end]
+    - table: iconic_unlocks
+      columns: [character_id, iconic_id]
+    - table: equipment_matrix
+      columns: [brand, category, rarity]
+    - table: generated_equipment
+      columns: [seed, brand, category]
+
+subtasks:
+  - id: equipment-catalog-manager
+    title: Equipment Catalog Manager
+    description: Управление каталогом оборудования
+    effort_days: 3
+    dependencies: []
+  - id: iconic-timeline-manager
+    title: Iconic Timeline Manager
+    description: Управление временной линией культового оборудования
+    effort_days: 4
+    dependencies: [equipment-catalog-manager]
+  - id: procedural-generator-integration
+    title: Procedural Generator Integration
+    description: Интеграция процедурной генерации
+    effort_days: 3
+    dependencies: [equipment-catalog-manager]
+  - id: equipment-matrix-manager
+    title: Equipment Matrix Manager
+    description: Управление матрицей характеристик
+    effort_days: 3
+    dependencies: []
+  - id: equipment-analytics-system
+    title: Equipment Analytics System
+    description: Аналитика оборудования
+    effort_days: 2
+    dependencies: [equipment-catalog-manager]
+  - id: inventory-integration
+    title: Inventory Integration
+    description: Интеграция с inventory-service
+    effort_days: 3
+    dependencies: [equipment-catalog-manager, iconic-timeline-manager]
+  - id: economy-integration
+    title: Economy Integration
+    description: Интеграция с economy-service
+    effort_days: 2
+    dependencies: [equipment-catalog-manager]
+  - id: gameplay-integration
+    title: Gameplay Integration
+    description: Интеграция с gameplay-service
+    effort_days: 2
+    dependencies: [equipment-matrix-manager]
+  - id: narrative-integration
+    title: Narrative Integration
+    description: Интеграция с narrative-service для разблокировки культового
+    effort_days: 2
+    dependencies: [iconic-timeline-manager]
+
+total_estimated_effort: 24 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            ECM[Equipment Catalog Manager]
+            ITM[Iconic Timeline Manager]
+            PG[Procedural Generator]
+            EMM[Equipment Matrix Manager]
+            EAS[Equipment Analytics System]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>equipment_catalog<br/>iconic_equipment_timeline<br/>iconic_unlocks<br/>equipment_matrix<br/>generated_equipment)]
+        end
+
+        subgraph "External Services"
+            IS[Inventory Service]
+            ES[Economy Service]
+            GS[Gameplay Service]
+            NS[Narrative Service]
+            RG[Realtime Gateway]
+            EB[Event Bus]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| ECM
+        CL -->|API requests| ITM
+        CL -->|API requests| PG
+        CL -->|API requests| EMM
+
+        ECM -->|store| DB
+        ITM -->|store| DB
+        PG -->|store| DB
+        EMM -->|store| DB
+
+        ECM -->|add items| IS
+        ITM -->|unlock items| IS
+        PG -->|generate items| IS
+        ECM -->|trade| ES
+        EMM -->|calculate stats| GS
+        ITM -->|quest unlock| NS
+
+        ECM -->|events| EB
+        ITM -->|events| EB
+        PG -->|events| EB
+        EMM -->|events| EB
+
+        EB -->|push| RG
+        RG -->|updates| CL
+    ```
+
