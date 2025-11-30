@@ -1,0 +1,133 @@
+# Issue: #315
+metadata:
+  id: cosmetic-core
+  title: Архитектура системы косметики - Основная структура
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:50:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - monetization
+    - personalization
+    - cosmetics
+  related_systems:
+    - cosmetic-service
+    - inventory-service
+    - shop-service
+    - economy-service
+    - analytics-service
+  related_documents:
+    - id: backend-cosmetic-system
+      relation: implements
+    - id: cosmetic-mechanics
+      relation: extends
+    - id: cosmetic-data-flows
+      relation: extends
+    - id: cosmetic-database
+      relation: extends
+    - id: cosmetic-integrations
+      relation: extends
+    - id: cosmetic-technical
+      relation: extends
+  github_issue: 315
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - monetization
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную архитектуру системы косметики, включающую:
+    - Управление каталогом косметических предметов
+    - Систему покупки косметики
+    - Систему экипировки косметики
+    - Систему магазина и ротации
+    - Систему редкостей
+    - Интеграции с экономикой и инвентарем
+  goal: |
+    Создать архитектурную схему системы косметики с определением:
+    - Компонентов для управления косметикой
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы косметики с поддержкой покупки, экипировки,
+    магазина и редкостей.
+
+architecture:
+  overview: |
+    Архитектура системы косметики состоит из следующих компонентов:
+    1. Cosmetic Manager - управление системой косметики
+    2. Cosmetic Catalog Manager - управление каталогом косметики
+    3. Cosmetic Ownership Manager - управление владением косметикой
+    4. Cosmetic Shop Manager - управление магазином и ротацией
+    5. Cosmetic Equip Manager - управление экипировкой косметики
+    6. Cosmetic Rarity Manager - управление редкостями
+    7. Cosmetic Purchase Manager - управление покупкой косметики
+    8. Cosmetic Preview Manager - управление предпросмотром косметики
+    9. Cosmetic Analytics Collector - сбор аналитики
+    10. Cosmetic Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: cosmetic-service
+      port: 8092
+      responsibility: |
+        Обработка системы косметики:
+        - Управление системой косметики
+        - Управление каталогом косметики
+        - Управление владением косметикой
+        - Управление магазином и ротацией
+        - Управление экипировкой
+        - Управление редкостями
+        - Управление покупкой
+        - Управление предпросмотром
+        - Сбор аналитики
+        - Сбор телеметрии
+      components:
+        - cosmetic-manager: управление системой косметики
+        - cosmetic-catalog-manager: управление каталогом косметики
+        - cosmetic-ownership-manager: управление владением косметикой
+        - cosmetic-shop-manager: управление магазином и ротацией
+        - cosmetic-equip-manager: управление экипировкой косметики
+        - cosmetic-rarity-manager: управление редкостями
+        - cosmetic-purchase-manager: управление покупкой косметики
+        - cosmetic-preview-manager: управление предпросмотром косметики
+        - cosmetic-analytics-collector: сбор аналитики
+        - cosmetic-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/cosmetic/catalog - каталог косметики
+        - GET /api/v1/cosmetic/catalog/{cosmeticId} - информация о косметике
+        - GET /api/v1/cosmetic/shop - ежедневный магазин
+        - GET /api/v1/cosmetic/shop/rotation - информация о ротации
+        - POST /api/v1/cosmetic/purchase - покупка косметики
+        - GET /api/v1/cosmetic/{characterId}/cosmetics - список косметики персонажа
+        - GET /api/v1/cosmetic/{characterId}/cosmetics/owned - владение косметикой
+        - GET /api/v1/cosmetic/{characterId}/cosmetics/equipped - экипированная косметика
+        - POST /api/v1/cosmetic/{characterId}/cosmetics/{cosmeticId}/equip - экипировка косметики
+        - POST /api/v1/cosmetic/{characterId}/cosmetics/{cosmeticId}/unequip - снятие косметики
+        - GET /api/v1/cosmetic/{characterId}/cosmetics/{cosmeticId}/preview - предпросмотр косметики
+        - GET /api/v1/cosmetic/rarities - список редкостей
+        - GET /api/v1/cosmetic/{characterId}/cosmetics/stats - статистика косметики
+      websocket_channels:
+        - wss://api.necp.game/v1/cosmetic/{characterId} - поток обновлений косметики персонажа
+      events_published:
+        - cosmetic.purchased: куплена косметика
+        - cosmetic.equipped: экипирована косметика
+        - cosmetic.unequipped: снята косметика
+        - cosmetic.shop-rotated: обновлен магазин
+        - cosmetic.rarity-unlocked: разблокирована редкость
+        - cosmetic.stats-updated: обновлена статистика
+      events_subscribed:
+        - character.created: создан персонаж
+        - economy.transaction: транзакция в экономике
+        - inventory.item-added: добавлен предмет в инвентарь
+        - achievement.unlocked: разблокировано достижение
+

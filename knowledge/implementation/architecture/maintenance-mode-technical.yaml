@@ -1,0 +1,240 @@
+# Issue: #316
+metadata:
+  id: maintenance-mode-technical
+  title: Архитектура системы режима обслуживания - Техническое задание
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:55:00Z
+  github_issue: 316
+  related_documents:
+    - id: maintenance-mode-core
+      relation: extends
+
+technical_specification:
+  subtasks:
+    - id: maintenance-manager
+      title: Реализация менеджера системы обслуживания
+      description: |
+        Реализация Maintenance Manager с управлением системой обслуживания
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: maintenance-window-manager
+      title: Реализация менеджера окон обслуживания
+      description: |
+        Реализация Maintenance Window Manager с управлением окнами обслуживания,
+        созданием, обновлением и удалением окон.
+      dependencies: [maintenance-manager]
+      estimated_effort: 4 days
+
+    - id: maintenance-status-manager
+      title: Реализация менеджера статуса обслуживания
+      description: |
+        Реализация Maintenance Status Manager с управлением статусом обслуживания,
+        обновлением статуса и проверкой режима обслуживания.
+      dependencies: [maintenance-manager]
+      estimated_effort: 3 days
+
+    - id: scheduled-maintenance-manager
+      title: Реализация менеджера планового обслуживания
+      description: |
+        Реализация Scheduled Maintenance Manager с управлением плановым обслуживанием,
+        планированием окон и автоматическим запуском.
+      dependencies: [maintenance-window-manager]
+      estimated_effort: 4 days
+
+    - id: emergency-maintenance-manager
+      title: Реализация менеджера экстренного обслуживания
+      description: |
+        Реализация Emergency Maintenance Manager с управлением экстренным обслуживанием,
+        триггерами и немедленным запуском.
+      dependencies: [maintenance-window-manager]
+      estimated_effort: 4 days
+
+    - id: graceful-shutdown-manager
+      title: Реализация менеджера graceful shutdown
+      description: |
+        Реализация Graceful Shutdown Manager с управлением graceful shutdown,
+        ожиданием завершения активных запросов и закрытием соединений.
+      dependencies: [maintenance-manager]
+      estimated_effort: 5 days
+
+    - id: connection-blocker
+      title: Реализация блокировщика соединений
+      description: |
+        Реализация Connection Blocker с блокировкой новых соединений,
+        middleware для API Gateway и возвратом статуса 503.
+      dependencies: [maintenance-status-manager]
+      estimated_effort: 3 days
+
+    - id: maintenance-notification-manager
+      title: Реализация менеджера уведомлений
+      description: |
+        Реализация Maintenance Notification Manager с управлением уведомлениями,
+        отправкой через различные каналы и логированием.
+      dependencies: [maintenance-manager]
+      estimated_effort: 4 days
+
+    - id: maintenance-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Maintenance Analytics Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [maintenance-manager]
+      estimated_effort: 3 days
+
+    - id: maintenance-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Maintenance Telemetry Collector с логированием событий,
+        сбором телеметрии и интеграцией с Analytics Service.
+      dependencies: [maintenance-manager]
+      estimated_effort: 2 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений статуса обслуживания
+        и уведомлений.
+      dependencies: [maintenance-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы обслуживания.
+      dependencies: [maintenance-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для окон обслуживания, статуса, уведомлений
+        и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> InfrastructureService[Infrastructure Service<br/>8093]
+        
+        InfrastructureService --> MM[Maintenance Manager]
+        InfrastructureService --> MWM[Maintenance Window Manager]
+        InfrastructureService --> MSM[Maintenance Status Manager]
+        InfrastructureService --> SMM[Scheduled Maintenance Manager]
+        InfrastructureService --> EMM[Emergency Maintenance Manager]
+        InfrastructureService --> GSM[Graceful Shutdown Manager]
+        InfrastructureService --> CB[Connection Blocker]
+        InfrastructureService --> MNM[Maintenance Notification Manager]
+        InfrastructureService --> MAC[Maintenance Analytics Collector]
+        InfrastructureService --> MTC[Maintenance Telemetry Collector]
+        
+        MM --> MWM
+        MM --> MSM
+        MWM --> SMM
+        MWM --> EMM
+        MSM --> CB
+        MM --> GSM
+        MM --> MNM
+        
+        InfrastructureService --> APIGateway[API Gateway]
+        InfrastructureService --> NotificationService[Notification Service]
+        InfrastructureService --> DeploymentService[Deployment Service]
+        InfrastructureService --> MonitoringService[Monitoring Service]
+        InfrastructureService --> AnalyticsService[Analytics Service]
+        
+        InfrastructureService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        InfrastructureService --> DB[(Infrastructure DB)]
+        
+        Client --> WSMaintenance[WebSocket<br/>Maintenance]
+        WSMaintenance --> InfrastructureService
+    ```
+
+  scheduled_maintenance_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant Admin as Administrator
+        participant MWM as Maintenance Window Manager
+        participant MNM as Maintenance Notification Manager
+        participant MSM as Maintenance Status Manager
+        participant CB as Connection Blocker
+        participant GSM as Graceful Shutdown Manager
+        participant EB as Event Bus
+        
+        Admin->>MWM: Create maintenance window
+        MWM->>MWM: Save window to DB
+        MWM->>MNM: Schedule notifications (24h, 1h)
+        MWM->>MSM: Update status to "starting"
+        MSM->>CB: Block new connections
+        MSM->>GSM: Start graceful shutdown
+        GSM->>GSM: Wait for active requests
+        GSM->>GSM: Close connections
+        GSM->>MSM: Shutdown complete
+        MSM->>MSM: Update status to "completed"
+        MSM->>MNM: Send completion notification
+        MSM->>EB: Publish maintenance.ended
+    ```
+
+  emergency_maintenance_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant Trigger as Infrastructure Alert
+        participant EMM as Emergency Maintenance Manager
+        participant MNM as Maintenance Notification Manager
+        participant MSM as Maintenance Status Manager
+        participant CB as Connection Blocker
+        participant GSM as Graceful Shutdown Manager
+        participant EB as Event Bus
+        
+        Trigger->>EMM: Emergency maintenance trigger
+        EMM->>EMM: Create emergency window
+        EMM->>MNM: Send immediate notification
+        EMM->>MSM: Update status to "starting"
+        MSM->>CB: Block new connections
+        MSM->>GSM: Start graceful shutdown
+        GSM->>GSM: Wait for active requests
+        GSM->>GSM: Close connections
+        GSM->>MSM: Shutdown complete
+        MSM->>MSM: Update status to "completed"
+        MSM->>MNM: Send completion notification
+        MSM->>EB: Publish maintenance.ended
+    ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния режима обслуживания
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (начало обслуживания, graceful shutdown, завершение обслуживания)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для статуса, окон, обслуживания, graceful shutdown, блокировки соединений, уведомлений и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы режима обслуживания:
+      - Определены компоненты (Maintenance Manager, Maintenance Window Manager, Maintenance Status Manager, Scheduled Maintenance Manager, Emergency Maintenance Manager, Graceful Shutdown Manager, Connection Blocker, Maintenance Notification Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (maintenance_windows, maintenance_status, maintenance_notifications, maintenance_telemetry)
+      - Спроектирована система планового обслуживания
+      - Спроектирована система экстренного обслуживания
+      - Спроектирована система graceful shutdown
+      - Спроектирована система уведомлений
+      - Создано техническое задание
+      - Разбито на подзадачи
+

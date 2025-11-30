@@ -41,16 +41,21 @@ func (h *WeaponCombatHandlers) PerformMeleeAttack(w http.ResponseWriter, r *http
 	h.respondError(w, http.StatusNotImplemented, "handler not implemented - run 'make generate-all-weapon-apis' first")
 }
 
+// Issue: #141886468
 func (h *WeaponCombatHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (h *WeaponCombatHandlers) respondError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+	if err := json.NewEncoder(w).Encode(map[string]string{"error": message}); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON error response")
+	}
 }
 
 

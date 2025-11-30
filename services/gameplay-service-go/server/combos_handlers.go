@@ -1,4 +1,4 @@
-// Issue: #1525
+// Issue: #1525, #141886468
 package server
 
 import (
@@ -159,7 +159,9 @@ func (h *ComboHandlers) GetComboAnalytics(w http.ResponseWriter, r *http.Request
 func (h *ComboHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (h *ComboHandlers) respondError(w http.ResponseWriter, status int, message string) {
