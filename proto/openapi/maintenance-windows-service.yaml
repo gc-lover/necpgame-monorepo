@@ -1,0 +1,216 @@
+# Issue: #316
+openapi: 3.0.3
+info:
+  title: Maintenance Windows Service API
+  description: API для управления окнами обслуживания
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8097/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Maintenance Windows
+    description: Управление окнами обслуживания
+
+paths:
+  /infrastructure/maintenance/windows:
+    post:
+      tags:
+        - Maintenance Windows
+      summary: Создать окно обслуживания
+      operationId: createMaintenanceWindow
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/CreateMaintenanceWindowRequest'
+      responses:
+        '201':
+          description: Окно обслуживания создано
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Maintenance Windows
+      summary: Получить список окон обслуживания
+      operationId: listMaintenanceWindows
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: maintenance_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - SCHEDULED
+              - EMERGENCY
+              - HOT_FIX
+              - ROLLBACK
+              - UPGRADE
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - PLANNED
+              - NOTIFIED
+              - STARTING
+              - ACTIVE
+              - COMPLETING
+              - COMPLETED
+              - CANCELLED
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список окон обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindowsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/windows/{window_id}:
+    get:
+      tags:
+        - Maintenance Windows
+      summary: Получить информацию об окне обслуживания
+      operationId: getMaintenanceWindow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация об окне обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindow'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Maintenance Windows
+      summary: Обновить окно обслуживания
+      operationId: updateMaintenanceWindow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/UpdateMaintenanceWindowRequest'
+      responses:
+        '200':
+          description: Окно обслуживания обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Maintenance Windows
+      summary: Отменить окно обслуживания
+      operationId: cancelMaintenanceWindow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Окно обслуживания отменено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

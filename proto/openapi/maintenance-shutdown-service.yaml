@@ -1,0 +1,83 @@
+# Issue: #316
+openapi: 3.0.3
+info:
+  title: Maintenance Shutdown Service API
+  description: API для управления graceful shutdown
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8097/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Graceful Shutdown
+    description: Координация graceful shutdown
+
+paths:
+  /infrastructure/maintenance/shutdown/start:
+    post:
+      tags:
+        - Graceful Shutdown
+      summary: Начать graceful shutdown
+      operationId: startGracefulShutdown
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'maintenance-schemas.yaml#/components/schemas/StartGracefulShutdownRequest'
+      responses:
+        '200':
+          description: Graceful shutdown начат
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/GracefulShutdownStatus'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/shutdown/status:
+    get:
+      tags:
+        - Graceful Shutdown
+      summary: Получить статус graceful shutdown
+      operationId: getGracefulShutdownStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Статус graceful shutdown
+          content:
+            application/json:
+              schema:
+                $ref: 'maintenance-schemas.yaml#/components/schemas/GracefulShutdownStatus'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
