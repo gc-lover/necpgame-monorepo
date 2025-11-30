@@ -1,3 +1,4 @@
+// Issue: #141888796
 package server
 
 import (
@@ -364,6 +365,7 @@ func (r *ClanWarRepository) GetTerritoryByID(ctx context.Context, territoryID uu
 	}
 
 	if err := json.Unmarshal(resourcesJSON, &territory.Resources); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal resources JSON")
 		territory.Resources = make(map[string]interface{})
 	}
 
