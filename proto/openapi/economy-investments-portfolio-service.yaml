@@ -1,0 +1,273 @@
+# Issue: #228
+openapi: 3.0.3
+info:
+  title: Economy Investments Portfolio Service API
+  description: |
+    API для управления портфелями игроков.
+    
+    **Основные возможности:**
+    - Получение портфеля игрока
+    - Ребалансировка портфеля
+    - Шаблоны портфелей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+  x-microservice: economy-service-go
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Portfolio
+    description: Управление портфелями
+
+paths:
+  /economy/investments/portfolio:
+    get:
+      tags:
+        - Portfolio
+      summary: Получить портфель игрока
+      description: Возвращает полный портфель инвестиций игрока с аналитикой
+      operationId: getPortfolio
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Портфель игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/investments/portfolio/rebalance:
+    post:
+      tags:
+        - Portfolio
+      summary: Ребалансировка портфеля
+      description: Выполняет ребалансировку портфеля согласно целевым пропорциям
+      operationId: rebalancePortfolio
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RebalancePortfolioRequest'
+      responses:
+        '200':
+          description: Портфель ребалансирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/investments/portfolio/templates:
+    get:
+      tags:
+        - Portfolio
+      summary: Получить шаблоны портфелей
+      description: Возвращает доступные шаблоны портфелей
+      operationId: getPortfolioTemplates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+            enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
+      responses:
+        '200':
+          description: Список шаблонов портфелей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioTemplatesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/investments/portfolio/apply-template:
+    post:
+      tags:
+        - Portfolio
+      summary: Применить шаблон портфеля
+      description: Применяет шаблон портфеля к портфелю игрока
+      operationId: applyPortfolioTemplate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyPortfolioTemplateRequest'
+      responses:
+        '200':
+          description: Шаблон применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Portfolio:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        total_value:
+          type: number
+          format: decimal
+        total_return:
+          type: number
+          format: decimal
+        total_return_percent:
+          type: number
+          format: decimal
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioPosition'
+        asset_allocation:
+          type: object
+          additionalProperties:
+            type: number
+            format: decimal
+        risk_score:
+          type: number
+          format: decimal
+        diversification_score:
+          type: number
+          format: decimal
+        last_updated:
+          type: string
+          format: date-time
+
+    PortfolioPosition:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        product_type:
+          type: string
+          enum: [STOCK, BOND, REAL_ESTATE, PRODUCTION_SHARE, COMMODITY]
+        amount:
+          type: number
+          format: decimal
+        current_value:
+          type: number
+          format: decimal
+        return:
+          type: number
+          format: decimal
+        return_percent:
+          type: number
+          format: decimal
+        allocation_percent:
+          type: number
+          format: decimal
+
+    RebalancePortfolioRequest:
+      type: object
+      required:
+        - character_id
+        - target_allocation
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        target_allocation:
+          type: object
+          additionalProperties:
+            type: number
+            format: decimal
+            minimum: 0
+            maximum: 100
+          description: Целевое распределение активов по типам (в процентах)
+
+    PortfolioTemplate:
+      type: object
+      properties:
+        template_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        risk_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
+        target_allocation:
+          type: object
+          additionalProperties:
+            type: number
+            format: decimal
+
+    PortfolioTemplatesResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioTemplate'
+
+    ApplyPortfolioTemplateRequest:
+      type: object
+      required:
+        - character_id
+        - template_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        template_id:
+          type: string
+          format: uuid
+
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+

@@ -1,0 +1,359 @@
+# Issue: #228
+openapi: 3.0.3
+info:
+  title: Economy Investments Core Service API
+  description: |
+    API для управления инвестициями и транзакциями.
+    
+    **Основные возможности:**
+    - Покупка и продажа инвестиций
+    - Управление позициями игроков
+    - История транзакций
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+  x-microservice: economy-service-go
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Investments
+    description: Управление инвестициями
+
+paths:
+  /economy/investments/buy:
+    post:
+      tags:
+        - Investments
+      summary: Покупка инвестиции
+      description: Покупает инвестиционный продукт для игрока
+      operationId: buyInvestment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyInvestmentRequest'
+      responses:
+        '201':
+          description: Инвестиция куплена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestmentPosition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/investments/sell:
+    post:
+      tags:
+        - Investments
+      summary: Продажа инвестиции
+      description: Продает инвестиционную позицию игрока
+      operationId: sellInvestment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellInvestmentRequest'
+      responses:
+        '200':
+          description: Инвестиция продана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestmentTransaction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/investments/positions:
+    get:
+      tags:
+        - Investments
+      summary: Получить позиции игрока
+      description: Возвращает все инвестиционные позиции игрока
+      operationId: getInvestmentPositions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: product_type
+          in: query
+          schema:
+            type: string
+            enum: [STOCK, BOND, REAL_ESTATE, PRODUCTION_SHARE, COMMODITY]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список позиций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestmentPositionsResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/investments/transactions:
+    get:
+      tags:
+        - Investments
+      summary: Получить историю транзакций
+      description: Возвращает историю транзакций инвестиций для игрока
+      operationId: getInvestmentTransactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: product_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: transaction_type
+          in: query
+          schema:
+            type: string
+            enum: [BUY, SELL, DIVIDEND, INTEREST]
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestmentTransactionsResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    BuyInvestmentRequest:
+      type: object
+      required:
+        - character_id
+        - product_id
+        - amount
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        product_id:
+          type: string
+          format: uuid
+          description: ID инвестиционного продукта
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Сумма инвестиции
+        quantity:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Количество (для акций)
+
+    SellInvestmentRequest:
+      type: object
+      required:
+        - character_id
+        - position_id
+        - amount
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        position_id:
+          type: string
+          format: uuid
+          description: ID позиции для продажи
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Сумма для продажи
+        quantity:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Количество для продажи (для акций)
+
+    InvestmentPosition:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        product_type:
+          type: string
+          enum: [STOCK, BOND, REAL_ESTATE, PRODUCTION_SHARE, COMMODITY]
+        amount:
+          type: number
+          format: decimal
+        quantity:
+          type: number
+          format: decimal
+        purchase_price:
+          type: number
+          format: decimal
+        current_value:
+          type: number
+          format: decimal
+        total_return:
+          type: number
+          format: decimal
+        purchased_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    InvestmentPositionsResponse:
+      type: object
+      properties:
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvestmentPosition'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    InvestmentTransaction:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum: [BUY, SELL, DIVIDEND, INTEREST]
+        amount:
+          type: number
+          format: decimal
+        quantity:
+          type: number
+          format: decimal
+        price:
+          type: number
+          format: decimal
+        fee:
+          type: number
+          format: decimal
+        executed_at:
+          type: string
+          format: date-time
+
+    InvestmentTransactionsResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvestmentTransaction'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
