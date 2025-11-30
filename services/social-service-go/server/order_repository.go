@@ -1,3 +1,4 @@
+// Issue: #141888033
 package server
 
 import (
@@ -133,10 +134,16 @@ func (r *OrderRepository) List(ctx context.Context, orderType *models.OrderType,
 
 		order.ExecutorID = executorID
 		if len(rewardJSON) > 0 {
-			json.Unmarshal(rewardJSON, &order.Reward)
+			if err := json.Unmarshal(rewardJSON, &order.Reward); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal reward JSON")
+				order.Reward = make(map[string]interface{})
+			}
 		}
 		if len(requirementsJSON) > 0 {
-			json.Unmarshal(requirementsJSON, &order.Requirements)
+			if err := json.Unmarshal(requirementsJSON, &order.Requirements); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal requirements JSON")
+				order.Requirements = make(map[string]interface{})
+			}
 		}
 
 		orders = append(orders, order)

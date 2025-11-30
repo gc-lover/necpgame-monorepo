@@ -1,3 +1,4 @@
+// Issue: #141888033
 package server
 
 import (
@@ -227,6 +228,9 @@ func (s *SocialService) GetNotifications(ctx context.Context, accountID uuid.UUI
 		var response models.NotificationListResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached notifications JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 
@@ -422,6 +426,9 @@ func (s *SocialService) GetMails(ctx context.Context, recipientID uuid.UUID, lim
 		var response models.MailListResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached mails JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 

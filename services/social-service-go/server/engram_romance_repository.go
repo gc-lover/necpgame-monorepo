@@ -1,3 +1,4 @@
+// Issue: #141888033
 package server
 
 import (
@@ -66,9 +67,13 @@ func (r *EngramRomanceRepository) CreateRomanceComment(ctx context.Context, comm
 	}
 	comment.CreatedAt = time.Now()
 
-	eventContextJSON, _ := json.Marshal(comment.EventContext)
+	eventContextJSON, err := json.Marshal(comment.EventContext)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal event context JSON")
+		return err
+	}
 
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`INSERT INTO social.engram_romance_comments 
 		 (id, comment_id, engram_id, character_id, comment_text, romance_event_type,
 		  partner_id, event_context, influence_level, created_at)
@@ -129,7 +134,10 @@ func (r *EngramRomanceRepository) GetRomanceInfluence(ctx context.Context, engra
 		influence.EngramType = &engramType.V
 	}
 	if len(specialEventsJSON) > 0 {
-		json.Unmarshal(specialEventsJSON, &influence.SpecialEvents)
+		if err := json.Unmarshal(specialEventsJSON, &influence.SpecialEvents); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal special events JSON")
+			influence.SpecialEvents = []string{}
+		}
 	}
 
 	return &influence, nil

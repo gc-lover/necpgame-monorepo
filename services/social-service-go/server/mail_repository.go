@@ -1,3 +1,4 @@
+// Issue: #141888033
 package server
 
 import (
@@ -114,7 +115,10 @@ func (r *MailRepository) GetByRecipientID(ctx context.Context, recipientID uuid.
 
 		mail.SenderID = senderID
 		if len(attachmentsJSON) > 0 {
-			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+			if err := json.Unmarshal(attachmentsJSON, &mail.Attachments); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal attachments JSON")
+				mail.Attachments = make(map[string]interface{})
+			}
 		}
 
 		messages = append(messages, mail)
@@ -209,7 +213,10 @@ func (r *MailRepository) GetExpiredMails(ctx context.Context, before time.Time) 
 
 		mail.SenderID = senderID
 		if len(attachmentsJSON) > 0 {
-			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+			if err := json.Unmarshal(attachmentsJSON, &mail.Attachments); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal attachments JSON")
+				mail.Attachments = make(map[string]interface{})
+			}
 		}
 
 		messages = append(messages, mail)
@@ -266,7 +273,10 @@ func (r *MailRepository) GetExpiringMailsByDays(ctx context.Context, recipientID
 
 		mail.SenderID = senderID
 		if len(attachmentsJSON) > 0 {
-			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+			if err := json.Unmarshal(attachmentsJSON, &mail.Attachments); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal attachments JSON")
+				mail.Attachments = make(map[string]interface{})
+			}
 		}
 
 		messages = append(messages, mail)
