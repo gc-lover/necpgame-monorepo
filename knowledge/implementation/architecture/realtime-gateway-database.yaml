@@ -1,0 +1,66 @@
+# Issue: #390
+metadata:
+  id: realtime-gateway-database
+  title: Архитектура Realtime Gateway System - База данных
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-30T20:50:00Z
+  github_issue: 390
+  related_documents:
+    - id: realtime-gateway-core
+      relation: extends
+
+database_structure:
+  tables:
+    - name: realtime_connections
+      description: WebSocket соединения
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - zone_id: UUID FOREIGN KEY
+        - connection_state: ENUM (connecting, connected, disconnecting, disconnected)
+        - last_heartbeat: TIMESTAMP
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+        - disconnected_at: TIMESTAMP
+
+    - name: realtime_zones
+      description: Зоны realtime
+      columns:
+        - id: UUID PRIMARY KEY
+        - name: VARCHAR(255)
+        - type: ENUM (open_world, combat_zone, raid_zone, social_zone)
+        - max_players: INTEGER
+        - current_players: INTEGER
+        - tick_rate: INTEGER
+        - interest_cell_size: INTEGER
+        - performance_profile: VARCHAR(50)
+        - is_active: BOOLEAN
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: realtime_zone_participants
+      description: Участники зон
+      columns:
+        - id: UUID PRIMARY KEY
+        - zone_id: UUID FOREIGN KEY
+        - character_id: UUID FOREIGN KEY
+        - connection_id: UUID FOREIGN KEY
+        - interest_cell_x: INTEGER
+        - interest_cell_y: INTEGER
+        - joined_at: TIMESTAMP
+        - left_at: TIMESTAMP
+
+    - name: realtime_telemetry
+      description: Телеметрия realtime
+      columns:
+        - id: UUID PRIMARY KEY
+        - event_type: VARCHAR(50)
+        - connection_id: UUID FOREIGN KEY
+        - zone_id: UUID FOREIGN KEY
+        - character_id: UUID FOREIGN KEY
+        - event_data: JSONB
+        - created_at: TIMESTAMP
+

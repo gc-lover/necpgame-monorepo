@@ -1,0 +1,171 @@
+# Issue: #390
+metadata:
+  id: realtime-gateway-data-flows
+  title: Архитектура Realtime Gateway System - Потоки данных и синхронизация
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-30T20:50:00Z
+  github_issue: 390
+  related_documents:
+    - id: realtime-gateway-core
+      relation: extends
+
+data_flows:
+  connection_flow: |
+    1. Клиент устанавливает WebSocket соединение через API Gateway
+    2. Connection Manager валидирует соединение и аутентифицирует игрока
+    3. Connection Manager регистрирует соединение в БД
+    4. Zone Manager определяет зону для игрока
+    5. Interest Manager вычисляет область интереса
+    6. Realtime Gateway Manager публикует событие realtime.connection.opened
+    7. Realtime Gateway отправляет обновление клиенту
+
+  zone_join_flow: |
+    1. Игрок запрашивает присоединение к зоне
+    2. Zone Manager проверяет доступность зоны
+    3. Zone Manager проверяет лимиты игроков
+    4. Interest Manager вычисляет область интереса
+    5. State Synchronizer загружает начальное состояние
+    6. Realtime Gateway Manager публикует событие realtime.zone.joined
+    7. Message Router подписывает игрока на топики зоны
+    8. Realtime Gateway отправляет обновление клиенту
+
+  state_sync_flow: |
+    1. Игрок отправляет обновление состояния через WebSocket
+    2. Protocol Optimizer применяет дельта-компрессию
+    3. State Synchronizer валидирует обновление
+    4. State Synchronizer применяет изменения к состоянию
+    5. Interest Manager определяет игроков в области интереса
+    6. Message Router маршрутизирует обновления клиентам
+    7. Realtime Gateway Manager публикует событие realtime.state.synchronized
+    8. Realtime Gateway отправляет обновления клиентам
+
+data_consistency:
+  strategy: Eventual Consistency для realtime синхронизации, Strong Consistency для критичных операций (подключение, отключение)
+  mechanisms:
+    - Eventual Consistency для синхронизации состояния игры (позиции, боевые события)
+    - Strong Consistency (ACID транзакции) для подключения/отключения игроков
+    - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении состояния
+    - Валидация перед маршрутизацией сообщений
+    - Синхронизация с другими сервисами через Event Bus
+    - Outbox Pattern для гарантированной доставки событий
+    - Saga Pattern для распределенных операций (подключение к зоне, синхронизация состояния)
+
+data_synchronization:
+  event_sourcing: |
+    Все изменения состояния realtime (подключение, отключение, присоединение к зоне, синхронизация состояния)
+    записываются как события в Event Store.
+    Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+    Примеры событий: ConnectionOpenedEvent, ConnectionClosedEvent, ZoneJoinedEvent, StateSynchronizedEvent.
+  cqrs_pattern: |
+    Разделение команд (подключение, отключение, присоединение к зоне, отправка сообщений) и запросов
+    (получение списка зон, получение информации о зоне, получение статистики соединений) для оптимизации производительности
+    и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+  saga_pattern: |
+    Для распределенных транзакций, таких как подключение к зоне (подключение, присоединение к зоне,
+    синхронизация состояния, уведомление других игроков) или синхронизация состояния (получение состояния,
+    применение изменений, отправка обновлений клиентам), используется Saga Pattern
+    для обеспечения атомарности операций между Realtime Gateway Service, World Service, Gameplay Service и Social Service.
+  outbox_pattern: |
+    Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+    который записывает события в транзакционную таблицу перед публикацией.
+
+tickrate_specification:
+  connection_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Подключение: event-based, ~0.1-1 events/sec
+      - Отключение: event-based, ~0.1-1 events/sec
+      - Получение статистики соединений: event-based, ~0.001-0.01 requests/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций соединений
+    latency_requirements: < 100-200ms для подключения, < 50-100ms для отключения
+    sync_strategy: Strong Consistency (ACID транзакции) для подключения/отключения
+
+  zone_operations:
+    tickrate: Event-based (on-demand при присоединении/выходе) + 1-5 Hz для обновления зон
+    network_load: |
+      - Присоединение к зоне: event-based, ~0.01-0.1 events/sec на игрока
+      - Выход из зоны: event-based, ~0.01-0.05 events/sec на игрока
+      - Получение списка зон: event-based, ~0.001-0.01 requests/sec на игрока
+      - Обновление зон: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций зон
+    latency_requirements: < 200-300ms для присоединения к зоне, < 100-200ms для выхода
+    sync_strategy: Strong Consistency (ACID транзакции) для присоединения/выхода из зон
+
+  state_synchronization_operations:
+    tickrate: 5-128 Hz (зависит от профиля производительности)
+    network_load: |
+      - Синхронизация состояния: 5-128 Hz, ~0.5-10 KB/sec на игрока (зависит от профиля)
+      - Обновления позиций: 20-60 Hz, ~0.2-2 KB/sec на игрока
+      - Боевые события: 60-128 Hz, ~0.5-5 KB/sec на игрока
+      - Общий трафик: ~1-20 KB/sec на игрока для синхронизации состояния
+    latency_requirements: < 16-200ms для синхронизации состояния (зависит от профиля)
+    sync_strategy: Eventual Consistency для синхронизации состояния (delta-компрессия, приоритизация)
+
+  message_routing_operations:
+    tickrate: Event-based (on-demand при отправке сообщений) + 1-10 Hz для обработки очереди
+    network_load: |
+      - Маршрутизация сообщений: event-based, ~0.1-10 events/sec на игрока
+      - Обработка очереди: 1-10 Hz, ~0.1-1 events/sec
+      - Общий трафик: ~0.2-2 KB/sec для операций маршрутизации
+    latency_requirements: < 10-50ms для маршрутизации сообщений
+    sync_strategy: Eventual Consistency для маршрутизации сообщений (батчинг, приоритизация)
+
+  interest_management_operations:
+    tickrate: 1-5 Hz для обновления области интереса
+    network_load: |
+      - Обновление области интереса: 1-5 Hz, ~0.01-0.1 events/sec на игрока
+      - Получение игроков в области интереса: 1-5 Hz, ~0.01-0.05 requests/sec на игрока
+      - Общий трафик: ~0.1-0.3 KB/sec для операций interest management
+    latency_requirements: < 50-200ms для обновления области интереса
+    sync_strategy: Eventual Consistency для interest management (кэширование результатов)
+
+  protocol_optimization_operations:
+    tickrate: Event-based (on-demand при применении оптимизаций) + 1-10 Hz для мониторинга
+    network_load: |
+      - Применение оптимизаций: event-based, ~0.01-0.1 events/sec
+      - Мониторинг производительности: 1-10 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций оптимизации протокола
+    latency_requirements: < 10-50ms для применения оптимизаций
+    sync_strategy: Eventual Consistency для оптимизации протокола (кэширование настроек)
+
+  performance_profile_operations:
+    tickrate: Event-based (on-demand при переключении профиля) + 1-5 Hz для мониторинга
+    network_load: |
+      - Переключение профиля: event-based, ~0.001-0.01 events/sec
+      - Мониторинг производительности: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций профилей производительности
+    latency_requirements: < 100-300ms для переключения профиля
+    sync_strategy: Strong Consistency (ACID транзакции) для переключения профилей
+
+  stats_operations:
+    tickrate: Event-based (on-demand при запросе) + 1-5 Hz для обновления статистики
+    network_load: |
+      - Получение статистики: event-based, ~0.001-0.01 requests/sec
+      - Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций статистики
+    latency_requirements: < 30-100ms для получения статистики, < 50-100ms для обновления
+    sync_strategy: Eventual Consistency для статистики (кэширование в Redis)
+
+  event_handling:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Публикация событий realtime: event-based, ~0.5-5 events/sec
+      - Подписка на события: event-based, ~0.2-2 events/sec
+      - Общий трафик: ~0.5-2 KB/sec для событий
+    latency_requirements: < 50-200ms для публикации событий
+    sync_strategy: Eventual Consistency для событий (через Event Bus)
+
+scalability_requirements:
+  horizontal_scaling: |
+    Realtime Gateway Service может масштабироваться горизонтально через пул game server instances.
+    Каждый instance обслуживает 1-5 зон с независимым game loop.
+  load_balancing: |
+    Нагрузка распределяется через API Gateway с использованием sticky sessions для WebSocket соединений.
+  auto_scaling: |
+    Автоматическое масштабирование на основе метрик нагрузки (количество соединений, использование CPU/RAM).
+  warm_pools: |
+    Поддержка warm pools для быстрого масштабирования при пиковых нагрузках.
+

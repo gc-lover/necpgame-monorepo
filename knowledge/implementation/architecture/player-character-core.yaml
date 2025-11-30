@@ -1,0 +1,201 @@
+# Issue: #389
+metadata:
+  id: player-character-core
+  title: Архитектура системы управления персонажами игроков - Основная структура
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:45:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - player-character-management
+    - backend
+    - character
+    - account
+  related_systems:
+    - character-service-go
+    - inventory-service-go
+    - quest-service-go
+    - session-service-go
+  related_documents:
+    - id: backend-player-character-management-overview
+      relation: extends
+    - id: backend-player-character-creation
+      relation: extends
+    - id: backend-player-character-switching
+      relation: extends
+    - id: player-character-mechanics
+      relation: extends
+    - id: player-character-data-flows
+      relation: extends
+    - id: player-character-database
+      relation: extends
+    - id: player-character-integrations
+      relation: extends
+    - id: player-character-technical
+      relation: extends
+  github_issue: 389
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы управления
+    персонажами игроков для создания, удаления, переключения и управления
+    персонажами с поддержкой слотов, восстановления и синхронизации состояния.
+  goal: |
+    Создать архитектурную схему системы управления персонажами игроков с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы создания персонажей
+    - Системы удаления персонажей
+    - Системы переключения персонажей
+    - Системы управления слотами
+    - Технического задания для реализации
+  essence: |
+    Система управления персонажами игроков для создания, удаления, переключения
+    и управления персонажами с поддержкой слотов, восстановления и синхронизации состояния.
+
+architecture:
+  overview: |
+    Система управления персонажами игроков состоит из семи основных компонентов:
+    1. Character Creation Manager - управление созданием персонажей
+    2. Character Deletion Manager - управление удалением персонажей (soft delete)
+    3. Character Restoration Manager - управление восстановлением персонажей
+    4. Character Switching Manager - управление переключением персонажей
+    5. Slot Management Manager - управление слотами персонажей
+    6. Stats Recalculation Manager - пересчёт боевых статов
+    7. Character State Manager - сохранение и загрузка состояния персонажей
+
+  components:
+    - name: Character Creation Manager
+      location: character-service-go (модуль character-creation)
+      responsibility: |
+        - Создание персонажей
+        - Валидация данных
+        - Проверка слотов
+        - Выдача стартовых ресурсов
+        - Инициализация инвентаря и квестов
+      creation_features: |
+        - Проверка доступных слотов
+        - Валидация имени персонажа (уникальность)
+        - Задание атрибутов и навыков по классу и origin
+        - Назначение стартовой зоны и валюты
+        - Создание инвентаря
+        - Выдача начальных квестов
+      endpoints:
+        - POST /api/v1/character/characters - создание персонажа
+        - GET /api/v1/character/characters/validate-name - проверка имени
+        - GET /api/v1/character/characters/available-slots - доступные слоты
+
+    - name: Character Deletion Manager
+      location: character-service-go (модуль character-deletion)
+      responsibility: |
+        - Удаление персонажей (soft delete)
+        - Освобождение слотов
+        - Установка окна восстановления
+        - Публикация событий удаления
+      deletion_features: |
+        - Soft delete (флаг deleted)
+        - Установка can_restore_until (30 дней)
+        - Освобождение слота
+        - Публикация CharacterDeleted события
+        - Создание снапшота для восстановления
+      endpoints:
+        - DELETE /api/v1/character/characters/{character_id} - удаление персонажа
+        - GET /api/v1/character/characters/{character_id}/deletion-status - статус удаления
+
+    - name: Character Restoration Manager
+      location: character-service-go (модуль character-restoration)
+      responsibility: |
+        - Восстановление удалённых персонажей
+        - Проверка окна восстановления
+        - Возврат слотов
+        - Восстановление состояния
+      restoration_features: |
+        - Проверка окна восстановления (30 дней)
+        - Возврат слота
+        - Восстановление состояния из снапшота
+        - Публикация CharacterRestored события
+      endpoints:
+        - POST /api/v1/character/characters/{character_id}/restore - восстановление персонажа
+        - GET /api/v1/character/characters/deleted - список удалённых персонажей
+
+    - name: Character Switching Manager
+      location: character-service-go (модуль character-switching)
+      responsibility: |
+        - Переключение между персонажами
+        - Сохранение текущего персонажа
+        - Валидация прав доступа
+        - Обновление сессии
+      switching_features: |
+        - Сохранение текущего персонажа
+        - Проверка прав на нового персонажа
+        - Обновление session (current_character_id)
+        - Обновление last_played_at
+        - Публикация CharacterSwitched события
+      endpoints:
+        - POST /api/v1/character/characters/{character_id}/switch - переключение персонажа
+        - GET /api/v1/character/characters/current - текущий персонаж
+
+    - name: Slot Management Manager
+      location: character-service-go (модуль slot-management)
+      responsibility: |
+        - Управление слотами персонажей
+        - Покупка дополнительных слотов
+        - Отслеживание использования слотов
+        - Управление базовыми и премиальными слотами
+      slot_features: |
+        - Базовые слоты (по умолчанию)
+        - Премиальные слоты (покупка)
+        - Отслеживание used_slots
+        - Проверка лимитов
+        - Списание валюты при покупке
+      endpoints:
+        - GET /api/v1/character/slots - информация о слотах
+        - POST /api/v1/character/slots/purchase - покупка слота
+        - GET /api/v1/character/slots/available - доступные слоты
+
+    - name: Stats Recalculation Manager
+      location: character-service-go (модуль stats-recalculation)
+      responsibility: |
+        - Пересчёт боевых статов персонажа
+        - Учёт атрибутов, экипировки и бафов
+        - Синхронизация здоровья и брони
+        - Защита от переполнения
+      stats_features: |
+        - Базовые статы из атрибутов
+        - Бонусы от экипировки
+        - Бонусы от активных бафов
+        - Синхронизация здоровья и брони
+        - Валидация значений (защита от переполнения)
+      endpoints:
+        - POST /api/v1/character/characters/{character_id}/recalculate-stats - пересчёт статов
+        - GET /api/v1/character/characters/{character_id}/stats - текущие статы
+
+    - name: Character State Manager
+      location: character-service-go (модуль character-state)
+      responsibility: |
+        - Сохранение состояния персонажа
+        - Загрузка состояния персонажа
+        - Создание снапшотов
+        - Синхронизация с другими сервисами
+      state_features: |
+        - Сохранение основных записей
+        - Сохранение инвентаря
+        - Сохранение прогресса квестов
+        - Сохранение состояния сессии
+        - Создание снапшотов для восстановления
+      endpoints:
+        - POST /api/v1/character/characters/{character_id}/save-state - сохранение состояния
+        - GET /api/v1/character/characters/{character_id}/load-state - загрузка состояния
+        - POST /api/v1/character/characters/{character_id}/snapshot - создание снапшота
+

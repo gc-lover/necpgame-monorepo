@@ -1,0 +1,188 @@
+# Issue: #403
+metadata:
+  id: admin-moderation-data-flows
+  title: Архитектура системы администрирования и модерации - Потоки данных и синхронизация
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:50:00Z
+  github_issue: 403
+  related_documents:
+    - id: admin-moderation-core
+      relation: extends
+
+data_consistency:
+  strategy: Strong Consistency (ACID транзакции) для критичных операций (управление игроками, экономикой, санкциями)
+  mechanisms:
+    - ACID транзакции для управления игроками, экономикой, контентом и санкциями
+    - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении данных
+    - Валидация перед выполнением административных операций
+    - Синхронизация с другими сервисами через Event Bus
+    - Outbox Pattern для гарантированной доставки событий
+    - Saga Pattern для распределенных операций (изменение баланса, выдача санкций, обновление контента)
+
+data_synchronization:
+  event_sourcing: |
+    Все изменения состояния администрирования (действия администраторов, выдача санкций, изменения баланса, обновление контента)
+    записываются как события в Event Store.
+    Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+    Примеры событий: AdminActionPerformedEvent, SanctionAppliedEvent, BalanceUpdatedEvent, ContentUpdatedEvent.
+  cqrs_pattern: |
+    Разделение команд (выдача санкций, изменение баланса, обновление контента) и запросов
+    (получение списка игроков, получение статистики, получение логов аудита) для оптимизации производительности
+    и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+  saga_pattern: |
+    Для распределенных транзакций, таких как изменение баланса игрока (изменение баланса, логирование транзакции,
+    запись в аудит, уведомление игрока) или выдача санкции (создание санкции, применение санкции, запись в аудит,
+    уведомление игрока), используется Saga Pattern
+    для обеспечения атомарности операций между Admin API, Economy Service, Character Service, Social Service и Notification Service.
+  outbox_pattern: |
+    Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+    который записывает события в транзакционную таблицу перед публикацией.
+
+tickrate_specification:
+  admin_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Вход в админ-панель: event-based, ~0.01-0.1 events/sec
+      - Получение списка игроков: event-based, ~0.01-0.05 requests/sec на администратора
+      - Получение информации об игроке: event-based, ~0.01-0.02 requests/sec на администратора
+      - Общий трафик: ~0.1-0.3 KB/sec на администратора для операций администрирования
+    latency_requirements: < 200-300ms для входа, < 100-200ms для получения списка игроков
+    sync_strategy: Strong Consistency (ACID транзакции) для административных операций
+
+  player_management_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Обновление профиля игрока: event-based, ~0.001-0.01 events/sec на администратора
+      - Удаление игрока: event-based, ~0.001-0.01 events/sec на администратора
+      - Получение истории сессий: event-based, ~0.001-0.01 requests/sec на администратора
+      - Получение инвентаря: event-based, ~0.001-0.01 requests/sec на администратора
+      - Общий трафик: ~0.1-0.3 KB/sec для операций управления игроками
+    latency_requirements: < 200-300ms для обновления профиля, < 100-200ms для получения данных
+    sync_strategy: Strong Consistency (ACID транзакции) для управления игроками
+
+  economy_management_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Изменение баланса: event-based, ~0.001-0.01 events/sec на администратора
+      - Получение баланса: event-based, ~0.001-0.01 requests/sec на администратора
+      - Получение активности рынка: event-based, ~0.001-0.01 requests/sec на администратора
+      - Получение подозрительных операций: event-based, ~0.001-0.01 requests/sec на администратора
+      - Общий трафик: ~0.1-0.3 KB/sec для операций управления экономикой
+    latency_requirements: < 200-300ms для изменения баланса, < 100-200ms для получения данных
+    sync_strategy: Strong Consistency (ACID транзакции) для управления экономикой
+
+  content_management_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Создание/обновление достижения: event-based, ~0.001-0.01 events/sec на администратора
+      - Создание/обновление задания: event-based, ~0.001-0.01 events/sec на администратора
+      - Обновление диалога NPC: event-based, ~0.001-0.01 events/sec на администратора
+      - Получение списка контента: event-based, ~0.001-0.01 requests/sec на администратора
+      - Общий трафик: ~0.1-0.3 KB/sec для операций управления контентом
+    latency_requirements: < 200-300ms для создания/обновления контента, < 100-200ms для получения данных
+    sync_strategy: Strong Consistency (ACID транзакции) для управления контентом
+
+  moderation_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Обработка репорта: event-based, ~0.001-0.01 events/sec на модератора
+      - Выдача санкции: event-based, ~0.001-0.01 events/sec на модератора
+      - Удаление сообщения: event-based, ~0.001-0.01 events/sec на модератора
+      - Получение списка репортов: event-based, ~0.001-0.01 requests/sec на модератора
+      - Общий трафик: ~0.1-0.3 KB/sec для операций модерации
+    latency_requirements: < 200-300ms для выдачи санкции, < 100-200ms для получения данных
+    sync_strategy: Strong Consistency (ACID транзакции) для модерации
+
+  analytics_operations:
+    tickrate: Event-based (on-demand при запросе) + 1-5 Hz для обновления метрик
+    network_load: |
+      - Получение метрик онлайн: event-based, ~0.001-0.01 requests/sec на администратора
+      - Получение метрик матчей: event-based, ~0.001-0.01 requests/sec на администратора
+      - Обновление метрик: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.3 KB/sec для операций аналитики
+    latency_requirements: < 100-200ms для получения метрик, < 50-100ms для обновления
+    sync_strategy: Eventual Consistency для аналитики (кэширование в Redis)
+
+  role_permission_operations:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Создание/обновление администратора: event-based, ~0.0001-0.001 events/sec
+      - Получение списка администраторов: event-based, ~0.0001-0.001 requests/sec
+      - Проверка прав доступа: event-based, ~0.01-0.1 requests/sec на администратора
+      - Общий трафик: ~0.1-0.3 KB/sec для операций ролей и прав
+    latency_requirements: < 100-200ms для создания/обновления администратора, < 10-50ms для проверки прав
+    sync_strategy: Strong Consistency (ACID транзакции) для управления ролями и правами
+
+  audit_log_operations:
+    tickrate: Event-based (on-demand при записи/запросе) + 1-5 Hz для батчинга
+    network_load: |
+      - Запись в аудит: event-based, ~0.1-1 events/sec на администратора
+      - Получение логов: event-based, ~0.001-0.01 requests/sec на администратора
+      - Поиск по логам: event-based, ~0.001-0.01 requests/sec на администратора
+      - Батчинг логов: 1-5 Hz, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.2-0.5 KB/sec для операций аудита
+    latency_requirements: < 50-100ms для записи в аудит, < 100-200ms для получения логов
+    sync_strategy: Strong Consistency (ACID транзакции) для записи в аудит, Eventual Consistency для получения логов
+
+  event_handling:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Публикация событий администрирования: event-based, ~0.1-0.5 events/sec
+      - Подписка на события: event-based, ~0.05-0.2 events/sec
+      - Общий трафик: ~0.2-0.7 KB/sec для событий
+    latency_requirements: < 100-300ms для публикации событий
+    sync_strategy: Eventual Consistency для событий (через Event Bus)
+
+data_flow:
+  - step: 1
+    description: |
+      Администратор входит в админ-панель через Admin Panel Service
+    flow: |
+      Admin Panel → Auth Service → Session Service
+    events:
+      - admin:logged-in
+
+  - step: 2
+    description: |
+      Администратор запрашивает список игроков
+    flow: |
+      Admin Panel → Player Management Module → Character Service → Response
+    events:
+      - admin:players-requested
+
+  - step: 3
+    description: |
+      Администратор изменяет баланс игрока
+    flow: |
+      Admin Panel → Economy Management Module → Economy Service → 
+      Transaction Log → Audit Log → Notification Service
+    events:
+      - admin:economy-balance-updated
+      - economy:balance-updated
+      - admin:action-logged
+
+  - step: 4
+    description: |
+      Модератор обрабатывает репорт
+    flow: |
+      Admin Panel → Moderation Module → Social Service → 
+      Sanction Service → Audit Log → Notification Service
+    events:
+      - admin:report-resolved
+      - moderation:sanction-applied
+      - admin:action-logged
+
+  - step: 5
+    description: |
+      Администратор обновляет диалог NPC
+    flow: |
+      Admin Panel → Content Management Module → Gameplay Service → 
+      Cache Invalidation → Audit Log
+    events:
+      - admin:content-dialogue-updated
+      - content:npc-dialogue-updated
+      - admin:action-logged
+
