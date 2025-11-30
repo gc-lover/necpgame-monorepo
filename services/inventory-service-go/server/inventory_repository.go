@@ -1,3 +1,4 @@
+// Issue: #141887950
 package server
 
 import (
@@ -106,7 +107,10 @@ func (r *InventoryRepository) GetInventoryItems(ctx context.Context, inventoryID
 		}
 
 		if metadataJSON.Valid && metadataJSON.String != "" {
-			json.Unmarshal([]byte(metadataJSON.String), &item.Metadata)
+			if err := json.Unmarshal([]byte(metadataJSON.String), &item.Metadata); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+				item.Metadata = make(map[string]interface{})
+			}
 		}
 
 		items = append(items, item)
@@ -116,9 +120,13 @@ func (r *InventoryRepository) GetInventoryItems(ctx context.Context, inventoryID
 }
 
 func (r *InventoryRepository) AddItem(ctx context.Context, item *models.InventoryItem) error {
-	metadataJSON, _ := json.Marshal(item.Metadata)
+	metadataJSON, err := json.Marshal(item.Metadata)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal metadata JSON")
+		return err
+	}
 	
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`INSERT INTO mvp_core.character_items (id, inventory_id, item_id, slot_index, stack_count, max_stack_size, is_equipped, equip_slot, metadata, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 		item.ID, item.InventoryID, item.ItemID, item.SlotIndex, item.StackCount,
@@ -213,15 +221,24 @@ func (r *InventoryRepository) GetItemTemplate(ctx context.Context, itemID string
 	}
 
 	if requirementsJSON.Valid && requirementsJSON.String != "" {
-		json.Unmarshal([]byte(requirementsJSON.String), &template.Requirements)
+		if err := json.Unmarshal([]byte(requirementsJSON.String), &template.Requirements); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal requirements JSON")
+			template.Requirements = make(map[string]interface{})
+		}
 	}
 
 	if statsJSON.Valid && statsJSON.String != "" {
-		json.Unmarshal([]byte(statsJSON.String), &template.Stats)
+		if err := json.Unmarshal([]byte(statsJSON.String), &template.Stats); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal stats JSON")
+			template.Stats = make(map[string]interface{})
+		}
 	}
 
 	if metadataJSON.Valid && metadataJSON.String != "" {
-		json.Unmarshal([]byte(metadataJSON.String), &template.Metadata)
+		if err := json.Unmarshal([]byte(metadataJSON.String), &template.Metadata); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+			template.Metadata = make(map[string]interface{})
+		}
 	}
 
 	return &template, nil
