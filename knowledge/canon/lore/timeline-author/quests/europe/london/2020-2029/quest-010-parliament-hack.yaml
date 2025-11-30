@@ -1,11 +1,12 @@
+# Issue: #658
 metadata:
   id: quest-london-2029-parliament-hack
   title: 'Лондон 2020-2029 — Взлом Парламента'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,33 +96,54 @@ quest_definition:
     flags:
       - parliament_hack_completed
   branches:
-    - id: publish_evidence
-      condition: "player_morality_score >= 5"
-      objectives:
-        - id: release_to_public
-          text: "Опубликовать доказательства коррупции для общественной поддержки"
-          type: interact
-          target: public_publication
-          count: 1
-          optional: false
+    - id: publish_evidence_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        min_value: 0.5
+      consequences:
+        currency: 0
+        reputation:
+          london_public: 40
+          london_government: -20
+        flags:
+          - parliament_evidence_published_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
     - id: blackmail_path
-      condition: "player_morality_score < 0"
-      objectives:
-        - id: blackmail_government
-          text: "Шантажировать правительство за до 200 000 еддис"
-          type: interact
-          target: blackmail_negotiation
-          count: 1
-          optional: false
-    - id: manipulate_voting
-      condition: "player_reputation_london_government >= 10"
-      objectives:
-        - id: manipulate_parliament_vote
-          text: "Манипулировать голосованием для изменения законов"
-          type: interact
-          target: vote_manipulation
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: 0.0
+      consequences:
+        currency: 200000
+        reputation:
+          london_public: -15
+          london_government: -10
+        flags:
+          - parliament_blackmail_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: criminal
+            location: london
+    - id: manipulate_voting_path
+      unlock_condition:
+        type: reputation_check
+        reputation: london_government
+        min_value: 10
+      consequences:
+        currency: 0
+        reputation:
+          london_government: 25
+          london_public: -10
+        flags:
+          - parliament_manipulation_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
 content:
   sections:
     - id: access
@@ -177,6 +199,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

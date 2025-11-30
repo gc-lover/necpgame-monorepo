@@ -1,11 +1,12 @@
+# Issue: #622
 metadata:
   id: canon-quest-paris-2020-2029-louvre-heist
   title: 'Париж 2020-2029 — «Ограбление Лувра»'
   document_type: canon
   category: timeline-author
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -99,42 +100,58 @@ quest_definition:
       optional: false
   rewards:
     experience: 10000
-    money: 0
+    currency: 0
     items:
       - item_id: mona_lisa_painting
         quantity: 1
+        name: "Картина Мона Лиза"
     reputation:
-      Cultural_Organizations: -50
-    unlocks:
-      - global_manhunt_event
+      cultural_organizations: -50
+    flags:
+      - global_manhunt_event_unlocked
   branches:
-    - branch_id: stealth_roof_infiltration
-      description: "Стелс через крышу"
+    - id: stealth_roof_infiltration_path
+      unlock_condition:
+        type: choice_made
+        choice_id: infiltration_method_selection
+        value: "stealth_roof"
       consequences:
-        skills:
-          stealth: +50
         reputation:
-          Criminal_Networks: +30
-        unlocks:
-          - advanced_stealth_heists
-    - branch_id: substitution_method
-      description: "Подмена экспоната"
+          criminal_networks: 30
+        flags:
+          - advanced_stealth_heists_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: heist
+            location: global
+    - id: substitution_method_path
+      unlock_condition:
+        type: choice_made
+        choice_id: infiltration_method_selection
+        value: "substitution"
       consequences:
-        skills:
-          social: +40
         reputation:
-          Criminal_Networks: +20
-        unlocks:
-          - substitution_heists
-    - branch_id: hacker_sabotage
-      description: "Хакерский саботаж систем безопасности"
+          criminal_networks: 20
+        flags:
+          - substitution_heists_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: heist
+            location: global
+    - id: hacker_sabotage_path
+      unlock_condition:
+        type: choice_made
+        choice_id: infiltration_method_selection
+        value: "hacker_sabotage"
       consequences:
-        skills:
-          hacking: +50
         reputation:
-          Criminal_Networks: +25
-        unlocks:
-          - hacker_heists
+          criminal_networks: 25
+        flags:
+          - hacker_heists_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: heist
+            location: global
 content:
   sections:
     - id: planning
@@ -193,6 +210,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура rewards (money -> currency, unlocks -> flags). Исправлена структура branches (branch_id -> id, description -> unlock_condition, убраны skills и unlocks из consequences, добавлены правильные поля). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

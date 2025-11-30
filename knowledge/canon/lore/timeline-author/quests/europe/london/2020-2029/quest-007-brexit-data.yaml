@@ -1,11 +1,12 @@
+# Issue: #655
 metadata:
   id: quest-london-2029-brexit-data
   title: 'Лондон 2020-2029 — Данные Брексита'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,33 +96,54 @@ quest_definition:
     flags:
       - brexit_data_quest_completed
   branches:
-    - id: publish_data
-      condition: "player_morality_score >= 5"
-      objectives:
-        - id: release_to_public
-          text: "Опубликовать данные и поднять репутацию масс"
-          type: interact
-          target: public_release
-          count: 1
-          optional: false
-    - id: sell_to_corporations
-      condition: "player_morality_score < 0"
-      objectives:
-        - id: sell_data
-          text: "Продать данные корпорациям за до 30 000 еддис"
-          type: interact
-          target: corporate_sale
-          count: 1
-          optional: false
-    - id: destroy_data
-      condition: "player_reputation_london_government >= 10"
-      objectives:
-        - id: destroy_evidence
-          text: "Уничтожить данные ради безопасности"
-          type: interact
-          target: data_destruction
-          count: 1
-          optional: false
+    - id: publish_data_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        min_value: 0.5
+      consequences:
+        currency: 0
+        reputation:
+          london_masses: 30
+          london_corporations: -10
+        flags:
+          - brexit_data_published_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
+    - id: sell_to_corporations_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: 0.0
+      consequences:
+        currency: 30000
+        reputation:
+          london_masses: -20
+          london_corporations: 20
+        flags:
+          - brexit_data_sold_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: corporate
+            location: london
+    - id: destroy_data_path
+      unlock_condition:
+        type: reputation_check
+        reputation: london_government
+        min_value: 10
+      consequences:
+        currency: 0
+        reputation:
+          london_government: 15
+          london_masses: -10
+        flags:
+          - brexit_data_destroyed_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: government
+            location: london
 content:
   sections:
     - id: breach
@@ -170,6 +192,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

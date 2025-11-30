@@ -1,11 +1,12 @@
+# Issue: #604
 metadata:
   id: canon-quest-rome-2029-002-vatican-heist
   title: 'Рим: ограбление Ватикана'
   document_type: canon
   category: quests
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -90,42 +91,57 @@ quest_definition:
     experience: 20000
     currency: 0
     items:
-      - id: unique_relic_artifact
-        name: "Уникальный артефакт (зависит от выбранной реликвии)"
+      - item_id: unique_relic_artifact
         quantity: 1
+        name: "Уникальный артефакт (зависит от выбранной реликвии)"
     reputation:
       vatican: -50
     flags:
       - vatican_heist_completed
       - vatican_wanted
   branches:
-    - id: holy_spear
-      condition: "relic_choice == 'holy_spear'"
-      objectives:
-        - id: steal_holy_spear
-          text: "Украсть Святое копьё"
-          type: acquire
-          target: holy_spear_vault
-          count: 1
-          optional: false
-    - id: cross_fragment
-      condition: "relic_choice == 'cross_fragment'"
-      objectives:
-        - id: steal_cross_fragment
-          text: "Украсть фрагмент Креста"
-          type: acquire
-          target: cross_fragment_vault
-          count: 1
-          optional: false
-    - id: turin_shroud
-      condition: "relic_choice == 'turin_shroud'"
-      objectives:
-        - id: steal_turin_shroud
-          text: "Украсть Туринскую плащаницу"
-          type: acquire
-          target: turin_shroud_vault
-          count: 1
-          optional: false
+    - id: holy_spear_path
+      unlock_condition:
+        type: choice_made
+        choice_id: relic_choice
+        value: "holy_spear"
+      consequences:
+        reputation:
+          vatican: -10
+        flags:
+          - holy_spear_stolen
+        unlocked_content:
+          - quest_type: side
+            category: relic_hunt
+            location: rome
+    - id: cross_fragment_path
+      unlock_condition:
+        type: choice_made
+        choice_id: relic_choice
+        value: "cross_fragment"
+      consequences:
+        reputation:
+          vatican: -10
+        flags:
+          - cross_fragment_stolen
+        unlocked_content:
+          - quest_type: side
+            category: relic_hunt
+            location: rome
+    - id: turin_shroud_path
+      unlock_condition:
+        type: choice_made
+        choice_id: relic_choice
+        value: "turin_shroud"
+      consequences:
+        reputation:
+          vatican: -10
+        flags:
+          - turin_shroud_stolen
+        unlocked_content:
+          - quest_type: side
+            category: relic_hunt
+            location: rome
 content:
   sections:
     - id: overview
@@ -187,6 +203,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура items (id -> item_id). Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

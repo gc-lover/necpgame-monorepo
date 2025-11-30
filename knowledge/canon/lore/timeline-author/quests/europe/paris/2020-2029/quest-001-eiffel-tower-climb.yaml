@@ -1,11 +1,12 @@
+# Issue: #621
 metadata:
   id: canon-quest-paris-2020-2029-eiffel-tower-climb
   title: 'Париж 2020-2029 — «Восхождение на Эйфелеву Башню»'
   document_type: canon
   category: timeline-author
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -86,32 +87,43 @@ quest_definition:
       optional: false
   rewards:
     experience: 1500
-    money: -30
+    currency: -30
     items:
       - item_id: trophy_top_of_paris
         quantity: 1
+        name: "Трофей «На Вершине Парижа»"
     reputation: {}
-    unlocks:
-      - megacity_towers_questline
+    flags:
+      - megacity_towers_questline_unlocked
   branches:
-    - branch_id: elevator_path
-      description: "Подъем на лифте"
+    - id: elevator_path
+      unlock_condition:
+        type: choice_made
+        choice_id: eiffel_tower_access_method
+        value: "elevator"
       consequences:
-        skills:
-          social: +10
         reputation:
-          Tourism: +5
-        unlocks:
-          - fast_tower_access
-    - branch_id: stairs_path
-      description: "Подъем пешком по 1665 ступеням"
+          tourism: 5
+        flags:
+          - fast_tower_access_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: tourism
+            location: paris
+    - id: stairs_path
+      unlock_condition:
+        type: choice_made
+        choice_id: eiffel_tower_access_method
+        value: "stairs"
       consequences:
-        skills:
-          endurance: +15
         reputation:
-          Tourism: +10
-        unlocks:
-          - endurance_quests
+          tourism: 10
+        flags:
+          - endurance_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: endurance
+            location: paris
 content:
   sections:
     - id: setup
@@ -168,6 +180,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура rewards (money -> currency, unlocks -> flags). Исправлена структура branches (branch_id -> id, description -> unlock_condition, убраны skills и unlocks из consequences, добавлены правильные поля). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer
