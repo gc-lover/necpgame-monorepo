@@ -1,3 +1,4 @@
+// Issue: #141886730, #141886751
 package server
 
 import (
@@ -73,8 +74,12 @@ func (h *SupportHandlers) GetTickets(w http.ResponseWriter, r *http.Request, par
 
 	limit := 50
 	offset := 0
-	if params.Limit != nil {
-		limit = *params.Limit
+	if params.Limit != nil && *params.Limit > 0 {
+		if *params.Limit > 100 {
+			limit = 100
+		} else {
+			limit = *params.Limit
+		}
 	}
 	if params.Offset != nil {
 		offset = *params.Offset
@@ -181,7 +186,9 @@ func (h *SupportHandlers) CloseTicket(w http.ResponseWriter, r *http.Request, ti
 func (h *SupportHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (h *SupportHandlers) respondError(w http.ResponseWriter, status int, message string) {
