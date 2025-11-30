@@ -18,11 +18,57 @@ jobs:
       services: ${{ steps.list.outputs.services }}
     steps:
       - uses: actions/checkout@v4
-      - name: Discover Go services
+        with:
+          fetch-depth: 0
+      - name: Discover changed Go services
         id: list
         run: |
-          services=$(find services -maxdepth 1 -type d -name "*-go" -exec basename {} \; | jq -R -s -c 'split("\n")[:-1]')
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+          
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA=$(git rev-parse HEAD~1)
+          fi
+          
+          changed_files=$(git diff --name-only --diff-filter=ACMR $BASE_SHA $HEAD_SHA)
+          proto_changed=$(echo "$changed_files" | grep -qE '^proto/' && echo "true" || echo "false")
+          changed_service_dirs=$(echo "$changed_files" | grep -E '^services/[^/]+-go/' | cut -d'/' -f1-2 | sort -u | sed 's|services/||')
+          
+          all_services=$(find services -maxdepth 1 -type d -name "*-go" -exec basename {} \;)
+          valid_services=""
+          
+          while IFS= read -r service; do
+            if [ -f "services/$service/go.mod" ]; then
+              valid_services="${valid_services}${service}\n"
+            fi
+          done <<< "$all_services"
+          
+          if [ "$proto_changed" = "true" ] && [ -z "$changed_service_dirs" ]; then
+            services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+          elif [ -n "$changed_service_dirs" ]; then
+            filtered_services=""
+            while IFS= read -r service; do
+              if echo "$changed_service_dirs" | grep -q "^${service}$"; then
+                filtered_services="${filtered_services}${service}\n"
+              fi
+            done <<< "$valid_services"
+            services=$(echo -e "$filtered_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+          else
+            services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+          fi
+          
+          if [ -z "$services" ] || [ "$services" = "[]" ]; then
+            echo "No services to process"
+            services="[]"
+          fi
+          
           echo "services=$services" >> $GITHUB_OUTPUT
+          echo "Found services: $services"
 
   test:
     needs: discover-services
@@ -30,6 +76,7 @@ jobs:
     strategy:
       matrix:
         service: ${{ fromJson(needs.discover-services.outputs.services) }}
+      max-parallel: 10
     
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +100,7 @@ jobs:
     strategy:
       matrix:
         service: ${{ fromJson(needs.discover-services.outputs.services) }}
+      max-parallel: 10
     steps:
       - uses: actions/checkout@v4
       
