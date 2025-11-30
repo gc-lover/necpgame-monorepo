@@ -1,0 +1,470 @@
+<!-- Issue: #42 -->
+metadata:
+  id: economy-trading-markets-auctions-architecture
+  title: Архитектура экономической системы - торговля, рынки, аукционы, биржа
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-01T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - trading
+    - markets
+    - auctions
+    - stock-exchange
+  related_systems:
+    - economy-service
+    - inventory-service
+    - wallet-service
+    - social-service
+    - analytics-service
+  related_documents:
+    - id: economy-overview
+      relation: implements
+    - id: economy-trading
+      relation: implements
+    - id: player-market-core
+      relation: implements
+    - id: auction-house-mechanics
+      relation: implements
+    - id: stock-exchange-overview
+      relation: implements
+    - id: trade-system-architecture
+      relation: extends
+    - id: stock-exchange-core
+      relation: extends
+  github_issue: 42
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+    - network
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру экономической системы, объединяющую
+    торговлю, игровой рынок, аукционы и биржу. Все механики должны быть интегрированы
+    с economy-service и обеспечивать стабильную игровую экономику.
+  goal: |
+    Создать архитектурную схему экономической системы с определением:
+    - Компонентов для управления торговлей, рынками, аукционами и биржей
+    - REST, WebSocket и Event Bus контрактов
+    - Синхронизации данных между слоями (Event Sourcing, CQRS)
+    - Тикрейта и требований к сетевой нагрузке
+    - Интеграций между компонентами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура экономической системы, интегрирующая торговлю,
+    игровой рынок, аукционы и биржу в единую систему с поддержкой стабильной
+    игровой экономики и realtime синхронизации.
+
+architecture:
+  overview: |
+    Архитектура экономической системы состоит из следующих компонентов:
+    1. Trading System - P2P торговля между игроками
+    2. Player Market System - игровой рынок с фиксированными ценами
+    3. Auction House System - аукционный дом со ставками
+    4. Stock Exchange System - фондовая биржа
+    5. Economy Orchestrator - оркестратор экономических операций
+    6. Economy Analytics System - аналитика экономики
+
+  microservices:
+    - name: economy-service
+      port: 8085
+      responsibility: |
+        Обработка экономических механик:
+        - P2P торговля между игроками
+        - Игровой рынок (Player Market)
+        - Аукционный дом (Auction House)
+        - Фондовая биржа (Stock Exchange)
+        - Оркестрация экономических операций
+      components:
+        - trading-system: P2P торговля
+        - player-market-system: игровой рынок
+        - auction-house-system: аукционный дом
+        - stock-exchange-system: фондовая биржа
+        - economy-orchestrator: оркестратор операций
+        - economy-analytics-system: аналитика экономики
+      endpoints:
+        - POST /api/v1/economy/trade/sessions - создание торговой сессии
+        - GET /api/v1/economy/trade/sessions/{id} - получение сессии
+        - POST /api/v1/economy/market/listings - создание объявления
+        - GET /api/v1/economy/market/listings - поиск объявлений
+        - POST /api/v1/economy/market/purchase - покупка предмета
+        - POST /api/v1/economy/auctions/create - создание лота
+        - POST /api/v1/economy/auctions/bid - размещение ставки
+        - POST /api/v1/economy/auctions/buyout - мгновенный выкуп
+        - GET /api/v1/economy/stock/orders - получение ордеров
+        - POST /api/v1/economy/stock/orders - создание ордера
+        - GET /api/v1/economy/stock/prices - получение цен
+      websocket_channels:
+        - wss://api.necp.game/v1/economy/trade/{sessionId} - live события торговли
+        - wss://api.necp.game/v1/economy/market/{characterId} - обновления рынка
+        - wss://api.necp.game/v1/economy/auctions/{auctionId} - события аукциона
+        - wss://api.necp.game/v1/economy/stock/prices - цены акций в реальном времени
+      events_published:
+        - economy.trade.session-created: создание торговой сессии
+        - economy.trade.completed: завершение торговли
+        - economy.market.listing-created: создание объявления
+        - economy.market.purchase-completed: покупка предмета
+        - economy.auction.created: создание лота
+        - economy.auction.bid-placed: размещение ставки
+        - economy.auction.completed: завершение аукциона
+        - economy.stock.order-placed: размещение ордера
+        - economy.stock.trade-executed: исполнение сделки
+        - economy.stock.price-updated: обновление цены
+      events_subscribed:
+        - inventory.item-moved: перемещение предмета
+        - wallet.balance-updated: обновление баланса
+        - social.reputation-updated: обновление репутации
+
+  data_synchronization:
+    strategy: Event Sourcing + CQRS
+    event_store: |
+      Все события экономики сохраняются в Event Store:
+      - economy.trade.session-created
+      - economy.trade.completed
+      - economy.market.listing-created
+      - economy.market.purchase-completed
+      - economy.auction.created
+      - economy.auction.bid-placed
+      - economy.auction.completed
+      - economy.stock.order-placed
+      - economy.stock.trade-executed
+      - economy.stock.price-updated
+    command_side: |
+      Command Side (Write Model):
+      - economy-service: обработка команд торговли, рынка, аукционов, биржи
+    query_side: |
+      Query Side (Read Model):
+      - economy-service: получение статуса операций, цен, объявлений
+    saga_pattern: |
+      Saga для экономических операций:
+      1. Start Economy Operation Saga
+      2. Validate Resources (предметы, валюта)
+      3. Reserve Resources (блокировка)
+      4. Execute Operation (торговля/покупка/ставка/ордер)
+      5. Update Balances (обновление балансов)
+      6. If failure: Compensate (rollback, возврат ресурсов)
+    consistency: |
+      Strong Consistency для критичных операций:
+      - Создание торговых сессий
+      - Покупка предметов
+      - Размещение ставок
+      - Исполнение ордеров
+      - Обновление балансов
+      Eventual Consistency для:
+      - Поиск объявлений
+      - Статистика рынка
+      - Аналитика экономики
+
+  network_requirements:
+    tick_rate:
+      trading_sessions: |
+        - Протокол: WebSocket (TCP)
+        - Тикрейт: 10-20 Hz
+        - Задержка: <100 мс
+        - Игроков: 2 (P2P)
+      market_listings: |
+        - Протокол: HTTP REST + WebSocket
+        - Тикрейт: on-demand (при изменении)
+        - Задержка: <200 мс
+        - Оптимизация: Кэширование, пагинация
+      auction_bidding: |
+        - Протокол: WebSocket (TCP)
+        - Тикрейт: 5-10 Hz (при активных торгах)
+        - Задержка: <150 мс
+        - Оптимизация: Батчинг ставок
+      stock_exchange: |
+        - Протокол: WebSocket (TCP) для цен
+        - Тикрейт: 1-5 Hz (цены), on-demand (ордера)
+        - Задержка: <100 мс
+        - Оптимизация: Кэширование цен, агрегация обновлений
+    bandwidth_optimization: |
+      - Кэширование объявлений и цен
+      - Пагинация результатов поиска (50 на страницу)
+      - Агрегация обновлений цен для биржи
+      - Сжатие данных для WebSocket
+      - Rate limiting для предотвращения злоупотреблений
+
+  data_flows:
+    trading_session_flow: |
+      1. Игрок создает торговую сессию
+      2. Trading System проверяет расстояние между игроками
+      3. Trading System блокирует предметы и валюту
+      4. Оба игрока подтверждают обмен
+      5. Trading System выполняет обмен
+      6. Economy Service публикует событие economy.trade.completed
+      7. Realtime Gateway отправляет обновление клиентам
+
+    market_listing_flow: |
+      1. Игрок создает объявление на рынке
+      2. Player Market System проверяет лимиты (20 объявлений)
+      3. Player Market System блокирует предмет в инвентаре
+      4. Player Market System рассчитывает комиссию (1%)
+      5. Economy Service публикует событие economy.market.listing-created
+      6. Realtime Gateway отправляет обновление клиентам
+
+    market_purchase_flow: |
+      1. Игрок покупает предмет на рынке
+      2. Player Market System проверяет наличие и баланс
+      3. Player Market System списывает валюту и комиссию
+      4. Player Market System передает предмет покупателю
+      5. Player Market System выплачивает продавцу (за вычетом комиссии)
+      6. Economy Service публикует событие economy.market.purchase-completed
+      7. Realtime Gateway отправляет обновление клиентам
+
+    auction_bidding_flow: |
+      1. Игрок размещает ставку на аукционе
+      2. Auction House System проверяет минимальную ставку (+5%)
+      3. Auction House System резервирует валюту
+      4. Auction House System возвращает предыдущему лидеру
+      5. Auction House System продлевает таймер (если <5 минут)
+      6. Economy Service публикует событие economy.auction.bid-placed
+      7. Realtime Gateway отправляет обновление клиентам
+
+    stock_order_flow: |
+      1. Игрок размещает ордер на бирже
+      2. Stock Exchange System добавляет ордер в order book
+      3. Stock Exchange System пытается выполнить matching
+      4. Stock Exchange System обновляет цены при исполнении
+      5. Economy Service публикует событие economy.stock.order-placed или trade-executed
+      6. Realtime Gateway отправляет обновление цен клиентам
+
+  database_structure:
+    tables:
+      - name: trade_sessions
+        description: Торговые сессии P2P
+        columns:
+          - id: UUID PRIMARY KEY
+          - initiator_id: UUID FOREIGN KEY
+          - recipient_id: UUID FOREIGN KEY
+          - status: ENUM (created, active, confirmed, completed, cancelled)
+          - initiator_items: JSONB
+          - recipient_items: JSONB
+          - initiator_currency: JSONB
+          - recipient_currency: JSONB
+          - created_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+      - name: market_listings
+        description: Объявления на игровом рынке
+        columns:
+          - id: UUID PRIMARY KEY
+          - seller_id: UUID FOREIGN KEY
+          - item_id: UUID FOREIGN KEY
+          - price: DECIMAL(15,2)
+          - quantity: INTEGER
+          - status: ENUM (active, sold, expired, cancelled)
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - sold_at: TIMESTAMP (nullable)
+
+      - name: auction_lots
+        description: Лоты аукционного дома
+        columns:
+          - id: UUID PRIMARY KEY
+          - seller_id: UUID FOREIGN KEY
+          - item_id: UUID FOREIGN KEY
+          - start_price: DECIMAL(15,2)
+          - buyout_price: DECIMAL(15,2)
+          - current_bid: DECIMAL(15,2)
+          - bidder_id: UUID FOREIGN KEY (nullable)
+          - bid_count: INTEGER DEFAULT 0
+          - status: ENUM (active, sold, expired, cancelled)
+          - duration_hours: INTEGER
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+      - name: stock_orders
+        description: Ордера на бирже
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - stock_symbol: VARCHAR(20)
+          - order_type: ENUM (buy, sell)
+          - order_side: ENUM (market, limit)
+          - quantity: INTEGER
+          - price: DECIMAL(15,2) (nullable)
+          - status: ENUM (pending, filled, partially_filled, cancelled)
+          - filled_quantity: INTEGER DEFAULT 0
+          - created_at: TIMESTAMP
+          - executed_at: TIMESTAMP (nullable)
+
+      - name: stock_trades
+        description: Исполненные сделки на бирже
+        columns:
+          - id: UUID PRIMARY KEY
+          - buy_order_id: UUID FOREIGN KEY
+          - sell_order_id: UUID FOREIGN KEY
+          - stock_symbol: VARCHAR(20)
+          - quantity: INTEGER
+          - price: DECIMAL(15,2)
+          - executed_at: TIMESTAMP
+
+      - name: economy_operations_log
+        description: Лог всех экономических операций
+        columns:
+          - id: UUID PRIMARY KEY
+          - operation_type: ENUM (trade, market_purchase, auction_bid, stock_order)
+          - character_id: UUID FOREIGN KEY
+          - operation_data: JSONB
+          - result: JSONB
+          - created_at: TIMESTAMP
+
+  integrations:
+    inventory_service: |
+      Проверка владения предметами, блокировка предметов, передача предметов
+    wallet_service: |
+      Проверка баланса, резервирование валюты, списание/начисление валюты
+    social_service: |
+      Получение репутации продавцов, обновление репутации после сделок
+    analytics_service: |
+      Логирование всех операций, сбор метрик экономики, антифрод мониторинг
+    realtime_service: |
+      Синхронизация цен и событий в реальном времени
+
+technical_specification:
+  subtasks:
+    - id: trading-system
+      title: Реализация системы P2P торговли
+      description: |
+        Реализация Trading System с управлением торговыми сессиями,
+        проверкой расстояния, блокировкой предметов и двойным подтверждением.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: player-market-system
+      title: Реализация игрового рынка
+      description: |
+        Реализация Player Market System с созданием объявлений, поиском,
+        покупкой предметов и управлением лимитами.
+      dependencies: []
+      estimated_effort: 6 days
+
+    - id: auction-house-system
+      title: Реализация аукционного дома
+      description: |
+        Реализация Auction House System с созданием лотов, размещением ставок,
+        логикой buyout и продлением таймеров.
+      dependencies: []
+      estimated_effort: 6 days
+
+    - id: stock-exchange-system
+      title: Реализация фондовой биржи
+      description: |
+        Реализация Stock Exchange System с order book, matching ордеров,
+        обновлением цен и управлением портфелями.
+      dependencies: []
+      estimated_effort: 7 days
+
+    - id: economy-orchestrator
+      title: Реализация оркестратора экономики
+      description: |
+        Реализация Economy Orchestrator с координацией всех экономических
+        операций и управлением сагами.
+      dependencies: [trading-system, player-market-system, auction-house-system, stock-exchange-system]
+      estimated_effort: 5 days
+
+    - id: economy-analytics-system
+      title: Реализация аналитики экономики
+      description: |
+        Реализация Economy Analytics System с логированием операций,
+        сбором метрик и антифрод мониторингом.
+      dependencies: [economy-orchestrator]
+      estimated_effort: 4 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений торговли,
+        рынка, аукционов и биржи.
+      dependencies: [economy-orchestrator]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов экономической системы.
+      dependencies: [economy-orchestrator]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для торговли, рынка, аукционов, биржи
+        и логов операций с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> EconomyService[Economy Service<br/>8085]
+        
+        EconomyService --> TS[Trading System]
+        EconomyService --> PMS[Player Market System]
+        EconomyService --> AHS[Auction House System]
+        EconomyService --> SES[Stock Exchange System]
+        EconomyService --> EO[Economy Orchestrator]
+        EconomyService --> EAS[Economy Analytics System]
+        
+        TS --> PMS
+        PMS --> AHS
+        AHS --> SES
+        
+        EconomyService --> InventoryService[Inventory Service]
+        EconomyService --> WalletService[Wallet Service]
+        EconomyService --> SocialService[Social Service]
+        EconomyService --> AnalyticsService[Analytics Service]
+        EconomyService --> RealtimeService[Realtime Service]
+        
+        EconomyService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        EconomyService --> DB[(Economy DB)]
+        
+        Client --> WSEcon[WebSocket<br/>Economy]
+        WSEcon --> EconomyService
+    ```
+
+  trading_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P1 as Player 1
+        participant TS as Trading System
+        participant IS as Inventory Service
+        participant WS as Wallet Service
+        participant P2 as Player 2
+        
+        P1->>TS: Create trade session
+        TS->>IS: Validate items
+        TS->>TS: Block items
+        TS->>P2: Notify trade offer
+        P2->>TS: Accept trade
+        P2->>TS: Add items
+        TS->>IS: Validate items
+        TS->>TS: Block items
+        P1->>TS: Confirm trade
+        P2->>TS: Confirm trade
+        TS->>IS: Transfer items
+        TS->>WS: Transfer currency
+        TS->>TS: Complete trade
+        TS->>P1: Trade completed
+        TS->>P2: Trade completed
+    ```
+
