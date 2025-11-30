@@ -1,4 +1,4 @@
-// Issue: #140876112
+// Issue: #140876112, #141888033
 package server
 
 import (
@@ -128,10 +128,16 @@ func (r *romanceCoreRepository) GetPlayerRomanceRelationships(ctx context.Contex
 		}
 
 		if len(flagsJSON) > 0 {
-			json.Unmarshal(flagsJSON, &rel.Flags)
+			if err := json.Unmarshal(flagsJSON, &rel.Flags); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal flags JSON")
+				rel.Flags = []string{}
+			}
 		}
 		if len(metadataJSON) > 0 {
-			json.Unmarshal(metadataJSON, &rel.Metadata)
+			if err := json.Unmarshal(metadataJSON, &rel.Metadata); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+				rel.Metadata = make(map[string]interface{})
+			}
 		}
 
 		relationships = append(relationships, rel)
@@ -187,10 +193,16 @@ func (r *romanceCoreRepository) GetPlayerRomanceRelationshipsByType(ctx context.
 		}
 
 		if len(flagsJSON) > 0 {
-			json.Unmarshal(flagsJSON, &rel.Flags)
+			if err := json.Unmarshal(flagsJSON, &rel.Flags); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal flags JSON")
+				rel.Flags = []string{}
+			}
 		}
 		if len(metadataJSON) > 0 {
-			json.Unmarshal(metadataJSON, &rel.Metadata)
+			if err := json.Unmarshal(metadataJSON, &rel.Metadata); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+				rel.Metadata = make(map[string]interface{})
+			}
 		}
 
 		relationships = append(relationships, rel)
@@ -231,10 +243,16 @@ func (r *romanceCoreRepository) GetPlayerPlayerRomance(ctx context.Context, play
 	}
 
 	if len(flagsJSON) > 0 {
-		json.Unmarshal(flagsJSON, &rel.Flags)
+		if err := json.Unmarshal(flagsJSON, &rel.Flags); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal flags JSON")
+			rel.Flags = []string{}
+		}
 	}
 	if len(metadataJSON) > 0 {
-		json.Unmarshal(metadataJSON, &rel.Metadata)
+		if err := json.Unmarshal(metadataJSON, &rel.Metadata); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+			rel.Metadata = make(map[string]interface{})
+		}
 	}
 
 	return &rel, nil
@@ -323,10 +341,16 @@ func (r *romanceCoreRepository) AcceptPlayerPlayerRomance(ctx context.Context, r
 	}
 
 	if len(flagsJSON) > 0 {
-		json.Unmarshal(flagsJSON, &rel.Flags)
+		if err := json.Unmarshal(flagsJSON, &rel.Flags); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal flags JSON")
+			rel.Flags = []string{}
+		}
 	}
 	if len(metadataJSON) > 0 {
-		json.Unmarshal(metadataJSON, &rel.Metadata)
+		if err := json.Unmarshal(metadataJSON, &rel.Metadata); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+			rel.Metadata = make(map[string]interface{})
+		}
 	}
 
 	return &rel, nil
@@ -448,7 +472,10 @@ func (r *romanceCoreRepository) GetRomanceNotifications(ctx context.Context, pla
 		}
 
 		if len(metadataJSON) > 0 {
-			json.Unmarshal(metadataJSON, &notif.Metadata)
+			if err := json.Unmarshal(metadataJSON, &notif.Metadata); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal metadata JSON")
+				notif.Metadata = make(map[string]interface{})
+			}
 		}
 
 		notifications = append(notifications, notif)

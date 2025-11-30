@@ -1,3 +1,4 @@
+// Issue: #141888033
 package server
 
 import (
@@ -74,8 +75,14 @@ func (r *NotificationRepository) Create(ctx context.Context, notification *model
 		return nil, err
 	}
 
-	json.Unmarshal(channelsJSON, &notification.Channels)
-	json.Unmarshal(dataJSON, &notification.Data)
+	if err := json.Unmarshal(channelsJSON, &notification.Channels); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal channels JSON")
+		notification.Channels = []models.DeliveryChannel{}
+	}
+	if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal data JSON")
+		notification.Data = make(map[string]interface{})
+	}
 
 	return notification, nil
 }
@@ -101,8 +108,14 @@ func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*mo
 		return nil, err
 	}
 
-	json.Unmarshal(channelsJSON, &notification.Channels)
-	json.Unmarshal(dataJSON, &notification.Data)
+	if err := json.Unmarshal(channelsJSON, &notification.Channels); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal channels JSON")
+		notification.Channels = []models.DeliveryChannel{}
+	}
+	if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal data JSON")
+		notification.Data = make(map[string]interface{})
+	}
 
 	return &notification, nil
 }
@@ -206,8 +219,14 @@ func (r *NotificationRepository) UpdateStatus(ctx context.Context, id uuid.UUID,
 		return nil, err
 	}
 
-	json.Unmarshal(channelsJSON, &notification.Channels)
-	json.Unmarshal(dataJSON, &notification.Data)
+	if err := json.Unmarshal(channelsJSON, &notification.Channels); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal channels JSON")
+		notification.Channels = []models.DeliveryChannel{}
+	}
+	if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal data JSON")
+		notification.Data = make(map[string]interface{})
+	}
 
 	return &notification, nil
 }

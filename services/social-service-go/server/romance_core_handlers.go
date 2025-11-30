@@ -1,4 +1,4 @@
-// Issue: #140876112
+// Issue: #140876112, #141888018
 package server
 
 import (
@@ -320,7 +320,9 @@ func (h *RomanceCoreHandlers) GetRomanceNotifications(w http.ResponseWriter, r *
 func (h *RomanceCoreHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (h *RomanceCoreHandlers) respondError(w http.ResponseWriter, status int, message string) {
