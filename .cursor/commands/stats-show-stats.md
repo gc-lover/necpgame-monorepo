@@ -1,39 +1,23 @@
-# Stats Agent: Показать статистику
+# Show Stats
 
-Собрать статистику по задачам всех агентов и составить таблицу с метриками производительности.
+Show statistics for all agents.
 
-## Инструкции
+## Steps
 
-1. **Используй один запрос поиска для всех Issues (ОБЯЗАТЕЛЬНО):**
+1. Search Project items with Status field:
    ```javascript
-   const result = await mcp_github_search_issues({
-     query: 'is:issue label:agent:*',
-     perPage: 100
+   // Project config: .cursor/GITHUB_PROJECT_CONFIG.md
+   await mcp_github_list_project_items({
+     owner_type: 'user',
+     owner: 'gc-lover',
+     project_number: 1,
+     query: 'is:issue',
+     fields: ['Status', 'Title']
    });
    ```
 
-2. **Обработай результаты:**
-   - Группируй Issues по меткам агентов
-   - Подсчитывай: всего, открыто, закрыто, в работе, возвращено
-   - Вычисляй прогресс (закрыто / всего * 100%)
+2. Group by Status, count: total, open, done, in progress, returned
 
-3. **Составь таблицу:**
-   ```markdown
-   | Агент | Всего | Открыто | Закрыто | В работе | Возвращено | Прогресс |
-   |-------|-------|---------|---------|----------|------------|----------|
-   | Idea Writer | 15 | 5 | 10 | 3 | 2 | 66.7% |
-   ```
+3. Show table with progress percentage
 
-4. **Добавь итоговые показатели**
-
-## Оптимизация
-
-- **КРИТИЧЕСКИ ВАЖНО:** Один запрос поиска вместо множественных `issue_read`
-- Кэшируй результаты поиска (TTL: 2 минуты)
-
-## Ссылки
-
-- `.cursor/rules/agent-stats.mdc` - полная документация Stats Agent
-- `.cursor/STATS_AGENT_USAGE.md` - примеры использования
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - оптимизация запросов
-
+**Group by Status values, not labels.**

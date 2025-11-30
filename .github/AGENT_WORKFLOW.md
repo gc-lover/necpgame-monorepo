@@ -14,8 +14,7 @@
 - Текстовое описание механик
 - Минимальная проработка концепций
 
-**Статус в Project:** `idea-writer`
-**Метки:** `agent:idea-writer`, `stage:idea`
+**Статус в Project:** `Idea Writer - Todo`, `Idea Writer - In Progress`, `Idea Writer - Blocked`, `Idea Writer - Review`, `Idea Writer - Returned`
 
 **Что делает агент:**
 - Создает детальные описания идей
@@ -38,8 +37,8 @@
 - Реализация NPC взаимодействий
 - Создание YAML файлов для квестов
 
-**Статус в Project:** `content-writer`
-**Метки:** `agent:content-writer`, `stage:content`, `content`, `canon`, `lore`, `quest`
+**Статус в Project:** `Content Writer - Todo`, `Content Writer - In Progress`, `Content Writer - Blocked`, `Content Writer - Review`, `Content Writer - Returned`
+**Функциональные метки (опционально):** `content`, `canon`, `lore`, `quest`
 
 **Что делает агент:**
 - Создает YAML файлы квестов в `knowledge/canon/lore/timeline-author/quests/`
@@ -72,8 +71,7 @@
 - Создание технической структуры
 - Разбиение на подзадачи
 
-**Статус в Project:** `architect`
-**Метки:** `agent:architect`, `stage:design`
+**Статус в Project:** `Architect - Todo`, `Architect - In Progress`, `Architect - Blocked`, `Architect - Review`, `Architect - Returned`
 
 **Что делает агент:**
 - Анализирует идею от Idea Writer
@@ -98,8 +96,7 @@
 - Документирование API
 - Валидация архитектуры через API
 
-**Статус в Project:** `api-designer`
-**Метки:** `agent:api-designer`, `stage:api-design`
+**Статус в Project:** `API Designer - Todo`, `API Designer - In Progress`, `API Designer - Blocked`, `API Designer - Review`, `API Designer - Returned`
 
 **Что делает агент:**
 - Создает OpenAPI 3.0 спецификацию
@@ -123,8 +120,8 @@
 - Оптимизация запросов и индексов
 - Работа с производительностью БД
 
-**Статус в Project:** `database-dev`
-**Метки:** `agent:database`, `stage:database`, `database`
+**Статус в Project:** `Database - Todo`, `Database - In Progress`, `Database - Blocked`, `Database - Review`, `Database - Returned`
+**Функциональные метки (опционально):** `database`
 
 **Что делает агент:**
 - Проектирует детальные схемы БД (таблицы, связи, индексы)
@@ -149,8 +146,8 @@
 - Работа с базой данных
 - Интеграция сервисов
 
-**Статус в Project:** `backend-dev`
-**Метки:** `agent:backend`, `stage:backend-dev`
+**Статус в Project:** `Backend - Todo`, `Backend - In Progress`, `Backend - Blocked`, `Backend - Review`, `Backend - Returned`
+**Функциональные метки (опционально):** `backend`
 
 **Что делает агент:**
 - Реализует Go сервисы по OpenAPI
@@ -175,8 +172,8 @@
 - Интеграция с anti-cheat-service
 - Проверка уязвимостей
 
-**Статус в Project:** `security`
-**Метки:** `agent:security`, `stage:security`, `security`
+**Статус в Project:** `Security - Todo`, `Security - In Progress`, `Security - Blocked`, `Security - Review`, `Security - Returned`
+**Функциональные метки (опционально):** `security`
 
 **Что делает агент:**
 - Проводит аудит безопасности
@@ -200,8 +197,8 @@
 - Реализация игровой механики
 - Оптимизация производительности
 
-**Статус в Project:** `ue5-dev`
-**Метки:** `agent:ue5`, `stage:client-dev`
+**Статус в Project:** `UE5 - Todo`, `UE5 - In Progress`, `UE5 - Blocked`, `UE5 - Review`, `UE5 - Returned`
+**Функциональные метки (опционально):** `client`, `ui`, `ux`
 
 **Что делает агент:**
 - Создает C++ классы в UE5
@@ -225,8 +222,8 @@
 - Балансировка сложности квестов
 - Настройка игровых формул
 
-**Статус в Project:** `game-balance`
-**Метки:** `agent:game-balance`, `stage:balance`, `game-balance`
+**Статус в Project:** `Game Balance - Todo`, `Game Balance - In Progress`, `Game Balance - Blocked`, `Game Balance - Review`, `Game Balance - Returned`
+**Функциональные метки (опционально):** `game-balance`
 
 **Что делает агент:**
 - Балансирует игровые механики
@@ -249,8 +246,8 @@
 - Поиск багов
 - Валидация требований
 
-**Статус в Project:** `testing`
-**Метки:** `agent:qa`, `stage:testing`
+**Статус в Project:** `QA - Todo`, `QA - In Progress`, `QA - Blocked`, `QA - Review`, `QA - Returned`
+**Функциональные метки (опционально):** `bug`, `enhancement`
 
 **Что делает агент:**
 - Создает тест-кейсы
@@ -274,8 +271,7 @@
 - Деплой в продакшен
 - Мониторинг после релиза
 
-**Статус в Project:** `release`
-**Метки:** `agent:release`, `stage:release`
+**Статус в Project:** `Release - Todo`, `Release - In Progress`, `Release - Blocked`, `Release - Review`, `Release - Returned`
 
 **Что делает агент:**
 - Создает release notes
@@ -405,46 +401,17 @@
 - Изменений в коде
 - Статуса в Project
 
-## Настройка GitHub Project
+## Статусы в Project
 
-### Custom Field: "Development Stage"
-
-Тип: **Single select**
-
-Значения:
-1. `idea-writer` - Idea Writer
-2. `content-writer` - Content Writer
-3. `architect` - Architect
-4. `database-dev` - Database Engineer
-5. `api-designer` - API Designer
-6. `backend-dev` - Backend Developer
-7. `network-dev` - Network Engineer
-8. `security` - Security Agent
-9. `devops` - DevOps/Infrastructure
-10. `performance` - Performance Engineer
-11. `ue5-dev` - UE5 Developer
-12. `testing` - QA/Testing
-13. `game-balance` - Game Balance Agent
-14. `release` - Release
-
-### Custom Field: "Branch" (рекомендуется)
-
-Тип: **Text**
-
-Автоматически заполняется при создании ветки для задачи.
-Формат: `feature/issue-{number}-{description}`
-
-### Views для каждого агента
-
-Создайте отдельные views, фильтруя по:
-- `Development Stage` = соответствующий статус
-- Метки `agent:*` для дополнительной фильтрации
+**Статусы используются для отслеживания этапа задачи:**
+- Формат: `{Agent Name} - {State}`
+- Состояния: `Todo`, `In Progress`, `Blocked`, `Review`, `Returned`
+- Агенты обновляют статус через MCP GitHub при передаче задач
 
 ## Автоматизация через GitHub Actions
 
 Workflow автоматически:
-- Добавляет метки при создании Issue
-- Обновляет статус в Project при изменении
+- Добавляет новые Issues в Project со статусом `Todo`
+- Обновляет статус в Project при выполнении всех чекбоксов
 - Маршрутизирует задачи между агентами
-- Уведомляет о готовности к следующему этапу
 

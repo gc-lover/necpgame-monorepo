@@ -1,36 +1,13 @@
-# QA: Вернуть задачу разработчику
+# Return to Developer
 
-Вернуть задачу разработчику для исправления найденных багов.
+Return task if bugs found.
 
-## Инструкции
+## Return Reasons
 
-1. **Создай Issues для каждого бага:**
-   - Используй шаблон `bug_report.yml`
-   - Документируй все найденные проблемы
+- Backend bugs → Backend
+- Client bugs → UE5
 
-2. **Прочитай Issue через MCP GitHub (используй кэширование)**
+## Steps
 
-3. **Определи, кому вернуть:**
-   - Если баги в бекенде → `agent:backend`
-   - Если баги в клиенте → `agent:ue5`
-   - Если баги в обоих → верни обоим (создай подзадачи)
-
-4. **Обнови метки Issue:**
-   - Удали: `agent:qa`, `stage:testing`
-   - Добавь: `returned`, `agent:{developer}`, `stage:{developer-stage}`
-
-5. **Добавь комментарий с объяснением:**
-   ```markdown
-   ❌ Тестирование выявило баги
-   
-   **Найденные баги:**
-   - Issue #XXX: [Краткое описание бага]
-   - Issue #YYY: [Краткое описание бага]
-   ```
-
-6. **Используй батчинг для >=3 Issues**
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - полная документация возврата задач
-- `.cursor/rules/agent-qa.mdc` - правила QA
+1. Update Status to `{CorrectAgent} - Returned`
+2. Add comment with bugs list

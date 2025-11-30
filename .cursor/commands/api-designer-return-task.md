@@ -1,28 +1,13 @@
-# API Designer: Вернуть задачу
+# Return Task
 
-Вернуть задачу Architect с объяснением причины возврата.
+Return task if not ready.
 
-## Инструкции
+## Return Reasons
 
-1. **Прочитай Issue через MCP GitHub (используй кэширование)**
+- No architecture → return to Architect
+- Content quest → return to Content Writer
 
-2. **Определи причину возврата:**
-   - Нет архитектуры от Architect
-   - Архитектура недостаточно проработана
-   - Это контентный квест (передай Content Writer)
+## Steps
 
-3. **Обнови метки Issue:**
-   - Удали: `agent:api-designer`, `stage:api-design`
-   - Добавь: `returned`
-   - Добавь: `agent:architect`, `stage:design` (если нет архитектуры)
-   - Или: `agent:content-writer`, `stage:content` (если контентный квест)
-
-4. **Добавь комментарий с объяснением**
-
-5. **Используй батчинг для >=3 Issues**
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_RETURN.md` - полная документация возврата задач
-- `.cursor/rules/AGENT_LABEL_MANAGEMENT.md` - управление метками
-
+1. Update Status to `{CorrectAgent} - Returned`
+2. Add comment with reason

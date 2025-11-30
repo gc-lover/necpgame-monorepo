@@ -2,7 +2,7 @@
 
 ## Ключевые слова и паттерны
 
-### Idea Writer (agent:idea-writer, stage:idea)
+### Idea Writer (Status: Idea Writer - Todo/In Progress)
 - Лор, lore, narrative, квесты, quests (концепции)
 - NPC, персонажи, characters (концепции)
 - Контент, content, game-design (концепции)
@@ -13,7 +13,7 @@
 - Диалоги, dialogues (концепции)
 - Концепция, concept
 
-### Content Writer (agent:content-writer, stage:content)
+### Content Writer (Status: Content Writer - Todo/In Progress)
 - [Canon/Lore] Квест: ... (контентные квесты)
 - Реализация контентных квестов
 - Создание YAML файлов квестов
@@ -23,7 +23,7 @@
 - Контентные квесты после Idea Writer
 - Метки: `canon`, `lore`, `quest` (вместе с `content`)
 
-### Architect (agent:architect, stage:design)
+### Architect (Status: Architect - Todo/In Progress)
 - Система, system, architecture, архитектура
 - Структурирование, структура
 - Проектирование, design (техническое)
@@ -33,13 +33,13 @@
 - Компоненты, components
 - Техническое задание
 
-### API Designer (agent:api-designer, stage:api-design)
+### API Designer (Status: API Designer - Todo/In Progress)
 - API, endpoints, спецификация
 - OpenAPI, протокол, protocol
 - Request/Response схемы
 - REST, gRPC (если про спецификацию)
 
-### Backend Developer (agent:backend, stage:backend-dev)
+### Backend Developer (Status: Backend - Todo/In Progress)
 - [Backend] в заголовке (явное указание)
 - Реализация, implementation (код)
 - Go, сервисы, services
@@ -49,13 +49,13 @@
 - Chat System, Achievement System, Session Management (системы бекенда)
 - Этап разработки: implementation (если про код)
 
-### Network Engineer (agent:network, stage:network)
+### Network Engineer (Status: Network - Todo/In Progress)
 - Сеть, network, Envoy
 - gRPC, протокол (реализация)
 - Realtime, синхронизация
 - Protocol Buffers (реализация)
 
-### DevOps (agent:devops, stage:infrastructure)
+### DevOps (Status: DevOps - Todo/In Progress)
 - Инфраструктура, infrastructure
 - Автоматизация, automation
 - Деплой, deployment
@@ -63,25 +63,25 @@
 - Docker, Kubernetes, K8s
 - Мониторинг, monitoring
 
-### Performance Engineer (agent:performance, stage:performance)
+### Performance Engineer (Status: Performance - Todo/In Progress)
 - Оптимизация, optimization
 - Производительность, performance
 - Бенчмарки, benchmarks
 - Профилирование, profiling
 
-### UE5 Developer (agent:ue5, stage:client-dev)
+### UE5 Developer (Status: UE5 - Todo/In Progress)
 - Клиент, client, Unreal Engine
 - C++, UE5
 - UI, UX, интерфейс
 - Визуальные ассеты (если про реализацию)
 - Игровая механика (реализация)
 
-### QA/Testing (agent:qa, stage:testing)
+### QA/Testing (Status: QA - Todo/In Progress)
 - Тестирование, testing, тесты
 - Баги, bugs
 - Валидация, validation
 
-### Release (agent:release, stage:release)
+### Release (Status: Release - Todo/In Progress)
 - Релиз, release
 - Release notes
 - Деплой в продакшен
@@ -90,7 +90,7 @@
 
 1. Если есть явное указание на код/реализацию → Backend или UE5
 2. Если про систему/архитектуру → Architect
-3. Если про контентные квесты (Canon/Lore) с метками `canon`, `lore`, `quest` → Content Writer
+3. Если про контентные квесты (Canon/Lore) с функциональными метками `canon`, `lore`, `quest` → Content Writer
 4. Если про лор/контент/квесты (концепции) → Idea Writer
 5. Если про инфраструктуру/деплой → DevOps
 6. Если про сеть/протокол → Network

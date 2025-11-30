@@ -1,35 +1,21 @@
-# Content Writer: Найти мои задачи
+# Find Tasks
 
-Найти все открытые задачи для Content Writer через MCP GitHub с оптимизацией запросов.
+Search open tasks for Content Writer via MCP GitHub Project.
 
-## Инструкции
+## Steps
 
-1. **Используй поиск с кэшированием (ОБЯЗАТЕЛЬНО):**
-
+1. **Search in Project by Status:**
    ```javascript
-   const query = 'is:issue is:open label:agent:content-writer';
-   const result = await mcp_github_search_issues({
-     query: query,
-     perPage: 100
+   // Project config: .cursor/GITHUB_PROJECT_CONFIG.md
+   await mcp_github_list_project_items({
+     owner_type: 'user',
+     owner: 'gc-lover',
+     project_number: 1,
+     query: 'is:issue Status:"Content Writer - Todo" OR Status:"Content Writer - In Progress"',
+     fields: ['Status', 'Title']
    });
    ```
 
-2. **Отфильтруй и покажи список задач:**
-   - Номер Issue
-   - Название
-   - Приоритет (если есть)
-   - Статус
+2. **Show list:** number, title, priority, Status
 
-3. **Спроси пользователя, с какой задачей работать**
-
-## Оптимизация
-
-- **КРИТИЧЕСКИ ВАЖНО:** Используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read`
-- Используй кэширование для повторных запросов
-- Добавляй задержки между запросами (500ms)
-
-## Ссылки
-
-- `.cursor/rules/AGENT_TASK_DISCOVERY.md` - полная документация поиска задач
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
-
+**Primary filter: Project Status. Status determines the stage.**

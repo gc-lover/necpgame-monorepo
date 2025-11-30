@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -25,11 +24,11 @@ func (s *HTTPServer) transferEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		ToCharacterID    uuid.UUID  `json:"to_character_id"`
-		TransferType     string     `json:"transfer_type"`
-		IsCopy           bool       `json:"is_copy"`
-		NewAttitudeType  *string    `json:"new_attitude_type,omitempty"`
-		TransferPrice    *float64   `json:"transfer_price,omitempty"`
+		ToCharacterID   uuid.UUID `json:"to_character_id"`
+		TransferType    string    `json:"transfer_type"`
+		IsCopy          bool      `json:"is_copy"`
+		NewAttitudeType *string   `json:"new_attitude_type,omitempty"`
+		TransferPrice   *float64  `json:"transfer_price,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -132,10 +131,10 @@ func (s *HTTPServer) loanEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"loan_id":              result.LoanID.String(),
-		"success":              result.Success,
-		"return_date":          result.ReturnDate.Format("2006-01-02T15:04:05Z07:00"),
-		"temporary_engram_id":  result.TemporaryEngramID.String(),
+		"loan_id":             result.LoanID.String(),
+		"success":             result.Success,
+		"return_date":         result.ReturnDate.Format("2006-01-02T15:04:05Z07:00"),
+		"temporary_engram_id": result.TemporaryEngramID.String(),
 	}
 
 	s.respondJSON(w, http.StatusOK, response)
@@ -157,9 +156,9 @@ func (s *HTTPServer) extractEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		TargetCharacterID  uuid.UUID `json:"target_character_id"`
-		ExtractionMethod   string    `json:"extraction_method"`
-		RiskLevel          float64   `json:"risk_level"`
+		TargetCharacterID uuid.UUID `json:"target_character_id"`
+		ExtractionMethod  string    `json:"extraction_method"`
+		RiskLevel         float64   `json:"risk_level"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -196,9 +195,9 @@ func (s *HTTPServer) extractEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"extraction_id":    result.ExtractionID.String(),
-		"success":          result.Success,
-		"engram_damaged":   result.EngramDamaged,
+		"extraction_id":         result.ExtractionID.String(),
+		"success":               result.Success,
+		"engram_damaged":        result.EngramDamaged,
 		"target_character_died": result.TargetCharacterDied,
 	}
 
@@ -229,10 +228,10 @@ func (s *HTTPServer) tradeEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		TradeType        string     `json:"trade_type"`
+		TradeType         string     `json:"trade_type"`
 		TargetCharacterID *uuid.UUID `json:"target_character_id,omitempty"`
-		Price            *float64   `json:"price,omitempty"`
-		ExchangeItemID   *uuid.UUID `json:"exchange_item_id,omitempty"`
+		Price             *float64   `json:"price,omitempty"`
+		ExchangeItemID    *uuid.UUID `json:"exchange_item_id,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -264,9 +263,9 @@ func (s *HTTPServer) tradeEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"trade_id":    result.TradeID.String(),
-		"success":     result.Success,
-		"traded_at":   result.TradedAt.Format("2006-01-02T15:04:05Z07:00"),
+		"trade_id":  result.TradeID.String(),
+		"success":   result.Success,
+		"traded_at": result.TradedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	if result.NewOwnerID != nil {
@@ -275,4 +274,3 @@ func (s *HTTPServer) tradeEngram(w http.ResponseWriter, r *http.Request) {
 
 	s.respondJSON(w, http.StatusOK, response)
 }
-
