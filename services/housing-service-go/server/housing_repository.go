@@ -1,3 +1,4 @@
+// Issue: #141888398
 package server
 
 import (
@@ -26,8 +27,16 @@ func NewHousingRepository(db *pgxpool.Pool, logger *logrus.Logger) *HousingRepos
 }
 
 func (r *HousingRepository) CreateApartment(ctx context.Context, apartment *models.Apartment) error {
-	guestsJSON, _ := json.Marshal(apartment.Guests)
-	settingsJSON, _ := json.Marshal(apartment.Settings)
+	guestsJSON, err := json.Marshal(apartment.Guests)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal guests JSON")
+		return fmt.Errorf("failed to marshal guests: %w", err)
+	}
+	settingsJSON, err := json.Marshal(apartment.Settings)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal settings JSON")
+		return fmt.Errorf("failed to marshal settings: %w", err)
+	}
 
 	query := `
 		INSERT INTO housing.apartments (
@@ -37,7 +46,7 @@ func (r *HousingRepository) CreateApartment(ctx context.Context, apartment *mode
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		apartment.ID, apartment.OwnerID, apartment.OwnerType, apartment.ApartmentType,
 		apartment.Location, apartment.Price, apartment.FurnitureSlots, apartment.PrestigeScore,
 		apartment.IsPublic, guestsJSON, settingsJSON, apartment.CreatedAt, apartment.UpdatedAt,
@@ -76,10 +85,12 @@ func (r *HousingRepository) GetApartmentByID(ctx context.Context, apartmentID uu
 	}
 
 	if err := json.Unmarshal(guestsJSON, &apartment.Guests); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal guests JSON")
 		apartment.Guests = []uuid.UUID{}
 	}
 
 	if err := json.Unmarshal(settingsJSON, &apartment.Settings); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal settings JSON")
 		apartment.Settings = make(map[string]interface{})
 	}
 
@@ -159,8 +170,16 @@ func (r *HousingRepository) ListApartments(ctx context.Context, ownerID *uuid.UU
 }
 
 func (r *HousingRepository) UpdateApartment(ctx context.Context, apartment *models.Apartment) error {
-	guestsJSON, _ := json.Marshal(apartment.Guests)
-	settingsJSON, _ := json.Marshal(apartment.Settings)
+	guestsJSON, err := json.Marshal(apartment.Guests)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal guests JSON")
+		return fmt.Errorf("failed to marshal guests: %w", err)
+	}
+	settingsJSON, err := json.Marshal(apartment.Settings)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal settings JSON")
+		return fmt.Errorf("failed to marshal settings: %w", err)
+	}
 
 	query := `
 		UPDATE housing.apartments
@@ -168,7 +187,7 @@ func (r *HousingRepository) UpdateApartment(ctx context.Context, apartment *mode
 		WHERE id = $1
 	`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		apartment.ID, apartment.IsPublic, guestsJSON, settingsJSON,
 		apartment.PrestigeScore, apartment.UpdatedAt,
 	)
@@ -203,6 +222,7 @@ func (r *HousingRepository) GetFurnitureItemByID(ctx context.Context, itemID str
 	}
 
 	if err := json.Unmarshal(functionBonusJSON, &item.FunctionBonus); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal function bonus JSON")
 		item.FunctionBonus = make(map[string]interface{})
 	}
 
@@ -263,9 +283,21 @@ func (r *HousingRepository) ListFurnitureItems(ctx context.Context, category *mo
 }
 
 func (r *HousingRepository) CreatePlacedFurniture(ctx context.Context, furniture *models.PlacedFurniture) error {
-	positionJSON, _ := json.Marshal(furniture.Position)
-	rotationJSON, _ := json.Marshal(furniture.Rotation)
-	scaleJSON, _ := json.Marshal(furniture.Scale)
+	positionJSON, err := json.Marshal(furniture.Position)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal position JSON")
+		return fmt.Errorf("failed to marshal position: %w", err)
+	}
+	rotationJSON, err := json.Marshal(furniture.Rotation)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal rotation JSON")
+		return fmt.Errorf("failed to marshal rotation: %w", err)
+	}
+	scaleJSON, err := json.Marshal(furniture.Scale)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal scale JSON")
+		return fmt.Errorf("failed to marshal scale: %w", err)
+	}
 
 	query := `
 		INSERT INTO housing.placed_furniture (
@@ -274,7 +306,7 @@ func (r *HousingRepository) CreatePlacedFurniture(ctx context.Context, furniture
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		furniture.ID, furniture.ApartmentID, furniture.FurnitureItemID,
 		positionJSON, rotationJSON, scaleJSON, furniture.CreatedAt, furniture.UpdatedAt,
 	)
@@ -310,14 +342,17 @@ func (r *HousingRepository) GetPlacedFurnitureByID(ctx context.Context, furnitur
 	}
 
 	if err := json.Unmarshal(positionJSON, &furniture.Position); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal position JSON")
 		furniture.Position = make(map[string]interface{})
 	}
 
 	if err := json.Unmarshal(rotationJSON, &furniture.Rotation); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal rotation JSON")
 		furniture.Rotation = make(map[string]interface{})
 	}
 
 	if err := json.Unmarshal(scaleJSON, &furniture.Scale); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal scale JSON")
 		furniture.Scale = make(map[string]interface{})
 	}
 

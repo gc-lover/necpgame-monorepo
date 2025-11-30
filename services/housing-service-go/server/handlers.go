@@ -1,6 +1,8 @@
+// Issue: #141886468, #141888386
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 
@@ -325,12 +327,23 @@ func (h *HousingHandlers) GetPrestigeLeaderboard(w http.ResponseWriter, r *http.
 	h.respondJSON(w, http.StatusOK, response)
 }
 
-// Issue: #141886468
+// Issue: #141886468, #141888386
 func (h *HousingHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+		// Send error response to client
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errorResponse := map[string]string{"error": "Failed to encode response"}
+		json.NewEncoder(w).Encode(errorResponse)
+		return
+	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		h.logger.WithError(err).Error("Failed to write JSON response")
 	}
 }
 
