@@ -1,0 +1,225 @@
+# Issue: #315
+metadata:
+  id: cosmetic-technical
+  title: Архитектура системы косметики - Техническое задание
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:50:00Z
+  github_issue: 315
+  related_documents:
+    - id: cosmetic-core
+      relation: extends
+
+technical_specification:
+  subtasks:
+    - id: cosmetic-manager
+      title: Реализация менеджера системы косметики
+      description: |
+        Реализация Cosmetic Manager с управлением системой косметики
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: cosmetic-catalog-manager
+      title: Реализация менеджера каталога косметики
+      description: |
+        Реализация Cosmetic Catalog Manager с управлением каталогом косметики,
+        типами и доступностью.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 3 days
+
+    - id: cosmetic-ownership-manager
+      title: Реализация менеджера владения косметикой
+      description: |
+        Реализация Cosmetic Ownership Manager с управлением владением косметикой,
+        проверкой владения и выдачей косметики.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 3 days
+
+    - id: cosmetic-shop-manager
+      title: Реализация менеджера магазина и ротации
+      description: |
+        Реализация Cosmetic Shop Manager с управлением магазином,
+        ротацией товаров и алгоритмом выбора.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 4 days
+
+    - id: cosmetic-equip-manager
+      title: Реализация менеджера экипировки косметики
+      description: |
+        Реализация Cosmetic Equip Manager с управлением экипировкой косметики,
+        слотами и применением косметики.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 4 days
+
+    - id: cosmetic-rarity-manager
+      title: Реализация менеджера редкостей
+      description: |
+        Реализация Cosmetic Rarity Manager с управлением редкостями,
+        расчетом вероятностей и визуальными эффектами.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 3 days
+
+    - id: cosmetic-purchase-manager
+      title: Реализация менеджера покупки косметики
+      description: |
+        Реализация Cosmetic Purchase Manager с управлением покупкой косметики,
+        проверкой ограничений и обработкой транзакций.
+      dependencies: [cosmetic-ownership-manager]
+      estimated_effort: 4 days
+
+    - id: cosmetic-preview-manager
+      title: Реализация менеджера предпросмотра косметики
+      description: |
+        Реализация Cosmetic Preview Manager с управлением предпросмотром косметики,
+        3D предпросмотром и сравнением.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 3 days
+
+    - id: cosmetic-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Cosmetic Analytics Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 3 days
+
+    - id: cosmetic-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Cosmetic Telemetry Collector с логированием событий,
+        сбором телеметрии и интеграцией с Analytics Service.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 2 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений косметики,
+        экипировки и уведомлений.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы косметики.
+      dependencies: [cosmetic-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для косметических предметов, владения,
+        экипировки, ротаций и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> CosmeticService[Cosmetic Service<br/>8092]
+        
+        CosmeticService --> CM[Cosmetic Manager]
+        CosmeticService --> CCM[Cosmetic Catalog Manager]
+        CosmeticService --> COM[Cosmetic Ownership Manager]
+        CosmeticService --> CSM[Cosmetic Shop Manager]
+        CosmeticService --> CEM[Cosmetic Equip Manager]
+        CosmeticService --> CRM[Cosmetic Rarity Manager]
+        CosmeticService --> CPM[Cosmetic Purchase Manager]
+        CosmeticService --> CPvM[Cosmetic Preview Manager]
+        CosmeticService --> CAC[Cosmetic Analytics Collector]
+        CosmeticService --> CTC[Cosmetic Telemetry Collector]
+        
+        CM --> CCM
+        CM --> COM
+        CM --> CSM
+        CM --> CEM
+        CM --> CRM
+        COM --> CPM
+        CM --> CPvM
+        
+        CosmeticService --> InventoryService[Inventory Service]
+        CosmeticService --> EconomyService[Economy Service]
+        CosmeticService --> CharacterService[Character Service]
+        CosmeticService --> ShopService[Shop Service]
+        CosmeticService --> AnalyticsService[Analytics Service]
+        CosmeticService --> NotificationService[Notification Service]
+        CosmeticService --> AchievementService[Achievement Service]
+        
+        CosmeticService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        CosmeticService --> DB[(Cosmetic DB)]
+        
+        Client --> WSCosmetic[WebSocket<br/>Cosmetic]
+        WSCosmetic --> CosmeticService
+    ```
+
+  purchase_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant CPM as Cosmetic Purchase Manager
+        participant ES as Economy Service
+        participant COM as Cosmetic Ownership Manager
+        participant EB as Event Bus
+        
+        P->>CPM: Purchase cosmetic
+        CPM->>CPM: Check ownership
+        CPM->>CPM: Check availability
+        CPM->>ES: Check balance
+        ES->>ES: Deduct currency
+        CPM->>COM: Grant ownership
+        CPM->>EB: Publish cosmetic.purchased
+    ```
+
+  equip_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant CEM as Cosmetic Equip Manager
+        participant EB as Event Bus
+        
+        P->>CEM: Equip cosmetic
+        CEM->>CEM: Check ownership
+        CEM->>CEM: Validate slot
+        CEM->>CEM: Unequip current (if any)
+        CEM->>CEM: Apply cosmetic
+        CEM->>EB: Publish cosmetic.equipped
+    ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния косметики
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (покупка косметики, экипировка, ротация магазина)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для каталога, магазина, покупки, экипировки, предпросмотра, редкостей, статистики и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы косметики:
+      - Определены компоненты (Cosmetic Manager, Cosmetic Catalog Manager, Cosmetic Ownership Manager, Cosmetic Shop Manager, Cosmetic Equip Manager, Cosmetic Rarity Manager, Cosmetic Purchase Manager, Cosmetic Preview Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (cosmetic_items, player_cosmetics, player_equipped_cosmetics, cosmetic_shop_rotations, cosmetic_telemetry)
+      - Спроектирована система покупки косметики
+      - Спроектирована система экипировки косметики
+      - Спроектирована система магазина и ротации
+      - Спроектирована система редкостей
+      - Создано техническое задание
+      - Разбито на подзадачи
+

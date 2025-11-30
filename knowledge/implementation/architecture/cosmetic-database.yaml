@@ -1,0 +1,77 @@
+# Issue: #315
+metadata:
+  id: cosmetic-database
+  title: Архитектура системы косметики - База данных
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:50:00Z
+  github_issue: 315
+  related_documents:
+    - id: cosmetic-core
+      relation: extends
+
+database_structure:
+  tables:
+    - name: cosmetic_items
+      description: Каталог косметических предметов
+      columns:
+        - id: UUID PRIMARY KEY
+        - code: VARCHAR(50) UNIQUE
+        - name: VARCHAR(255)
+        - category: ENUM (character_skin, weapon_skin, emote, title, name_plate)
+        - rarity: ENUM (common, rare, epic, legendary)
+        - cost: JSONB
+        - assets: JSONB
+        - description: TEXT
+        - is_exclusive: BOOLEAN
+        - is_time_limited: BOOLEAN
+        - available_from: TIMESTAMP
+        - available_until: TIMESTAMP
+        - level_requirement: INTEGER
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: player_cosmetics
+      description: Владение косметикой игроками
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - cosmetic_id: UUID FOREIGN KEY
+        - source: VARCHAR(50)
+        - acquired_at: TIMESTAMP
+        - usage_count: INTEGER
+        - last_used_at: TIMESTAMP
+
+    - name: player_equipped_cosmetics
+      description: Экипированная косметика игроков
+      columns:
+        - id: UUID PRIMARY KEY
+        - character_id: UUID FOREIGN KEY
+        - slot_type: ENUM (character_skin, weapon_skin, emote, title, name_plate)
+        - slot_name: VARCHAR(50)
+        - cosmetic_id: UUID FOREIGN KEY
+        - equipped_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: cosmetic_shop_rotations
+      description: Ротации магазина косметики
+      columns:
+        - id: UUID PRIMARY KEY
+        - rotation_type: ENUM (daily, weekly)
+        - start_date: TIMESTAMP
+        - end_date: TIMESTAMP
+        - items: JSONB
+        - created_at: TIMESTAMP
+
+    - name: cosmetic_telemetry
+      description: Телеметрия косметики
+      columns:
+        - id: UUID PRIMARY KEY
+        - event_type: VARCHAR(50)
+        - character_id: UUID FOREIGN KEY
+        - cosmetic_id: UUID FOREIGN KEY
+        - event_data: JSONB
+        - created_at: TIMESTAMP
+

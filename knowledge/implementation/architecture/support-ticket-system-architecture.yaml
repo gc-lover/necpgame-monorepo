@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-23T23:59:00Z
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:35:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -305,6 +305,112 @@ architecture:
       7. Notification Service отправляет уведомления
       8. Analytics Service собирает метрики SLA
 
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций (создание тикета, назначение агента, изменение статуса)
+    mechanisms:
+      - ACID транзакции для создания тикетов, назначения агентов и изменения статусов
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении тикетов
+      - Валидация перед созданием тикета и назначением агента
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание тикета, назначение агента, изменение статуса, мониторинг SLA)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния тикетов (создание, обновление, назначение агента, изменение статуса, добавление ответа)
+      записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: TicketCreatedEvent, TicketAssignedEvent, TicketStatusChangedEvent, TicketResponseAddedEvent.
+    cqrs_pattern: |
+      Разделение команд (создание тикетов, назначение агентов, изменение статусов) и запросов
+      (получение списка тикетов, получение очереди агентов, получение статистики) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как создание тикета (создание, автокатегоризация, назначение приоритета,
+      добавление в очередь, уведомление игрока) или назначение агента (выбор агента, проверка лимитов, назначение,
+      обновление статуса, уведомления), используется Saga Pattern
+      для обеспечения атомарности операций между Support Service, Notification Service и Analytics Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    ticket_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание тикета: event-based, ~0.01-0.1 events/sec на игрока
+        - Получение списка тикетов: event-based, ~0.01-0.05 requests/sec на игрока
+        - Получение информации о тикете: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций тикетов
+      latency_requirements: < 200-300ms для создания тикета, < 30-100ms для получения списка
+      sync_strategy: Strong Consistency (ACID транзакции) для создания тикетов, Eventual Consistency для получения списка
+
+    assignment_operations:
+      tickrate: Event-based (on-demand при назначении) + 1-5 Hz для обновления очереди
+      network_load: |
+        - Назначение агента: event-based, ~0.01-0.1 events/sec
+        - Получение очереди агентов: event-based, ~0.01-0.05 requests/sec на агента
+        - Обновление очереди: 1-5 Hz, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций назначения
+      latency_requirements: < 200-300ms для назначения агента, < 30-100ms для получения очереди
+      sync_strategy: Strong Consistency (ACID транзакции) для назначения агентов
+
+    response_operations:
+      tickrate: Event-based (on-demand при добавлении ответа) + 1-5 Hz для обновления статуса
+      network_load: |
+        - Добавление ответа: event-based, ~0.01-0.1 events/sec на тикет
+        - Получение списка ответов: event-based, ~0.01-0.02 requests/sec на тикет
+        - Обновление статуса: 1-5 Hz, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec для операций ответов
+      latency_requirements: < 200-300ms для добавления ответа, < 30-100ms для получения списка
+      sync_strategy: Strong Consistency (ACID транзакции) для добавления ответов
+
+    sla_monitoring_operations:
+      tickrate: Event-based (on-demand при проверке) + 1-10 Hz для периодического мониторинга
+      network_load: |
+        - Проверка SLA: 1-10 Hz, ~0.01-0.1 events/sec
+        - Получение информации о SLA: event-based, ~0.001-0.01 requests/sec на тикет
+        - Обновление метрик: 1-10 Hz, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций мониторинга SLA
+      latency_requirements: < 50-100ms для проверки SLA, < 30-100ms для получения информации
+      sync_strategy: Eventual Consistency для мониторинга SLA (батчинг метрик)
+
+    categorization_operations:
+      tickrate: Event-based (on-demand при создании тикета)
+      network_load: |
+        - Автокатегоризация: event-based, ~0.01-0.1 events/sec
+        - Определение категории: event-based, ~0.01-0.1 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций категоризации
+      latency_requirements: < 100-200ms для автокатегоризации
+      sync_strategy: Eventual Consistency для категоризации (кэширование результатов)
+
+    priority_operations:
+      tickrate: Event-based (on-demand при создании тикета)
+      network_load: |
+        - Назначение приоритета: event-based, ~0.01-0.1 events/sec
+        - Изменение приоритета: event-based, ~0.001-0.01 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций приоритетов
+      latency_requirements: < 100-200ms для назначения приоритета
+      sync_strategy: Strong Consistency (ACID транзакции) для изменения приоритетов
+
+    stats_operations:
+      tickrate: Event-based (on-demand при запросе) + 1-5 Hz для обновления статистики
+      network_load: |
+        - Получение статистики: event-based, ~0.001-0.01 requests/sec на агента
+        - Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec для операций статистики
+      latency_requirements: < 30-100ms для получения статистики, < 50-100ms для обновления
+      sync_strategy: Eventual Consistency для статистики (кэширование в Redis)
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий тикетов: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
+
   database_structure:
     tables:
       - name: support_tickets
@@ -599,3 +705,32 @@ diagrams:
         STM->>NS: Notify player
         STM->>SLAM: Update metrics
     ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния тикетов
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание тикета, назначение агента, изменение статуса, мониторинг SLA)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для тикетов, назначения, ответов, мониторинга SLA, категоризации, приоритетов, статистики и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы тикетов поддержки:
+      - Определены компоненты (Support Ticket Manager, Ticket Creator, Auto Categorization Engine, Priority Assignment Engine, Agent Queue Manager, SLA Monitor, Ticket Response Manager, Ticket Status Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (support_tickets, ticket_responses, agent_queues, ticket_sla_metrics, support_telemetry)
+      - Спроектирована система создания тикетов
+      - Спроектирована система автокатегоризации
+      - Спроектирована система назначения приоритетов
+      - Спроектирована система очередей агентов
+      - Спроектирована система мониторинга SLA
+      - Создано техническое задание
+      - Разбито на подзадачи
