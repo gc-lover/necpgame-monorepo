@@ -18,6 +18,8 @@ static_resources:
               typed_config:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 stat_prefix: ingress_http
+                upgrade_configs:
+                  - upgrade_type: websocket
                 route_config:
                   name: local_route
                   virtual_hosts:
@@ -29,9 +31,15 @@ static_resources:
                           route:
                             cluster: keycloak
                         - match:
+                            prefix: "/ws/game"
+                          route:
+                            cluster: realtime-gateway-websocket
+                            timeout: 0s
+                        - match:
                             prefix: "/ws"
                           route:
-                            cluster: ws-lobby
+                            cluster: realtime-gateway-websocket
+                            timeout: 0s
                         - match:
                             prefix: "/metrics"
                           route:
@@ -54,6 +62,26 @@ static_resources:
                     socket_address:
                       address: keycloak
                       port_value: 8080
+    - name: realtime-gateway-websocket
+      connect_timeout: 5s
+      type: LOGICAL_DNS
+      lb_policy: LEAST_REQUEST
+      load_assignment:
+        cluster_name: realtime-gateway-websocket
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: realtime-gateway-go
+                      port_value: 18080
+      health_checks:
+        - timeout: 1s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          http_health_check:
+            path: /health
     - name: ws-lobby
       connect_timeout: 2s
       type: LOGICAL_DNS

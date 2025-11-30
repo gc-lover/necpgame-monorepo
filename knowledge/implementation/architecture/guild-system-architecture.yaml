@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T21:30:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:05:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -403,6 +403,77 @@ technical_specification:
     - Оптимизация запросов к БД (batch, индексы)
     - Кэширование активных гильдий
 
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для операций с гильдиями (создание, банк, войны)
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация прав перед выполнением операций
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (войны, банк)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения гильдий записываются как события:
+      - GuildCreatedEvent - гильдия создана
+      - MemberJoinedEvent - участник присоединился
+      - MemberLeftEvent - участник покинул гильдию
+      - RankChangedEvent - ранг изменен
+      - BankTransactionEvent - транзакция банка
+      - WarDeclaredEvent - война объявлена
+      - TerritoryCapturedEvent - территория захвачена
+      
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния гильдии
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Guild Manager обрабатывает команды (create, update, delete)
+      - Read Model: Оптимизированные представления для быстрого чтения гильдий
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для распределенных операций:
+      - Guild War Saga: координация между social, world, combat сервисами
+      - Bank Transaction Saga: координация между social, economy, inventory сервисами
+      - Territory Capture Saga: координация между social, world сервисами
+      
+      Компенсирующие транзакции:
+      - Откат операций при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    guild_operations:
+      tickrate: Event-based (on-demand) + 20-30 Hz для синхронизации состояния
+      description: |
+        Операции с гильдиями выполняются по требованию (event-based),
+        но требуется периодическая синхронизация состояния для всех участников.
+      network_load: |
+        - Изменения гильдии: event-based, ~5-10 events/sec на гильдию
+        - Синхронизация состояния: 20-30 updates/sec для всех участников
+        - Банковские транзакции: event-based, ~1-3 events/sec
+        - Гильдейские войны: event-based, ~0.1-0.5 events/sec
+        - Общий трафик: ~1-2 KB/sec на игрока в гильдии
+      sync_strategy: Strong Consistency (ACID транзакции) для операций, Eventual для статистики
+      latency_requirements: |
+        - Создание гильдии: < 100ms
+        - Добавление участника: < 50ms
+        - Банковская транзакция: < 50ms
+        - Объявление войны: < 100ms
+        - Синхронизация состояния: < 50ms
+
 subtasks:
   - id: guild-manager-module
     title: Реализация модуля Guild Manager
@@ -604,6 +675,15 @@ next_steps:
   - Определение системы прав и разрешений
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы гильдий:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с гильдиями
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

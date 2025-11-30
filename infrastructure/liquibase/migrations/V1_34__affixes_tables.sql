@@ -1,3 +1,4 @@
+-- Issue: #1517
 CREATE TABLE IF NOT EXISTS gameplay.affixes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE,

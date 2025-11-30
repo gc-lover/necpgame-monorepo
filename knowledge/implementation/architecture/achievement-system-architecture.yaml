@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T20:30:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T18:50:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -298,6 +298,69 @@ technical_specification:
     - Оптимизация запросов к БД (batch, индексы)
     - Кэширование прогресса игроков в памяти (Redis)
 
+  data_consistency:
+    strategy: Eventual Consistency (event-driven)
+    mechanisms:
+      - Event Sourcing для всех изменений прогресса
+      - Outbox Pattern для гарантированной доставки событий
+      - Idempotency для обработки дубликатов событий
+      - Saga Pattern для распределения наград (multi-service)
+      - Оптимистичные блокировки для обновления прогресса
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения прогресса записываются как события:
+      - ProgressUpdatedEvent - прогресс обновлен
+      - AchievementUnlockedEvent - достижение разблокировано
+      - RewardDistributedEvent - награда выдана
+      
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния прогресса
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Achievement Tracker обрабатывает события и обновляет прогресс
+      - Read Model: Оптимизированные представления для быстрого чтения достижений
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для распределения наград:
+      - Reward Distribution Saga: выдача валюты, предметов, титулов
+      - Multi-service Saga: координация между economy, notification, mail сервисами
+      
+      Компенсирующие транзакции:
+      - Откат наград при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    achievement_operations:
+      tickrate: Event-based (on-demand)
+      description: |
+        Система достижений полностью event-driven, не требует постоянного тикрейта.
+        Обработка происходит при получении событий от игровых сервисов.
+      network_load: |
+        - Обработка событий: event-based, ~5-10 events/sec на игрока
+        - Синхронизация прогресса: при изменении, ~1-2 updates/sec
+        - Уведомления о достижениях: event-based, ~0.1-0.5 events/sec
+        - Общий трафик: ~0.3-0.5 KB/sec на игрока
+      sync_strategy: Eventual Consistency (event-driven)
+      latency_requirements: |
+        - Обработка события: < 50ms
+        - Расчёт прогресса: < 20ms
+        - Получение достижений: < 100ms
+        - Выдача наград: < 200ms (асинхронно)
+
 subtasks:
   - id: achievement-service-module
     title: Реализация модулей Achievement Service
@@ -527,6 +590,15 @@ next_steps:
   - Создание request/response схем
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы достижений:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с достижениями
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

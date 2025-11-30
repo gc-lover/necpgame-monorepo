@@ -1,0 +1,102 @@
+// Issue: #142109960
+// Protocol Buffer definitions for UDP reliability layer
+// Network Engineer - UDP reliability protocol messages
+
+syntax = "proto3";
+package necp.realtime.v1;
+
+message UDPPacketHeader {
+  uint32 sequence_number = 1;
+  uint32 ack_number = 2;
+  uint64 ack_bitfield = 3;
+  uint32 flags = 4;
+  uint32 payload_type = 5;
+}
+
+message UDPAck {
+  uint32 ack_number = 1;
+  uint64 ack_bitfield = 2;
+  uint64 timestamp_ms = 3;
+}
+
+message UDPNack {
+  uint32 missing_sequence_start = 1;
+  uint32 missing_sequence_end = 2;
+  uint64 timestamp_ms = 3;
+}
+
+message UDPConnectionRequest {
+  string session_id = 1;
+  string session_token = 2;
+  string zone_id = 3;
+  uint32 client_timestamp_ms = 4;
+}
+
+message UDPConnectionAck {
+  bool success = 1;
+  string connection_id = 2;
+  uint32 server_timestamp_ms = 3;
+  string session_token = 4;
+  uint32 initial_sequence_number = 5;
+}
+
+message UDPConnectionConfirm {
+  string connection_id = 1;
+  uint32 client_timestamp_ms = 2;
+}
+
+message UDPHeartbeat {
+  uint64 timestamp_ms = 1;
+  uint32 sequence_number = 2;
+}
+
+message UDPHeartbeatAck {
+  uint64 server_timestamp_ms = 1;
+  uint64 rtt_estimate_ms = 2;
+  uint32 sequence_number = 3;
+}
+
+message UDPReliablePacket {
+  UDPPacketHeader header = 1;
+  bytes payload = 2;
+}
+
+message UDPUnreliablePacket {
+  UDPPacketHeader header = 1;
+  bytes payload = 2;
+}
+
+message UDPRetransmitRequest {
+  repeated uint32 sequence_numbers = 1;
+  uint64 timestamp_ms = 2;
+}
+
+message UDPConnectionStats {
+  string connection_id = 1;
+  uint64 packets_sent = 2;
+  uint64 packets_received = 3;
+  uint64 packets_lost = 4;
+  uint64 packets_retransmitted = 5;
+  uint32 latency_ms = 6;
+  uint32 jitter_ms = 7;
+  double packet_loss_percent = 8;
+  uint64 bytes_sent = 9;
+  uint64 bytes_received = 10;
+}
+
+message UDPPacket {
+  oneof packet_type {
+    UDPConnectionRequest connection_request = 1;
+    UDPConnectionAck connection_ack = 2;
+    UDPConnectionConfirm connection_confirm = 3;
+    UDPAck ack = 4;
+    UDPNack nack = 5;
+    UDPHeartbeat heartbeat = 6;
+    UDPHeartbeatAck heartbeat_ack = 7;
+    UDPReliablePacket reliable_packet = 8;
+    UDPUnreliablePacket unreliable_packet = 9;
+    UDPRetransmitRequest retransmit_request = 10;
+    UDPConnectionStats connection_stats = 11;
+  }
+}
+

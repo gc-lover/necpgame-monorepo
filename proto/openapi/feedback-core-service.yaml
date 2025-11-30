@@ -1,3 +1,4 @@
+# Issue: #1335
 openapi: 3.0.3
 info:
   title: Feedback Core Service API
@@ -23,6 +24,17 @@ paths:
       tags:
         - Feedback Core
       summary: Создание нового обращения
+      description: |
+        Создание нового обращения от игрока.
+        
+        **Требует:** Аутентификация (session token).
+        
+        **Rate limiting:** 5 обращений в час на игрока.
+        
+        **Валидация:**
+        - title: обязательное, до 100 символов
+        - description: обязательное, до 2000 символов
+        - screenshots: до 3 файлов
       operationId: submitFeedback
       security:
         - BearerAuth: []
@@ -43,6 +55,8 @@ paths:
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
+        '429':
+          $ref: 'common.yaml#/components/responses/TooManyRequests'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
@@ -72,6 +86,8 @@ paths:
           $ref: 'common.yaml#/components/responses/NotFound'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
+        '429':
+          $ref: 'common.yaml#/components/responses/TooManyRequests'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
@@ -89,7 +105,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [pending, in_review, approved, rejected, merged, closed]
+            enum: [pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate, merged]
         - $ref: 'common.yaml#/components/parameters/Limit'
         - $ref: 'common.yaml#/components/parameters/Offset'
       responses:
@@ -105,10 +121,25 @@ paths:
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /{id}/update-status:
-    put:
+    post:
       tags:
         - Feedback Core
       summary: Обновить статус обращения
+      description: |
+        Обновление статуса обращения.
+        
+        **Требует:** Специальная аутентификация (агенты/админы).
+        
+        **Статусы:**
+        - pending_moderation - ожидает модерации
+        - pending - ожидает обработки
+        - in_review - на рассмотрении
+        - assigned - назначено агенту
+        - in_progress - в работе
+        - resolved - решено
+        - rejected - отклонено
+        - duplicate - дубликат
+        - merged - объединено с другим обращением
       operationId: updateFeedbackStatus
       security:
         - BearerAuth: []
@@ -185,7 +216,7 @@ components:
           format: uuid
         status:
           type: string
-          enum: [pending, in_review, approved, rejected, merged, closed]
+          enum: [pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate, merged]
         github_issue_number:
           type: integer
           nullable: true
@@ -218,7 +249,7 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, in_review, approved, rejected, merged, closed]
+          enum: [pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate, merged]
         github_issue_number:
           type: integer
           nullable: true
@@ -250,12 +281,22 @@ components:
       properties:
         status:
           type: string
-          enum: [pending, in_review, approved, rejected, merged, closed]
+          enum: [pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate, merged]
         comment:
           type: string
 
     GameContext:
       type: object
+      description: |
+        Контекст игры (JSONB).
+        
+        **Поля:**
+        - character_id - ID персонажа
+        - location - локация игрока
+        - game_version - версия игры
+        - level - уровень персонажа (опционально)
+        - active_quests - активные квесты (опционально)
+        - playtime - время в игре (опционально)
       properties:
         character_id:
           type: string
@@ -264,6 +305,17 @@ components:
           type: string
         game_version:
           type: string
+        level:
+          type: integer
+          minimum: 1
+        active_quests:
+          type: array
+          items:
+            type: string
+        playtime:
+          type: integer
+          description: Время в игре в секундах
+          minimum: 0
 
 security:
   - BearerAuth: []

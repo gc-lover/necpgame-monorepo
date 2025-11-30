@@ -147,16 +147,230 @@ architecture:
       - Управление зарплатами
       - Экономические транзакции
       - Управление ресурсами
+      - Интеграция с системой валют
 
     guild_service: |
       - Использование системы кланов
       - Интеграция с гильдиями
+      - Преобразование клана в корпорацию
 
     world_service: |
       - Интеграция с миром игры
       - Управление территориями
+      - Влияние на экономику мира
 
-  technical_tasks:
+    character_service: |
+      - Данные сотрудников
+      - Статистика сотрудников
+      - Вклад в корпорацию
+
+    realtime_gateway: |
+      - Realtime синхронизация состояния корпорации
+      - Push уведомления о событиях
+      - Синхронизация сотрудников
+
+  database:
+    tables:
+      - name: corporations
+        description: Корпорации
+        columns:
+          - id: UUID PRIMARY KEY
+          - guild_id: UUID REFERENCES guilds(id)
+          - name: VARCHAR(255) UNIQUE
+          - registration_number: VARCHAR(50) UNIQUE
+          - status: VARCHAR(20) (PENDING, ACTIVE, SUSPENDED, DISBANDED)
+          - official_activity: VARCHAR(100)
+          - capital: DECIMAL(20, 4)
+          - registered_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: corporation_positions
+        description: Должности в корпорациях
+        columns:
+          - id: UUID PRIMARY KEY
+          - corporation_id: UUID REFERENCES corporations(id)
+          - name: VARCHAR(100)
+          - position_type: VARCHAR(50) (CEO, COO, CFO, CTO, MANAGER, SPECIALIST, INTERN)
+          - hierarchy_level: INTEGER
+          - parent_position_id: UUID REFERENCES corporation_positions(id) NULL
+          - salary_type: VARCHAR(20) (FIXED, PERCENTAGE, BONUS)
+          - salary_amount: DECIMAL(20, 4)
+          - permissions: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: corporation_employees
+        description: Сотрудники корпораций
+        columns:
+          - id: UUID PRIMARY KEY
+          - corporation_id: UUID REFERENCES corporations(id)
+          - account_id: UUID
+          - position_id: UUID REFERENCES corporation_positions(id)
+          - hired_at: TIMESTAMP
+          - last_active_at: TIMESTAMP
+          - performance_score: DECIMAL(5, 2)
+          - total_salary_paid: DECIMAL(20, 4)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: corporation_duties
+        description: Должностные обязательства
+        columns:
+          - id: UUID PRIMARY KEY
+          - corporation_id: UUID REFERENCES corporations(id)
+          - position_id: UUID REFERENCES corporation_positions(id)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - requirements: JSONB
+          - completion_criteria: JSONB
+          - status: VARCHAR(20) (ACTIVE, COMPLETED, CANCELLED)
+          - assigned_to: UUID REFERENCES corporation_employees(id) NULL
+          - assigned_at: TIMESTAMP NULL
+          - completed_at: TIMESTAMP NULL
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: corporation_activities
+        description: Официальная деятельность корпораций
+        columns:
+          - id: UUID PRIMARY KEY
+          - corporation_id: UUID REFERENCES corporations(id)
+          - activity_type: VARCHAR(50) (PRODUCTION, TRADING, SERVICES, RESEARCH, SECURITY, TRANSPORT)
+          - description: TEXT
+          - status: VARCHAR(20) (ACTIVE, SUSPENDED, TERMINATED)
+          - registered_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: corporation_salary_payments
+        description: Выплаты зарплат
+        columns:
+          - id: UUID PRIMARY KEY
+          - corporation_id: UUID REFERENCES corporations(id)
+          - employee_id: UUID REFERENCES corporation_employees(id)
+          - amount: DECIMAL(20, 4)
+          - currency_type: VARCHAR(50)
+          - payment_type: VARCHAR(20) (SALARY, BONUS, PREMIUM)
+          - tax_amount: DECIMAL(20, 4)
+          - net_amount: DECIMAL(20, 4)
+          - paid_at: TIMESTAMP
+          - created_at: TIMESTAMP
+
+      - name: corporation_reports
+        description: Отчетность корпораций
+        columns:
+          - id: UUID PRIMARY KEY
+          - corporation_id: UUID REFERENCES corporations(id)
+          - report_type: VARCHAR(50) (FINANCIAL, ACTIVITY, PERFORMANCE)
+          - period_start: DATE
+          - period_end: DATE
+          - data: JSONB
+          - created_at: TIMESTAMP
+
+  event_bus:
+    topics:
+      - name: social.corporation.created
+        description: Создана корпорация
+        schema:
+          corporation_id: UUID
+          guild_id: UUID
+          name: string
+          registration_number: string
+
+      - name: social.corporation.registered
+        description: Корпорация зарегистрирована
+        schema:
+          corporation_id: UUID
+          registration_number: string
+          official_activity: string
+
+      - name: social.corporation.position.created
+        description: Создана должность
+        schema:
+          corporation_id: UUID
+          position_id: UUID
+          name: string
+          position_type: string
+
+      - name: social.corporation.employee.hired
+        description: Нанят сотрудник
+        schema:
+          corporation_id: UUID
+          employee_id: UUID
+          account_id: UUID
+          position_id: UUID
+
+      - name: social.corporation.salary.paid
+        description: Выплачена зарплата
+        schema:
+          corporation_id: UUID
+          employee_id: UUID
+          amount: number
+          currency_type: string
+
+      - name: social.corporation.duty.completed
+        description: Выполнено обязательство
+        schema:
+          corporation_id: UUID
+          duty_id: UUID
+          employee_id: UUID
+
+  websocket:
+    channels:
+      - name: corporation.{corporation_id}.updates
+        description: Realtime обновления корпорации
+      - name: corporation.{corporation_id}.employees
+        description: Realtime обновления сотрудников
+      - name: corporation.{corporation_id}.salaries
+        description: Realtime обновления зарплат
+
+  tickrate_and_network_requirements:
+    corporation_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание корпорации: event-based, ~0.01-0.05 events/sec
+        - Регистрация корпорации: event-based, ~0.01-0.05 events/sec
+        - Обновление корпорации: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на корпорацию
+      sync_strategy: Strong Consistency
+
+    hierarchy_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание должности: event-based, ~0.01-0.05 events/sec
+        - Назначение должности: event-based, ~0.05-0.1 events/sec
+        - Обновление иерархии: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на корпорацию
+      sync_strategy: Strong Consistency
+
+    salary_management:
+      tickrate: Event-based (on-demand) + 1 Hz (автоматические выплаты)
+      network_load: |
+        - Настройка зарплат: event-based, ~0.01-0.05 events/sec
+        - Выплата зарплат: event-based, ~0.1-0.5 events/sec (при выплате)
+        - Автоматические выплаты: 1 update/sec (периодические)
+        - Общий трафик: ~0.2-0.5 KB/sec на корпорацию
+      sync_strategy: Strong Consistency (ACID транзакции)
+
+    duty_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание обязательства: event-based, ~0.05-0.1 events/sec
+        - Выполнение обязательства: event-based, ~0.1-0.3 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на корпорацию
+      sync_strategy: Strong Consistency
+
+    activity_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Регистрация деятельности: event-based, ~0.01-0.05 events/sec
+        - Отчетность: event-based, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на корпорацию
+      sync_strategy: Strong Consistency
+
+  technical_specification:
+    subtasks:
     phase_1:
       name: Corporation Service Core
       tasks:
@@ -210,4 +424,73 @@ architecture:
       estimated_effort: 2 days
 
     total_estimated_effort: 23 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        Gateway --> EconomyService[Economy Service<br/>8085]
+        
+        SocialService --> CS[Corporation Service]
+        SocialService --> CRS[Corporation Registration Service]
+        SocialService --> CHM[Corporation Hierarchy Manager]
+        SocialService --> CDM[Corporation Duty Manager]
+        SocialService --> CAM[Corporation Activity Manager]
+        
+        EconomyService --> CSM[Corporation Salary Manager]
+        
+        CS --> GuildService[Guild Service]
+        CS --> WorldService[World Service]
+        CSM --> EconomyService
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EconomyService --> EventBus
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SocialService --> DB[(Social DB)]
+        EconomyService --> DB
+        
+        Client --> WSCorp[WebSocket<br/>Corporation Updates]
+        WSCorp --> SocialService
+    ```
+
+  corporation_registration_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant Client
+        participant SocialService
+        participant RegistrationService
+        participant GuildService
+        participant EconomyService
+        participant EventBus
+        
+        Client->>SocialService: POST /corporations/register
+        SocialService->>RegistrationService: Validate requirements
+        RegistrationService->>GuildService: Check guild exists
+        RegistrationService->>EconomyService: Check capital
+        RegistrationService->>RegistrationService: Create registration
+        RegistrationService->>SocialService: Registration created
+        SocialService->>EventBus: Publish corporation.registered
+        SocialService->>Client: Registration successful
+    ```
+
+  salary_payment_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant Scheduler
+        participant SalaryManager
+        participant EconomyService
+        participant Employee
+        participant EventBus
+        
+        Scheduler->>SalaryManager: Payment time
+        SalaryManager->>SalaryManager: Calculate salaries
+        SalaryManager->>EconomyService: Transfer funds
+        EconomyService->>Employee: Credit salary
+        SalaryManager->>EventBus: Publish salary.paid
+        SalaryManager->>Scheduler: Payment completed
+    ```
 

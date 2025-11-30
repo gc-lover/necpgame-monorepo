@@ -1,0 +1,420 @@
+# Issue: #141665206
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Shooting Profiles Service API
+  description: |
+    API для управления профилями стрельбы, TTK, отдачей и модификаторами.
+
+    **Основные возможности:**
+    - Управление профилями стрельбы (TTK по режимам)
+    - Расчет TTK
+    - Управление отдачей оружия
+    - Применение модификаторов (импланты, навыки, экипировка)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Shooting Profiles
+    description: Профили стрельбы и TTK
+  - name: Recoil
+    description: Управление отдачей
+  - name: Modifiers
+    description: Модификаторы стрельбы
+
+paths:
+  /gameplay/combat/shooting/profiles:
+    get:
+      tags:
+        - Shooting Profiles
+      summary: Получить профили стрельбы
+      operationId: getShootingProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [pve, pvp, arena]
+      responses:
+        "200":
+          description: Профили стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShootingProfilesResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/shooting/ttk:
+    get:
+      tags:
+        - Shooting Profiles
+      summary: Рассчитать TTK
+      operationId: calculateTTK
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: weapon_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pve, pvp, arena]
+        - name: target_health
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Расчет TTK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TTKResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Shooting Profiles
+      summary: Обновить TTK профиль
+      operationId: updateTTK
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTTKRequest"
+      responses:
+        "200":
+          description: TTK профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TTKResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/shooting/weapons/{weaponId}/recoil:
+    get:
+      tags:
+        - Recoil
+      summary: Получить отдачу оружия
+      operationId: getWeaponRecoil
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Отдача оружия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponRecoilResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Recoil
+      summary: Обновить отдачу оружия
+      operationId: updateWeaponRecoil
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRecoilRequest"
+      responses:
+        "200":
+          description: Отдача обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponRecoilResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/shooting/modifiers:
+    get:
+      tags:
+        - Modifiers
+      summary: Получить модификаторы стрельбы
+      operationId: getShootingModifiers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Модификаторы стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShootingModifiersResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Modifiers
+      summary: Применить модификатор стрельбы
+      operationId: applyShootingModifier
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplyModifierRequest"
+      responses:
+        "200":
+          description: Модификатор применен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShootingModifiersResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ShootingProfilesResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        profiles:
+          type: array
+          items:
+            type: object
+            properties:
+              mode:
+                type: string
+                enum: [pve, pvp, arena]
+              ttk_range:
+                type: string
+              characteristics:
+                type: string
+
+    TTKResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [pve, pvp, arena]
+        ttk_seconds:
+          type: number
+          description: Время до убийства в секундах
+        hits_required:
+          type: integer
+          minimum: 1
+          description: Количество попаданий до убийства
+        damage_per_hit:
+          type: integer
+          minimum: 1
+
+    UpdateTTKRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_id
+        - mode
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [pve, pvp, arena]
+        ttk_seconds:
+          type: number
+          minimum: 0
+
+    WeaponRecoilResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        recoil_pattern:
+          type: array
+          items:
+            type: number
+          description: Паттерн отдачи (массив значений отклонения)
+        recoil_type:
+          type: string
+          enum: [predictable, realistic]
+        modifiers_applied:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoilModifier"
+
+    UpdateRecoilRequest:
+      type: object
+      properties:
+        recoil_pattern:
+          type: array
+          items:
+            type: number
+        recoil_type:
+          type: string
+          enum: [predictable, realistic]
+
+    ShootingModifiersResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        modifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShootingModifier"
+
+    ShootingModifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [implant, skill, equipment, weapon_mod]
+        source_id:
+          type: string
+          format: uuid
+        modifier_type:
+          type: string
+          enum: [recoil_reduction, ttk_adjustment, damage_boost, accuracy_boost]
+        value:
+          type: number
+          description: Значение модификатора (может быть отрицательным для снижения)
+
+    ApplyModifierRequest:
+      type: object
+      required:
+        - character_id
+        - source
+        - source_id
+        - modifier_type
+        - value
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [implant, skill, equipment, weapon_mod]
+        source_id:
+          type: string
+          format: uuid
+        modifier_type:
+          type: string
+          enum: [recoil_reduction, ttk_adjustment, damage_boost, accuracy_boost]
+        value:
+          type: number
+
+    RecoilModifier:
+      type: object
+      properties:
+        source:
+          type: string
+          enum: [implant, skill, weapon_mod]
+        value:
+          type: number
+          description: Модификатор отдачи (отрицательное значение = снижение отдачи)
+
+security:
+  - BearerAuth: []

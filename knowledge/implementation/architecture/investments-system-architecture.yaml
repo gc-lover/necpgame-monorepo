@@ -1,0 +1,453 @@
+# Issue: #228
+metadata:
+  id: investments-system-architecture
+  title: Архитектура системы инвестиций
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-30T19:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - investments
+    - backend
+    - economy
+  related_systems:
+    - economy-service-go
+    - stock-exchange
+    - housing-system-go
+  related_documents:
+    - id: economy-investments
+      relation: extends
+  github_issue: 228
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы инвестиций
+    для управления инвестиционными продуктами, портфелями игроков, анализом рисков
+    и интеграцией с stock-exchange, housing-system и другими сервисами.
+  goal: |
+    Создать архитектурную схему системы инвестиций с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Технического задания для реализации
+  essence: |
+    Система управления инвестициями с поддержкой различных типов активов (акции, облигации,
+    недвижимость, производственные доли), управления портфелем, анализа рисков и интеграции
+    с экономическими сервисами.
+
+architecture:
+  overview: |
+    Система инвестиций состоит из следующих компонентов:
+    1. Investment Manager - управление инвестициями и транзакциями
+    2. Portfolio Manager - управление портфелями игроков
+    3. Product Manager - управление инвестиционными продуктами
+    4. Risk Manager - анализ рисков и контроль
+    5. Analytics Manager - аналитика портфеля и рекомендации
+    6. Integration Handler - интеграция с другими сервисами
+
+  components:
+    - name: Investment Manager
+      location: economy-service-go (модуль investments)
+      responsibility: |
+        - Управление инвестиционными транзакциями (покупка, продажа)
+        - Валидация инвестиций
+        - Управление жизненным циклом инвестиций
+        - Начисление дивидендов и выплат
+        - Интеграция с wallet-service для операций
+      port: 8085 (economy-service-go)
+      endpoints:
+        - POST /api/v1/economy/investments/buy - покупка инвестиции
+        - POST /api/v1/economy/investments/sell - продажа инвестиции
+        - GET /api/v1/economy/investments/positions - позиции игрока
+        - GET /api/v1/economy/investments/transactions - история транзакций
+
+    - name: Portfolio Manager
+      location: economy-service-go (модуль investments)
+      responsibility: |
+        - Управление портфелями игроков
+        - Диверсификация активов
+        - Ребалансировка портфеля
+        - Шаблоны портфелей
+        - Расчет доходности портфеля
+      endpoints:
+        - GET /api/v1/economy/investments/portfolio - портфель игрока
+        - POST /api/v1/economy/investments/portfolio/rebalance - ребалансировка
+        - GET /api/v1/economy/investments/portfolio/templates - шаблоны портфелей
+        - POST /api/v1/economy/investments/portfolio/apply-template - применить шаблон
+
+    - name: Product Manager
+      location: economy-service-go (модуль investments)
+      responsibility: |
+        - Управление инвестиционными продуктами
+        - Каталог продуктов (акции, облигации, недвижимость, производственные доли)
+        - Характеристики продуктов (доходность, риски)
+        - Обновление продуктов
+      endpoints:
+        - GET /api/v1/economy/investments/products - каталог продуктов
+        - GET /api/v1/economy/investments/products/{product_id} - продукт
+        - POST /api/v1/economy/investments/products - создание продукта (admin)
+
+    - name: Risk Manager
+      location: economy-service-go (модуль investments)
+      responsibility: |
+        - Анализ рисков инвестиций
+        - Контроль suitability (соответствие профилю игрока)
+        - Margin call обработка
+        - KYC ограничения
+        - Предупреждения о рисках
+      integration: |
+        Интегрируется с character-service для проверки профиля игрока
+        Публикует предупреждения через Event Bus
+
+    - name: Analytics Manager
+      location: economy-service-go (модуль investments)
+      responsibility: |
+        - Аналитика портфеля
+        - Прогнозы доходности
+        - Рекомендации по ребалансировке
+        - Распределение активов
+        - История доходности
+      integration: |
+        Интегрируется с analytics-service для метрик
+        Использует данные от stock-exchange и housing-system
+
+    - name: Integration Handler
+      location: economy-service-go (модуль investments)
+      responsibility: |
+        - Интеграция с stock-exchange
+        - Интеграция с housing-system
+        - Интеграция с economy-events
+        - Интеграция с guild-system
+        - Публикация событий через Event Bus
+      integration: |
+        Публикует события через Event Bus для других сервисов
+        Подписывается на события от других сервисов
+
+  microservices:
+    - name: economy-service-go
+      port: 8085
+      responsibility: |
+        Основной сервис для инвестиций:
+        - Управление инвестициями и транзакциями
+        - Управление портфелями
+        - Управление продуктами
+        - Анализ рисков
+        - Аналитика портфеля
+        - Интеграция с другими сервисами
+      components:
+        - Investment Manager
+        - Portfolio Manager
+        - Product Manager
+        - Risk Manager
+        - Analytics Manager
+        - Integration Handler
+
+  database_schema:
+    tables:
+      - name: investment_products
+        description: |
+          Хранит инвестиционные продукты
+        columns:
+          - product_id (UUID, PK)
+          - product_type (VARCHAR, NOT NULL) -- 'STOCK', 'BOND', 'REAL_ESTATE', 'PRODUCTION_SHARE', 'COMMODITY'
+          - name (VARCHAR, NOT NULL)
+          - description (TEXT)
+          - issuer_id (UUID) -- корпорация, фракция, etc.
+          - expected_return (DECIMAL) -- ожидаемая доходность
+          - risk_level (VARCHAR) -- 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'
+          - min_investment (DECIMAL) -- минимальная сумма инвестиции
+          - max_investment (DECIMAL) -- максимальная сумма инвестиции
+          - dividend_rate (DECIMAL) -- ставка дивидендов
+          - maturity_date (TIMESTAMP) -- для облигаций
+          - status (VARCHAR, NOT NULL) -- 'ACTIVE', 'SUSPENDED', 'CLOSED'
+          - created_at (TIMESTAMP)
+          - updated_at (TIMESTAMP)
+        indexes:
+          - idx_product_type (product_type)
+          - idx_issuer_id (issuer_id)
+          - idx_status (status)
+
+      - name: player_investment_positions
+        description: |
+          Хранит позиции игроков в инвестициях
+        columns:
+          - position_id (UUID, PK)
+          - character_id (UUID, FK, NOT NULL)
+          - product_id (UUID, FK, NOT NULL)
+          - amount (DECIMAL, NOT NULL) -- сумма инвестиции
+          - quantity (DECIMAL) -- количество (для акций)
+          - purchase_price (DECIMAL, NOT NULL)
+          - current_value (DECIMAL)
+          - total_return (DECIMAL) -- общая доходность
+          - purchased_at (TIMESTAMP, NOT NULL)
+          - updated_at (TIMESTAMP)
+        indexes:
+          - idx_character_id (character_id)
+          - idx_product_id (product_id)
+          - idx_purchased_at (purchased_at)
+
+      - name: investment_transactions
+        description: |
+          Хранит историю транзакций инвестиций
+        columns:
+          - transaction_id (UUID, PK)
+          - character_id (UUID, FK, NOT NULL)
+          - product_id (UUID, FK, NOT NULL)
+          - transaction_type (VARCHAR, NOT NULL) -- 'BUY', 'SELL', 'DIVIDEND', 'INTEREST'
+          - amount (DECIMAL, NOT NULL)
+          - quantity (DECIMAL)
+          - price (DECIMAL)
+          - fee (DECIMAL) -- комиссия
+          - executed_at (TIMESTAMP, NOT NULL)
+        indexes:
+          - idx_character_id (character_id)
+          - idx_product_id (product_id)
+          - idx_executed_at (executed_at)
+
+      - name: portfolio_snapshots
+        description: |
+          Хранит снимки портфелей для аналитики
+        columns:
+          - snapshot_id (UUID, PK)
+          - character_id (UUID, FK, NOT NULL)
+          - total_value (DECIMAL, NOT NULL)
+          - total_return (DECIMAL)
+          - asset_allocation (JSONB) -- распределение активов
+          - risk_score (DECIMAL)
+          - recorded_at (TIMESTAMP, NOT NULL)
+        indexes:
+          - idx_character_id (character_id)
+          - idx_recorded_at (recorded_at)
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для покупки/продажи инвестиций
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед инвестированием
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (покупка инвестиции, блокировка средств, начисление)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния инвестиций (покупка, продажа, начисление дивидендов)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: InvestmentPurchasedEvent, InvestmentSoldEvent, DividendPaidEvent.
+    cqrs_pattern: |
+      Разделение команд (покупка/продажа инвестиций) и запросов (получение портфеля,
+      история транзакций) для оптимизации производительности и масштабируемости.
+      Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как покупка инвестиции (блокировка средств,
+      создание позиции, начисление), используется Saga Pattern для обеспечения
+      атомарности операций между Investment Service, Wallet Service и Stock Exchange.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    investment_operations:
+      tickrate: Event-based (on-demand) + 1-5 Hz для обновления цен
+      network_load: |
+        - Покупка/продажа инвестиций: event-based, ~0.1-0.3 events/sec
+        - Обновление цен: 1-5 Hz, ~0.2-0.5 KB/sec на игрока
+        - Начисление дивидендов: event-based, ~0.01-0.1 events/sec
+        - Общий трафик: ~0.3-1 KB/sec на игрока
+      latency_requirements: < 50-200ms для операций с инвестициями
+      sync_strategy: Strong Consistency (ACID транзакции) для транзакций, Eventual Consistency для цен
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через economy-service
+    - Распределение нагрузки на обработку инвестиций
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование портфелей в Redis
+    - Периодическое обновление цен
+
+subtasks:
+  phase_1:
+    name: Investment Manager и Product Manager
+    tasks:
+      - Реализация Investment Manager
+      - Реализация Product Manager
+      - CRUD операции с продуктами
+      - Покупка/продажа инвестиций
+      - Интеграция с wallet-service
+    estimated_effort: 5 days
+
+  phase_2:
+    name: Portfolio Manager
+    tasks:
+      - Реализация Portfolio Manager
+      - Управление портфелями
+      - Диверсификация активов
+      - Ребалансировка портфеля
+      - Шаблоны портфелей
+    estimated_effort: 4 days
+
+  phase_3:
+    name: Risk Manager
+    tasks:
+      - Реализация Risk Manager
+      - Анализ рисков
+      - Suitability проверки
+      - Margin call обработка
+      - KYC ограничения
+    estimated_effort: 4 days
+
+  phase_4:
+    name: Analytics Manager
+    tasks:
+      - Реализация Analytics Manager
+      - Аналитика портфеля
+      - Прогнозы доходности
+      - Рекомендации
+      - Интеграция с analytics-service
+    estimated_effort: 4 days
+
+  phase_5:
+    name: Integration Handler и начисления
+    tasks:
+      - Реализация Integration Handler
+      - Интеграция с stock-exchange
+      - Интеграция с housing-system
+      - Начисление дивидендов
+      - Публикация событий
+    estimated_effort: 4 days
+
+  phase_6:
+    name: Тестирование и оптимизация
+    tasks:
+      - Нагрузочное тестирование
+      - Оптимизация запросов
+      - Мониторинг и алерты
+    estimated_effort: 3 days
+
+  total_estimated_effort: 24 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            IM[Investment Manager]
+            PM[Portfolio Manager]
+            PRM[Product Manager]
+            RM[Risk Manager]
+            AM[Analytics Manager]
+            IH[Integration Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>investment_products<br/>player_investment_positions<br/>investment_transactions<br/>portfolio_snapshots)]
+        end
+
+        subgraph "External Services"
+            WS[Wallet Service]
+            SE[Stock Exchange]
+            HS[Housing System]
+            ES[Economy Events]
+            GS[Guild System]
+            AS[Analytics Service]
+            RG[Realtime Gateway]
+            EB[Event Bus]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| IM
+        CL -->|API requests| PM
+        IM --> PRM
+        IM --> RM
+        PM --> AM
+        PM --> RM
+        IM -->|store| DB
+        PM -->|store| DB
+        IM -->|transactions| WS
+        IH --> SE
+        IH --> HS
+        IH --> ES
+        IH --> GS
+        AM --> AS
+        IH --> EB
+        IH --> RG
+        RG -->|push updates| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CL as Client
+        participant IM as Investment Manager
+        participant PM as Portfolio Manager
+        participant RM as Risk Manager
+        participant WS as Wallet Service
+        participant SE as Stock Exchange
+        participant RG as Realtime Gateway
+
+        CL->>IM: Buy investment
+        IM->>RM: Check risk
+        RM->>IM: Risk OK
+        IM->>WS: Block funds
+        WS->>IM: Funds blocked
+        IM->>SE: Create position
+        SE->>IM: Position created
+        IM->>PM: Update portfolio
+        PM->>RG: Notify client
+        RG->>CL: Push update
+    ```
+
+  investment_lifecycle: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> Discovery: Product Available
+        Discovery --> Research: Player Interested
+        Research --> Purchase: Investment Decision
+        Purchase --> Active: Investment Made
+        Active --> Monitoring: Position Active
+        Monitoring --> Rebalance: Rebalance Needed
+        Monitoring --> Exit: Sell Decision
+        Rebalance --> Active: Rebalanced
+        Exit --> [*]: Investment Sold
+        Active --> Dividend: Dividend Paid
+        Dividend --> Active: Dividend Received
+    ```
+
+decisions:
+  - id: adr-investments-architecture
+    title: Централизованная модель системы инвестиций
+    status: approved
+    rationale: |
+      Обеспечивает единый контроль инвестиций, портфелей и рисков.
+      Упрощает интеграцию с другими экономическими сервисами.
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы инвестиций:
+      - Определены компоненты (Investment Manager, Portfolio Manager, Product Manager, Risk Manager, Analytics Manager, Integration Handler)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (investment_products, player_investment_positions, investment_transactions, portfolio_snapshots)
+      - Спроектирована система управления портфелем
+      - Спроектирована система анализа рисков
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с инвестициями
+      - Создано техническое задание
+      - Разбито на подзадачи
+

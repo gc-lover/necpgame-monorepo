@@ -1,0 +1,103 @@
+# Issue: #141889952
+openapi: 3.0.3
+info:
+  title: Stock Events History Service API
+  description: |
+    API для получения истории влияния игровых событий на котировки акций.
+    
+    Функционал:
+    - История влияния событий на цены
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: events
+    description: Операции с биржевыми событиями
+
+paths:
+  /stocks/{stock_id}/events/history:
+    get:
+      tags:
+        - events
+      summary: Получить историю событий акции
+      description: |
+        Возвращает все события (активные и завершенные), 
+        влиявшие на акцию за указанный период.
+      operationId: getStockEventHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          description: ID акции
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          required: false
+          description: Фильтр по типу события
+          schema:
+            type: string
+            enum:
+              - quest_completed
+              - faction_war
+              - territory_control
+              - corporate_scandal
+              - tech_breakthrough
+              - economic_event
+        - name: from_date
+          in: query
+          required: false
+          description: Начало периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          description: Конец периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История событий успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-events-schemas.yaml#/components/schemas/StockEventHistoryEntry"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

@@ -1,0 +1,205 @@
+# Issue: #299
+openapi: 3.0.3
+info:
+  title: Housing Shop Service API
+  description: API для магазина мебели
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Housing Shop Manager
+    description: Магазин мебели
+
+paths:
+  /world/housing/shop/catalog:
+    get:
+      tags:
+        - Housing Shop Manager
+      summary: Получить каталог магазина мебели
+      operationId: getHousingShopCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - DECORATIVE
+              - FUNCTIONAL
+              - COMFORT
+              - STORAGE
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Каталог магазина
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HousingShopCatalogResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/housing/shop/furniture/{furniture_id}:
+    get:
+      tags:
+        - Housing Shop Manager
+      summary: Получить детали мебели в магазине
+      operationId: getHousingShopFurnitureDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: furniture_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали мебели
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FurnitureItem"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/housing/shop/purchase:
+    post:
+      tags:
+        - Housing Shop Manager
+      summary: Купить мебель из магазина
+      operationId: purchaseFurnitureFromShop
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseFurnitureRequest"
+      responses:
+        "200":
+          description: Мебель куплена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FurnitureItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FurnitureItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum:
+            - DECORATIVE
+            - FUNCTIONAL
+            - COMFORT
+            - STORAGE
+        description:
+          type: string
+        price:
+          type: integer
+          format: int64
+        prestige_points:
+          type: integer
+          default: 0
+        slot_cost:
+          type: integer
+          default: 1
+        is_unique:
+          type: boolean
+          default: false
+        function_bonus:
+          type: object
+          additionalProperties: true
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PurchaseFurnitureRequest:
+      type: object
+      required:
+        - player_id
+        - furniture_item_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        furniture_item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          default: 1
+          minimum: 1
+
+    HousingShopCatalogResponse:
+      type: object
+      properties:
+        furniture:
+          type: array
+          items:
+            $ref: "#/components/schemas/FurnitureItem"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+security:
+  - BearerAuth: []
+

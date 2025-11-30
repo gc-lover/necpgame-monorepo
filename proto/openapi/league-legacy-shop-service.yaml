@@ -1,0 +1,148 @@
+# Issue: #83
+openapi: 3.0.3
+info:
+  title: League Legacy Shop Service API
+  description: API для Legacy Shop: покупка Legacy Items за Legacy Points
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Legacy Shop
+    description: Магазин наследия
+
+paths:
+  /legacy-shop/items:
+    get:
+      tags:
+        - Legacy Shop
+      summary: Получить доступные Legacy Items
+      operationId: getLegacyShopItems
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список доступных Legacy Items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LegacyShopItem"
+                  player_legacy_points:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /legacy-shop/purchase:
+    post:
+      tags:
+        - Legacy Shop
+      summary: Купить Legacy Item
+      operationId: purchaseLegacyItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseRequest"
+      responses:
+        "200":
+          description: Покупка успешна
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    LegacyShopItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        price:
+          type: integer
+        effects:
+          type: object
+          additionalProperties: true
+        restrictions:
+          type: object
+          additionalProperties: true
+
+    PurchaseRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+
+    PurchaseResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        legacy_item:
+          $ref: "#/components/schemas/LegacyItem"
+        remaining_legacy_points:
+          type: integer
+
+    LegacyItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        effects:
+          type: object
+          additionalProperties: true
+        obtained_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

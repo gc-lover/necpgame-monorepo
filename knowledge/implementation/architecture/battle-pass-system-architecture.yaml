@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T00:15:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:20:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -305,6 +305,82 @@ architecture:
       - Синхронизация прогресса Battle Pass
       - Уведомления о событиях
       - Обновления в реальном времени
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для начисления опыта, выдачи наград и покупки премиума
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед выдачей наград и покупкой премиума
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (выдача награды, покупка премиума, уведомление игрока)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния Battle Pass (начисление опыта, повышение уровня, выдача наград, покупка премиума, завершение челленджа)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: XPAddedEvent, LevelUpEvent, RewardClaimedEvent, PremiumPurchasedEvent, ChallengeCompletedEvent.
+    cqrs_pattern: |
+      Разделение команд (начисление опыта, выдача наград, покупка премиума) и запросов
+      (получение прогресса, получение наград, получение челленджей) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как выдача награды (выдача награды, обновление прогресса,
+      отправка уведомления) или покупка премиума (списание валюты, активация премиум-трека,
+      выдача всех пропущенных наград, отправка уведомления), используется Saga Pattern
+      для обеспечения атомарности операций между Economy Service, Mail Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    xp_operations:
+      tickrate: Event-based (on-demand при событиях)
+      network_load: |
+        - Начисление опыта: event-based, ~0.1-1 events/sec на игрока
+        - Получение прогресса: event-based, ~0.01-0.05 requests/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для опыта
+      latency_requirements: < 50-100ms для начисления опыта, < 30-100ms для получения прогресса
+      sync_strategy: Strong Consistency (ACID транзакции) для начисления опыта
+
+    reward_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Выдача наград: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение наград: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для наград
+      latency_requirements: < 100-200ms для выдачи наград, < 30-100ms для получения наград
+      sync_strategy: Strong Consistency (ACID транзакции) для выдачи наград
+
+    premium_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Покупка премиума: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение статуса премиума: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока для премиума
+      latency_requirements: < 200-300ms для покупки премиума, < 30-100ms для получения статуса
+      sync_strategy: Strong Consistency (ACID транзакции) для покупки премиума
+
+    challenge_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Завершение челленджа: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение челленджей: event-based, ~0.01-0.02 requests/sec на игрока
+        - Обновление прогресса: event-based, ~0.01-0.05 events/sec на игрока
+        - Общий трафик: ~0.1-0.4 KB/sec на игрока для челленджей
+      latency_requirements: < 50-150ms для завершения челленджа, < 30-100ms для получения челленджей
+      sync_strategy: Strong Consistency (ACID транзакции) для завершения челленджей
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий Battle Pass: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.8 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_schema:
     tables:
@@ -655,6 +731,17 @@ next_steps:
   - Определение формата сезонов и наград
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния Battle Pass
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (выдача награды, покупка премиума)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для опыта, наград, премиума, челленджей и обработки событий
   - version: '1.0.0'
     date: 2025-11-23
     author: Architect Agent

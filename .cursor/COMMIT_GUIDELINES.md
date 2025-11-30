@@ -124,6 +124,8 @@ git push origin feature/issue-{number}-{description}
 
 ### Связь коммита с Issue
 
+**ВАЖНО:** Всегда указывай **номер Issue** (например, `#123`), а не `item_id` (project_item_id) в коммитах.
+
 Всегда указывай номер Issue в коммите или используй ключевые слова:
 
 ```

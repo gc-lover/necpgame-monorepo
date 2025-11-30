@@ -1,0 +1,257 @@
+# Issue: #53
+openapi: 3.0.3
+info:
+  title: World State Core Service API
+  description: API для управления глобальным состоянием: получение, обновление, пакетные операции
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: World State Core
+    description: Управление глобальным состоянием
+
+paths:
+  /world/state/{key}:
+    get:
+      tags:
+        - World State Core
+      summary: Получить состояние по ключу
+      operationId: getStateByKey
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Состояние по ключу
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    put:
+      tags:
+        - World State Core
+      summary: Обновить состояние
+      operationId: updateState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StateUpdateRequest"
+      responses:
+        "200":
+          description: Состояние обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "common.yaml#/components/responses/Conflict"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    delete:
+      tags:
+        - World State Core
+      summary: Удалить состояние
+      operationId: deleteState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Состояние удалено
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/state/category/{category}:
+    get:
+      tags:
+        - World State Core
+      summary: Получить состояние категории
+      operationId: getStateByCategory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Состояние категории
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  states:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GlobalState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/state/batch:
+    post:
+      tags:
+        - World State Core
+      summary: Пакетное обновление состояния
+      operationId: batchUpdateState
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchStateUpdateRequest"
+      responses:
+        "200":
+          description: Состояния обновлены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  states:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GlobalState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    GlobalState:
+      type: object
+      properties:
+        key:
+          type: string
+        category:
+          type: string
+        value:
+          type: object
+          additionalProperties: true
+        version:
+          type: integer
+        sync_type:
+          type: string
+          enum:
+            - SERVER_WIDE
+            - PLAYER_SPECIFIC
+            - PHASED
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    StateUpdateRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: object
+          additionalProperties: true
+        version:
+          type: integer
+        sync_type:
+          type: string
+          enum:
+            - SERVER_WIDE
+            - PLAYER_SPECIFIC
+            - PHASED
+
+    BatchStateUpdateRequest:
+      type: object
+      required:
+        - updates
+      properties:
+        updates:
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - value
+            properties:
+              key:
+                type: string
+              value:
+                type: object
+                additionalProperties: true
+              version:
+                type: integer
+              sync_type:
+                type: string
+                enum:
+                  - SERVER_WIDE
+                  - PLAYER_SPECIFIC
+                  - PHASED
+
+security:
+  - BearerAuth: []
+

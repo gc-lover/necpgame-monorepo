@@ -417,6 +417,32 @@ architecture:
       - Синхронизация Heat
       - Уведомления об изменениях доступа
 
+  tickrate_and_network_requirements:
+    reputation_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Изменение репутации: event-based, ~0.1-0.5 events/sec
+        - Пересчет тира: event-based, ~0.05-0.1 events/sec
+        - Обновление эффектов: event-based, ~0.1-0.3 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    heat_system:
+      tickrate: 1 Hz (периодическое затухание)
+      network_load: |
+        - Затухание Heat: 1 update/sec
+        - Обновление Heat: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока
+      sync_strategy: Eventual Consistency для затухания, Strong для изменений
+
+    reputation_recovery:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Задачи восстановления: event-based, ~0.01-0.05 events/sec
+        - Прогресс восстановления: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
 technical_specification:
   subtasks:
     - id: reputation-manager

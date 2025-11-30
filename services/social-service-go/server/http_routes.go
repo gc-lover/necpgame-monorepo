@@ -133,5 +133,20 @@ func (s *HTTPServer) setupRomanceRoutes(social *mux.Router) {
 		social.HandleFunc("/romance/engrams/{engram_id}/comment", romanceHandlers.EngramRomanceComment).Methods("POST")
 		social.HandleFunc("/romance/engrams/{engram_id}/influence", romanceHandlers.GetEngramRomanceInfluence).Methods("GET")
 	}
+
+	if s.romanceCoreService != nil {
+		romanceCoreHandlers := NewRomanceCoreHandlers(s.romanceCoreService)
+		social.HandleFunc("/romance/types", romanceCoreHandlers.GetRomanceTypes).Methods("GET")
+		social.HandleFunc("/romance/{player_id}/relationships", romanceCoreHandlers.GetPlayerRomanceRelationships).Methods("GET")
+		social.HandleFunc("/romance/{player_id}/relationships/{type}", romanceCoreHandlers.GetPlayerRomanceRelationshipsByType).Methods("GET")
+		social.HandleFunc("/romance/player-player/initiate", romanceCoreHandlers.InitiatePlayerPlayerRomance).Methods("POST")
+		social.HandleFunc("/romance/player-player/accept", romanceCoreHandlers.AcceptPlayerPlayerRomance).Methods("POST")
+		social.HandleFunc("/romance/player-player/reject", romanceCoreHandlers.RejectPlayerPlayerRomance).Methods("POST")
+		social.HandleFunc("/romance/player-player/breakup", romanceCoreHandlers.BreakupPlayerPlayerRomance).Methods("POST")
+		social.HandleFunc("/romance/player-player/relationship/{player_id1}/{player_id2}", romanceCoreHandlers.GetPlayerPlayerRomance).Methods("GET")
+		social.HandleFunc("/romance/compatibility/{player_id}/{target_id}", romanceCoreHandlers.GetRomanceCompatibility).Methods("GET")
+		social.HandleFunc("/romance/privacy/update", romanceCoreHandlers.UpdateRomancePrivacy).Methods("POST")
+		social.HandleFunc("/romance/notifications/{player_id}", romanceCoreHandlers.GetRomanceNotifications).Methods("GET")
+	}
 }
 

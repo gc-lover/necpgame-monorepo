@@ -1,0 +1,129 @@
+# Issue: #141889956
+openapi: 3.0.3
+info:
+  title: Stock Protection Enforcement Service API
+  description: |
+    API для управления enforcement actions (санкции) на фондовой бирже.
+    
+    Функционал:
+    - Получение списка санкций
+    - Создание санкций (admin)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: enforcement
+    description: Санкции и действия
+
+paths:
+  /stocks/protection/enforcement:
+    get:
+      tags:
+        - enforcement
+      summary: Получить список санкций
+      description: |
+        Возвращает историю применённых санкций.
+      operationId: getEnforcementActions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - warning
+              - suspension
+              - ban
+              - confiscation
+              - fine
+        - name: player_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Санкции успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-protection-schemas.yaml#/components/schemas/EnforcementAction"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+    post:
+      tags:
+        - enforcement
+      summary: Создать санкцию
+      description: |
+        Применяет санкцию к игроку за нарушение.
+        Требуется роль admin.
+      operationId: createEnforcementAction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "stock-protection-schemas.yaml#/components/schemas/EnforcementActionCreate"
+      responses:
+        "201":
+          description: Санкция создана
+          content:
+            application/json:
+              schema:
+                $ref: "stock-protection-schemas.yaml#/components/schemas/EnforcementAction"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

@@ -1,0 +1,144 @@
+# Issue: #141889952
+openapi: 3.0.3
+info:
+  title: Stock Events Impacts Service API
+  description: |
+    API для управления воздействиями игровых событий на котировки акций.
+    
+    Функционал:
+    - Отслеживание активных воздействий событий на акции
+    - Получение всех активных воздействий
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: impacts
+    description: Воздействия событий на акции
+
+paths:
+  /stocks/{stock_id}/events/impacts:
+    get:
+      tags:
+        - impacts
+      summary: Получить активные воздействия на акцию
+      description: |
+        Возвращает все активные события, влияющие на цену акции.
+        Включает базовый эффект, модификаторы, длительность и decay curve.
+      operationId: getStockEventImpacts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          description: ID акции
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum:
+              - active
+              - expired
+              - reversed
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Активные воздействия успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-events-schemas.yaml#/components/schemas/EventImpact"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+                  summary:
+                    $ref: "stock-events-schemas.yaml#/components/schemas/ImpactSummary"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /events/impacts/active:
+    get:
+      tags:
+        - impacts
+      summary: Получить все активные воздействия
+      description: |
+        Возвращает все активные воздействия событий на все акции.
+        Полезно для мониторинга и аналитики.
+      operationId: getAllActiveImpacts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_type
+          in: query
+          required: false
+          description: Фильтр по типу события
+          schema:
+            type: string
+            enum:
+              - quest_completed
+              - faction_war
+              - territory_control
+              - corporate_scandal
+              - tech_breakthrough
+              - economic_event
+        - name: min_impact
+          in: query
+          required: false
+          description: Минимальное влияние (%) для фильтра
+          schema:
+            type: number
+            format: double
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Активные воздействия успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-events-schemas.yaml#/components/schemas/EventImpact"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

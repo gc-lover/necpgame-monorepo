@@ -1,0 +1,197 @@
+metadata:
+  id: combat-implants-architecture-spec
+  title: Техническое задание и диаграммы Combat Implants
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-30T15:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - implants
+    - technical-specification
+  related_documents:
+    - id: combat-implants-architecture
+      relation: extends
+  github_issue: 80
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - database
+
+technical_specification:
+  subtasks:
+    - id: implant-catalog-manager
+      title: Реализация менеджера каталога имплантов
+      description: |
+        Реализация Implant Catalog Manager с управлением типами имплантов,
+        их эффектами, редкостью и совместимостью.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: implant-acquisition-manager
+      title: Реализация менеджера приобретения имплантов
+      description: |
+        Реализация Implant Acquisition Manager с поддержкой покупки, лута,
+        квестов и крафта имплантов.
+      dependencies: [implant-catalog-manager]
+      estimated_effort: 5 days
+
+    - id: implant-limits-manager
+      title: Реализация менеджера лимитов имплантов
+      description: |
+        Реализация Implant Limits Manager с проверкой слотов, совместимости,
+        энергии и человечности.
+      dependencies: [implant-catalog-manager]
+      estimated_effort: 6 days
+
+    - id: implant-visuals-manager
+      title: Реализация менеджера визуализации имплантов
+      description: |
+        Реализация Implant Visuals Manager с управлением визуальными эффектами
+        имплантов на персонаже.
+      dependencies: [implant-catalog-manager]
+      estimated_effort: 4 days
+
+    - id: cyberpsychosis-tracker
+      title: Реализация трекера киберпсихоза
+      description: |
+        Реализация Cyberpsychosis Tracker с отслеживанием уровня киберпсихоза
+        и применением эффектов при достижении порогов.
+      dependencies: [implant-limits-manager]
+      estimated_effort: 5 days
+
+    - id: implant-effects-calculator
+      title: Реализация калькулятора эффектов имплантов
+      description: |
+        Реализация Implant Effects Calculator с расчетом эффектов имплантов
+        и их применением к характеристикам персонажа.
+      dependencies: [implant-catalog-manager]
+      estimated_effort: 4 days
+
+    - id: implant-synergy-system
+      title: Реализация системы синергий имплантов
+      description: |
+        Реализация Implant Synergy System с проверкой синергий между имплантами
+        и применением бонусов.
+      dependencies: [implant-effects-calculator]
+      estimated_effort: 5 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений имплантов,
+        киберпсихоза и синергий.
+      dependencies: [implant-acquisition-manager, cyberpsychosis-tracker]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы имплантов.
+      dependencies: [implant-acquisition-manager, implant-limits-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для каталога имплантов, имплантов персонажей,
+        приобретений, лимитов, киберпсихоза и синергий с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> ICM[Implant Catalog Manager]
+        GameplayService --> IAM[Implant Acquisition Manager]
+        GameplayService --> ILM[Implant Limits Manager]
+        GameplayService --> IVM[Implant Visuals Manager]
+        GameplayService --> CT[Cyberpsychosis Tracker]
+        GameplayService --> IEC[Implant Effects Calculator]
+        GameplayService --> ISS[Implant Synergy System]
+        
+        IAM --> ILM
+        IAM --> IEC
+        ILM --> CT
+        IEC --> ISS
+        
+        GameplayService --> CharacterService[Character Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> EconomyService[Economy Service]
+        GameplayService --> InventoryService[Inventory Service]
+        GameplayService --> AbilityService[Ability Service]
+        GameplayService --> CombatService[Combat Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSImplants[WebSocket<br/>Implants]
+        WSImplants --> GameplayService
+    ```
+
+  implant_installation_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant IAM as Implant Acquisition Manager
+        participant ILM as Implant Limits Manager
+        participant IEC as Implant Effects Calculator
+        participant CT as Cyberpsychosis Tracker
+        participant ISS as Implant Synergy System
+        participant CS as Character Service
+        participant EB as Event Bus
+        
+        C->>IAM: POST /implants/install
+        IAM->>ILM: Check limits
+        ILM->>ILM: Check slots
+        ILM->>ILM: Check compatibility
+        ILM->>ILM: Check energy
+        ILM-->>IAM: Limits OK
+        IAM->>IEC: Calculate effects
+        IEC-->>IAM: Effects calculated
+        IAM->>CT: Update cyberpsychosis
+        CT-->>IAM: Cyberpsychosis updated
+        IAM->>ISS: Check synergies
+        ISS-->>IAM: Synergies checked
+        IAM->>CS: Update character stats
+        CS-->>IAM: Stats updated
+        IAM->>EB: Publish combat.implant.installed
+        IAM-->>C: Implant installed
+    ```
+
+  cyberpsychosis_update_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant ILM as Implant Limits Manager
+        participant CT as Cyberpsychosis Tracker
+        participant CS as Character Service
+        participant EB as Event Bus
+        
+        Note over ILM: Implant installed/uninstalled
+        ILM->>CT: Update humanity
+        CT->>CT: Calculate cyberpsychosis level
+        CT->>CT: Check thresholds
+        
+        alt Threshold reached
+            CT->>CT: Apply cyberpsychosis effects
+            CT->>CS: Update character effects
+            CS-->>CT: Effects applied
+        end
+        
+        CT->>EB: Publish combat.implant.cyberpsychosis.updated
+    ```
+

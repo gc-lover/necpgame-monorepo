@@ -4,19 +4,23 @@
 
 **CRITICAL: Search by Project Status, not labels!**
 
+**ВАЖНО:** При работе с задачами:
+- **Внутренний ID (`item_id`):** Используй только для API вызовов GitHub Project
+- **Номер Issue (`#123`):** Используй во всех комментариях, сообщениях, коммитах и документации
+
 ### Algorithm
 
 1. **Search in Project by Status:**
 ```javascript
 // Use config from .cursor/GITHUB_PROJECT_CONFIG.md
-await mcp_github_list_project_items({
+mcp_github_list_project_items({
   owner_type: 'user',  // from config
   owner: 'gc-lover',   // from config
   project_number: 1,   // from config
-  query: 'is:issue Status:"{Agent} - Todo" OR Status:"{Agent} - In Progress"',
-  fields: ['Status', 'Title']
+  query: 'Status:"{Agent} - Todo" OR Status:"{Agent} - In Progress"'
 });
 ```
+**Note:** Не используй `is:issue` в query - `list_project_items` работает только с issues. Не указывай `fields` - вернутся все поля.
 
 2. **Or search issues and filter by Status:**
 ```javascript
@@ -63,10 +67,12 @@ const result = await mcp_github_search_issues({
 
 **Then:**
 1. Check cache first
-2. Read Issue #123 via MCP
+2. Read Issue #123 via MCP (используй номер Issue, не item_id)
 3. Check Project Status matches your agent
 4. Verify readiness
 5. Start work
+
+**Важно:** Пользователь всегда указывает номер Issue (например, `#123`), а не `item_id`. Используй `item_id` только для внутренних API вызовов, но в сообщениях и комментариях всегда указывай номер Issue.
 
 ## Caching
 

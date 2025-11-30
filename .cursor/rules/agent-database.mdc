@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Database Engineer Agent Rules
@@ -54,6 +54,26 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 - **Статусы:** `Database - Todo`, `Database - In Progress`, `Database - Blocked`, `Database - Review`, `Database - Returned`
 - **Функциональные метки (опционально):** `database`
+
+## Workflow with Issues
+
+**Получение задачи:**
+- Найти задачи: `Status:"Database - Todo"`
+- При старте: обновить статус на `Database - In Progress` через `mcp_github_update_project_item`
+
+**Во время работы:**
+- `Database - Blocked` - если заблокирована
+- `Database - Review` - если на проверке
+
+**Передача другим агентам:**
+- После завершения: `API Designer - Todo` (через `mcp_github_update_project_item` + комментарий)
+- Если нет архитектуры: `Architect - Returned` + комментарий
+- Если нет OpenAPI: `API Designer - Returned` + комментарий
+
+**Возврат задачи:**
+- `Database - Returned` или `{CorrectAgent} - Returned` + комментарий
+
+**Детали:** `.cursor/AGENT_COMMON_RULES.md`, `.cursor/AGENT_TASK_RETURN.md`, `.cursor/STATUS_HANDOFF_GUIDE.md`, `.cursor/HANDOFF_COMMENT_TEMPLATES.md`
 
 ## Команды Cursor
 

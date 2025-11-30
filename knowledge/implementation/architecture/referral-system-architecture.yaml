@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-23T23:59:00Z
+  version: "1.1.0"
+  last_updated: 2025-11-30T20:40:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -260,6 +260,105 @@ architecture:
       3. Leaderboard Manager обновляет кэш
       4. Referral Service публикует событие referral.leaderboard-updated
       5. Realtime Gateway отправляет обновление клиентам
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций (регистрация, milestone, награды)
+    mechanisms:
+      - ACID транзакции для регистрации по коду, создания реферала, выдачи наград и обновления milestone
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов при обновлении лидерборда
+      - Валидация перед регистрацией по коду и выдачей наград
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (регистрация по коду, выдача наград, обновление лидерборда)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния реферальной системы (генерация кода, регистрация по коду, создание реферала,
+      достижение milestone, выдача наград, обновление лидерборда) записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: ReferralCodeGeneratedEvent, ReferralRegisteredEvent, MilestoneReachedEvent, RewardDistributedEvent, LeaderboardUpdatedEvent.
+    cqrs_pattern: |
+      Разделение команд (генерация кода, регистрация по коду, выдача наград) и запросов
+      (получение кода, получение списка рефералов, получение лидерборда) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как регистрация по коду (валидация кода, создание реферала,
+      выдача приветственной награды, уведомление реферера) или выдача milestone награды (проверка milestone,
+      создание награды, выдача награды, обновление лидерборда, уведомление реферера), используется Saga Pattern
+      для обеспечения атомарности операций между Referral Service, Character Service, Economy Service, Reward Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    code_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Генерация кода: event-based, ~0.001-0.01 events/sec на игрока
+        - Валидация кода: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение кода: event-based, ~0.01-0.05 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций кодов
+      latency_requirements: < 50-100ms для генерации кода, < 30-50ms для валидации кода
+      sync_strategy: Strong Consistency (ACID транзакции) для генерации и валидации кодов
+
+    registration_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Регистрация по коду: event-based, ~0.001-0.01 events/sec на игрока
+        - Создание реферала: event-based, ~0.001-0.01 events/sec на игрока
+        - Выдача приветственной награды: event-based, ~0.001-0.01 events/sec на игрока
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока для операций регистрации
+      latency_requirements: < 200-300ms для регистрации по коду, < 100-200ms для создания реферала
+      sync_strategy: Strong Consistency (ACID транзакции) для регистрации по коду
+
+    tracking_operations:
+      tickrate: Event-based (on-demand при событиях персонажа) + 1-5 Hz для обновления статусов
+      network_load: |
+        - Обновление статуса реферала: event-based, ~0.01-0.05 events/sec на игрока
+        - Получение списка рефералов: event-based, ~0.01-0.02 requests/sec на игрока
+        - Получение статистики: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций трекинга
+      latency_requirements: < 50-100ms для обновления статуса, < 30-100ms для получения списка
+      sync_strategy: Strong Consistency (ACID транзакции) для обновления статуса, Eventual Consistency для статистики
+
+    milestone_operations:
+      tickrate: Event-based (on-demand при достижении уровня 10)
+      network_load: |
+        - Проверка milestone: event-based, ~0.001-0.01 events/sec на игрока
+        - Создание milestone награды: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение milestone: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций milestone
+      latency_requirements: < 100-200ms для проверки milestone, < 50-150ms для создания награды
+      sync_strategy: Strong Consistency (ACID транзакции) для milestone операций
+
+    reward_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Выдача награды: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение награды: event-based, ~0.001-0.01 events/sec на игрока
+        - Получение списка наград: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций наград
+      latency_requirements: < 200-300ms для выдачи награды, < 50-150ms для получения награды
+      sync_strategy: Strong Consistency (ACID транзакции) для выдачи наград
+
+    leaderboard_operations:
+      tickrate: Event-based (on-demand при изменениях) + 1-5 Hz для обновления лидерборда
+      network_load: |
+        - Обновление лидерборда: 1-5 Hz, ~0.05-0.2 KB/sec
+        - Получение лидерборда: event-based, ~0.01-0.05 requests/sec на игрока
+        - Получение позиции: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для операций лидерборда
+      latency_requirements: < 50-100ms для обновления лидерборда, < 30-100ms для получения лидерборда
+      sync_strategy: Eventual Consistency для лидерборда (кэширование в Redis)
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий реферальной системы: event-based, ~0.1-0.5 events/sec
+        - Подписка на события: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.2-0.7 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_structure:
     tables:
@@ -574,3 +673,31 @@ diagrams:
         MM->>LM: Update leaderboard
         LM->>EB: Publish referral.milestone-reached
     ```
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния реферальной системы
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (регистрация по коду, выдача наград, обновление лидерборда)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для кодов, регистрации, трекинга, milestone, наград, лидерборда и обработки событий
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура реферальной системы:
+      - Определены компоненты (Referral Manager, Code Generator, Code Validator, Registration Handler, Referral Tracker, Milestone Manager, Reward Distributor, Leaderboard Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (referral_codes, referrals, referral_milestones, referral_rewards, referral_leaderboard)
+      - Спроектирована система генерации кодов
+      - Спроектирована система регистрации по коду
+      - Спроектирована система milestone наград
+      - Спроектирована система лидерборда
+      - Создано техническое задание
+      - Разбито на подзадачи

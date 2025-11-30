@@ -1,0 +1,148 @@
+# Issue: #1513
+openapi: 3.0.3
+info:
+  title: Combat Freerun Air Dash Service API
+  description: API для выполнения Air Dash - рывка в воздухе для изменения траектории и уклонения
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
+
+tags:
+  - name: Acrobatics Advanced Actions
+    description: Продвинутые элементы акробатики
+
+paths:
+  /api/v1/gameplay/combat/freerun/actions/air-dash:
+    post:
+      tags:
+        - Acrobatics Advanced Actions
+      summary: Выполнить Air Dash
+      description: Выполняет рывок в воздухе для изменения траектории и уклонения
+      operationId: performAirDash
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AirDashRequest"
+            examples:
+              basic:
+                summary: Базовый Air Dash
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 50.0
+                  direction:
+                    x: 1.0
+                    y: 0.5
+                    z: 0.2
+      responses:
+        "200":
+          description: Air Dash выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AirDashResponse"
+              examples:
+                success:
+                  summary: Успешное выполнение
+                  value:
+                    success: true
+                    action_id: "b8c9d0e1-f2a3-4567-8901-234567890123"
+                    stamina_used: 12
+                    cooldown_remaining: 2.0
+                    uses_remaining: 0
+                    validation_passed: true
+                    message: "Air Dash performed"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Air Dash на кулдауне, недостаточно использований или выносливости
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    AirDashRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - position
+        - direction
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        position:
+          $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
+        direction:
+          $ref: "combat-freerun-acrobatics-base-service.yaml#/components/schemas/Vector3D"
+          description: Направление рывка
+
+    AirDashResponse:
+      type: object
+      required:
+        - success
+        - action_id
+        - stamina_used
+        - cooldown_remaining
+        - validation_passed
+      properties:
+        success:
+          type: boolean
+          description: Успешность выполнения
+        action_id:
+          type: string
+          format: uuid
+          description: ID действия
+        stamina_used:
+          type: integer
+          minimum: 0
+          description: Потрачена выносливость
+        cooldown_remaining:
+          type: number
+          format: double
+          minimum: 0
+          description: Оставшееся время кулдауна (секунды)
+        uses_remaining:
+          type: integer
+          minimum: 0
+          description: Оставшееся количество использований в воздухе
+        validation_passed:
+          type: boolean
+          description: Прошло ли валидацию античита
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+security:
+  - BearerAuth: []
+

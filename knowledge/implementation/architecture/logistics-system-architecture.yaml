@@ -1,0 +1,477 @@
+# Issue: #230
+metadata:
+  id: logistics-system-architecture
+  title: Архитектура системы логистики и перевозок
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-30T19:35:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - logistics
+    - backend
+    - economy
+  related_systems:
+    - economy-service-go
+    - logistics-service-go
+    - insurance-service-go
+  related_documents:
+    - id: economy-logistics
+      relation: extends
+  github_issue: 230
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы логистики
+    для перемещения товаров между регионами с учётом рисков, страхования,
+    эскорта и мониторинга SLA.
+  goal: |
+    Создать архитектурную схему системы логистики с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Технического задания для реализации
+  essence: |
+    Система управления логистикой с поддержкой различных типов транспорта, маршрутов,
+    управления рисками, страхования, эскорта и мониторинга SLA.
+
+architecture:
+  overview: |
+    Система логистики состоит из следующих компонентов:
+    1. Shipment Manager - управление перевозками и их жизненным циклом
+    2. Route Manager - управление маршрутами и расчет стоимости
+    3. Transport Manager - управление типами транспорта
+    4. Risk Engine - обработка рисков и инцидентов
+    5. Insurance Manager - управление страхованием
+    6. Escort Manager - управление эскортом и конвоями
+    7. SLA Monitor - мониторинг SLA и уведомления
+    8. Integration Handler - интеграция с другими сервисами
+
+  components:
+    - name: Shipment Manager
+      location: logistics-service-go (модуль shipments)
+      responsibility: |
+        - Управление жизненным циклом перевозок (DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST)
+        - CRUD операции с перевозками
+        - Валидация перевозок
+        - Трекинг перевозок
+        - Интеграция с wallet-service для оплаты
+      port: 8088 (logistics-service-go)
+      endpoints:
+        - POST /api/v1/logistics/shipments/quote - расчет стоимости перевозки
+        - POST /api/v1/logistics/shipments - создание перевозки
+        - GET /api/v1/logistics/shipments/{shipment_id} - получение перевозки
+        - GET /api/v1/logistics/shipments - список перевозок игрока
+        - PUT /api/v1/logistics/shipments/{shipment_id} - обновление перевозки
+        - DELETE /api/v1/logistics/shipments/{shipment_id} - отмена перевозки
+        - GET /api/v1/logistics/shipments/{shipment_id}/track - трекинг перевозки
+
+    - name: Route Manager
+      location: logistics-service-go (модуль routes)
+      responsibility: |
+        - Управление маршрутами (локальные, региональные, глобальные)
+        - Расчет расстояний и времени доставки
+        - Расчет стоимости перевозки
+        - Оптимизация маршрутов
+        - Динамическая смена маршрутов при рисках
+      endpoints:
+        - GET /api/v1/logistics/routes - список маршрутов
+        - GET /api/v1/logistics/routes/{route_id} - маршрут
+        - POST /api/v1/logistics/routes/calculate - расчет маршрута
+
+    - name: Transport Manager
+      location: logistics-service-go (модуль transport)
+      responsibility: |
+        - Управление типами транспорта (наземный, воздушный, железнодорожный, курьерский)
+        - Характеристики транспорта (скорость, вместимость, стоимость)
+        - Доступность транспорта
+        - Бронирование транспорта
+
+    - name: Risk Engine
+      location: logistics-service-go (модуль risks)
+      responsibility: |
+        - Обработка рисков перевозки (атаки бандитов, аварии, таможенные задержки, погода)
+        - Вероятностные модели рисков
+        - Обработка инцидентов
+        - Расчет вероятности успешной доставки
+        - Интеграция с economy-events для динамических рисков
+      integration: |
+        Интегрируется с economy-events для получения информации о рисках
+        Публикует события инцидентов через Event Bus
+
+    - name: Insurance Manager
+      location: logistics-service-go (модуль insurance)
+      responsibility: |
+        - Управление страховыми планами (basic, premium, full)
+        - Расчет стоимости страхования
+        - Обработка страховых выплат
+        - Интеграция с insurance-service
+      integration: |
+        Интегрируется с insurance-service для обработки страховых выплат
+
+    - name: Escort Manager
+      location: logistics-service-go (модуль escort)
+      responsibility: |
+        - Управление эскортом и конвоями
+        - Расчет стоимости эскорта
+        - Влияние эскорта на вероятность атак
+        - Бронированный транспорт
+      integration: |
+        Интегрируется с character-service для найма эскорта
+
+    - name: SLA Monitor
+      location: logistics-service-go (модуль monitoring)
+      responsibility: |
+        - Мониторинг SLA перевозок
+        - KPI метрики (время доставки, успешность, задержки)
+        - Алерты при отклонениях SLA
+        - Отчеты о перевозках
+      integration: |
+        Интегрируется с analytics-service для метрик
+        Публикует события мониторинга через Event Bus
+
+    - name: Integration Handler
+      location: logistics-service-go (модуль integration)
+      responsibility: |
+        - Интеграция с economy-service
+        - Интеграция с insurance-service
+        - Интеграция с economy-events
+        - Интеграция с character-service
+        - Публикация событий через Event Bus
+      integration: |
+        Публикует события через Event Bus для других сервисов
+        Подписывается на события от других сервисов
+
+  microservices:
+    - name: logistics-service-go
+      port: 8088
+      responsibility: |
+        Основной сервис для логистики:
+        - Управление перевозками и их жизненным циклом
+        - Управление маршрутами и транспортом
+        - Обработка рисков и инцидентов
+        - Управление страхованием и эскортом
+        - Мониторинг SLA
+        - Интеграция с другими сервисами
+      components:
+        - Shipment Manager
+        - Route Manager
+        - Transport Manager
+        - Risk Engine
+        - Insurance Manager
+        - Escort Manager
+        - SLA Monitor
+        - Integration Handler
+
+  database_schema:
+    tables:
+      - name: transport_shipments
+        description: |
+          Хранит перевозки товаров
+        columns:
+          - shipment_id (UUID, PK)
+          - character_id (UUID, FK, NOT NULL)
+          - route_id (UUID, FK, NOT NULL)
+          - transport_type (VARCHAR, NOT NULL) -- 'GROUND', 'AIR', 'RAIL', 'COURIER', 'PLAYER_PICKUP'
+          - cargo_items (JSONB, NOT NULL) -- список товаров
+          - cargo_weight (DECIMAL, NOT NULL)
+          - cargo_value (DECIMAL, NOT NULL)
+          - origin_location (VARCHAR, NOT NULL)
+          - destination_location (VARCHAR, NOT NULL)
+          - insurance_plan (VARCHAR) -- 'BASIC', 'PREMIUM', 'FULL'
+          - escort_level (VARCHAR) -- 'NONE', 'BASIC', 'ARMORED'
+          - status (VARCHAR, NOT NULL) -- 'DRAFT', 'SCHEDULED', 'IN_TRANSIT', 'DELAYED', 'DELIVERED', 'LOST'
+          - estimated_delivery (TIMESTAMP)
+          - actual_delivery (TIMESTAMP)
+          - cost (DECIMAL, NOT NULL)
+          - insurance_cost (DECIMAL)
+          - escort_cost (DECIMAL)
+          - created_at (TIMESTAMP)
+          - updated_at (TIMESTAMP)
+        indexes:
+          - idx_character_id (character_id)
+          - idx_route_id (route_id)
+          - idx_status (status)
+          - idx_estimated_delivery (estimated_delivery)
+
+      - name: transport_routes
+        description: |
+          Хранит маршруты перевозок
+        columns:
+          - route_id (UUID, PK)
+          - origin_location (VARCHAR, NOT NULL)
+          - destination_location (VARCHAR, NOT NULL)
+          - route_type (VARCHAR, NOT NULL) -- 'LOCAL', 'REGIONAL', 'GLOBAL'
+          - distance (DECIMAL, NOT NULL)
+          - base_cost (DECIMAL, NOT NULL)
+          - base_risk (DECIMAL, NOT NULL)
+          - estimated_time (INTEGER) -- в минутах
+          - available_transports (JSONB) -- доступные типы транспорта
+          - created_at (TIMESTAMP)
+          - updated_at (TIMESTAMP)
+        indexes:
+          - idx_origin_destination (origin_location, destination_location)
+          - idx_route_type (route_type)
+
+      - name: shipment_incidents
+        description: |
+          Хранит инциденты перевозок
+        columns:
+          - incident_id (UUID, PK)
+          - shipment_id (UUID, FK, NOT NULL)
+          - incident_type (VARCHAR, NOT NULL) -- 'BANDIT_ATTACK', 'ACCIDENT', 'CUSTOMS_DELAY', 'WEATHER'
+          - severity (VARCHAR, NOT NULL) -- 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'
+          - damage_amount (DECIMAL)
+          - resolved_at (TIMESTAMP)
+          - created_at (TIMESTAMP, NOT NULL)
+        indexes:
+          - idx_shipment_id (shipment_id)
+          - idx_incident_type (incident_type)
+          - idx_created_at (created_at)
+
+      - name: shipment_tracking
+        description: |
+          Хранит историю трекинга перевозок
+        columns:
+          - tracking_id (UUID, PK)
+          - shipment_id (UUID, FK, NOT NULL)
+          - location (VARCHAR, NOT NULL)
+          - status (VARCHAR, NOT NULL)
+          - timestamp (TIMESTAMP, NOT NULL)
+        indexes:
+          - idx_shipment_id (shipment_id)
+          - idx_timestamp (timestamp)
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для создания и обновления перевозок
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед созданием перевозки
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (создание перевозки, оплата, страхование)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния перевозок (создание, обновление статуса, инциденты)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: ShipmentCreatedEvent, ShipmentStatusChangedEvent, IncidentOccurredEvent.
+    cqrs_pattern: |
+      Разделение команд (создание перевозки, обновление статуса) и запросов (получение перевозки,
+      трекинг) для оптимизации производительности и масштабируемости.
+      Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как создание перевозки (блокировка средств,
+      создание перевозки, оплата страхования, бронирование транспорта), используется
+      Saga Pattern для обеспечения атомарности операций между Logistics Service,
+      Wallet Service и Insurance Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    logistics_operations:
+      tickrate: Event-based (on-demand) + 1-5 Hz для обновления статусов
+      network_load: |
+        - Создание/обновление перевозок: event-based, ~0.1-0.3 events/sec
+        - Обновление статусов: 1-5 Hz, ~0.2-0.5 KB/sec на игрока
+        - Трекинг перевозок: 1-5 Hz, ~0.1-0.3 KB/sec на игрока
+        - Общий трафик: ~0.4-1.1 KB/sec на игрока
+      latency_requirements: < 50-200ms для операций с перевозками
+      sync_strategy: Strong Consistency (ACID транзакции) для создания перевозок, Eventual Consistency для трекинга
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через logistics-service
+    - Распределение нагрузки на обработку перевозок
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование маршрутов в Redis
+    - WebSocket для realtime трекинга
+
+subtasks:
+  phase_1:
+    name: Shipment Manager и Route Manager
+    tasks:
+      - Реализация Shipment Manager
+      - Реализация Route Manager
+      - CRUD операции с перевозками
+      - Расчет маршрутов и стоимости
+      - Управление жизненным циклом перевозок
+    estimated_effort: 5 days
+
+  phase_2:
+    name: Transport Manager и Risk Engine
+    tasks:
+      - Реализация Transport Manager
+      - Реализация Risk Engine
+      - Обработка рисков
+      - Вероятностные модели
+      - Интеграция с economy-events
+    estimated_effort: 5 days
+
+  phase_3:
+    name: Insurance Manager и Escort Manager
+    tasks:
+      - Реализация Insurance Manager
+      - Реализация Escort Manager
+      - Интеграция с insurance-service
+      - Расчет стоимости страхования и эскорта
+    estimated_effort: 4 days
+
+  phase_4:
+    name: SLA Monitor и трекинг
+    tasks:
+      - Реализация SLA Monitor
+      - Трекинг перевозок
+      - KPI метрики
+      - Алерты и уведомления
+      - WebSocket для realtime обновлений
+    estimated_effort: 4 days
+
+  phase_5:
+    name: Integration Handler и оптимизация
+    tasks:
+      - Реализация Integration Handler
+      - Интеграция с другими сервисами
+      - Публикация событий
+      - Оптимизация маршрутов
+    estimated_effort: 4 days
+
+  phase_6:
+    name: Тестирование и оптимизация
+    tasks:
+      - Нагрузочное тестирование
+      - Оптимизация запросов
+      - Мониторинг и алерты
+    estimated_effort: 3 days
+
+  total_estimated_effort: 25 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Logistics Service"
+            SM[Shipment Manager]
+            RM[Route Manager]
+            TM[Transport Manager]
+            RE[Risk Engine]
+            IM[Insurance Manager]
+            EM[Escort Manager]
+            SLAM[SLA Monitor]
+            IH[Integration Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>transport_shipments<br/>transport_routes<br/>shipment_incidents<br/>shipment_tracking)]
+        end
+
+        subgraph "External Services"
+            ES[Economy Service]
+            IS[Insurance Service]
+            CS[Character Service]
+            WS[Wallet Service]
+            EES[Economy Events]
+            AS[Analytics Service]
+            RG[Realtime Gateway]
+            EB[Event Bus]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| SM
+        SM --> RM
+        SM --> TM
+        SM --> RE
+        SM --> IM
+        SM --> EM
+        SLAM --> SM
+        SM -->|store| DB
+        RM -->|store| DB
+        SM -->|transactions| WS
+        IM --> IS
+        EM --> CS
+        RE --> EES
+        SLAM --> AS
+        IH --> EB
+        IH --> RG
+        RG -->|push updates| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CL as Client
+        participant SM as Shipment Manager
+        participant RM as Route Manager
+        participant RE as Risk Engine
+        participant WS as Wallet Service
+        participant IS as Insurance Service
+        participant RG as Realtime Gateway
+
+        CL->>SM: Create shipment
+        SM->>RM: Calculate route
+        RM->>SM: Route calculated
+        SM->>RE: Check risks
+        RE->>SM: Risks assessed
+        SM->>IS: Calculate insurance
+        IS->>SM: Insurance cost
+        SM->>WS: Block funds
+        WS->>SM: Funds blocked
+        SM->>SM: Create shipment
+        SM->>RG: Notify client
+        RG->>CL: Push update
+    ```
+
+  shipment_lifecycle: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> DRAFT: Shipment Created
+        DRAFT --> SCHEDULED: Scheduled
+        SCHEDULED --> IN_TRANSIT: Started
+        IN_TRANSIT --> DELIVERED: Delivered
+        IN_TRANSIT --> DELAYED: Delayed
+        DELAYED --> IN_TRANSIT: Resumed
+        DELAYED --> LOST: Lost
+        IN_TRANSIT --> LOST: Lost
+        DELIVERED --> [*]
+        LOST --> [*]
+    ```
+
+decisions:
+  - id: adr-logistics-architecture
+    title: Централизованная модель системы логистики
+    status: approved
+    rationale: |
+      Обеспечивает единый контроль перевозок, маршрутов и рисков.
+      Упрощает интеграцию с другими экономическими сервисами.
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы логистики:
+      - Определены компоненты (Shipment Manager, Route Manager, Transport Manager, Risk Engine, Insurance Manager, Escort Manager, SLA Monitor, Integration Handler)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (transport_shipments, transport_routes, shipment_incidents, shipment_tracking)
+      - Спроектирована система управления перевозками
+      - Спроектирована система обработки рисков
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с логистикой
+      - Создано техническое задание
+      - Разбито на подзадачи
+

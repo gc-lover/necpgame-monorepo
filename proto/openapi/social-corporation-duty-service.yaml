@@ -1,0 +1,291 @@
+# Issue: #1435
+openapi: 3.0.3
+info:
+  title: Social Corporation Duty Service API
+  description: API для управления должностными обязательствами в корпорациях
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Corporation Duty
+    description: Управление должностными обязательствами
+
+paths:
+  /social/corporations/{corporationId}/duties:
+    post:
+      tags:
+        - Corporation Duty
+      summary: Создать обязательство
+      operationId: createDuty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDutyRequest"
+      responses:
+        "201":
+          description: Обязательство создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporationDuty"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    get:
+      tags:
+        - Corporation Duty
+      summary: Получить список обязательств
+      operationId: listDuties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - COMPLETED
+              - CANCELLED
+        - name: position_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список обязательств
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  duties:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CorporationDuty"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/corporations/{corporationId}/duties/{dutyId}/assign:
+    post:
+      tags:
+        - Corporation Duty
+      summary: Назначить обязательство
+      operationId: assignDuty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: dutyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignDutyRequest"
+      responses:
+        "200":
+          description: Обязательство назначено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporationDuty"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/corporations/{corporationId}/duties/{dutyId}/complete:
+    post:
+      tags:
+        - Corporation Duty
+      summary: Выполнить обязательство
+      operationId: completeDuty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: dutyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteDutyRequest"
+      responses:
+        "200":
+          description: Обязательство выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporationDuty"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CorporationDuty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        corporation_id:
+          type: string
+          format: uuid
+        position_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        completion_criteria:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - COMPLETED
+            - CANCELLED
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateDutyRequest:
+      type: object
+      required:
+        - position_id
+        - title
+        - description
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        completion_criteria:
+          type: object
+          additionalProperties: true
+
+    AssignDutyRequest:
+      type: object
+      required:
+        - employee_id
+      properties:
+        employee_id:
+          type: string
+          format: uuid
+
+    CompleteDutyRequest:
+      type: object
+      properties:
+        completion_data:
+          type: object
+          additionalProperties: true
+
+security:
+  - BearerAuth: []
+

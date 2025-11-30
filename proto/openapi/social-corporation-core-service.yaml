@@ -1,0 +1,232 @@
+# Issue: #1435
+openapi: 3.0.3
+info:
+  title: Social Corporation Core Service API
+  description: API для управления корпорациями: создание, обновление, удаление
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Corporation Core
+    description: Управление корпорациями
+
+paths:
+  /social/corporations:
+    post:
+      tags:
+        - Corporation Core
+      summary: Создать корпорацию
+      operationId: createCorporation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCorporationRequest"
+      responses:
+        "201":
+          description: Корпорация создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Corporation"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "409":
+          $ref: "common.yaml#/components/responses/Conflict"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/corporations/{corporationId}:
+    get:
+      tags:
+        - Corporation Core
+      summary: Получить информацию о корпорации
+      operationId: getCorporation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о корпорации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Corporation"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    put:
+      tags:
+        - Corporation Core
+      summary: Обновить корпорацию
+      operationId: updateCorporation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCorporationRequest"
+      responses:
+        "200":
+          description: Корпорация обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Corporation"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    delete:
+      tags:
+        - Corporation Core
+      summary: Удалить корпорацию
+      operationId: deleteCorporation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Корпорация удалена
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Corporation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        registration_number:
+          type: string
+          maxLength: 50
+        status:
+          type: string
+          enum:
+            - PENDING
+            - ACTIVE
+            - SUSPENDED
+            - DISBANDED
+        official_activity:
+          type: string
+          maxLength: 100
+        capital:
+          type: number
+          format: decimal
+        registered_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateCorporationRequest:
+      type: object
+      required:
+        - guild_id
+        - name
+        - official_activity
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        official_activity:
+          type: string
+          maxLength: 100
+        capital:
+          type: number
+          format: decimal
+          minimum: 0
+
+    UpdateCorporationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          enum:
+            - PENDING
+            - ACTIVE
+            - SUSPENDED
+            - DISBANDED
+        official_activity:
+          type: string
+          maxLength: 100
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,438 @@
+# Issue: #1521
+metadata:
+  id: data-synchronization-system-architecture
+  title: Архитектура системы синхронизации данных между слоями и механиками
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-30T19:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - data-synchronization
+    - consistency
+    - microservices
+    - event-driven
+  related_systems:
+    - character-service-go
+    - inventory-service-go
+    - world-service-go
+    - realtime-gateway-go
+    - event-bus-service
+  related_documents:
+    - id: data-synchronization-consistency-guide
+      relation: implements
+    - id: hybrid-network-system-architecture
+      relation: extends
+    - id: realtime-server-system-architecture
+      relation: extends
+  github_issue: 1521
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - database
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру синхронизации данных между различными слоями
+    (клиент, сервер, база данных) и механиками игры (инвентарь, персонаж, квесты, боевая система, экономика)
+    для обеспечения консистентности данных в распределенной микросервисной архитектуре.
+  goal: |
+    Создать архитектурную схему системы синхронизации данных с определением:
+    - Компонентов системы синхронизации
+    - Взаимодействия между микросервисами
+    - Паттернов синхронизации для разных типов данных
+    - Event Bus архитектуры
+    - Стратегий консистентности
+  essence: |
+    Комплексная архитектура синхронизации данных с использованием событийной архитектуры,
+    транзакций, паттернов распределенных систем и стратегий консистентности.
+
+architecture:
+  overview: |
+    Архитектура системы синхронизации данных состоит из следующих компонентов:
+    1. Event Bus Service - централизованная шина событий
+    2. State Synchronization Manager - управление синхронизацией состояния
+    3. Outbox Pattern Service - гарантированная доставка событий
+    4. Saga Orchestrator - координация распределенных транзакций
+    5. Conflict Resolution Engine - разрешение конфликтов
+    6. Event Store - хранение событий для Event Sourcing
+    7. CQRS Read Model Manager - управление read-моделями
+
+  components:
+    - name: Event Bus Service
+      location: event-bus-service-go
+      responsibility: |
+        - Централизованная шина событий для обмена сообщениями между микросервисами
+        - Публикация событий от механик
+        - Подписка механик на интересующие события
+        - Гарантия доставки (at-least-once или exactly-once)
+        - Маршрутизация событий
+        - Управление топиками и подписками
+      port: 9092 (Kafka) или 5672 (RabbitMQ)
+      technology: Kafka или RabbitMQ
+      endpoints:
+        - POST /api/v1/events/publish - публикация события
+        - GET /api/v1/events/subscribe - подписка на события
+        - GET /api/v1/events/topics - список топиков
+        - GET /api/v1/events/health - health check
+
+    - name: State Synchronization Manager
+      location: world-service-go (модуль synchronization)
+      responsibility: |
+        - Управление синхронизацией состояния между клиентом и сервером
+        - Авторитетный сервер (Single Source of Truth)
+        - Валидация действий клиента
+        - Отправка обновлений состояния клиентам
+        - Разрешение конфликтов состояния
+        - Кэширование состояния для быстрого доступа
+      integration: |
+        Интегрируется с Realtime Gateway для отправки обновлений клиентам
+        Использует Event Bus для публикации изменений состояния
+
+    - name: Outbox Pattern Service
+      location: Каждый микросервис (модуль outbox)
+      responsibility: |
+        - Гарантированная доставка событий в Event Bus
+        - Запись событий в транзакционную таблицу перед публикацией
+        - Периодическая публикация событий из outbox таблицы
+        - Идемпотентность публикации
+        - Обработка ошибок публикации
+      database_table: |
+        outbox_events:
+          - id (UUID, PK)
+          - event_type (VARCHAR)
+          - event_data (JSONB)
+          - aggregate_id (UUID)
+          - aggregate_type (VARCHAR)
+          - published (BOOLEAN)
+          - created_at (TIMESTAMP)
+          - published_at (TIMESTAMP)
+
+    - name: Saga Orchestrator
+      location: world-service-go (модуль saga)
+      responsibility: |
+        - Координация распределенных транзакций между микросервисами
+        - Управление жизненным циклом Saga
+        - Компенсирующие транзакции при ошибках
+        - Отслеживание состояния Saga
+        - Таймауты и откаты
+      saga_types:
+        - Choreography: каждый сервис знает, что делать дальше
+        - Orchestration: центральный координатор управляет процессом
+      endpoints:
+        - POST /api/v1/saga/start - начало Saga
+        - POST /api/v1/saga/step - выполнение шага Saga
+        - POST /api/v1/saga/compensate - компенсирующая транзакция
+        - GET /api/v1/saga/{saga_id} - состояние Saga
+
+    - name: Conflict Resolution Engine
+      location: world-service-go (модуль conflict-resolution)
+      responsibility: |
+        - Разрешение конфликтов при синхронизации данных
+        - Стратегии разрешения конфликтов (Last Write Wins, Vector Clocks, CRDT)
+        - Обнаружение конфликтов
+        - Уведомление о конфликтах
+        - Автоматическое и ручное разрешение
+      strategies:
+        - Last Write Wins: последняя запись побеждает
+        - Vector Clocks: отслеживание причинно-следственных связей
+        - CRDT: конфликтно-свободные реплицированные типы данных
+        - Manual Resolution: ручное разрешение администратором
+
+    - name: Event Store
+      location: event-store-service-go
+      responsibility: |
+        - Хранение событий для Event Sourcing
+        - Восстановление состояния из событий
+        - Снимки состояния для производительности
+        - Аудит и "time travel"
+        - Запросы по событиям
+      database_tables:
+        - events: хранение всех событий
+        - snapshots: снимки состояния для производительности
+        - event_streams: потоки событий для агрегатов
+
+    - name: CQRS Read Model Manager
+      location: Каждый микросервис (модуль read-model)
+      responsibility: |
+        - Управление read-моделями для оптимизации чтения
+        - Синхронизация read-моделей через события
+        - Кэширование read-моделей в Redis
+        - Инвалидация кэша при изменениях
+        - Оптимизация запросов для чтения
+
+  microservices:
+    - name: event-bus-service-go
+      port: 9092 (Kafka) или 5672 (RabbitMQ)
+      responsibility: |
+        Централизованная шина событий:
+        - Публикация и подписка на события
+        - Маршрутизация событий
+        - Гарантия доставки
+        - Управление топиками
+      technology: Kafka (рекомендуется) или RabbitMQ
+
+    - name: world-service-go
+      port: 8082
+      responsibility: |
+        Управление синхронизацией:
+        - State Synchronization Manager
+        - Saga Orchestrator
+        - Conflict Resolution Engine
+        - Интеграция с Event Bus
+        - Синхронизация состояния мира
+
+  data_consistency:
+    strategy: |
+      Гибридный подход:
+      - Strong Consistency для критичных операций (торговля, экономика, боевая система)
+      - Eventual Consistency для некритичных операций (статистика, логи, аналитика)
+    mechanisms:
+      - ACID транзакции для критичных операций
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Saga Pattern для распределенных транзакций
+      - Event Sourcing для аудита и восстановления состояния
+      - CQRS для разделения операций чтения и записи
+      - Outbox Pattern для гарантированной доставки событий
+      - Conflict Resolution для разрешения конфликтов
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния записываются как события в Event Store.
+      Это обеспечивает полный аудит, возможность восстановления состояния
+      и "time travel" для отладки. Снимки состояния используются для производительности.
+    cqrs_pattern: |
+      Разделение команд (изменение данных) и запросов (чтение данных)
+      для оптимизации производительности и масштабируемости.
+      Read-модели кэшируются в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, затрагивающих несколько микросервисов,
+      используется Saga Pattern для обеспечения атомарности операций.
+      Поддерживаются Choreography и Orchestration типы.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+      Периодическая публикация событий из outbox таблицы обеспечивает надежность.
+
+  tickrate_specification:
+    event_publication:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий: event-based, ~10-50 events/sec на микросервис
+        - Подписка на события: event-based, ~5-20 events/sec на микросервис
+        - Общий трафик Event Bus: ~50-200 KB/sec
+      latency_requirements: < 10-50ms для публикации событий
+      sync_strategy: Eventual Consistency для событий
+
+    state_synchronization:
+      tickrate: 20-128 Hz в зависимости от типа данных
+      network_load: |
+        - Позиции персонажей: 60-128 Hz, ~5-10 KB/sec на игрока
+        - Состояние инвентаря: event-based, ~0.5-1 KB/sec на игрока
+        - Боевая система: 60-128 Hz, ~3-5 KB/sec на игрока
+        - Экономика: event-based, ~0.2-0.5 KB/sec на игрока
+      latency_requirements: < 30-100ms для синхронизации состояния
+      sync_strategy: Strong Consistency для критичных данных, Eventual для некритичных
+
+  scalability_requirements:
+    - Горизонтальное масштабирование Event Bus (Kafka partitions)
+    - Распределение нагрузки на обработку событий
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование read-моделей в Redis
+    - Репликация Event Store для отказоустойчивости
+
+subtasks:
+  phase_1:
+    name: Event Bus Service
+    tasks:
+      - Настройка Kafka или RabbitMQ
+      - Реализация публикации событий
+      - Реализация подписки на события
+      - Гарантия доставки
+      - Управление топиками
+    estimated_effort: 5 days
+
+  phase_2:
+    name: Outbox Pattern Service
+    tasks:
+      - Реализация outbox таблицы в каждом микросервисе
+      - Реализация публикации событий из outbox
+      - Обработка ошибок публикации
+      - Идемпотентность публикации
+    estimated_effort: 4 days
+
+  phase_3:
+    name: State Synchronization Manager
+    tasks:
+      - Реализация State Synchronization Manager
+      - Валидация действий клиента
+      - Отправка обновлений состояния
+      - Разрешение конфликтов
+      - Кэширование состояния
+    estimated_effort: 5 days
+
+  phase_4:
+    name: Saga Orchestrator
+    tasks:
+      - Реализация Saga Orchestrator
+      - Управление жизненным циклом Saga
+      - Компенсирующие транзакции
+      - Таймауты и откаты
+    estimated_effort: 5 days
+
+  phase_5:
+    name: Conflict Resolution Engine
+    tasks:
+      - Реализация Conflict Resolution Engine
+      - Стратегии разрешения конфликтов
+      - Обнаружение конфликтов
+      - Автоматическое и ручное разрешение
+    estimated_effort: 4 days
+
+  phase_6:
+    name: Event Store и CQRS
+    tasks:
+      - Реализация Event Store
+      - Восстановление состояния из событий
+      - Снимки состояния
+      - CQRS Read Model Manager
+      - Кэширование read-моделей
+    estimated_effort: 6 days
+
+  total_estimated_effort: 29 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Event Bus Service"
+            EB[Event Bus<br/>Kafka/RabbitMQ]
+        end
+
+        subgraph "World Service"
+            SSM[State Synchronization Manager]
+            SO[Saga Orchestrator]
+            CRE[Conflict Resolution Engine]
+        end
+
+        subgraph "Microservices"
+            CS[Character Service]
+            IS[Inventory Service]
+            QS[Quest Service]
+            ES[Economy Service]
+            OBS[Outbox Service]
+        end
+
+        subgraph "Event Store"
+            ES_STORE[Event Store]
+            SNAPSHOTS[Snapshots]
+        end
+
+        subgraph "CQRS"
+            RM[Read Model Manager]
+            REDIS[(Redis Cache)]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CS -->|publish events| EB
+        IS -->|publish events| EB
+        QS -->|publish events| EB
+        ES -->|publish events| EB
+        EB -->|subscribe| CS
+        EB -->|subscribe| IS
+        EB -->|subscribe| QS
+        EB -->|subscribe| ES
+        CS -->|outbox| OBS
+        IS -->|outbox| OBS
+        OBS -->|publish| EB
+        CS -->|store events| ES_STORE
+        IS -->|store events| ES_STORE
+        ES_STORE -->|snapshots| SNAPSHOTS
+        CS -->|read model| RM
+        IS -->|read model| RM
+        RM -->|cache| REDIS
+        SSM -->|sync state| CL
+        SSM -->|validate| CS
+        SSM -->|validate| IS
+        SO -->|orchestrate| CS
+        SO -->|orchestrate| IS
+        CRE -->|resolve conflicts| SSM
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CL as Client
+        participant SSM as State Sync Manager
+        participant CS as Character Service
+        participant OBS as Outbox Service
+        participant EB as Event Bus
+        participant IS as Inventory Service
+
+        CL->>SSM: Action request
+        SSM->>CS: Validate action
+        CS->>CS: Process action
+        CS->>OBS: Write event to outbox
+        CS->>SSM: Action result
+        SSM->>CL: Update state
+        OBS->>EB: Publish event
+        EB->>IS: Deliver event
+        IS->>IS: Process event
+    ```
+
+  saga_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant SO as Saga Orchestrator
+        participant CS as Character Service
+        participant IS as Inventory Service
+        participant ES as Economy Service
+
+        SO->>CS: Reserve item slot
+        CS->>SO: Slot reserved
+        SO->>ES: Check funds
+        ES->>SO: Funds available
+        SO->>ES: Deduct funds
+        ES->>SO: Funds deducted
+        SO->>IS: Add item
+        IS->>SO: Item added
+        SO->>SO: Complete saga
+    ```
+
+decisions:
+  - id: adr-event-bus-technology
+    title: Выбор технологии Event Bus
+    status: approved
+    rationale: |
+      Kafka рекомендуется для высокой пропускной способности и масштабируемости.
+      RabbitMQ может использоваться для меньших нагрузок или специфических требований.
+  - id: adr-consistency-strategy
+    title: Гибридная стратегия консистентности
+    status: approved
+    rationale: |
+      Strong Consistency для критичных операций обеспечивает надежность,
+      Eventual Consistency для некритичных операций обеспечивает производительность.
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы синхронизации данных:
+      - Определены компоненты (Event Bus Service, State Synchronization Manager, Outbox Pattern Service, Saga Orchestrator, Conflict Resolution Engine, Event Store, CQRS Read Model Manager)
+      - Описаны микросервисы и их взаимодействие
+      - Спроектированы паттерны синхронизации (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Определены стратегии консистентности (Strong Consistency для критичных, Eventual для некритичных)
+      - Добавлена спецификация тикрейта для событий и синхронизации состояния
+      - Создано техническое задание
+      - Разбито на подзадачи
+

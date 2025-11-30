@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T00:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T20:15:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -272,6 +272,73 @@ architecture:
       - Синхронизация состояния сбросов
       - Уведомления о событиях
       - Обновления в реальном времени
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для сбросов и выдачи наград
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед выполнением сбросов
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (сброс квестов, выдача наград, уведомление игроков)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния сбросов (выполнение сброса, выдача квестов, выдача наград, обновление серии логинов)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: DailyResetCompletedEvent, WeeklyResetCompletedEvent, QuestAssignedEvent, RewardClaimedEvent, StreakUpdatedEvent.
+    cqrs_pattern: |
+      Разделение команд (выполнение сброса, выдача квестов, выдача наград) и запросов
+      (получение статуса сброса, получение квестов игрока, получение логин-наград) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как выполнение сброса (сброс квестов, выдача новых квестов,
+      обновление ограничений, уведомление игроков) или выдача награды (выдача награды, обновление серии логинов,
+      отправка уведомления), используется Saga Pattern для обеспечения атомарности операций
+      между World Service, Gameplay Service, Economy Service и Notification Service.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    reset_operations:
+      tickrate: Event-based (cron-triggered, 1 раз в день/неделю)
+      network_load: |
+        - Выполнение daily reset: event-based, ~0.01-0.1 events/sec (batch обработка)
+        - Выполнение weekly reset: event-based, ~0.001-0.01 events/sec (batch обработка)
+        - Общий трафик: ~0.1-1 KB/sec для batch операций
+      latency_requirements: < 30-60 минут для daily reset, < 1-2 часа для weekly reset
+      sync_strategy: Strong Consistency (ACID транзакции) для выполнения сбросов
+
+    quest_assignment:
+      tickrate: Event-based (on-demand при сбросе)
+      network_load: |
+        - Выдача квестов: event-based, ~0.01-0.1 events/sec на игрока при сбросе
+        - Получение квестов игрока: event-based, ~0.01-0.02 requests/sec на игрока
+        - Общий трафик: ~0.1-0.5 KB/sec на игрока для квестов
+      latency_requirements: < 50-200ms для выдачи квестов, < 30-100ms для получения квестов
+      sync_strategy: Strong Consistency (ACID транзакции) для выдачи квестов
+
+    login_rewards:
+      tickrate: Event-based (on-demand при логине)
+      network_load: |
+        - Выдача логин-наград: event-based, ~0.01-0.05 events/sec на игрока при логине
+        - Получение логин-наград: event-based, ~0.01-0.02 requests/sec на игрока
+        - Обновление серии логинов: event-based, ~0.01-0.02 events/sec на игрока
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока для логин-наград
+      latency_requirements: < 50-200ms для выдачи наград, < 30-100ms для получения наград
+      sync_strategy: Strong Consistency (ACID транзакции) для выдачи наград
+
+    event_handling:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Публикация событий сбросов: event-based, ~0.01-0.1 events/sec
+        - Подписка на события: event-based, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.1-0.5 KB/sec для событий
+      latency_requirements: < 100-300ms для публикации событий
+      sync_strategy: Eventual Consistency для событий (через Event Bus)
 
   database_schema:
     tables:
@@ -617,6 +684,17 @@ next_steps:
   - Определение формата расписаний и событий
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния сбросов
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (выполнение сброса, выдача наград)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для сбросов, выдачи квестов, логин-наград и обработки событий
   - version: '1.0.0'
     date: 2025-11-23
     author: Architect Agent

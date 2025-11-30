@@ -1,0 +1,333 @@
+metadata:
+  id: combat-implants-architecture
+  title: Архитектура системы боевых имплантов
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-30T15:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - implants
+    - cyberware
+    - progression
+  related_systems:
+    - gameplay-service
+    - character-service
+    - progression-service
+    - economy-service
+    - inventory-service
+  related_documents:
+    - id: mechanics-combat-implants-overview
+      relation: implements
+    - id: mechanics-combat-implants-types
+      relation: implements
+    - id: mechanics-combat-implants-acquisition
+      relation: implements
+    - id: mechanics-combat-implants-limits
+      relation: implements
+    - id: mechanics-combat-implants-visuals
+      relation: implements
+    - id: combat-abilities-architecture
+      relation: integrates
+  github_issue: 80
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы боевых имплантов, включающую:
+    - Управление типами имплантов и их эффектами
+    - Приобретение и улучшение имплантов
+    - Лимиты имплантов (слоты, совместимость, энергия, человечность)
+    - Визуализацию имплантов
+    - Интеграцию с боевой системой, способностями и прогрессией
+    - Управление киберпсихозом
+  goal: |
+    Создать архитектурную схему системы боевых имплантов с определением:
+    - Компонентов для управления имплантами
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Комплексная архитектура системы боевых имплантов с поддержкой типов, приобретения,
+    лимитов, визуализации и интеграции с боевой системой и прогрессией.
+
+architecture:
+  overview: |
+    Архитектура системы боевых имплантов состоит из следующих компонентов:
+    1. Implant Catalog Manager - управление каталогом имплантов
+    2. Implant Acquisition Manager - управление приобретением и улучшением
+    3. Implant Limits Manager - управление лимитами (слоты, совместимость, энергия)
+    4. Implant Visuals Manager - управление визуализацией
+    5. Cyberpsychosis Tracker - отслеживание киберпсихоза
+    6. Implant Effects Calculator - расчет эффектов имплантов
+    7. Implant Synergy System - система синергий имплантов
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка боевых имплантов:
+        - Управление каталогом имплантов
+        - Управление приобретением и улучшением
+        - Управление лимитами имплантов
+        - Управление визуализацией
+        - Отслеживание киберпсихоза
+        - Расчет эффектов имплантов
+        - Обработка синергий
+      components:
+        - implant-catalog-manager: управление каталогом имплантов
+        - implant-acquisition-manager: управление приобретением
+        - implant-limits-manager: управление лимитами
+        - implant-visuals-manager: управление визуализацией
+        - cyberpsychosis-tracker: отслеживание киберпсихоза
+        - implant-effects-calculator: расчет эффектов
+        - implant-synergy-system: система синергий
+      endpoints:
+        - GET /api/v1/gameplay/combat/implants/catalog - каталог имплантов
+        - GET /api/v1/gameplay/combat/implants/{implantId} - информация об импланте
+        - GET /api/v1/gameplay/combat/implants/character/{characterId} - импланты персонажа
+        - POST /api/v1/gameplay/combat/implants/acquire - приобретение импланта
+        - POST /api/v1/gameplay/combat/implants/install - установка импланта
+        - POST /api/v1/gameplay/combat/implants/uninstall - удаление импланта
+        - POST /api/v1/gameplay/combat/implants/upgrade - улучшение импланта
+        - GET /api/v1/gameplay/combat/implants/limits - проверка лимитов
+        - GET /api/v1/gameplay/combat/implants/cyberpsychosis - состояние киберпсихоза
+        - POST /api/v1/gameplay/combat/implants/visuals - обновление визуалов
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/implants/{sessionId} - live события имплантов
+      events_published:
+        - combat.implant.acquired: приобретение импланта
+        - combat.implant.installed: установка импланта
+        - combat.implant.uninstalled: удаление импланта
+        - combat.implant.upgraded: улучшение импланта
+        - combat.implant.limit.reached: достижение лимита
+        - combat.implant.cyberpsychosis.updated: обновление киберпсихоза
+        - combat.implant.synergy.activated: активация синергии
+      events_subscribed:
+        - character.created: создание персонажа
+        - progression.level-up: повышение уровня
+        - economy.transaction.completed: завершение транзакции
+        - inventory.item.added: добавление предмета
+        - combat.ability.activated: активация способности
+
+  implant_types:
+    - name: combat
+      description: Боевые импланты
+      categories:
+        - offensive: урон, крит, скорость атаки
+        - defensive: защита, сопротивление, регенерация
+        - tactical: стелс, хак, контроль
+    - name: movement
+      description: Двигательные импланты
+      categories:
+        - speed: скорость движения
+        - jump: прыжки, двойной прыжок
+        - parkour: паркур, лазание
+    - name: os
+      description: Операционные системы
+      categories:
+        - cyberdeck: хакерские способности
+        - sandevistan: замедление времени
+        - berserk: берсерк режим
+    - name: visual
+      description: Визуальные импланты
+      categories:
+        - eyes: глаза, зрение
+        - skin: кожа, камуфляж
+        - limbs: конечности
+
+  data_flows:
+    implant_acquisition_flow: |
+      1. Игрок приобретает имплант через POST /api/v1/gameplay/combat/implants/acquire
+      2. Implant Acquisition Manager проверяет доступность импланта
+      3. Economy Service проверяет наличие средств
+      4. Economy Service списывает средства
+      5. Inventory Service добавляет имплант в инвентарь
+      6. Gameplay Service публикует событие combat.implant.acquired
+      7. Realtime Gateway отправляет обновление клиентам
+
+    implant_installation_flow: |
+      1. Игрок устанавливает имплант через POST /api/v1/gameplay/combat/implants/install
+      2. Implant Limits Manager проверяет лимиты (слоты, совместимость, энергия)
+      3. Implant Effects Calculator рассчитывает эффекты импланта
+      4. Cyberpsychosis Tracker обновляет уровень киберпсихоза
+      5. Implant Synergy System проверяет синергии
+      6. Character Service обновляет характеристики персонажа
+      7. Gameplay Service публикует событие combat.implant.installed
+      8. Realtime Gateway отправляет обновление клиентам
+
+    implant_upgrade_flow: |
+      1. Игрок улучшает имплант через POST /api/v1/gameplay/combat/implants/upgrade
+      2. Implant Acquisition Manager проверяет возможность улучшения
+      3. Economy Service проверяет наличие материалов/средств
+      4. Implant Effects Calculator рассчитывает новые эффекты
+      5. Character Service обновляет характеристики персонажа
+      6. Gameplay Service публикует событие combat.implant.upgraded
+      7. Realtime Gateway отправляет обновление клиентам
+
+    cyberpsychosis_update_flow: |
+      1. Игрок устанавливает/удаляет имплант
+      2. Cyberpsychosis Tracker рассчитывает новый уровень киберпсихоза
+      3. Cyberpsychosis Tracker проверяет пороги киберпсихоза
+      4. При достижении порога → применение эффектов киберпсихоза
+      5. Gameplay Service публикует событие combat.implant.cyberpsychosis.updated
+      6. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: implants_catalog
+        description: Каталог имплантов
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255) NOT NULL
+          - type: ENUM (combat, movement, os, visual)
+          - category: VARCHAR(100)
+          - rarity: ENUM (common, uncommon, rare, epic, legendary)
+          - effects: JSONB NOT NULL
+          - energy_cost: INTEGER
+          - humanity_cost: INTEGER
+          - slot_type: VARCHAR(100)
+          - compatibility: JSONB
+          - created_at: TIMESTAMP NOT NULL DEFAULT NOW()
+
+      - name: character_implants
+        description: Импланты персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - implant_id: UUID FOREIGN KEY
+          - installed_at: TIMESTAMP
+          - upgrade_level: INTEGER DEFAULT 1
+          - slot: VARCHAR(100)
+          - is_active: BOOLEAN DEFAULT true
+          - created_at: TIMESTAMP NOT NULL DEFAULT NOW()
+
+      - name: implant_acquisitions
+        description: История приобретений имплантов
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - implant_id: UUID FOREIGN KEY
+          - acquisition_type: ENUM (purchase, loot, quest, crafting)
+          - cost: JSONB
+          - acquired_at: TIMESTAMP NOT NULL DEFAULT NOW()
+
+      - name: implant_limits_state
+        description: Состояние лимитов имплантов
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - total_energy_used: INTEGER
+          - max_energy: INTEGER
+          - total_humanity_lost: INTEGER
+          - max_humanity: INTEGER
+          - slots_used: JSONB
+          - last_update: TIMESTAMP NOT NULL DEFAULT NOW()
+
+      - name: cyberpsychosis_state
+        description: Состояние киберпсихоза
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - current_level: INTEGER
+          - threshold_level: INTEGER
+          - effects_active: JSONB
+          - last_update: TIMESTAMP NOT NULL DEFAULT NOW()
+
+      - name: implant_synergies
+        description: Синергии имплантов
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - synergy_id: UUID
+          - active_implants: JSONB
+          - bonus_effects: JSONB
+          - activated_at: TIMESTAMP NOT NULL DEFAULT NOW()
+
+  integrations:
+    character_service: |
+      - Получение данных персонажа
+      - Обновление характеристик при установке/удалении имплантов
+      - Применение эффектов имплантов к персонажу
+
+    progression_service: |
+      - Получение данных о прокачке
+      - Разблокировка имплантов по уровню
+      - Обновление навыков на основе имплантов
+
+    economy_service: |
+      - Проверка средств для приобретения
+      - Списание средств при покупке
+      - Получение цен на импланты
+
+    inventory_service: |
+      - Добавление имплантов в инвентарь
+      - Удаление имплантов из инвентаря
+      - Проверка наличия материалов для улучшения
+
+    ability_service: |
+      - Получение способностей от имплантов
+      - Интеграция имплантов с системой способностей
+      - Проверка синергий имплантов и способностей
+
+    combat_service: |
+      - Применение эффектов имплантов в бою
+      - Расчет бонусов от имплантов
+      - Интеграция с боевой системой
+
+    realtime_gateway: |
+      - Отправка realtime обновлений имплантов
+      - Синхронизация состояния киберпсихоза
+      - Уведомления о лимитах и синергиях
+
+  tickrate_and_network_requirements:
+    implant_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Приобретение импланта: event-based, ~0.1-0.5 events/sec
+        - Установка/удаление: event-based, ~0.1-0.3 events/sec
+        - Улучшение: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Strong Consistency (ACID транзакции)
+
+    implant_effects:
+      tickrate: 60-128 Hz (в бою)
+      network_load: |
+        - Эффекты имплантов в бою: 60-128 updates/sec
+        - Бонусы от имплантов: event-based, ~5-10 events/sec
+        - Общий трафик: ~1-2 KB/sec на игрока
+      sync_strategy: Strong Consistency для боевых эффектов
+
+    cyberpsychosis:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Обновление киберпсихоза: event-based, ~0.01-0.05 events/sec
+        - Эффекты киберпсихоза: event-based, ~0.1-0.2 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    implant_synergies:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Активация синергий: event-based, ~0.1-0.3 events/sec
+        - Обновление эффектов: event-based, ~0.1-0.2 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+technical_specification:
+  reference: combat-implants-architecture-spec.yaml
+
+diagrams:
+  reference: combat-implants-architecture-spec.yaml
+

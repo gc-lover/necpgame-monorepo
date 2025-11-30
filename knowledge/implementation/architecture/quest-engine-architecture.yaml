@@ -4,8 +4,8 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T22:45:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-30T19:55:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -259,6 +259,75 @@ architecture:
       - Синхронизация состояния квестов
       - Обновления прогресса в реальном времени
       - Уведомления о событиях
+
+  data_consistency:
+    strategy: Strong Consistency (ACID транзакции) для критичных операций
+    mechanisms:
+      - ACID транзакции для начала квеста, обновления прогресса и завершения квеста
+      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
+      - Валидация перед началом квеста и завершением
+      - Синхронизация с другими сервисами через Event Bus
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для распределенных операций (начало квеста, завершение квеста с наградами, обновление world state)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения состояния квестов (начало квеста, обновление прогресса, завершение квеста)
+      записываются как события в Event Store. Это обеспечивает полный аудит,
+      возможность восстановления состояния и "time travel" для отладки.
+      Примеры событий: QuestStartedEvent, QuestObjectiveCompletedEvent, QuestCompletedEvent, QuestFailedEvent.
+    cqrs_pattern: |
+      Разделение команд (начало квеста, обновление прогресса, завершение квеста) и запросов
+      (получение информации о квесте, получение списка квестов, получение прогресса) для оптимизации производительности
+      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
+    saga_pattern: |
+      Для распределенных транзакций, таких как начало квеста (проверка требований, создание инстанса,
+      инициализация state machine) или завершение квеста (проверка условий, распределение наград,
+      обновление world state), используется Saga Pattern для обеспечения атомарности операций
+      между Gameplay Service, Character Service, Economy Service и Narrative Coherence System.
+    outbox_pattern: |
+      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
+      который записывает события в транзакционную таблицу перед публикацией.
+
+  tickrate_specification:
+    quest_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Начало квеста: event-based, ~0.1-0.3 events/sec на игрока
+        - Обновление прогресса: event-based, ~0.1-0.5 events/sec на игрока
+        - Завершение квеста: event-based, ~0.1-0.2 events/sec на игрока
+        - Получение информации о квесте: event-based, ~0.1-0.5 requests/sec на игрока
+        - Общий трафик: ~0.3-0.8 KB/sec на игрока
+      latency_requirements: < 50-200ms для операций с квестами
+      sync_strategy: Strong Consistency (ACID транзакции) для начала квеста, обновления прогресса и завершения
+
+    dialogue_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Получение диалога: event-based, ~0.1-0.3 requests/sec на игрока
+        - Выбор в диалоге: event-based, ~0.1-0.2 events/sec на игрока
+        - Обновление состояния диалога: event-based, ~0.1-0.2 events/sec на игрока
+        - Общий трафик: ~0.2-0.4 KB/sec на игрока
+      latency_requirements: < 50-150ms для операций с диалогами
+      sync_strategy: Strong Consistency (ACID транзакции) для выбора в диалоге
+
+    skill_check_operations:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Выполнение skill check: event-based, ~0.1-0.2 events/sec на игрока
+        - Получение результатов: event-based, ~0.1-0.2 requests/sec на игрока
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока
+      latency_requirements: < 50-100ms для выполнения skill check
+      sync_strategy: Strong Consistency (ACID транзакции) для выполнения skill check
+
+    realtime_updates:
+      tickrate: Event-based (on-demand) + 1-5 Hz для синхронизации состояния
+      network_load: |
+        - Синхронизация состояния квеста: 1-5 Hz, ~0.1-0.3 KB/sec на игрока
+        - Уведомления о событиях: event-based, ~0.1-0.2 events/sec на игрока
+        - Общий трафик: ~0.2-0.4 KB/sec на игрока
+      latency_requirements: < 30-100ms для синхронизации состояния
+      sync_strategy: Eventual Consistency для синхронизации состояния
 
   database_schema:
     tables:
@@ -586,6 +655,17 @@ next_steps:
   - Определение формата state machine
 
 history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния квестов
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (начало квеста, завершение квеста с наградами)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для операций с квестами, диалогами, skill checks и realtime обновлений
   - version: '1.0.0'
     date: 2025-11-22
     author: Architect Agent

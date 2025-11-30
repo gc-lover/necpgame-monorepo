@@ -522,6 +522,41 @@ architecture:
         - world-events:{id}
       ttl: 300 seconds
 
+  tickrate_and_network_requirements:
+    world_events_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание события: event-based, ~0.01-0.05 events/sec
+        - Активация события: event-based, ~0.01-0.05 events/sec
+        - Обновление состояния: event-based, ~0.1-0.3 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    event_effects:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Применение эффектов: event-based, ~0.1-0.5 events/sec
+        - Обновление цен: event-based, ~0.1-0.3 events/sec
+        - Обновление репутации: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.3-0.8 KB/sec на игрока
+      sync_strategy: Strong Consistency для критических эффектов, Eventual для статистики
+
+    event_scheduling:
+      tickrate: 1 Hz (проверка расписания)
+      network_load: |
+        - Проверка расписания: 1 update/sec
+        - Автоматическая активация: event-based, ~0.01-0.05 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока
+      sync_strategy: Eventual Consistency
+
+    event_monitoring:
+      tickrate: 1-5 Hz (мониторинг активных событий)
+      network_load: |
+        - Обновление статуса: 1-5 updates/sec
+        - WebSocket обновления: 1-5 updates/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Eventual Consistency
+
   technical_specification:
     implementation_phases:
       phase_1:

@@ -1,0 +1,158 @@
+# Issue: #83
+openapi: 3.0.3
+info:
+  title: League Hall of Fame Service API
+  description: API для Hall of Fame: лучшие игроки лиг, категории, статуи
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Hall of Fame
+    description: Зал славы лиг
+
+paths:
+  /league/hall-of-fame:
+    get:
+      tags:
+        - Hall of Fame
+      summary: Получить Hall of Fame
+      operationId: getHallOfFame
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - STORY
+              - ECONOMY
+              - PVP
+              - ALTERNATIVE
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Hall of Fame
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HallOfFameEntry"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /league/hall-of-fame/{leagueId}:
+    get:
+      tags:
+        - Hall of Fame
+      summary: Получить Hall of Fame для лиги
+      operationId: getLeagueHallOfFame
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leagueId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - STORY
+              - ECONOMY
+              - PVP
+              - ALTERNATIVE
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Hall of Fame для лиги
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  league_id:
+                    type: string
+                    format: uuid
+                  entries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HallOfFameEntry"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    HallOfFameEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        league_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        category:
+          type: string
+          enum:
+            - STORY
+            - ECONOMY
+            - PVP
+            - ALTERNATIVE
+        rank:
+          type: integer
+        achievement:
+          type: string
+        statue_model:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

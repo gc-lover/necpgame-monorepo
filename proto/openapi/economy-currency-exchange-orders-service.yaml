@@ -1,0 +1,285 @@
+# Issue: #1443
+openapi: 3.0.3
+info:
+  title: Economy Currency Exchange Orders Service API
+  description: |
+    API для управления ордерами на валютной бирже.
+    
+    **Основные возможности:**
+    - Instant обмен валют
+    - Создание и управление лимитными ордерами
+    - Получение списка ордеров
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Exchange Orders
+    description: Управление ордерами на валютной бирже
+
+paths:
+  /currency-exchange/orders/instant:
+    post:
+      tags:
+        - Exchange Orders
+      summary: Instant обмен валют
+      description: |
+        Выполняет мгновенный обмен валют по текущему курсу.
+      operationId: createInstantExchange
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstantExchangeRequest"
+      responses:
+        "201":
+          description: Обмен выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /currency-exchange/orders/limit:
+    post:
+      tags:
+        - Exchange Orders
+      summary: Создать лимитный ордер
+      description: |
+        Создаёт лимитный ордер на обмен валют по указанному курсу.
+      operationId: createLimitOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LimitOrderRequest"
+      responses:
+        "201":
+          description: Ордер создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /currency-exchange/orders:
+    get:
+      tags:
+        - Exchange Orders
+      summary: Получить список ордеров
+      description: |
+        Возвращает список ордеров игрока с фильтрацией.
+      operationId: listOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, filled, cancelled, expired]
+          description: Фильтр по статусу
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum: [instant, limit]
+          description: Фильтр по типу ордера
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список ордеров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ExchangeOrder"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /currency-exchange/orders/{order_id}:
+    get:
+      tags:
+        - Exchange Orders
+      summary: Получить детали ордера
+      description: |
+        Возвращает детальную информацию об ордере.
+      operationId: getOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID ордера
+      responses:
+        "200":
+          description: Детали ордера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeOrder"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    delete:
+      tags:
+        - Exchange Orders
+      summary: Отменить ордер
+      description: |
+        Отменяет лимитный ордер, если он ещё не исполнен.
+      operationId: cancelOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID ордера
+      responses:
+        "200":
+          description: Ордер отменён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    InstantExchangeRequest:
+      type: object
+      required:
+        - from_currency
+        - to_currency
+        - amount
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+          minimum: 0
+
+    LimitOrderRequest:
+      type: object
+      required:
+        - from_currency
+        - to_currency
+        - amount
+        - target_rate
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+          minimum: 0
+        target_rate:
+          type: number
+          minimum: 0
+          description: Целевой курс обмена
+        expires_at:
+          type: string
+          format: date-time
+          description: Срок действия ордера
+
+    ExchangeOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_type:
+          type: string
+          enum: [instant, limit]
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+        target_rate:
+          type: number
+          nullable: true
+        executed_rate:
+          type: number
+          nullable: true
+        received_amount:
+          type: number
+          nullable: true
+        fee:
+          type: number
+        status:
+          type: string
+          enum: [pending, filled, cancelled, expired]
+        created_at:
+          type: string
+          format: date-time
+        executed_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+

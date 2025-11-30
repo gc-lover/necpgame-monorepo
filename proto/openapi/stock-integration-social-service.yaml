@@ -1,0 +1,107 @@
+# Issue: #141889954
+openapi: 3.0.3
+info:
+  title: Stock Integration Social Service API
+  description: |
+    API для интеграции биржи с социальными системами (фракции, войны, территория).
+    
+    Функционал:
+    - Информация об акциях фракций
+    - Влияние фракционных войн на акции
+    - Влияние территориального контроля
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: social-integration
+    description: Интеграция с социальными системами
+
+paths:
+  /social/factions/{faction_id}/stock-info:
+    get:
+      tags:
+        - social-integration
+      summary: Получить информацию об акциях фракции
+      description: |
+        Возвращает информацию об акциях корпорации, связанной с фракцией.
+        Включает текущую цену, влияние фракционных событий, территориальный контроль.
+      operationId: getFactionStockInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: faction_id
+          in: path
+          required: true
+          description: ID фракции
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация об акциях фракции успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  faction_id:
+                    type: string
+                    format: uuid
+                  corporation_id:
+                    type: string
+                    format: uuid
+                  stock_id:
+                    type: string
+                    format: uuid
+                  current_price:
+                    type: number
+                    format: double
+                  faction_war_impact:
+                    type: number
+                    format: double
+                    description: Текущее влияние фракционных войн (%)
+                  territory_control_impact:
+                    type: number
+                    format: double
+                    description: Влияние территориального контроля (%)
+                  active_events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_type:
+                          type: string
+                          enum:
+                            - faction.war.started
+                            - faction.war.ended
+                            - territory.control.changed
+                        impact_percent:
+                          type: number
+                          format: double
+                        started_at:
+                          type: string
+                          format: date-time
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

@@ -1,0 +1,105 @@
+# Issue: #141889972
+openapi: 3.0.3
+info:
+  title: Stock Indices Core Service API
+  description: |
+    API для основных операций с фондовыми индексами.
+    
+    Функционал:
+    - Получение списка всех индексов
+    - Получение данных конкретного индекса
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: indices
+    description: Операции с фондовыми индексами
+
+paths:
+  /stocks/indices:
+    get:
+      tags:
+        - indices
+      summary: Получить список всех индексов
+      description: |
+        Возвращает все фондовые индексы с текущими значениями.
+        Включает глобальные, региональные и секторные индексы.
+      operationId: getAllIndices
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Фильтр по типу индекса
+          schema:
+            type: string
+            enum:
+              - global
+              - regional
+              - sector
+      responses:
+        "200":
+          description: Список индексов успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-indices-schemas.yaml#/components/schemas/StockIndex"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/indices/{code}:
+    get:
+      tags:
+        - indices
+      summary: Получить данные индекса
+      description: |
+        Возвращает детальную информацию о конкретном индексе.
+      operationId: getIndex
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса (CORP100, NC50, TECH, etc.)
+          schema:
+            type: string
+            pattern: ^[A-Z0-9]+$
+          example: CORP100
+      responses:
+        "200":
+          description: Данные индекса успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "stock-indices-schemas.yaml#/components/schemas/StockIndexDetailed"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

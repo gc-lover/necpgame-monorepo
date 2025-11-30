@@ -10,7 +10,6 @@ on:
         options:
           - update-status
           - add-comments
-          - transfer-to-next-status
           - analyze-and-update-status
       status_filter:
         description: 'Status filter (e.g., "Idea Writer - Todo" or "Backend - In Progress"). Use "All" for analyze-and-update-status'
@@ -299,31 +298,6 @@ jobs:
               });
             }
 
-            const statusTransitions = {
-              'Idea Writer - Review': 'Architect - Todo',
-              'Content Writer - Review': 'Backend - Todo',
-              'Architect - Review': 'Database - Todo',
-              'Database - Review': 'API Designer - Todo',
-              'API Designer - Review': 'Backend - Todo',
-              'Backend - Review': 'Network - Todo',
-              'Network - Review': 'Security - Todo',
-              'Security - Review': 'DevOps - Todo',
-              'DevOps - Review': 'UE5 - Todo',
-              'UE5 - Review': 'QA - Todo',
-              'QA - Review': 'Game Balance - Todo',
-              'Game Balance - Review': 'Release - Todo'
-            };
-
-            async function transferToNextStatus(projectItemId, currentStatus) {
-              const nextStatus = statusTransitions[currentStatus] || newStatus;
-              
-              if (!nextStatus) {
-                console.log(`No next status found for: ${currentStatus}`);
-                return false;
-              }
-              
-              return await updateStatus(projectItemId, nextStatus);
-            }
 
             async function getIssueDetails(issueNumber) {
               try {
@@ -538,13 +512,6 @@ jobs:
                         if (commentTemplate) {
                           await addComment(issueNumber, commentTemplate);
                           console.log(`    Added comment`);
-                        }
-                        break;
-                      case 'transfer-to-next-status':
-                        const transferred = await transferToNextStatus(projectItemId, currentStatus);
-                        if (transferred) {
-                          const nextStatus = statusTransitions[currentStatus] || newStatus;
-                          console.log(`    Transferred to: ${nextStatus}`);
                         }
                         break;
                       case 'analyze-and-update-status':

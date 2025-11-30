@@ -1,0 +1,200 @@
+metadata:
+  id: combat-freerun-architecture-spec
+  title: Техническое задание и диаграммы Freerun
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-30T15:20:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - freerun
+    - technical-specification
+  related_documents:
+    - id: combat-freerun-architecture
+      relation: extends
+  github_issue: 1513
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - database
+
+technical_specification:
+  subtasks:
+    - id: freerun-action-manager
+      title: Реализация менеджера действий паркура
+      description: |
+        Реализация Freerun Action Manager с обработкой всех типов действий паркура,
+        валидацией доступности и интеграцией с боевой сессией.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: stamina-manager
+      title: Реализация менеджера выносливости
+      description: |
+        Реализация Stamina Manager с расчетом расхода, восстановления и модификаторов
+        выносливости на основе навыков и имплантов.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: freerun-combo-system
+      title: Реализация системы комбо паркура
+      description: |
+        Реализация Freerun Combo System с отслеживанием последовательностей действий,
+        применением бонусов и интеграцией с боевыми комбо.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 4 days
+
+    - id: route-manager
+      title: Реализация менеджера маршрутов
+      description: |
+        Реализация Route Manager с созданием, валидацией и управлением пользовательскими
+        маршрутами паркура.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 4 days
+
+    - id: mobile-ability-integrator
+      title: Реализация интегратора мобильных способностей
+      description: |
+        Реализация Mobile Ability Integrator с проверкой совместимости способностей
+        с паркуром и применением мобильных версий.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 4 days
+
+    - id: freerun-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Freerun Telemetry Collector с логированием действий, сбором метрик
+        и интеграцией с Analytics Service.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 3 days
+
+    - id: anti-cheat-validator
+      title: Реализация валидатора античит
+      description: |
+        Реализация Anti-Cheat Validator с проверкой действий паркура на подозрительность,
+        валидацией физической возможности и детектом эксплойтов.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 5 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений действий паркура,
+        состояния выносливости и телеметрии.
+      dependencies: [freerun-action-manager, stamina-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы Freerun.
+      dependencies: [freerun-action-manager, freerun-combo-system]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для действий паркура, профилей, комбо, выносливости, маршрутов,
+        телеметрии и аудита с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> FAM[Freerun Action Manager]
+        GameplayService --> SM[Stamina Manager]
+        GameplayService --> FCS[Freerun Combo System]
+        GameplayService --> RM[Route Manager]
+        GameplayService --> MAI[Mobile Ability Integrator]
+        GameplayService --> FTC[Freerun Telemetry Collector]
+        GameplayService --> ACV[Anti-Cheat Validator]
+        
+        FAM --> SM
+        FAM --> FCS
+        FAM --> ACV
+        FCS --> MAI
+        
+        GameplayService --> CombatSession[Combat Session]
+        GameplayService --> AbilityService[Ability Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> QuestService[Quest Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        GameplayService --> InventoryService[Inventory Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSFreerun[WebSocket<br/>Freerun]
+        WSFreerun --> GameplayService
+    ```
+
+  freerun_action_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant FAM as Freerun Action Manager
+        participant SM as Stamina Manager
+        participant ACV as Anti-Cheat Validator
+        participant FCS as Freerun Combo System
+        participant MAI as Mobile Ability Integrator
+        participant EB as Event Bus
+        
+        C->>FAM: POST /freerun/actions
+        FAM->>FAM: Check action availability
+        FAM->>SM: Check stamina
+        SM-->>FAM: Stamina status
+        FAM->>ACV: Validate action
+        ACV-->>FAM: Validation result
+        FAM->>FAM: Execute action
+        FAM->>SM: Consume stamina
+        FAM->>FCS: Check combo
+        FCS-->>FAM: Combo status
+        FAM->>MAI: Check mobile abilities
+        MAI-->>FAM: Mobile ability status
+        FAM->>EB: Publish combat.freerun.action
+        FAM-->>C: Action result
+    ```
+
+  stamina_recovery_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant SM as Stamina Manager
+        participant PS as Progression Service
+        participant IS as Implant Service
+        participant ES as Economy Service
+        participant EB as Event Bus
+        
+        Note over SM: Action performed, stamina consumed
+        SM->>SM: Calculate stamina consumption
+        SM->>PS: Get skill bonuses
+        PS-->>SM: Skill data
+        SM->>IS: Get implant bonuses
+        IS-->>SM: Implant data
+        SM->>SM: Apply modifiers
+        SM->>SM: Update stamina state
+        
+        alt Stamina depleted
+            SM->>SM: Block actions
+            SM->>SM: Start recovery timer
+        end
+        
+        SM->>SM: Natural recovery
+        SM->>EB: Publish combat.freerun.stamina
+    ```
+

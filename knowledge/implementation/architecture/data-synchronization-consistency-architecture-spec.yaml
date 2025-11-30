@@ -1,0 +1,127 @@
+metadata:
+  id: data-synchronization-consistency-architecture-spec
+  title: Техническое задание и диаграммы синхронизации данных
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-30T15:10:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - data-synchronization
+    - technical-specification
+  related_documents:
+    - id: data-synchronization-consistency-architecture
+      relation: extends
+  github_issue: 1521
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - database
+
+technical_specification:
+  subtasks:
+    - id: sync-1
+      title: Event Bus Manager
+      description: Реализация управления Event Bus (Kafka)
+      effort: 8
+      files:
+        - services/sync-service/internal/eventbus/manager.go (350 строк)
+        - services/sync-service/internal/eventbus/publisher.go (280 строк)
+        - services/sync-service/internal/eventbus/subscriber.go (320 строк)
+
+    - id: sync-2
+      title: Outbox Pattern Processor
+      description: Реализация Outbox Pattern для гарантированной доставки
+      effort: 6
+      files:
+        - services/sync-service/internal/outbox/processor.go (380 строк)
+        - services/sync-service/internal/outbox/repository.go (250 строк)
+
+    - id: sync-3
+      title: Saga Orchestrator
+      description: Реализация Saga Orchestrator для распределенных транзакций
+      effort: 10
+      files:
+        - services/sync-service/internal/saga/orchestrator.go (420 строк)
+        - services/sync-service/internal/saga/step.go (280 строк)
+        - services/sync-service/internal/saga/compensation.go (300 строк)
+
+    - id: sync-4
+      title: State Synchronization Manager
+      description: Реализация синхронизации состояния между сервисами
+      effort: 8
+      files:
+        - services/sync-service/internal/sync/manager.go (400 строк)
+        - services/sync-service/internal/sync/strategies.go (350 строк)
+
+    - id: sync-5
+      title: Conflict Resolution Engine
+      description: Реализация разрешения конфликтов
+      effort: 6
+      files:
+        - services/sync-service/internal/conflict/resolver.go (380 строк)
+        - services/sync-service/internal/conflict/strategies.go (320 строк)
+
+    - id: sync-6
+      title: Consistency Monitor
+      description: Реализация мониторинга консистентности
+      effort: 5
+      files:
+        - services/sync-service/internal/consistency/monitor.go (350 строк)
+        - services/sync-service/internal/consistency/validator.go (280 строк)
+
+    - id: sync-7
+      title: API Endpoints
+      description: Реализация REST API endpoints
+      effort: 4
+      files:
+        - services/sync-service/internal/api/handlers.go (450 строк)
+
+    - id: sync-8
+      title: Database Migrations
+      description: Создание миграций БД для синхронизации
+      effort: 3
+      files:
+        - infrastructure/liquibase/changelogs/sync-service/V1_0__create_sync_tables.sql (200 строк)
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+      Client[Client] -->|WebSocket| Gateway[Realtime Gateway]
+      Gateway -->|gRPC| Gameplay[Gameplay Service]
+      Gameplay -->|Transaction| DB1[(Database)]
+      Gameplay -->|Outbox| Outbox[Outbox Table]
+      Outbox -->|Read| Processor[Outbox Processor]
+      Processor -->|Publish| EventBus[Event Bus Kafka]
+      EventBus -->|Subscribe| Character[Character Service]
+      EventBus -->|Subscribe| Inventory[Inventory Service]
+      EventBus -->|Subscribe| Quest[Quest Service]
+      Character -->|State| Sync[State Sync Manager]
+      Inventory -->|State| Sync
+      Quest -->|State| Sync
+      Sync -->|Sync| Redis[(Redis)]
+      Sync -->|WebSocket| Gateway
+      Gateway -->|Update| Client
+    ```
+
+  saga_flow: |
+    ```mermaid
+    sequenceDiagram
+      Client->>Saga Orchestrator: Start Saga
+      Saga Orchestrator->>Service A: Execute Step 1
+      Service A-->>Saga Orchestrator: Success
+      Saga Orchestrator->>Service B: Execute Step 2
+      Service B-->>Saga Orchestrator: Success
+      Saga Orchestrator->>Service C: Execute Step 3
+      Service C-->>Saga Orchestrator: Error
+      Saga Orchestrator->>Service B: Compensate Step 2
+      Saga Orchestrator->>Service A: Compensate Step 1
+      Saga Orchestrator-->>Client: Saga Failed
+    ```
+

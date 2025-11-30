@@ -1,0 +1,113 @@
+# Issue: #141890009
+openapi: 3.0.3
+info:
+  title: Economy Currency Exchange Trades Service API
+  description: |
+    API для истории сделок на валютной бирже.
+    
+    **Основные возможности:**
+    - Получение истории сделок
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Exchange Trades
+    description: История сделок на валютной бирже
+
+paths:
+  /currency-exchange/trades:
+    get:
+      tags:
+        - Exchange Trades
+      summary: Получить историю сделок
+      description: |
+        Возвращает историю сделок игрока с фильтрацией.
+      operationId: getTrades
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from_currency
+          in: query
+          schema:
+            type: string
+          description: Фильтр по валюте отправления
+        - name: to_currency
+          in: query
+          schema:
+            type: string
+          description: Фильтр по валюте получения
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История сделок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Trade"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Trade:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+        rate:
+          type: number
+        received_amount:
+          type: number
+        fee:
+          type: number
+        executed_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

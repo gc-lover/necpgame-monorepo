@@ -82,3 +82,5 @@ func (s *ImplantsStatsService) GetSetBonuses(ctx context.Context, characterID *u
 	return convertSetBonusesToAPI(bonuses), nil
 }
 
+
+

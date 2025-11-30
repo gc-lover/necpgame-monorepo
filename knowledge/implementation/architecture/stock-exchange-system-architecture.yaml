@@ -776,6 +776,40 @@ architecture:
 
     total_estimated_effort: 44 days
 
+  tickrate_and_network_requirements:
+    stock_trading:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Создание ордера: event-based, ~0.1-0.5 events/sec
+        - Исполнение ордера: event-based, ~0.1-0.3 events/sec
+        - Обновление цен: event-based, ~1-5 events/sec (пиковая)
+        - Общий трафик: ~0.5-2 KB/sec на игрока
+      sync_strategy: Strong Consistency (ACID транзакции)
+
+    stock_prices:
+      tickrate: 1-10 Hz (обновление цен)
+      network_load: |
+        - Обновление цен: 1-10 updates/sec
+        - WebSocket обновления: 1-10 updates/sec
+        - Общий трафик: ~0.3-1 KB/sec на игрока
+      sync_strategy: Eventual Consistency для цен, Strong для сделок
+
+    dividend_payments:
+      tickrate: Event-based (по расписанию)
+      network_load: |
+        - Выплата дивидендов: event-based, ~0.01-0.1 events/sec
+        - Обновление портфеля: event-based, ~0.05-0.2 events/sec
+        - Общий трафик: ~0.1-0.3 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    stock_analytics:
+      tickrate: 1-5 Hz (расчет индексов)
+      network_load: |
+        - Расчет индексов: 1-5 updates/sec
+        - Обновление метрик: 1-5 updates/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Eventual Consistency
+
 diagrams:
   component_diagram: |
     ```mermaid

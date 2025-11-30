@@ -1,0 +1,169 @@
+# Issue: #141889941
+openapi: 3.0.3
+info:
+  title: Cosmetic Catalog Service API
+  description: API для каталога косметики
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Catalog
+    description: Каталог косметики
+  - name: Rarity
+    description: Редкости косметики
+
+paths:
+  /monetization/cosmetic/catalog:
+    get:
+      tags:
+        - Catalog
+      summary: Получить каталог косметики
+      operationId: getCosmeticCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - CHARACTER_SKIN
+              - WEAPON_SKIN
+              - EMOTE
+              - TITLE
+              - NAME_PLATE
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum:
+              - COMMON
+              - UNCOMMON
+              - RARE
+              - EPIC
+              - LEGENDARY
+              - EXOTIC
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Каталог косметики
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/CosmeticCatalogResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/categories:
+    get:
+      tags:
+        - Catalog
+      summary: Получить категории косметики
+      operationId: getCosmeticCategories
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Категории косметики
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/CosmeticCategoriesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/{cosmetic_id}:
+    get:
+      tags:
+        - Catalog
+      summary: Получить детали косметики
+      operationId: getCosmeticDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cosmetic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали косметики
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/CosmeticItem'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/rarity/{rarity}:
+    get:
+      tags:
+        - Rarity
+      summary: Получить косметику по редкости
+      operationId: getCosmeticsByRarity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rarity
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - COMMON
+              - UNCOMMON
+              - RARE
+              - EPIC
+              - LEGENDARY
+              - EXOTIC
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - CHARACTER_SKIN
+              - WEAPON_SKIN
+              - EMOTE
+              - TITLE
+              - NAME_PLATE
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Косметика по редкости
+          content:
+            application/json:
+              schema:
+                $ref: 'cosmetic-service-schemas.yaml#/components/schemas/CosmeticCatalogResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

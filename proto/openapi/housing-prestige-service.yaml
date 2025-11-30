@@ -1,0 +1,136 @@
+# Issue: #299
+openapi: 3.0.3
+info:
+  title: Housing Prestige Service API
+  description: API для расчёта и управления престижем квартир
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Prestige Calculator
+    description: Расчёт престижа
+
+paths:
+  /world/housing/prestige/leaderboard:
+    get:
+      tags:
+        - Prestige Calculator
+      summary: Получить лидерборд престижа
+      operationId: getPrestigeLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Лидерборд престижа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PrestigeEntry"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/housing/apartments/{apartment_id}/prestige:
+    get:
+      tags:
+        - Prestige Calculator
+      summary: Получить престиж квартиры
+      operationId: getApartmentPrestige
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: apartment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Престиж квартиры
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApartmentPrestigeResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    PrestigeEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        apartment_id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        owner_name:
+          type: string
+        prestige_score:
+          type: integer
+        apartment_type:
+          type: string
+
+    ApartmentPrestigeResponse:
+      type: object
+      properties:
+        apartment_id:
+          type: string
+          format: uuid
+        prestige_score:
+          type: integer
+        base_prestige:
+          type: integer
+        furniture_prestige:
+          type: integer
+        location_multiplier:
+          type: number
+          format: float
+        uniqueness_bonus:
+          type: integer
+
+security:
+  - BearerAuth: []
+

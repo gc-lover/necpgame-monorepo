@@ -1,0 +1,265 @@
+# Issue: #83
+openapi: 3.0.3
+info:
+  title: League Meta Progression Service API
+  description: API для мета-прогресса игроков: титулы, косметика, Legacy Items, рейтинг
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Meta Progression
+    description: Мета-прогресс игроков
+
+paths:
+  /player/legacy-progress:
+    get:
+      tags:
+        - Meta Progression
+      summary: Получить мета-прогресс игрока
+      operationId: getPlayerLegacyProgress
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Мета-прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerLegacy"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /player/titles:
+    get:
+      tags:
+        - Meta Progression
+      summary: Получить титулы игрока
+      operationId: getPlayerTitles
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список титулов игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  titles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Title"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /player/cosmetics:
+    get:
+      tags:
+        - Meta Progression
+      summary: Получить косметику игрока
+      operationId: getPlayerCosmetics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список косметики игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cosmetics:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Cosmetic"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /player/legacy-items:
+    get:
+      tags:
+        - Meta Progression
+      summary: Получить Legacy Items игрока
+      operationId: getPlayerLegacyItems
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список Legacy Items игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  legacy_items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LegacyItem"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /player/rating:
+    get:
+      tags:
+        - Meta Progression
+      summary: Получить глобальный рейтинг игрока
+      operationId: getPlayerRating
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Глобальный рейтинг игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerRating"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    PlayerLegacy:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        legacy_points:
+          type: integer
+        total_leagues:
+          type: integer
+        titles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Title"
+        cosmetics:
+          type: array
+          items:
+            $ref: "#/components/schemas/Cosmetic"
+        legacy_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LegacyItem"
+        global_rating:
+          type: number
+          format: decimal
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Title:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        league_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum:
+            - STORY
+            - ECONOMY
+            - PVP
+            - ALTERNATIVE
+        unlocked_at:
+          type: string
+          format: date-time
+
+    Cosmetic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        league_id:
+          type: string
+          format: uuid
+        unlocked_at:
+          type: string
+          format: date-time
+
+    LegacyItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        effects:
+          type: object
+          additionalProperties: true
+        league_id:
+          type: string
+          format: uuid
+        obtained_at:
+          type: string
+          format: date-time
+        used_in_current_league:
+          type: boolean
+
+    PlayerRating:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        global_rating:
+          type: number
+          format: decimal
+        previous_rating:
+          type: number
+          format: decimal
+        rating_change:
+          type: number
+          format: decimal
+        league_rank:
+          type: integer
+        total_rank:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

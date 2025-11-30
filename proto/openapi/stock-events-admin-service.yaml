@@ -1,0 +1,169 @@
+# Issue: #141889952
+openapi: 3.0.3
+info:
+  title: Stock Events Admin Service API
+  description: |
+    API для административного управления влиянием игровых событий на котировки акций.
+    
+    Функционал:
+    - Симуляция влияния событий (admin)
+    - Применение событий вручную (admin)
+    - Откат воздействий событий (admin)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: admin
+    description: Административные операции
+
+paths:
+  /admin/stocks/events/simulate:
+    post:
+      tags:
+        - admin
+      summary: Симулировать влияние события
+      description: |
+        Админ endpoint для симуляции влияния события на акцию.
+        Не применяет изменения, только рассчитывает эффект.
+        Требуется роль admin.
+      operationId: simulateEventImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "stock-events-schemas.yaml#/components/schemas/EventSimulationRequest"
+      responses:
+        "200":
+          description: Симуляция выполнена успешно
+          content:
+            application/json:
+              schema:
+                $ref: "stock-events-schemas.yaml#/components/schemas/EventSimulationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/events/apply:
+    post:
+      tags:
+        - admin
+      summary: Применить событие вручную
+      description: |
+        Админ endpoint для ручного применения события к акции.
+        Обновляет цену и создает impact запись.
+        Требуется роль admin.
+      operationId: applyEventImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "stock-events-schemas.yaml#/components/schemas/EventApplicationRequest"
+      responses:
+        "201":
+          description: Событие успешно применено
+          content:
+            application/json:
+              schema:
+                $ref: "stock-events-schemas.yaml#/components/schemas/EventImpact"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/events/{impact_id}/reverse:
+    post:
+      tags:
+        - admin
+      summary: Откатить воздействие события
+      description: |
+        Админ endpoint для отмены воздействия события.
+        Восстанавливает цену и помечает impact как reversed.
+        Требуется роль admin.
+      operationId: reverseEventImpact
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: impact_id
+          in: path
+          required: true
+          description: ID воздействия для отката
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  description: Причина отката
+                  minLength: 10
+      responses:
+        "200":
+          description: Воздействие успешно откачено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  impact_id:
+                    type: string
+                    format: uuid
+                  stock_id:
+                    type: string
+                    format: uuid
+                  price_restored:
+                    type: number
+                    format: double
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

@@ -1,0 +1,157 @@
+# Issue: #53
+openapi: 3.0.3
+info:
+  title: World State Query Service API
+  description: API для запросов к состоянию: point, range, aggregate queries и проекции
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: World State Query
+    description: Запросы к состоянию
+
+paths:
+  /world/state/query:
+    post:
+      tags:
+        - World State Query
+      summary: Запросы к состоянию (point, range, aggregate)
+      operationId: queryState
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StateQueryRequest"
+      responses:
+        "200":
+          description: Результат запроса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StateQueryResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/state/projections:
+    get:
+      tags:
+        - World State Query
+      summary: Получить доступные проекции
+      operationId: getProjections
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Список проекций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projections:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Projection"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    StateQueryRequest:
+      type: object
+      required:
+        - query_type
+      properties:
+        query_type:
+          type: string
+          enum:
+            - POINT
+            - RANGE
+            - AGGREGATE
+        key:
+          type: string
+        category:
+          type: string
+        range_start:
+          type: string
+        range_end:
+          type: string
+        aggregate_function:
+          type: string
+          enum:
+            - COUNT
+            - SUM
+            - AVG
+            - MIN
+            - MAX
+        filter:
+          type: object
+          additionalProperties: true
+
+    StateQueryResponse:
+      type: object
+      properties:
+        query_type:
+          type: string
+          enum:
+            - POINT
+            - RANGE
+            - AGGREGATE
+        results:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        aggregate_value:
+          type: number
+          nullable: true
+        total_count:
+          type: integer
+
+    Projection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        query_pattern:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

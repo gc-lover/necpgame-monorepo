@@ -1,0 +1,287 @@
+# Issue: #83
+openapi: 3.0.3
+info:
+  title: League Core Service API
+  description: API для управления лигами: текущая лига, статистика, фазы, таймеры
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: League Core
+    description: Управление лигами
+
+paths:
+  /league/current:
+    get:
+      tags:
+        - League Core
+      summary: Получить текущую лигу
+      operationId: getCurrentLeague
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Текущая лига
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/League"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /league/{leagueId}:
+    get:
+      tags:
+        - League Core
+      summary: Получить информацию о лиге
+      operationId: getLeague
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leagueId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о лиге
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/League"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /league/{leagueId}/statistics:
+    get:
+      tags:
+        - League Core
+      summary: Получить статистику лиги
+      operationId: getLeagueStatistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leagueId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статистика лиги
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeagueStatistics"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /league/countdown:
+    get:
+      tags:
+        - League Core
+      summary: Получить таймер до конца лиги
+      operationId: getLeagueCountdown
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Таймер до конца лиги
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Countdown"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /league/phases:
+    get:
+      tags:
+        - League Core
+      summary: Получить текущую фазу лиги
+      operationId: getLeaguePhases
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Текущая фаза лиги
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhaseInfo"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    League:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        seed:
+          type: string
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - ENDED
+            - PENDING
+        current_phase:
+          type: string
+          enum:
+            - START
+            - RISE
+            - CRISIS
+            - ENDGAME
+            - FINALE
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        time_acceleration:
+          type: number
+          format: decimal
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    LeagueStatistics:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        total_players:
+          type: integer
+        active_players:
+          type: integer
+        economic_metrics:
+          type: object
+          additionalProperties: true
+        pvp_metrics:
+          type: object
+          additionalProperties: true
+        quest_metrics:
+          type: object
+          additionalProperties: true
+        phase_statistics:
+          type: array
+          items:
+            $ref: "#/components/schemas/PhaseStatistics"
+
+    PhaseStatistics:
+      type: object
+      properties:
+        phase:
+          type: string
+          enum:
+            - START
+            - RISE
+            - CRISIS
+            - ENDGAME
+            - FINALE
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        metrics:
+          type: object
+          additionalProperties: true
+
+    Countdown:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        time_remaining:
+          type: integer
+          description: Оставшееся время в секундах
+        end_date:
+          type: string
+          format: date-time
+        current_phase:
+          type: string
+          enum:
+            - START
+            - RISE
+            - CRISIS
+            - ENDGAME
+            - FINALE
+
+    PhaseInfo:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        current_phase:
+          type: string
+          enum:
+            - START
+            - RISE
+            - CRISIS
+            - ENDGAME
+            - FINALE
+        phase_start_date:
+          type: string
+          format: date-time
+        phase_end_date:
+          type: string
+          format: date-time
+        next_phase:
+          type: string
+          enum:
+            - START
+            - RISE
+            - CRISIS
+            - ENDGAME
+            - FINALE
+          nullable: true
+        time_acceleration:
+          type: number
+          format: decimal
+
+security:
+  - BearerAuth: []
+

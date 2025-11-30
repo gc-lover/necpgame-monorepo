@@ -1,0 +1,94 @@
+# Issue: #141889972
+openapi: 3.0.3
+info:
+  title: Stock Indices Constituents Service API
+  description: |
+    API для управления составом фондовых индексов.
+    
+    Функционал:
+    - Получение состава индекса (constituents)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: constituents
+    description: Состав индексов
+
+paths:
+  /stocks/indices/{code}/constituents:
+    get:
+      tags:
+        - constituents
+      summary: Получить состав индекса
+      description: |
+        Возвращает список акций входящих в индекс с весами.
+      operationId: getIndexConstituents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса
+          schema:
+            type: string
+            pattern: ^[A-Z0-9]+$
+        - name: sort_by
+          in: query
+          required: false
+          description: Поле для сортировки
+          schema:
+            type: string
+            enum:
+              - weight
+              - market_cap
+              - price_change
+            default: weight
+        - name: order
+          in: query
+          required: false
+          description: Порядок сортировки
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Состав индекса успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "stock-indices-schemas.yaml#/components/schemas/IndexConstituent"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

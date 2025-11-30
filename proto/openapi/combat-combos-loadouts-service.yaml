@@ -1,0 +1,121 @@
+# Issue: #141890005
+openapi: 3.0.3
+info:
+  title: Combat Combos Loadouts Service API
+  description: |
+    API для управления лоадаутами комбо.
+    
+    **Основные возможности:**
+    - Получение лоадаута комбо персонажа
+    - Обновление лоадаута комбо
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Combo Loadouts
+    description: Управление лоадаутами комбо
+
+paths:
+  /gameplay/combat/combos/loadout:
+    get:
+      tags:
+        - Combo Loadouts
+      summary: Получить лоадаут комбо персонажа
+      description: |
+        Возвращает текущий лоадаут комбо для персонажа,
+        включая активные комбо и настройки.
+      operationId: getComboLoadout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440003"
+      responses:
+        "200":
+          description: Лоадаут комбо
+          content:
+            application/json:
+              schema:
+                $ref: "combat-combos-schemas.yaml#/components/schemas/ComboLoadout"
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440006"
+                character_id: "550e8400-e29b-41d4-a716-446655440003"
+                active_combos:
+                  - "550e8400-e29b-41d4-a716-446655440000"
+                  - "550e8400-e29b-41d4-a716-446655440007"
+                preferences:
+                  auto_activate: false
+                  priority_order:
+                    - "550e8400-e29b-41d4-a716-446655440000"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Лоадаут не найден
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Combo Loadouts
+      summary: Обновить лоадаут комбо
+      description: |
+        Обновляет лоадаут комбо для персонажа.
+        Устанавливает активные комбо и настройки.
+      operationId: updateComboLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "combat-combos-schemas.yaml#/components/schemas/UpdateLoadoutRequest"
+            example:
+              character_id: "550e8400-e29b-41d4-a716-446655440003"
+              active_combos:
+                - "550e8400-e29b-41d4-a716-446655440000"
+                - "550e8400-e29b-41d4-a716-446655440007"
+              preferences:
+                auto_activate: false
+                priority_order:
+                  - "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        "200":
+          description: Лоадаут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "combat-combos-schemas.yaml#/components/schemas/ComboLoadout"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []
+

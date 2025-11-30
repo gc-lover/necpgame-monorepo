@@ -6,18 +6,36 @@ Search open tasks for Architect via MCP GitHub Project.
 
 1. **Search in Project by Status:**
    ```javascript
-   // Project config: .cursor/GITHUB_PROJECT_CONFIG.md
-   await mcp_github_list_project_items({
+   mcp_github_list_project_items({
      owner_type: 'user',
      owner: 'gc-lover',
      project_number: 1,
-     query: 'is:issue Status:"Architect - Todo" OR Status:"Architect - In Progress"',
-     fields: ['Status', 'Title']
+     query: 'Status:"Architect - Todo" OR Status:"Architect - In Progress"'
    });
    ```
+   **Note:** Не используй `is:issue` в query - `list_project_items` работает только с issues. Не указывай `fields` - вернутся все поля.
 
 2. **Check readiness:** Idea from Idea Writer exists, NOT UI task, NOT content quest
 
 3. **Show list:** number, title, priority, Status
+
+   **Важно:** В списке показывай номер Issue (например, `#123`), а не `item_id`. Номер Issue берется из `content.number`.
+
+4. **При выборе задачи:** ОБЯЗАТЕЛЬНО обнови статус на `Architect - In Progress`:
+
+   **Примечание:** `item_id` используется только для API вызова. В комментариях и сообщениях всегда указывай номер Issue (например, `Issue: #123`).
+   ```javascript
+   // Получить id опции через mcp_github_list_project_fields
+   mcp_github_update_project_item({
+     owner_type: 'user',
+     owner: 'gc-lover',
+     project_number: 1,
+     item_id: project_item_id,
+     updated_field: {
+       id: 239690516,  // число
+       value: '{option_id}'  // id опции '02b1119e' из list_project_fields  // id опции "Architect - In Progress"
+     }
+   });
+   ```
 
 **Primary filter: Project Status. Status determines the stage.**
