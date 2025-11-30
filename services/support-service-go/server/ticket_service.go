@@ -1,3 +1,4 @@
+// Issue: #141886738
 package server
 
 import (
@@ -127,8 +128,13 @@ func (s *TicketService) GetTicketsByPlayerID(ctx context.Context, playerID uuid.
 		Total:   total,
 	}
 
-	responseJSON, _ := json.Marshal(response)
-	s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal response JSON for cache")
+		// Continue without caching if marshal fails
+	} else {
+		s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	}
 
 	return response, nil
 }
