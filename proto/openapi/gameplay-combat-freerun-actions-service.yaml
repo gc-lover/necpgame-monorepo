@@ -1,0 +1,245 @@
+# Issue: #1513
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Freerun Actions Service API
+  description: |
+    API для выполнения действий паркура и управления выносливостью.
+    
+    **Основные возможности:**
+    - Выполнение действий паркура (Wall Run, Double Jump, Slide, Air Dash, Wall Kick, Vault)
+    - Получение доступных действий
+    - Управление выносливостью (stamina)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Freerun Actions
+    description: Действия паркура
+  - name: Stamina
+    description: Управление выносливостью
+
+paths:
+  /gameplay/combat/freerun/actions:
+    post:
+      tags:
+        - Freerun Actions
+      summary: Выполнить действие паркура
+      operationId: performFreerunAction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FreerunActionRequest"
+      responses:
+        "200":
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunActionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/freerun/actions/available:
+    get:
+      tags:
+        - Freerun Actions
+      summary: Получить доступные действия паркура
+      operationId: getAvailableFreerunActions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Доступные действия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailableFreerunActionsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/freerun/stamina:
+    get:
+      tags:
+        - Stamina
+      summary: Получить состояние выносливости
+      operationId: getFreerunStamina
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние выносливости
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunStaminaState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/freerun/stamina/recover:
+    post:
+      tags:
+        - Stamina
+      summary: Восстановить выносливость
+      operationId: recoverFreerunStamina
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoverStaminaRequest"
+      responses:
+        "200":
+          description: Выносливость восстановлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunStaminaState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FreerunActionRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [wall_run, double_jump, slide, air_dash, wall_kick, vault]
+        position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        direction:
+          $ref: "common.yaml#/components/schemas/Direction3D"
+
+    FreerunActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        action_id:
+          type: string
+          format: uuid
+        stamina_used:
+          type: number
+          minimum: 0
+        stamina_remaining:
+          type: number
+          minimum: 0
+        stamina_state:
+          $ref: "#/components/schemas/FreerunStaminaState"
+
+    AvailableFreerunActionsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        available_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+                enum: [wall_run, double_jump, slide, air_dash, wall_kick, vault]
+              available:
+                type: boolean
+              stamina_cost:
+                type: number
+                minimum: 0
+              cooldown_remaining:
+                type: number
+                minimum: 0
+
+    FreerunStaminaState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_stamina:
+          type: number
+          minimum: 0
+        max_stamina:
+          type: number
+          minimum: 0
+        recovery_rate:
+          type: number
+          minimum: 0
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              value:
+                type: number
+
+    RecoverStaminaRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0
+          description: Количество выносливости для восстановления (опционально, если не указано - полное восстановление)
+
+security:
+  - BearerAuth: []
+

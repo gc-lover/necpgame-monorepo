@@ -1,0 +1,262 @@
+# Issue: #1513
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Freerun Loadouts Service API
+  description: |
+    API для комбо паркура, лоадаутов и мобильных способностей.
+    
+    **Основные возможности:**
+    - Комбо паркура
+    - Управление лоадаутами паркура
+    - Мобильные способности
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Freerun Combo
+    description: Комбо паркура
+  - name: Freerun Loadout
+    description: Лоадауты паркура
+  - name: Mobile Ability
+    description: Мобильные способности
+
+paths:
+  /gameplay/combat/freerun/combo:
+    post:
+      tags:
+        - Freerun Combo
+      summary: Выполнить комбо паркура
+      operationId: performFreerunCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FreerunComboRequest"
+      responses:
+        "200":
+          description: Комбо выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunComboResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/freerun/loadout:
+    get:
+      tags:
+        - Freerun Loadout
+      summary: Получить лоадаут паркура
+      operationId: getFreerunLoadout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Лоадаут паркура
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunLoadout"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Freerun Loadout
+      summary: Обновить лоадаут паркура
+      operationId: updateFreerunLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFreerunLoadoutRequest"
+      responses:
+        "200":
+          description: Лоадаут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunLoadout"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/freerun/mobile-ability:
+    post:
+      tags:
+        - Mobile Ability
+      summary: Активировать мобильную способность
+      operationId: activateMobileAbility
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateMobileAbilityRequest"
+      responses:
+        "200":
+          description: Мобильная способность активирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileAbilityResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FreerunComboRequest:
+      type: object
+      required:
+        - character_id
+        - actions
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        actions:
+          type: array
+          items:
+            type: string
+            enum: [wall_run, double_jump, slide, air_dash, wall_kick, vault]
+          minItems: 2
+          maxItems: 10
+
+    FreerunComboResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        combo_id:
+          type: string
+          format: uuid
+        combo_multiplier:
+          type: number
+          minimum: 1
+        stamina_bonus:
+          type: number
+        total_stamina_used:
+          type: number
+          minimum: 0
+
+    FreerunLoadout:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        enabled_actions:
+          type: array
+          items:
+            type: string
+            enum: [wall_run, double_jump, slide, air_dash, wall_kick, vault]
+        stamina_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+        mobile_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    UpdateFreerunLoadoutRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        enabled_actions:
+          type: array
+          items:
+            type: string
+            enum: [wall_run, double_jump, slide, air_dash, wall_kick, vault]
+        stamina_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+        mobile_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ActivateMobileAbilityRequest:
+      type: object
+      required:
+        - character_id
+        - ability_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        ability_id:
+          type: string
+          format: uuid
+        position:
+          $ref: "common.yaml#/components/schemas/Position3D"
+        direction:
+          $ref: "common.yaml#/components/schemas/Direction3D"
+
+    MobileAbilityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ability_id:
+          type: string
+          format: uuid
+        stamina_used:
+          type: number
+          minimum: 0
+        cooldown_until:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
