@@ -1,3 +1,4 @@
+// Issue: #141888300
 package server
 
 import (
@@ -110,6 +111,9 @@ func (s *AchievementService) GetAchievement(ctx context.Context, id uuid.UUID) (
 		var achievement models.Achievement
 		if err := json.Unmarshal([]byte(cached), &achievement); err == nil {
 			return &achievement, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached achievement JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 
@@ -142,6 +146,9 @@ func (s *AchievementService) ListAchievements(ctx context.Context, category *mod
 		var response models.AchievementListResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached achievement list JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 
@@ -317,6 +324,9 @@ func (s *AchievementService) GetPlayerAchievements(ctx context.Context, playerID
 		var response models.PlayerAchievementResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached player achievement JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 
@@ -355,6 +365,9 @@ func (s *AchievementService) GetLeaderboard(ctx context.Context, period string, 
 		var response models.LeaderboardResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else if err != nil {
+			s.logger.WithError(err).Error("Failed to unmarshal cached leaderboard JSON")
+			// Continue without cache if unmarshal fails
 		}
 	}
 

@@ -1,3 +1,4 @@
+// Issue: #141888300
 package server
 
 import (
@@ -74,10 +75,16 @@ func (r *AchievementRepository) GetByID(ctx context.Context, id uuid.UUID) (*mod
 
 	achievement.SeasonID = seasonID
 	if len(conditionsJSON) > 0 {
-		json.Unmarshal(conditionsJSON, &achievement.Conditions)
+		if err := json.Unmarshal(conditionsJSON, &achievement.Conditions); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal conditions JSON")
+			achievement.Conditions = make(map[string]interface{})
+		}
 	}
 	if len(rewardsJSON) > 0 {
-		json.Unmarshal(rewardsJSON, &achievement.Rewards)
+		if err := json.Unmarshal(rewardsJSON, &achievement.Rewards); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal rewards JSON")
+			achievement.Rewards = make(map[string]interface{})
+		}
 	}
 
 	return &achievement, nil
@@ -111,10 +118,16 @@ func (r *AchievementRepository) GetByCode(ctx context.Context, code string) (*mo
 
 	achievement.SeasonID = seasonID
 	if len(conditionsJSON) > 0 {
-		json.Unmarshal(conditionsJSON, &achievement.Conditions)
+		if err := json.Unmarshal(conditionsJSON, &achievement.Conditions); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal conditions JSON")
+			achievement.Conditions = make(map[string]interface{})
+		}
 	}
 	if len(rewardsJSON) > 0 {
-		json.Unmarshal(rewardsJSON, &achievement.Rewards)
+		if err := json.Unmarshal(rewardsJSON, &achievement.Rewards); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal rewards JSON")
+			achievement.Rewards = make(map[string]interface{})
+		}
 	}
 
 	return &achievement, nil
@@ -252,7 +265,10 @@ func (r *AchievementRepository) GetNearCompletion(ctx context.Context, playerID 
 		}
 
 		if len(progressDataJSON) > 0 {
-			json.Unmarshal(progressDataJSON, &pa.ProgressData)
+			if err := json.Unmarshal(progressDataJSON, &pa.ProgressData); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal progress data JSON")
+				pa.ProgressData = make(map[string]interface{})
+			}
 		}
 
 		playerAchievements = append(playerAchievements, pa)
@@ -290,7 +306,10 @@ func (r *AchievementRepository) GetRecentUnlocks(ctx context.Context, playerID u
 		}
 
 		if len(progressDataJSON) > 0 {
-			json.Unmarshal(progressDataJSON, &pa.ProgressData)
+			if err := json.Unmarshal(progressDataJSON, &pa.ProgressData); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal progress data JSON")
+				pa.ProgressData = make(map[string]interface{})
+			}
 		}
 
 		playerAchievements = append(playerAchievements, pa)
