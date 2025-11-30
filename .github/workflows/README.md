@@ -61,6 +61,22 @@
 
 ## Automation Workflows
 
+### `ci-monitor.yml`
+- **Триггер:** 
+  - После завершения `Backend CI` workflow (`workflow_run`)
+  - По расписанию (каждые 15 минут) для проверки статусов
+  - Ручной запуск (с опцией только очистки старых отчётов)
+- **Действия:**
+  - Мониторинг результатов CI workflow runs
+  - Создание/обновление Issues с детальными отчётами о статусе jobs
+  - Добавление Issues в GitHub Project со статусом "DevOps - Todo" (или "Backend - Todo")
+  - Автоматическая очистка старых отчётов (оставляет только последние 5 коммитов)
+- **Параметры:**
+  - `cleanup_only` - только очистка старых отчётов без создания новых
+- **Метки Issues:** `ci-report`, `ci-report-{commit-sha}`, `automated`
+- **Хранение:** Отчёты за последние 5 коммитов, старые автоматически закрываются
+- **Интеграция:** Issues автоматически добавляются в GitHub Project для мониторинга агентами
+
 ### `migrate-ideas-to-issues.yml`
 - **Триггер:** Ручной запуск
 - **Действия:** Миграция идей из YAML файлов в GitHub Issues
@@ -125,6 +141,19 @@ gh workflow run github-api-batch-processor.yml \
 gh workflow run migrate-ideas-to-issues.yml \
   -f idea_file="knowledge/analysis/tasks/ideas/2025-11-07-IDEA-subtle-media-collabs.yaml" \
   -f create_issue=true
+```
+
+### Мониторинг CI/CD статусов
+
+```bash
+# Проверить последние CI отчёты (через Issues с меткой ci-report)
+gh issue list --label ci-report --state open
+
+# Запустить очистку старых отчётов вручную
+gh workflow run ci-monitor.yml -f cleanup_only=true
+
+# Посмотреть детали конкретного CI run
+gh run view {run_id}
 ```
 
 ### Проверка статуса деплоя
