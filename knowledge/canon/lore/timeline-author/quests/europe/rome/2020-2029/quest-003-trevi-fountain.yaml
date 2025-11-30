@@ -1,11 +1,12 @@
+# Issue: #605
 metadata:
   id: canon-quest-rome-2029-003-trevi
   title: 'Рим: традиция у фонтана Треви'
   document_type: canon
   category: quests
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -88,15 +89,20 @@ quest_definition:
     flags:
       - return_to_rome_achievement
   branches:
-    - id: night_scene
-      condition: "time_of_day == 'night'"
-      objectives:
-        - id: repeat_la_dolce_vita
-          text: "Повторить сцену «La Dolce Vita» ночью, рискуя штрафом"
-          type: interact
-          target: night_trevi_scene
-          count: 1
-          optional: true
+    - id: night_scene_path
+      unlock_condition:
+        type: choice_made
+        choice_id: time_of_day
+        value: "night"
+      consequences:
+        reputation:
+          rome_citizens: 5
+        flags:
+          - la_dolce_vita_scene_completed
+        unlocked_content:
+          - quest_type: side
+            category: cultural
+            location: rome
 content:
   sections:
     - id: overview
@@ -158,6 +164,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

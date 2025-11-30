@@ -1,11 +1,12 @@
+# Issue: #653
 metadata:
   id: quest-london-2029-royal-ai
   title: 'Лондон 2020-2029 — Королевский ИИ'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,33 +96,50 @@ quest_definition:
     flags:
       - royal_ai_quest_completed
   branches:
-    - id: serve_ai
-      condition: "player_reputation_london_monarchy >= 15"
-      objectives:
-        - id: serve_royal_ai
-          text: "Служить ИИ и укрепить монархию"
-          type: interact
-          target: ai_service_path
-          count: 1
-          optional: false
-    - id: reveal_secret
-      condition: "player_morality_score >= 5"
-      objectives:
-        - id: reveal_to_world
-          text: "Раскрыть тайну миру"
-          type: interact
-          target: world_revelation
-          count: 1
-          optional: false
-    - id: destroy_core
-      condition: "player_morality_score < -5"
-      objectives:
-        - id: initiate_destruction
-          text: "Инициировать уничтожение ядра ИИ"
-          type: interact
-          target: ai_core_destruction
-          count: 1
-          optional: false
+    - id: serve_ai_path
+      unlock_condition:
+        type: reputation_check
+        reputation: london_monarchy
+        min_value: 15
+      consequences:
+        reputation:
+          london_monarchy: 20
+        flags:
+          - royal_ai_service_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
+    - id: reveal_secret_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        min_value: 0.5
+      consequences:
+        reputation:
+          london_public: 30
+          london_monarchy: -20
+        flags:
+          - royal_ai_revealed_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
+    - id: destroy_core_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: -0.5
+      consequences:
+        reputation:
+          london_monarchy: -30
+          london_public: 10
+        flags:
+          - royal_ai_destroyed_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
 content:
   sections:
     - id: rumors
@@ -177,6 +195,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

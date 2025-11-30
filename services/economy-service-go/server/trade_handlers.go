@@ -187,4 +187,3 @@ func (h *TradeHandlers) GetActiveTrades(w http.ResponseWriter, r *http.Request) 
 
 	h.respondJSON(w, http.StatusOK, response)
 }
-

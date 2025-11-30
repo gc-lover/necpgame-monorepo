@@ -1,11 +1,12 @@
+# Issue: #651
 metadata:
   id: quest-london-2020-2029-fog-protocol
   title: 'Лондон 2020-2029 — Протокол тумана'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -97,33 +98,48 @@ quest_definition:
     flags:
       - fog_protocol_completed
   branches:
-    - id: data_theft
-      condition: "operation_type == 'data_theft'"
-      objectives:
-        - id: steal_data
-          text: "Украсть данные в тумане"
-          type: hack
-          target: data_target
-          count: 1
-          optional: false
-    - id: cargo_robbery
-      condition: "operation_type == 'cargo_robbery'"
-      objectives:
-        - id: rob_cargo
-          text: "Ограбить карго в тумане"
-          type: loot
-          target: cargo_target
-          count: 1
-          optional: false
-    - id: prisoner_rescue
-      condition: "operation_type == 'prisoner_rescue'"
-      objectives:
-        - id: rescue_prisoner
-          text: "Освободить пленника в тумане"
-          type: interact
-          target: prisoner_target
-          count: 1
-          optional: false
+    - id: data_theft_path
+      unlock_condition:
+        type: choice_made
+        choice_id: operation_type_selection
+        value: "data_theft"
+      consequences:
+        reputation:
+          fog_protocol_network: 5
+        flags:
+          - data_theft_operations_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: hacking
+            location: london
+    - id: cargo_robbery_path
+      unlock_condition:
+        type: choice_made
+        choice_id: operation_type_selection
+        value: "cargo_robbery"
+      consequences:
+        reputation:
+          fog_protocol_network: 5
+        flags:
+          - cargo_robbery_operations_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: heist
+            location: london
+    - id: prisoner_rescue_path
+      unlock_condition:
+        type: choice_made
+        choice_id: operation_type_selection
+        value: "prisoner_rescue"
+      consequences:
+        reputation:
+          fog_protocol_network: 5
+        flags:
+          - prisoner_rescue_operations_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: rescue
+            location: london
 content:
   sections:
     - id: contract
@@ -167,6 +183,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

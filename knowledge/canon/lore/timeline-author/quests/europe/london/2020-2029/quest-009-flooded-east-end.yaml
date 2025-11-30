@@ -1,11 +1,12 @@
+# Issue: #657
 metadata:
   id: quest-london-2029-flooded-east-end
   title: 'Лондон 2020-2029 — Затопленный Ист-Энд'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -94,24 +95,33 @@ quest_definition:
     flags:
       - flooded_east_end_extracted
   branches:
-    - id: successful_extraction
-      condition: "extraction_timer > 0 AND loot_collected >= 3"
-      objectives:
-        - id: claim_extraction_reward
-          text: "Получить награду за успешную экстракцию: лут 5 000-20 000 еддис"
-          type: interact
-          target: extraction_reward_station
-          count: 1
-          optional: false
-    - id: failed_extraction
-      condition: "extraction_timer <= 0 OR player_died == true"
-      objectives:
-        - id: deal_with_loss
-          text: "Справиться с потерей лута при провале экстракции"
-          type: interact
-          target: extraction_failure_consequences
-          count: 1
-          optional: false
+    - id: successful_extraction_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: extract_safely
+        min_count: 1
+      consequences:
+        currency: 10000
+        reputation:
+          london_survivors: 15
+        flags:
+          - successful_extraction_unlocked
+          - flooded_zone_master_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: extraction
+            location: london
+    - id: failed_extraction_path
+      unlock_condition:
+        type: quest_completion
+        quest_id: quest-london-2029-flooded-east-end
+      consequences:
+        currency: 0
+        reputation:
+          london_survivors: -5
+        flags:
+          - extraction_failed_unlocked
+        unlocked_content: []
 content:
   sections:
     - id: prep
@@ -167,6 +177,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

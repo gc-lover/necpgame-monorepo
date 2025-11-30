@@ -5,8 +5,8 @@ metadata:
   document_type: canon
   category: quests
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: true
   concept_reviewed_at: ''
   owners:
@@ -96,25 +96,59 @@ quest_definition:
       optional: false
   rewards:
     experience: 3000
-    money: 0
+    currency: 0
     items:
       - item_id: achievement_chicago_phoenix
         quantity: 1
-    reputation: {}
-    unlocks:
-      - historical_quests
-      - architectural_history_access
+        name: "Феникс Чикаго"
+    reputation:
+      historical_societies: 30
+    flags:
+      - historical_quests_unlocked
+      - architectural_history_access_unlocked
   branches:
-    - branch_id: architectural_historian
-      description: "Стать историком архитектуры"
+    - id: architectural_historian
+      unlock_condition:
+        type: skill_check
+        skill: architecture
+        min_value: 0.5
       consequences:
-        skills:
-          history: +30
-          architecture: +25
         reputation:
-          Historical_Societies: +30
-        unlocks:
-          - exclusive_historical_access
+          historical_societies: 30
+        flags:
+          - exclusive_historical_access_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: architectural
+            location: chicago
+    - id: historian
+      unlock_condition:
+        type: skill_check
+        skill: history
+        min_value: 0.6
+      consequences:
+        reputation:
+          historical_societies: 20
+        flags:
+          - historical_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: historical
+            location: chicago
+    - id: researcher
+      unlock_condition:
+        type: skill_check
+        skill: research
+        min_value: 0.5
+      consequences:
+        reputation:
+          historical_societies: 15
+        flags:
+          - research_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: research
+            location: chicago
 content:
   sections:
     - id: overview
@@ -177,6 +211,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Исправлена структура quest_definition: rewards (money → currency, unlocks → flags), branches (branch_id → id, description → unlock_condition, правильная структура consequences). Структура теперь полностью соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer
