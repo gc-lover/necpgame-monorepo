@@ -1,0 +1,525 @@
+# Issue: #1452
+openapi: 3.0.3
+info:
+  title: Transport Vehicle Service - Schemas
+  description: Общие схемы данных для системы транспорта
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+paths: {}
+
+components:
+  schemas:
+    VehicleType:
+      type: string
+      enum:
+        - ground
+        - air
+        - water
+        - space
+      description: Тип транспорта по среде движения
+
+    VehicleSubtype:
+      type: string
+      enum:
+        - automobile
+        - motorcycle
+        - avi
+        - airship
+        - ship
+        - shuttle
+      description: Подтип транспорта
+
+    VehicleStatus:
+      type: string
+      enum:
+        - available
+        - in_use
+        - stored
+        - damaged
+        - destroyed
+        - maintenance
+      description: Статус транспорта
+
+    Vehicle:
+      type: object
+      required:
+        - id
+        - type
+        - subtype
+        - name
+        - status
+        - owner_id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID транспорта
+        type:
+          $ref: '#/components/schemas/VehicleType'
+        subtype:
+          $ref: '#/components/schemas/VehicleSubtype'
+        name:
+          type: string
+          description: Название транспорта
+        description:
+          type: string
+          description: Описание транспорта
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        owner_id:
+          type: string
+          format: uuid
+          description: ID владельца
+        condition:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Состояние транспорта (0-100%)
+        position:
+          $ref: 'common.yaml#/components/schemas/Position3D'
+        stored_location_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID места хранения
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Дополнительные метаданные
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVehicleRequest:
+      type: object
+      required:
+        - type
+        - subtype
+        - name
+      properties:
+        type:
+          $ref: '#/components/schemas/VehicleType'
+        subtype:
+          $ref: '#/components/schemas/VehicleSubtype'
+        name:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    UpdateVehicleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    VehicleListResponse:
+      type: object
+      required:
+        - vehicles
+      properties:
+        vehicles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vehicle'
+        total:
+          type: integer
+          format: int64
+
+    ClaimVehicleRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    StoreVehicleRequest:
+      type: object
+      required:
+        - location_id
+      properties:
+        location_id:
+          type: string
+          format: uuid
+          description: ID места хранения
+
+    VehiclePhysicsState:
+      type: object
+      required:
+        - vehicle_id
+        - position
+        - velocity
+        - rotation
+      properties:
+        vehicle_id:
+          type: string
+          format: uuid
+        position:
+          $ref: 'common.yaml#/components/schemas/Position3D'
+        velocity:
+          $ref: 'common.yaml#/components/schemas/Direction3D'
+        rotation:
+          $ref: 'common.yaml#/components/schemas/Direction3D'
+        speed:
+          type: number
+          format: float
+          description: Скорость в м/с
+        acceleration:
+          type: number
+          format: float
+          description: Ускорение в м/с²
+        health:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Здоровье транспорта (0-100%)
+
+    UpdateVehiclePhysicsRequest:
+      type: object
+      required:
+        - position
+        - velocity
+        - rotation
+      properties:
+        position:
+          $ref: 'common.yaml#/components/schemas/Position3D'
+        velocity:
+          $ref: 'common.yaml#/components/schemas/Direction3D'
+        rotation:
+          $ref: 'common.yaml#/components/schemas/Direction3D'
+        speed:
+          type: number
+          format: float
+        acceleration:
+          type: number
+          format: float
+
+    VehicleCollision:
+      type: object
+      required:
+        - vehicle_id
+        - collision_type
+        - impact_force
+      properties:
+        vehicle_id:
+          type: string
+          format: uuid
+        collision_type:
+          type: string
+          enum:
+            - vehicle
+            - obstacle
+            - terrain
+            - player
+        impact_force:
+          type: number
+          format: float
+          description: Сила удара
+        position:
+          $ref: 'common.yaml#/components/schemas/Position3D'
+        other_entity_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID другой сущности при столкновении
+
+    VehicleDamage:
+      type: object
+      required:
+        - damage_amount
+      properties:
+        damage_amount:
+          type: number
+          format: float
+          minimum: 0
+          description: Количество урона
+        damage_type:
+          type: string
+          enum:
+            - collision
+            - combat
+            - wear
+            - environmental
+        source:
+          type: string
+          nullable: true
+          description: Источник урона
+
+    VehicleControlCommand:
+      type: object
+      required:
+        - command_type
+      properties:
+        command_type:
+          type: string
+          enum:
+            - accelerate
+            - brake
+            - turn_left
+            - turn_right
+            - steer
+            - reverse
+            - handbrake
+            - special_action
+        value:
+          type: number
+          format: float
+          nullable: true
+          description: Значение команды (0.0-1.0 для большинства команд)
+        timestamp:
+          type: string
+          format: date-time
+          description: Время команды
+
+    VehiclePassenger:
+      type: object
+      required:
+        - character_id
+        - seat_index
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        seat_index:
+          type: integer
+          minimum: 0
+          description: Индекс места (0 - водитель)
+        entered_at:
+          type: string
+          format: date-time
+
+    VehiclePassengerListResponse:
+      type: object
+      required:
+        - passengers
+      properties:
+        passengers:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehiclePassenger'
+        total:
+          type: integer
+          format: int64
+
+    VehicleCondition:
+      type: object
+      required:
+        - vehicle_id
+        - condition
+        - health
+      properties:
+        vehicle_id:
+          type: string
+          format: uuid
+        condition:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Общее состояние (0-100%)
+        health:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Здоровье (0-100%)
+        wear:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Износ (0-100%)
+        damage_parts:
+          type: array
+          items:
+            type: string
+          description: Список поврежденных частей
+
+    RepairVehicleRequest:
+      type: object
+      properties:
+        parts:
+          type: array
+          items:
+            type: string
+          description: Список частей для ремонта (пусто = все части)
+        full_repair:
+          type: boolean
+          default: false
+          description: Полный ремонт
+
+    MaintenanceVehicleRequest:
+      type: object
+      properties:
+        maintenance_type:
+          type: string
+          enum:
+            - oil_change
+            - tire_replacement
+            - engine_tune
+            - full_service
+        parts:
+          type: array
+          items:
+            type: string
+          description: Список частей для обслуживания
+
+    RepairCostResponse:
+      type: object
+      required:
+        - total_cost
+      properties:
+        total_cost:
+          type: number
+          format: float
+          description: Общая стоимость ремонта
+        currency:
+          type: string
+          default: credits
+        parts_cost:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Стоимость по частям
+
+    ReplacePartsRequest:
+      type: object
+      required:
+        - parts
+      properties:
+        parts:
+          type: array
+          items:
+            type: object
+            required:
+              - part_name
+              - new_part_id
+            properties:
+              part_name:
+                type: string
+              new_part_id:
+                type: string
+                format: uuid
+
+    VehicleCustomization:
+      type: object
+      required:
+        - vehicle_id
+      properties:
+        vehicle_id:
+          type: string
+          format: uuid
+        color_primary:
+          type: string
+          description: Основной цвет (hex)
+        color_secondary:
+          type: string
+          description: Вторичный цвет (hex)
+        color_accent:
+          type: string
+          description: Акцентный цвет (hex)
+        materials:
+          type: object
+          additionalProperties:
+            type: string
+          description: Материалы для различных частей
+        decorative_elements:
+          type: array
+          items:
+            type: string
+          description: Декоративные элементы
+        mods:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID установленных модификаций
+
+    ApplyCustomizationRequest:
+      type: object
+      required:
+        - customization
+      properties:
+        customization:
+          $ref: '#/components/schemas/VehicleCustomization'
+
+    CustomizationOption:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - cost
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - color
+            - material
+            - decal
+            - mod
+        cost:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: credits
+        description:
+          type: string
+        preview_url:
+          type: string
+          nullable: true
+
+    CustomizationOptionsResponse:
+      type: object
+      required:
+        - options
+      properties:
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomizationOption'
+        total:
+          type: integer
+          format: int64
+
+    InstallModsRequest:
+      type: object
+      required:
+        - mod_ids
+      properties:
+        mod_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID модификаций для установки
+

@@ -1,0 +1,177 @@
+# Issue: #1452
+openapi: 3.0.3
+info:
+  title: Transport Vehicle Physics Service API
+  description: API для физики движения транспорта
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Movement Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+tags:
+  - name: Vehicle Physics
+    description: Физика движения транспорта
+
+paths:
+  /movement/vehicles/{vehicleId}/physics/update:
+    post:
+      tags:
+        - Vehicle Physics
+      summary: Обновить физику транспорта
+      description: |
+        Обновляет физическое состояние транспортного средства (позиция, скорость, ускорение).
+      operationId: updateVehiclePhysics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/UpdateVehiclePhysicsRequest'
+      responses:
+        '200':
+          description: Физика обновлена
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehiclePhysicsState'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /movement/vehicles/{vehicleId}/physics/state:
+    get:
+      tags:
+        - Vehicle Physics
+      summary: Состояние физики транспорта
+      description: |
+        Возвращает текущее физическое состояние транспортного средства.
+      operationId: getVehiclePhysicsState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      responses:
+        '200':
+          description: Состояние физики
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehiclePhysicsState'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /movement/vehicles/{vehicleId}/physics/collision:
+    post:
+      tags:
+        - Vehicle Physics
+      summary: Обработать столкновение
+      description: |
+        Обрабатывает столкновение транспортного средства с другой сущностью.
+      operationId: handleVehicleCollision
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCollision'
+      responses:
+        '200':
+          description: Столкновение обработано
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehiclePhysicsState'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /movement/vehicles/{vehicleId}/physics/damage:
+    post:
+      tags:
+        - Vehicle Physics
+      summary: Применить повреждения
+      description: |
+        Применяет повреждения к транспортному средству.
+      operationId: applyVehicleDamage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleDamage'
+      responses:
+        '200':
+          description: Повреждения применены
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehiclePhysicsState'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
