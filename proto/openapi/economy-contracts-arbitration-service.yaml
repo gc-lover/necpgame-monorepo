@@ -1,0 +1,405 @@
+# Issue: #217
+openapi: 3.0.3
+info:
+  title: Economy Contracts Arbitration Service API
+  description: |
+    API для арбитража и споров в системе контрактов NECPGAME.
+    
+    **Основные возможности:**
+    - Создание споров по контрактам
+    - Добавление доказательств
+    - Рассмотрение споров
+    - Разрешение споров и распределение эскроу
+    
+    **Интеграции:**
+    - contract-service - контракты
+    - escrow-service - распределение эскроу
+    - reputation-service - влияние на репутацию
+    - arbitration-service - основная логика арбитража
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Arbitration
+    description: Арбитраж и споры
+
+paths:
+  /economy/arbitration/disputes:
+    get:
+      tags:
+        - Arbitration
+      summary: Получить список споров
+      description: |
+        Возвращает список споров с фильтрацией.
+      operationId: getDisputes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, investigating, resolved]
+          description: Фильтр по статусу
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по контракту
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список споров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  disputes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Dispute"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Arbitration
+      summary: Создать спор
+      description: |
+        Создает новый спор по контракту.
+      operationId: createDispute
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDisputeRequest"
+      responses:
+        "201":
+          description: Спор создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dispute"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/arbitration/disputes/{dispute_id}:
+    get:
+      tags:
+        - Arbitration
+      summary: Получить информацию о споре
+      description: |
+        Возвращает детальную информацию о споре.
+      operationId: getDisputeById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dispute_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор спора
+      responses:
+        "200":
+          description: Информация о споре
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DisputeDetailed"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/arbitration/disputes/{dispute_id}/evidence:
+    post:
+      tags:
+        - Arbitration
+      summary: Добавить доказательства
+      description: |
+        Добавляет доказательства к спору.
+      operationId: addEvidence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dispute_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор спора
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddEvidenceRequest"
+      responses:
+        "200":
+          description: Доказательства добавлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evidence"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/arbitration/disputes/{dispute_id}/resolve:
+    post:
+      tags:
+        - Arbitration
+      summary: Разрешить спор
+      description: |
+        Разрешает спор и распределяет эскроу согласно решению.
+      operationId: resolveDispute
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dispute_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор спора
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveDisputeRequest"
+      responses:
+        "200":
+          description: Спор разрешен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dispute"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Dispute:
+      type: object
+      required:
+        - id
+        - contract_id
+        - initiator_id
+        - reason
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [non_delivery, wrong_items, quality_issues, other]
+        status:
+          type: string
+          enum: [pending, investigating, resolved]
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    DisputeDetailed:
+      type: object
+      required:
+        - id
+        - contract_id
+        - initiator_id
+        - reason
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [non_delivery, wrong_items, quality_issues, other]
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, investigating, resolved]
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/Evidence"
+        resolution:
+          type: object
+          nullable: true
+          properties:
+            decision:
+              type: string
+              enum: [initiator_wins, counterparty_wins, partial, dismissed]
+            initiator_percentage:
+              type: number
+              format: float
+            counterparty_percentage:
+              type: number
+              format: float
+            moderator_notes:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateDisputeRequest:
+      type: object
+      required:
+        - contract_id
+        - reason
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [non_delivery, wrong_items, quality_issues, other]
+        description:
+          type: string
+          nullable: true
+
+    AddEvidenceRequest:
+      type: object
+      required:
+        - evidence_type
+        - content
+      properties:
+        evidence_type:
+          type: string
+          enum: [text, screenshot, log, other]
+        content:
+          type: string
+          description: Содержимое доказательства (текст, URL скриншота, и т.д.)
+        description:
+          type: string
+          nullable: true
+
+    Evidence:
+      type: object
+      required:
+        - id
+        - dispute_id
+        - submitted_by
+        - evidence_type
+        - content
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        dispute_id:
+          type: string
+          format: uuid
+        submitted_by:
+          type: string
+          format: uuid
+        evidence_type:
+          type: string
+          enum: [text, screenshot, log, other]
+        content:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ResolveDisputeRequest:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+          enum: [initiator_wins, counterparty_wins, partial, dismissed]
+        initiator_percentage:
+          type: number
+          format: float
+          nullable: true
+          description: Процент эскроу для инициатора (для partial решения)
+        counterparty_percentage:
+          type: number
+          format: float
+          nullable: true
+          description: Процент эскроу для контрагента (для partial решения)
+        moderator_notes:
+          type: string
+          nullable: true
+
+security:
+  - BearerAuth: []
+

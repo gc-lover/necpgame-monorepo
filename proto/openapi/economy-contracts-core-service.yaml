@@ -1,0 +1,538 @@
+# Issue: #217
+openapi: 3.0.3
+info:
+  title: Economy Contracts Core Service API
+  description: |
+    API для управления контрактами и сделками в NECPGAME.
+    
+    **Основные возможности:**
+    - Создание и управление контрактами
+    - Переговоры по контрактам
+    - Принятие и отклонение контрактов
+    - Исполнение и завершение контрактов
+    
+    **Типы контрактов:**
+    - Exchange - обмен предметами/валютой
+    - Delivery - доставка предметов
+    - Craft - крафт предметов
+    - Service - предоставление услуг
+    
+    **Интеграции:**
+    - economy-service - основная логика контрактов
+    - inventory-service - блокировка предметов
+    - wallet-service - блокировка валюты
+    - escrow-service - управление эскроу
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Contracts
+    description: Управление контрактами
+
+paths:
+  /economy/contracts:
+    get:
+      tags:
+        - Contracts
+      summary: Получить список контрактов
+      description: |
+        Возвращает список контрактов с фильтрацией.
+      operationId: getContracts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, negotiation, escrow_pending, active, completed, cancelled, disputed]
+          description: Фильтр по статусу
+        - name: contract_type
+          in: query
+          schema:
+            type: string
+            enum: [exchange, delivery, craft, service]
+          description: Фильтр по типу контракта
+        - name: party_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по участнику контракта
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список контрактов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contract"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Contracts
+      summary: Создать контракт
+      description: |
+        Создает новый контракт.
+      operationId: createContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContractRequest"
+      responses:
+        "201":
+          description: Контракт создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/contracts/{contract_id}:
+    get:
+      tags:
+        - Contracts
+      summary: Получить информацию о контракте
+      description: |
+        Возвращает детальную информацию о контракте.
+      operationId: getContractById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+      responses:
+        "200":
+          description: Информация о контракте
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractDetailed"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    put:
+      tags:
+        - Contracts
+      summary: Обновить контракт
+      description: |
+        Обновляет контракт (только в статусе draft или negotiation).
+      operationId: updateContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContractRequest"
+      responses:
+        "200":
+          description: Контракт обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    delete:
+      tags:
+        - Contracts
+      summary: Отменить контракт
+      description: |
+        Отменяет контракт (только в статусе draft или negotiation).
+      operationId: cancelContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+      responses:
+        "200":
+          description: Контракт отменен
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/StatusResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/contracts/{contract_id}/negotiate:
+    post:
+      tags:
+        - Contracts
+      summary: Предложить изменения контракта
+      description: |
+        Предлагает изменения условий контракта (переговоры).
+      operationId: negotiateContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NegotiateContractRequest"
+      responses:
+        "200":
+          description: Предложение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/contracts/{contract_id}/accept:
+    post:
+      tags:
+        - Contracts
+      summary: Принять контракт
+      description: |
+        Принимает контракт и переводит его в статус escrow_pending.
+      operationId: acceptContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+      responses:
+        "200":
+          description: Контракт принят
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/contracts/{contract_id}/reject:
+    post:
+      tags:
+        - Contracts
+      summary: Отклонить контракт
+      description: |
+        Отклоняет контракт.
+      operationId: rejectContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Контракт отклонен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/contracts/{contract_id}/complete:
+    post:
+      tags:
+        - Contracts
+      summary: Завершить контракт
+      description: |
+        Завершает контракт и освобождает эскроу.
+      operationId: completeContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+      responses:
+        "200":
+          description: Контракт завершен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/contracts/active:
+    get:
+      tags:
+        - Contracts
+      summary: Получить активные контракты
+      description: |
+        Возвращает список активных контрактов игрока.
+      operationId: getActiveContracts
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список активных контрактов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contract"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Contract:
+      type: object
+      required:
+        - id
+        - contract_type
+        - initiator_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_type:
+          type: string
+          enum: [exchange, delivery, craft, service]
+        initiator_id:
+          type: string
+          format: uuid
+        counterparty_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [draft, negotiation, escrow_pending, active, completed, cancelled, disputed]
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ContractDetailed:
+      type: object
+      required:
+        - id
+        - contract_type
+        - initiator_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_type:
+          type: string
+          enum: [exchange, delivery, craft, service]
+        initiator_id:
+          type: string
+          format: uuid
+        counterparty_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [draft, negotiation, escrow_pending, active, completed, cancelled, disputed]
+        terms:
+          type: object
+          description: Условия контракта (зависят от типа)
+        escrow_id:
+          type: string
+          format: uuid
+          nullable: true
+        collateral_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateContractRequest:
+      type: object
+      required:
+        - contract_type
+        - counterparty_id
+        - terms
+      properties:
+        contract_type:
+          type: string
+          enum: [exchange, delivery, craft, service]
+        counterparty_id:
+          type: string
+          format: uuid
+        terms:
+          type: object
+          description: Условия контракта (зависят от типа)
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateContractRequest:
+      type: object
+      properties:
+        terms:
+          type: object
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NegotiateContractRequest:
+      type: object
+      required:
+        - proposed_terms
+      properties:
+        proposed_terms:
+          type: object
+          description: Предлагаемые изменения условий
+
+security:
+  - BearerAuth: []
+

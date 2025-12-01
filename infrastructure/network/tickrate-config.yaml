@@ -4,7 +4,7 @@
 
 tickrate_config:
   version: "1.0.0"
-  
+
   zones:
     safe_zones:
       zone_type: "safe"
@@ -21,7 +21,7 @@ tickrate_config:
         max_per_zone: 500
       network:
         bandwidth_per_player_kbps: 15
-    
+
     open_world_pve:
       zone_type: "open_world"
       protocol: "websocket"
@@ -40,14 +40,14 @@ tickrate_config:
       protocol_switching:
         enabled: true
         switch_to_udp_on_combat: true
-    
+
     open_world_pvp:
       zone_type: "open_world"
       protocol: "udp"
       tickrate:
-        base: 60
+        base: 64
         min: 40
-        max: 80
+        max: 64
         adaptive: true
       latency:
         target_ms: 40
@@ -59,13 +59,16 @@ tickrate_config:
       spatial_partitioning:
         enabled: true
         grid_size_meters: 100
-    
+      description: |
+        Open World PvP - базовый стандарт 64 Hz.
+        Переключение с WebSocket (30 Hz) на UDP (64 Hz) при входе в бой.
+
     pvp_small:
       zone_type: "pvp"
       protocol: "udp"
       tickrate:
-        base: 128
-        min: 60
+        base: 64
+        min: 64
         max: 128
         adaptive: true
       latency:
@@ -75,10 +78,18 @@ tickrate_config:
         min: 5
         max: 20
       network:
-        bandwidth_per_player_kbps: 25
+        bandwidth_per_player_kbps: 20
       spatial_partitioning:
         enabled: false
-    
+      description: |
+        PvP Small - базовый стандарт 64 Hz.
+        Максимум 128 Hz только для competitive турниров (10 игроков).
+      competitive_mode:
+        enabled: true
+        tickrate: 128
+        max_players: 10
+        description: "Только для competitive турниров (5v5)"
+
     gvg_200:
       zone_type: "gvg"
       protocol: "udp"
@@ -99,7 +110,7 @@ tickrate_config:
         enabled: true
         grid_size_meters: 100
         visibility_range: "3x3"
-    
+
     gvg_400:
       zone_type: "gvg"
       protocol: "udp"
@@ -124,7 +135,7 @@ tickrate_config:
       event_aggregation:
         enabled: true
         batch_window_ms: 100
-    
+
     massive_war:
       zone_type: "massive_war"
       protocol: "udp"
@@ -187,7 +198,7 @@ tickrate_config:
         network_load_kbps: 10
         sync_strategy: "strong_consistency"
         lod_enabled: true
-    
+
     movement:
       pve:
         tickrate: 30
@@ -208,7 +219,7 @@ tickrate_config:
         network_load_kbps: 3
         sync_strategy: "strong_consistency"
         lod_enabled: true
-    
+
     abilities:
       pve:
         tickrate: "event_based"
@@ -226,25 +237,25 @@ tickrate_config:
         tickrate: "event_based_40hz"
         network_load_kbps: 2
         sync_strategy: "strong_consistency"
-    
+
     inventory:
       all_zones:
         tickrate: "event_based"
         network_load_kbps: 0.8
         sync_strategy: "strong_consistency_acid"
-    
+
     trading:
       all_zones:
         tickrate: "event_based"
         network_load_kbps: 1.5
         sync_strategy: "strong_consistency_acid"
-    
+
     chat:
       all_zones:
         tickrate: "event_based"
         network_load_kbps: 2
         sync_strategy: "eventual_consistency"
-    
+
     quests:
       all_zones:
         tickrate: "event_based"
@@ -256,7 +267,7 @@ tickrate_config:
     adjustment_interval_seconds: 5
     min_tickrate: 20
     max_tickrate: 128
-    
+
     factors:
       player_count:
         weight: 0.6
@@ -273,7 +284,7 @@ tickrate_config:
             multiplier: 0.5
           - players: 1000
             multiplier: 0.4
-      
+
       network_latency:
         weight: 0.3
         thresholds:
@@ -285,7 +296,7 @@ tickrate_config:
             multiplier: 0.7
           - latency_ms: 200
             multiplier: 0.5
-      
+
       cpu_usage:
         weight: 0.1
         thresholds:
@@ -297,12 +308,12 @@ tickrate_config:
             multiplier: 0.8
           - cpu_percent: 90
             multiplier: 0.6
-    
+
     priority_mechanics:
       - combat
       - movement
       - health
-    
+
     protected_mechanics:
       - inventory
       - trading
@@ -315,23 +326,22 @@ tickrate_config:
       traffic_reduction_percent: 85
       max_visible_cells: 9
       update_frequency_multiplier: 1.0
-    
+
     spatial_sharding:
       enabled: true
       shard_size_meters: 200
       edge_buffer_meters: 50
       traffic_reduction_percent: 88
       sync_frequency_ms: 100
-    
+
     event_aggregation:
       enabled: true
       batch_window_ms: 100
       max_events_per_batch: 50
       traffic_reduction_percent: 65
-    
+
     lod_system:
       enabled: true
       levels: 3
       traffic_reduction_percent: 60
       update_frequency_multiplier: 0.5
-

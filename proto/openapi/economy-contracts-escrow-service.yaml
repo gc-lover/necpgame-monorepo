@@ -1,0 +1,369 @@
+# Issue: #217
+openapi: 3.0.3
+info:
+  title: Economy Contracts Escrow Service API
+  description: |
+    API для управления эскроу и залогами в системе контрактов NECPGAME.
+    
+    **Основные возможности:**
+    - Создание и управление эскроу
+    - Блокировка активов в эскроу
+    - Освобождение эскроу при завершении
+    - Распределение эскроу при спорах
+    - Управление залогами
+    
+    **Интеграции:**
+    - contract-service - контракты
+    - wallet-service - блокировка валюты
+    - inventory-service - блокировка предметов
+    - escrow-service - основная логика эскроу
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Escrow
+    description: Управление эскроу
+  - name: Collateral
+    description: Управление залогами
+
+paths:
+  /economy/escrow/{escrow_id}:
+    get:
+      tags:
+        - Escrow
+      summary: Получить информацию об эскроу
+      description: |
+        Возвращает детальную информацию об эскроу.
+      operationId: getEscrowById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор эскроу
+      responses:
+        "200":
+          description: Информация об эскроу
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Escrow"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/escrow/{escrow_id}/release:
+    post:
+      tags:
+        - Escrow
+      summary: Освободить эскроу
+      description: |
+        Освобождает эскроу и возвращает активы сторонам контракта.
+      operationId: releaseEscrow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор эскроу
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                distribution:
+                  type: object
+                  description: Распределение активов (если отличается от стандартного)
+      responses:
+        "200":
+          description: Эскроу освобожден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Escrow"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/escrow/{escrow_id}/distribute:
+    post:
+      tags:
+        - Escrow
+      summary: Распределить эскроу
+      description: |
+        Распределяет эскроу согласно указанному распределению (используется при спорах).
+      operationId: distributeEscrow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор эскроу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributeEscrowRequest"
+      responses:
+        "200":
+          description: Эскроу распределен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Escrow"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/collateral/{collateral_id}:
+    get:
+      tags:
+        - Collateral
+      summary: Получить информацию о залоге
+      description: |
+        Возвращает детальную информацию о залоге.
+      operationId: getCollateralById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: collateral_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор залога
+      responses:
+        "200":
+          description: Информация о залоге
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collateral"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/collateral/{collateral_id}/release:
+    post:
+      tags:
+        - Collateral
+      summary: Освободить залог
+      description: |
+        Освобождает залог и возвращает активы владельцу.
+      operationId: releaseCollateral
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: collateral_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор залога
+      responses:
+        "200":
+          description: Залог освобожден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collateral"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/collateral/{collateral_id}/forfeit:
+    post:
+      tags:
+        - Collateral
+      summary: Конфисковать залог
+      description: |
+        Конфискует залог (частично или полностью) при нарушении условий контракта.
+      operationId: forfeitCollateral
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: collateral_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор залога
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: number
+                  format: float
+                  description: Сумма для конфискации
+                reason:
+                  type: string
+                  description: Причина конфискации
+      responses:
+        "200":
+          description: Залог конфискован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collateral"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Escrow:
+      type: object
+      required:
+        - id
+        - contract_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, locked, released, distributed]
+        initiator_assets:
+          type: object
+          description: Активы инициатора (предметы, валюта)
+        counterparty_assets:
+          type: object
+          description: Активы контрагента (предметы, валюта)
+        created_at:
+          type: string
+          format: date-time
+        released_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    DistributeEscrowRequest:
+      type: object
+      required:
+        - distribution
+      properties:
+        distribution:
+          type: object
+          description: Распределение активов между сторонами
+          properties:
+            initiator_percentage:
+              type: number
+              format: float
+              description: Процент активов для инициатора (0-100)
+            counterparty_percentage:
+              type: number
+              format: float
+              description: Процент активов для контрагента (0-100)
+
+    Collateral:
+      type: object
+      required:
+        - id
+        - contract_id
+        - owner_id
+        - amount
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+          description: Сумма залога
+        currency:
+          type: string
+          description: Валюта залога
+        status:
+          type: string
+          enum: [pending, locked, released, forfeited]
+        forfeited_amount:
+          type: number
+          format: float
+          nullable: true
+          description: Конфискованная сумма
+        created_at:
+          type: string
+          format: date-time
+        released_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+
