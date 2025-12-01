@@ -1,14 +1,60 @@
+// Issue: #141886468
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
+	"github.com/necpgame/housing-service-go/models"
 	"github.com/necpgame/housing-service-go/pkg/api"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 func (h *HousingHandlers) GetApartmentBonuses(w http.ResponseWriter, r *http.Request, apartmentId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "GetApartmentBonuses not implemented")
+	ctx := r.Context()
+	apartmentID := uuid.UUID(apartmentId)
+
+	detail, err := h.service.GetApartmentDetail(ctx, apartmentID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get apartment detail")
+		h.respondError(w, http.StatusInternalServerError, "failed to get apartment bonuses")
+		return
+	}
+
+	bonuses := make(map[string]interface{})
+	if detail.FunctionalBonuses != nil {
+		bonuses = detail.FunctionalBonuses
+	}
+
+	response := api.ApartmentBonusesResponse{
+		ApartmentId: &apartmentId,
+		Bonuses: &struct {
+			CRAFTSPEED           *float32 `json:"CRAFT_SPEED,omitempty"`
+			HUMANITYREGENERATION *float32 `json:"HUMANITY_REGENERATION,omitempty"`
+			STORAGESLOTS         *int     `json:"STORAGE_SLOTS,omitempty"`
+			WEAPONSTORAGE        *int     `json:"WEAPON_STORAGE,omitempty"`
+		}{},
+	}
+
+	if craftSpeed, ok := bonuses["CRAFT_SPEED"].(float64); ok {
+		cs := float32(craftSpeed)
+		response.Bonuses.CRAFTSPEED = &cs
+	}
+	if humanityRegen, ok := bonuses["HUMANITY_REGENERATION"].(float64); ok {
+		hr := float32(humanityRegen)
+		response.Bonuses.HUMANITYREGENERATION = &hr
+	}
+	if storageSlots, ok := bonuses["STORAGE_SLOTS"].(float64); ok {
+		ss := int(storageSlots)
+		response.Bonuses.STORAGESLOTS = &ss
+	}
+	if weaponStorage, ok := bonuses["WEAPON_STORAGE"].(float64); ok {
+		ws := int(weaponStorage)
+		response.Bonuses.WEAPONSTORAGE = &ws
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *HousingHandlers) UpdateFurniturePosition(w http.ResponseWriter, r *http.Request, apartmentId openapi_types.UUID, furnitureId openapi_types.UUID) {
@@ -20,19 +66,160 @@ func (h *HousingHandlers) MoveFurniture(w http.ResponseWriter, r *http.Request, 
 }
 
 func (h *HousingHandlers) RemoveGuest(w http.ResponseWriter, r *http.Request, apartmentId openapi_types.UUID, params api.RemoveGuestParams) {
-	h.respondError(w, http.StatusNotImplemented, "RemoveGuest not implemented")
+	ctx := r.Context()
+	apartmentID := uuid.UUID(apartmentId)
+
+	characterID, err := h.getCharacterID(r)
+	if err != nil {
+		h.respondError(w, http.StatusUnauthorized, "invalid character ID")
+		return
+	}
+
+	guestID := uuid.UUID(params.PlayerId)
+	apartment, err := h.service.GetApartment(ctx, apartmentID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get apartment")
+		h.respondError(w, http.StatusInternalServerError, "failed to get apartment")
+		return
+	}
+
+	// Удаляем гостя из списка
+	newGuests := make([]uuid.UUID, 0, len(apartment.Guests))
+	for _, g := range apartment.Guests {
+		if g != guestID {
+			newGuests = append(newGuests, g)
+		}
+	}
+
+	modelReq := &models.UpdateApartmentSettingsRequest{
+		CharacterID: characterID,
+		Guests:      newGuests,
+	}
+
+	err = h.service.UpdateApartmentSettings(ctx, apartmentID, modelReq)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to remove guest")
+		h.respondError(w, http.StatusInternalServerError, "failed to remove guest")
+		return
+	}
+
+	response := map[string]interface{}{
+		"apartment_id": apartmentId,
+		"player_id":    params.PlayerId,
+		"status":       "success",
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *HousingHandlers) GetApartmentGuests(w http.ResponseWriter, r *http.Request, apartmentId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "GetApartmentGuests not implemented")
+	ctx := r.Context()
+	apartmentID := uuid.UUID(apartmentId)
+
+	apartment, err := h.service.GetApartment(ctx, apartmentID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get apartment")
+		h.respondError(w, http.StatusInternalServerError, "failed to get apartment guests")
+		return
+	}
+
+	guests := make([]openapi_types.UUID, len(apartment.Guests))
+	for i, g := range apartment.Guests {
+		guests[i] = openapi_types.UUID(g)
+	}
+
+	response := map[string]interface{}{
+		"apartment_id": apartmentId,
+		"guests":       guests,
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *HousingHandlers) AddGuest(w http.ResponseWriter, r *http.Request, apartmentId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "AddGuest not implemented")
+	ctx := r.Context()
+	apartmentID := uuid.UUID(apartmentId)
+
+	characterID, err := h.getCharacterID(r)
+	if err != nil {
+		h.respondError(w, http.StatusUnauthorized, "invalid character ID")
+		return
+	}
+
+	var req api.AddGuestJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	guestID := uuid.UUID(req.CharacterId)
+	modelReq := &models.UpdateApartmentSettingsRequest{
+		CharacterID: characterID,
+		Guests:      []uuid.UUID{guestID},
+	}
+
+	apartment, err := h.service.GetApartment(ctx, apartmentID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get apartment")
+		h.respondError(w, http.StatusInternalServerError, "failed to get apartment")
+		return
+	}
+
+	// Добавляем гостя, если его еще нет
+	found := false
+	for _, g := range apartment.Guests {
+		if g == guestID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		apartment.Guests = append(apartment.Guests, guestID)
+		modelReq.Guests = apartment.Guests
+		err = h.service.UpdateApartmentSettings(ctx, apartmentID, modelReq)
+		if err != nil {
+			h.logger.WithError(err).Error("Failed to add guest")
+			h.respondError(w, http.StatusInternalServerError, "failed to add guest")
+			return
+		}
+	}
+
+	response := map[string]interface{}{
+		"apartment_id": apartmentId,
+		"character_id": req.CharacterId,
+		"status":       "success",
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *HousingHandlers) GetApartmentPrestige(w http.ResponseWriter, r *http.Request, apartmentId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "GetApartmentPrestige not implemented")
+	ctx := r.Context()
+	apartmentID := uuid.UUID(apartmentId)
+
+	apartment, err := h.service.GetApartment(ctx, apartmentID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get apartment")
+		h.respondError(w, http.StatusInternalServerError, "failed to get apartment prestige")
+		return
+	}
+
+	prestigeScore := apartment.PrestigeScore
+	basePrestige := 0
+	furniturePrestige := 0
+	uniquenessBonus := 0
+	locationMultiplier := float32(1.0)
+
+	response := api.ApartmentPrestigeResponse{
+		ApartmentId:        &apartmentId,
+		PrestigeScore:      &prestigeScore,
+		BasePrestige:       &basePrestige,
+		FurniturePrestige:  &furniturePrestige,
+		UniquenessBonus:    &uniquenessBonus,
+		LocationMultiplier: &locationMultiplier,
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *HousingHandlers) GetApartmentVisits(w http.ResponseWriter, r *http.Request, apartmentId openapi_types.UUID, params api.GetApartmentVisitsParams) {
@@ -44,7 +231,55 @@ func (h *HousingHandlers) GetHousingEvents(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *HousingHandlers) GetFurnitureCatalog(w http.ResponseWriter, r *http.Request, params api.GetFurnitureCatalogParams) {
-	h.respondError(w, http.StatusNotImplemented, "GetFurnitureCatalog not implemented")
+	ctx := r.Context()
+
+	var category *models.FurnitureCategory
+	if params.Category != nil {
+		cat := models.FurnitureCategory(string(*params.Category))
+		category = &cat
+	}
+
+	limit := 50
+	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
+		limit = *params.Limit
+	}
+
+	offset := 0
+	if params.Offset != nil && *params.Offset >= 0 {
+		offset = *params.Offset
+	}
+
+	items, total, err := h.service.ListFurnitureItems(ctx, category, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to list furniture items")
+		h.respondError(w, http.StatusInternalServerError, "failed to get furniture catalog")
+		return
+	}
+
+	apiItems := make([]api.FurnitureItem, len(items))
+	for i, item := range items {
+		cat := api.FurnitureItemCategory(item.Category)
+		prestigePoints := item.PrestigeValue
+		apiItems[i] = api.FurnitureItem{
+			Id:             &item.ID,
+			Category:       &cat,
+			Name:           &item.Name,
+			Description:    &item.Description,
+			Price:          &item.Price,
+			PrestigePoints: &prestigePoints,
+			FunctionBonus:  &item.FunctionBonus,
+			CreatedAt:      &item.CreatedAt,
+		}
+	}
+
+	response := api.FurnitureCatalogResponse{
+		Furniture: &apiItems,
+		Total:     &total,
+		Limit:     &limit,
+		Offset:    &offset,
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *HousingHandlers) GetOwnedFurniture(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, params api.GetOwnedFurnitureParams) {
