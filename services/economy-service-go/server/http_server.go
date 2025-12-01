@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/necpgame/economy-service-go/models"
 	tradeapi "github.com/necpgame/economy-service-go/pkg/api"
+	"github.com/necpgame/economy-service-go/pkg/weaponcombinationsapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -83,11 +84,9 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 	}
 
 	if server.weaponCombinationsService != nil {
-		// TODO: After running `make generate-weapon-combinations-api`, uncomment these lines:
-		// weaponCombinationsHandlers := NewWeaponCombinationsHandlers(server.weaponCombinationsService)
-		// weaponCombinationsAPI := economy.PathPrefix("/weapons").Subrouter()
-		// weaponcombinationsapi.HandlerFromMux(weaponCombinationsHandlers, weaponCombinationsAPI)
-		_ = server.weaponCombinationsService
+		weaponCombinationsHandlers := NewWeaponCombinationsHandlers(server.weaponCombinationsService)
+		weaponCombinationsAPI := economy.PathPrefix("/weapons").Subrouter()
+		weaponcombinationsapi.HandlerFromMux(weaponCombinationsHandlers, weaponCombinationsAPI)
 	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
