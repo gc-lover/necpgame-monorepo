@@ -14,7 +14,10 @@ import (
 	"github.com/necpgame/gameplay-service-go/pkg/damageapi"
 	"github.com/necpgame/gameplay-service-go/pkg/implantsmaintenanceapi"
 	"github.com/necpgame/gameplay-service-go/pkg/implantsstatsapi"
+	"github.com/necpgame/gameplay-service-go/pkg/weaponadvancedapi"
+	"github.com/necpgame/gameplay-service-go/pkg/weaponcombatapi"
 	"github.com/necpgame/gameplay-service-go/pkg/weaponcoreapi"
+	"github.com/necpgame/gameplay-service-go/pkg/weaponeffectsapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -127,15 +130,14 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	}
 	if weaponMechanicsService != nil {
 		weaponCoreHandlers := NewWeaponCoreHandlers(weaponMechanicsService)
+		weaponCombatHandlers := NewWeaponCombatHandlers(weaponMechanicsService)
+		weaponEffectsHandlers := NewWeaponEffectsHandlers(weaponMechanicsService)
+		weaponAdvancedHandlers := NewWeaponAdvancedHandlers(weaponMechanicsService)
 		weaponAPI := router.PathPrefix("/api/v1/gameplay/combat/weapons").Subrouter()
 		weaponcoreapi.HandlerFromMux(weaponCoreHandlers, weaponAPI)
-		// TODO: Generate and implement other weapon handlers:
-		// weaponCombatHandlers := NewWeaponCombatHandlers(weaponMechanicsService)
-		// weaponEffectsHandlers := NewWeaponEffectsHandlers(weaponMechanicsService)
-		// weaponAdvancedHandlers := NewWeaponAdvancedHandlers(weaponMechanicsService)
-		// weaponcombatapi.HandlerFromMux(weaponCombatHandlers, weaponAPI)
-		// weaponeffectsapi.HandlerFromMux(weaponEffectsHandlers, weaponAPI)
-		// weaponadvancedapi.HandlerFromMux(weaponAdvancedHandlers, weaponAPI)
+		weaponcombatapi.HandlerFromMux(weaponCombatHandlers, weaponAPI)
+		weaponeffectsapi.HandlerFromMux(weaponEffectsHandlers, weaponAPI)
+		weaponadvancedapi.HandlerFromMux(weaponAdvancedHandlers, weaponAPI)
 	}
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 	return server
