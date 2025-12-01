@@ -1,0 +1,683 @@
+# Issue: #63
+openapi: 3.0.3
+info:
+  title: Economy Stock Exchange Core Service API
+  description: |
+    API для базовой торговли акциями на фондовой бирже в NECPGAME.
+
+    **Основные возможности:**
+    - Получение списка акций и цен
+    - Создание и управление ордерами (покупка/продажа)
+    - Портфель игрока
+    - История сделок
+    - Realtime обновления цен
+
+    **Интеграции:**
+    - economy-service - основная логика биржи
+    - wallet-service - балансы и транзакции
+    - world-service - мировые события
+    - quest-service - квесты корпораций
+    - social-service - фракции
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Stocks
+    description: Список акций и цены
+  - name: Orders
+    description: Ордера на покупку/продажу
+  - name: Portfolio
+    description: Портфель игрока
+  - name: Trades
+    description: История сделок
+
+paths:
+  /economy/stock/stocks:
+    get:
+      tags:
+        - Stocks
+      summary: Получить список акций
+      description: |
+        Возвращает список всех доступных акций с текущими ценами.
+      operationId: getStocks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sector
+          in: query
+          schema:
+            type: string
+          description: Фильтр по сектору
+        - name: corporation_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по корпорации
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [symbol, price, change_24h, volume]
+          description: Сортировка
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список акций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stocks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Stock"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/stock/stocks/{stock_id}:
+    get:
+      tags:
+        - Stocks
+      summary: Получить информацию об акции
+      description: |
+        Возвращает детальную информацию об акции по её ID.
+      operationId: getStockById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор акции
+      responses:
+        "200":
+          description: Информация об акции
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockDetailed"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/stock/prices:
+    get:
+      tags:
+        - Stocks
+      summary: Получить цены акций
+      description: |
+        Возвращает текущие цены акций. Поддерживает фильтрацию по списку ID.
+      operationId: getStockPrices
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: Список ID акций (опционально, если не указан - все акции)
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [full, compact]
+          description: Формат ответа
+      responses:
+        "200":
+          description: Цены акций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prices:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StockPrice"
+                  updated_at:
+                    type: string
+                    format: date-time
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/stock/orders:
+    get:
+      tags:
+        - Orders
+      summary: Получить ордера игрока
+      description: |
+        Возвращает список ордеров текущего игрока.
+      operationId: getMyOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, partially_filled, filled, cancelled]
+          description: Фильтр по статусу
+        - name: side
+          in: query
+          schema:
+            type: string
+            enum: [buy, sell]
+          description: Фильтр по типу (покупка/продажа)
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список ордеров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Orders
+      summary: Создать ордер
+      description: |
+        Создает новый ордер на покупку или продажу акций.
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Ордер создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Недостаточно средств или акций
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/stock/orders/{order_id}:
+    get:
+      tags:
+        - Orders
+      summary: Получить ордер по ID
+      description: |
+        Возвращает детальную информацию об ордере.
+      operationId: getOrderById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ордера
+      responses:
+        "200":
+          description: Информация об ордере
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    delete:
+      tags:
+        - Orders
+      summary: Отменить ордер
+      description: |
+        Отменяет активный ордер.
+      operationId: cancelOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ордера
+      responses:
+        "200":
+          description: Ордер отменен
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/StatusResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/stock/portfolio:
+    get:
+      tags:
+        - Portfolio
+      summary: Получить портфель игрока
+      description: |
+        Возвращает портфель акций текущего игрока.
+      operationId: getPortfolio
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Портфель игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Portfolio"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/stock/portfolio/{stock_id}:
+    get:
+      tags:
+        - Portfolio
+      summary: Получить позицию по акции
+      description: |
+        Возвращает позицию игрока по конкретной акции.
+      operationId: getPortfolioPosition
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор акции
+      responses:
+        "200":
+          description: Позиция по акции
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioPosition"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/stock/trades:
+    get:
+      tags:
+        - Trades
+      summary: Получить историю сделок
+      description: |
+        Возвращает историю исполненных сделок игрока.
+      operationId: getTradeHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по акции
+        - name: side
+          in: query
+          schema:
+            type: string
+            enum: [buy, sell]
+          description: Фильтр по типу сделки
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История сделок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Trade"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Stock:
+      type: object
+      required:
+        - id
+        - symbol
+        - corporation_id
+        - current_price
+      properties:
+        id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        corporation_id:
+          type: string
+          format: uuid
+        corporation_name:
+          type: string
+        sector:
+          type: string
+        current_price:
+          type: number
+          format: float
+        change_24h:
+          type: number
+          format: float
+          description: Изменение цены за 24 часа (%)
+        volume_24h:
+          type: integer
+          description: Объем торгов за 24 часа
+
+    StockDetailed:
+      type: object
+      required:
+        - id
+        - symbol
+        - corporation_id
+        - current_price
+      properties:
+        id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        corporation_id:
+          type: string
+          format: uuid
+        corporation_name:
+          type: string
+        sector:
+          type: string
+        current_price:
+          type: number
+          format: float
+        change_24h:
+          type: number
+          format: float
+        change_7d:
+          type: number
+          format: float
+        volume_24h:
+          type: integer
+        market_cap:
+          type: number
+          format: float
+        shares_outstanding:
+          type: integer
+        high_24h:
+          type: number
+          format: float
+        low_24h:
+          type: number
+          format: float
+        description:
+          type: string
+
+    StockPrice:
+      type: object
+      required:
+        - stock_id
+        - price
+        - updated_at
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        price:
+          type: number
+          format: float
+        change_24h:
+          type: number
+          format: float
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - stock_id
+        - side
+        - quantity
+        - order_type
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        side:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: integer
+          minimum: 1
+        order_type:
+          type: string
+          enum: [market, limit]
+        limit_price:
+          type: number
+          format: float
+          description: Цена для limit ордера
+
+    Order:
+      type: object
+      required:
+        - id
+        - stock_id
+        - side
+        - quantity
+        - order_type
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        stock_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: integer
+        filled_quantity:
+          type: integer
+        order_type:
+          type: string
+          enum: [market, limit]
+        limit_price:
+          type: number
+          format: float
+          nullable: true
+        average_fill_price:
+          type: number
+          format: float
+          nullable: true
+        status:
+          type: string
+          enum: [pending, partially_filled, filled, cancelled]
+        created_at:
+          type: string
+          format: date-time
+        executed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Portfolio:
+      type: object
+      required:
+        - total_value
+        - positions
+      properties:
+        total_value:
+          type: number
+          format: float
+          description: Общая стоимость портфеля
+        total_cost:
+          type: number
+          format: float
+          description: Общая стоимость покупки
+        total_profit:
+          type: number
+          format: float
+          description: Общая прибыль/убыток
+        positions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioPosition"
+
+    PortfolioPosition:
+      type: object
+      required:
+        - stock_id
+        - quantity
+        - average_buy_price
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        corporation_name:
+          type: string
+        quantity:
+          type: integer
+        average_buy_price:
+          type: number
+          format: float
+        current_price:
+          type: number
+          format: float
+        total_cost:
+          type: number
+          format: float
+        current_value:
+          type: number
+          format: float
+        profit:
+          type: number
+          format: float
+        profit_percent:
+          type: number
+          format: float
+
+    Trade:
+      type: object
+      required:
+        - id
+        - stock_id
+        - side
+        - quantity
+        - price
+        - executed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        stock_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: float
+        total_value:
+          type: number
+          format: float
+        commission:
+          type: number
+          format: float
+        executed_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []

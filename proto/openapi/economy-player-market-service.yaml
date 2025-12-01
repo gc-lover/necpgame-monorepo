@@ -1,0 +1,775 @@
+# Issue: #61
+openapi: 3.0.3
+info:
+  title: Economy Player Market Service API
+  description: |
+    API для системы Player Market - торговли между игроками в NECPGAME.
+    
+    **Основные возможности:**
+    - Создание объявлений о продаже
+    - Поиск и фильтрация объявлений
+    - Покупка предметов по фиксированной цене
+    - Управление объявлениями (редактирование, отмена)
+    - История покупок и продаж
+    - Социальные функции (отзывы, рейтинг продавца)
+    
+    **Особенности:**
+    - Фиксированные цены (не аукцион)
+    - Комиссия с продажи
+    - Ограничение на количество активных объявлений
+    - Региональные рынки (по городам)
+    - Антифрод меры
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Market Listings
+    description: Объявления о продаже
+  - name: Market Search
+    description: Поиск объявлений
+  - name: Market Purchase
+    description: Покупка предметов
+  - name: Market Management
+    description: Управление объявлениями
+  - name: Market History
+    description: История операций
+  - name: Market Social
+    description: Социальные функции
+
+paths:
+  /economy/market/listings:
+    post:
+      tags:
+        - Market Listings
+      summary: Создать объявление о продаже
+      description: |
+        Создает новое объявление о продаже предмета на рынке.
+        Проверяет наличие предмета в инвентаре и лимиты на объявления.
+      operationId: createMarketListing
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateListingRequest'
+      responses:
+        '201':
+          description: Объявление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketListing'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          description: Превышен лимит активных объявлений
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Market Search
+      summary: Поиск объявлений
+      description: |
+        Возвращает список объявлений с возможностью фильтрации и поиска.
+      operationId: searchMarketListings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_name
+          in: query
+          schema:
+            type: string
+          description: Поиск по названию предмета
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Фильтр по категории
+        - name: quality
+          in: query
+          schema:
+            type: string
+            enum: [common, uncommon, rare, epic, legendary, artifact]
+          description: Фильтр по качеству
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+          description: Минимальный уровень предмета
+        - name: max_level
+          in: query
+          schema:
+            type: integer
+          description: Максимальный уровень предмета
+        - name: min_price
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Минимальная цена
+        - name: max_price
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Максимальная цена
+        - name: city_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по городу
+        - name: seller_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по продавцу
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, date_asc, date_desc, popularity]
+          description: Сортировка
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  listings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketListing'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/market/listings/{listing_id}:
+    get:
+      tags:
+        - Market Search
+      summary: Получить информацию об объявлении
+      description: |
+        Возвращает детальную информацию об объявлении по его ID.
+      operationId: getMarketListingById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор объявления
+      responses:
+        '200':
+          description: Информация об объявлении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketListing'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Market Management
+      summary: Обновить объявление
+      description: |
+        Обновляет существующее объявление (цена, описание).
+      operationId: updateMarketListing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор объявления
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateListingRequest'
+      responses:
+        '200':
+          description: Объявление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketListing'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Market Management
+      summary: Отменить объявление
+      description: |
+        Отменяет объявление и возвращает предмет в инвентарь.
+      operationId: cancelMarketListing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор объявления
+      responses:
+        '200':
+          description: Объявление отменено
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/market/listings/my:
+    get:
+      tags:
+        - Market Management
+      summary: Получить мои объявления
+      description: |
+        Возвращает список объявлений текущего игрока.
+      operationId: getMyMarketListings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, sold, cancelled, expired]
+          description: Фильтр по статусу
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список моих объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  listings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketListing'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/market/purchase:
+    post:
+      tags:
+        - Market Purchase
+      summary: Купить предмет
+      description: |
+        Покупает предмет по объявлению. Проверяет баланс, списывает средства,
+        передает предмет покупателю, начисляет средства продавцу (с учетом комиссии).
+      operationId: purchaseMarketItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        '200':
+          description: Покупка завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          description: Объявление уже продано или недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/market/history/purchases:
+    get:
+      tags:
+        - Market History
+      summary: История покупок
+      description: |
+        Возвращает историю покупок текущего игрока.
+      operationId: getPurchaseHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История покупок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  purchases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PurchaseHistory'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/market/history/sales:
+    get:
+      tags:
+        - Market History
+      summary: История продаж
+      description: |
+        Возвращает историю продаж текущего игрока.
+      operationId: getSalesHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История продаж
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sales:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SaleHistory'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/market/sellers/{seller_id}:
+    get:
+      tags:
+        - Market Social
+      summary: Получить профиль продавца
+      description: |
+        Возвращает профиль продавца с рейтингом, статистикой и отзывами.
+      operationId: getSellerProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: seller_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор продавца
+      responses:
+        '200':
+          description: Профиль продавца
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProfile'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/market/reviews:
+    post:
+      tags:
+        - Market Social
+      summary: Оставить отзыв о продавце
+      description: |
+        Оставляет отзыв о продавце после покупки.
+      operationId: createSellerReview
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+      responses:
+        '201':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerReview'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          description: Отзыв уже оставлен для этой покупки
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreateListingRequest:
+      type: object
+      required:
+        - character_id
+        - item_id
+        - price
+        - city_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: Цена продажи
+        description:
+          type: string
+          description: Описание объявления
+        city_id:
+          type: string
+          format: uuid
+          description: Город размещения объявления
+
+    MarketListing:
+      type: object
+      required:
+        - id
+        - seller_id
+        - item_id
+        - price
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        seller_name:
+          type: string
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        item_category:
+          type: string
+        item_quality:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, artifact]
+        item_level:
+          type: integer
+        price:
+          type: number
+          format: float
+        commission:
+          type: number
+          format: float
+          description: Комиссия с продажи
+        city_id:
+          type: string
+          format: uuid
+        city_name:
+          type: string
+        status:
+          type: string
+          enum: [active, sold, cancelled, expired]
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        views:
+          type: integer
+          description: Количество просмотров
+
+    UpdateListingRequest:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+          minimum: 0
+        description:
+          type: string
+
+    PurchaseRequest:
+      type: object
+      required:
+        - listing_id
+        - buyer_id
+      properties:
+        listing_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+
+    PurchaseResult:
+      type: object
+      required:
+        - purchase_id
+        - success
+      properties:
+        purchase_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        item_id:
+          type: string
+          format: uuid
+        price_paid:
+          type: number
+          format: float
+        purchased_at:
+          type: string
+          format: date-time
+
+    PurchaseHistory:
+      type: object
+      required:
+        - purchase_id
+        - listing_id
+        - item_id
+        - price_paid
+        - purchased_at
+      properties:
+        purchase_id:
+          type: string
+          format: uuid
+        listing_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        seller_name:
+          type: string
+        price_paid:
+          type: number
+          format: float
+        purchased_at:
+          type: string
+          format: date-time
+
+    SaleHistory:
+      type: object
+      required:
+        - sale_id
+        - listing_id
+        - item_id
+        - price_received
+        - sold_at
+      properties:
+        sale_id:
+          type: string
+          format: uuid
+        listing_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        buyer_id:
+          type: string
+          format: uuid
+        buyer_name:
+          type: string
+        price_received:
+          type: number
+          format: float
+          description: Цена после вычета комиссии
+        commission:
+          type: number
+          format: float
+        sold_at:
+          type: string
+          format: date-time
+
+    SellerProfile:
+      type: object
+      required:
+        - seller_id
+        - rating
+        - total_sales
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+        seller_name:
+          type: string
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        total_sales:
+          type: integer
+        total_revenue:
+          type: number
+          format: float
+        positive_reviews:
+          type: integer
+        negative_reviews:
+          type: integer
+        joined_at:
+          type: string
+          format: date-time
+
+    CreateReviewRequest:
+      type: object
+      required:
+        - purchase_id
+        - seller_id
+        - rating
+      properties:
+        purchase_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    SellerReview:
+      type: object
+      required:
+        - id
+        - purchase_id
+        - seller_id
+        - buyer_id
+        - rating
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        purchase_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        buyer_name:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

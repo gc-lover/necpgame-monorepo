@@ -1,0 +1,893 @@
+# Issue: #60
+openapi: 3.0.3
+info:
+  title: Economy Core Service API
+  description: |
+    API для базовых экономических механик в NECPGAME.
+    
+    **Основные возможности:**
+    - Обзор экономической системы
+    - Базовая P2P торговля между игроками
+    - Торговые гильдии
+    - Управление валютами и ресурсами
+    - Влияние экономики на игровой мир
+    
+    **Валюты:**
+    - Eurodollars (ED) - основная валюта
+    - PvP Tokens - награды за PvP
+    - PvE Credits - награды за PvE
+    - Faction Currency - фракционные единицы
+    - Regional Currencies - региональные валюты
+    
+    **Ресурсы:**
+    - Базовые материалы
+    - Редкие компоненты
+    - Крафт-ресурсы
+    - Ресурсы для имплантов
+    - Информационные ресурсы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Economy Overview
+    description: Обзор экономики
+  - name: Currencies
+    description: Валюты
+  - name: Resources
+    description: Ресурсы
+  - name: Trading
+    description: Базовая торговля
+  - name: Trading Guilds
+    description: Торговые гильдии
+  - name: World Impact
+    description: Влияние на мир
+
+paths:
+  /economy/overview:
+    get:
+      tags:
+        - Economy Overview
+      summary: Получить обзор экономики
+      description: |
+        Возвращает обзор экономической системы: общий объём торговли, инфляция, курсы валют.
+      operationId: getEconomyOverview
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Обзор экономики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyOverview'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/model:
+    get:
+      tags:
+        - Economy Overview
+      summary: Получить информацию о типе экономической модели
+      description: |
+        Возвращает информацию о типе экономической модели: структура рынков, управление, ценообразование.
+        Описывает гибридную модель с глобальными, региональными и фракционными рынками.
+      operationId: getEconomyModel
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Информация о типе экономической модели
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyModel'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/currencies:
+    get:
+      tags:
+        - Currencies
+      summary: Получить список валют
+      description: |
+        Возвращает список всех доступных валют в системе.
+      operationId: getCurrencies
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список валют
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currencies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Currency'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/currencies/{currency_id}/balance:
+    get:
+      tags:
+        - Currencies
+      summary: Получить баланс валюты
+      description: |
+        Возвращает баланс указанной валюты для персонажа.
+      operationId: getCurrencyBalance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: currency_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор валюты
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+      responses:
+        '200':
+          description: Баланс валюты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyBalance'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources:
+    get:
+      tags:
+        - Resources
+      summary: Получить каталог ресурсов
+      description: |
+        Возвращает каталог ресурсов с возможностью фильтрации по типу.
+      operationId: getResources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resource_type
+          in: query
+          schema:
+            type: string
+            enum: [basic, rare, craft, implant, information]
+          description: Фильтр по типу ресурса
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Каталог ресурсов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/{resource_id}:
+    get:
+      tags:
+        - Resources
+      summary: Получить информацию о ресурсе
+      description: |
+        Возвращает детальную информацию о ресурсе по его ID.
+      operationId: getResourceById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ресурса
+      responses:
+        '200':
+          description: Информация о ресурсе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/category/{category}:
+    get:
+      tags:
+        - Resources
+      summary: Получить ресурсы по категории
+      description: |
+        Возвращает список ресурсов, отфильтрованных по категории (raw_materials, electronics, bio_chem, data_assets).
+      operationId: getResourcesByCategory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [raw_materials, electronics, bio_chem, data_assets]
+          description: Категория ресурсов
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список ресурсов по категории
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/tier/{tier}:
+    get:
+      tags:
+        - Resources
+      summary: Получить ресурсы по tier
+      description: |
+        Возвращает список ресурсов, отфильтрованных по tier (1-5).
+      operationId: getResourcesByTier
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tier
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description: Tier ресурсов (1-5)
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список ресурсов по tier
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/{resource_id}/price:
+    get:
+      tags:
+        - Resources
+      summary: Получить текущую цену ресурса
+      description: |
+        Возвращает текущую рыночную цену ресурса с историей изменений (опционально).
+      operationId: getResourcePrice
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ресурса
+        - name: include_history
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Включить историю изменений цены
+        - name: history_days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+            default: 7
+          description: Количество дней истории (если include_history=true)
+      responses:
+        '200':
+          description: Текущая цена ресурса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourcePrice'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/trade/initiate:
+    post:
+      tags:
+        - Trading
+      summary: Инициировать торговлю
+      description: |
+        Инициирует базовую P2P торговлю между двумя игроками.
+      operationId: initiateTrade
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateTradeRequest'
+      responses:
+        '200':
+          description: Торговля инициирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSession'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/trade/{trade_id}/accept:
+    post:
+      tags:
+        - Trading
+      summary: Принять торговлю
+      description: |
+        Принимает предложение торговли и завершает сделку.
+      operationId: acceptTrade
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: trade_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор торговой сессии
+      responses:
+        '200':
+          description: Торговля завершена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/trade/{trade_id}/cancel:
+    post:
+      tags:
+        - Trading
+      summary: Отменить торговлю
+      description: |
+        Отменяет торговую сессию и разблокирует предметы.
+      operationId: cancelTrade
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: trade_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор торговой сессии
+      responses:
+        '200':
+          description: Торговля отменена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/guilds:
+    get:
+      tags:
+        - Trading Guilds
+      summary: Получить список торговых гильдий
+      description: |
+        Возвращает список торговых гильдий с возможностью фильтрации.
+      operationId: getTradingGuilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список торговых гильдий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  guilds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradingGuild'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/guilds/create:
+    post:
+      tags:
+        - Trading Guilds
+      summary: Создать торговую гильдию
+      description: |
+        Создает новую торговую гильдию.
+      operationId: createTradingGuild
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Гильдия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingGuild'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/guilds/{guild_id}/join:
+    post:
+      tags:
+        - Trading Guilds
+      summary: Вступить в торговую гильдию
+      description: |
+        Вступает в торговую гильдию.
+      operationId: joinTradingGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор гильдии
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Вступление в гильдию успешно
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/world-impact:
+    get:
+      tags:
+        - World Impact
+      summary: Получить влияние экономики на мир
+      description: |
+        Возвращает информацию о влиянии экономических операций на игровой мир.
+      operationId: getWorldImpact
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по региону
+      responses:
+        '200':
+          description: Влияние на мир
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldImpact'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    EconomyOverview:
+      type: object
+      required:
+        - total_trade_volume
+        - inflation_rate
+        - currency_rates
+      properties:
+        total_trade_volume:
+          type: number
+          format: float
+          description: Общий объём торговли
+        inflation_rate:
+          type: number
+          format: float
+          description: Уровень инфляции
+        currency_rates:
+          type: object
+          description: Курсы валют
+        active_trades:
+          type: integer
+          description: Количество активных сделок
+        active_guilds:
+          type: integer
+          description: Количество активных гильдий
+
+    Currency:
+      type: object
+      required:
+        - id
+        - name
+        - currency_type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        currency_type:
+          type: string
+          enum: [eurodollars, pvp_tokens, pve_credits, faction, regional]
+        symbol:
+          type: string
+        exchange_rate:
+          type: number
+          format: float
+          description: Курс обмена к Eurodollars
+
+    CurrencyBalance:
+      type: object
+      required:
+        - currency_id
+        - character_id
+        - balance
+      properties:
+        currency_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        balance:
+          type: number
+          format: float
+          minimum: 0
+
+    Resource:
+      type: object
+      required:
+        - id
+        - name
+        - resource_type
+        - category
+        - tier
+        - rarity
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        resource_type:
+          type: string
+          enum: [basic, rare, craft, implant, information]
+        category:
+          type: string
+          enum: [raw_materials, electronics, bio_chem, data_assets]
+          description: Категория ресурса
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Tier ресурса (1-5)
+        description:
+          type: string
+        base_price:
+          type: number
+          format: float
+          description: Базовая цена ресурса
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        sources:
+          type: array
+          items:
+            type: string
+            enum: [loot, mining, processing, quest, market]
+          description: Источники получения ресурса
+        applications:
+          type: array
+          items:
+            type: string
+          description: Применение ресурса (crafting, implants, etc.)
+        stack_size:
+          type: integer
+          minimum: 1
+          description: Максимальный размер стека
+        weight:
+          type: number
+          format: float
+          minimum: 0
+          description: Вес единицы ресурса
+
+    ResourcePrice:
+      type: object
+      required:
+        - resource_id
+        - current_price
+        - updated_at
+      properties:
+        resource_id:
+          type: string
+          format: uuid
+        current_price:
+          type: number
+          format: float
+          minimum: 0
+          description: Текущая рыночная цена
+        base_price:
+          type: number
+          format: float
+          minimum: 0
+          description: Базовая цена ресурса
+        price_change_24h:
+          type: number
+          format: float
+          description: Изменение цены за 24 часа (%)
+        price_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceHistoryPoint'
+          description: История изменений цены (если include_history=true)
+        updated_at:
+          type: string
+          format: date-time
+
+    PriceHistoryPoint:
+      type: object
+      required:
+        - price
+        - timestamp
+      properties:
+        price:
+          type: number
+          format: float
+          minimum: 0
+        timestamp:
+          type: string
+          format: date-time
+
+    InitiateTradeRequest:
+      type: object
+      required:
+        - initiator_id
+        - target_id
+        - items
+      properties:
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        currency_offer:
+          type: number
+          format: float
+          minimum: 0
+
+    TradeSession:
+      type: object
+      required:
+        - trade_id
+        - initiator_id
+        - target_id
+        - status
+        - created_at
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, completed, cancelled]
+        items:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    TradingGuild:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        member_count:
+          type: integer
+        trade_volume:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - creator_id
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        creator_id:
+          type: string
+          format: uuid
+
+    WorldImpact:
+      type: object
+      required:
+        - region_id
+        - economic_activity
+      properties:
+        region_id:
+          type: string
+          format: uuid
+        economic_activity:
+          type: number
+          format: float
+          description: Уровень экономической активности
+        trade_volume:
+          type: number
+          format: float
+        inflation_rate:
+          type: number
+          format: float
+        market_stability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+security:
+  - BearerAuth: []
+

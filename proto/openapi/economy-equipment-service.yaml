@@ -1,7 +1,22 @@
+# Issue: #62
 openapi: 3.0.3
 info:
   title: Economy Equipment Service API
-  description: API для процедурной матрицы снаряжения
+  description: |
+    API для системы оборудования в NECPGAME.
+
+    **Основные возможности:**
+    - Каталог оборудования (ручной срез ключевых предметов)
+    - Временная линия культового оборудования (Iconic Equipment Timeline)
+    - Процедурная генерация оборудования
+    - Управление матрицей характеристик
+    - Аналитика оборудования
+
+    **Интеграции:**
+    - inventory-service - добавление предметов в инвентарь
+    - economy-service - торговля оборудованием
+    - gameplay-service - расчет характеристик
+    - narrative-service - разблокировка культового через квесты
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -14,10 +29,206 @@ servers:
     description: Продакшен сервер
 
 tags:
+  - name: Equipment Catalog
+    description: Каталог оборудования
+  - name: Iconic Equipment
+    description: Культовое оборудование
   - name: Equipment Matrix
     description: Процедурная матрица снаряжения
+  - name: Equipment Analytics
+    description: Аналитика оборудования
 
 paths:
+  /economy/equipment/catalog:
+    get:
+      tags:
+        - Equipment Catalog
+      summary: Получить каталог оборудования
+      description: |
+        Возвращает каталог оборудования с возможностью фильтрации.
+      operationId: getEquipmentCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Фильтр по категории
+        - name: brand_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по бренду
+        - name: rarity
+          in: query
+          schema:
+            $ref: "#/components/schemas/EquipmentRarity"
+          description: Фильтр по редкости
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Каталог оборудования
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CatalogItem"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/equipment/catalog/{id}:
+    get:
+      tags:
+        - Equipment Catalog
+      summary: Получить предмет из каталога
+      description: |
+        Возвращает детальную информацию о предмете из каталога.
+      operationId: getCatalogItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор предмета
+      responses:
+        "200":
+          description: Информация о предмете
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogItem"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/equipment/iconic/timeline:
+    get:
+      tags:
+        - Iconic Equipment
+      summary: Получить временную линию культового оборудования
+      description: |
+        Возвращает временную линию культового оборудования по годам (2020-2093).
+      operationId: getIconicTimeline
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+          description: Фильтр по году
+        - name: unlocked_only
+          in: query
+          schema:
+            type: boolean
+          description: Только разблокированное оборудование
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Временная линия культового оборудования
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/IconicItem"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/equipment/iconic/{id}:
+    get:
+      tags:
+        - Iconic Equipment
+      summary: Получить культовый предмет
+      description: |
+        Возвращает детальную информацию о культовом предмете.
+      operationId: getIconicItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор культового предмета
+      responses:
+        "200":
+          description: Информация о культовом предмете
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IconicItem"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/equipment/analytics:
+    get:
+      tags:
+        - Equipment Analytics
+      summary: Получить аналитику оборудования
+      description: |
+        Возвращает аналитику по использованию оборудования.
+      operationId: getEquipmentAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+          description: Период аналитики
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Фильтр по категории
+      responses:
+        "200":
+          description: Аналитика оборудования
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipmentAnalytics"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
   /economy/equipment/generate:
     post:
       tags:
@@ -318,7 +529,23 @@ components:
 
     StatType:
       type: string
-      enum: [DAMAGE, ACCURACY, RANGE, FIRE_RATE, RELOAD_SPEED, MAGAZINE_SIZE, CRIT_CHANCE, CRIT_DAMAGE, STABILITY, HANDLING, DURABILITY, ENERGY_COST, COOLDOWN, EFFECT_DURATION]
+      enum:
+        [
+          DAMAGE,
+          ACCURACY,
+          RANGE,
+          FIRE_RATE,
+          RELOAD_SPEED,
+          MAGAZINE_SIZE,
+          CRIT_CHANCE,
+          CRIT_DAMAGE,
+          STABILITY,
+          HANDLING,
+          DURABILITY,
+          ENERGY_COST,
+          COOLDOWN,
+          EFFECT_DURATION,
+        ]
 
     StatDistribution:
       type: string
@@ -355,7 +582,16 @@ components:
 
     ModifierType:
       type: string
-      enum: [DAMAGE_BOOST, CRIT_CHANCE, ELEMENTAL_DAMAGE, STATUS_EFFECT, STAT_BOOST, REDUCTION, MULTIPLIER]
+      enum:
+        [
+          DAMAGE_BOOST,
+          CRIT_CHANCE,
+          ELEMENTAL_DAMAGE,
+          STATUS_EFFECT,
+          STAT_BOOST,
+          REDUCTION,
+          MULTIPLIER,
+        ]
 
     Brand:
       type: object
@@ -481,6 +717,129 @@ components:
           additionalProperties: true
           nullable: true
 
+    CatalogItem:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - rarity
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        brand_id:
+          type: string
+          format: uuid
+        brand_name:
+          type: string
+        rarity:
+          $ref: "#/components/schemas/EquipmentRarity"
+        stats:
+          type: object
+          additionalProperties: true
+        icon_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+
+    IconicItem:
+      type: object
+      required:
+        - id
+        - name
+        - year
+        - unlocked
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        year:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+        category:
+          type: string
+        brand_id:
+          type: string
+          format: uuid
+        brand_name:
+          type: string
+        rarity:
+          type: string
+          enum: [ICONIC]
+        stats:
+          type: object
+          additionalProperties: true
+        unique_ability:
+          type: string
+        unlock_condition:
+          type: string
+        unlocked:
+          type: boolean
+        icon_url:
+          type: string
+          format: uri
+        timeline_position:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    EquipmentAnalytics:
+      type: object
+      required:
+        - period
+        - total_items
+      properties:
+        period:
+          type: string
+          enum: [day, week, month, year]
+        total_items:
+          type: integer
+        items_by_category:
+          type: object
+          additionalProperties:
+            type: integer
+        items_by_rarity:
+          type: object
+          additionalProperties:
+            type: integer
+        most_popular_brands:
+          type: array
+          items:
+            type: object
+            properties:
+              brand_id:
+                type: string
+                format: uuid
+              brand_name:
+                type: string
+              count:
+                type: integer
+        generation_stats:
+          type: object
+          properties:
+            total_generated:
+              type: integer
+            by_source:
+              type: object
+              additionalProperties:
+                type: integer
+        iconic_unlocks:
+          type: integer
+
 security:
   - BearerAuth: []
-

@@ -1,0 +1,626 @@
+# Issue: #225
+openapi: 3.0.3
+info:
+  title: Economy Events Service API
+  description: |
+    API для управления экономическими событиями в NECPGAME.
+    
+    **Основные возможности:**
+    - Управление экономическими событиями (CRUD)
+    - Жизненный цикл событий (PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED)
+    - Планирование и триггеры событий
+    - Мониторинг и аналитика событий
+    
+    **Типы событий:**
+    - Crisis - кризисы
+    - Boom - бумы
+    - Inflation - инфляция
+    - Embargo - эмбарго
+    - Sanctions - санкции
+    - Tariffs - тарифы
+    - Scandal - скандалы
+    - TechBreakthrough - технологические прорывы
+    
+    **Интеграции:**
+    - economy-service - основная логика событий
+    - pricing-engine - применение эффектов к ценам
+    - currency-exchange - изменение курсов валют
+    - stock-exchange - изменение котировок акций
+    - analytics-service - метрики и аналитика
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Events
+    description: Управление экономическими событиями
+  - name: Event Lifecycle
+    description: Жизненный цикл событий
+  - name: Event Monitoring
+    description: Мониторинг и аналитика событий
+
+paths:
+  /economy/events:
+    get:
+      tags:
+        - Events
+      summary: Получить список событий
+      description: |
+        Возвращает список экономических событий с фильтрацией.
+      operationId: getEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planned, announced, active, cooldown, archived]
+          description: Фильтр по статусу
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough]
+          description: Фильтр по типу события
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [global, regional]
+          description: Фильтр по охвату (глобальное/региональное)
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по региону
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EconomicEvent"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    post:
+      tags:
+        - Events
+      summary: Создать событие
+      description: |
+        Создает новое экономическое событие.
+      operationId: createEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "201":
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomicEvent"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/events/{event_id}:
+    get:
+      tags:
+        - Events
+      summary: Получить информацию о событии
+      description: |
+        Возвращает детальную информацию о событии.
+      operationId: getEventById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор события
+      responses:
+        "200":
+          description: Информация о событии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomicEventDetailed"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    put:
+      tags:
+        - Events
+      summary: Обновить событие
+      description: |
+        Обновляет событие (только в статусе planned).
+      operationId: updateEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventRequest"
+      responses:
+        "200":
+          description: Событие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomicEvent"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    delete:
+      tags:
+        - Events
+      summary: Удалить событие
+      description: |
+        Удаляет событие (только в статусе planned или archived).
+      operationId: deleteEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор события
+      responses:
+        "200":
+          description: Событие удалено
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/StatusResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/events/{event_id}/announce:
+    post:
+      tags:
+        - Event Lifecycle
+      summary: Анонсировать событие
+      description: |
+        Переводит событие в статус ANNOUNCED.
+      operationId: announceEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор события
+      responses:
+        "200":
+          description: Событие анонсировано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomicEvent"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/events/{event_id}/activate:
+    post:
+      tags:
+        - Event Lifecycle
+      summary: Активировать событие
+      description: |
+        Переводит событие в статус ACTIVE и применяет эффекты.
+      operationId: activateEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор события
+      responses:
+        "200":
+          description: Событие активировано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomicEvent"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/events/{event_id}/archive:
+    post:
+      tags:
+        - Event Lifecycle
+      summary: Архивировать событие
+      description: |
+        Переводит событие в статус ARCHIVED.
+      operationId: archiveEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор события
+      responses:
+        "200":
+          description: Событие архивировано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomicEvent"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/events/active:
+    get:
+      tags:
+        - Events
+      summary: Получить активные события
+      description: |
+        Возвращает список активных экономических событий.
+      operationId: getActiveEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список активных событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EconomicEvent"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/events/{event_id}/metrics:
+    get:
+      tags:
+        - Event Monitoring
+      summary: Получить метрики события
+      description: |
+        Возвращает метрики события (PriceDeviation, TransactionVolume, EventUptime).
+      operationId: getEventMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор события
+      responses:
+        "200":
+          description: Метрики события
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMetrics"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    EconomicEvent:
+      type: object
+      required:
+        - id
+        - event_type
+        - status
+        - scope
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough]
+        status:
+          type: string
+          enum: [planned, announced, active, cooldown, archived]
+        scope:
+          type: string
+          enum: [global, regional]
+        region_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        actual_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        actual_end:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    EconomicEventDetailed:
+      type: object
+      required:
+        - id
+        - event_type
+        - status
+        - scope
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough]
+        status:
+          type: string
+          enum: [planned, announced, active, cooldown, archived]
+        scope:
+          type: string
+          enum: [global, regional]
+        region_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        effects:
+          type: object
+          description: Эффекты события (JSON-объект с модификаторами)
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        actual_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        actual_end:
+          type: string
+          format: date-time
+          nullable: true
+        trigger_type:
+          type: string
+          enum: [manual, cron, quest, simulation]
+          nullable: true
+        trigger_config:
+          type: object
+          nullable: true
+          description: Конфигурация триггера (cron expression, quest_id, и т.д.)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateEventRequest:
+      type: object
+      required:
+        - event_type
+        - scope
+        - title
+      properties:
+        event_type:
+          type: string
+          enum: [crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough]
+        scope:
+          type: string
+          enum: [global, regional]
+        region_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        effects:
+          type: object
+          description: Эффекты события (JSON-объект с модификаторами)
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        trigger_type:
+          type: string
+          enum: [manual, cron, quest, simulation]
+          nullable: true
+        trigger_config:
+          type: object
+          nullable: true
+          description: Конфигурация триггера
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        effects:
+          type: object
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        trigger_type:
+          type: string
+          enum: [manual, cron, quest, simulation]
+          nullable: true
+        trigger_config:
+          type: object
+          nullable: true
+
+    EventMetrics:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        price_deviation:
+          type: number
+          format: float
+          description: Отклонение цен от прогноза (%)
+        transaction_volume:
+          type: number
+          format: float
+          description: Объем транзакций
+        event_uptime:
+          type: number
+          format: float
+          description: Время активности события (часы)
+        affected_regions:
+          type: integer
+          description: Количество затронутых регионов
+        affected_players:
+          type: integer
+          description: Количество затронутых игроков
+        calculated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
