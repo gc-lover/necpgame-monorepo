@@ -20,6 +20,7 @@ type HousingServiceInterface interface {
 	ListApartments(ctx context.Context, ownerID *uuid.UUID, ownerType *string, isPublic *bool, limit, offset int) ([]models.Apartment, int, error)
 	UpdateApartmentSettings(ctx context.Context, apartmentID uuid.UUID, req *models.UpdateApartmentSettingsRequest) error
 	PlaceFurniture(ctx context.Context, apartmentID uuid.UUID, req *models.PlaceFurnitureRequest) (*models.PlacedFurniture, error)
+	UpdateFurniturePosition(ctx context.Context, apartmentID, furnitureID uuid.UUID, position, rotation, scale map[string]interface{}) (*models.PlacedFurniture, error)
 	RemoveFurniture(ctx context.Context, apartmentID, furnitureID uuid.UUID, characterID uuid.UUID) error
 	GetFurnitureItem(ctx context.Context, itemID string) (*models.FurnitureItem, error)
 	ListFurnitureItems(ctx context.Context, category *models.FurnitureCategory, limit, offset int) ([]models.FurnitureItem, int, error)

@@ -21,6 +21,7 @@ type HousingRepositoryInterface interface {
 	ListFurnitureItems(ctx context.Context, category *models.FurnitureCategory, limit, offset int) ([]models.FurnitureItem, int, error)
 	CreatePlacedFurniture(ctx context.Context, furniture *models.PlacedFurniture) error
 	GetPlacedFurnitureByID(ctx context.Context, furnitureID uuid.UUID) (*models.PlacedFurniture, error)
+	UpdatePlacedFurniture(ctx context.Context, furniture *models.PlacedFurniture) error
 	ListPlacedFurniture(ctx context.Context, apartmentID uuid.UUID) ([]models.PlacedFurniture, error)
 	DeletePlacedFurniture(ctx context.Context, furnitureID uuid.UUID) error
 	CountPlacedFurniture(ctx context.Context, apartmentID uuid.UUID) (int, error)
@@ -315,6 +316,49 @@ func (s *HousingService) GetApartmentDetail(ctx context.Context, apartmentID uui
 		ItemDetails:       itemDetails,
 		FunctionalBonuses: functionalBonuses,
 	}, nil
+}
+
+func (s *HousingService) UpdateFurniturePosition(ctx context.Context, apartmentID, furnitureID uuid.UUID, position, rotation, scale map[string]interface{}) (*models.PlacedFurniture, error) {
+	furniture, err := s.repo.GetPlacedFurnitureByID(ctx, furnitureID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get placed furniture: %w", err)
+	}
+
+	if furniture == nil {
+		return nil, fmt.Errorf("furniture not found")
+	}
+
+	if furniture.ApartmentID != apartmentID {
+		return nil, fmt.Errorf("furniture does not belong to this apartment")
+	}
+
+	// Обновляем позицию, если указана
+	if position != nil {
+		furniture.Position = position
+	}
+
+	// Обновляем ротацию, если указана
+	if rotation != nil {
+		furniture.Rotation = rotation
+	}
+
+	// Обновляем масштаб, если указан
+	if scale != nil {
+		furniture.Scale = scale
+	}
+
+	furniture.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdatePlacedFurniture(ctx, furniture); err != nil {
+		return nil, fmt.Errorf("failed to update placed furniture: %w", err)
+	}
+
+	s.publishEvent(ctx, "housing:furniture:moved", map[string]interface{}{
+		"apartment_id": apartmentID,
+		"furniture_id": furnitureID,
+	})
+
+	return furniture, nil
 }
 
 func (s *HousingService) VisitApartment(ctx context.Context, req *models.VisitApartmentRequest) error {
