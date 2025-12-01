@@ -405,6 +405,42 @@ func (r *HousingRepository) ListPlacedFurniture(ctx context.Context, apartmentID
 	return furniture, nil
 }
 
+func (r *HousingRepository) UpdatePlacedFurniture(ctx context.Context, furniture *models.PlacedFurniture) error {
+	positionJSON, err := json.Marshal(furniture.Position)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal position JSON")
+		return fmt.Errorf("failed to marshal position: %w", err)
+	}
+
+	rotationJSON, err := json.Marshal(furniture.Rotation)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal rotation JSON")
+		return fmt.Errorf("failed to marshal rotation: %w", err)
+	}
+
+	scaleJSON, err := json.Marshal(furniture.Scale)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal scale JSON")
+		return fmt.Errorf("failed to marshal scale: %w", err)
+	}
+
+	query := `
+		UPDATE housing.placed_furniture
+		SET position = $1, rotation = $2, scale = $3, updated_at = $4
+		WHERE id = $5
+	`
+
+	_, err = r.db.Exec(ctx, query,
+		positionJSON, rotationJSON, scaleJSON, furniture.UpdatedAt, furniture.ID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update placed furniture: %w", err)
+	}
+
+	return nil
+}
+
 func (r *HousingRepository) DeletePlacedFurniture(ctx context.Context, furnitureID uuid.UUID) error {
 	query := `DELETE FROM housing.placed_furniture WHERE id = $1`
 
