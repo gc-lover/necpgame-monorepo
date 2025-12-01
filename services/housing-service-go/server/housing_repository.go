@@ -478,6 +478,76 @@ func (r *HousingRepository) CreateVisit(ctx context.Context, visit *models.Apart
 	return nil
 }
 
+func (r *HousingRepository) ListApartmentVisits(ctx context.Context, apartmentID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error) {
+	countQuery := `SELECT COUNT(*) FROM housing.apartment_visits WHERE apartment_id = $1`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery, apartmentID).Scan(&total)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count apartment visits: %w", err)
+	}
+
+	query := `
+		SELECT id, apartment_id, visitor_id, visited_at
+		FROM housing.apartment_visits
+		WHERE apartment_id = $1
+		ORDER BY visited_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.db.Query(ctx, query, apartmentID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list apartment visits: %w", err)
+	}
+	defer rows.Close()
+
+	var visits []models.ApartmentVisit
+	for rows.Next() {
+		var visit models.ApartmentVisit
+		err := rows.Scan(&visit.ID, &visit.ApartmentID, &visit.VisitorID, &visit.VisitedAt)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to scan visit: %w", err)
+		}
+		visits = append(visits, visit)
+	}
+
+	return visits, total, nil
+}
+
+func (r *HousingRepository) ListPlayerVisits(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error) {
+	countQuery := `SELECT COUNT(*) FROM housing.apartment_visits WHERE visitor_id = $1`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery, playerID).Scan(&total)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count player visits: %w", err)
+	}
+
+	query := `
+		SELECT id, apartment_id, visitor_id, visited_at
+		FROM housing.apartment_visits
+		WHERE visitor_id = $1
+		ORDER BY visited_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.db.Query(ctx, query, playerID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list player visits: %w", err)
+	}
+	defer rows.Close()
+
+	var visits []models.ApartmentVisit
+	for rows.Next() {
+		var visit models.ApartmentVisit
+		err := rows.Scan(&visit.ID, &visit.ApartmentID, &visit.VisitorID, &visit.VisitedAt)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to scan visit: %w", err)
+		}
+		visits = append(visits, visit)
+	}
+
+	return visits, total, nil
+}
+
 func (r *HousingRepository) GetPrestigeLeaderboard(ctx context.Context, limit, offset int) ([]models.PrestigeLeaderboardEntry, int, error) {
 	query := `
 		SELECT a.id, a.owner_id, a.apartment_type, a.location, a.prestige_score,
