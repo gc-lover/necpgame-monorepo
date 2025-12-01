@@ -26,6 +26,8 @@ type HousingServiceInterface interface {
 	ListFurnitureItems(ctx context.Context, category *models.FurnitureCategory, limit, offset int) ([]models.FurnitureItem, int, error)
 	GetApartmentDetail(ctx context.Context, apartmentID uuid.UUID) (*models.ApartmentDetailResponse, error)
 	VisitApartment(ctx context.Context, req *models.VisitApartmentRequest) error
+	GetApartmentVisits(ctx context.Context, apartmentID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error)
+	GetPlayerVisits(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error)
 	GetPrestigeLeaderboard(ctx context.Context, limit, offset int) ([]models.PrestigeLeaderboardEntry, int, error)
 }
 

@@ -26,6 +26,8 @@ type HousingRepositoryInterface interface {
 	DeletePlacedFurniture(ctx context.Context, furnitureID uuid.UUID) error
 	CountPlacedFurniture(ctx context.Context, apartmentID uuid.UUID) (int, error)
 	CreateVisit(ctx context.Context, visit *models.ApartmentVisit) error
+	ListApartmentVisits(ctx context.Context, apartmentID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error)
+	ListPlayerVisits(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error)
 	GetPrestigeLeaderboard(ctx context.Context, limit, offset int) ([]models.PrestigeLeaderboardEntry, int, error)
 }
 
@@ -403,6 +405,24 @@ func (s *HousingService) VisitApartment(ctx context.Context, req *models.VisitAp
 	RecordApartmentVisit()
 
 	return nil
+}
+
+func (s *HousingService) GetApartmentVisits(ctx context.Context, apartmentID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error) {
+	visits, total, err := s.repo.ListApartmentVisits(ctx, apartmentID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get apartment visits: %w", err)
+	}
+
+	return visits, total, nil
+}
+
+func (s *HousingService) GetPlayerVisits(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]models.ApartmentVisit, int, error) {
+	visits, total, err := s.repo.ListPlayerVisits(ctx, playerID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get player visits: %w", err)
+	}
+
+	return visits, total, nil
 }
 
 func (s *HousingService) GetPrestigeLeaderboard(ctx context.Context, limit, offset int) ([]models.PrestigeLeaderboardEntry, int, error) {
