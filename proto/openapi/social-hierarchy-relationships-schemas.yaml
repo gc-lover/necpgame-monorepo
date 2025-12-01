@@ -1,0 +1,187 @@
+# Issue: #1433
+openapi: 3.0.3
+info:
+  title: Social Hierarchy Relationships Service - Schemas
+  description: Общие схемы данных для управления связями между уровнями иерархии коопераций
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+paths: {}
+
+components:
+  schemas:
+    HierarchyLevel:
+      type: string
+      enum:
+        - player
+        - group
+        - clan
+        - corporation
+        - politics
+        - continent
+        - planet
+      description: Уровень иерархии коопераций
+
+    HierarchyRelationship:
+      type: object
+      required:
+        - id
+        - from_level
+        - from_entity_id
+        - to_level
+        - to_entity_id
+        - relationship_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID связи
+        from_level:
+          $ref: '#/components/schemas/HierarchyLevel'
+          description: Уровень источника связи
+        from_entity_id:
+          type: string
+          format: uuid
+          description: ID сущности источника
+        to_level:
+          $ref: '#/components/schemas/HierarchyLevel'
+          description: Уровень цели связи
+        to_entity_id:
+          type: string
+          format: uuid
+          description: ID сущности цели
+        relationship_type:
+          type: string
+          enum:
+            - member
+            - owner
+            - parent
+            - child
+            - alliance
+            - conflict
+          description: Тип связи
+        status:
+          type: string
+          enum:
+            - active
+            - pending
+            - suspended
+            - terminated
+          description: Статус связи
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Дополнительные метаданные связи
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+
+    CreateHierarchyRelationshipRequest:
+      type: object
+      required:
+        - from_level
+        - from_entity_id
+        - to_level
+        - to_entity_id
+        - relationship_type
+      properties:
+        from_level:
+          $ref: '#/components/schemas/HierarchyLevel'
+        from_entity_id:
+          type: string
+          format: uuid
+        to_level:
+          $ref: '#/components/schemas/HierarchyLevel'
+        to_entity_id:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum:
+            - member
+            - owner
+            - parent
+            - child
+            - alliance
+            - conflict
+        metadata:
+          type: object
+          additionalProperties: true
+
+    UpdateHierarchyRelationshipRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - active
+            - pending
+            - suspended
+            - terminated
+        metadata:
+          type: object
+          additionalProperties: true
+
+    PromoteHierarchyRelationshipRequest:
+      type: object
+      required:
+        - new_level
+        - new_entity_id
+      properties:
+        new_level:
+          $ref: '#/components/schemas/HierarchyLevel'
+          description: Новый уровень иерархии
+        new_entity_id:
+          type: string
+          format: uuid
+          description: ID новой сущности на новом уровне
+        reason:
+          type: string
+          description: Причина повышения уровня
+
+    HierarchyRelationshipListResponse:
+      type: object
+      required:
+        - relationships
+      properties:
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/HierarchyRelationship'
+        total:
+          type: integer
+          format: int64
+          description: Общее количество связей
+
+    HierarchyRelationshipValidationResult:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          description: Результат валидации
+        errors:
+          type: array
+          items:
+            type: string
+          description: Список ошибок валидации
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Список предупреждений
+

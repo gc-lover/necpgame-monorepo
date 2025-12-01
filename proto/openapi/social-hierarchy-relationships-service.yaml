@@ -1,0 +1,292 @@
+# Issue: #1433
+openapi: 3.0.3
+info:
+  title: Social Hierarchy Relationships Service API
+  description: API для управления связями между уровнями иерархии коопераций игроков
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+tags:
+  - name: Hierarchy Relationships
+    description: Управление связями между уровнями иерархии
+
+paths:
+  /social/hierarchy/relationships:
+    post:
+      tags:
+        - Hierarchy Relationships
+      summary: Создать связь между уровнями
+      description: |
+        Создает новую связь между уровнями иерархии коопераций.
+        Валидирует возможность создания связи согласно правилам иерархии.
+      operationId: createHierarchyRelationship
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/CreateHierarchyRelationshipRequest'
+            example:
+              from_level: "clan"
+              from_entity_id: "550e8400-e29b-41d4-a716-446655440000"
+              to_level: "corporation"
+              to_entity_id: "660e8400-e29b-41d4-a716-446655440001"
+              relationship_type: "member"
+              metadata:
+                role: "founder"
+      responses:
+        '201':
+          description: Связь успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/HierarchyRelationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Hierarchy Relationships
+      summary: Список связей между уровнями
+      description: |
+        Возвращает список связей между уровнями иерархии с возможностью фильтрации.
+      operationId: listHierarchyRelationships
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: from_level
+          in: query
+          required: false
+          schema:
+            $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/HierarchyLevel'
+          description: Фильтр по уровню источника
+        - name: from_entity_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по ID сущности источника
+        - name: to_level
+          in: query
+          required: false
+          schema:
+            $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/HierarchyLevel'
+          description: Фильтр по уровню цели
+        - name: to_entity_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по ID сущности цели
+        - name: relationship_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - member
+              - owner
+              - parent
+              - child
+              - alliance
+              - conflict
+          description: Фильтр по типу связи
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - pending
+              - suspended
+              - terminated
+          description: Фильтр по статусу
+      responses:
+        '200':
+          description: Список связей
+          content:
+            application/json:
+              schema:
+                $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/HierarchyRelationshipListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/hierarchy/relationships/{relationshipId}:
+    get:
+      tags:
+        - Hierarchy Relationships
+      summary: Информация о связи
+      description: |
+        Возвращает детальную информацию о связи между уровнями иерархии.
+      operationId: getHierarchyRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationshipId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID связи
+      responses:
+        '200':
+          description: Информация о связи
+          content:
+            application/json:
+              schema:
+                $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/HierarchyRelationship'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Hierarchy Relationships
+      summary: Обновить связь
+      description: |
+        Обновляет информацию о связи между уровнями иерархии.
+      operationId: updateHierarchyRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationshipId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID связи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/UpdateHierarchyRelationshipRequest'
+      responses:
+        '200':
+          description: Связь успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/HierarchyRelationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Hierarchy Relationships
+      summary: Удалить связь
+      description: |
+        Удаляет связь между уровнями иерархии.
+      operationId: deleteHierarchyRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationshipId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID связи
+      responses:
+        '204':
+          description: Связь успешно удалена
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/hierarchy/relationships/{relationshipId}/promote:
+    post:
+      tags:
+        - Hierarchy Relationships
+      summary: Повысить уровень связи
+      description: |
+        Повышает уровень связи в иерархии коопераций (например, переход клана в корпорацию).
+        Валидирует возможность повышения уровня согласно правилам иерархии.
+      operationId: promoteHierarchyRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationshipId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID связи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/PromoteHierarchyRelationshipRequest'
+            example:
+              new_level: "corporation"
+              new_entity_id: "770e8400-e29b-41d4-a716-446655440002"
+              reason: "Clan has grown to meet corporation requirements"
+      responses:
+        '200':
+          description: Уровень успешно повышен
+          content:
+            application/json:
+              schema:
+                $ref: 'social-hierarchy-relationships-schemas.yaml#/components/schemas/HierarchyRelationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
