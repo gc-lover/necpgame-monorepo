@@ -1,0 +1,283 @@
+# Issue: #1452
+openapi: 3.0.3
+info:
+  title: Transport Vehicle Control Service API
+  description: API для управления транспортом
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+tags:
+  - name: Vehicle Control
+    description: Управление транспортом
+
+paths:
+  /gameplay/transport/vehicles/{vehicleId}/control:
+    post:
+      tags:
+        - Vehicle Control
+      summary: Команда управления транспортом
+      description: |
+        Отправляет команду управления транспортным средством.
+      operationId: sendVehicleControlCommand
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleControlCommand'
+            example:
+              command_type: accelerate
+              value: 0.8
+              timestamp: "2025-12-01T22:00:00Z"
+      responses:
+        '200':
+          description: Команда обработана
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}/enter:
+    post:
+      tags:
+        - Vehicle Control
+      summary: Войти в транспорт
+      description: |
+        Позволяет персонажу войти в транспортное средство.
+      operationId: enterVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+        - name: seat_index
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Индекс места (0 - водитель)
+      responses:
+        '200':
+          description: Персонаж вошел в транспорт
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehiclePassenger'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}/exit:
+    post:
+      tags:
+        - Vehicle Control
+      summary: Выйти из транспорта
+      description: |
+        Позволяет персонажу выйти из транспортного средства.
+      operationId: exitVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '200':
+          description: Персонаж вышел из транспорта
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}/passengers:
+    get:
+      tags:
+        - Vehicle Control
+      summary: Список пассажиров
+      description: |
+        Возвращает список пассажиров транспортного средства.
+      operationId: listVehiclePassengers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      responses:
+        '200':
+          description: Список пассажиров
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehiclePassengerListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}/passengers/{characterId}:
+    post:
+      tags:
+        - Vehicle Control
+      summary: Добавить пассажира
+      description: |
+        Добавляет пассажира в транспортное средство.
+      operationId: addVehiclePassenger
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+        - name: seat_index
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+          description: Индекс места
+      responses:
+        '200':
+          description: Пассажир добавлен
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehiclePassenger'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Vehicle Control
+      summary: Удалить пассажира
+      description: |
+        Удаляет пассажира из транспортного средства.
+      operationId: removeVehiclePassenger
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '204':
+          description: Пассажир удален
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

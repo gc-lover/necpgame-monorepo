@@ -1,0 +1,330 @@
+# Issue: #1452
+openapi: 3.0.3
+info:
+  title: Transport Vehicle Core Service API
+  description: API для управления транспортом и владением
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+tags:
+  - name: Transport Core
+    description: Управление транспортом и владением
+
+paths:
+  /gameplay/transport/{characterId}/vehicles:
+    get:
+      tags:
+        - Transport Core
+      summary: Список транспорта персонажа
+      description: |
+        Возвращает список транспорта, принадлежащего персонажу.
+      operationId: listCharacterVehicles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleType'
+          description: Фильтр по типу транспорта
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleStatus'
+          description: Фильтр по статусу
+      responses:
+        '200':
+          description: Список транспорта
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles:
+    post:
+      tags:
+        - Transport Core
+      summary: Создать транспорт
+      description: |
+        Создает новое транспортное средство.
+      operationId: createVehicle
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/CreateVehicleRequest'
+            example:
+              type: ground
+              subtype: automobile
+              name: "Quadra Type-66"
+              description: "Classic cyberpunk vehicle"
+      responses:
+        '201':
+          description: Транспорт создан
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/Vehicle'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}:
+    get:
+      tags:
+        - Transport Core
+      summary: Информация о транспорте
+      description: |
+        Возвращает детальную информацию о транспортном средстве.
+      operationId: getVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      responses:
+        '200':
+          description: Информация о транспорте
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/Vehicle'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Transport Core
+      summary: Обновить транспорт
+      description: |
+        Обновляет информацию о транспортном средстве.
+      operationId: updateVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/UpdateVehicleRequest'
+      responses:
+        '200':
+          description: Транспорт обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/Vehicle'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Transport Core
+      summary: Удалить транспорт
+      description: |
+        Удаляет транспортное средство.
+      operationId: deleteVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      responses:
+        '204':
+          description: Транспорт удален
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}/claim:
+    post:
+      tags:
+        - Transport Core
+      summary: Заявить право владения
+      description: |
+        Заявляет право владения транспортным средством для персонажа.
+      operationId: claimVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/ClaimVehicleRequest'
+      responses:
+        '200':
+          description: Право владения заявлено
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/Vehicle'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}/store:
+    post:
+      tags:
+        - Transport Core
+      summary: Сохранить транспорт
+      description: |
+        Сохраняет транспортное средство в указанном месте хранения.
+      operationId: storeVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/StoreVehicleRequest'
+      responses:
+        '200':
+          description: Транспорт сохранен
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/Vehicle'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/transport/vehicles/{vehicleId}/retrieve:
+    post:
+      tags:
+        - Transport Core
+      summary: Извлечь транспорт
+      description: |
+        Извлекает транспортное средство из места хранения.
+      operationId: retrieveVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      responses:
+        '200':
+          description: Транспорт извлечен
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/Vehicle'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

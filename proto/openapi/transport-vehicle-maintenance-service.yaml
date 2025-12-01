@@ -1,0 +1,248 @@
+# Issue: #1452
+openapi: 3.0.3
+info:
+  title: Transport Vehicle Maintenance Service API
+  description: API для ремонта и обслуживания транспорта
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+tags:
+  - name: Vehicle Maintenance
+    description: Ремонт и обслуживание транспорта
+
+paths:
+  /economy/transport/vehicles/{vehicleId}/condition:
+    get:
+      tags:
+        - Vehicle Maintenance
+      summary: Состояние транспорта
+      description: |
+        Возвращает текущее состояние транспортного средства (износ, повреждения, здоровье).
+      operationId: getVehicleCondition
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      responses:
+        '200':
+          description: Состояние транспорта
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCondition'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/transport/vehicles/{vehicleId}/repair:
+    post:
+      tags:
+        - Vehicle Maintenance
+      summary: Отремонтировать транспорт
+      description: |
+        Выполняет ремонт транспортного средства. Списывает валюту за ремонт.
+      operationId: repairVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/RepairVehicleRequest'
+      responses:
+        '200':
+          description: Транспорт отремонтирован
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCondition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '402':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/transport/vehicles/{vehicleId}/maintenance:
+    post:
+      tags:
+        - Vehicle Maintenance
+      summary: Обслужить транспорт
+      description: |
+        Выполняет обслуживание транспортного средства (замена масла, шин, настройка двигателя и т.д.).
+      operationId: maintainVehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/MaintenanceVehicleRequest'
+      responses:
+        '200':
+          description: Транспорт обслужен
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCondition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '402':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/transport/vehicles/{vehicleId}/repair-cost:
+    get:
+      tags:
+        - Vehicle Maintenance
+      summary: Стоимость ремонта
+      description: |
+        Возвращает стоимость ремонта транспортного средства.
+      operationId: getRepairCost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+        - name: parts
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Список частей для ремонта (пусто = все части)
+        - name: full_repair
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Полный ремонт
+      responses:
+        '200':
+          description: Стоимость ремонта
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/RepairCostResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/transport/vehicles/{vehicleId}/parts/replace:
+    post:
+      tags:
+        - Vehicle Maintenance
+      summary: Заменить детали
+      description: |
+        Заменяет детали транспортного средства. Списывает валюту за детали.
+      operationId: replaceVehicleParts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/ReplacePartsRequest'
+      responses:
+        '200':
+          description: Детали заменены
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCondition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '402':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

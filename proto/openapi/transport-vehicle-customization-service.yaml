@@ -1,0 +1,194 @@
+# Issue: #1452
+openapi: 3.0.3
+info:
+  title: Transport Vehicle Customization Service API
+  description: API для кастомизации транспорта
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+tags:
+  - name: Vehicle Customization
+    description: Кастомизация транспорта
+
+paths:
+  /economy/transport/vehicles/{vehicleId}/customization:
+    get:
+      tags:
+        - Vehicle Customization
+      summary: Кастомизация транспорта
+      description: |
+        Возвращает текущую кастомизацию транспортного средства.
+      operationId: getVehicleCustomization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      responses:
+        '200':
+          description: Кастомизация транспорта
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCustomization'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Vehicle Customization
+      summary: Применить кастомизацию
+      description: |
+        Применяет кастомизацию к транспортному средству. Списывает валюту за кастомизацию.
+      operationId: applyVehicleCustomization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/ApplyCustomizationRequest'
+      responses:
+        '200':
+          description: Кастомизация применена
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCustomization'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '402':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/transport/customization/options:
+    get:
+      tags:
+        - Vehicle Customization
+      summary: Доступные опции кастомизации
+      description: |
+        Возвращает список доступных опций кастомизации для транспорта.
+      operationId: listCustomizationOptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: vehicle_type
+          in: query
+          required: false
+          schema:
+            $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleType'
+          description: Фильтр по типу транспорта
+        - name: option_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - color
+              - material
+              - decal
+              - mod
+          description: Фильтр по типу опции
+      responses:
+        '200':
+          description: Список опций кастомизации
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/CustomizationOptionsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/transport/vehicles/{vehicleId}/mods:
+    post:
+      tags:
+        - Vehicle Customization
+      summary: Установить модификации
+      description: |
+        Устанавливает модификации на транспортное средство. Списывает валюту за модификации.
+      operationId: installVehicleMods
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID транспорта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'transport-vehicle-schemas.yaml#/components/schemas/InstallModsRequest'
+      responses:
+        '200':
+          description: Модификации установлены
+          content:
+            application/json:
+              schema:
+                $ref: 'transport-vehicle-schemas.yaml#/components/schemas/VehicleCustomization'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '402':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
