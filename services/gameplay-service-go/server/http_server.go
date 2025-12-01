@@ -14,6 +14,7 @@ import (
 	"github.com/necpgame/gameplay-service-go/pkg/damageapi"
 	"github.com/necpgame/gameplay-service-go/pkg/implantsmaintenanceapi"
 	"github.com/necpgame/gameplay-service-go/pkg/implantsstatsapi"
+	"github.com/necpgame/gameplay-service-go/pkg/weaponcoreapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,6 +36,7 @@ type QuestServiceInterface interface {
 	CompleteQuest(ctx context.Context, questInstanceID uuid.UUID, characterID uuid.UUID) error
 	FailQuest(ctx context.Context, questInstanceID uuid.UUID, characterID uuid.UUID) error
 	ListQuestInstances(ctx context.Context, characterID uuid.UUID, status *models.QuestStatus, limit, offset int) (*models.QuestListResponse, error)
+	ReloadQuestContent(ctx context.Context, req *models.ReloadQuestContentRequest) (*models.ReloadQuestContentResponse, error)
 }
 
 type HTTPServer struct {
@@ -91,6 +93,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	questAPI.HandleFunc("/instances/{instance_id}/complete", server.completeQuest).Methods("POST")
 	questAPI.HandleFunc("/instances/{instance_id}/fail", server.failQuest).Methods("POST")
 	questAPI.HandleFunc("/characters/{character_id}", server.listQuestInstances).Methods("GET")
+	questAPI.HandleFunc("/content/reload", server.reloadQuestContent).Methods("POST")
 
 	affixHandlers := NewAffixHandlers(affixService)
 	affixAPI := router.PathPrefix("/api/v1/gameplay").Subrouter()
@@ -123,17 +126,16 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		damageapi.HandlerFromMux(damageHandlers, damageAPI)
 	}
 	if weaponMechanicsService != nil {
-		// TODO: After running `make generate-all-weapon-apis`, uncomment these lines:
-		// weaponCoreHandlers := NewWeaponCoreHandlers(weaponMechanicsService)
+		weaponCoreHandlers := NewWeaponCoreHandlers(weaponMechanicsService)
+		weaponAPI := router.PathPrefix("/api/v1/gameplay/combat/weapons").Subrouter()
+		weaponcoreapi.HandlerFromMux(weaponCoreHandlers, weaponAPI)
+		// TODO: Generate and implement other weapon handlers:
 		// weaponCombatHandlers := NewWeaponCombatHandlers(weaponMechanicsService)
 		// weaponEffectsHandlers := NewWeaponEffectsHandlers(weaponMechanicsService)
 		// weaponAdvancedHandlers := NewWeaponAdvancedHandlers(weaponMechanicsService)
-		// weaponAPI := router.PathPrefix("/api/v1/gameplay/combat/weapons").Subrouter()
-		// weaponcoreapi.HandlerFromMux(weaponCoreHandlers, weaponAPI)
 		// weaponcombatapi.HandlerFromMux(weaponCombatHandlers, weaponAPI)
 		// weaponeffectsapi.HandlerFromMux(weaponEffectsHandlers, weaponAPI)
 		// weaponadvancedapi.HandlerFromMux(weaponAdvancedHandlers, weaponAPI)
-		_ = weaponMechanicsService
 	}
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 	return server
