@@ -1,11 +1,12 @@
+# Issue: #721
 metadata:
   id: quest-berlin-2039-east-west-reunion
   title: 'Берлин 2030-2039 — Воссоединение Востока и Запада'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -83,7 +84,7 @@ quest_definition:
     experience: 5000
     currency: 0
     items:
-      - id: unity_achievement
+      - item_id: unity_achievement
         name: "Ачивка «Единство»"
         quantity: 1
     reputation:
@@ -92,32 +93,46 @@ quest_definition:
       - east_west_reunion_completed
   branches:
     - id: full_unity
-      condition: "player_skill_diplomacy >= 5"
-      objectives:
-        - id: promote_unity
-          text: "Продвигать полное единство Берлина"
-          type: interact
-          target: unity_faction
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: diplomacy
+        min_value: 1.0
+      consequences:
+        reputation:
+          berlin_unity: 10
+        flags:
+          - full_unity_achieved
+        unlocked_content:
+          - quest_type: main
+            category: unity
+            location: berlin
     - id: preserve_differences
-      condition: "player_reputation_cultural >= 15"
-      objectives:
-        - id: preserve_cultural_differences
-          text: "Сохранить культурные различия между Востоком и Западом"
-          type: interact
-          target: cultural_preservation_faction
-          count: 1
-          optional: false
+      unlock_condition:
+        type: reputation_check
+        reputation: cultural
+        min_value: 15
+      consequences:
+        reputation:
+          berlin_culture: 10
+        flags:
+          - cultural_differences_preserved
+        unlocked_content:
+          - quest_type: side
+            category: cultural
+            location: berlin
     - id: new_division
-      condition: "player_morality_score < 3"
-      objectives:
-        - id: create_new_division
-          text: "Создать новое разделение между Востоком и Западом"
-          type: interact
-          target: division_faction
-          count: 1
-          optional: false
+      unlock_condition:
+        type: morality_check
+        morality_score: -3
+      consequences:
+        reputation:
+          berlin_unity: -10
+        flags:
+          - new_division_created
+        unlocked_content:
+          - quest_type: side
+            category: conflict
+            location: berlin
 content:
   sections:
     - id: coalition
@@ -162,6 +177,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches: condition заменен на unlock_condition, удалены objectives из branches, добавлены consequences. Исправлена структура rewards.items: id заменен на item_id. Структура теперь полностью соответствует архитектуре.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

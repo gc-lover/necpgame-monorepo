@@ -1,11 +1,12 @@
+# Issue: #724
 metadata:
   id: quest-berlin-2039-ostalgie-cafe
   title: 'Берлин 2030-2039 — «Кафе остальгии»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -99,35 +100,45 @@ quest_definition:
       optional: false
   rewards:
     experience: 800
-    money: -20
+    currency: -20
     items:
       - item_id: talisman_ampelmannchen
         quantity: 1
     reputation:
       East_Berlin_NPCs: 10
-    unlocks:
-      - cultural_difference_quests
+    flags:
+      - cultural_difference_quests_unlocked
   branches:
-    - branch_id: east_sympathizer
-      description: "Симпатия к восточной культуре"
+    - id: east_sympathizer
+      unlock_condition:
+        type: choice_made
+        choice_id: east_west_reconciliation
+        value: "east"
       consequences:
-        skills:
-          culture: +20
         reputation:
-          East_Berlin_NPCs: +20
+          East_Berlin_NPCs: 20
           West_Berlin_NPCs: -10
-        unlocks:
-          - east_berlin_events
-    - branch_id: balanced_view
-      description: "Сбалансированный взгляд"
+        flags:
+          - east_berlin_events_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: east_berlin
+            location: berlin
+    - id: balanced_view
+      unlock_condition:
+        type: choice_made
+        choice_id: east_west_reconciliation
+        value: "balanced"
       consequences:
-        skills:
-          social: +25
         reputation:
-          East_Berlin_NPCs: +10
-          West_Berlin_NPCs: +10
-        unlocks:
-          - reunification_events
+          East_Berlin_NPCs: 10
+          West_Berlin_NPCs: 10
+        flags:
+          - reunification_events_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: reunification
+            location: berlin
 content:
   sections:
     - id: discovery
@@ -171,6 +182,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура rewards: money заменен на currency, unlocks заменен на flags. Исправлена структура branches: branch_id заменен на id, description заменен на unlock_condition, удалены skills из consequences, добавлены flags и unlocked_content. Структура теперь полностью соответствует архитектуре.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

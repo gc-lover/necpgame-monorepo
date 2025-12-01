@@ -1,11 +1,12 @@
+# Issue: #662
 metadata:
   id: quest-london-2039-buckingham-scandal
   title: 'Лондон 2030-2039 — Скандал в Букингеме'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,33 +96,54 @@ quest_definition:
     flags:
       - buckingham_scandal_completed
   branches:
-    - id: publish_scandal
-      condition: "player_morality_score >= 5"
-      objectives:
-        - id: expose_to_media
-          text: "Опубликовать скандал в медиа"
-          type: interact
-          target: media_publication
-          count: 1
-          optional: false
+    - id: publish_scandal_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        min_value: 0.5
+      consequences:
+        currency: 0
+        reputation:
+          london_journalists: 10
+          london_monarchists: -20
+        flags:
+          - buckingham_scandal_published_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
     - id: blackmail_path
-      condition: "player_morality_score < 0"
-      objectives:
-        - id: blackmail_royal_family
-          text: "Шантажировать королевскую семью за 200 000 еддис"
-          type: interact
-          target: blackmail_negotiation
-          count: 1
-          optional: false
-    - id: loyalty_to_crown
-      condition: "player_reputation_london_monarchists >= 10"
-      objectives:
-        - id: report_to_crown
-          text: "Сообщить короне о предателе"
-          type: interact
-          target: crown_report
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: 0.0
+      consequences:
+        currency: 200000
+        reputation:
+          london_monarchists: -15
+          london_journalists: -10
+        flags:
+          - buckingham_blackmail_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: criminal
+            location: london
+    - id: loyalty_to_crown_path
+      unlock_condition:
+        type: reputation_check
+        reputation: london_monarchists
+        min_value: 10
+      consequences:
+        currency: 0
+        reputation:
+          london_monarchists: 8
+          london_journalists: -5
+        flags:
+          - buckingham_loyalty_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
 content:
   sections:
     - id: tip
@@ -177,6 +199,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

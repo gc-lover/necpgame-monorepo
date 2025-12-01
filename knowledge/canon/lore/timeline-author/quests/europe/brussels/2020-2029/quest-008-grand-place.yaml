@@ -1,11 +1,12 @@
+# Issue: #690
 metadata:
   id: quest-brussels-2029-grand-place
   title: 'Брюссель 2020-2029 — Гранд-Плас'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -50,6 +51,83 @@ summary:
     - Подробный обзор гильдейских домов и ратуши.
     - Возможность увидеть редкое событие «Flower Carpet».
     - Поддержка liveops-парадов и туристических маршрутов.
+quest_definition:
+  quest_type: side
+  level_min: 1
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: arrive_grand_place
+      text: "Войти на площадь Гран-Плас и активировать AR-гид, который подсвечивает ключевые здания и рассказывает их историю"
+      type: interact
+      target: grand_place_ar_guide
+      count: 1
+      optional: false
+    - id: collect_guildhouse_cards
+      text: "Собрать карточки с архитектурными деталями каждого дома гильдий. Комплект открывает бонусные комментарии"
+      type: collect
+      target: guildhouse_architecture_cards
+      count: 10
+      optional: false
+    - id: help_flower_carpet
+      text: "Помочь волонтёрам выложить узор из 750 000 бегоний. Пройти мини-игру, проверяющую точность узора"
+      type: perform
+      target: flower_carpet_minigame
+      count: 1
+      optional: true
+    - id: photograph_night_show
+      text: "Сделать снимки вечернего светового шоу для городского архива и поделиться ими в социальном интерфейсе"
+      type: perform
+      target: grand_place_night_photography
+      count: 5
+      optional: false
+  rewards:
+    experience: 1200
+    currency: 0
+    items:
+      - item_id: grand_place_keeper_title
+        name: "Титул «Хранитель Гранд-Плас»"
+        quantity: 1
+    reputation:
+      brussels_tourism: 20
+      brussels_culture: 15
+    flags:
+      - grand_place_quest_completed
+      - grand_place_tours_unlocked
+      - flower_carpet_event_unlocked
+  branches:
+    - id: architecture_enthusiast_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: collect_guildhouse_cards
+        min_count: 10
+      consequences:
+        reputation:
+          brussels_culture: 10
+        flags:
+          - architecture_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: architecture
+            location: brussels
+    - id: liveops_participant_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: help_flower_carpet
+        min_count: 1
+      consequences:
+        reputation:
+          brussels_tourism: 15
+        flags:
+          - liveops_events_unlocked
+        unlocked_content:
+          - event_type: liveops
+            category: cultural
+            location: brussels
 content:
   sections:
     - id: arrival
@@ -98,6 +176,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 4 objectives на основе контента квеста (прибытие на площадь с AR-гидом, сбор карточек домов гильдий, помощь с цветочным ковром, фотографирование ночного шоу). Добавлены rewards: 1200 XP, титул "Хранитель Гранд-Плас", репутация brussels_tourism: 20, brussels_culture: 15, флаги для разблокировки туров и событий. Добавлены 2 branches (architecture_enthusiast_path, liveops_participant_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

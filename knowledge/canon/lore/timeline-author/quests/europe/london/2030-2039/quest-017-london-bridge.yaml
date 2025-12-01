@@ -1,11 +1,12 @@
+# Issue: #665
 metadata:
   id: quest-london-2039-london-bridge
   title: 'Лондон 2030-2039 — Падение Лондонского моста'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -89,7 +90,7 @@ quest_definition:
     experience: 8000
     currency: 100000
     items:
-      - id: knight_of_london_title
+      - item_id: knight_of_london_title
         name: "Титул «Рыцарь Лондона»"
         quantity: 1
     reputation:
@@ -97,33 +98,57 @@ quest_definition:
     flags:
       - london_bridge_operation_completed
   branches:
-    - id: full_success
-      condition: "all_bombs_defused == true AND terrorists_defeated == true"
-      objectives:
-        - id: celebrate_success
-          text: "Отпраздновать полный успех операции"
-          type: interact
-          target: success_celebration
-          count: 1
-          optional: false
-    - id: partial_success
-      condition: "bombs_defused >= 3 AND bridge_damaged == true"
-      objectives:
-        - id: assess_damage
-          text: "Оценить ущерб мосту и организовать восстановление"
-          type: interact
-          target: damage_assessment
-          count: 1
-          optional: false
-    - id: failure
-      condition: "bombs_defused < 3 OR bridge_destroyed == true"
-      objectives:
-        - id: deal_with_consequences
-          text: "Справиться с последствиями провала операции"
-          type: interact
-          target: failure_consequences
-          count: 1
-          optional: false
+    - id: full_success_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: defuse_or_evacuate
+        min_count: 5
+        additional_condition: terrorists_defeated == true
+      consequences:
+        currency: 0
+        reputation:
+          london_monarchists: 20
+          london_public: 15
+        flags:
+          - london_bridge_full_success_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: crisis
+            location: london
+    - id: partial_success_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: defuse_or_evacuate
+        min_count: 3
+        additional_condition: bridge_damaged == true
+      consequences:
+        currency: 0
+        reputation:
+          london_monarchists: 10
+          london_public: 5
+        flags:
+          - london_bridge_partial_success_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: crisis
+            location: london
+    - id: failure_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: defuse_or_evacuate
+        max_count: 2
+        additional_condition: bridge_destroyed == true
+      consequences:
+        currency: -50000
+        reputation:
+          london_monarchists: -20
+          london_public: -15
+        flags:
+          - london_bridge_failure_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: crisis
+            location: london
 content:
   sections:
     - id: intel
@@ -179,6 +204,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Исправлена структура items (id -> item_id). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

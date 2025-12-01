@@ -1,11 +1,12 @@
+# Issue: #15
 metadata:
   id: quest-main-2072-independence-celebration
   title: "Основной квест: Празднование независимости (2072)"
   document_type: implementation
   category: start-content
   status: in-review
-  version: '1.0.0'
-  last_updated: 2025-11-06T20:10:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -50,6 +51,105 @@ summary:
     - Стадии патруля с проверками PERCEPTION/COOL/INVESTIGATION.
     - Диалоговое дерево на 24 узла, ведущее к складу заговорщиков.
     - Награды и API-мэппинг, учитывающие социальные и боевые исходы.
+quest_definition:
+  quest_type: main
+  level_min: 8
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: accept_quest
+      text: "Принять задание у Сары Миллер"
+      type: interact
+      target: npc-sarah-miller
+      count: 1
+      optional: false
+    - id: patrol_area
+      text: "Патрулировать площадь и выявить угрозы (PERCEPTION 16 для обнаружения закладок, COOL 16 для деэскалации толпы, INVESTIGATION 15 для выявления канала заговорщиков)"
+      type: perform
+      target: downtown-square-patrol
+      count: 1
+      optional: false
+    - id: prevent_incidents
+      text: "Предотвратить инциденты и задержать заговорщиков (Recon Sweep, Crowd De-escalation, Conspiracy Trace)"
+      type: perform
+      target: incident-prevention
+      count: 1
+      optional: false
+    - id: handle_encounters
+      text: "Обработать боевые сценарии (Street Clash, Warehouse Raid, Patrol Ambush) при необходимости"
+      type: combat
+      target: conspiracy-encounters
+      count: 1
+      optional: true
+    - id: report_to_sarah
+      text: "Вернуться к Саре Миллер с отчётом"
+      type: interact
+      target: npc-sarah-miller
+      count: 1
+      optional: false
+  rewards:
+    experience: 680
+    currency: 900
+    items: []
+    reputation:
+      ncpd: 25
+    flags:
+      - independence-celebration-quest-completed
+      - downtown-security-unlocked
+  branches:
+    - id: perception_path
+      unlock_condition:
+        type: skill_check
+        skill: perception
+        min_value: 16
+      consequences:
+        experience: 100
+        currency: 0
+        reputation:
+          ncpd: 5
+        flags:
+          - perception-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: investigation
+            location: global
+    - id: cool_deescalation_path
+      unlock_condition:
+        type: skill_check
+        skill: cool
+        min_value: 16
+      consequences:
+        experience: 100
+        currency: 100
+        reputation:
+          ncpd: 10
+        flags:
+          - social-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: social
+            location: global
+    - id: investigation_path
+      unlock_condition:
+        type: skill_check
+        skill: investigation
+        min_value: 15
+      consequences:
+        experience: 100
+        currency: 50
+        reputation:
+          ncpd: 5
+        flags:
+          - investigation-master-unlocked
+          - warehouse-raid-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: investigation
+            location: downtown
 content:
   sections:
     - id: synopsis
@@ -144,6 +244,10 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2072-independence-celebration
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 5 objectives на основе контента квеста (принять задание, патрулировать площадь, предотвратить инциденты, обработать боевые сценарии, вернуться с отчётом). Добавлены rewards: 680 XP, 900 currency, репутация ncpd: 25, флаги для разблокировки контента. Добавлены 3 branches (perception_path, cool_deescalation_path, investigation_path) с правильной структурой unlock_condition и consequences, учитывающие проверки навыков PERCEPTION 16, COOL 16, INVESTIGATION 15.'
   - version: '1.0.0'
     date: 2025-11-06
     author: concept_team

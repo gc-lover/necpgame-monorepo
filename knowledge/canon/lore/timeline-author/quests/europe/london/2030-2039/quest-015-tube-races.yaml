@@ -1,11 +1,12 @@
+# Issue: #663
 metadata:
   id: quest-london-2039-tube-races
   title: 'Лондон 2030-2039 — Гонки в метро'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -89,7 +90,7 @@ quest_definition:
     experience: 1500
     currency: 0
     items:
-      - id: underground_racer_bike
+      - item_id: underground_racer_bike
         name: "Легендарный байк «Underground Racer»"
         quantity: 1
     reputation:
@@ -97,24 +98,36 @@ quest_definition:
     flags:
       - tube_race_completed
   branches:
-    - id: first_place
-      condition: "race_position == 1"
-      objectives:
-        - id: claim_first_place_reward
-          text: "Получить награду за первое место: 15 000 еддис и легендарный байк"
-          type: interact
-          target: first_place_podium
-          count: 1
-          optional: false
-    - id: second_third_place
-      condition: "race_position >= 2 AND race_position <= 3"
-      objectives:
-        - id: claim_place_reward
-          text: "Получить награду за место: 5 000-8 000 еддис"
-          type: interact
-          target: podium_rewards
-          count: 1
-          optional: false
+    - id: first_place_path
+      unlock_condition:
+        type: quest_completion
+        quest_id: quest-london-2039-tube-races
+        additional_condition: race_position == 1
+      consequences:
+        currency: 15000
+        reputation:
+          london_racers: 10
+        flags:
+          - tube_race_first_place_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: racing
+            location: london
+    - id: second_third_place_path
+      unlock_condition:
+        type: quest_completion
+        quest_id: quest-london-2039-tube-races
+        additional_condition: race_position >= 2 AND race_position <= 3
+      consequences:
+        currency: 5000
+        reputation:
+          london_racers: 5
+        flags:
+          - tube_race_podium_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: racing
+            location: london
 content:
   sections:
     - id: registration
@@ -157,6 +170,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Исправлена структура items (id -> item_id). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

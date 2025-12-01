@@ -1,3 +1,4 @@
+# Issue: #53
 metadata:
   id: global-state-system-architecture
   title: Архитектура системы глобального состояния
@@ -570,7 +571,46 @@ diagrams:
         WorldService->>RealtimeGateway: WebSocket Update
     ```
 
-
+  network_requirements:
+    protocol: |
+      Global State система использует WebSocket (TCP) для синхронизации с клиентами:
+      - Протокол: WebSocket (TCP) - постоянно, без переключения
+      - Применение: все типы синхронизации (server-wide, player-specific, phased)
+      - Надежная доставка сообщений критична для состояния
+      - Поддержка TLS (wss://)
+    
+    tickrate_and_frequency: |
+      Тикрейт и частота обновлений:
+      - Server-wide синхронизация: Event-based (при изменениях состояния)
+      - Player-specific синхронизация: Event-based (при изменениях персональных данных)
+      - Phased синхронизация: Event-based (при изменениях фаз)
+      - WebSocket heartbeat: каждые 30 секунд
+      - Redis pub/sub: realtime (мгновенно при изменениях)
+      - Event Bus синхронизация: batch каждые 100 мс (для оптимизации)
+    
+    latency_requirements: |
+      Требования к задержке:
+      - WebSocket обновления: <100 мс (p99)
+      - Redis pub/sub: <10 мс (p99)
+      - Event Bus синхронизация: <200 мс (p99)
+      - State queries: <50 мс (p99)
+      - State updates: <100 мс (p99)
+    
+    network_load: |
+      Сетевая нагрузка:
+      - WebSocket обновления: 0.5-2 KB/sec на игрока (зависит от частоты изменений)
+      - Redis pub/sub: 1-5 KB/sec на сервис (зависит от количества подписчиков)
+      - Event Bus: 5-20 KB/sec (batch синхронизация)
+      - State queries: 0.1-0.5 KB/запрос
+      - State updates: 0.5-2 KB/обновление
+    
+    optimization: |
+      Оптимизации:
+      - Кэширование состояния в Redis для быстрого доступа
+      - Batch синхронизация через Event Bus (каждые 100 мс)
+      - WebSocket каналы только для активных подписчиков
+      - Инвалидация кэша при изменениях
+      - Оптимистичная блокировка для снижения конфликтов
 
 
 

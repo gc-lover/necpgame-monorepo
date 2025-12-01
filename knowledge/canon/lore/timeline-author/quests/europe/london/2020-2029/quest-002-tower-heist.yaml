@@ -1,11 +1,12 @@
+# Issue: #682
 metadata:
   id: quest-london-2020-2029-tower-heist
   title: 'Лондон 2020-2029 — «Ограбление Тауэра»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -96,33 +97,45 @@ quest_definition:
       optional: false
   rewards:
     experience: 2500
-    money: 50000
+    currency: 50000
     items:
       - item_id: royal_neuroimplant
         quantity: 1
     reputation: {}
-    unlocks:
+    flags:
       - royal_heritage_questline
   branches:
-    - branch_id: stealth_infiltration
-      description: "Проникновение через стелс"
+    - id: stealth_infiltration_path
+      unlock_condition:
+        type: choice_made
+        choice_id: tower_infiltration
+        value: "stealth"
       consequences:
-        skills:
-          stealth: +30
+        currency: 0
         reputation:
-          Criminal_Networks: +20
-        unlocks:
-          - advanced_stealth_heists
-    - branch_id: assault_path
-      description: "Штурмовой путь"
+          criminal_networks: 20
+        flags:
+          - advanced_stealth_heists_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: heist
+            location: london
+    - id: assault_path
+      unlock_condition:
+        type: choice_made
+        choice_id: tower_infiltration
+        value: "assault"
       consequences:
-        skills:
-          combat: +30
+        currency: 0
         reputation:
-          Criminal_Networks: +15
-          Authorities: -15
-        unlocks:
-          - assault_heists
+          criminal_networks: 15
+          authorities: -15
+        flags:
+          - assault_heists_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: heist
+            location: london
 content:
   sections:
     - id: planning
@@ -172,6 +185,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура rewards (money -> currency, unlocks -> flags). Исправлена структура branches (branch_id -> id, description -> unlock_condition, правильная структура consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

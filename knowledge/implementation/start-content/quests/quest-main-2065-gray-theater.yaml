@@ -1,11 +1,12 @@
+# Issue: #13
 metadata:
   id: quest-main-2065-gray-theater
   title: "Архив — Основной квест: Серый театр (2065)"
   document_type: implementation
   category: start-content
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-06T20:35:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -48,6 +49,145 @@ summary:
     - Ветвления STEALTH 18, TECH 17, COOL 17.
     - Диалоговое дерево из 25 узлов с исходами для саботажа и боя.
     - Награды, штрафы и API эндпоинты для исторической справки.
+quest_definition:
+  quest_type: main
+  level_min: 10
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: accept_quest
+      text: "Принять задание от контакта npc-sarah-miller"
+      type: interact
+      target: npc-sarah-miller
+      count: 1
+      optional: false
+    - id: travel_to_location
+      text: "Добраться до локации Downtown или Watson"
+      type: travel
+      target: gray-theater-location
+      count: 1
+      optional: false
+    - id: infiltrate
+      text: "Проникнуть в 'Серый театр' (STEALTH 18 для скрытного проникновения, TECH 17 для быстрого проникновения, COOL 17 для защиты от паники)"
+      type: perform
+      target: gray-theater-infiltration
+      count: 1
+      optional: false
+    - id: sabotage
+      text: "Саботировать данные или оборудование (выбор влияет на награды и последствия)"
+      type: perform
+      target: gray-theater-sabotage
+      count: 1
+      optional: false
+    - id: eliminate_guards
+      text: "Устранить охрану (STEALTH 18 уменьшает количество врагов на 4, TECH 17 уменьшает время на 15%, COOL 17 защищает от паники)"
+      type: combat
+      target: gray-theater-guards
+      count: 1
+      optional: false
+    - id: escape
+      text: "Уйти незамеченным (избежать сигнализации и паники)"
+      type: perform
+      target: gray-theater-escape
+      count: 1
+      optional: false
+    - id: report
+      text: "Доложить контакту npc-sarah-miller о завершении операции"
+      type: interact
+      target: npc-sarah-miller
+      count: 1
+      optional: false
+  rewards:
+    experience: 920
+    currency: 1200
+    items:
+      - item_id: item-corporate-data
+        name: "Корпоративные данные"
+        quantity: 1
+    reputation:
+      ncpd: 22
+    flags:
+      - gray-theater-quest-completed
+      - proxy-war-prevented
+  branches:
+    - id: stealth_path
+      unlock_condition:
+        type: skill_check
+        skill: stealth
+        min_value: 18
+      consequences:
+        experience: 100
+        reputation:
+          ncpd: 5
+        flags:
+          - stealth-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: stealth
+            location: global
+    - id: tech_path
+      unlock_condition:
+        type: skill_check
+        skill: tech
+        min_value: 17
+      consequences:
+        experience: 100
+        currency: 0
+        flags:
+          - tech-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: tech
+            location: global
+    - id: cool_path
+      unlock_condition:
+        type: skill_check
+        skill: cool
+        min_value: 17
+      consequences:
+        experience: 100
+        reputation:
+          ncpd: 3
+        flags:
+          - cool-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: social
+            location: global
+    - id: sabotage_data_path
+      unlock_condition:
+        type: choice_made
+        choice_id: sabotage_method
+        value: "data"
+      consequences:
+        currency: 200
+        reputation:
+          ncpd: 5
+        flags:
+          - data-sabotage-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: intelligence
+            location: global
+    - id: sabotage_equipment_path
+      unlock_condition:
+        type: choice_made
+        choice_id: sabotage_method
+        value: "equipment"
+      consequences:
+        currency: 150
+        reputation:
+          ncpd: 3
+        flags:
+          - equipment-sabotage-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: sabotage
+            location: global
 content:
   sections:
     - id: synopsis
@@ -113,6 +253,10 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2065-gray-theater
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 7 objectives на основе контента квеста (принять задание, добраться до локации, проникнуть, саботировать, устранить охрану, уйти незамеченным, доложить). Добавлены rewards: 920 XP, 1200 currency, item-corporate-data, репутация ncpd: 22, флаги для разблокировки контента. Добавлены 5 branches (stealth_path, tech_path, cool_path, sabotage_data_path, sabotage_equipment_path) с правильной структурой unlock_condition и consequences, учитывающие проверки навыков STEALTH 18, TECH 17, COOL 17 и выбор метода саботажа.'
   - version: '1.0.0'
     date: 2025-11-05
     author: concept_team

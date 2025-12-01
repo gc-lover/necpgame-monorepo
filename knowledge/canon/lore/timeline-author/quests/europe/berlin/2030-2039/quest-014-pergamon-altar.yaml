@@ -1,11 +1,12 @@
+# Issue: #722
 metadata:
   id: quest-berlin-2030-2039-pergamon-altar
   title: 'Берлин 2030-2039 — «Пергамский алтарь»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,7 +96,7 @@ quest_definition:
     experience: 2500
     currency: 0
     items:
-      - id: zeus_spark_artifact
+      - item_id: zeus_spark_artifact
         name: "Артефакт «Искра Зевса»"
         quantity: 1
     reputation:
@@ -104,23 +105,33 @@ quest_definition:
       - pergamon_altar_activated
   branches:
     - id: priest_control
-      condition: "player_skill_religion >= 3"
-      objectives:
-        - id: grant_priest_control
-          text: "Передать контроль жрецам"
-          type: interact
-          target: priest_faction
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: religion
+        min_value: 0.6
+      consequences:
+        reputation:
+          berlin_culture: 5
+        flags:
+          - priest_control_granted
+        unlocked_content:
+          - quest_type: side
+            category: religious
+            location: berlin
     - id: guest_control
-      condition: "player_reputation_public >= 10"
-      objectives:
-        - id: grant_guest_control
-          text: "Передать контроль гостям"
-          type: interact
-          target: museum_guests
-          count: 1
-          optional: false
+      unlock_condition:
+        type: reputation_check
+        reputation: public
+        min_value: 10
+      consequences:
+        reputation:
+          berlin_culture: 5
+        flags:
+          - guest_control_granted
+        unlocked_content:
+          - quest_type: side
+            category: public
+            location: berlin
 content:
   sections:
     - id: entry
@@ -169,6 +180,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches: condition заменен на unlock_condition, удалены objectives из branches, добавлены consequences. Исправлена структура rewards.items: id заменен на item_id. Структура теперь полностью соответствует архитектуре.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

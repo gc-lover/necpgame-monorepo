@@ -93,3 +93,34 @@ type QuestListResponse struct {
 	Total  int            `json:"total"`
 }
 
+type QuestDefinition struct {
+	ID          uuid.UUID              `json:"id" db:"id"`
+	QuestID     string                 `json:"quest_id" db:"quest_id"`
+	Title       string                  `json:"title" db:"title"`
+	Description string                 `json:"description" db:"description"`
+	QuestType   string                 `json:"quest_type" db:"quest_type"`
+	LevelMin    *int                   `json:"level_min,omitempty" db:"level_min"`
+	LevelMax    *int                   `json:"level_max,omitempty" db:"level_max"`
+	Requirements map[string]interface{} `json:"requirements" db:"requirements"`
+	Objectives   map[string]interface{} `json:"objectives" db:"objectives"`
+	Rewards      map[string]interface{} `json:"rewards" db:"rewards"`
+	Branches     map[string]interface{} `json:"branches" db:"branches"`
+	DialogueID   *uuid.UUID             `json:"dialogue_id,omitempty" db:"dialogue_id"`
+	ContentData  map[string]interface{} `json:"content_data" db:"content_data"`
+	Version      int                    `json:"version" db:"version"`
+	IsActive     bool                   `json:"is_active" db:"is_active"`
+	CreatedAt    time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time              `json:"updated_at" db:"updated_at"`
+}
+
+type ReloadQuestContentRequest struct {
+	QuestID    string                 `json:"quest_id"`
+	YAMLContent map[string]interface{} `json:"yaml_content"`
+}
+
+type ReloadQuestContentResponse struct {
+	QuestID    string    `json:"quest_id"`
+	Message    string    `json:"message"`
+	ImportedAt time.Time `json:"imported_at"`
+}
+

@@ -1,11 +1,12 @@
+# Issue: #14
 metadata:
   id: quest-main-2045-red-dust-refugees
   title: "Архив — Основной квест: Беженцы Красной пыли (2045)"
   document_type: implementation
   category: start-content
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-05T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -48,6 +49,129 @@ summary:
     - Ветвления COOL 15, MEDICAL 13, TACTICS 14, PERCEPTION 14.
     - Диалоговое дерево из 26 узлов с респаун сценарием.
     - Базовые награды и API маппинг для исторического архива.
+quest_definition:
+  quest_type: main
+  level_min: 8
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: meet_refugees
+      text: "Встретиться с беженцами в Santo Domingo"
+      type: interact
+      target: red-dust-refugees-group
+      count: 1
+      optional: false
+    - id: ensure_route
+      text: "Обеспечить безопасный маршрут эвакуации (TACTICS 14 для оптимального маршрута, PERCEPTION 14 для альтернативного пролаза)"
+      type: perform
+      target: evacuation-route-planning
+      count: 1
+      optional: false
+    - id: escort_refugees
+      text: "Эскортировать беженцев из Santo Domingo в Watson (COOL 15 для переговоров с препятствиями, MEDICAL 13 для стабилизации раненых)"
+      type: escort
+      target: refugees-escort-route
+      count: 1
+      optional: false
+    - id: handle_encounters
+      text: "Обработать события пути (escort_1-3): переговоры, бой, медицинская помощь"
+      type: perform
+      target: escort-encounters
+      count: 3
+      optional: false
+    - id: arrive_watson
+      text: "Прибыть в Watson с беженцами"
+      type: travel
+      target: watson-safe-zone
+      count: 1
+      optional: false
+    - id: return_for_reward
+      text: "Вернуться к контакту npc-marco-fix за наградой"
+      type: interact
+      target: npc-marco-fix
+      count: 1
+      optional: false
+  rewards:
+    experience: 500
+    currency: 600
+    items:
+      - item_id: item-components-basic
+        name: "Базовые компоненты"
+        quantity: 1
+    reputation:
+      independent: 15
+    flags:
+      - red-dust-refugees-quest-completed
+      - evacuation-master-unlocked
+  branches:
+    - id: cool_negotiation_path
+      unlock_condition:
+        type: skill_check
+        skill: cool
+        min_value: 15
+      consequences:
+        experience: 100
+        currency: 100
+        reputation:
+          independent: 5
+        flags:
+          - negotiation-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: social
+            location: global
+    - id: medical_stabilization_path
+      unlock_condition:
+        type: skill_check
+        skill: medical
+        min_value: 13
+      consequences:
+        experience: 100
+        currency: 50
+        reputation:
+          independent: 3
+        flags:
+          - medical-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: medical
+            location: global
+    - id: tactics_route_path
+      unlock_condition:
+        type: skill_check
+        skill: tactics
+        min_value: 14
+      consequences:
+        experience: 100
+        currency: 75
+        reputation:
+          independent: 4
+        flags:
+          - tactics-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: tactical
+            location: global
+    - id: perception_alternative_path
+      unlock_condition:
+        type: skill_check
+        skill: perception
+        min_value: 14
+      consequences:
+        experience: 100
+        currency: 50
+        reputation:
+          independent: 3
+        flags:
+          - perception-master-unlocked
+        unlocked_content:
+          - quest_type: side
+            category: exploration
+            location: global
 content:
   sections:
     - id: synopsis
@@ -115,6 +239,10 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2045-red-dust-refugees
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 6 objectives на основе контента квеста (встретиться с беженцами, обеспечить маршрут, эскортировать, обработать события пути, прибыть в Watson, вернуться за наградой). Добавлены rewards: 500 XP, 600 currency, item-components-basic, репутация independent: 15, флаги для разблокировки контента. Добавлены 4 branches (cool_negotiation_path, medical_stabilization_path, tactics_route_path, perception_alternative_path) с правильной структурой unlock_condition и consequences, учитывающие проверки навыков COOL 15, MEDICAL 13, TACTICS 14, PERCEPTION 14.'
   - version: '1.0.0'
     date: 2025-11-05
     author: concept_team

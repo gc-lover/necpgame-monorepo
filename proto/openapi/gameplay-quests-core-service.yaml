@@ -217,6 +217,34 @@ paths:
         "500":
           $ref: "common.yaml#/components/responses/InternalServerError"
 
+  /gameplay/quests/content/reload:
+    post:
+      tags:
+        - Quests
+      summary: Импортировать контентный квест из YAML в БД
+      operationId: reloadQuestContent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReloadQuestContentRequest"
+      responses:
+        "200":
+          description: Квест успешно импортирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReloadQuestContentResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -314,6 +342,31 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/QuestInstance"
+
+    ReloadQuestContentRequest:
+      type: object
+      required:
+        - quest_id
+        - yaml_content
+      properties:
+        quest_id:
+          type: string
+          description: ID квеста из YAML файла (metadata.id)
+        yaml_content:
+          type: object
+          description: Полное содержимое YAML файла квеста
+          additionalProperties: true
+
+    ReloadQuestContentResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        message:
+          type: string
+        imported_at:
+          type: string
+          format: date-time
 
 security:
   - BearerAuth: []

@@ -1,11 +1,12 @@
+# Issue: #719
 metadata:
   id: quest-berlin-2039-museum-island
   title: 'Берлин 2030-2039 — Музейный остров'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -107,7 +108,7 @@ quest_definition:
     experience: 5000
     currency: -50
     items:
-      - id: museum_island_expert_title
+      - item_id: museum_island_expert_title
         name: "Титул «Знаток острова муз»"
         quantity: 1
     reputation:
@@ -116,23 +117,33 @@ quest_definition:
       - museum_island_completed
   branches:
     - id: art_focus
-      condition: "player_skill_art >= 3"
-      objectives:
-        - id: focus_on_art_collections
-          text: "Сфокусироваться на художественных коллекциях"
-          type: interact
-          target: art_collections_focus
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: art
+        min_value: 0.6
+      consequences:
+        reputation:
+          berlin_culture: 5
+        flags:
+          - art_focus_bonus
+        unlocked_content:
+          - quest_type: side
+            category: art_collections
+            location: berlin
     - id: history_focus
-      condition: "player_skill_history >= 3"
-      objectives:
-        - id: focus_on_historical_artifacts
-          text: "Сфокусироваться на исторических артефактах"
-          type: investigate
-          target: historical_artifacts_focus
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: history
+        min_value: 0.6
+      consequences:
+        reputation:
+          berlin_culture: 5
+        flags:
+          - history_focus_bonus
+        unlocked_content:
+          - quest_type: side
+            category: historical_artifacts
+            location: berlin
 content:
   sections:
     - id: planning
@@ -188,6 +199,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches: condition заменен на unlock_condition, удалены objectives из branches, добавлены consequences. Исправлена структура rewards.items: id заменен на item_id. Структура теперь полностью соответствует архитектуре.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

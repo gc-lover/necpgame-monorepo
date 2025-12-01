@@ -1,3 +1,4 @@
+# Issue: #194
 metadata:
   id: session-management-system-architecture
   title: Архитектура системы управления сессиями (Session Management System)
@@ -344,6 +345,29 @@ architecture:
         - Общий трафик: ~0.2-0.5 KB/sec на игрока
       latency_requirements: < 30-100ms для синхронизации состояния
       sync_strategy: Eventual Consistency для синхронизации состояния (Redis + периодическая синхронизация с БД)
+
+  network_requirements:
+    protocol: |
+      Session Management использует WebSocket (TCP) для синхронизации состояния сессий:
+      - Протокол: WebSocket (TCP) - постоянно, без переключения
+      - Применение: синхронизация состояния сессий, heartbeat, переподключения
+      - Надежная доставка сообщений критична для управления сессиями
+      - Поддержка TLS (wss://)
+      - Интеграция с Realtime Gateway для WebSocket соединений
+    
+    websocket_integration: |
+      Интеграция с Realtime Gateway:
+      - Управление WebSocket соединениями через Realtime Gateway
+      - Синхронизация состояния сессий через WebSocket каналы
+      - Heartbeat через WebSocket (1-2 Hz)
+      - Уведомления о событиях сессий через WebSocket
+    
+    network_optimization: |
+      Оптимизации:
+      - Batch обновления heartbeat в БД (каждые 100 запросов)
+      - Кэширование состояния сессий в Redis для быстрого доступа
+      - Event-based синхронизация для снижения трафика
+      - Периодическая синхронизация с БД (1-5 Hz) вместо realtime
 
   database_schema:
     tables:

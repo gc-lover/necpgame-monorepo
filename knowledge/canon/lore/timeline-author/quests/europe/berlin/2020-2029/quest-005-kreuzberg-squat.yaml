@@ -1,11 +1,12 @@
+# Issue: #713
 metadata:
   id: quest-berlin-2020-2029-kreuzberg-squat
   title: 'Берлин 2020-2029 — Сквот Кройцберга'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +46,103 @@ summary:
     - Сквотирование демонстрирует альтернативные модели жизни и управления.
     - Коллектив требует вклада в граффити, инфраструктуру и общую кухню.
     - Конфликт с властями определяет репутацию и доступ к подпольным сетям.
+quest_definition:
+  quest_type: side
+  level_min: 3
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: scout_buildings
+      text: "Вместе с локальными активистами изучить пустующие дома, собрать данные о владельцах и полиции. Подготовка снижает риск рейда"
+      type: investigate
+      target: kreuzberg_empty_buildings
+      count: 3
+      optional: false
+    - id: occupy_building
+      text: "Помочь коммуне вскрыть дом, распределить комнаты, организовать электропитание и общую кухню. Выбрать специализацию внутри сквота"
+      type: perform
+      target: kreuzberg_squat_setup
+      count: 1
+      optional: false
+    - id: participate_assembly
+      text: "Участвовать в общем собрании, формировать правила: распределение ресурсов, расписание дежурств, взаимодействие с соседями. Предложить инициативы"
+      type: interact
+      target: squat_assembly_meeting
+      count: 1
+      optional: false
+    - id: defend_from_raid
+      text: "Защитить сквот от полицейского рейда. Выбрать стратегию — переговоры, баррикады или медиаподдержку"
+      type: perform
+      target: squat_defense_raid
+      count: 1
+      optional: false
+  rewards:
+    experience: 2500
+    currency: 0
+    items:
+      - item_id: illegal_squat_housing
+        name: "Нелегальное жильё в сквоте"
+        quantity: 1
+    reputation:
+      anarchist_collectives: 15
+      kreuzberg_community: 10
+    flags:
+      - kreuzberg_squat_quest_completed
+      - underground_missions_unlocked
+      - squat_network_access
+  branches:
+    - id: negotiation_path
+      unlock_condition:
+        type: choice_made
+        choice_id: defense_strategy
+        value: "negotiation"
+      consequences:
+        currency: 0
+        reputation:
+          anarchist_collectives: 5
+          berlin_authorities: -5
+        flags:
+          - diplomatic_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: diplomatic
+            location: berlin
+    - id: barricade_path
+      unlock_condition:
+        type: choice_made
+        choice_id: defense_strategy
+        value: "barricade"
+      consequences:
+        currency: 0
+        reputation:
+          anarchist_collectives: 10
+          berlin_authorities: -10
+        flags:
+          - resistance_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: resistance
+            location: berlin
+    - id: media_support_path
+      unlock_condition:
+        type: choice_made
+        choice_id: defense_strategy
+        value: "media"
+      consequences:
+        currency: 0
+        reputation:
+          anarchist_collectives: 8
+          berlin_media: 5
+        flags:
+          - media_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: media
+            location: berlin
 content:
   sections:
     - id: scouting
@@ -89,6 +187,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 4 objectives на основе контента квеста (разведка зданий, захват и обустройство, участие в собрании, защита от рейда). Добавлены rewards: 2500 XP, нелегальное жильё в сквоте, репутация anarchist_collectives: 15, kreuzberg_community: 10, флаги для разблокировки подпольных миссий. Добавлены 3 branches (negotiation_path, barricade_path, media_support_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

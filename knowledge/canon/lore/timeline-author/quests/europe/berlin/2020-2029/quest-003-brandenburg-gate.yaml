@@ -1,11 +1,12 @@
+# Issue: #711
 metadata:
   id: quest-berlin-2020-2029-brandenburg-gate
   title: 'Берлин 2020-2029 — Бранденбургские ворота'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -92,32 +93,44 @@ quest_definition:
       optional: false
   rewards:
     experience: 1500
-    money: 2500
+    currency: 2500
     items: []
     reputation:
       Smuggling_Syndicate: 3
-    unlocks:
+    flags:
       - new_smuggling_routes
   branches:
-    - branch_id: stealth_approach
-      description: "Проход через стелс и технологический обход"
+    - id: stealth_approach
+      unlock_condition:
+        type: choice_made
+        choice_id: approach_selection
+        value: "stealth"
       consequences:
-        skills:
-          stealth: +20
+        currency: 0
         reputation:
-          Smuggling_Syndicate: +5
-        unlocks:
-          - advanced_stealth_quests
-    - branch_id: social_engineering
-      description: "Использование социальной инженерии и подкупа"
+          Smuggling_Syndicate: 5
+        flags:
+          - advanced_stealth_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: stealth
+            location: berlin
+    - id: social_engineering
+      unlock_condition:
+        type: choice_made
+        choice_id: approach_selection
+        value: "social"
       consequences:
-        skills:
-          social: +20
+        currency: 0
         reputation:
-          Smuggling_Syndicate: +3
+          Smuggling_Syndicate: 3
           Authorities: -2
-        unlocks:
-          - social_quests
+        flags:
+          - social_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: social
+            location: berlin
 content:
   sections:
     - id: briefing
@@ -155,6 +168,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура rewards: money → currency, unlocks → flags. Исправлена структура branches: branch_id → id, description → unlock_condition с правильной структурой (type, choice_id, value), удалены skills из consequences, добавлены currency, flags и unlocked_content. Обновлена версия до 2.1.0.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

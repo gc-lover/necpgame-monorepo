@@ -1,11 +1,12 @@
+# Issue: #685
 metadata:
   id: quest-brussels-2020-2029-belgian-chocolate
   title: 'Брюссель 2020-2029 — «Бельгийский шоколад»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -50,6 +51,91 @@ summary:
     - Формирует маршрут по ключевым шоколадным домам с короткими историями.
     - Мини-игра дегустации даёт временный бафф энергии.
     - Собранная коробка активирует событие liveops с экспортом деликатесов.
+quest_definition:
+  quest_type: side
+  level_min: 3
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: get_chocolate_guide
+      text: "Получить holo-гид по шоколадным домам на Grand Place, выбрать три точки для визита и настроить план дегустации"
+      type: interact
+      target: grand_place_tourism_center
+      count: 1
+      optional: false
+    - id: visit_chocolate_houses
+      text: "Посетить три ключевых шоколадных дома, изучить их историю и витрины"
+      type: travel
+      target: brussels_chocolate_houses
+      count: 3
+      optional: false
+    - id: play_tasting_game
+      text: "Пройти мини-игру дегустации pralines, сочетая тёмный, молочный и белый шоколад с начинками"
+      type: perform
+      target: chocolate_tasting_minigame
+      count: 1
+      optional: false
+    - id: learn_neuhaus_history
+      text: "Посетить фирменный бутик Neuhaus, сканировать AR-архив 1912 года и узнать о рождении praline"
+      type: investigate
+      target: neuhaus_boutique
+      count: 1
+      optional: false
+    - id: create_gift_box
+      text: "Собрать подарочную коробку из пяти конфет для VIP-клиента, выбрав оптимальную комбинацию"
+      type: craft
+      target: chocolate_gift_box_assembly
+      count: 1
+      optional: false
+  rewards:
+    experience: 1000
+    currency: 0
+    items:
+      - item_id: sweet_energy_buff
+        name: "Бафф «Sweet Energy» (+20% Energy на 6 часов)"
+        quantity: 1
+      - item_id: chocolate_gourmet_title
+        name: "Титул «Шоколадный гурман»"
+        quantity: 1
+    reputation:
+      brussels_tourism: 15
+      brussels_gastronomy: 10
+    flags:
+      - belgian_chocolate_quest_completed
+      - praline_week_liveops_unlocked
+  branches:
+    - id: premium_chocolate_path
+      unlock_condition:
+        type: skill_check
+        skill: taste
+        min_value: 0.7
+      consequences:
+        currency: 0
+        reputation:
+          brussels_gastronomy: 15
+        flags:
+          - premium_chocolate_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: gastronomy
+            location: brussels
+    - id: social_gift_path
+      unlock_condition:
+        type: quest_completion
+        quest_id: quest-brussels-2020-2029-belgian-chocolate
+      consequences:
+        currency: 0
+        reputation:
+          brussels_tourism: 10
+        flags:
+          - social_gift_events_unlocked
+        unlocked_content:
+          - event_type: social
+            location: brussels
 content:
   sections:
     - id: grand_place
@@ -98,6 +184,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 5 objectives на основе контента квеста (получить гид, посетить шоколадные дома, пройти дегустацию, изучить историю Neuhaus, собрать подарочную коробку). Добавлены rewards: 1000 XP, бафф "Sweet Energy", титул "Шоколадный гурман", репутация, флаги для разблокировки liveops. Добавлены 2 branches (premium_chocolate_path, social_gift_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

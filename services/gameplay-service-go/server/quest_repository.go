@@ -16,6 +16,11 @@ type QuestRepository struct {
 	logger *logrus.Logger
 }
 
+type QuestDefinitionRepositoryInterface interface {
+	UpsertQuestDefinition(ctx context.Context, definition *models.QuestDefinition) error
+	GetQuestDefinition(ctx context.Context, questID string) (*models.QuestDefinition, error)
+}
+
 func NewQuestRepository(db *pgxpool.Pool) *QuestRepository {
 	return &QuestRepository{
 		db:     db,
@@ -305,5 +310,106 @@ func (r *QuestRepository) CreateSkillCheckResult(ctx context.Context, result *mo
 	).Scan(&result.ID, &result.CheckedAt)
 
 	return err
+}
+
+func (r *QuestRepository) UpsertQuestDefinition(ctx context.Context, definition *models.QuestDefinition) error {
+	requirementsJSON, _ := json.Marshal(definition.Requirements)
+	objectivesJSON, _ := json.Marshal(definition.Objectives)
+	rewardsJSON, _ := json.Marshal(definition.Rewards)
+	branchesJSON, _ := json.Marshal(definition.Branches)
+	contentDataJSON, _ := json.Marshal(definition.ContentData)
+
+	query := `
+		INSERT INTO gameplay.quest_definitions (
+			quest_id, title, description, quest_type, level_min, level_max,
+			requirements, objectives, rewards, branches, dialogue_id,
+			content_data, version, is_active, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+		)
+		ON CONFLICT (quest_id) DO UPDATE SET
+			title = EXCLUDED.title,
+			description = EXCLUDED.description,
+			quest_type = EXCLUDED.quest_type,
+			level_min = EXCLUDED.level_min,
+			level_max = EXCLUDED.level_max,
+			requirements = EXCLUDED.requirements,
+			objectives = EXCLUDED.objectives,
+			rewards = EXCLUDED.rewards,
+			branches = EXCLUDED.branches,
+			dialogue_id = EXCLUDED.dialogue_id,
+			content_data = EXCLUDED.content_data,
+			version = EXCLUDED.version + 1,
+			is_active = EXCLUDED.is_active,
+			updated_at = NOW()
+		RETURNING id, version, created_at, updated_at`
+
+	err := r.db.QueryRow(ctx, query,
+		definition.QuestID, definition.Title, definition.Description, definition.QuestType,
+		definition.LevelMin, definition.LevelMax, requirementsJSON, objectivesJSON,
+		rewardsJSON, branchesJSON, definition.DialogueID, contentDataJSON,
+		definition.Version, definition.IsActive,
+	).Scan(&definition.ID, &definition.Version, &definition.CreatedAt, &definition.UpdatedAt)
+
+	return err
+}
+
+func (r *QuestRepository) GetQuestDefinition(ctx context.Context, questID string) (*models.QuestDefinition, error) {
+	var definition models.QuestDefinition
+	var requirementsJSON, objectivesJSON, rewardsJSON, branchesJSON, contentDataJSON []byte
+
+	query := `
+		SELECT id, quest_id, title, description, quest_type, level_min, level_max,
+		       requirements, objectives, rewards, branches, dialogue_id,
+		       content_data, version, is_active, created_at, updated_at
+		FROM gameplay.quest_definitions
+		WHERE quest_id = $1`
+
+	err := r.db.QueryRow(ctx, query, questID).Scan(
+		&definition.ID, &definition.QuestID, &definition.Title, &definition.Description,
+		&definition.QuestType, &definition.LevelMin, &definition.LevelMax,
+		&requirementsJSON, &objectivesJSON, &rewardsJSON, &branchesJSON,
+		&definition.DialogueID, &contentDataJSON, &definition.Version,
+		&definition.IsActive, &definition.CreatedAt, &definition.UpdatedAt,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if len(requirementsJSON) > 0 {
+		json.Unmarshal(requirementsJSON, &definition.Requirements)
+	} else {
+		definition.Requirements = make(map[string]interface{})
+	}
+
+	if len(objectivesJSON) > 0 {
+		json.Unmarshal(objectivesJSON, &definition.Objectives)
+	} else {
+		definition.Objectives = make(map[string]interface{})
+	}
+
+	if len(rewardsJSON) > 0 {
+		json.Unmarshal(rewardsJSON, &definition.Rewards)
+	} else {
+		definition.Rewards = make(map[string]interface{})
+	}
+
+	if len(branchesJSON) > 0 {
+		json.Unmarshal(branchesJSON, &definition.Branches)
+	} else {
+		definition.Branches = make(map[string]interface{})
+	}
+
+	if len(contentDataJSON) > 0 {
+		json.Unmarshal(contentDataJSON, &definition.ContentData)
+	} else {
+		definition.ContentData = make(map[string]interface{})
+	}
+
+	return &definition, nil
 }
 

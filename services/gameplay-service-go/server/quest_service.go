@@ -381,3 +381,93 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
+func (s *QuestService) ReloadQuestContent(ctx context.Context, req *models.ReloadQuestContentRequest) (*models.ReloadQuestContentResponse, error) {
+	yamlContent := req.YAMLContent
+	
+	// Extract metadata
+	metadata, ok := yamlContent["metadata"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid YAML: missing metadata")
+	}
+	
+	questID, ok := metadata["id"].(string)
+	if !ok || questID == "" {
+		return nil, fmt.Errorf("invalid YAML: missing or invalid metadata.id")
+	}
+	
+	title, _ := metadata["title"].(string)
+	if title == "" {
+		title = questID
+	}
+	
+	// Extract summary for description
+	description := ""
+	if summary, ok := yamlContent["summary"].(map[string]interface{}); ok {
+		if goal, ok := summary["goal"].(string); ok {
+			description = goal
+		}
+	}
+	
+	// Extract quest type (default to "side")
+	questType := "side"
+	if category, ok := metadata["category"].(string); ok {
+		if category == "main-quest" || category == "main" {
+			questType = "main"
+		}
+	}
+	
+	// Extract level range
+	var levelMin, levelMax *int
+	if levelMinVal, ok := yamlContent["level_min"].(int); ok {
+		levelMin = &levelMinVal
+	}
+	if levelMaxVal, ok := yamlContent["level_max"].(int); ok {
+		levelMax = &levelMaxVal
+	}
+	
+	// Extract objectives, rewards, branches from content
+	objectives := make(map[string]interface{})
+	rewards := make(map[string]interface{})
+	branches := make(map[string]interface{})
+	
+	if content, ok := yamlContent["content"].(map[string]interface{}); ok {
+		if sections, ok := content["sections"].([]interface{}); ok {
+			objectives["sections"] = sections
+		}
+	}
+	
+	if summary, ok := yamlContent["summary"].(map[string]interface{}); ok {
+		if keyPoints, ok := summary["key_points"].([]interface{}); ok {
+			objectives["key_points"] = keyPoints
+		}
+	}
+	
+	// Store full YAML content in content_data
+	definition := &models.QuestDefinition{
+		QuestID:      questID,
+		Title:        title,
+		Description:  description,
+		QuestType:    questType,
+		LevelMin:     levelMin,
+		LevelMax:     levelMax,
+		Requirements: make(map[string]interface{}),
+		Objectives:   objectives,
+		Rewards:      rewards,
+		Branches:     branches,
+		ContentData:  yamlContent,
+		Version:      1,
+		IsActive:     true,
+	}
+	
+	err := s.repo.UpsertQuestDefinition(ctx, definition)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upsert quest definition: %w", err)
+	}
+	
+	return &models.ReloadQuestContentResponse{
+		QuestID:    questID,
+		Message:    fmt.Sprintf("Quest '%s' successfully imported", title),
+		ImportedAt: time.Now(),
+	}, nil
+}
+

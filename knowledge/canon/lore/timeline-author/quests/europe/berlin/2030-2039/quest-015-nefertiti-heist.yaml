@@ -1,11 +1,12 @@
+# Issue: #723
 metadata:
   id: quest-berlin-2030-2039-nefertiti-heist
   title: 'Берлин 2030-2039 — «Кража Нефертити»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,7 +96,7 @@ quest_definition:
     experience: 10000
     currency: 500000000
     items:
-      - id: cultural_repatriation_contract
+      - item_id: cultural_repatriation_contract
         name: "Контракт на репатриацию культуры"
         quantity: 1
     reputation:
@@ -104,32 +105,51 @@ quest_definition:
       - nefertiti_heist_completed
   branches:
     - id: deliver_to_egypt
-      condition: "player_morality_score >= 5"
-      objectives:
-        - id: transport_to_egypt
-          text: "Доставить бюст Нефертити в Египет"
-          type: deliver
-          target: egypt_museum
-          count: 1
-          optional: false
+      unlock_condition:
+        type: morality_check
+        morality_score: 5
+      consequences:
+        reputation:
+          egypt_culture_ministry: 25
+          germany_culture: -20
+        flags:
+          - nefertiti_delivered_to_egypt
+        unlocked_content:
+          - quest_type: main
+            category: cultural_repatriation
+            location: global
     - id: sell_black_market
-      condition: "player_currency < 1000000"
-      objectives:
-        - id: find_buyer
-          text: "Найти покупателя на чёрном рынке"
-          type: interact
-          target: black_market_dealer
-          count: 1
-          optional: false
+      unlock_condition:
+        type: currency_check
+        currency: player_currency
+        max_value: 1000000
+      consequences:
+        currency: 500000000
+        reputation:
+          black_market: 30
+          egypt_culture_ministry: -30
+          germany_culture: -30
+        flags:
+          - nefertiti_sold_black_market
+        unlocked_content:
+          - quest_type: side
+            category: black_market
+            location: global
     - id: return_to_germany
-      condition: "player_reputation_germany >= 20"
-      objectives:
-        - id: return_bust
-          text: "Вернуть бюст в Neues Museum"
-          type: deliver
-          target: neues_museum_return
-          count: 1
-          optional: false
+      unlock_condition:
+        type: reputation_check
+        reputation: germany
+        min_value: 20
+      consequences:
+        reputation:
+          germany_culture: 25
+          egypt_culture_ministry: -20
+        flags:
+          - nefertiti_returned_to_germany
+        unlocked_content:
+          - quest_type: side
+            category: diplomatic
+            location: berlin
 content:
   sections:
     - id: contract
@@ -185,6 +205,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches: condition заменен на unlock_condition, удалены objectives из branches, добавлены consequences. Исправлена структура rewards.items: id заменен на item_id. Структура теперь полностью соответствует архитектуре.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

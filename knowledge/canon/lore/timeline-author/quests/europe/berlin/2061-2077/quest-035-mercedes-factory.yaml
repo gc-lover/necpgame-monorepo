@@ -1,11 +1,12 @@
+# Issue: #695
 metadata:
   id: quest-berlin-2077-mercedes-factory
   title: 'Берлин 2061-2077 — Завод Mercedes-Benz'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,7 +96,7 @@ quest_definition:
     experience: 2000
     currency: 0
     items:
-      - id: german_quality_title
+      - item_id: german_quality_title
         name: "Титул «Немецкое качество»"
         quantity: 1
     reputation:
@@ -104,14 +105,23 @@ quest_definition:
       - mercedes_factory_visited
   branches:
     - id: purchase_custom_vehicle
-      condition: "player_currency >= 200000"
-      objectives:
-        - id: buy_custom_mercedes
-          text: "Купить кастомную версию Mercedes за 200 000 еддис"
-          type: interact
-          target: vehicle_purchase_interface
-          count: 1
-          optional: false
+      unlock_condition:
+        type: currency_check
+        min_value: 200000
+      consequences:
+        currency: -200000
+        items:
+          - item_id: custom_mercedes_vehicle
+            name: "Кастомный Mercedes"
+            quantity: 1
+        reputation:
+          berlin_industry: 10
+        flags:
+          - custom_mercedes_owned
+        unlocked_content:
+          - quest_type: side
+            category: vehicle_customization
+            location: berlin
 content:
   sections:
     - id: briefing
@@ -167,6 +177,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches: заменен condition на unlock_condition с правильной структурой, удалены objectives из branches, добавлены consequences. Исправлена структура rewards: заменен id на item_id для items. Структура теперь соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer
