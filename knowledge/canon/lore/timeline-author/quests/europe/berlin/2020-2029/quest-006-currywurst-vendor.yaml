@@ -1,11 +1,12 @@
+# Issue: #714
 metadata:
   id: quest-berlin-2029-currywurst-vendor
   title: 'Берлин 2020-2029 — Продавец карривурст'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +46,88 @@ summary:
     - Подчёркивает историю послевоенного Берлина и 70 миллионов порций в год.
     - Мини-игры по вкусовому балансу и обслуживанию очереди.
     - Завершение открывает социальные бонусы и доступ к живым мероприятиям.
+quest_definition:
+  quest_type: side
+  level_min: 1
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: find_currywurst_stand
+      text: "Получить подсказки от местных NPC и сканировать карту уличной еды. Выбрать будку с лучшими отзывами и подходящим уровнем остроты"
+      type: travel
+      target: berlin_street_food_map
+      count: 1
+      optional: false
+    - id: customize_currywurst
+      text: "Пройти мини-игру по настройке рецепта: с кожицей или без, уровень карри и гарнир. Баланс вкуса влияет на баффы и реакцию очереди"
+      type: perform
+      target: currywurst_customization_minigame
+      count: 1
+      optional: false
+    - id: learn_vendor_story
+      text: "Выслушать историю владельца о легенде Херте Хойвер. Задать вопросы, открывая коллекционные карточки с фактами о карривурст"
+      type: interact
+      target: currywurst_vendor_npc
+      count: 1
+      optional: false
+    - id: become_regular_customer
+      text: "Стать постоянным клиентом: повторные визиты и участие в челленджах «самый острый соус» повышают статус. Открываются скидки и доступ к ночным ивентам"
+      type: perform
+      target: currywurst_loyalty_program
+      count: 3
+      optional: false
+  rewards:
+    experience: 500
+    currency: -5
+    items:
+      - item_id: curry_boost_buff
+        name: "Бафф «Curry Boost» (+15% HP на 6 часов)"
+        quantity: 1
+      - item_id: currywurst_expert_title
+        name: "Титул «Currywurst эксперт»"
+        quantity: 1
+    reputation:
+      berlin_street_food: 10
+      berlin_culture: 5
+    flags:
+      - currywurst_vendor_quest_completed
+      - street_food_events_unlocked
+      - currywurst_loyalty_unlocked
+  branches:
+    - id: spicy_challenge_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: become_regular_customer
+        min_count: 3
+      consequences:
+        currency: 0
+        reputation:
+          berlin_street_food: 10
+        flags:
+          - spicy_challenge_events_unlocked
+        unlocked_content:
+          - event_type: liveops
+            category: gastronomy
+            location: berlin
+    - id: vendor_friendship_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: learn_vendor_story
+        min_count: 1
+      consequences:
+        currency: 0
+        reputation:
+          berlin_culture: 10
+        flags:
+          - vendor_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: social
+            location: berlin
 content:
   sections:
     - id: scouting
@@ -93,6 +176,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 4 objectives на основе контента квеста (поиск будки, настройка рецепта, изучение истории владельца, становление постоянным клиентом). Добавлены rewards: 500 XP, -5 currency, бафф "Curry Boost" (+15% HP на 6 часов), титул "Currywurst эксперт", репутация berlin_street_food: 10, berlin_culture: 5, флаги для разблокировки уличных гастрономических событий. Добавлены 2 branches (spicy_challenge_path, vendor_friendship_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

@@ -1,13 +1,14 @@
+# Issue: #659
 metadata:
   id: quest-london-2039-big-ben-restoration
-  title: 'Лондон 2030-2039 — Восстановление Биг-Бена'
+  title: "Лондон 2030-2039 — Восстановление Биг-Бена"
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: "2.1.0"
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
-  concept_reviewed_at: ''
+  concept_reviewed_at: ""
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -33,8 +34,8 @@ metadata:
 review:
   chain:
     - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
+      reviewer: ""
+      reviewed_at: ""
       status: pending
   next_actions: []
 summary:
@@ -95,33 +96,54 @@ quest_definition:
     flags:
       - big_ben_restored
   branches:
-    - id: public_control
-      condition: "player_reputation_london_citizens >= 10"
-      objectives:
-        - id: give_control_to_city
-          text: "Передать контроль времени городу"
-          type: interact
-          target: city_time_control
-          count: 1
-          optional: false
-    - id: corporate_control
-      condition: "player_reputation_london_corporations >= 10"
-      objectives:
-        - id: give_control_to_corporations
-          text: "Передать контроль времени корпорациям"
-          type: interact
-          target: corporate_time_control
-          count: 1
-          optional: false
-    - id: chaotic_control
-      condition: "player_morality_score < 0"
-      objectives:
-        - id: create_chaos
-          text: "Создать хаос в управлении временем"
-          type: interact
-          target: chaotic_time_control
-          count: 1
-          optional: false
+    - id: public_control_path
+      unlock_condition:
+        type: reputation_check
+        reputation: london_citizens
+        min_value: 10
+      consequences:
+        currency: 0
+        reputation:
+          london_citizens: 30
+          london_corporations: -10
+        flags:
+          - big_ben_public_control_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: cultural
+            location: london
+    - id: corporate_control_path
+      unlock_condition:
+        type: reputation_check
+        reputation: london_corporations
+        min_value: 10
+      consequences:
+        currency: 50000
+        reputation:
+          london_corporations: 30
+          london_citizens: -15
+        flags:
+          - big_ben_corporate_control_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: corporate
+            location: london
+    - id: chaotic_control_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: 0.0
+      consequences:
+        currency: 0
+        reputation:
+          london_citizens: -20
+          london_corporations: -20
+        flags:
+          - big_ben_chaotic_control_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: chaos
+            location: london
 content:
   sections:
     - id: blueprints
@@ -170,14 +192,18 @@ implementation:
   queue_reference: []
   blockers: []
 history:
-  - version: '2.0.0'
+  - version: "2.1.0"
+    date: 2025-12-01
+    author: content_writer
+    changes: "Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов."
+  - version: "2.0.0"
     date: 2025-11-29
     author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики временного контроля и культурной реставрации.'
-  - version: '1.0.0'
+    changes: "Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики временного контроля и культурной реставрации."
+  - version: "1.0.0"
     date: 2025-11-13
     author: concept_team
     changes: Квест «Восстановление Биг-Бена» адаптирован под шаблон Concept Director.
 validation:
-  checksum: ''
-  schema_version: '1.0'
+  checksum: ""
+  schema_version: "1.0"

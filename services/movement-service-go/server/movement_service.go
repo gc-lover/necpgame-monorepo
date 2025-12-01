@@ -66,6 +66,7 @@ func (s *MovementService) GetPosition(ctx context.Context, characterID uuid.UUID
 	return pos, nil
 }
 
+// Issue: #1431
 func (s *MovementService) SavePosition(ctx context.Context, characterID uuid.UUID, req *models.SavePositionRequest) (*models.CharacterPosition, error) {
 	pos, err := s.repo.SavePosition(ctx, characterID, req)
 	if err != nil {
@@ -73,8 +74,18 @@ func (s *MovementService) SavePosition(ctx context.Context, characterID uuid.UUI
 	}
 
 	cacheKey := "position:" + characterID.String()
-	posJSON, _ := json.Marshal(pos)
-	s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute)
+	posJSON, err := json.Marshal(pos)
+	if err != nil {
+		s.logger.WithError(err).WithField("character_id", characterID).Error("Failed to marshal position for cache")
+		RecordError("json_marshal_failed")
+		return nil, err
+	}
+
+	if err := s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute).Err(); err != nil {
+		s.logger.WithError(err).WithField("character_id", characterID).Warn("Failed to set position in cache")
+		RecordError("cache_set_failed")
+		// Не возвращаем ошибку, так как данные уже сохранены в БД
+	}
 
 	RecordPositionSaved()
 
@@ -202,7 +213,7 @@ func (s *MovementService) saveAllPositions(ctx context.Context) {
 			VelocityZ: float64(entityState.VZ),
 		}
 
-		_, err = s.repo.SavePosition(ctx, characterID, req)
+		pos, err := s.repo.SavePosition(ctx, characterID, req)
 		if err != nil {
 			s.logger.WithError(err).WithField("character_id", characterID).Error("Failed to save position")
 			RecordError("save_position_failed")
@@ -210,8 +221,19 @@ func (s *MovementService) saveAllPositions(ctx context.Context) {
 		}
 
 		cacheKey := "position:" + characterID.String()
-		posJSON, _ := json.Marshal(req)
-		s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute)
+		posJSON, err := json.Marshal(pos)
+		if err != nil {
+			s.logger.WithError(err).WithField("character_id", characterID).Error("Failed to marshal position for cache")
+			RecordError("json_marshal_failed")
+			// Продолжаем для других позиций, так как данные уже сохранены в БД
+			continue
+		}
+
+		if err := s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute).Err(); err != nil {
+			s.logger.WithError(err).WithField("character_id", characterID).Warn("Failed to set position in cache")
+			RecordError("cache_set_failed")
+			// Продолжаем для других позиций, так как данные уже сохранены в БД
+		}
 	}
 
 	s.logger.WithField("count", len(positionsCopy)).Debug("Saved positions to database")

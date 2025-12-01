@@ -1,11 +1,12 @@
+# Issue: #693
 metadata:
   id: quest-berlin-2061-2077-european-silicon
   title: 'Берлин 2061-2077 — Европейский кремний'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -95,7 +96,7 @@ quest_definition:
     experience: 10000
     currency: 0
     items:
-      - id: european_silicon_title
+      - item_id: european_silicon_title
         name: "Титул «Европейский кремний»"
         quantity: 1
     reputation:
@@ -105,23 +106,39 @@ quest_definition:
       - european_silicon_completed
   branches:
     - id: berlin_wins
-      condition: "player_reputation_berlin_tech_hub >= 20"
-      objectives:
-        - id: celebrate_berlin_victory
-          text: "Отпраздновать победу Берлина в голосовании"
-          type: interact
-          target: victory_celebration
-          count: 1
-          optional: false
+      unlock_condition:
+        type: reputation_check
+        reputation: berlin_tech_hub
+        min_value: 20
+      consequences:
+        currency: 0
+        reputation:
+          berlin_tech_hub: 10
+          eu_commission: 5
+        flags:
+          - berlin_tech_capital_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: economic
+            location: berlin
     - id: compromise_solution
-      condition: "player_reputation_diplomacy >= 15"
-      objectives:
-        - id: negotiate_compromise
-          text: "Договориться о компромиссном решении с другими городами"
-          type: interact
-          target: compromise_negotiation
-          count: 1
-          optional: false
+      unlock_condition:
+        type: reputation_check
+        reputation: diplomacy
+        min_value: 15
+      consequences:
+        currency: 0
+        reputation:
+          berlin_tech_hub: 5
+          eu_commission: 10
+          london_tech_hub: 5
+          paris_tech_hub: 5
+        flags:
+          - compromise_tech_hub_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: diplomatic
+            location: europe
 content:
   sections:
     - id: lobbying
@@ -178,6 +195,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches: заменен condition на unlock_condition с правильной структурой, удалены objectives из branches, добавлены consequences. Исправлена структура rewards: заменен id на item_id для items. Структура теперь соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

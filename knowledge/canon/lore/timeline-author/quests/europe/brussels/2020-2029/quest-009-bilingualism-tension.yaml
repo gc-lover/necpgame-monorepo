@@ -1,11 +1,12 @@
+# Issue: #691
 metadata:
   id: quest-brussels-2029-bilingualism-tension
   title: 'Брюссель 2020-2029 — Двуязычие и напряжение'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -50,6 +51,103 @@ summary:
     - Контраст экономик север/юг.
     - Перевод табличек и документов на два языка.
     - Прецедент 541 дней без правительства.
+quest_definition:
+  quest_type: side
+  level_min: 5
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: survey_districts
+      text: "Посетить фламандские и валлонские районы, записать язык вывесок и опросить жителей о языковых предпочтениях"
+      type: travel
+      target: brussels_bilingual_districts
+      count: 5
+      optional: false
+    - id: observe_political_crisis
+      text: "Наблюдать за симуляцией парламентских переговоров, попытками сформировать коалицию и узнать про рекордный простой правительства (541 день)"
+      type: interact
+      target: belgian_parliament_simulation
+      count: 1
+      optional: false
+    - id: moderate_debate
+      text: "Модерировать встречу активистов из обеих общин, выбирая аргументы, которые уменьшают напряжение"
+      type: perform
+      target: bilingual_community_debate
+      count: 1
+      optional: false
+    - id: create_reconciliation_report
+      text: "Создать финальный документ с мерами по сохранению единства: двуязычное образование, экономические стимулы, культурные фестивали"
+      type: craft
+      target: reconciliation_policy_report
+      count: 1
+      optional: false
+  rewards:
+    experience: 3000
+    currency: 0
+    items:
+      - item_id: belgian_crisis_expert_title
+        name: "Титул «Знаток бельгийского кризиса»"
+        quantity: 1
+    reputation:
+      brussels_politics: 25
+      brussels_culture: 15
+      flanders_community: 10
+      wallonia_community: 10
+    flags:
+      - bilingual_tension_quest_completed
+      - diplomatic_liveops_unlocked
+      - cultural_exchange_quests_unlocked
+  branches:
+    - id: flanders_sympathizer_path
+      unlock_condition:
+        type: choice_made
+        choice_id: community_support
+        value: "flanders"
+      consequences:
+        reputation:
+          flanders_community: 20
+          wallonia_community: -5
+        flags:
+          - flanders_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: political
+            location: brussels
+    - id: wallonia_sympathizer_path
+      unlock_condition:
+        type: choice_made
+        choice_id: community_support
+        value: "wallonia"
+      consequences:
+        reputation:
+          wallonia_community: 20
+          flanders_community: -5
+        flags:
+          - wallonia_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: political
+            location: brussels
+    - id: neutral_mediator_path
+      unlock_condition:
+        type: choice_made
+        choice_id: community_support
+        value: "neutral"
+      consequences:
+        reputation:
+          brussels_politics: 15
+          flanders_community: 10
+          wallonia_community: 10
+        flags:
+          - diplomatic_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: diplomatic
+            location: brussels
 content:
   sections:
     - id: survey
@@ -98,6 +196,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 4 objectives на основе контента квеста (исследование кварталов, наблюдение за политическим кризисом, модерация дебатов, создание отчёта примирения). Добавлены rewards: 3000 XP, титул "Знаток бельгийского кризиса", репутация brussels_politics: 25, brussels_culture: 15, flanders_community: 10, wallonia_community: 10, флаги для разблокировки дипломатических liveops и культурного обмена. Добавлены 3 branches (flanders_sympathizer_path, wallonia_sympathizer_path, neutral_mediator_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

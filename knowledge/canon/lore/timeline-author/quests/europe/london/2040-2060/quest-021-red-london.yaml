@@ -1,11 +1,12 @@
+# Issue: #669
 metadata:
   id: quest-london-2040-red-london
   title: Красный Лондон
   document_type: canon
   category: timeline-author
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -96,7 +97,7 @@ quest_definition:
     experience: 2500
     currency: 0
     items:
-      - id: red_london_survivor_title
+      - item_id: red_london_survivor_title
         name: "Титул «Переживший Красный Лондон»"
         quantity: 1
     reputation:
@@ -106,23 +107,36 @@ quest_definition:
       - red_london_survived
   branches:
     - id: evacuation_path
-      condition: "player_morality_score < 0"
-      objectives:
-        - id: evacuate_early
-          text: "Эвакуироваться до начала бури"
-          type: interact
-          target: evacuation_point
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: 0.0
+      consequences:
+        currency: 0
+        reputation:
+          london_citizens: -10
+        flags:
+          - red_london_evacuated_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: survival
+            location: london
     - id: community_leader_path
-      condition: "player_reputation_london_citizens >= 10"
-      objectives:
-        - id: lead_community_response
-          text: "Возглавить ответ сообщества на катастрофу"
-          type: interact
-          target: community_leadership_meeting
-          count: 1
-          optional: false
+      unlock_condition:
+        type: reputation_check
+        faction: london_citizens
+        min_value: 10
+      consequences:
+        currency: 0
+        reputation:
+          london_citizens: 20
+          london_city_services: 15
+        flags:
+          - red_london_community_leader_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: leadership
+            location: london
 content:
   sections:
     - id: setup
@@ -184,6 +198,10 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура items (id -> item_id). Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

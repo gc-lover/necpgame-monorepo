@@ -1,11 +1,12 @@
+# Issue: #668
 metadata:
   id: quest-london-2030-brexit-legacy
   title: Наследие Брексита
   document_type: canon
   category: timeline-author
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -98,32 +99,52 @@ quest_definition:
       - brexit_legacy_completed
   branches:
     - id: reunification_path
-      condition: "player_morality_score >= 5"
-      objectives:
-        - id: lobby_reunification
-          text: "Лоббировать возвращение Лондона под управление Британии"
-          type: interact
-          target: british_parliament_lobby
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        min_value: 0.5
+      consequences:
+        currency: 0
+        reputation:
+          london_politics: 10
+          britain_government: 15
+        flags:
+          - brexit_reunification_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
     - id: independence_path
-      condition: "player_reputation_london_politics >= 15"
-      objectives:
-        - id: support_independence
-          text: "Поддержать статус-кво города-государства"
-          type: interact
-          target: london_independence_council
-          count: 1
-          optional: false
+      unlock_condition:
+        type: reputation_check
+        faction: london_politics
+        min_value: 15
+      consequences:
+        currency: 0
+        reputation:
+          london_politics: 20
+        flags:
+          - brexit_independence_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
     - id: expansion_path
-      condition: "player_morality_score < 0"
-      objectives:
-        - id: initiate_expansion
-          text: "Инициировать агрессивную экономическую экспансию Лондона"
-          type: interact
-          target: expansion_planning_committee
-          count: 1
-          optional: false
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: 0.0
+      consequences:
+        currency: 0
+        reputation:
+          london_politics: 15
+          london_corporations: 20
+        flags:
+          - brexit_expansion_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: political
+            location: london
 content:
   sections:
     - id: setup
@@ -185,6 +206,10 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

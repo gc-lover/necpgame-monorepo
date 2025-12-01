@@ -1,11 +1,12 @@
+# Issue: #715
 metadata:
   id: quest-berlin-2020-2029-techno-rave
   title: 'Берлин 2020-2029 — Техно-рейв'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +46,91 @@ summary:
     - Поиск слухов и паролей создает атмосферу подполья.
     - Ритм-мини-игра моделирует 130+ BPM и требует концентрации.
     - Рассветный сет влияет на будущие приглашения и лейблы.
+quest_definition:
+  quest_type: side
+  level_min: 2
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: gather_rave_intel
+      text: "Через мессенджеры и клубных знакомых получить координаты рейва, узнать код входа и помочь отвлечь внимание полиции"
+      type: investigate
+      target: berlin_underground_rave_network
+      count: 1
+      optional: false
+    - id: arrive_at_warehouse
+      text: "Прибыть на промзону, пройти очередь в чёрном. Внешний вид и уверенность влияют на шанс допуска"
+      type: travel
+      target: berlin_warehouse_rave_location
+      count: 1
+      optional: false
+    - id: participate_dancefloor
+      text: "Участвовать в ритм-игре на танцполе: комбинировать движения, следить за дыханием и мотивировать других участников. Поддерживать бас 48 часов"
+      type: perform
+      target: techno_rave_dancefloor
+      count: 1
+      optional: false
+    - id: support_rave_community
+      text: "Между сетами раздавать воду, помогать новичкам и удерживать morale рейва. Решения влияют на выносливость"
+      type: interact
+      target: rave_aftercare_station
+      count: 3
+      optional: false
+    - id: complete_sunrise_set
+      text: "Участвовать в финальном рассветном сете, оформляемом совместно с ди-джеем. Успех открывает liveops-ивенты и мерч лейбла"
+      type: perform
+      target: sunrise_techno_set
+      count: 1
+      optional: false
+  rewards:
+    experience: 2000
+    currency: -20
+    items:
+      - item_id: techno_warrior_title
+        name: "Титул «Техно-воин»"
+        quantity: 1
+    reputation:
+      berlin_techno_scene: 15
+      berlin_underground: 10
+    flags:
+      - techno_rave_quest_completed
+      - exclusive_rave_invitations_unlocked
+      - techno_label_merch_unlocked
+  branches:
+    - id: endurance_champion_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: participate_dancefloor
+        min_count: 1
+      consequences:
+        currency: 0
+        reputation:
+          berlin_techno_scene: 10
+        flags:
+          - endurance_events_unlocked
+        unlocked_content:
+          - event_type: liveops
+            category: techno
+            location: berlin
+    - id: community_leader_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: support_rave_community
+        min_count: 3
+      consequences:
+        currency: 0
+        reputation:
+          berlin_underground: 15
+        flags:
+          - community_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: social
+            location: berlin
 content:
   sections:
     - id: intel
@@ -94,6 +180,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 5 objectives на основе контента квеста (сбор слухов, прибытие на склад, участие на танцполе, поддержка коммьюнити, завершение рассветного сета). Добавлены rewards: 2000 XP, -20 currency, титул "Техно-воин", репутация berlin_techno_scene: 15, berlin_underground: 10, флаги для разблокировки эксклюзивных рейвов и мерча лейбла. Добавлены 2 branches (endurance_champion_path, community_leader_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

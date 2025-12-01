@@ -1,11 +1,12 @@
+# Issue: #661
 metadata:
   id: quest-london-2039-sherlock-ai
   title: 'Лондон 2030-2039 — ИИ Шерлок'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -89,7 +90,7 @@ quest_definition:
     experience: 2500
     currency: 15000
     items:
-      - id: sherlock_ai_companion
+      - item_id: sherlock_ai_companion
         name: "ИИ Шерлок как помощник"
         quantity: 1
     reputation:
@@ -97,24 +98,38 @@ quest_definition:
     flags:
       - sherlock_ai_quest_completed
   branches:
-    - id: perfect_deduction
-      condition: "all_evidence_collected == true AND correct_deductions >= 3"
-      objectives:
-        - id: solve_case_perfectly
-          text: "Раскрыть дело идеально с помощью ИИ Шерлока"
-          type: interact
-          target: perfect_solution
-          count: 1
-          optional: false
-    - id: partial_solution
-      condition: "evidence_collected >= 3 AND correct_deductions >= 2"
-      objectives:
-        - id: solve_case_partially
-          text: "Раскрыть дело частично"
-          type: interact
-          target: partial_solution
-          count: 1
-          optional: false
+    - id: perfect_deduction_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: collect_evidence
+        min_count: 5
+        additional_condition: correct_deductions >= 3
+      consequences:
+        currency: 5000
+        reputation:
+          london_detectives: 10
+        flags:
+          - sherlock_perfect_deduction_unlocked
+        unlocked_content:
+          - quest_type: main
+            category: detective
+            location: london
+    - id: partial_solution_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: collect_evidence
+        min_count: 3
+        additional_condition: correct_deductions >= 2
+      consequences:
+        currency: 2000
+        reputation:
+          london_detectives: 5
+        flags:
+          - sherlock_partial_solution_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: detective
+            location: london
 content:
   sections:
     - id: briefing
@@ -170,6 +185,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Исправлена структура items (id -> item_id). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

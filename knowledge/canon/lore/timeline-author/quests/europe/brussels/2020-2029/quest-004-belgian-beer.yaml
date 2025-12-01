@@ -1,11 +1,12 @@
+# Issue: #686
 metadata:
   id: quest-brussels-2020-2029-belgian-beer
   title: 'Брюссель 2020-2029 — «Бельгийское пиво»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -50,6 +51,91 @@ summary:
     - Включает дегустацию trappist, lambic и сезонных сортов с уникальными бокалами.
     - Система проверяет устойчивость персонажа и социальные навыки в пабах.
     - Завершение открывает поставки для liveops фестивалей пива.
+quest_definition:
+  quest_type: side
+  level_min: 4
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: visit_delirium_cafe
+      text: "Посетить Delirium Café, получить меню на 2 000 позиций, выбрать стартовые дегустации и пройти мини-игру по подбору правильного бокала"
+      type: interact
+      target: delirium_cafe
+      count: 1
+      optional: false
+    - id: visit_trappist_brewery
+      text: "Посетить монастырскую пивоварню, послушать истории монахов и получить ограниченный выпуск Westvleteren"
+      type: interact
+      target: trappist_brewery
+      count: 1
+      optional: false
+    - id: taste_lambic_gueuze
+      text: "Попробовать lambic и gueuze, поддерживая баланс кислотности и сладости для получения коллекционной записи о спонтанной ферментации"
+      type: perform
+      target: lambic_tasting
+      count: 1
+      optional: false
+    - id: collect_beer_glasses
+      text: "Собрать набор фирменных бокалов и обучить NPC правильной подаче пива"
+      type: collect
+      target: beer_glass_collection
+      count: 5
+      optional: false
+    - id: complete_beer_masterclass
+      text: "Завершить пивной мастер-класс, продемонстрировав знание ритуалов подачи и сортов пива"
+      type: perform
+      target: beer_masterclass_completion
+      count: 1
+      optional: false
+  rewards:
+    experience: 1500
+    currency: 0
+    items:
+      - item_id: trappist_toast_buff
+        name: "Бафф «Trappist Toast» (+25% Charisma на 6 часов)"
+        quantity: 1
+      - item_id: beer_connoisseur_title
+        name: "Титул «Пивной знаток»"
+        quantity: 1
+    reputation:
+      brussels_tourism: 20
+      brussels_gastronomy: 15
+    flags:
+      - belgian_beer_quest_completed
+      - beer_masterclass_liveops_unlocked
+  branches:
+    - id: trappist_expert_path
+      unlock_condition:
+        type: skill_check
+        skill: knowledge
+        min_value: 0.6
+      consequences:
+        currency: 0
+        reputation:
+          brussels_gastronomy: 10
+        flags:
+          - trappist_expert_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: gastronomy
+            location: brussels
+    - id: social_beer_path
+      unlock_condition:
+        type: quest_completion
+        quest_id: quest-brussels-2020-2029-belgian-beer
+      consequences:
+        currency: 0
+        reputation:
+          brussels_tourism: 15
+        flags:
+          - social_beer_events_unlocked
+        unlocked_content:
+          - event_type: social
+            location: brussels
 content:
   sections:
     - id: delirium
@@ -98,6 +184,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 5 objectives на основе контента квеста (посетить Delirium Café, посетить траппистскую пивоварню, попробовать lambic и gueuze, собрать бокалы, завершить мастер-класс). Добавлены rewards: 1500 XP, бафф "Trappist Toast" (+25% Charisma на 6 часов), титул "Пивной знаток", репутация, флаги для разблокировки liveops. Добавлены 2 branches (trappist_expert_path, social_beer_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

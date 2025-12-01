@@ -382,6 +382,23 @@ func (s *HTTPServer) listQuestInstances(w http.ResponseWriter, r *http.Request) 
 	s.respondJSON(w, http.StatusOK, response)
 }
 
+func (s *HTTPServer) reloadQuestContent(w http.ResponseWriter, r *http.Request) {
+	var req models.ReloadQuestContentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.questService.ReloadQuestContent(r.Context(), &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to reload quest content")
+		s.respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }

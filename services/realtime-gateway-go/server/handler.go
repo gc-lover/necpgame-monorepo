@@ -115,14 +115,31 @@ func (h *GatewayHandler) AddClientConnection(conn *websocket.Conn) {
 	SetActiveClients(float64(len(h.clientConns)))
 }
 
+// Issue: #1410
 func (h *GatewayHandler) RemoveClientConnection(conn *websocket.Conn) {
 	h.clientConnsMu.Lock()
+	clientConn, exists := h.clientConns[conn]
 	delete(h.clientConns, conn)
 	h.clientConnsMu.Unlock()
 	
 	h.deltaStatesMu.Lock()
 	delete(h.clientDeltaStates, conn)
 	h.deltaStatesMu.Unlock()
+	
+	// Закрываем соединение, если оно существует
+	if exists && clientConn != nil {
+		clientConn.mu.Lock()
+		if conn != nil {
+			// Отправляем close message перед закрытием
+			conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "Connection closed"))
+			conn.Close()
+		}
+		clientConn.mu.Unlock()
+	} else if conn != nil {
+		// Если clientConn не найден, все равно закрываем соединение
+		conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "Connection closed"))
+		conn.Close()
+	}
 	
 	SetActiveClients(float64(len(h.clientConns)))
 }

@@ -1,11 +1,12 @@
+# Issue: #718
 metadata:
   id: quest-berlin-2029-tv-tower-hack
   title: 'Берлин 2020-2029 — Взлом телебашни'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +46,104 @@ summary:
     - Отражает политическое наследие ГДР и культовый силуэт башни.
     - Многоэтапная операция: стелс, лифт, взлом, выбор сообщения.
     - Исход влияет на репутацию фракций и поиск игрока службами.
+quest_definition:
+  quest_type: side
+  level_min: 10
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: infiltrate_tower
+      text: "Ночной стелс по Alexanderplatz: отвлечь охрану, взломать пропуска и отключить камеры"
+      type: stealth
+      target: tv_tower_security
+      count: 1
+      optional: false
+    - id: ascend_to_sphere
+      text: "Подняться на лифте на 203 метра в сферу, решить отключить датчики или замаскировать сигнал"
+      type: travel
+      target: tv_tower_elevator
+      count: 1
+      optional: false
+    - id: hack_equipment
+      text: "Взломать оборудование: настроить частоты, перехватить цифровые ключи и обойти резервный сервер NetWatch"
+      type: hack
+      target: tv_tower_broadcast_equipment
+      count: 1
+      optional: false
+    - id: choose_message
+      text: "Выбрать послание для трансляции: революционное обращение, арт-инсталляция или коммерческий спот"
+      type: choice
+      target: broadcast_message_selection
+      count: 1
+      optional: false
+    - id: escape_tower
+      text: "Скрыться через сервисные тоннели после трансляции"
+      type: stealth
+      target: tv_tower_service_tunnels
+      count: 1
+      optional: false
+  rewards:
+    experience: 8000
+    currency: 100000
+    items: []
+    reputation:
+      berlin_hacktivists: 25
+      media_outlets: 15
+    flags:
+      - tv_tower_hack_completed
+      - voice_of_berlin_title_unlocked
+  branches:
+    - id: revolutionary_message_path
+      unlock_condition:
+        type: choice_made
+        choice_id: broadcast_message_selection
+        value: "revolutionary"
+      consequences:
+        reputation:
+          berlin_hacktivists: 15
+          authorities: -20
+        flags:
+          - revolutionary_message_broadcast
+          - wanted_level_increased
+        unlocked_content:
+          - quest_type: side
+            category: political
+            location: berlin
+    - id: art_installation_path
+      unlock_condition:
+        type: choice_made
+        choice_id: broadcast_message_selection
+        value: "art"
+      consequences:
+        reputation:
+          berlin_artists: 20
+          media_outlets: 10
+        flags:
+          - art_installation_broadcast
+        unlocked_content:
+          - quest_type: side
+            category: artistic
+            location: berlin
+    - id: commercial_spot_path
+      unlock_condition:
+        type: choice_made
+        choice_id: broadcast_message_selection
+        value: "commercial"
+      consequences:
+        currency: 50000
+        reputation:
+          corporations: 15
+          authorities: -10
+        flags:
+          - commercial_spot_broadcast
+        unlocked_content:
+          - quest_type: side
+            category: corporate
+            location: berlin
 content:
   sections:
     - id: infiltration
@@ -100,6 +199,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Структура теперь полностью соответствует архитектуре.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

@@ -1,11 +1,12 @@
+# Issue: #717
 metadata:
   id: quest-berlin-2029-spree-river-cruise
   title: 'Берлин 2020-2029 — Круиз по Шпрее'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +46,85 @@ summary:
     - Круиз раскрывает городские символы через призму реки.
     - Фото-челленджи у Museum Island, рейхстага и Oberbaumbrücke.
     - Финал подключает игрока к сетевым событиям «Art on the River».
+quest_definition:
+  quest_type: side
+  level_min: 1
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: choose_cruise_time
+      text: "Выбрать дневной или вечерний рейс круиза по Шпрее и получить аудиогид"
+      type: interact
+      target: spree_cruise_booking
+      count: 1
+      optional: false
+    - id: photograph_museum_island
+      text: "Зафиксировать купола Museum Island, получить исторические заметки и собрать коллекцию UNESCO-меток"
+      type: perform
+      target: museum_island_photography
+      count: 1
+      optional: false
+    - id: photograph_cathedral_reichstag
+      text: "Выполнить задания по панорамной съемке Берлинского собора и рейхстага, провести диалоги с гидом"
+      type: perform
+      target: cathedral_reichstag_photography
+      count: 1
+      optional: false
+    - id: photograph_oberbaum
+      text: "Настроить AR-кадры Oberbaumbrücke, совмещая мост, граффити и движущийся поезд U-Bahn"
+      type: perform
+      target: oberbaum_photography
+      count: 1
+      optional: false
+    - id: disembark_east_side
+      text: "Высадиться у East Side Gallery, поделиться фото в liveops-сети и открыть сезонные задания «Art on the River»"
+      type: interact
+      target: east_side_gallery_finale
+      count: 1
+      optional: false
+  rewards:
+    experience: 600
+    currency: -20
+    items: []
+    reputation:
+      berlin_tourism: 10
+    flags:
+      - spree_cruise_completed
+      - art_on_river_unlocked
+      - spree_captain_title_unlocked
+  branches:
+    - id: day_cruise_path
+      unlock_condition:
+        type: choice_made
+        choice_id: cruise_time_selection
+        value: "day"
+      consequences:
+        reputation:
+          berlin_tourism: 5
+        flags:
+          - day_cruise_bonus
+        unlocked_content:
+          - quest_type: side
+            category: tourism
+            location: berlin
+    - id: evening_cruise_path
+      unlock_condition:
+        type: choice_made
+        choice_id: cruise_time_selection
+        value: "evening"
+      consequences:
+        reputation:
+          berlin_tourism: 5
+        flags:
+          - evening_cruise_bonus
+        unlocked_content:
+          - quest_type: side
+            category: tourism
+            location: berlin
 content:
   sections:
     - id: embark
@@ -94,6 +174,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Структура теперь полностью соответствует архитектуре.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

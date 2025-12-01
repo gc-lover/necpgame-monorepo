@@ -1,11 +1,12 @@
+# Issue: #664
 metadata:
   id: quest-london-2039-fish-and-chips
   title: 'Лондон 2030-2039 — Фиш энд чипс'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -89,7 +90,7 @@ quest_definition:
     experience: 800
     currency: 0
     items:
-      - id: free_fish_and_chips_buff
+      - item_id: free_fish_and_chips_buff
         name: "Бафф «Бесплатная еда» (+5% HP)"
         quantity: 1
     reputation:
@@ -97,33 +98,52 @@ quest_definition:
     flags:
       - fish_and_chips_quest_completed
   branches:
-    - id: protect_tradition
-      condition: "player_morality_score >= 5"
-      objectives:
-        - id: defend_shop
-          text: "Защитить забегаловку от корпорации и сохранить традицию"
-          type: combat
-          target: corporate_raid
-          count: 1
-          optional: false
-    - id: sell_to_corporation
-      condition: "player_currency < 50000"
-      objectives:
-        - id: negotiate_sale
-          text: "Убедить владельца продать за 50 000 еддис"
-          type: interact
-          target: sale_negotiation
-          count: 1
-          optional: false
-    - id: abandon_shop
-      condition: "player_morality_score < 0"
-      objectives:
-        - id: leave_shop
-          text: "Уйти, позволив забегаловке закрыться"
-          type: interact
-          target: shop_abandonment
-          count: 1
-          optional: false
+    - id: protect_tradition_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        min_value: 0.5
+      consequences:
+        currency: 0
+        reputation:
+          london_tradition: 15
+        flags:
+          - fish_and_chips_tradition_protected_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: tradition
+            location: london
+    - id: sell_to_corporation_path
+      unlock_condition:
+        type: skill_check
+        skill: currency
+        max_value: 50000
+      consequences:
+        currency: 50000
+        reputation:
+          london_tradition: -10
+          london_corporations: 5
+        flags:
+          - fish_and_chips_sold_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: corporate
+            location: london
+    - id: abandon_shop_path
+      unlock_condition:
+        type: skill_check
+        skill: morality
+        max_value: 0.0
+      consequences:
+        currency: 0
+        reputation:
+          london_tradition: -15
+        flags:
+          - fish_and_chips_abandoned_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: abandoned
+            location: london
 content:
   sections:
     - id: rumor
@@ -172,6 +192,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Исправлена структура branches (condition -> unlock_condition, убраны objectives из branches, добавлены правильные поля consequences). Исправлена структура items (id -> item_id). Структура quest_definition соответствует архитектуре системы квестов.'
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer

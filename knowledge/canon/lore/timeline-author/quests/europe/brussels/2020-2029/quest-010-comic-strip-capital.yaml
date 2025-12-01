@@ -1,11 +1,12 @@
+# Issue: #692
 metadata:
   id: quest-brussels-2029-comic-strip-capital
   title: 'Брюссель 2020-2029 — «Столица комиксов»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -50,6 +51,77 @@ summary:
     - 50+ муралов доступны через AR-сканирование и дают фрагменты истории авторов.
     - Belgian Comic Strip Center открывает игровые квесты и уникальные товары.
     - Завершение позволяет выпустить собственную мини-комикс ленту.
+quest_definition:
+  quest_type: side
+  level_min: 1
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: follow_comic_mural_route
+      text: "Следовать по карте «Comic Strip Route», сканировать муралы с Тинтином, Смурфами и Lucky Luke через AR, раскрывая биографии авторов"
+      type: travel
+      target: brussels_comic_strip_route
+      count: 10
+      optional: false
+    - id: visit_comic_museum
+      text: "Посетить музей бельгийского комикса, пройти интерактивные стенды, изучить оригинальные страницы и выполнить мини-квест по реставрации панелей"
+      type: interact
+      target: belgian_comic_strip_center
+      count: 1
+      optional: false
+    - id: create_comic_page
+      text: "Собрать элементы дизайна и текстовые баллоны в мастерской автора, создать уникальную страницу комикса, которая попадёт в городской архив"
+      type: craft
+      target: comic_creator_workshop
+      count: 1
+      optional: false
+  rewards:
+    experience: 1500
+    currency: -25
+    items:
+      - item_id: comic_reader_title
+        name: "Титул «Читатель комиксов»"
+        quantity: 1
+    reputation:
+      brussels_culture: 20
+      brussels_tourism: 10
+    flags:
+      - comic_strip_capital_quest_completed
+      - weekly_art_events_unlocked
+      - comic_creation_unlocked
+  branches:
+    - id: mural_collector_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: follow_comic_mural_route
+        min_count: 10
+      consequences:
+        reputation:
+          brussels_culture: 10
+        flags:
+          - mural_collection_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: collection
+            location: brussels
+    - id: comic_creator_path
+      unlock_condition:
+        type: objective_completion
+        objective_id: create_comic_page
+        min_count: 1
+      consequences:
+        reputation:
+          brussels_culture: 15
+        flags:
+          - comic_creation_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: creative
+            location: brussels
 content:
   sections:
     - id: mural_route
@@ -87,6 +159,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Создано 3 objectives на основе контента квеста (следование по маршруту комикс-муралов, посещение музея комиксов, создание страницы комикса). Добавлены rewards: 1500 XP, -25 currency, титул "Читатель комиксов", репутация brussels_culture: 20, brussels_tourism: 10, флаги для разблокировки арт-ивентов и создания комиксов. Добавлены 2 branches (mural_collector_path, comic_creator_path) с правильной структурой unlock_condition и consequences.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

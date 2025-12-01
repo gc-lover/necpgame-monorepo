@@ -1,11 +1,12 @@
+# Issue: #716
 metadata:
   id: quest-berlin-2020-2029-stasi-archives
   title: 'Берлин 2020-2029 — Архивы Штази'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +46,103 @@ summary:
     - Шпионская техника и километры архивов создают атмосферу тотального контроля.
     - История конкретного досье показывает влияние слежки на отношения.
     - Выбор игрока определяет международный резонанс и доверие свидетелей.
+quest_definition:
+  quest_type: side
+  level_min: 7
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: infiltrate_museum
+      text: "Получить доступ к музею Штази под видом исследователя и обойти систему безопасности"
+      type: stealth
+      target: stasi_museum_security
+      count: 1
+      optional: false
+    - id: find_hidden_elevator
+      text: "Найти скрытый лифт в закрытую секцию архивов"
+      type: investigate
+      target: hidden_elevator_location
+      count: 1
+      optional: false
+    - id: search_dossier
+      text: "Навигация по картотекам и микроплёнкам, расшифровка шифров для поиска дела, связанного с семьёй"
+      type: investigate
+      target: stasi_archive_files
+      count: 1
+      optional: false
+    - id: analyze_dossier
+      text: "Проанализировать протоколы допросов, аудиозаписи и фотографии, узнать о предательстве друга"
+      type: investigate
+      target: dossier_analysis
+      count: 1
+      optional: false
+    - id: make_decision
+      text: "Принять решение: опубликовать, скрыть или уничтожить файлы"
+      type: choice
+      target: dossier_fate_decision
+      count: 1
+      optional: false
+  rewards:
+    experience: 4000
+    currency: 0
+    items: []
+    reputation:
+      berlin_historical_research: 20
+      international_investigators: 15
+    flags:
+      - stasi_archives_accessed
+      - informant_network_unlocked
+  branches:
+    - id: publish_path
+      unlock_condition:
+        type: choice_made
+        choice_id: dossier_fate_decision
+        value: "publish"
+      consequences:
+        reputation:
+          berlin_historical_research: 10
+          international_investigators: 10
+          media_outlets: 15
+        flags:
+          - truth_revealed
+        unlocked_content:
+          - quest_type: side
+            category: investigation
+            location: global
+    - id: hide_path
+      unlock_condition:
+        type: choice_made
+        choice_id: dossier_fate_decision
+        value: "hide"
+      consequences:
+        reputation:
+          berlin_historical_research: 5
+          witnesses: -10
+        flags:
+          - truth_hidden
+        unlocked_content:
+          - quest_type: side
+            category: moral_dilemma
+            location: berlin
+    - id: destroy_path
+      unlock_condition:
+        type: choice_made
+        choice_id: dossier_fate_decision
+        value: "destroy"
+      consequences:
+        reputation:
+          berlin_historical_research: -5
+          witnesses: -15
+        flags:
+          - truth_destroyed
+        unlocked_content:
+          - quest_type: side
+            category: consequences
+            location: berlin
 content:
   sections:
     - id: infiltration
@@ -88,6 +186,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлен Issue в начало файла. Добавлена полная структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Структура теперь полностью соответствует архитектуре.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team
