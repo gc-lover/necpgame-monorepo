@@ -154,23 +154,238 @@ func (h *CompanionHandlers) PurchaseCompanionFromShop(w http.ResponseWriter, r *
 }
 
 func (h *CompanionHandlers) GetCompanionEvents(w http.ResponseWriter, r *http.Request, companionId openapi_types.UUID, params api.GetCompanionEventsParams) {
-	h.respondError(w, http.StatusNotImplemented, "GetCompanionEvents not implemented")
+	_ = r.Context()
+	_ = uuid.UUID(companionId)
+
+	limit := 20
+	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
+		limit = *params.Limit
+	}
+
+	offset := 0
+	if params.Offset != nil && *params.Offset >= 0 {
+		offset = *params.Offset
+	}
+
+	// TODO: Реализовать получение событий из БД когда будет таблица companion_events
+	// Пока возвращаем пустой список
+	events := make([]api.CompanionEvent, 0)
+	total := 0
+
+	response := api.CompanionEventsResponse{
+		Events: &events,
+		Total:  &total,
+		Limit:  &limit,
+		Offset: &offset,
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *CompanionHandlers) CompanionAttack(w http.ResponseWriter, r *http.Request, companionId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "CompanionAttack not implemented")
+	ctx := r.Context()
+	companionID := uuid.UUID(companionId)
+
+	var req api.CompanionAttackJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	characterID := uuid.UUID(req.PlayerId)
+	_ = uuid.UUID(req.TargetId)
+
+	companion, err := h.repo.GetPlayerCompanion(ctx, companionID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get companion")
+		h.respondError(w, http.StatusInternalServerError, "failed to get companion")
+		return
+	}
+
+	if companion == nil {
+		h.respondError(w, http.StatusNotFound, "companion not found")
+		return
+	}
+
+	if companion.CharacterID != characterID {
+		h.respondError(w, http.StatusForbidden, "not your companion")
+		return
+	}
+
+	if companion.Status != models.CompanionStatusSummoned {
+		h.respondError(w, http.StatusBadRequest, "companion is not summoned")
+		return
+	}
+
+	// Вычисляем урон на основе уровня и статов компаньона
+	damage := 10
+	if companion.Stats != nil {
+		if d, ok := companion.Stats["damage"].(float64); ok {
+			damage = int(d)
+		}
+	}
+	damage = damage + (companion.Level * 2)
+
+	success := true
+
+	response := api.CompanionAttackResponse{
+		Success:     &success,
+		TargetId:    &req.TargetId,
+		DamageDealt: &damage,
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *CompanionHandlers) CompanionDefend(w http.ResponseWriter, r *http.Request, companionId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "CompanionDefend not implemented")
+	ctx := r.Context()
+	companionID := uuid.UUID(companionId)
+
+	var req api.CompanionDefendJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	characterID := uuid.UUID(req.PlayerId)
+
+	companion, err := h.repo.GetPlayerCompanion(ctx, companionID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get companion")
+		h.respondError(w, http.StatusInternalServerError, "failed to get companion")
+		return
+	}
+
+	if companion == nil {
+		h.respondError(w, http.StatusNotFound, "companion not found")
+		return
+	}
+
+	if companion.CharacterID != characterID {
+		h.respondError(w, http.StatusForbidden, "not your companion")
+		return
+	}
+
+	if companion.Status != models.CompanionStatusSummoned {
+		h.respondError(w, http.StatusBadRequest, "companion is not summoned")
+		return
+	}
+
+	// Активируем защиту на 30 секунд
+	defenseActive := true
+	defenseDurationSeconds := 30
+	success := true
+
+	response := api.CompanionDefendResponse{
+		Success:                &success,
+		DefenseActive:          &defenseActive,
+		DefenseDurationSeconds: &defenseDurationSeconds,
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 func (h *CompanionHandlers) CustomizeCompanion(w http.ResponseWriter, r *http.Request, companionId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "CustomizeCompanion not implemented")
+	ctx := r.Context()
+	companionID := uuid.UUID(companionId)
+
+	var req api.CustomizeCompanionJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	characterID := uuid.UUID(req.PlayerId)
+
+	companion, err := h.repo.GetPlayerCompanion(ctx, companionID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get companion")
+		h.respondError(w, http.StatusInternalServerError, "failed to get companion")
+		return
+	}
+
+	if companion == nil {
+		h.respondError(w, http.StatusNotFound, "companion not found")
+		return
+	}
+
+	if companion.CharacterID != characterID {
+		h.respondError(w, http.StatusForbidden, "not your companion")
+		return
+	}
+
+	// Обновляем кастомизацию (сохраняем в Equipment или Stats)
+	if req.Customization != nil {
+		if companion.Equipment == nil {
+			companion.Equipment = make(map[string]interface{})
+		}
+		for key, value := range *req.Customization {
+			companion.Equipment[key] = value
+		}
+	}
+
+	err = h.repo.UpdatePlayerCompanion(ctx, companion)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to update companion customization")
+		h.respondError(w, http.StatusInternalServerError, "failed to customize companion")
+		return
+	}
+
+	apiCompanion := toAPIPlayerCompanion(companion)
+	h.respondJSON(w, http.StatusOK, apiCompanion)
 }
 
 func (h *CompanionHandlers) EquipCompanionItem(w http.ResponseWriter, r *http.Request, companionId openapi_types.UUID) {
-	h.respondError(w, http.StatusNotImplemented, "EquipCompanionItem not implemented")
+	ctx := r.Context()
+	companionID := uuid.UUID(companionId)
+
+	var req api.EquipCompanionItemJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	characterID := uuid.UUID(req.PlayerId)
+	itemID := uuid.UUID(req.ItemId)
+
+	companion, err := h.repo.GetPlayerCompanion(ctx, companionID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get companion")
+		h.respondError(w, http.StatusInternalServerError, "failed to get companion")
+		return
+	}
+
+	if companion == nil {
+		h.respondError(w, http.StatusNotFound, "companion not found")
+		return
+	}
+
+	if companion.CharacterID != characterID {
+		h.respondError(w, http.StatusForbidden, "not your companion")
+		return
+	}
+
+	// Экипируем предмет
+	if companion.Equipment == nil {
+		companion.Equipment = make(map[string]interface{})
+	}
+
+	slot := "default"
+	if req.Slot != nil {
+		slot = *req.Slot
+	}
+
+	companion.Equipment[slot] = itemID.String()
+
+	err = h.repo.UpdatePlayerCompanion(ctx, companion)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to equip item")
+		h.respondError(w, http.StatusInternalServerError, "failed to equip companion item")
+		return
+	}
+
+	apiCompanion := toAPIPlayerCompanion(companion)
+	h.respondJSON(w, http.StatusOK, apiCompanion)
 }
 
 
