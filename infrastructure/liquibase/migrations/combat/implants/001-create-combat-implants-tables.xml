@@ -1,0 +1,267 @@
+<!-- Issue: #58 -->
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Implant Catalog Table -->
+    <changeSet id="create-implant-catalog-table" author="database-engineer">
+        <createTable tableName="implant_catalog" schemaName="combat">
+            <column name="implant_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="implant_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="implant_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slot_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rarity" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tier" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="humanity_cost" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="level_required" type="INTEGER" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stats_bonuses" type="JSONB"/>
+            <column name="abilities" type="JSONB"/>
+            <column name="synergy_tags" type="JSONB"/>
+            <column name="description" type="TEXT"/>
+            <column name="manufacturer" type="VARCHAR(100)"/>
+            <column name="is_iconic" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_implant_catalog_type" tableName="implant_catalog" schemaName="combat">
+            <column name="implant_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_implant_catalog_slot" tableName="implant_catalog" schemaName="combat">
+            <column name="slot_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_implant_catalog_rarity" tableName="implant_catalog" schemaName="combat">
+            <column name="rarity"/>
+        </createIndex>
+
+        <createIndex indexName="idx_implant_catalog_tier" tableName="implant_catalog" schemaName="combat">
+            <column name="tier"/>
+        </createIndex>
+
+        <createIndex indexName="idx_implant_catalog_active" tableName="implant_catalog" schemaName="combat">
+            <column name="is_active"/>
+        </createIndex>
+
+        <!-- Composite index for search -->
+        <createIndex indexName="idx_implant_catalog_search" tableName="implant_catalog" schemaName="combat">
+            <column name="implant_type"/>
+            <column name="slot_type"/>
+            <column name="tier"/>
+        </createIndex>
+
+        <comment>Implant Catalog table - available implants</comment>
+    </changeSet>
+
+    <!-- Player Implants Table -->
+    <changeSet id="create-player-implants-table" author="database-engineer">
+        <createTable tableName="player_implants" schemaName="combat">
+            <column name="player_implant_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="implant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slot_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_equipped" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="condition_percent" type="INTEGER" defaultValue="100">
+                <constraints nullable="false" checkConstraint="condition_percent BETWEEN 0 AND 100"/>
+            </column>
+            <column name="malfunction_risk" type="DECIMAL(5,2)" defaultValue="0.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="installed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="last_maintenance_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="acquired_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="combat"
+            baseTableName="player_implants"
+            baseColumnNames="character_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_player_implants_character"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="combat"
+            baseTableName="player_implants"
+            baseColumnNames="implant_id"
+            referencedTableSchemaName="combat"
+            referencedTableName="implant_catalog"
+            referencedColumnNames="implant_id"
+            constraintName="fk_player_implants_implant"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_player_implants_character" tableName="player_implants" schemaName="combat">
+            <column name="character_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_implants_implant" tableName="player_implants" schemaName="combat">
+            <column name="implant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_implants_equipped" tableName="player_implants" schemaName="combat">
+            <column name="character_id"/>
+            <column name="is_equipped"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_implants_slot" tableName="player_implants" schemaName="combat">
+            <column name="character_id"/>
+            <column name="slot_type"/>
+        </createIndex>
+
+        <!-- Unique constraint: one implant per slot for equipped -->
+        <addUniqueConstraint
+            schemaName="combat"
+            tableName="player_implants"
+            columnNames="character_id, slot_type, is_equipped"
+            constraintName="uq_player_implants_equipped_slot"/>
+
+        <comment>Player Implants table - implants owned/equipped by players</comment>
+    </changeSet>
+
+    <!-- Cyberpsychosis Tracker Table -->
+    <changeSet id="create-cyberpsychosis-tracker-table" author="database-engineer">
+        <createTable tableName="cyberpsychosis_tracker" schemaName="combat">
+            <column name="tracker_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="humanity_current" type="INTEGER" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="humanity_max" type="INTEGER" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cyberpsychosis_level" type="INTEGER" defaultValue="0">
+                <constraints nullable="false" checkConstraint="cyberpsychosis_level BETWEEN 0 AND 10"/>
+            </column>
+            <column name="total_implants" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_humanity_cost" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="therapy_sessions" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_therapy_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="risk_status" type="VARCHAR(20)" defaultValue="low">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="combat"
+            baseTableName="cyberpsychosis_tracker"
+            baseColumnNames="character_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_cyberpsychosis_tracker_character"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_cyberpsychosis_tracker_character" tableName="cyberpsychosis_tracker" schemaName="combat">
+            <column name="character_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_cyberpsychosis_tracker_level" tableName="cyberpsychosis_tracker" schemaName="combat">
+            <column name="cyberpsychosis_level"/>
+        </createIndex>
+
+        <createIndex indexName="idx_cyberpsychosis_tracker_risk" tableName="cyberpsychosis_tracker" schemaName="combat">
+            <column name="risk_status"/>
+        </createIndex>
+
+        <comment>Cyberpsychosis Tracker table - humanity and cyberpsychosis tracking</comment>
+    </changeSet>
+
+    <!-- Implant Synergies Table -->
+    <changeSet id="create-implant-synergies-table" author="database-engineer">
+        <createTable tableName="implant_synergies" schemaName="combat">
+            <column name="synergy_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="synergy_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="required_tags" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bonuses" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_implant_synergies_active" tableName="implant_synergies" schemaName="combat">
+            <column name="is_active"/>
+        </createIndex>
+
+        <comment>Implant Synergies table - synergy bonuses definitions</comment>
+    </changeSet>
+
+</databaseChangeLog>
+
