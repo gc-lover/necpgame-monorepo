@@ -10,49 +10,86 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Получить текущий сезон боевого пропуска
-	// (GET /battle-pass/current)
-	GetCurrentBattlePass(w http.ResponseWriter, r *http.Request)
-	// Купить премиум пропуск
-	// (POST /battle-pass/premium)
-	PurchasePremium(w http.ResponseWriter, r *http.Request)
-	// Получить прогресс игрока
-	// (GET /battle-pass/progress)
-	GetPlayerProgress(w http.ResponseWriter, r *http.Request, params GetPlayerProgressParams)
-	// Получить требования уровня
-	// (GET /battle-pass/progress/level/{level})
-	GetLevelRequirements(w http.ResponseWriter, r *http.Request, level int)
+	// Get season challenges for player
+	// (GET /api/v1/battle-pass/challenges/season/{player_id})
+	GetSeasonChallenges(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, params GetSeasonChallengesParams)
+	// Get weekly challenges
+	// (GET /api/v1/battle-pass/challenges/weekly)
+	GetWeeklyChallenges(w http.ResponseWriter, r *http.Request, params GetWeeklyChallengesParams)
+	// Complete challenge
+	// (POST /api/v1/battle-pass/challenges/{challengeId}/complete)
+	CompleteChallenge(w http.ResponseWriter, r *http.Request, challengeId openapi_types.UUID)
+	// Award Battle Pass XP
+	// (POST /api/v1/battle-pass/progress/xp)
+	AwardBattlePassXP(w http.ResponseWriter, r *http.Request)
+	// Get season rewards
+	// (GET /api/v1/battle-pass/rewards)
+	GetSeasonRewards(w http.ResponseWriter, r *http.Request, params GetSeasonRewardsParams)
+	// Claim reward
+	// (POST /api/v1/battle-pass/rewards/claim)
+	ClaimReward(w http.ResponseWriter, r *http.Request)
+	// Create new season
+	// (POST /api/v1/battle-pass/season/create)
+	CreateSeason(w http.ResponseWriter, r *http.Request)
+	// Get season info
+	// (GET /api/v1/battle-pass/season/{season_id})
+	GetSeasonInfo(w http.ResponseWriter, r *http.Request, seasonId openapi_types.UUID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// Получить текущий сезон боевого пропуска
-// (GET /battle-pass/current)
-func (_ Unimplemented) GetCurrentBattlePass(w http.ResponseWriter, r *http.Request) {
+// Get season challenges for player
+// (GET /api/v1/battle-pass/challenges/season/{player_id})
+func (_ Unimplemented) GetSeasonChallenges(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, params GetSeasonChallengesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Купить премиум пропуск
-// (POST /battle-pass/premium)
-func (_ Unimplemented) PurchasePremium(w http.ResponseWriter, r *http.Request) {
+// Get weekly challenges
+// (GET /api/v1/battle-pass/challenges/weekly)
+func (_ Unimplemented) GetWeeklyChallenges(w http.ResponseWriter, r *http.Request, params GetWeeklyChallengesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Получить прогресс игрока
-// (GET /battle-pass/progress)
-func (_ Unimplemented) GetPlayerProgress(w http.ResponseWriter, r *http.Request, params GetPlayerProgressParams) {
+// Complete challenge
+// (POST /api/v1/battle-pass/challenges/{challengeId}/complete)
+func (_ Unimplemented) CompleteChallenge(w http.ResponseWriter, r *http.Request, challengeId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Получить требования уровня
-// (GET /battle-pass/progress/level/{level})
-func (_ Unimplemented) GetLevelRequirements(w http.ResponseWriter, r *http.Request, level int) {
+// Award Battle Pass XP
+// (POST /api/v1/battle-pass/progress/xp)
+func (_ Unimplemented) AwardBattlePassXP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get season rewards
+// (GET /api/v1/battle-pass/rewards)
+func (_ Unimplemented) GetSeasonRewards(w http.ResponseWriter, r *http.Request, params GetSeasonRewardsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Claim reward
+// (POST /api/v1/battle-pass/rewards/claim)
+func (_ Unimplemented) ClaimReward(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create new season
+// (POST /api/v1/battle-pass/season/create)
+func (_ Unimplemented) CreateSeason(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get season info
+// (GET /api/v1/battle-pass/season/{season_id})
+func (_ Unimplemented) GetSeasonInfo(w http.ResponseWriter, r *http.Request, seasonId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -65,8 +102,19 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetCurrentBattlePass operation middleware
-func (siw *ServerInterfaceWrapper) GetCurrentBattlePass(w http.ResponseWriter, r *http.Request) {
+// GetSeasonChallenges operation middleware
+func (siw *ServerInterfaceWrapper) GetSeasonChallenges(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "player_id" -------------
+	var playerId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "player_id", chi.URLParam(r, "player_id"), &playerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "player_id", Err: err})
+		return
+	}
 
 	ctx := r.Context()
 
@@ -74,8 +122,19 @@ func (siw *ServerInterfaceWrapper) GetCurrentBattlePass(w http.ResponseWriter, r
 
 	r = r.WithContext(ctx)
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSeasonChallengesParams
+
+	// ------------- Optional query parameter "season_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "season_id", r.URL.Query(), &params.SeasonId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "season_id", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCurrentBattlePass(w, r)
+		siw.Handler.GetSeasonChallenges(w, r, playerId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -85,28 +144,8 @@ func (siw *ServerInterfaceWrapper) GetCurrentBattlePass(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
-// PurchasePremium operation middleware
-func (siw *ServerInterfaceWrapper) PurchasePremium(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PurchasePremium(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetPlayerProgress operation middleware
-func (siw *ServerInterfaceWrapper) GetPlayerProgress(w http.ResponseWriter, r *http.Request) {
+// GetWeeklyChallenges operation middleware
+func (siw *ServerInterfaceWrapper) GetWeeklyChallenges(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -117,7 +156,7 @@ func (siw *ServerInterfaceWrapper) GetPlayerProgress(w http.ResponseWriter, r *h
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetPlayerProgressParams
+	var params GetWeeklyChallengesParams
 
 	// ------------- Required query parameter "character_id" -------------
 
@@ -143,7 +182,7 @@ func (siw *ServerInterfaceWrapper) GetPlayerProgress(w http.ResponseWriter, r *h
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPlayerProgress(w, r, params)
+		siw.Handler.GetWeeklyChallenges(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -153,17 +192,17 @@ func (siw *ServerInterfaceWrapper) GetPlayerProgress(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
-// GetLevelRequirements operation middleware
-func (siw *ServerInterfaceWrapper) GetLevelRequirements(w http.ResponseWriter, r *http.Request) {
+// CompleteChallenge operation middleware
+func (siw *ServerInterfaceWrapper) CompleteChallenge(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// ------------- Path parameter "level" -------------
-	var level int
+	// ------------- Path parameter "challengeId" -------------
+	var challengeId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "level", chi.URLParam(r, "level"), &level, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "challengeId", chi.URLParam(r, "challengeId"), &challengeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "level", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "challengeId", Err: err})
 		return
 	}
 
@@ -174,7 +213,138 @@ func (siw *ServerInterfaceWrapper) GetLevelRequirements(w http.ResponseWriter, r
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetLevelRequirements(w, r, level)
+		siw.Handler.CompleteChallenge(w, r, challengeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AwardBattlePassXP operation middleware
+func (siw *ServerInterfaceWrapper) AwardBattlePassXP(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AwardBattlePassXP(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSeasonRewards operation middleware
+func (siw *ServerInterfaceWrapper) GetSeasonRewards(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSeasonRewardsParams
+
+	// ------------- Required query parameter "season_id" -------------
+
+	if paramValue := r.URL.Query().Get("season_id"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "season_id"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "season_id", r.URL.Query(), &params.SeasonId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "season_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSeasonRewards(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ClaimReward operation middleware
+func (siw *ServerInterfaceWrapper) ClaimReward(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClaimReward(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSeason operation middleware
+func (siw *ServerInterfaceWrapper) CreateSeason(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSeason(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSeasonInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetSeasonInfo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "season_id" -------------
+	var seasonId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "season_id", chi.URLParam(r, "season_id"), &seasonId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "season_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSeasonInfo(w, r, seasonId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -298,16 +468,28 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/battle-pass/current", wrapper.GetCurrentBattlePass)
+		r.Get(options.BaseURL+"/api/v1/battle-pass/challenges/season/{player_id}", wrapper.GetSeasonChallenges)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/battle-pass/premium", wrapper.PurchasePremium)
+		r.Get(options.BaseURL+"/api/v1/battle-pass/challenges/weekly", wrapper.GetWeeklyChallenges)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/battle-pass/progress", wrapper.GetPlayerProgress)
+		r.Post(options.BaseURL+"/api/v1/battle-pass/challenges/{challengeId}/complete", wrapper.CompleteChallenge)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/battle-pass/progress/level/{level}", wrapper.GetLevelRequirements)
+		r.Post(options.BaseURL+"/api/v1/battle-pass/progress/xp", wrapper.AwardBattlePassXP)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/battle-pass/rewards", wrapper.GetSeasonRewards)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/battle-pass/rewards/claim", wrapper.ClaimReward)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/battle-pass/season/create", wrapper.CreateSeason)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/battle-pass/season/{season_id}", wrapper.GetSeasonInfo)
 	})
 
 	return r
