@@ -1,4 +1,4 @@
--- Issue: #140887681
+-- Issue: #140
 -- Leaderboard System Database Schema
 -- Создание таблиц для системы лидербордов:
 -- - leaderboards (определения лидербордов)
