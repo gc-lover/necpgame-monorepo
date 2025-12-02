@@ -1,0 +1,309 @@
+# Issue: #138
+openapi: 3.0.0
+info:
+  title: Achievement Service API
+  description: |
+    Achievement Service управляет достижениями игроков, отслеживает прогресс,
+    выдает награды и поддерживает event-driven обновления.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necpgame.com
+    description: Production server
+  - url: https://staging-api.necpgame.com
+    description: Staging server
+
+tags:
+  - name: Achievements
+    description: Управление достижениями
+  - name: Progress
+    description: Отслеживание прогресса
+
+paths:
+  /api/v1/achievements:
+    get:
+      tags: [Achievements]
+      summary: Получить список всех достижений
+      operationId: listAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [combat, exploration, social, economic, progression]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [locked, in_progress, completed]
+      responses:
+        "200":
+          description: Список достижений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AchievementsListResponse"
+
+  /api/v1/achievements/{achievementId}:
+    parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Achievements]
+      summary: Получить детали достижения
+      operationId: getAchievement
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Детали достижения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AchievementResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/achievements/player/{playerId}:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+    get:
+      tags: [Progress]
+      summary: Получить прогресс игрока по достижениям
+      operationId: getPlayerAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [combat, exploration, social, economic, progression]
+      responses:
+        "200":
+          description: Прогресс по достижениям
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAchievementsResponse"
+
+  /api/v1/achievements/{achievementId}/claim:
+    parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Progress]
+      summary: Получить награду за достижение
+      operationId: claimAchievement
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimAchievementResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/achievements/progress:
+    post:
+      tags: [Progress]
+      summary: Обновить прогресс достижения (internal API)
+      operationId: updateProgress
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProgressRequest"
+      responses:
+        "200":
+          description: Прогресс обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressUpdateResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/achievements/stats/{playerId}:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+    get:
+      tags: [Progress]
+      summary: Получить статистику достижений игрока
+      operationId: getAchievementStats
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Статистика достижений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AchievementStatsResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    AchievementResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [combat, exploration, social, economic, progression]
+        achievement_type:
+          type: string
+          enum: [count, binary, milestone, tiered]
+        icon_url:
+          type: string
+        requirements:
+          type: object
+          description: Требования для выполнения
+        rewards:
+          type: object
+          description: Награды за выполнение
+        points:
+          type: integer
+          description: Очки достижения
+        is_hidden:
+          type: boolean
+        is_repeatable:
+          type: boolean
+
+    AchievementsListResponse:
+      type: object
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/AchievementResponse"
+        total:
+          type: integer
+
+    PlayerAchievementProgress:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [locked, in_progress, completed]
+        progress_current:
+          type: integer
+        progress_required:
+          type: integer
+        progress_percentage:
+          type: number
+          format: float
+        unlocked_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        rewards_claimed:
+          type: boolean
+
+    PlayerAchievementsResponse:
+      type: object
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerAchievementProgress"
+        total_completed:
+          type: integer
+        total_points:
+          type: integer
+
+    ClaimAchievementResponse:
+      type: object
+      properties:
+        rewards:
+          type: object
+          description: Полученные награды
+        achievement_id:
+          type: string
+          format: uuid
+        claimed_at:
+          type: string
+          format: date-time
+
+    UpdateProgressRequest:
+      type: object
+      required:
+        - player_id
+        - event_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          description: Тип события (kill_enemy, complete_quest, etc.)
+        event_data:
+          type: object
+          description: Дополнительные данные события
+
+    ProgressUpdateResponse:
+      type: object
+      properties:
+        updated_achievements:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID обновлённых достижений
+        completed_achievements:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID завершённых достижений
+
+    AchievementStatsResponse:
+      type: object
+      properties:
+        total_achievements:
+          type: integer
+        completed_achievements:
+          type: integer
+        completion_percentage:
+          type: number
+          format: float
+        total_points:
+          type: integer
+        by_category:
+          type: object
+          description: Статистика по категориям
+          additionalProperties:
+            type: object
+
