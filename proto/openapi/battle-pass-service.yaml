@@ -1,196 +1,199 @@
-# Issue: SOLID refactoring - create full OpenAPI spec for battle-pass-service
-openapi: 3.0.3
+# Issue: #227
+
+openapi: 3.0.0
 
 info:
   title: Battle Pass Service API
   version: 1.0.0
-  description: Battle Pass system API - сезонный боевой пропуск NECP Game
-  contact:
-    name: NECPGAME API Support
-    email: api@necp.game
+  description: |
+    API для управления Battle Pass: сезоны, прогрессия, награды, челленджи.
+    
+    Сезонная прогрессия с бесплатным и премиум треками, еженедельными челленджами.
 
 servers:
-  - url: http://localhost:8102
+  - url: http://localhost:8087
     description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+
+security:
+  - BearerAuth: []
 
 tags:
-  - name: progress
-    description: Battle Pass progress management
-  - name: rewards
-    description: Reward management and claiming
-  - name: challenges
-    description: Weekly and season challenges
   - name: seasons
-    description: Season management
+    description: Сезоны Battle Pass
+  - name: progress
+    description: Прогресс игрока
+  - name: rewards
+    description: Награды
+  - name: challenges
+    description: Еженедельные челленджи
 
 paths:
-  /api/v1/battle-pass/progress/xp:
-    post:
-      tags: [progress]
-      summary: Award Battle Pass XP
-      operationId: awardBattlePassXP
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [character_id, xp_amount]
-              properties:
-                character_id:
-                  type: string
-                  format: uuid
-                xp_amount:
-                  type: integer
-                  minimum: 1
-      responses:
-        "200":
-          description: XP awarded successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  new_level:
-                    type: integer
-                  total_xp:
-                    type: integer
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
-  /api/v1/battle-pass/rewards:
+  /api/v1/economy/battle-pass/current:
     get:
-      tags: [rewards]
-      summary: Get season rewards
-      operationId: getSeasonRewards
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: season_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      tags:
+        - seasons
+      summary: Получить текущий сезон
+      operationId: getCurrentSeason
       responses:
-        "200":
-          description: List of rewards
+        '200':
+          description: Текущий сезон
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/BattlePassReward"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
+                $ref: '#/components/schemas/Season'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /api/v1/battle-pass/rewards/claim:
-    post:
-      tags: [rewards]
-      summary: Claim reward
-      operationId: claimReward
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [character_id, reward_id]
-              properties:
-                character_id:
-                  type: string
-                  format: uuid
-                reward_id:
-                  type: string
-                  format: uuid
-      responses:
-        "200":
-          description: Reward claimed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
-  /api/v1/battle-pass/challenges/weekly:
+  /api/v1/economy/battle-pass/progress:
     get:
-      tags: [challenges]
-      summary: Get weekly challenges
-      operationId: getWeeklyChallenges
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: season_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Weekly challenges
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/WeeklyChallenge"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
-  /api/v1/battle-pass/challenges/season/{player_id}:
-    get:
-      tags: [challenges]
-      summary: Get season challenges for player
-      operationId: getSeasonChallenges
-      security:
-        - BearerAuth: []
+      tags:
+        - progress
+      summary: Получить прогресс игрока
+      operationId: getPlayerProgress
       parameters:
         - name: player_id
-          in: path
+          in: query
           required: true
           schema:
             type: string
             format: uuid
-        - name: season_id
+      responses:
+        '200':
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProgress'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /api/v1/economy/battle-pass/claim:
+    post:
+      tags:
+        - rewards
+      summary: Забрать награду уровня
+      operationId: claimReward
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+                - level
+                - track
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                level:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                track:
+                  $ref: '#/components/schemas/RewardTrack'
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /api/v1/economy/battle-pass/purchase-premium:
+    post:
+      tags:
+        - rewards
+      summary: Купить премиум трек
+      operationId: purchasePremium
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Премиум активирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  premium_status:
+                    type: boolean
+                  retroactive_rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+                    description: Награды за уже достигнутые уровни
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /api/v1/economy/battle-pass/challenges/weekly:
+    get:
+      tags:
+        - challenges
+      summary: Получить еженедельные челленджи
+      operationId: getWeeklyChallenges
+      parameters:
+        - name: player_id
           in: query
+          required: true
           schema:
             type: string
             format: uuid
       responses:
-        "200":
-          description: Season challenges
+        '200':
+          description: Еженедельные челленджи
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/SeasonChallenge"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
+                type: object
+                properties:
+                  week_number:
+                    type: integer
+                  challenges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeeklyChallenge'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /api/v1/battle-pass/challenges/{challengeId}/complete:
+  /api/v1/economy/battle-pass/challenges/{challengeId}/complete:
     post:
-      tags: [challenges]
-      summary: Complete challenge
+      tags:
+        - challenges
+      summary: Завершить челлендж
       operationId: completeChallenge
-      security:
-        - BearerAuth: []
       parameters:
         - name: challengeId
           in: path
@@ -204,97 +207,114 @@ paths:
           application/json:
             schema:
               type: object
-              required: [character_id]
+              required:
+                - player_id
               properties:
-                character_id:
+                player_id:
                   type: string
                   format: uuid
       responses:
-        "200":
-          description: Challenge completed
+        '200':
+          description: Челлендж завершен
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
                   xp_awarded:
                     type: integer
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
+                  new_level:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /api/v1/battle-pass/season/{season_id}:
-    get:
-      tags: [seasons]
-      summary: Get season info
-      operationId: getSeasonInfo
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: season_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Season information
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BattlePassSeason"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
-  /api/v1/battle-pass/season/create:
+  /api/v1/economy/battle-pass/xp/add:
     post:
-      tags: [seasons]
-      summary: Create new season
-      operationId: createSeason
-      security:
-        - BearerAuth: []
+      tags:
+        - progress
+      summary: Добавить XP игроку
+      description: Добавить XP за игровые действия (используется другими сервисами)
+      operationId: addXP
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [name, start_date, end_date]
+              required:
+                - player_id
+                - xp_amount
+                - source
               properties:
-                name:
+                player_id:
                   type: string
-                start_date:
-                  type: string
-                  format: date-time
-                end_date:
-                  type: string
-                  format: date-time
-                max_level:
+                  format: uuid
+                xp_amount:
                   type: integer
-                  default: 100
+                  minimum: 1
+                source:
+                  type: string
+                  description: Источник XP (quest, combat, challenge, etc.)
       responses:
-        "201":
-          description: Season created
+        '200':
+          description: XP добавлен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BattlePassSeason"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
+                type: object
+                properties:
+                  new_xp:
+                    type: integer
+                  new_level:
+                    type: integer
+                  level_up:
+                    type: boolean
+                  rewards_unlocked:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
 components:
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+
   schemas:
-    BattlePassSeason:
+    RewardTrack:
+      type: string
+      enum:
+        - free
+        - premium
+
+    Season:
       type: object
-      required: [id, name, start_date, end_date, max_level, is_active]
+      required:
+        - id
+        - name
+        - season_number
+        - start_date
+        - end_date
+        - max_level
+        - status
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
+          maxLength: 100
+        description:
+          type: string
+        season_number:
+          type: integer
+          minimum: 1
         start_date:
           type: string
           format: date-time
@@ -303,80 +323,133 @@ components:
           format: date-time
         max_level:
           type: integer
-        is_active:
-          type: boolean
-        created_at:
+          default: 100
+        theme:
           type: string
-          format: date-time
+        status:
+          type: string
+          enum:
+            - scheduled
+            - active
+            - ended
 
-    BattlePassReward:
+    PlayerProgress:
       type: object
-      required: [id, season_id, level, reward_type]
+      required:
+        - player_id
+        - season_id
+        - current_level
+        - current_xp
+        - has_premium
       properties:
-        id:
+        player_id:
           type: string
           format: uuid
         season_id:
           type: string
           format: uuid
+        season:
+          $ref: '#/components/schemas/Season'
+        current_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        current_xp:
+          type: integer
+          minimum: 0
+        xp_to_next_level:
+          type: integer
+        has_premium:
+          type: boolean
+        premium_purchased_at:
+          type: string
+          format: date-time
+        claimed_levels_free:
+          type: array
+          items:
+            type: integer
+        claimed_levels_premium:
+          type: array
+          items:
+            type: integer
+        unclaimed_rewards_count:
+          type: integer
+
+    Reward:
+      type: object
+      required:
+        - level
+        - track
+        - reward_type
+        - reward_data
+      properties:
         level:
           type: integer
+          minimum: 1
+          maximum: 100
+        track:
+          $ref: '#/components/schemas/RewardTrack'
         reward_type:
           type: string
-          enum: [currency, item, cosmetic, xp]
+          enum:
+            - currency
+            - item
+            - cosmetic
+            - title
+            - emote
+            - xp_boost
         reward_data:
           type: object
-        is_premium:
+          additionalProperties: true
+        claimed:
           type: boolean
-          default: false
 
     WeeklyChallenge:
       type: object
-      required: [id, season_id, week_number, title, xp_reward]
+      required:
+        - id
+        - title
+        - description
+        - objective_type
+        - objective_count
+        - xp_reward
       properties:
         id:
           type: string
           format: uuid
-        season_id:
-          type: string
-          format: uuid
-        week_number:
-          type: integer
         title:
           type: string
+          maxLength: 200
         description:
           type: string
+        objective_type:
+          type: string
+          enum:
+            - kill_enemies
+            - complete_quests
+            - earn_currency
+            - play_matches
+            - deal_damage
+            - collect_items
+            - win_matches
+        objective_count:
+          type: integer
+          minimum: 1
         xp_reward:
           type: integer
-        progress_required:
+          minimum: 0
+        current_progress:
           type: integer
-        challenge_type:
+          minimum: 0
+        completed_at:
           type: string
-
-    SeasonChallenge:
-      type: object
-      required: [id, season_id, title, xp_reward]
-      properties:
-        id:
+          format: date-time
+        claimed_at:
           type: string
-          format: uuid
-        season_id:
+          format: date-time
+        start_date:
           type: string
-          format: uuid
-        title:
+          format: date-time
+        end_date:
           type: string
-        description:
-          type: string
-        xp_reward:
-          type: integer
-        progress_required:
-          type: integer
-
-  securitySchemes:
-    $ref: "common.yaml#/components/securitySchemes"
-
-  responses:
-    $ref: "common.yaml#/components/responses"
-
-security:
-  - BearerAuth: []
+          format: date-time
