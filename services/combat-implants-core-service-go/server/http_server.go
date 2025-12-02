@@ -7,20 +7,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/combat-implants-core-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr   string
-	router *mux.Router
+	router chi.Router
 	logger *logrus.Logger
 	server *http.Server
 }
 
 func NewHTTPServer(addr string) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 
 	server := &HTTPServer{
 		addr:   addr,
@@ -37,10 +37,10 @@ func NewHTTPServer(addr string) *HTTPServer {
 	handlers := NewCoreHandlers()
 
 	// Register handlers using oapi-codegen gorilla integration
-	api.HandlerFromMux(handlers, router)
+	api.HandlerWithOptions(handlers, api.ChiServerOptions{BaseRouter: router})
 
 	// Health check
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 
 	server.server = &http.Server{
 		Addr:         addr,
@@ -119,3 +119,4 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
