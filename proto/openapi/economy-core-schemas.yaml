@@ -1,0 +1,342 @@
+# Issue: #60
+components:
+  schemas:
+    EconomyOverview:
+      type: object
+      required:
+        - total_trade_volume
+        - inflation_rate
+        - currency_rates
+      properties:
+        total_trade_volume:
+          type: number
+          format: float
+          description: Общий объём торговли
+        inflation_rate:
+          type: number
+          format: float
+          description: Уровень инфляции
+        currency_rates:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Курсы валют
+        market_health:
+          type: string
+          enum: [healthy, stable, declining, crisis]
+          description: Состояние рынка
+
+    EconomyModel:
+      type: object
+      required:
+        - model_type
+        - market_structure
+        - pricing_mechanism
+      properties:
+        model_type:
+          type: string
+          enum: [player_driven, hybrid, managed]
+          description: Тип экономической модели
+        market_structure:
+          type: string
+          description: Структура рынков
+        pricing_mechanism:
+          type: string
+          description: Механизм ценообразования
+        governance:
+          type: string
+          description: Управление экономикой
+
+    Currency:
+      type: object
+      required:
+        - id
+        - name
+        - code
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Название валюты
+        code:
+          type: string
+          description: Код валюты (ED, PVP, PVE, FAC, REG)
+        type:
+          type: string
+          enum: [primary, pvp_token, pve_credit, faction, regional]
+          description: Тип валюты
+        exchange_rate:
+          type: number
+          format: float
+          description: Курс обмена к основной валюте (ED)
+        tradeable:
+          type: boolean
+          description: Можно ли торговать валютой
+
+    CurrencyBalance:
+      type: object
+      required:
+        - currency_id
+        - character_id
+        - balance
+      properties:
+        currency_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        balance:
+          type: number
+          format: float
+          description: Текущий баланс
+        locked:
+          type: number
+          format: float
+          description: Заблокированная сумма (в торговле)
+        updated_at:
+          type: string
+          format: date-time
+
+    Resource:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - rarity
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [basic, rare, craft, implant, information]
+        category:
+          type: string
+          enum: [raw_materials, electronics, bio_chem, data_assets]
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Уровень ресурса (1-5)
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        description:
+          type: string
+        weight:
+          type: number
+          format: float
+        stackable:
+          type: boolean
+        max_stack:
+          type: integer
+
+    ResourcePrice:
+      type: object
+      required:
+        - resource_id
+        - current_price
+        - currency
+      properties:
+        resource_id:
+          type: string
+          format: uuid
+        current_price:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: ED
+        price_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceHistoryPoint'
+        volatility:
+          type: number
+          format: float
+          description: Волатильность цены
+
+    PriceHistoryPoint:
+      type: object
+      required:
+        - timestamp
+        - price
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        price:
+          type: number
+          format: float
+        volume:
+          type: integer
+          description: Объём торговли на момент
+
+    InitiateTradeRequest:
+      type: object
+      required:
+        - initiator_id
+        - target_player_id
+        - offered_items
+      properties:
+        initiator_id:
+          type: string
+          format: uuid
+          description: ID инициатора торговли
+        target_player_id:
+          type: string
+          format: uuid
+          description: ID целевого игрока
+        offered_items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        offered_currency:
+          type: number
+          format: float
+          description: Предлагаемая валюта (eddies)
+        message:
+          type: string
+          description: Сообщение для целевого игрока
+
+    TradeSession:
+      type: object
+      required:
+        - trade_id
+        - initiator_id
+        - target_player_id
+        - status
+        - created_at
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        target_player_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, rejected, completed, cancelled]
+        initiator_offer:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+            currency:
+              type: number
+              format: float
+        target_offer:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+            currency:
+              type: number
+              format: float
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    TradingGuild:
+      type: object
+      required:
+        - guild_id
+        - name
+        - owner_id
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        member_count:
+          type: integer
+        trade_volume:
+          type: number
+          format: float
+        reputation:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - owner_id
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        owner_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 500
+        tax_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 0.5
+          default: 0.05
+
+    WorldImpact:
+      type: object
+      required:
+        - region_id
+      properties:
+        region_id:
+          type: string
+          format: uuid
+        economic_health:
+          type: string
+          enum: [booming, healthy, stable, declining, crisis]
+        faction_influence:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        market_events:
+          type: array
+          items:
+            type: object
+            properties:
+              event_type:
+                type: string
+              impact:
+                type: string
+                enum: [positive, negative, neutral]

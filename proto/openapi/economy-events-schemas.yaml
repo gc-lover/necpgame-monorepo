@@ -1,0 +1,217 @@
+# Issue: #225
+# Schemas for Economy Events Service API
+openapi: 3.0.3
+
+components:
+  schemas:
+    EconomicEvent:
+      type: object
+      required:
+        - id
+        - event_type
+        - status
+        - scope
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough]
+        status:
+          type: string
+          enum: [planned, announced, active, cooldown, archived]
+        scope:
+          type: string
+          enum: [global, regional]
+        region_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        actual_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        actual_end:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    EconomicEventDetailed:
+      type: object
+      required:
+        - id
+        - event_type
+        - status
+        - scope
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough]
+        status:
+          type: string
+          enum: [planned, announced, active, cooldown, archived]
+        scope:
+          type: string
+          enum: [global, regional]
+        region_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        effects:
+          type: object
+          description: Эффекты события (JSON-объект с модификаторами)
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        actual_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        actual_end:
+          type: string
+          format: date-time
+          nullable: true
+        trigger_type:
+          type: string
+          enum: [manual, cron, quest, simulation]
+          nullable: true
+        trigger_config:
+          type: object
+          nullable: true
+          description: Конфигурация триггера (cron expression, quest_id, и т.д.)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateEventRequest:
+      type: object
+      required:
+        - event_type
+        - scope
+        - title
+      properties:
+        event_type:
+          type: string
+          enum: [crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough]
+        scope:
+          type: string
+          enum: [global, regional]
+        region_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        effects:
+          type: object
+          description: Эффекты события (JSON-объект с модификаторами)
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        trigger_type:
+          type: string
+          enum: [manual, cron, quest, simulation]
+          nullable: true
+        trigger_config:
+          type: object
+          nullable: true
+          description: Конфигурация триггера
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        effects:
+          type: object
+        planned_start:
+          type: string
+          format: date-time
+          nullable: true
+        planned_end:
+          type: string
+          format: date-time
+          nullable: true
+        trigger_type:
+          type: string
+          enum: [manual, cron, quest, simulation]
+          nullable: true
+        trigger_config:
+          type: object
+          nullable: true
+
+    EventMetrics:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        price_deviation:
+          type: number
+          format: float
+          description: Отклонение цен от прогноза (%)
+        transaction_volume:
+          type: number
+          format: float
+          description: Объем транзакций
+        event_uptime:
+          type: number
+          format: float
+          description: Время активности события (часы)
+        affected_regions:
+          type: integer
+          description: Количество затронутых регионов
+        affected_players:
+          type: integer
+          description: Количество затронутых игроков
+        calculated_at:
+          type: string
+          format: date-time
+

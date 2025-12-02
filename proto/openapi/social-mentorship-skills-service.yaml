@@ -1,0 +1,114 @@
+# Issue: #303
+openapi: 3.0.3
+info:
+  title: Social Mentorship Skills Service API
+  description: |
+    API для отслеживания прогресса навыков в наставничестве в NECPGAME.
+    
+    **Основные возможности:**
+    - Получение прогресса навыков по контракту
+    - Отслеживание прогресса по трекам навыков (боевые, социальные, технические, экономические)
+    
+    **Интеграции:**
+    - social-service - основная логика наставничества
+    - gameplay-service - прогрессия навыков
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Mentorship Skills
+    description: Прогресс навыков наставничества
+
+paths:
+  /social/mentorship/skills/progress/{contractId}:
+    get:
+      tags:
+        - Mentorship Skills
+      summary: Получить прогресс навыков
+      description: |
+        Возвращает прогресс навыков ученика по контракту наставничества.
+      operationId: getSkillProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+        - name: skill_track
+          in: query
+          schema:
+            type: string
+            enum: [combat, social, technical, economic]
+          description: Фильтр по треку навыков
+      responses:
+        '200':
+          description: Прогресс навыков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillProgress'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    SkillProgress:
+      type: object
+      required:
+        - contract_id
+        - mentee_id
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skill_track:
+          type: string
+          enum: [combat, social, technical, economic]
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skill_name:
+                type: string
+              current_level:
+                type: integer
+              target_level:
+                type: integer
+              experience:
+                type: number
+                format: float
+              progress_percentage:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+        total_experience:
+          type: number
+          format: float
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

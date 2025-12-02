@@ -1,0 +1,494 @@
+# Issue: #317
+openapi: 3.0.3
+info:
+  title: Travel Events Service API
+  description: |
+    API для системы travel-событий (события перемещений) в NECPGAME.
+    
+    **Основные возможности:**
+    - Триггер travel-событий при перемещении
+    - Получение доступных событий для зоны
+    - Управление жизненным циклом событий
+    - Выполнение skill checks
+    - Распределение наград и применение штрафов
+    - Управление cooldown
+    - Каталог событий по эпохам (2020-2093)
+    
+    **Интеграции:**
+    - world-service - основная логика travel-событий
+    - economy-service - награды и экономические эффекты
+    - security-service - проверки безопасности и штрафы
+    - reputation-service - влияние на репутацию
+    - quest-service - триггеры квестов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: World Service (продакшн)
+
+tags:
+  - name: Travel Events
+    description: События перемещений
+  - name: Event Management
+    description: Управление событиями
+  - name: Skill Checks
+    description: Проверки навыков
+  - name: Rewards & Penalties
+    description: Награды и штрафы
+
+paths:
+  /world/travel-events/trigger:
+    post:
+      tags:
+        - Travel Events
+      summary: Триггер travel-события
+      description: |
+        Активирует проверку и генерацию travel-события при перемещении персонажа.
+        Проверяет вероятность события, cooldown и доступные события для зоны.
+      operationId: triggerTravelEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'travel-events-schemas.yaml#/components/schemas/TriggerTravelEventRequest'
+      responses:
+        '200':
+          description: Travel-событие активировано или нет доступных событий
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TriggerTravelEventResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/available:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить доступные события для зоны
+      description: |
+        Возвращает список доступных travel-событий для указанной зоны с учетом эпохи,
+        cooldown персонажа и вероятностей.
+      operationId: getAvailableTravelEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID зоны
+        - name: epoch_id
+          in: query
+          schema:
+            type: string
+            enum: [2020-2029, 2030-2039, 2040-2049, 2050-2059, 2060-2069, 2070-2077, 2078-2089, 2090-2093]
+          description: ID эпохи (опционально, если не указан - используется текущая эпоха)
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список доступных событий
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/AvailableTravelEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/{event_id}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить информацию о событии
+      description: Возвращает детальную информацию о travel-событии.
+      operationId: getTravelEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+      responses:
+        '200':
+          description: Информация о событии
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TravelEvent'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/{event_id}/start:
+    post:
+      tags:
+        - Event Management
+      summary: Начать travel-событие
+      description: |
+        Начинает выполнение travel-события для персонажа.
+        Создает экземпляр события и инициализирует его состояние.
+      operationId: startTravelEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'travel-events-schemas.yaml#/components/schemas/StartTravelEventRequest'
+      responses:
+        '200':
+          description: Событие начато
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TravelEventInstance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/{event_id}/skill-check:
+    post:
+      tags:
+        - Skill Checks
+      summary: Выполнить skill check
+      description: |
+        Выполняет проверку навыка для travel-события.
+        Возвращает результат проверки (успех/провал, критический успех/провал).
+      operationId: performSkillCheck
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'travel-events-schemas.yaml#/components/schemas/SkillCheckRequest'
+      responses:
+        '200':
+          description: Результат skill check
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/SkillCheckResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/{event_id}/complete:
+    post:
+      tags:
+        - Event Management
+      summary: Завершить travel-событие
+      description: |
+        Завершает travel-событие и применяет награды/штрафы.
+        Распределяет награды через economy-service и reputation-service.
+      operationId: completeTravelEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'travel-events-schemas.yaml#/components/schemas/CompleteTravelEventRequest'
+      responses:
+        '200':
+          description: Событие завершено
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TravelEventCompletionResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/{event_id}/cancel:
+    post:
+      tags:
+        - Event Management
+      summary: Отменить travel-событие
+      description: |
+        Отменяет активное travel-событие без применения наград/штрафов.
+        Обновляет cooldown персонажа.
+      operationId: cancelTravelEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: 'travel-events-schemas.yaml#/components/schemas/CancelTravelEventRequest'
+      responses:
+        '200':
+          description: Событие отменено
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/epoch/{epoch_id}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить события эпохи
+      description: |
+        Возвращает каталог travel-событий для указанной эпохи (2020-2093).
+        События фильтруются по доступности в эпохе.
+      operationId: getEpochTravelEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: epoch_id
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [2020-2029, 2030-2039, 2040-2049, 2050-2059, 2060-2069, 2070-2077, 2078-2089, 2090-2093]
+          description: ID эпохи
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [ambush, political_rally, implant_market, infrastructure_accident, nomad_assistance, corporate_intrigue, network_failure, dao_voting, gray_market, brain_dance_boom, concordat_inspection, league_info_war, export_license]
+          description: Фильтр по типу события
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список событий эпохи
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/EpochTravelEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/cooldown/{character_id}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить cooldown персонажа
+      description: |
+        Возвращает информацию о cooldown travel-событий для персонажа.
+        Показывает, какие события доступны и когда истечет cooldown.
+      operationId: getTravelEventCooldown
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '200':
+          description: Информация о cooldown
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TravelEventCooldownResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/probability:
+    get:
+      tags:
+        - Travel Events
+      summary: Рассчитать вероятность события
+      description: |
+        Рассчитывает вероятность появления travel-события для персонажа в зоне
+        с учетом всех модификаторов (уровень, репутация, время, зона).
+      operationId: calculateTravelEventProbability
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+        - name: zone_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID зоны
+      responses:
+        '200':
+          description: Вероятность события
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TravelEventProbabilityResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/rewards/{event_id}:
+    get:
+      tags:
+        - Rewards & Penalties
+      summary: Получить награды события
+      description: |
+        Возвращает информацию о возможных наградах за travel-событие.
+        Показывает лут-таблицы, репутационные награды и эдди.
+      operationId: getTravelEventRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+      responses:
+        '200':
+          description: Награды события
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TravelEventRewardsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/travel-events/penalties/{event_id}:
+    get:
+      tags:
+        - Rewards & Penalties
+      summary: Получить штрафы события
+      description: |
+        Возвращает информацию о возможных штрафах за travel-событие.
+        Показывает урон, heat, потерю репутации и конфискацию.
+      operationId: getTravelEventPenalties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID travel-события
+      responses:
+        '200':
+          description: Штрафы события
+          content:
+            application/json:
+              schema:
+                $ref: 'travel-events-schemas.yaml#/components/schemas/TravelEventPenaltiesResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []

@@ -1,0 +1,206 @@
+# Issue: #60
+paths:
+  /economy/trade/initiate:
+    post:
+      tags:
+        - Trading
+      summary: Инициировать торговлю
+      description: |
+        Инициирует базовую P2P торговлю между двумя игроками.
+      operationId: initiateTrade
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'economy-core-schemas.yaml#/components/schemas/InitiateTradeRequest'
+      responses:
+        '200':
+          description: Торговля инициирована
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-core-schemas.yaml#/components/schemas/TradeSession'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/trade/{trade_id}/accept:
+    post:
+      tags:
+        - Trading
+      summary: Принять торговлю
+      description: |
+        Принимает предложение торговли и завершает сделку.
+      operationId: acceptTrade
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: trade_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор торговой сессии
+      responses:
+        '200':
+          description: Торговля завершена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/trade/{trade_id}/cancel:
+    post:
+      tags:
+        - Trading
+      summary: Отменить торговлю
+      description: |
+        Отменяет торговую сессию и разблокирует предметы.
+      operationId: cancelTrade
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: trade_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор торговой сессии
+      responses:
+        '200':
+          description: Торговля отменена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/guilds:
+    get:
+      tags:
+        - Trading Guilds
+      summary: Получить список торговых гильдий
+      description: |
+        Возвращает список торговых гильдий с возможностью фильтрации.
+      operationId: getTradingGuilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список торговых гильдий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  guilds:
+                    type: array
+                    items:
+                      $ref: 'economy-core-schemas.yaml#/components/schemas/TradingGuild'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/guilds/create:
+    post:
+      tags:
+        - Trading Guilds
+      summary: Создать торговую гильдию
+      description: |
+        Создает новую торговую гильдию.
+      operationId: createTradingGuild
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'economy-core-schemas.yaml#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Гильдия создана
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-core-schemas.yaml#/components/schemas/TradingGuild'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/guilds/{guild_id}/join:
+    post:
+      tags:
+        - Trading Guilds
+      summary: Вступить в торговую гильдию
+      description: |
+        Вступает в торговую гильдию.
+      operationId: joinTradingGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор гильдии
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Вступление в гильдию успешно
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

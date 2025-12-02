@@ -209,3 +209,5 @@ func (h *HousingHandlers) GetFurnitureCatalog(w http.ResponseWriter, r *http.Req
 	h.respondJSON(w, http.StatusOK, response)
 }
 
+
+

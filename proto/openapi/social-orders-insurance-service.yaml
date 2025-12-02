@@ -1,0 +1,261 @@
+# Issue: #305
+openapi: 3.0.3
+info:
+  title: Social Orders Insurance Service API
+  description: |
+    API для страхования заказов между игроками в NECPGAME.
+    
+    **Основные возможности:**
+    - Покупка страховки на заказ
+    - Получение информации о страховке
+    - Подача заявки на страховую выплату
+    
+    **Типы страховки:**
+    - Mission Failure - страхование провала миссии
+    - Cargo - страхование груза
+    - Delay - страхование задержек
+    - Comprehensive - комплексная страховка
+    
+    **Интеграции:**
+    - social-service - основная логика заказов
+    - economy-service - обработка премий и выплат
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Player Orders Insurance
+    description: Страхование заказов
+
+paths:
+  /social/orders/{orderId}/insurance/buy:
+    post:
+      tags:
+        - Player Orders Insurance
+      summary: Купить страховку на заказ
+      description: |
+        Покупает страховку на заказ для защиты от рисков. Премия рассчитывается автоматически на основе сложности заказа и репутации исполнителя.
+      operationId: buyOrderInsurance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заказа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyInsuranceRequest'
+      responses:
+        '201':
+          description: Страховка куплена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderInsurance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/insurance:
+    get:
+      tags:
+        - Player Orders Insurance
+      summary: Получить информацию о страховке
+      description: |
+        Возвращает информацию о страховке на заказ, если она была куплена.
+      operationId: getOrderInsurance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заказа
+      responses:
+        '200':
+          description: Информация о страховке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderInsurance'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/insurance/claim:
+    post:
+      tags:
+        - Player Orders Insurance
+      summary: Подать заявку на страховую выплату
+      description: |
+        Подает заявку на страховую выплату при наступлении страхового случая.
+      operationId: claimOrderInsurance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заказа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimInsuranceRequest'
+      responses:
+        '200':
+          description: Заявка на выплату подана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsuranceClaim'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    BuyInsuranceRequest:
+      type: object
+      required:
+        - insurance_type
+      properties:
+        insurance_type:
+          type: string
+          enum: [mission_failure, cargo, delay, comprehensive]
+        coverage_amount:
+          type: number
+          format: float
+          nullable: true
+          description: Сумма покрытия (если null, рассчитывается автоматически)
+        premium:
+          type: number
+          format: float
+          nullable: true
+          description: Премия (если null, рассчитывается автоматически)
+
+    OrderInsurance:
+      type: object
+      required:
+        - id
+        - order_id
+        - insurance_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        insurance_type:
+          type: string
+          enum: [mission_failure, cargo, delay, comprehensive]
+        coverage_amount:
+          type: number
+          format: float
+        premium:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [active, claimed, expired]
+        purchased_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ClaimInsuranceRequest:
+      type: object
+      required:
+        - claim_type
+        - claim_reason
+      properties:
+        claim_type:
+          type: string
+          enum: [mission_failure, cargo_loss, delay, other]
+        claim_reason:
+          type: string
+          description: Причина заявки на выплату
+        evidence:
+          type: object
+          description: Доказательства страхового случая (JSON)
+          nullable: true
+
+    InsuranceClaim:
+      type: object
+      required:
+        - id
+        - insurance_id
+        - claim_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        insurance_id:
+          type: string
+          format: uuid
+        claim_type:
+          type: string
+          enum: [mission_failure, cargo_loss, delay, other]
+        claim_reason:
+          type: string
+        compensation_amount:
+          type: number
+          format: float
+          nullable: true
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        created_at:
+          type: string
+          format: date-time
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,112 @@
+# Issue: #302
+paths:
+  /social/families/{family_id}/inheritance:
+    get:
+      tags:
+        - Inheritance
+      summary: Получить информацию о наследовании
+      description: |
+        Возвращает информацию о наследовании имущества, компаний и тайников для семьи.
+      operationId: getFamilyInheritance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      responses:
+        '200':
+          description: Информация о наследовании
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyInheritance'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/inheritance/calculate:
+    post:
+      tags:
+        - Inheritance
+      summary: Рассчитать наследство
+      description: |
+        Рассчитывает наследство для указанного члена семьи (имущество, компании, тайники, налоги).
+      operationId: calculateInheritance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-family-relationships-schemas.yaml#/components/schemas/CalculateInheritanceRequest'
+      responses:
+        '200':
+          description: Расчет наследства
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/InheritanceCalculation'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/inheritance/claim:
+    post:
+      tags:
+        - Inheritance
+      summary: Заявить права на наследство
+      description: |
+        Заявляет права на наследство для указанного члена семьи.
+      operationId: claimInheritance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-family-relationships-schemas.yaml#/components/schemas/ClaimInheritanceRequest'
+      responses:
+        '200':
+          description: Права на наследство заявлены
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/InheritanceClaim'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

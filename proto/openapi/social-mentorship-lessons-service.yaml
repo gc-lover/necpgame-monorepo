@@ -1,0 +1,372 @@
+# Issue: #303
+openapi: 3.0.3
+info:
+  title: Social Mentorship Lessons Service API
+  description: |
+    API для управления уроками наставничества в NECPGAME.
+    
+    **Основные возможности:**
+    - Создание и управление уроками
+    - Начало и завершение уроков
+    - Оценка уроков
+    - Отслеживание прогресса
+    
+    **Интеграции:**
+    - social-service - основная логика наставничества
+    - gameplay-service - прогрессия навыков
+    - content-service - учебный контент
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Mentorship Lessons
+    description: Уроки наставничества
+
+paths:
+  /social/mentorship/lesson/create:
+    post:
+      tags:
+        - Mentorship Lessons
+      summary: Создать урок
+      description: |
+        Создает новый урок для контракта наставничества.
+      operationId: createMentorshipLesson
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLessonRequest'
+      responses:
+        '201':
+          description: Урок создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipLesson'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/lessons/{contractId}:
+    get:
+      tags:
+        - Mentorship Lessons
+      summary: Получить список уроков контракта
+      description: |
+        Возвращает список всех уроков для указанного контракта наставничества.
+      operationId: getContractLessons
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, in-progress, completed, failed]
+          description: Фильтр по статусу
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список уроков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lessons:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MentorshipLesson'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/lessons/{lessonId}:
+    get:
+      tags:
+        - Mentorship Lessons
+      summary: Получить информацию об уроке
+      description: |
+        Возвращает детальную информацию об уроке.
+      operationId: getMentorshipLesson
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор урока
+      responses:
+        '200':
+          description: Информация об уроке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipLesson'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/lessons/{lessonId}/start:
+    post:
+      tags:
+        - Mentorship Lessons
+      summary: Начать урок
+      description: |
+        Начинает выполнение урока.
+      operationId: startMentorshipLesson
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор урока
+      responses:
+        '200':
+          description: Урок начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipLesson'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/lessons/{lessonId}/complete:
+    post:
+      tags:
+        - Mentorship Lessons
+      summary: Завершить урок
+      description: |
+        Завершает выполнение урока.
+      operationId: completeMentorshipLesson
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор урока
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteLessonRequest'
+      responses:
+        '200':
+          description: Урок завершен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipLesson'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/lessons/{lessonId}/evaluate:
+    post:
+      tags:
+        - Mentorship Lessons
+      summary: Оценить урок
+      description: |
+        Оценивает выполнение урока (оценка наставника или ученика).
+      operationId: evaluateMentorshipLesson
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор урока
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateLessonRequest'
+      responses:
+        '200':
+          description: Урок оценен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipLesson'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CreateLessonRequest:
+      type: object
+      required:
+        - contract_id
+        - schedule_id
+        - title
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        schedule_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        content_id:
+          type: string
+          format: uuid
+          description: ID учебного контента (если используется)
+        format:
+          type: string
+          enum: [theoretical, practical, content_based, examination, group, vr]
+
+    CompleteLessonRequest:
+      type: object
+      properties:
+        completion_notes:
+          type: string
+        skills_learned:
+          type: array
+          items:
+            type: string
+        experience_gained:
+          type: number
+          format: float
+
+    EvaluateLessonRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        feedback:
+          type: string
+        evaluator_type:
+          type: string
+          enum: [mentor, mentee]
+
+    MentorshipLesson:
+      type: object
+      required:
+        - id
+        - contract_id
+        - title
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        schedule_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        content_id:
+          type: string
+          format: uuid
+        format:
+          type: string
+          enum: [theoretical, practical, content_based, examination, group, vr]
+        status:
+          type: string
+          enum: [scheduled, in-progress, completed, failed]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        feedback:
+          type: string
+        skills_learned:
+          type: array
+          items:
+            type: string
+        experience_gained:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

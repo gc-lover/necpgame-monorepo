@@ -1,0 +1,380 @@
+# Issue: #305
+openapi: 3.0.3
+info:
+  title: Social Orders Auctions Service API
+  description: |
+    API для аукционов заказов между игроками в NECPGAME.
+    
+    **Основные возможности:**
+    - Создание аукционов для заказов
+    - Размещение ставок на аукционах
+    - Управление аукционами (закрытие, отмена)
+    - Получение информации об аукционах и ставках
+    
+    **Типы аукционов:**
+    - Ascending (прямой) - ставки растут
+    - Descending (голландский) - цена снижается
+    - Sealed (закрытый) - все ставки одновременно
+    
+    **Интеграции:**
+    - social-service - основная логика заказов
+    - economy-service - обработка комиссий и залогов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Player Orders Auctions
+    description: Аукционы заказов
+
+paths:
+  /social/orders/auctions:
+    get:
+      tags:
+        - Player Orders Auctions
+      summary: Получить список аукционов
+      description: |
+        Возвращает список активных аукционов заказов с фильтрацией.
+      operationId: getOrderAuctions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, ended, cancelled]
+          description: Фильтр по статусу
+        - name: auction_type
+          in: query
+          schema:
+            type: string
+            enum: [ascending, descending, sealed]
+          description: Фильтр по типу аукциона
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum: [combat, hacking, trade, political, research, social]
+          description: Фильтр по типу заказа
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список аукционов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrderAuction'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Player Orders Auctions
+      summary: Создать аукцион для заказа
+      description: |
+        Создает аукцион для существующего заказа или создает новый заказ с аукционом.
+      operationId: createOrderAuction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderAuctionRequest'
+      responses:
+        '201':
+          description: Аукцион создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAuction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/auctions/{auctionId}:
+    get:
+      tags:
+        - Player Orders Auctions
+      summary: Получить информацию об аукционе
+      description: |
+        Возвращает детальную информацию об аукционе, включая ставки.
+      operationId: getOrderAuction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор аукциона
+      responses:
+        '200':
+          description: Информация об аукционе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAuctionDetail'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/auctions/{auctionId}/bid:
+    post:
+      tags:
+        - Player Orders Auctions
+      summary: Разместить ставку на аукционе
+      description: |
+        Размещает ставку на аукционе заказа. Для закрытых аукционов ставка подается, но не раскрывается до окончания.
+      operationId: placeAuctionBid
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор аукциона
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBidRequest'
+      responses:
+        '200':
+          description: Ставка размещена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionBid'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/auctions/{auctionId}/close:
+    post:
+      tags:
+        - Player Orders Auctions
+      summary: Закрыть аукцион
+      description: |
+        Закрывает аукцион и определяет победителя. Доступно только для создателя заказа.
+      operationId: closeOrderAuction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор аукциона
+      responses:
+        '200':
+          description: Аукцион закрыт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAuction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CreateOrderAuctionRequest:
+      type: object
+      required:
+        - order_id
+        - auction_type
+        - start_price
+      properties:
+        order_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID существующего заказа (если null, создается новый заказ)
+        auction_type:
+          type: string
+          enum: [ascending, descending, sealed]
+        start_price:
+          type: number
+          format: float
+          description: Начальная цена (для ascending) или максимальная цена (для descending)
+        reserve_price:
+          type: number
+          format: float
+          nullable: true
+          description: Минимальная цена (резерв)
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала аукциона (если null, начинается сразу)
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания аукциона
+        registration_fee:
+          type: number
+          format: float
+          default: 0
+          description: Регистрационный взнос за участие
+
+    OrderAuction:
+      type: object
+      required:
+        - id
+        - order_id
+        - auction_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        auction_type:
+          type: string
+          enum: [ascending, descending, sealed]
+        start_price:
+          type: number
+          format: float
+        current_price:
+          type: number
+          format: float
+        reserve_price:
+          type: number
+          format: float
+          nullable: true
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [active, ended, cancelled]
+        winner_id:
+          type: string
+          format: uuid
+          nullable: true
+        bid_count:
+          type: integer
+        registration_fee:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    OrderAuctionDetail:
+      type: object
+      required:
+        - auction
+        - bids
+      properties:
+        auction:
+          $ref: '#/components/schemas/OrderAuction'
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionBid'
+          description: Список ставок (для sealed аукционов может быть скрыт до окончания)
+
+    PlaceBidRequest:
+      type: object
+      required:
+        - bid_amount
+      properties:
+        bid_amount:
+          type: number
+          format: float
+          description: Сумма ставки
+        bid_conditions:
+          type: object
+          description: Дополнительные условия ставки (JSON)
+          nullable: true
+
+    AuctionBid:
+      type: object
+      required:
+        - id
+        - auction_id
+        - bidder_id
+        - bid_amount
+      properties:
+        id:
+          type: string
+          format: uuid
+        auction_id:
+          type: string
+          format: uuid
+        bidder_id:
+          type: string
+          format: uuid
+        bid_amount:
+          type: number
+          format: float
+        bid_conditions:
+          type: object
+          nullable: true
+        status:
+          type: string
+          enum: [active, outbid, winning, lost]
+        bid_time:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

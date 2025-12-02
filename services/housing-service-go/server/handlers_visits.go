@@ -98,3 +98,5 @@ func (h *HousingHandlers) GetPlayerVisits(w http.ResponseWriter, r *http.Request
 	h.respondJSON(w, http.StatusOK, response)
 }
 
+
+

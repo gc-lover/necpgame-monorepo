@@ -1,0 +1,357 @@
+# Issue: #302
+openapi: 3.0.3
+info:
+  title: Social Family Relationships Service API
+  description: |
+    API для управления семейными отношениями с NPC в NECPGAME.
+    
+    **Основные возможности:**
+    - Управление семейными структурами (ядерная семья, расширенные родственники, кланы)
+    - События семейной жизни (свадьбы, рождение, болезни, конфликты, трагедии, праздники)
+    - Наследование имущества и ресурсов
+    - Усыновление и вступление в семью
+    - Влияние на фракции и мир
+    - Опека и клановые союзы
+    
+    **Интеграции:**
+    - social-service - основные отношения
+    - world-service - влияние на мир
+    - economy-service - наследование имущества
+    - character-service - данные о персонажах
+    - factions-service - влияние на фракции
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Family Structures
+    description: Семейные структуры
+  - name: Family Events
+    description: События семейной жизни
+  - name: Inheritance
+    description: Наследование
+  - name: Adoption
+    description: Усыновление и вступление в семью
+  - name: Clans
+    description: Кланы и опека
+  - name: World Impact
+    description: Влияние на мир
+
+paths:
+  /social/families/{family_id}/tree:
+    get:
+      tags:
+        - Family Structures
+      summary: Получить дерево семьи
+      description: |
+        Возвращает полное дерево семьи с информацией о всех членах, их ролях, статусах и отношениях.
+      operationId: getFamilyTree
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      responses:
+        '200':
+          description: Дерево семьи
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyTree'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/tree/update:
+    post:
+      tags:
+        - Family Structures
+      summary: Обновить дерево семьи
+      description: |
+        Обновляет структуру семьи (добавление/удаление членов, изменение ролей).
+      operationId: updateFamilyTree
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-family-relationships-schemas.yaml#/components/schemas/UpdateFamilyTreeRequest'
+      responses:
+        '200':
+          description: Дерево семьи обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyTree'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/members:
+    get:
+      tags:
+        - Family Structures
+      summary: Получить список членов семьи
+      description: |
+        Возвращает список всех членов семьи с их ролями и статусами.
+      operationId: getFamilyMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [parent, child, spouse, guardian, clan_member]
+          description: Фильтр по роли
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список членов семьи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyMember'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/events:
+    get:
+      tags:
+        - Family Events
+      summary: Получить события семьи
+      description: |
+        Возвращает список событий семейной жизни (свадьбы, рождение, болезни, конфликты, трагедии, праздники).
+      operationId: getFamilyEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [wedding, birth, illness, conflict, tragedy, celebration]
+          description: Фильтр по типу события
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начальная дата для фильтрации
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конечная дата для фильтрации
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список событий семьи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyEvent'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Family Events
+      summary: Создать событие семьи
+      description: |
+        Создает новое событие семейной жизни (свадьба, рождение, болезнь, конфликт, трагедия, праздник).
+      operationId: createFamilyEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-family-relationships-schemas.yaml#/components/schemas/CreateFamilyEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/history:
+    get:
+      tags:
+        - Family Structures
+      summary: Получить историю семьи
+      description: |
+        Возвращает полную историю семьи с хронологией событий, изменений отношений и влияния на мир.
+      operationId: getFamilyHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начальная дата для фильтрации
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конечная дата для фильтрации
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История семьи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyHistoryEntry'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/inheritance:
+    $ref: 'social-family-inheritance-paths.yaml#/paths/~1social~1families~1{family_id}~1inheritance'
+
+  /social/families/{family_id}/inheritance/calculate:
+    $ref: 'social-family-inheritance-paths.yaml#/paths/~1social~1families~1{family_id}~1inheritance~1calculate'
+
+  /social/families/{family_id}/inheritance/claim:
+    $ref: 'social-family-inheritance-paths.yaml#/paths/~1social~1families~1{family_id}~1inheritance~1claim'
+
+  /social/families/{family_id}/adoption:
+    $ref: 'social-family-clans-paths.yaml#/paths/~1social~1families~1{family_id}~1adoption'
+
+  /social/families/{family_id}/clans:
+    $ref: 'social-family-clans-paths.yaml#/paths/~1social~1families~1{family_id}~1clans'
+
+  /social/families/{family_id}/guardianship:
+    $ref: 'social-family-clans-paths.yaml#/paths/~1social~1families~1{family_id}~1guardianship'
+
+  /social/families/{family_id}/world-impact:
+    get:
+      tags:
+        - World Impact
+      summary: Получить влияние семьи на мир
+      description: |
+        Возвращает информацию о влиянии семьи на фракции, дипломатию и общественное мнение.
+      operationId: getFamilyWorldImpact
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      responses:
+        '200':
+          description: Влияние семьи на мир
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyWorldImpact'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []

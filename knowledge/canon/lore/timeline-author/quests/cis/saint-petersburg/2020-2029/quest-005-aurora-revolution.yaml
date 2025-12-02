@@ -1,11 +1,12 @@
+# Issue: #835
 metadata:
   id: quest-saint-petersburg-2020-2029-aurora-revolution
   title: 'Санкт-Петербург 2020-2029 — «Революция “Авроры”»'
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-01T21:57:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +46,106 @@ summary:
     - Крейсер «Аврора» становится символом и площадкой для подготовки.
     - Сюжет предлагает три ветки: революция, подавление, компромисс.
     - Итог меняет политическую карту Петербурга и отношение фракций.
+quest_definition:
+  quest_type: main
+  level_min: 10
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: rally_revolutionaries
+      text: "Объединить активистов, минуя слежку корпораций, убедить фракции, подготовить лозунги и ресурсы для восстания"
+      type: perform
+      target: aurora_revolution_rally
+      count: 1
+      optional: false
+    - id: capture_aurora
+      text: "Захватить музейный крейсер «Аврора», развесить красные флаги и подготовить пушку к символическому выстрелу"
+      type: perform
+      target: aurora_revolution_capture
+      count: 1
+      optional: false
+    - id: assault_corp_citadel
+      text: "После залпа вести штурм корпоративного дворца (аналог Зимнего), используя тактические решения и поддержку толпы"
+      type: perform
+      target: aurora_revolution_assault
+      count: 1
+      optional: false
+    - id: resolve_revolution
+      text: "Принять решение о исходе революции: революция побеждает, власти подавляют восстание или стороны заключают реформаторский компромисс"
+      type: interact
+      target: aurora_revolution_resolution
+      count: 1
+      optional: false
+  rewards:
+    experience: 10000
+    currency: 0
+    items: []
+    reputation:
+      Revolutionaries: 100
+    flags:
+      - aurora_revolution_completed
+  branches:
+    - id: revolution_victory
+      condition: resolution == "revolution_victory"
+      objectives:
+        - id: establish_new_order
+          text: "Установить новый революционный порядок в Петербурге"
+          type: interact
+          target: aurora_revolution_new_order
+          count: 1
+          optional: false
+      rewards:
+        experience: 5000
+        currency: 0
+        items: []
+        reputation:
+          Revolutionaries: 150
+          Corporations: -100
+        flags:
+          - revolutionary_title
+          - petersburg_revolutionary_state
+    - id: revolution_suppressed
+      condition: resolution == "revolution_suppressed"
+      objectives:
+        - id: survive_repression
+          text: "Выжить в условиях репрессий и найти способ продолжить борьбу"
+          type: perform
+          target: aurora_revolution_survival
+          count: 1
+          optional: false
+      rewards:
+        experience: 3000
+        currency: 0
+        items: []
+        reputation:
+          Corporations: 50
+          Revolutionaries: -50
+        flags:
+          - counterrevolutionary_title
+          - petersburg_corporate_control
+    - id: reformist_compromise
+      condition: resolution == "reformist_compromise"
+      objectives:
+        - id: negotiate_reforms
+          text: "Провести переговоры и достичь компромисса с реформами"
+          type: interact
+          target: aurora_revolution_negotiations
+          count: 1
+          optional: false
+      rewards:
+        experience: 4000
+        currency: 5000
+        items: []
+        reputation:
+          Revolutionaries: 50
+          Corporations: 50
+        flags:
+          - reformist_title
+          - petersburg_reformist_state
 content:
   sections:
     - id: rally
@@ -94,6 +195,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-01
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены три ветки с альтернативными исходами: победа революции, подавление восстания, реформаторский компромисс.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team
