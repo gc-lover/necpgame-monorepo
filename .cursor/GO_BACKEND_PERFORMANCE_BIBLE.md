@@ -43,19 +43,67 @@
 - Expected Gains
 - ROI Calculation
 
-**[Part 4: MMO-Specific Patterns](performance/04-mmo-specific-patterns.md)** ⭐ NEW!
-- Session Management (Redis-based)
-- Inventory Optimization (caching + diff updates)
-- Guild/Clan Operations (batching)
+**[Part 4A: MMO Sessions & Inventory](performance/04a-mmo-sessions-inventory.md)** ⭐ NEW!
+- Session Management (Redis store, pooling)
+- Inventory Optimization (caching, diff updates)
+- Guild/Clan Operations (action batching, member cache)
+- Trading/Auction (optimistic locking, queue)
+
+**[Part 4B: Persistence](performance/04b-persistence-matching.md)** ⭐ NEW!
 - Leaderboard (Redis sorted sets, sharding)
-- Trading/Auction (optimistic locking)
-- Sharding Strategies (player sharding)
+- Player Sharding (horizontal scaling)
 - CQRS Pattern (read/write separation)
-- Event Sourcing (audit trail)
+- Event Sourcing (audit trail, replay)
 - Hot Reload Config (zero downtime)
 - Persistence (write-behind, snapshot+delta)
-- Matchmaking (skill buckets, O(1) matching)
-- Anti-Cheat Integration (server validation)
+
+**[Part 4C: Matchmaking & Anti-Cheat](performance/04c-matchmaking-anticheat.md)** ⭐ NEW!
+- Matchmaking (skill buckets, O(1) matching, timeout expansion)
+- Anti-Cheat (server validation, anomaly detection)
+
+**[Part 5A: Advanced Database & Cache](performance/05a-database-cache-advanced.md)** 🔥 NEW!
+- Time-Series Partitioning (auto retention)
+- Materialized Views (100x speedup)
+- Covering/Partial Indexes
+- Distributed Cache Pub/Sub (coordination)
+- Cache Warming, Negative Caching
+
+**[Part 5B: World & Lag Compensation](performance/05b-world-lag-compensation.md)** 🔥 NEW!
+- Server-Side Rewind (fair hits, 150-200ms compensation)
+- Dead Reckoning (smooth при packet loss)
+- Zone Sharding (horizontal scaling)
+- Visibility Culling (frustum, occluder)
+- Load Balancing (least-connection, sticky sessions)
+- Dynamic Instances (dungeons/raids)
+- gRPC Server-to-Server (<5ms)
+
+**[Part 6: Resilience & Compression](performance/06-resilience-compression.md)** 🔥 NEW!
+- Adaptive Compression (LZ4/Zstandard)
+- Dictionary Compression (game packets)
+- DB Connection Retry (exponential backoff)
+- Circuit Breaker (DB resilience)
+- Feature Flags (graceful degradation)
+- Load Shedding (backpressure)
+- Fallback Strategies (multi-level)
+- Bounded Map Growth (leak prevention)
+- TTL Cleanup (auto eviction)
+- Game-Specific Metrics
+
+**[Part 7A: PostgreSQL Advanced](performance/07a-postgresql-advanced.md)** 💎 NEW!
+- pgBouncer (10k → 25 connections)
+- LISTEN/NOTIFY (real-time events)
+- JSONB optimization (flexible schema)
+- Unlogged tables (+300% write)
+- WAL tuning (+50% throughput)
+- Prepared cache, Parallel queries, Autovacuum
+
+**[Part 7B: Redis & DB Comparison](performance/07b-redis-database-comparison.md)** 💎 NEW!
+- Redis Pipelining (↓99% round-trips)
+- Lua Scripts (atomic operations)
+- Redis Cluster (millions ops/sec)
+- Sentinel (HA), Streams, Bloom Filter
+- **Database Comparison Tables**
+- **Verdict:** PostgreSQL + Redis достаточно для 95% (ClickHouse только если >100M events/day)
 
 ---
 
@@ -77,7 +125,7 @@
 
 ## 📊 Что внутри
 
-### Всего оптимизаций: **90+ техник**
+### Всего оптимизаций: **120+ техник**
 
 **По приоритетам:**
 - 🔴 **P0 (Critical):** 10 techniques - MUST implement
@@ -116,14 +164,22 @@
 
 ## 🛠️ Связанные документы
 
+**ОБЯЗАТЕЛЬНО к прочтению:**
+- `.cursor/PERFORMANCE_ENFORCEMENT.md` - **СТРОГИЕ требования (BLOCKER system)**
+- `.cursor/OPTIMIZATION_FIRST_POLICY.md` - **новый подход к оптимизациям**
+
 **Для Backend Agent:**
 - `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист валидации
 - `.cursor/templates/backend-*.md` - шаблоны кода
-- `.cursor/commands/backend-validate-optimizations.md` - команда
+- `.cursor/commands/backend-validate-optimizations.md` - команда валидации
+- `.cursor/commands/backend-refactor-service.md` - команда рефакторинга
+
+**Для Database Agent:**
+- `.cursor/commands/database-refactor-schema.md` - команда рефакторинга таблиц
 
 **Для других агентов:**
 - `.cursor/rules/agent-api-designer.mdc` - struct alignment в OpenAPI
-- `.cursor/rules/agent-architect.mdc` - performance requirements
+- `.cursor/rules/agent-architect.mdc` - performance requirements  
 - `.cursor/rules/agent-database.mdc` - DB performance hints
 
 **Скрипты:**
