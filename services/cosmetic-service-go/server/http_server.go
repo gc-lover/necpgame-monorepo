@@ -8,14 +8,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	cosmeticapi "github.com/necpgame/cosmetic-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr              string
-	router            *mux.Router
+	router            chi.Router
 	catalogService    *CosmeticCatalogService
 	shopService       *CosmeticShopService
 	purchaseService   *CosmeticPurchaseService
@@ -37,7 +37,7 @@ func NewHTTPServer(
 	jwtValidator *JwtValidator,
 	authEnabled bool,
 ) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:              addr,
 		router:            router,
@@ -72,7 +72,7 @@ func NewHTTPServer(
 
 	cosmeticapi.HandlerFromMux(cosmeticHandlers, apiRouter)
 
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 
 	return server
 }
@@ -207,4 +207,5 @@ func (r *statusRecorder) WriteHeader(status int) {
 	r.statusCode = status
 	r.ResponseWriter.WriteHeader(status)
 }
+
 

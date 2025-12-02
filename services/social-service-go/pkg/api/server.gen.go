@@ -4,56 +4,25 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/oapi-codegen/runtime"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Получить список сообщений
-	// (GET /social/chat/messages)
-	GetMessages(w http.ResponseWriter, r *http.Request, params GetMessagesParams)
-	// Обработать сообщение
-	// (POST /social/chat/messages/process)
-	ProcessChatMessage(w http.ResponseWriter, r *http.Request)
-	// Отправить сообщение
-	// (POST /social/chat/messages/send)
-	SendChatMessage(w http.ResponseWriter, r *http.Request)
-	// Получить сообщения канала
-	// (GET /social/chat/messages/{channel_id})
-	GetChannelMessages(w http.ResponseWriter, r *http.Request, channelId openapi_types.UUID, params GetChannelMessagesParams)
+
+	// (GET /health)
+	HealthCheck(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// Получить список сообщений
-// (GET /social/chat/messages)
-func (_ Unimplemented) GetMessages(w http.ResponseWriter, r *http.Request, params GetMessagesParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Обработать сообщение
-// (POST /social/chat/messages/process)
-func (_ Unimplemented) ProcessChatMessage(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Отправить сообщение
-// (POST /social/chat/messages/send)
-func (_ Unimplemented) SendChatMessage(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Получить сообщения канала
-// (GET /social/chat/messages/{channel_id})
-func (_ Unimplemented) GetChannelMessages(w http.ResponseWriter, r *http.Request, channelId openapi_types.UUID, params GetChannelMessagesParams) {
+// (GET /health)
+func (_ Unimplemented) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -66,136 +35,11 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetMessages operation middleware
-func (siw *ServerInterfaceWrapper) GetMessages(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetMessagesParams
-
-	// ------------- Optional query parameter "channel_type" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "channel_type", r.URL.Query(), &params.ChannelType)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "channel_type", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
+// HealthCheck operation middleware
+func (siw *ServerInterfaceWrapper) HealthCheck(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetMessages(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ProcessChatMessage operation middleware
-func (siw *ServerInterfaceWrapper) ProcessChatMessage(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ProcessChatMessage(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// SendChatMessage operation middleware
-func (siw *ServerInterfaceWrapper) SendChatMessage(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.SendChatMessage(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetChannelMessages operation middleware
-func (siw *ServerInterfaceWrapper) GetChannelMessages(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "channel_id" -------------
-	var channelId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "channel_id", chi.URLParam(r, "channel_id"), &channelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "channel_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetChannelMessagesParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetChannelMessages(w, r, channelId, params)
+		siw.Handler.HealthCheck(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -319,16 +163,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/social/chat/messages", wrapper.GetMessages)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/social/chat/messages/process", wrapper.ProcessChatMessage)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/social/chat/messages/send", wrapper.SendChatMessage)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/social/chat/messages/{channel_id}", wrapper.GetChannelMessages)
+		r.Get(options.BaseURL+"/health", wrapper.HealthCheck)
 	})
 
 	return r

@@ -100,9 +100,9 @@ Todo → Idea Writer → UI/UX Designer → UE5 → QA → Release → Done
 - status_field_id: `239690516`
 
 **Для Backend Developer:**
-- Роутер: Chi (`chi-server`) для ВСЕХ новых сервисов
-- НЕ используй Gorilla для новых (deprecated)
-- См. `.cursor/CHI_ROUTER_STANDARD.md`
+- Роутер: Chi (`chi-server`) для ВСЕХ сервисов (новых и существующих)
+- Gorilla ЗАПРЕЩЕН - мигрируй на Chi если найден
+- См. `.cursor/CHI_ROUTER_STANDARD.md` и `.cursor/rules/agent-backend.mdc`
 
 ---
 

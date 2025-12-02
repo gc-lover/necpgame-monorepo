@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/battle-pass-service-go/models"
 	"github.com/necpgame/battle-pass-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
@@ -15,7 +15,7 @@ import (
 
 type HTTPServer struct {
 	addr            string
-	router          *mux.Router
+	router          chi.Router
 	battlePassService BattlePassServiceInterface
 	logger          *logrus.Logger
 	server          *http.Server
@@ -24,7 +24,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, battlePassService BattlePassServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:            addr,
 		router:          router,
@@ -49,16 +49,16 @@ func NewHTTPServer(addr string, battlePassService BattlePassServiceInterface, jw
 		BaseRouter: apiRouter,
 	})
 
-	apiRouter.HandleFunc("/battle-pass/progress/xp", server.awardBattlePassXP).Methods("POST")
-	apiRouter.HandleFunc("/battle-pass/rewards", server.getSeasonRewards).Methods("GET")
-	apiRouter.HandleFunc("/battle-pass/rewards/claim", server.claimReward).Methods("POST")
-	apiRouter.HandleFunc("/battle-pass/challenges/weekly", server.getWeeklyChallenges).Methods("GET")
-	apiRouter.HandleFunc("/battle-pass/challenges/season/{player_id}", server.getSeasonChallenges).Methods("GET")
-	apiRouter.HandleFunc("/battle-pass/challenges/{challengeId}/complete", server.completeChallenge).Methods("POST")
-	apiRouter.HandleFunc("/battle-pass/season/{season_id}", server.getSeasonInfo).Methods("GET")
-	apiRouter.HandleFunc("/battle-pass/season/create", server.createSeason).Methods("POST")
+	apiRouter.Get("/battle-pass/progress/xp", server.awardBattlePassXP)
+	apiRouter.Get("/battle-pass/rewards", server.getSeasonRewards)
+	apiRouter.Get("/battle-pass/rewards/claim", server.claimReward)
+	apiRouter.Get("/battle-pass/challenges/weekly", server.getWeeklyChallenges)
+	apiRouter.Get("/battle-pass/challenges/season/{player_id}", server.getSeasonChallenges)
+	apiRouter.Get("/battle-pass/challenges/{challengeId}/complete", server.completeChallenge)
+	apiRouter.Get("/battle-pass/season/{season_id}", server.getSeasonInfo)
+	apiRouter.Get("/battle-pass/season/create", server.createSeason)
 
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 
 	return server
 }
@@ -437,4 +437,5 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
+
 

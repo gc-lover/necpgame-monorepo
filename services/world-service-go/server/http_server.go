@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/world-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr              string
-	router            *mux.Router
+	router            chi.Router
 	worldService      WorldService
 	worldEventsService WorldEventsServiceInterface
 	worldStateService  WorldStateServiceInterface
@@ -24,7 +24,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, worldService WorldService, worldEventsService WorldEventsServiceInterface, worldStateService WorldStateServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:              addr,
 		router:            router,
@@ -46,48 +46,48 @@ func NewHTTPServer(addr string, worldService WorldService, worldEventsService Wo
 		worldAPI.Use(server.authMiddleware)
 	}
 
-	worldAPI.HandleFunc("/reset/daily/execute", server.executeDailyReset).Methods("POST")
-	worldAPI.HandleFunc("/reset/daily/status", server.getDailyResetStatus).Methods("GET")
-	worldAPI.HandleFunc("/reset/daily/next", server.getNextDailyReset).Methods("GET")
-	worldAPI.HandleFunc("/reset/weekly/execute", server.executeWeeklyReset).Methods("POST")
-	worldAPI.HandleFunc("/reset/weekly/status", server.getWeeklyResetStatus).Methods("GET")
-	worldAPI.HandleFunc("/reset/weekly/next", server.getNextWeeklyReset).Methods("GET")
+	worldAPI.Get("/reset/daily/execute", server.executeDailyReset)
+	worldAPI.Get("/reset/daily/status", server.getDailyResetStatus)
+	worldAPI.Get("/reset/daily/next", server.getNextDailyReset)
+	worldAPI.Get("/reset/weekly/execute", server.executeWeeklyReset)
+	worldAPI.Get("/reset/weekly/status", server.getWeeklyResetStatus)
+	worldAPI.Get("/reset/weekly/next", server.getNextWeeklyReset)
 
-	worldAPI.HandleFunc("/reset/quests/pool", server.getQuestPool).Methods("GET")
-	worldAPI.HandleFunc("/reset/quests/assign", server.assignQuestToPlayer).Methods("POST")
-	worldAPI.HandleFunc("/reset/quests/player/{player_id}", server.getPlayerQuests).Methods("GET")
+	worldAPI.Get("/reset/quests/pool", server.getQuestPool)
+	worldAPI.Get("/reset/quests/assign", server.assignQuestToPlayer)
+	worldAPI.Get("/reset/quests/player/{player_id}", server.getPlayerQuests)
 
-	worldAPI.HandleFunc("/reset/rewards/login/{player_id}", server.getPlayerLoginRewards).Methods("GET")
-	worldAPI.HandleFunc("/reset/rewards/login/claim", server.claimLoginReward).Methods("POST")
-	worldAPI.HandleFunc("/reset/rewards/login/streak/{player_id}", server.getPlayerLoginStreak).Methods("GET")
+	worldAPI.Get("/reset/rewards/login/{player_id}", server.getPlayerLoginRewards)
+	worldAPI.Get("/reset/rewards/login/claim", server.claimLoginReward)
+	worldAPI.Get("/reset/rewards/login/streak/{player_id}", server.getPlayerLoginStreak)
 
-	worldAPI.HandleFunc("/reset/schedule", server.getResetSchedule).Methods("GET")
-	worldAPI.HandleFunc("/reset/schedule/update", server.updateResetSchedule).Methods("POST")
+	worldAPI.Get("/reset/schedule", server.getResetSchedule)
+	worldAPI.Get("/reset/schedule/update", server.updateResetSchedule)
 
-	worldAPI.HandleFunc("/reset/execute/daily", server.executeDailyResetBatch).Methods("POST")
-	worldAPI.HandleFunc("/reset/execute/weekly", server.executeWeeklyResetBatch).Methods("POST")
-	worldAPI.HandleFunc("/reset/execute/status", server.getResetExecutionStatus).Methods("GET")
-	worldAPI.HandleFunc("/reset/events", server.getResetEvents).Methods("GET")
+	worldAPI.Get("/reset/execute/daily", server.executeDailyResetBatch)
+	worldAPI.Get("/reset/execute/weekly", server.executeWeeklyResetBatch)
+	worldAPI.Get("/reset/execute/status", server.getResetExecutionStatus)
+	worldAPI.Get("/reset/events", server.getResetEvents)
 
-	worldAPI.HandleFunc("/travel-events/trigger", server.triggerTravelEvent).Methods("POST")
-	worldAPI.HandleFunc("/travel-events/available", server.getAvailableTravelEvents).Methods("GET")
-	worldAPI.HandleFunc("/travel-events/{eventId}", server.getTravelEvent).Methods("GET")
-	worldAPI.HandleFunc("/travel-events/{eventId}/start", server.startTravelEvent).Methods("POST")
-	worldAPI.HandleFunc("/travel-events/{eventId}/skill-check", server.performTravelEventSkillCheck).Methods("POST")
-	worldAPI.HandleFunc("/travel-events/{eventId}/complete", server.completeTravelEvent).Methods("POST")
-	worldAPI.HandleFunc("/travel-events/{eventId}/cancel", server.cancelTravelEvent).Methods("POST")
-	worldAPI.HandleFunc("/travel-events/epoch/{epochId}", server.getEpochTravelEvents).Methods("GET")
-	worldAPI.HandleFunc("/travel-events/cooldown/{characterId}", server.getCharacterTravelEventCooldowns).Methods("GET")
-	worldAPI.HandleFunc("/travel-events/probability", server.calculateTravelEventProbability).Methods("GET")
-	worldAPI.HandleFunc("/travel-events/rewards/{eventId}", server.getTravelEventRewards).Methods("GET")
-	worldAPI.HandleFunc("/travel-events/penalties/{eventId}", server.getTravelEventPenalties).Methods("GET")
+	worldAPI.Get("/travel-events/trigger", server.triggerTravelEvent)
+	worldAPI.Get("/travel-events/available", server.getAvailableTravelEvents)
+	worldAPI.Get("/travel-events/{eventId}", server.getTravelEvent)
+	worldAPI.Get("/travel-events/{eventId}/start", server.startTravelEvent)
+	worldAPI.Get("/travel-events/{eventId}/skill-check", server.performTravelEventSkillCheck)
+	worldAPI.Get("/travel-events/{eventId}/complete", server.completeTravelEvent)
+	worldAPI.Get("/travel-events/{eventId}/cancel", server.cancelTravelEvent)
+	worldAPI.Get("/travel-events/epoch/{epochId}", server.getEpochTravelEvents)
+	worldAPI.Get("/travel-events/cooldown/{characterId}", server.getCharacterTravelEventCooldowns)
+	worldAPI.Get("/travel-events/probability", server.calculateTravelEventProbability)
+	worldAPI.Get("/travel-events/rewards/{eventId}", server.getTravelEventRewards)
+	worldAPI.Get("/travel-events/penalties/{eventId}", server.getTravelEventPenalties)
 
 	// World State endpoints
-	worldAPI.HandleFunc("/state/{key}", server.getStateByKey).Methods("GET")
-	worldAPI.HandleFunc("/state/{key}", server.updateState).Methods("PUT")
-	worldAPI.HandleFunc("/state/{key}", server.deleteState).Methods("DELETE")
-	worldAPI.HandleFunc("/state/category/{category}", server.getStateByCategory).Methods("GET")
-	worldAPI.HandleFunc("/state/batch", server.batchUpdateState).Methods("POST")
+	worldAPI.Get("/state/{key}", server.getStateByKey)
+	worldAPI.Get("/state/{key}", server.updateState)
+	worldAPI.Get("/state/{key}", server.deleteState)
+	worldAPI.Get("/state/category/{category}", server.getStateByCategory)
+	worldAPI.Get("/state/batch", server.batchUpdateState)
 
 	worldEventsAPI := router.PathPrefix("/api/v1").Subrouter()
 	if authEnabled {
@@ -97,7 +97,7 @@ func NewHTTPServer(addr string, worldService WorldService, worldEventsService Wo
 	worldEventsHandler := api.HandlerFromMux(worldEventsHandlers, worldEventsAPI)
 	router.PathPrefix("/api/v1").Handler(worldEventsHandler)
 
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 
 	return server
 }
@@ -147,5 +147,6 @@ func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interfa
 func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
 	s.respondJSON(w, status, map[string]string{"error": message})
 }
+
 
 

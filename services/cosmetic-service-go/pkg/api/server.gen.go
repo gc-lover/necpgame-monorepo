@@ -4,29 +4,26 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
-	"github.com/oapi-codegen/runtime"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/go-chi/chi/v5"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Получить каталог косметики
-	// (GET /monetization/cosmetic/catalog)
-	GetCosmeticCatalog(w http.ResponseWriter, r *http.Request, params GetCosmeticCatalogParams)
-	// Получить категории косметики
-	// (GET /monetization/cosmetic/categories)
-	GetCosmeticCategories(w http.ResponseWriter, r *http.Request)
-	// Получить косметику по редкости
-	// (GET /monetization/cosmetic/rarity/{rarity})
-	GetCosmeticsByRarity(w http.ResponseWriter, r *http.Request, rarity GetCosmeticsByRarityParamsRarity, params GetCosmeticsByRarityParams)
-	// Получить детали косметики
-	// (GET /monetization/cosmetic/{cosmetic_id})
-	GetCosmeticDetails(w http.ResponseWriter, r *http.Request, cosmeticId openapi_types.UUID)
+
+	// (GET /health)
+	HealthCheck(w http.ResponseWriter, r *http.Request)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// (GET /health)
+func (_ Unimplemented) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -38,163 +35,11 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetCosmeticCatalog operation middleware
-func (siw *ServerInterfaceWrapper) GetCosmeticCatalog(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetCosmeticCatalogParams
-
-	// ------------- Optional query parameter "category" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "category", r.URL.Query(), &params.Category)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "category", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "rarity" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "rarity", r.URL.Query(), &params.Rarity)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "rarity", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
+// HealthCheck operation middleware
+func (siw *ServerInterfaceWrapper) HealthCheck(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCosmeticCatalog(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetCosmeticCategories operation middleware
-func (siw *ServerInterfaceWrapper) GetCosmeticCategories(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCosmeticCategories(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetCosmeticsByRarity operation middleware
-func (siw *ServerInterfaceWrapper) GetCosmeticsByRarity(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "rarity" -------------
-	var rarity GetCosmeticsByRarityParamsRarity
-
-	err = runtime.BindStyledParameterWithOptions("simple", "rarity", mux.Vars(r)["rarity"], &rarity, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "rarity", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetCosmeticsByRarityParams
-
-	// ------------- Optional query parameter "category" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "category", r.URL.Query(), &params.Category)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "category", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCosmeticsByRarity(w, r, rarity, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetCosmeticDetails operation middleware
-func (siw *ServerInterfaceWrapper) GetCosmeticDetails(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "cosmetic_id" -------------
-	var cosmeticId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "cosmetic_id", mux.Vars(r)["cosmetic_id"], &cosmeticId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cosmetic_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCosmeticDetails(w, r, cosmeticId)
+		siw.Handler.HealthCheck(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -275,36 +120,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -317,13 +162,9 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/monetization/cosmetic/catalog", wrapper.GetCosmeticCatalog).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/monetization/cosmetic/categories", wrapper.GetCosmeticCategories).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/monetization/cosmetic/rarity/{rarity}", wrapper.GetCosmeticsByRarity).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/monetization/cosmetic/{cosmetic_id}", wrapper.GetCosmeticDetails).Methods("GET")
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/health", wrapper.HealthCheck)
+	})
 
 	return r
 }

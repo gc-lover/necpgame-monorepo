@@ -6,21 +6,21 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/companion-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr            string
-	router          *mux.Router
+	router          chi.Router
 	companionService CompanionServiceInterface
 	logger          *logrus.Logger
 	server          *http.Server
 }
 
 func NewHTTPServer(addr string, companionService CompanionServiceInterface) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:            addr,
 		router:          router,
@@ -45,7 +45,7 @@ func NewHTTPServer(addr string, companionService CompanionServiceInterface) *HTT
 		BaseRouter: apiRouter,
 	})
 
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 
 	return server
 }
@@ -149,5 +149,6 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
+
 
 

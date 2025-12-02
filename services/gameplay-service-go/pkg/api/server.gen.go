@@ -4,55 +4,25 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Получить аналитику эффективности комбо
-	// (GET /gameplay/combat/combos/analytics)
-	GetComboAnalytics(w http.ResponseWriter, r *http.Request, params GetComboAnalyticsParams)
-	// Получить лоадаут комбо персонажа
-	// (GET /gameplay/combat/combos/loadout)
-	GetComboLoadout(w http.ResponseWriter, r *http.Request, params GetComboLoadoutParams)
-	// Обновить лоадаут комбо
-	// (POST /gameplay/combat/combos/loadout)
-	UpdateComboLoadout(w http.ResponseWriter, r *http.Request)
-	// Отправить результаты scoring комбо
-	// (POST /gameplay/combat/combos/score)
-	SubmitComboScore(w http.ResponseWriter, r *http.Request)
+
+	// (GET /health)
+	HealthCheck(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// Получить аналитику эффективности комбо
-// (GET /gameplay/combat/combos/analytics)
-func (_ Unimplemented) GetComboAnalytics(w http.ResponseWriter, r *http.Request, params GetComboAnalyticsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Получить лоадаут комбо персонажа
-// (GET /gameplay/combat/combos/loadout)
-func (_ Unimplemented) GetComboLoadout(w http.ResponseWriter, r *http.Request, params GetComboLoadoutParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Обновить лоадаут комбо
-// (POST /gameplay/combat/combos/loadout)
-func (_ Unimplemented) UpdateComboLoadout(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Отправить результаты scoring комбо
-// (POST /gameplay/combat/combos/score)
-func (_ Unimplemented) SubmitComboScore(w http.ResponseWriter, r *http.Request) {
+// (GET /health)
+func (_ Unimplemented) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -65,150 +35,11 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetComboAnalytics operation middleware
-func (siw *ServerInterfaceWrapper) GetComboAnalytics(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetComboAnalyticsParams
-
-	// ------------- Optional query parameter "combo_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "combo_id", r.URL.Query(), &params.ComboId)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "combo_id", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "character_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "character_id", r.URL.Query(), &params.CharacterId)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "character_id", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "period_start" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "period_start", r.URL.Query(), &params.PeriodStart)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period_start", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "period_end" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "period_end", r.URL.Query(), &params.PeriodEnd)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period_end", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
+// HealthCheck operation middleware
+func (siw *ServerInterfaceWrapper) HealthCheck(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetComboAnalytics(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetComboLoadout operation middleware
-func (siw *ServerInterfaceWrapper) GetComboLoadout(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetComboLoadoutParams
-
-	// ------------- Required query parameter "character_id" -------------
-
-	if paramValue := r.URL.Query().Get("character_id"); paramValue != "" {
-
-	} else {
-		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "character_id"})
-		return
-	}
-
-	err = runtime.BindQueryParameter("form", true, true, "character_id", r.URL.Query(), &params.CharacterId)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "character_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetComboLoadout(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateComboLoadout operation middleware
-func (siw *ServerInterfaceWrapper) UpdateComboLoadout(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateComboLoadout(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// SubmitComboScore operation middleware
-func (siw *ServerInterfaceWrapper) SubmitComboScore(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.SubmitComboScore(w, r)
+		siw.Handler.HealthCheck(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -332,16 +163,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/gameplay/combat/combos/analytics", wrapper.GetComboAnalytics)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/gameplay/combat/combos/loadout", wrapper.GetComboLoadout)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/gameplay/combat/combos/loadout", wrapper.UpdateComboLoadout)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/gameplay/combat/combos/score", wrapper.SubmitComboScore)
+		r.Get(options.BaseURL+"/health", wrapper.HealthCheck)
 	})
 
 	return r
