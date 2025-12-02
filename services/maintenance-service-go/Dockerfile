@@ -22,7 +22,7 @@ RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 
 RUN addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser
+  adduser -D -u 1000 -G appuser appuser
 
 COPY --from=builder /app/maintenance-service /app/maintenance-service
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo

@@ -3,7 +3,7 @@ openapi: 3.0.3
 info:
   title: Combat Combos & Synergies Service API
   description: |
-    API для системы комбо и синергий.
+    Полный API для системы комбо и синергий.
     
     **Основные возможности:**
     - Каталог комбо с фильтрацией
@@ -27,81 +27,289 @@ tags:
   - name: Combo Activation
     description: Активация комбо
   - name: Combo Loadouts
-    description: Лоадауты комбо
+    description: Управление лоадаутами
   - name: Combo Scoring
     description: Оценка комбо
   - name: Combo Analytics
     description: Аналитика комбо
 
 paths:
-  # Catalog endpoints
   /gameplay/combat/combos/catalog:
-    $ref: 'combat-combos-catalog-service.yaml#/paths/~1gameplay~1combat~1combos~1catalog'
-  
+    get:
+      tags: [Combo Catalog]
+      summary: Получить каталог комбо
+      operationId: getComboCatalog
+      security: [{BearerAuth: []}]
+      parameters:
+        - name: combo_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ComboType'
+        - name: complexity
+          in: query
+          schema:
+            $ref: '#/components/schemas/ComboComplexity'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Каталог комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboCatalogResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
   /gameplay/combat/combos/{comboId}:
-    $ref: 'combat-combos-catalog-service.yaml#/paths/~1gameplay~1combat~1combos~1{comboId}'
-  
-  /gameplay/combat/combos/synergies/{synergyId}:
-    $ref: 'combat-combos-catalog-service.yaml#/paths/~1gameplay~1combat~1combos~1synergies~1{synergyId}'
-  
-  # Activation endpoints
+    get:
+      tags: [Combo Catalog]
+      summary: Получить детали комбо
+      operationId: getComboDetails
+      security: [{BearerAuth: []}]
+      parameters:
+        - name: comboId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboDetails'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
   /gameplay/combat/combos/activate:
-    $ref: 'combat-combos-activation-service.yaml#/paths/~1gameplay~1combat~1combos~1activate'
-  
-  /gameplay/combat/combos/synergy/apply:
-    $ref: 'combat-combos-activation-service.yaml#/paths/~1gameplay~1combat~1combos~1synergy~1apply'
-  
-  /gameplay/combat/combos/validate:
-    $ref: 'combat-combos-activation-service.yaml#/paths/~1gameplay~1combat~1combos~1validate'
-  
-  # Loadout endpoints
+    post:
+      tags: [Combo Activation]
+      summary: Активировать комбо
+      operationId: activateCombo
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateComboRequest'
+      responses:
+        '200':
+          description: Комбо активировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboActivationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/synergy:
+    post:
+      tags: [Combo Activation]
+      summary: Применить синергию
+      operationId: applySynergy
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplySynergyRequest'
+      responses:
+        '200':
+          description: Синергия применена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynergyApplicationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
   /gameplay/combat/combos/loadout:
-    $ref: 'combat-combos-loadouts-service.yaml#/paths/~1gameplay~1combat~1combos~1loadout'
-  
-  # Scoring endpoints
+    get:
+      tags: [Combo Loadouts]
+      summary: Получить лоадаут комбо
+      operationId: getComboLoadout
+      security: [{BearerAuth: []}]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лоадаут комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadout'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+    post:
+      tags: [Combo Loadouts]
+      summary: Обновить лоадаут комбо
+      operationId: updateComboLoadout
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLoadoutRequest'
+      responses:
+        '200':
+          description: Лоадаут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadout'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
   /gameplay/combat/combos/score:
-    $ref: 'combat-combos-scoring-service.yaml#/paths/~1gameplay~1combat~1combos~1score'
-  
-  # Analytics endpoints
+    post:
+      tags: [Combo Scoring]
+      summary: Отправить результаты scoring
+      operationId: submitComboScore
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitScoreRequest'
+      responses:
+        '200':
+          description: Score отправлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreSubmissionResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
   /gameplay/combat/combos/analytics:
-    $ref: 'combat-combos-analytics-service.yaml#/paths/~1gameplay~1combat~1combos~1analytics'
+    get:
+      tags: [Combo Analytics]
+      summary: Получить аналитику комбо
+      operationId: getComboAnalytics
+      security: [{BearerAuth: []}]
+      parameters:
+        - name: combo_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Аналитика комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
 components:
   schemas:
-    # Reference to schemas
+    # Enums
     ComboType:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboType'
     ComboComplexity:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboComplexity'
     SynergyType:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/SynergyType'
+    
+    # Main schemas
     Combo:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/Combo'
     ComboDetails:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboDetails'
     Synergy:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/Synergy'
-    ComboActivationRequest:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboActivationRequest'
+    
+    # Request/Response schemas
+    ActivateComboRequest:
+      $ref: 'combat-combos-schemas.yaml#/components/schemas/ActivateComboRequest'
     ComboActivationResponse:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboActivationResponse'
     ApplySynergyRequest:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/ApplySynergyRequest'
-    SynergyResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/SynergyResponse'
+    SynergyApplicationResponse:
+      $ref: 'combat-combos-schemas.yaml#/components/schemas/SynergyApplicationResponse'
     ComboLoadout:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboLoadout'
-    UpdateComboLoadoutRequest:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/UpdateComboLoadoutRequest'
-    SubmitComboScoreRequest:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/SubmitComboScoreRequest'
-    ComboScoreResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboScoreResponse'
-    ComboAnalyticsResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboAnalyticsResponse'
+    UpdateLoadoutRequest:
+      $ref: 'combat-combos-schemas.yaml#/components/schemas/UpdateLoadoutRequest'
+    SubmitScoreRequest:
+      $ref: 'combat-combos-schemas.yaml#/components/schemas/SubmitScoreRequest'
+    ScoreSubmissionResponse:
+      $ref: 'combat-combos-schemas.yaml#/components/schemas/ScoreSubmissionResponse'
+    AnalyticsResponse:
+      $ref: 'combat-combos-schemas.yaml#/components/schemas/AnalyticsResponse'
     ComboCatalogResponse:
       $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboCatalogResponse'
-    
+  
   securitySchemes:
     BearerAuth:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'

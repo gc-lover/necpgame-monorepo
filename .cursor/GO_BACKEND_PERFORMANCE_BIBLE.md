@@ -43,6 +43,20 @@
 - Expected Gains
 - ROI Calculation
 
+**[Part 4: MMO-Specific Patterns](performance/04-mmo-specific-patterns.md)** ⭐ NEW!
+- Session Management (Redis-based)
+- Inventory Optimization (caching + diff updates)
+- Guild/Clan Operations (batching)
+- Leaderboard (Redis sorted sets, sharding)
+- Trading/Auction (optimistic locking)
+- Sharding Strategies (player sharding)
+- CQRS Pattern (read/write separation)
+- Event Sourcing (audit trail)
+- Hot Reload Config (zero downtime)
+- Persistence (write-behind, snapshot+delta)
+- Matchmaking (skill buckets, O(1) matching)
+- Anti-Cheat Integration (server validation)
+
 ---
 
 ## ⚡ Quick Start
@@ -63,7 +77,7 @@
 
 ## 📊 Что внутри
 
-### Всего оптимизаций: **75+ техник**
+### Всего оптимизаций: **90+ техник**
 
 **По приоритетам:**
 - 🔴 **P0 (Critical):** 10 techniques - MUST implement
