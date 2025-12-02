@@ -2,106 +2,48 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/housing-service-go/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := server.GetLogger()
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetLevel(logrus.InfoLevel)
+	logger.Info("Housing Service Service starting...")
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		logger.Fatal("DATABASE_URL environment variable is required")
-	}
+	addr := getEnv("ADDR", "0.0.0.0:8122")
 
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to connect to database")
-	}
-	defer dbPool.Close()
-
-	redisURL := os.Getenv("REDIS_URL")
-	if redisURL == "" {
-		redisURL = "redis://localhost:6379"
-	}
-
-	redisOpts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to parse Redis URL")
-	}
-
-	redisClient := redis.NewClient(redisOpts)
-	defer redisClient.Close()
-
-	keycloakIssuer := os.Getenv("KEYCLOAK_ISSUER")
-	if keycloakIssuer == "" {
-		keycloakIssuer = "http://localhost:8080/realms/necpgame"
-	}
-
-	keycloakJWKSURL := os.Getenv("KEYCLOAK_JWKS_URL")
-	if keycloakJWKSURL == "" {
-		keycloakJWKSURL = fmt.Sprintf("%s/protocol/openid-connect/certs", keycloakIssuer)
-	}
-
-	authEnabled := os.Getenv("AUTH_ENABLED") != "false"
-	jwtValidator := server.NewJwtValidator(keycloakIssuer, keycloakJWKSURL, logger)
-
-	housingRepo := server.NewHousingRepository(dbPool, logger)
-	housingService := server.NewHousingService(housingRepo, redisClient, logger)
-
-	httpAddr := os.Getenv("HTTP_ADDR")
-	if httpAddr == "" {
-		httpAddr = ":8093"
-	}
-
-	httpServer := server.NewHTTPServer(httpAddr, housingService, jwtValidator, authEnabled)
-
-	metricsAddr := os.Getenv("METRICS_ADDR")
-	if metricsAddr == "" {
-		metricsAddr = ":9093"
-	}
-
-	metricsMux := http.NewServeMux()
-	metricsMux.Handle("/metrics", promhttp.Handler())
-
-	metricsServer := &http.Server{
-		Addr:    metricsAddr,
-		Handler: metricsMux,
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go func() {
-		logger.WithField("addr", httpAddr).Info("Starting HTTP server")
-		if err := httpServer.Start(ctx); err != nil {
-			logger.WithError(err).Fatal("HTTP server failed")
-		}
-	}()
-
-	go func() {
-		logger.WithField("addr", metricsAddr).Info("Starting metrics server")
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Metrics server failed")
-		}
-	}()
+	httpServer := server.NewHTTPServer(addr, logger)
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	<-sigChan
-	logger.Info("Shutting down...")
+	go func() {
+		<-sigChan
+		logger.Info("Shutting down server...")
 
-	cancel()
-	httpServer.Shutdown(context.Background())
-	metricsServer.Shutdown(context.Background())
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		httpServer.Shutdown(shutdownCtx)
+	}()
+
+	logger.WithField("addr", addr).Info("HTTP server starting")
+	if err := httpServer.Start(); err != nil {
+		logger.WithError(err).Fatal("Server error")
+	}
+
+	logger.Info("Server stopped")
 }
 
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}

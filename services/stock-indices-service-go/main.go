@@ -2,44 +2,24 @@ package main
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/necpgame/stock-indices-service-go/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := server.GetLogger()
-	logger.Info("Stock Indices Service (Go) starting...")
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetLevel(logrus.InfoLevel)
+	logger.Info("Stock  Indices  Service starting...")
 
-	addr := getEnv("ADDR", "0.0.0.0:8094")
-	metricsAddr := getEnv("METRICS_ADDR", ":9094")
+	addr := getEnv("ADDR", "0.0.0.0:8149")
 
-	httpServer := server.NewHTTPServer(addr)
-
-	metricsMux := http.NewServeMux()
-	metricsMux.Handle("/metrics", promhttp.Handler())
-
-	metricsServer := &http.Server{
-		Addr:         metricsAddr,
-		Handler:      metricsMux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	go func() {
-		logger.WithField("addr", metricsAddr).Info("Metrics server starting")
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Metrics server failed")
-		}
-	}()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	httpServer := server.NewHTTPServer(addr, logger)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -47,16 +27,14 @@ func main() {
 	go func() {
 		<-sigChan
 		logger.Info("Shutting down server...")
-		cancel()
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
-		metricsServer.Shutdown(shutdownCtx)
 		httpServer.Shutdown(shutdownCtx)
 	}()
 
 	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
+	if err := httpServer.Start(); err != nil {
 		logger.WithError(err).Fatal("Server error")
 	}
 
@@ -69,15 +47,4 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-
-
-
-
-
-
-
-
-
 

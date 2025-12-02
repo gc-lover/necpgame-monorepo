@@ -75,11 +75,12 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 
 **Chi - ЕДИНСТВЕННЫЙ роутер для ВСЕХ Go сервисов**
 
-См. `.cursor/CHI_ROUTER_STANDARD.md` для деталей:
 - ✅ НОВЫЕ сервисы → Chi обязательно (`chi-server`)
 - 🔄 СУЩЕСТВУЮЩИЕ с Chi → всё ОК
 - ⚠️ СУЩЕСТВУЮЩИЕ с Gorilla → **ОБЯЗАТЕЛЬНО мигрируй на Chi!**
 - ❌ Gorilla ЗАПРЕЩЕН для всех сервисов
+
+**Детали миграции:** См. секцию "Миграция с Gorilla на Chi" в `.cursor/rules/agent-backend.mdc`
 
 ## GitHub API
 

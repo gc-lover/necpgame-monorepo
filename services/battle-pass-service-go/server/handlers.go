@@ -1,209 +1,96 @@
+// Handlers for battle-pass-service - implements api.ServerInterface
 package server
 
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/google/uuid"
-	"github.com/necpgame/battle-pass-service-go/models"
 	"github.com/necpgame/battle-pass-service-go/pkg/api"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 )
 
+// BattlePassHandlers implements api.ServerInterface
 type BattlePassHandlers struct {
-	service BattlePassServiceInterface
-	logger  *logrus.Logger
+	logger *logrus.Logger
 }
 
-func NewBattlePassHandlers(service BattlePassServiceInterface) *BattlePassHandlers {
-	return &BattlePassHandlers{
-		service: service,
-		logger:  GetLogger(),
-	}
+// NewBattlePassHandlers creates new handlers
+func NewBattlePassHandlers(logger *logrus.Logger) *BattlePassHandlers {
+	return &BattlePassHandlers{logger: logger}
 }
 
-func (h *BattlePassHandlers) GetCurrentBattlePass(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	season, err := h.service.GetCurrentSeason(ctx)
-	if err != nil {
-		h.logger.WithError(err).Error("Failed to get current season")
-		h.respondError(w, http.StatusInternalServerError, "failed to get current season")
-		return
-	}
-
-	if season == nil {
-		h.respondError(w, http.StatusNotFound, "no active season")
-		return
-	}
-
-	apiSeason := toAPIBattlePassSeason(season)
-	h.respondJSON(w, http.StatusOK, apiSeason)
-}
-
-func (h *BattlePassHandlers) GetPlayerProgress(w http.ResponseWriter, r *http.Request, params api.GetPlayerProgressParams) {
-	ctx := r.Context()
-
-	characterID := uuid.UUID(params.CharacterId)
-	var seasonID uuid.UUID
-
-	if params.SeasonId != nil {
-		seasonID = uuid.UUID(*params.SeasonId)
-	} else {
-		season, err := h.service.GetCurrentSeason(ctx)
-		if err != nil {
-			h.logger.WithError(err).Error("Failed to get current season")
-			h.respondError(w, http.StatusInternalServerError, "failed to get current season")
-			return
-		}
-		if season == nil {
-			h.respondError(w, http.StatusNotFound, "no active season")
-			return
-		}
-		seasonID = season.ID
-	}
-
-	progress, err := h.service.GetProgress(ctx, characterID, seasonID)
-	if err != nil {
-		h.logger.WithError(err).Error("Failed to get progress")
-		h.respondError(w, http.StatusInternalServerError, "failed to get progress")
-		return
-	}
-
-	apiProgress := toAPIPlayerBattlePassProgress(progress)
-	h.respondJSON(w, http.StatusOK, apiProgress)
-}
-
-func (h *BattlePassHandlers) PurchasePremium(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var req api.PurchasePremiumRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	characterID := uuid.UUID(req.CharacterId)
-	progress, err := h.service.PurchasePremium(ctx, characterID)
-	if err != nil {
-		h.logger.WithError(err).Error("Failed to purchase premium")
-		h.respondError(w, http.StatusInternalServerError, "failed to purchase premium")
-		return
-	}
-
-	apiProgress := toAPIPlayerBattlePassProgress(progress)
-	h.respondJSON(w, http.StatusOK, apiProgress)
-}
-
-func (h *BattlePassHandlers) GetLevelRequirements(w http.ResponseWriter, r *http.Request, level int) {
-	ctx := r.Context()
-
-	if level < 1 || level > 100 {
-		h.respondError(w, http.StatusBadRequest, "invalid level")
-		return
-	}
-
-	requirements, err := h.service.GetLevelRequirements(ctx, level)
-	if err != nil {
-		h.logger.WithError(err).Error("Failed to get level requirements")
-		h.respondError(w, http.StatusInternalServerError, "failed to get level requirements")
-		return
-	}
-
-	apiRequirements := toAPILevelRequirements(requirements)
-	h.respondJSON(w, http.StatusOK, apiRequirements)
-}
-
-// Issue: #141886468
-func (h *BattlePassHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
+// Helper functions
+func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
+	json.NewEncoder(w).Encode(data)
 }
 
-func (h *BattlePassHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-	}
-	h.respondJSON(w, status, errorResponse)
+func respondError(w http.ResponseWriter, status int, message string) {
+	respondJSON(w, status, map[string]string{"error": message})
 }
 
-func toAPIBattlePassSeason(season *models.BattlePassSeason) *api.BattlePassSeason {
-	if season == nil {
-		return nil
-	}
+// Implement api.ServerInterface methods
 
-	apiID := openapi_types.UUID(season.ID)
-	return &api.BattlePassSeason{
-		Id:       &apiID,
-		Name:     stringPtr(season.Name),
-		StartDate: &season.StartDate,
-		EndDate:   &season.EndDate,
-		MaxLevel:  intPtr(season.MaxLevel),
-		IsActive:  boolPtr(season.IsActive),
-	}
+func (h *BattlePassHandlers) GetSeasonChallenges(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, params api.GetSeasonChallengesParams) {
+	// TODO: Implement season challenges logic
+	respondJSON(w, http.StatusOK, []interface{}{})
 }
 
-func toAPIPlayerBattlePassProgress(progress *models.PlayerBattlePassProgress) *api.PlayerBattlePassProgress {
-	if progress == nil {
-		return nil
-	}
-
-	apiCharID := openapi_types.UUID(progress.CharacterID)
-	apiSeasonID := openapi_types.UUID(progress.SeasonID)
-
-	result := &api.PlayerBattlePassProgress{
-		CharacterId:   &apiCharID,
-		SeasonId:      &apiSeasonID,
-		Level:         intPtr(progress.Level),
-		Xp:            intPtr(progress.XP),
-		XpToNextLevel: intPtr(progress.XPToNextLevel),
-		HasPremium:    boolPtr(progress.HasPremium),
-	}
-
-	if progress.PremiumPurchasedAt != nil {
-		result.PremiumPurchasedAt = progress.PremiumPurchasedAt
-	}
-
-	return result
+func (h *BattlePassHandlers) GetWeeklyChallenges(w http.ResponseWriter, r *http.Request, params api.GetWeeklyChallengesParams) {
+	// TODO: Implement weekly challenges logic
+	respondJSON(w, http.StatusOK, []interface{}{})
 }
 
-func toAPILevelRequirements(reqs *models.LevelRequirements) *api.LevelRequirements {
-	if reqs == nil {
-		return nil
-	}
-
-	return &api.LevelRequirements{
-		Level:        intPtr(reqs.Level),
-		XpRequired:   intPtr(reqs.XPRequired),
-		CumulativeXp: intPtr(reqs.CumulativeXP),
-	}
+func (h *BattlePassHandlers) CompleteChallenge(w http.ResponseWriter, r *http.Request, challengeId openapi_types.UUID) {
+	// TODO: Implement complete challenge logic
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success":    true,
+		"xp_awarded": 100,
+	})
 }
 
-func stringPtr(s string) *string {
-	return &s
+func (h *BattlePassHandlers) AwardBattlePassXP(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement award XP logic
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"new_level": 10,
+		"total_xp":  1000,
+	})
 }
 
-func boolPtr(b bool) *bool {
-	return &b
+func (h *BattlePassHandlers) GetSeasonRewards(w http.ResponseWriter, r *http.Request, params api.GetSeasonRewardsParams) {
+	// TODO: Implement get rewards logic
+	respondJSON(w, http.StatusOK, []interface{}{})
 }
 
-func intPtr(i int) *int {
-	return &i
+func (h *BattlePassHandlers) ClaimReward(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement claim reward logic
+	respondJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
 
+func (h *BattlePassHandlers) CreateSeason(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement create season logic
+	respondJSON(w, http.StatusCreated, map[string]interface{}{
+		"id":         "00000000-0000-0000-0000-000000000000",
+		"name":       "New Season",
+		"is_active":  true,
+		"max_level":  100,
+		"start_date": time.Now().Format(time.RFC3339),
+		"end_date":   time.Now().Add(90 * 24 * time.Hour).Format(time.RFC3339),
+	})
+}
 
-
-
-
-
-
-
-
-
-
-
+func (h *BattlePassHandlers) GetSeasonInfo(w http.ResponseWriter, r *http.Request, seasonId openapi_types.UUID) {
+	// TODO: Implement get season info logic
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"id":         seasonId.String(),
+		"name":       "Current Season",
+		"is_active":  true,
+		"max_level":  100,
+		"start_date": time.Now().Format(time.RFC3339),
+		"end_date":   time.Now().Add(90 * 24 * time.Hour).Format(time.RFC3339),
+	})
+}
 

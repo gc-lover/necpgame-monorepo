@@ -178,197 +178,7 @@ vendor/
 *~
 ```
 
-## 📊 Статистика генерации (проблемные сервисы)
-
-**Сервисы с НАРУШЕНИЕМ лимита 500 строк:**
-
-| Сервис | api.gen.go | Превышение | Нужна миграция |
-|--------|------------|------------|----------------|
-| `voice-chat-service-go` | **2926** строк | 🔴 **5.9x** | ✅ КРИТИЧНО |
-| `housing-service-go` | **1869** строк | 🔴 **3.7x** | ✅ КРИТИЧНО |
-| `clan-war-service-go` | **1724** строки | 🔴 **3.4x** | ✅ КРИТИЧНО |
-| `companion-service-go` | **1329** строк | 🔴 **2.6x** | ✅ Высокий |
-| `cosmetic-service-go` | **1191** строка | 🔴 **2.4x** | ✅ Высокий |
-| `referral-service-go` | **1168** строк | 🔴 **2.3x** | ✅ Высокий |
-| `world-service-go` | **1142** строки | 🔴 **2.3x** | ✅ Высокий |
-| `maintenance-service-go` | **1000** строк | 🔴 **2.0x** | ✅ Средний |
-
-**Все эти сервисы требуют миграции на раздельную генерацию!**
-
 ---
-
-## 🔧 Разбиение больших OpenAPI спецификаций
-
-**Если OpenAPI спецификация >500 строк**, её нужно разбить на модули:
-
-### Структура разбиения (пример: `voice-chat-service`):
-
-```
-proto/openapi/
-├── voice-chat-service/
-│   ├── main.yaml                    # Основной файл (info, servers, tags)
-│   ├── schemas/
-│   │   ├── channels.yaml            # Схемы для каналов (< 500 строк)
-│   │   ├── rooms.yaml               # Схемы для комнат (< 500 строк)
-│   │   ├── participants.yaml        # Схемы для участников (< 500 строк)
-│   │   └── settings.yaml            # Схемы для настроек (< 500 строк)
-│   └── paths/
-│       ├── channels.yaml            # Endpoints для каналов (< 500 строк)
-│       ├── rooms.yaml               # Endpoints для комнат (< 500 строк)
-│       └── participants.yaml        # Endpoints для участников (< 500 строк)
-└── voice-chat-service.yaml          # Главный файл с $ref ссылками
-```
-
-### Пример главного файла `voice-chat-service.yaml`:
-
-```yaml
-# Issue: #123
-openapi: 3.0.0
-info:
-  title: Voice Chat Service API
-  version: 1.0.0
-  description: Voice chat management for NECP Game
-
-servers:
-  - url: http://localhost:8154
-    description: Local development
-
-tags:
-  - name: channels
-    description: Channel management
-  - name: rooms
-    description: Room management
-  - name: participants
-    description: Participant management
-
-paths:
-  # Channels endpoints
-  /api/v1/voice-chat/channels:
-    $ref: 'voice-chat-service/paths/channels.yaml#/paths/~1api~1v1~1voice-chat~1channels'
-  
-  # Rooms endpoints
-  /api/v1/voice-chat/rooms:
-    $ref: 'voice-chat-service/paths/rooms.yaml#/paths/~1api~1v1~1voice-chat~1rooms'
-
-components:
-  schemas:
-    # Import schemas from separate files
-    Channel:
-      $ref: 'voice-chat-service/schemas/channels.yaml#/components/schemas/Channel'
-    Room:
-      $ref: 'voice-chat-service/schemas/rooms.yaml#/components/schemas/Room'
-    Participant:
-      $ref: 'voice-chat-service/schemas/participants.yaml#/components/schemas/Participant'
-  
-  # Common components from common.yaml
-  securitySchemes:
-    $ref: 'common.yaml#/components/securitySchemes'
-  
-  responses:
-    $ref: 'common.yaml#/components/responses'
-
-security:
-  - BearerAuth: []
-```
-
-### Пример модуля `paths/channels.yaml`:
-
-```yaml
-# Issue: #123
-# Module: Channels endpoints
-paths:
-  /api/v1/voice-chat/channels:
-    get:
-      tags: [channels]
-      summary: List all channels
-      operationId: listChannels
-      parameters:
-        - $ref: '../../../common.yaml#/components/parameters/PageParam'
-        - $ref: '../../../common.yaml#/components/parameters/LimitParam'
-      responses:
-        '200':
-          description: List of channels
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  channels:
-                    type: array
-                    items:
-                      $ref: '../schemas/channels.yaml#/components/schemas/Channel'
-                  pagination:
-                    $ref: '../../../common.yaml#/components/schemas/PaginationResponse'
-        '400':
-          $ref: '../../../common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: '../../../common.yaml#/components/responses/Unauthorized'
-```
-
----
-
-## Список сервисов для миграции
-
-### 🔴 КРИТИЧНЫЕ (нужна миграция СЕЙЧАС):
-
-1. **voice-chat-service-go** (2926 строк) - разбить спецификацию + раздельная генерация
-2. **housing-service-go** (1869 строк) - раздельная генерация
-3. **clan-war-service-go** (1724 строки) - раздельная генерация
-
-### 🟡 ВЫСОКИЙ ПРИОРИТЕТ:
-
-4. **companion-service-go** (1329 строк)
-5. **cosmetic-service-go** (1191 строка)
-6. **referral-service-go** (1168 строк)
-7. **world-service-go** (1142 строки)
-
-### 🟢 СРЕДНИЙ ПРИОРИТЕТ:
-
-8. **maintenance-service-go** (1000 строк)
-9. Остальные сервисы с api.gen.go >500 строк
-
-## 🛠️ Скрипты для автоматизации
-
-### 1. Миграция на раздельную генерацию
-
-Скрипт `scripts/migrate-to-split-generation.sh` автоматически мигрирует все сервисы:
-
-```bash
-./scripts/migrate-to-split-generation.sh [service-name]
-
-# Примеры:
-./scripts/migrate-to-split-generation.sh voice-chat-service-go    # Один сервис
-./scripts/migrate-to-split-generation.sh                          # Все сервисы
-```
-
-**Что делает скрипт:**
-- Обновляет `Makefile` для раздельной генерации
-- Удаляет старый `oapi-codegen.yaml` (если есть)
-- Обновляет `.gitignore` для новых файлов
-- Генерирует код в 3 файла: `types.gen.go`, `server.gen.go`, `spec.gen.go`
-- Проверяет размеры файлов (макс 500 строк)
-
-### 2. Добавление зависимостей
-
-Скрипт `scripts/add-codegen-deps.sh` автоматически добавляет зависимость `github.com/oapi-codegen/runtime`:
-
-```bash
-./scripts/add-codegen-deps.sh
-```
-
-### 3. Валидация всех сервисов
-
-Скрипт `scripts/validate-codegen.sh` проверяет все сервисы:
-
-```bash
-./scripts/validate-codegen.sh
-```
-
-**Что проверяет:**
-- Наличие `Makefile` с раздельной генерацией
-- Валидность OpenAPI спецификаций
-- Размеры сгенерированных файлов (макс 500 строк)
-- Структуру файлов в `pkg/api/`
 
 ---
 
@@ -474,64 +284,22 @@ paths:
 
 ---
 
-## 📚 Примеры
-
-### Правильная структура после миграции:
+## 📚 Структура после миграции
 
 ```
 services/{service-name}-go/
-├── Makefile                        # С раздельной генерацией
-├── .gitignore                      # Игнорирует *.gen.go и *.bundled.yaml
-├── pkg/
-│   └── api/
-│       ├── types.gen.go           # <500 строк (модели)
-│       ├── server.gen.go          # <500 строк (интерфейс сервера)
-│       └── spec.gen.go            # <500 строк (embedded spec)
+├── Makefile                   # С раздельной генерацией
+├── .gitignore
+├── pkg/api/
+│   ├── types.gen.go          # <500 строк
+│   ├── server.gen.go         # <500 строк
+│   └── spec.gen.go           # <500 строк
 ├── server/
-│   ├── http_server.go             # Настройка сервера
-│   ├── middleware.go              # Middleware
-│   ├── handlers.go                # Реализация api.ServerInterface
-│   ├── service.go                 # Бизнес-логика
-│   └── repository.go              # БД
-├── Dockerfile
+│   ├── http_server.go
+│   ├── handlers.go           # Реализация api.ServerInterface
+│   └── service.go
 └── go.mod
 ```
 
-### Пример handlers.go (использование сгенерированных типов):
-
-```go
-// Issue: #123
-package server
-
-import (
-    "net/http"
-    "github.com/your-org/necpgame/services/{service}-go/pkg/api"
-)
-
-type Handlers struct {
-    service Service
-}
-
-// NewHandlers создает handlers с DI
-func NewHandlers(service Service) *Handlers {
-    return &Handlers{service: service}
-}
-
-// Реализация api.ServerInterface (сгенерированный интерфейс)
-func (h *Handlers) ListChannels(w http.ResponseWriter, r *http.Request, params api.ListChannelsParams) {
-    // Используй сгенерированные типы
-    channels, err := h.service.ListChannels(r.Context(), params)
-    if err != nil {
-        respondError(w, http.StatusInternalServerError, err.Error())
-        return
-    }
-    
-    // Используй сгенерированные response типы
-    response := api.ListChannelsResponse{
-        Channels: channels,
-    }
-    
-    respondJSON(w, http.StatusOK, response)
-}
-```
+**Примеры кода:** См. `.cursor/rules/agent-backend.mdc`
 

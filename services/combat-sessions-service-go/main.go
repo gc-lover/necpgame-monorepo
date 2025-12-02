@@ -1,69 +1,44 @@
-// Issue: #130
-
 package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/combat-sessions-service-go/server"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	// Configuration
-	port := getEnv("PORT", "8090")
-	dbHost := getEnv("DB_HOST", "localhost")
-	dbPort := getEnv("DB_PORT", "5432")
-	dbName := getEnv("DB_NAME", "necpgame")
-	dbUser := getEnv("DB_USER", "postgres")
-	dbPass := getEnv("DB_PASSWORD", "postgres")
-	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
-	kafkaBrokers := getEnv("KAFKA_BROKERS", "localhost:9092")
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetLevel(logrus.InfoLevel)
+	logger.Info("Combat Sessions Service Service starting...")
 
-	// Database connection string
-	dbDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPass, dbName)
+	addr := getEnv("ADDR", "0.0.0.0:8158")
 
-	// Create repository
-	repo, err := server.NewPostgresRepository(dbDSN)
-	if err != nil {
-		log.Fatalf("Failed to create repository: %v", err)
-	}
-	defer repo.Close()
+	httpServer := server.NewHTTPServer(addr, logger)
 
-	// Create service
-	svc := server.NewCombatSessionService(repo, redisAddr, kafkaBrokers)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	// Create HTTP server
-	httpServer := server.NewHTTPServer(":"+port, svc)
-
-	// Start server in goroutine
 	go func() {
-		log.Printf("Combat Sessions Service starting on port %s", port)
-		if err := httpServer.Start(); err != nil {
-			log.Fatalf("Server failed: %v", err)
-		}
+		<-sigChan
+		logger.Info("Shutting down server...")
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		httpServer.Shutdown(shutdownCtx)
 	}()
 
-	// Graceful shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+	logger.WithField("addr", addr).Info("HTTP server starting")
+	if err := httpServer.Start(); err != nil {
+		logger.WithError(err).Fatal("Server error")
 	}
 
-	log.Println("Server exited")
+	logger.Info("Server stopped")
 }
 
 func getEnv(key, defaultValue string) string {
@@ -72,4 +47,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
