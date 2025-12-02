@@ -3,7 +3,7 @@
 SERVICE_NAME := world-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := gorilla-server
+ROUTER_TYPE := chi-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api

@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // ServerInterface represents all server handlers.
@@ -21,12 +20,22 @@ type ServerInterface interface {
 	// Создать континент
 	// (POST /world/continents)
 	CreateContinent(w http.ResponseWriter, r *http.Request)
-	// Информация о континенте
-	// (GET /world/continents/{continentId})
-	GetContinent(w http.ResponseWriter, r *http.Request, continentId openapi_types.UUID)
-	// Обновить континент
-	// (PUT /world/continents/{continentId})
-	UpdateContinent(w http.ResponseWriter, r *http.Request, continentId openapi_types.UUID)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Список континентов
+// (GET /world/continents)
+func (_ Unimplemented) ListContinents(w http.ResponseWriter, r *http.Request, params ListContinentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Создать континент
+// (POST /world/continents)
+func (_ Unimplemented) CreateContinent(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -123,68 +132,6 @@ func (siw *ServerInterfaceWrapper) CreateContinent(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
-// GetContinent operation middleware
-func (siw *ServerInterfaceWrapper) GetContinent(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "continentId" -------------
-	var continentId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "continentId", mux.Vars(r)["continentId"], &continentId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "continentId", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetContinent(w, r, continentId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateContinent operation middleware
-func (siw *ServerInterfaceWrapper) UpdateContinent(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "continentId" -------------
-	var continentId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "continentId", mux.Vars(r)["continentId"], &continentId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "continentId", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateContinent(w, r, continentId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -256,36 +203,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -298,13 +245,12 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/world/continents", wrapper.ListContinents).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/world/continents", wrapper.CreateContinent).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/world/continents/{continentId}", wrapper.GetContinent).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/world/continents/{continentId}", wrapper.UpdateContinent).Methods("PUT")
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/world/continents", wrapper.ListContinents)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/world/continents", wrapper.CreateContinent)
+	})
 
 	return r
 }
