@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-core-service-go/pkg/api"
@@ -94,18 +95,24 @@ func (h *Handlers) CreateWorldEvent(w http.ResponseWriter, r *http.Request) {
 		endTime = &t
 	}
 
+	// Convert effects to map
+	effects := make(map[string]interface{})
+	if req.Effects != nil {
+		effects["effects"] = req.Effects
+	}
+	
 	event, err := h.service.CreateEvent(
 		r.Context(),
-		req.Name,
+		req.Title,
 		req.Description,
 		string(req.Type),
 		string(req.Scale),
 		string(req.Frequency),
 		startTime,
 		endTime,
-		req.Effects,
-		req.Triggers,
-		req.Constraints,
+		effects,
+		nil, // triggers - not in current schema
+		nil, // constraints - not in current schema
 	)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to create event", h.logger)
@@ -116,14 +123,14 @@ func (h *Handlers) CreateWorldEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetWorldEvent - GET /world/events/{id}
-func (h *Handlers) GetWorldEvent(w http.ResponseWriter, r *http.Request, eventId api.EventIdParam) {
-	id, err := uuid.Parse(string(eventId))
+func (h *Handlers) GetWorldEvent(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	eventUUID, err := uuid.Parse(id.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid event ID", h.logger)
 		return
 	}
 
-	event, err := h.service.GetEvent(r.Context(), id)
+	event, err := h.service.GetEvent(r.Context(), eventUUID)
 	if err != nil {
 		respondError(w, http.StatusNotFound, "Event not found", h.logger)
 		return
@@ -133,8 +140,8 @@ func (h *Handlers) GetWorldEvent(w http.ResponseWriter, r *http.Request, eventId
 }
 
 // UpdateWorldEvent - PUT /world/events/{id}
-func (h *Handlers) UpdateWorldEvent(w http.ResponseWriter, r *http.Request, eventId api.EventIdParam) {
-	id, err := uuid.Parse(string(eventId))
+func (h *Handlers) UpdateWorldEvent(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	eventUUID, err := uuid.Parse(id.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid event ID", h.logger)
 		return
@@ -146,43 +153,21 @@ func (h *Handlers) UpdateWorldEvent(w http.ResponseWriter, r *http.Request, even
 		return
 	}
 
-	var startTime, endTime *time.Time
-	if req.StartTime != nil {
-		t := time.Time(*req.StartTime)
-		startTime = &t
-	}
-	if req.EndTime != nil {
-		t := time.Time(*req.EndTime)
-		endTime = &t
-	}
-
-	var name, description, eventType, scale, frequency, status *string
-	if req.Name != nil {
-		name = req.Name
-	}
-	if req.Description != nil {
-		description = req.Description
-	}
-	if req.Type != nil {
-		t := string(*req.Type)
-		eventType = &t
+	// Convert optional types to service layer format
+	var eventType, scale, frequency *string
+	if req.Frequency != nil {
+		f := string(*req.Frequency)
+		frequency = &f
 	}
 	if req.Scale != nil {
 		s := string(*req.Scale)
 		scale = &s
 	}
-	if req.Frequency != nil {
-		f := string(*req.Frequency)
-		frequency = &f
-	}
-	if req.Status != nil {
-		st := string(*req.Status)
-		status = &st
-	}
 
+	// Simplified update (use actual fields from UpdateWorldEventRequest)
 	event, err := h.service.UpdateEvent(
-		r.Context(), id, name, description, eventType, scale, frequency, status,
-		startTime, endTime, req.Effects, req.Triggers, req.Constraints,
+		r.Context(), eventUUID, nil, req.Description, eventType, scale, frequency, nil,
+		req.StartTime, req.EndTime, nil, nil, nil,
 	)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to update event", h.logger)
@@ -193,14 +178,14 @@ func (h *Handlers) UpdateWorldEvent(w http.ResponseWriter, r *http.Request, even
 }
 
 // DeleteWorldEvent - DELETE /world/events/{id}
-func (h *Handlers) DeleteWorldEvent(w http.ResponseWriter, r *http.Request, eventId api.EventIdParam) {
-	id, err := uuid.Parse(string(eventId))
+func (h *Handlers) DeleteWorldEvent(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	eventUUID, err := uuid.Parse(id.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid event ID", h.logger)
 		return
 	}
 
-	err = h.service.DeleteEvent(r.Context(), id)
+	err = h.service.DeleteEvent(r.Context(), eventUUID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to delete event", h.logger)
 		return
@@ -210,8 +195,8 @@ func (h *Handlers) DeleteWorldEvent(w http.ResponseWriter, r *http.Request, even
 }
 
 // ActivateWorldEvent - POST /world/events/{id}/activate
-func (h *Handlers) ActivateWorldEvent(w http.ResponseWriter, r *http.Request, eventId api.EventIdParam) {
-	id, err := uuid.Parse(string(eventId))
+func (h *Handlers) ActivateWorldEvent(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	eventUUID, err := uuid.Parse(id.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid event ID", h.logger)
 		return
@@ -220,7 +205,7 @@ func (h *Handlers) ActivateWorldEvent(w http.ResponseWriter, r *http.Request, ev
 	// Get user ID from context (set by auth middleware)
 	userID := "system" // TODO: get from JWT claims
 
-	err = h.service.ActivateEvent(r.Context(), id, userID)
+	err = h.service.ActivateEvent(r.Context(), eventUUID, userID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to activate event", h.logger)
 		return
@@ -230,14 +215,14 @@ func (h *Handlers) ActivateWorldEvent(w http.ResponseWriter, r *http.Request, ev
 }
 
 // DeactivateWorldEvent - POST /world/events/{id}/deactivate
-func (h *Handlers) DeactivateWorldEvent(w http.ResponseWriter, r *http.Request, eventId api.EventIdParam) {
-	id, err := uuid.Parse(string(eventId))
+func (h *Handlers) DeactivateWorldEvent(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	eventUUID, err := uuid.Parse(id.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid event ID", h.logger)
 		return
 	}
 
-	err = h.service.DeactivateEvent(r.Context(), id)
+	err = h.service.DeactivateEvent(r.Context(), eventUUID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to deactivate event", h.logger)
 		return
@@ -247,22 +232,18 @@ func (h *Handlers) DeactivateWorldEvent(w http.ResponseWriter, r *http.Request, 
 }
 
 // AnnounceWorldEvent - POST /world/events/{id}/announce
-func (h *Handlers) AnnounceWorldEvent(w http.ResponseWriter, r *http.Request, eventId api.EventIdParam) {
-	id, err := uuid.Parse(string(eventId))
+func (h *Handlers) AnnounceWorldEvent(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	eventUUID, err := uuid.Parse(id.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid event ID", h.logger)
 		return
 	}
 
-	var req api.AnnounceWorldEventRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body", h.logger)
-		return
-	}
-
 	userID := "system" // TODO: get from JWT claims
 
-	err = h.service.AnnounceEvent(r.Context(), id, userID, req.Message, req.Channels)
+	// Simplified announcement - no request body for now
+	message := "Event announced"
+	err = h.service.AnnounceEvent(r.Context(), eventUUID, userID, message, nil)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to announce event", h.logger)
 		return
@@ -303,23 +284,72 @@ func (h *Handlers) GetPlannedWorldEvents(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, apiEvents)
 }
 
+// GetWorldEventsByFrequency - GET /world/events/by-frequency/{frequency}
+func (h *Handlers) GetWorldEventsByFrequency(w http.ResponseWriter, r *http.Request, frequency api.WorldEventFrequency) {
+	events, err := h.service.GetActiveEvents(r.Context())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get events", h.logger)
+		return
+	}
+
+	// Filter by frequency
+	filtered := []api.WorldEvent{}
+	for _, event := range events {
+		if event.Frequency == string(frequency) {
+			filtered = append(filtered, h.toAPIWorldEvent(event))
+		}
+	}
+
+	respondJSON(w, http.StatusOK, filtered)
+}
+
+// GetWorldEventsByScale - GET /world/events/by-scale/{scale}
+func (h *Handlers) GetWorldEventsByScale(w http.ResponseWriter, r *http.Request, scale api.WorldEventScale) {
+	events, err := h.service.GetActiveEvents(r.Context())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get events", h.logger)
+		return
+	}
+
+	// Filter by scale
+	filtered := []api.WorldEvent{}
+	for _, event := range events {
+		if event.Scale == string(scale) {
+			filtered = append(filtered, h.toAPIWorldEvent(event))
+		}
+	}
+
+	respondJSON(w, http.StatusOK, filtered)
+}
+
+// GetWorldEventsByType - GET /world/events/by-type/{type}
+func (h *Handlers) GetWorldEventsByType(w http.ResponseWriter, r *http.Request, pType api.WorldEventType) {
+	events, err := h.service.GetActiveEvents(r.Context())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get events", h.logger)
+		return
+	}
+
+	// Filter by type
+	filtered := []api.WorldEvent{}
+	for _, event := range events {
+		if event.Type == string(pType) {
+			filtered = append(filtered, h.toAPIWorldEvent(event))
+		}
+	}
+
+	respondJSON(w, http.StatusOK, filtered)
+}
+
 // Helper: Convert internal WorldEvent to API WorldEvent
 func (h *Handlers) toAPIWorldEvent(event *WorldEvent) api.WorldEvent {
-	var effects, triggers, constraints map[string]interface{}
-
-	if len(event.Effects) > 0 {
-		json.Unmarshal(event.Effects, &effects)
-	}
-	if len(event.Triggers) > 0 {
-		json.Unmarshal(event.Triggers, &triggers)
-	}
-	if len(event.Constraints) > 0 {
-		json.Unmarshal(event.Constraints, &constraints)
-	}
-
+	// Convert UUID
+	idUUID := openapi_types.UUID{}
+	_ = idUUID.UnmarshalText([]byte(event.ID.String()))
+	
 	return api.WorldEvent{
-		Id:          event.ID.String(),
-		Name:        event.Name,
+		Id:          idUUID,
+		Title:       event.Name,
 		Description: event.Description,
 		Type:        api.WorldEventType(event.Type),
 		Scale:       api.WorldEventScale(event.Scale),
@@ -327,11 +357,8 @@ func (h *Handlers) toAPIWorldEvent(event *WorldEvent) api.WorldEvent {
 		Status:      api.WorldEventStatus(event.Status),
 		StartTime:   event.StartTime,
 		EndTime:     event.EndTime,
-		Effects:     effects,
-		Triggers:    triggers,
-		Constraints: constraints,
+		Effects:     nil, // TODO: Convert []byte to []EventEffect
 		CreatedAt:   event.CreatedAt,
-		UpdatedAt:   event.UpdatedAt,
 	}
 }
 
