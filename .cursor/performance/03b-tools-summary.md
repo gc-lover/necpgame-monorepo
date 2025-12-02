@@ -220,6 +220,7 @@ grep -r "context.WithTimeout" server/
 1. [Memory, Concurrency, DB](./01-memory-concurrency-db.md)
 2. [Network](./02a-network-optimizations.md) + [Game Patterns](./02b-game-patterns.md)
 3. [Profiling](./03a-profiling-testing.md) + [Tools](./03b-tools-summary.md)
+4. [MMO-Specific Patterns](./04-mmo-specific-patterns.md) ⭐ NEW!
 
 **Main:** [GO_BACKEND_PERFORMANCE_BIBLE.md](../)
 
