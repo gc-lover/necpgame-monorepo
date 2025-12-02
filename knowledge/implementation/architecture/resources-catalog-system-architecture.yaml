@@ -1,0 +1,334 @@
+# Issue: #235
+metadata:
+  id: arch-resources-catalog-system
+  title: "Resources Catalog System Architecture"
+  document_type: architecture
+  category: economy
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-02T20:35:00Z
+  architect: ai-agent
+  github_issue: 235
+  related_documents:
+    - mechanics/economy/economy-resources-catalog.yaml
+
+summary:
+  problem: "Централизовать каталог ресурсов с источниками, применением и динамическим ценообразованием"
+  goal: "Создать микросервис для управления каталогом ресурсов с CRUD операциями и pricing engine"
+  essence: "Resources Catalog Service предоставляет API для получения информации о ресурсах, ценах, источниках и применении"
+
+components:
+  - name: "Resource Catalog Manager"
+    type: core
+    responsibilities:
+      - "CRUD операции над ресурсами"
+      - "Фильтрация по категориям, редкости, tier"
+      - "Поиск по названию и тегам"
+    integration:
+      - economy-service
+      - crafting-service
+    
+  - name: "Dynamic Pricing Engine"
+    type: core
+    responsibilities:
+      - "Расчет текущей цены ресурса"
+      - "Учет спроса/предложения"
+      - "Региональные модификаторы"
+    integration:
+      - market-service
+      - analytics-service
+    
+  - name: "Source Tracker"
+    type: core
+    responsibilities:
+      - "Отслеживание источников ресурсов"
+      - "Зоны добычи и spawn points"
+      - "Вероятности drop rates"
+    integration:
+      - world-service
+      - loot-service
+    
+  - name: "Usage Analytics"
+    type: supporting
+    responsibilities:
+      - "Статистика использования ресурсов"
+      - "Популярность в крафте"
+      - "Спрос на рынке"
+    integration:
+      - analytics-service
+      - crafting-service
+
+api_endpoints:
+  resource_catalog:
+    base_path: "/api/v1/resources"
+    endpoints:
+      - method: GET
+        path: "/resources"
+        description: "Список ресурсов с фильтрацией"
+        query_params:
+          - category (raw_materials, electronics, bio_chem, data_assets)
+          - tier (1-5)
+          - rarity (common, uncommon, rare, epic, legendary)
+        expected_rps: 500
+        optimization_level: 1
+      
+      - method: GET
+        path: "/resources/{id}"
+        description: "Детальная информация о ресурсе"
+        expected_rps: 1000
+        optimization_level: 1
+      
+      - method: GET
+        path: "/resources/{id}/price"
+        description: "Текущая цена ресурса с модификаторами"
+        expected_rps: 2000
+        optimization_level: 2
+      
+      - method: GET
+        path: "/resources/{id}/sources"
+        description: "Источники получения ресурса"
+        expected_rps: 300
+        optimization_level: 1
+      
+      - method: GET
+        path: "/resources/{id}/uses"
+        description: "Применение ресурса в крафте"
+        expected_rps: 200
+        optimization_level: 1
+      
+      - method: POST
+        path: "/admin/resources"
+        description: "Создать ресурс (admin)"
+        expected_rps: 5
+        optimization_level: 1
+      
+      - method: PUT
+        path: "/admin/resources/{id}"
+        description: "Обновить ресурс (admin)"
+        expected_rps: 10
+        optimization_level: 1
+
+data_model:
+  entities:
+    - name: Resource
+      description: "Ресурс в каталоге"
+      fields_ordered_by_size:
+        - name: id
+          type: string (uuid)
+          size: 16 bytes
+          description: "Уникальный ID"
+        - name: name
+          type: string
+          size: 16 bytes (avg)
+          description: "Название ресурса"
+        - name: description
+          type: string
+          size: 16 bytes (pointer)
+          description: "Описание"
+        - name: base_price_vendor
+          type: int32
+          size: 4 bytes
+          description: "Базовая цена у продавца (€$)"
+        - name: base_price_player
+          type: int32
+          size: 4 bytes
+          description: "Базовая цена у игрока (€$)"
+        - name: weight
+          type: float32
+          size: 4 bytes
+          description: "Вес единицы (kg)"
+        - name: stack_size
+          type: int32
+          size: 4 bytes
+          description: "Максимальный размер стека"
+        - name: tier
+          type: int32
+          size: 4 bytes
+          description: "Tier (1-5)"
+        - name: category
+          type: enum
+          size: 1 byte
+          description: "Категория ресурса"
+        - name: rarity
+          type: enum
+          size: 1 byte
+          description: "Редкость"
+      expected_struct_size: ~76 bytes
+      expected_row_count: 100 resources
+      memory_for_10k: ~760 KB
+    
+    - name: ResourceSource
+      description: "Источник получения ресурса"
+      fields_ordered_by_size:
+        - name: resource_id
+          type: uuid
+          size: 16 bytes
+        - name: source_type
+          type: enum (loot, mining, crafting, vendor, quest)
+          size: 1 byte
+        - name: zone_id
+          type: int64
+          size: 8 bytes
+        - name: drop_rate
+          type: float32
+          size: 4 bytes
+      expected_struct_size: ~32 bytes
+    
+    - name: ResourcePrice
+      description: "Текущая цена с модификаторами"
+      fields_ordered_by_size:
+        - name: resource_id
+          type: uuid
+          size: 16 bytes
+        - name: current_price
+          type: int32
+          size: 4 bytes
+        - name: demand_modifier
+          type: float32
+          size: 4 bytes
+        - name: supply_modifier
+          type: float32
+          size: 4 bytes
+        - name: region_modifier
+          type: float32
+          size: 4 bytes
+      expected_struct_size: ~36 bytes
+
+database_schema:
+  tables:
+    - name: resources
+      description: "Каталог ресурсов"
+      columns_ordered_large_to_small:
+        - id UUID PRIMARY KEY
+        - name VARCHAR(100) NOT NULL
+        - description TEXT
+        - base_price_vendor INTEGER NOT NULL
+        - base_price_player INTEGER NOT NULL
+        - weight REAL NOT NULL
+        - stack_size INTEGER NOT NULL DEFAULT 999
+        - tier INTEGER NOT NULL CHECK (tier BETWEEN 1 AND 5)
+        - category VARCHAR(20) NOT NULL
+        - rarity VARCHAR(20) NOT NULL
+        - created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        - updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      indexes:
+        - "idx_resources_category ON resources(category, tier)"
+        - "idx_resources_rarity ON resources(rarity)"
+        - "idx_resources_tier ON resources(tier)"
+      expected_rows: 100
+      growth_rate: 5/month
+      hot_queries:
+        - "SELECT * FROM resources WHERE category = ? AND tier >= ?" (1000 QPS, <5ms)
+        - "SELECT * FROM resources WHERE id = ?" (2000 QPS, <1ms)
+    
+    - name: resource_sources
+      description: "Источники ресурсов"
+      columns:
+        - id UUID PRIMARY KEY
+        - resource_id UUID NOT NULL REFERENCES resources(id)
+        - source_type VARCHAR(20) NOT NULL
+        - zone_id BIGINT
+        - drop_rate REAL NOT NULL DEFAULT 1.0
+        - created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      indexes:
+        - "idx_sources_resource ON resource_sources(resource_id)"
+        - "idx_sources_zone ON resource_sources(zone_id) WHERE zone_id IS NOT NULL"
+      expected_rows: 500
+    
+    - name: resource_prices
+      description: "Текущие цены с модификаторами"
+      columns:
+        - resource_id UUID PRIMARY KEY REFERENCES resources(id)
+        - current_price INTEGER NOT NULL
+        - demand_modifier REAL NOT NULL DEFAULT 1.0
+        - supply_modifier REAL NOT NULL DEFAULT 1.0
+        - region_modifier REAL NOT NULL DEFAULT 1.0
+        - updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      indexes:
+        - "idx_prices_updated ON resource_prices(updated_at)"
+      expected_rows: 100
+      update_frequency: "Every 5 minutes"
+
+event_bus_contracts:
+  publishes:
+    - topic: "resources.catalog.updated"
+      description: "Ресурс обновлен в каталоге"
+      payload:
+        resource_id: uuid
+        fields_changed: array
+    
+    - topic: "resources.price.changed"
+      description: "Цена ресурса изменилась"
+      payload:
+        resource_id: uuid
+        old_price: int32
+        new_price: int32
+        modifiers: object
+  
+  subscribes:
+    - topic: "market.demand.updated"
+      description: "Спрос на рынке изменился"
+      handler: "Update demand_modifier in resource_prices"
+    
+    - topic: "crafting.resource.used"
+      description: "Ресурс использован в крафте"
+      handler: "Update usage analytics"
+
+data_synchronization:
+  pattern: "Event Sourcing + CQRS"
+  read_model: "resource_prices (denormalized)"
+  write_model: "resources + resource_sources"
+  eventual_consistency: "5 minutes для price updates"
+
+performance_requirements:
+  load:
+    peak_rps: 4000
+    concurrent_users: 10000
+    p99_latency: "<50ms"
+  
+  data_model_optimized: true
+  hot_path_endpoints:
+    - "GET /resources/{id}/price" (2000 RPS - CRITICAL)
+    - "GET /resources" (1000 RPS)
+  
+  backend_optimizations:
+    level: 1
+    required:
+      - "DB connection pool (25 connections)"
+      - "Response caching (5min TTL для prices)"
+      - "Batch queries для source/uses"
+
+tick_rate:
+  type: event-based
+  price_update_interval: "5 minutes (300 seconds)"
+  analytics_aggregation: "1 hour"
+
+network_requirements:
+  protocol: HTTP/REST
+  expected_bandwidth: "Low (<1MB/sec)"
+  latency_target: "<50ms P99"
+
+integration:
+  services:
+    - name: economy-service
+      integration_type: API
+      description: "Получение каталога для market operations"
+    
+    - name: crafting-service
+      integration_type: API
+      description: "Получение ресурсов для recipes"
+    
+    - name: world-service
+      integration_type: Event Bus
+      description: "Обновление spawn points и zones"
+    
+    - name: loot-service
+      integration_type: Event Bus
+      description: "Drop rates и loot tables"
+
+notes:
+  - "Простая CRUD система с pricing engine"
+  - "Оптимизация level 1 достаточна (не real-time game)"
+  - "Caching обязателен для price endpoint"
+  - "Admin API для управления каталогом"
+
