@@ -1,225 +1,384 @@
 # Issue: #135
-openapi: 3.0.3
+openapi: 3.0.0
 info:
   title: Inventory Service API
-  description: "API для управления инвентарем персонажей: предметы, экипировка, слоты"
+  description: |
+    Inventory Service управляет инвентарём игрока, экипировкой, хранилищами.
+    Поддерживает durability, item level, modsи различные типы хранилищ.
   version: 1.0.0
-  contact:
-    name: NECPGAME API Support
-    email: api@necp.game
 
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+  - url: https://api.necpgame.com
+    description: Production server
+  - url: https://staging-api.necpgame.com
+    description: Staging server
 
 tags:
   - name: Inventory
-    description: Управление инвентарем
+    description: Управление инвентарём
+  - name: Equipment
+    description: Управление экипировкой
+  - name: Storage
+    description: Управление хранилищами
 
 paths:
-  /inventory/{characterId}:
+  /api/v1/inventory/{playerId}:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
     get:
-      tags:
-        - Inventory
-      summary: Получить инвентарь персонажа
+      tags: [Inventory]
+      summary: Получить инвентарь игрока
       operationId: getInventory
-      parameters:
-        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
+      security:
+        - BearerAuth: []
       responses:
-        '200':
-          description: Инвентарь персонажа
+        "200":
+          description: Инвентарь игрока
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InventoryResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/InventoryResponse"
 
-  /inventory/{characterId}/items:
+  /api/v1/inventory/{playerId}/items:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
     post:
-      tags:
-        - Inventory
-      summary: Добавить предмет в инвентарь
+      tags: [Inventory]
+      summary: Добавить предмет в инвентарь (internal API)
       operationId: addItem
-      parameters:
-        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddItemRequest'
+              $ref: "#/components/schemas/AddItemRequest"
       responses:
-        '200':
+        "200":
           description: Предмет добавлен
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/SuccessResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/InventoryItemResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
 
-  /inventory/{characterId}/items/{itemId}:
-    delete:
-      tags:
-        - Inventory
-      summary: Удалить предмет из инвентаря
-      operationId: removeItem
-      parameters:
-        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
-        - $ref: 'common.yaml#/components/parameters/ItemIdCamel'
+  /api/v1/inventory/{playerId}/items/{itemId}:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Inventory]
+      summary: Получить информацию о предмете
+      operationId: getItem
+      security:
+        - BearerAuth: []
       responses:
-        '200':
-          description: Предмет удален
+        "200":
+          description: Информация о предмете
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/SuccessResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /inventory/{characterId}/equip:
-    post:
-      tags:
-        - Inventory
-      summary: Экипировать предмет
-      operationId: equipItem
-      parameters:
-        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
+                $ref: "#/components/schemas/InventoryItemResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+    patch:
+      tags: [Inventory]
+      summary: Обновить предмет (например, durability)
+      operationId: updateItem
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipItemRequest'
+              $ref: "#/components/schemas/UpdateItemRequest"
       responses:
-        '200':
+        "200":
+          description: Предмет обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItemResponse"
+    delete:
+      tags: [Inventory]
+      summary: Удалить предмет из инвентаря
+      operationId: removeItem
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Предмет удалён
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/inventory/{playerId}/items/{itemId}/move:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Inventory]
+      summary: Переместить предмет в другой слот
+      operationId: moveItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveItemRequest"
+      responses:
+        "200":
+          description: Предмет перемещён
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/inventory/{playerId}/equipment:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+    get:
+      tags: [Equipment]
+      summary: Получить экипированные предметы
+      operationId: getEquipment
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Экипированные предметы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipmentResponse"
+
+  /api/v1/inventory/{playerId}/equipment/{itemId}:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Equipment]
+      summary: Экипировать предмет
+      operationId: equipItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipItemRequest"
+      responses:
+        "200":
           description: Предмет экипирован
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/SuccessResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /inventory/{characterId}/unequip/{itemId}:
-    post:
-      tags:
-        - Inventory
-      summary: Снять предмет
+                $ref: "#/components/schemas/EquipmentResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+    delete:
+      tags: [Equipment]
+      summary: Снять экипированный предмет
       operationId: unequipItem
-      parameters:
-        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
-        - $ref: 'common.yaml#/components/parameters/ItemIdCamel'
+      security:
+        - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Предмет снят
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/SuccessResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/EquipmentResponse"
+
+  /api/v1/storage/{playerId}/vaults:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+    get:
+      tags: [Storage]
+      summary: Получить список хранилищ игрока
+      operationId: getVaults
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список хранилищ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultsListResponse"
+
+  /api/v1/storage/vaults/{vaultId}:
+    parameters:
+      - name: vaultId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Storage]
+      summary: Получить содержимое хранилища
+      operationId: getVault
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Содержимое хранилища
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/storage/vaults/{vaultId}/items:
+    parameters:
+      - name: vaultId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Storage]
+      summary: Переместить предмет в хранилище
+      operationId: storeItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreItemRequest"
+      responses:
+        "200":
+          description: Предмет помещён в хранилище
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/storage/vaults/{vaultId}/items/{itemId}:
+    parameters:
+      - name: vaultId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags: [Storage]
+      summary: Забрать предмет из хранилища
+      operationId: retrieveItem
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Предмет забран
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
 
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
 
   schemas:
-    Inventory:
+    InventoryResponse:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        character_id:
+        player_id:
           type: string
           format: uuid
-        capacity:
+        max_slots:
           type: integer
-          minimum: 0
-          description: Максимальное количество слотов
         used_slots:
           type: integer
-          minimum: 0
-          description: Использованные слоты
-        weight:
-          type: number
-          format: float
-          minimum: 0
-          description: Текущий вес
         max_weight:
           type: number
           format: float
-          minimum: 0
-          description: Максимальный вес
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+        current_weight:
+          type: number
+          format: float
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItemResponse"
 
-    InventoryItem:
+    InventoryItemResponse:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
-        inventory_id:
           type: string
           format: uuid
         item_id:
           type: string
-          description: ID шаблона предмета
+          format: uuid
         slot_index:
           type: integer
-          minimum: 0
-          description: Индекс слота в инвентаре
-        stack_count:
+        quantity:
           type: integer
-          minimum: 1
-          description: Количество в стаке
-        max_stack_size:
-          type: integer
-          minimum: 1
-          description: Максимальный размер стака
         is_equipped:
           type: boolean
-          default: false
-        equip_slot:
+        equipment_slot:
           type: string
-          nullable: true
-          description: Слот экипировки (head, chest, legs, weapon, etc.)
-        metadata:
+        durability:
+          type: integer
+        max_durability:
+          type: integer
+        item_level:
+          type: integer
+        rarity:
+          type: string
+        mods:
           type: object
-          additionalProperties: true
-          description: Дополнительные данные предмета (JSON)
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
+          description: Модификаторы предмета
+        is_locked:
+          type: boolean
+        is_bound:
+          type: boolean
+        acquired_at:
           type: string
           format: date-time
 
@@ -227,41 +386,99 @@ components:
       type: object
       required:
         - item_id
-        - stack_count
       properties:
         item_id:
           type: string
-          description: ID шаблона предмета
-        stack_count:
+          format: uuid
+        quantity:
           type: integer
-          minimum: 1
-          description: Количество предметов
+          default: 1
+        item_level:
+          type: integer
+        rarity:
+          type: string
+        mods:
+          type: object
+
+    UpdateItemRequest:
+      type: object
+      properties:
+        durability:
+          type: integer
+        mods:
+          type: object
+        is_locked:
+          type: boolean
+
+    MoveItemRequest:
+      type: object
+      required:
+        - target_slot
+      properties:
+        target_slot:
+          type: integer
+
+    EquipmentResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        equipment:
+          type: object
+          description: Экипированные предметы по слотам
+          additionalProperties:
+            $ref: "#/components/schemas/InventoryItemResponse"
 
     EquipItemRequest:
       type: object
       required:
-        - item_id
-        - equip_slot
+        - equipment_slot
       properties:
-        item_id:
+        equipment_slot:
           type: string
-          description: ID предмета в инвентаре
-        equip_slot:
-          type: string
-          description: Слот экипировки (head, chest, legs, weapon, etc.)
+          enum: [head, chest, legs, feet, hands, weapon_main, weapon_off, accessory_1, accessory_2]                                                            
 
-    InventoryResponse:
+    VaultResponse:
       type: object
       properties:
-        inventory:
-          $ref: '#/components/schemas/Inventory'
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        vault_type:
+          type: string
+          enum: [personal, guild, shared]
+        location_id:
+          type: string
+          format: uuid
+        max_slots:
+          type: integer
+        used_slots:
+          type: integer
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InventoryItem'
+            type: object
 
+    VaultsListResponse:
+      type: object
+      properties:
+        vaults:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultResponse"
 
-security:
-  - BearerAuth: []
-
-
+    StoreItemRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          default: 1
