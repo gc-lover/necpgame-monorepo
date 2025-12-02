@@ -1,13 +1,14 @@
-// Issue: #150
+// Issue: #1579 - ogen migration + DB pool + skill buckets
 package main
 
 import (
 	"database/sql"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/gc-lover/necpgame/services/matchmaking-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-service-go/server"
 )
 
 func main() {
@@ -22,6 +23,12 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
+
+	// CRITICAL: Configure connection pool (hot path service - 5k RPS)
+	db.SetMaxOpenConns(50)                      // Higher for matchmaking
+	db.SetMaxIdleConns(50)                      // Match MaxOpenConns
+	db.SetConnMaxLifetime(5 * time.Minute)      // Prevent stale connections
+	db.SetConnMaxIdleTime(10 * time.Minute)     // Reuse idle connections
 
 	// Repository
 	repository := server.NewPostgresRepository(db)
@@ -42,4 +49,5 @@ func main() {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
+
 
