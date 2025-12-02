@@ -1,0 +1,187 @@
+# Issue: #140890244
+
+metadata:
+  id: architecture-economy-model-type
+  title: "Economy Model Type System Architecture"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-02T20:35:00Z
+  owners:
+    - role: architect
+  tags:
+    - economy
+    - markets
+    - governance
+    - architecture
+  related_systems:
+    - economy-core-service
+    - economy-trading-service
+    - social-service
+  related_documents:
+    - id: economy-type
+      relation: implements
+    - id: economy-model-type-database-schema
+      relation: implements
+
+summary:
+  problem: "Необходима архитектура для гибридной экономической модели с глобальными, региональными и фракционными рынками."
+  goal: "Спроектировать систему управления экономической моделью с конфигурацией рынков, правил доступа и ценообразования."
+  essence: "Event-driven система управления экономической моделью с гибридным контролем (игроки, NPC, фракции)."
+
+content:
+  sections:
+    - id: system-overview
+      title: "Обзор"
+      body: |
+        Economy Model Type System:
+        - Гибридная экономическая модель (player-driven, NPC-driven, hybrid)
+        - Глобальные, региональные и фракционные рынки
+        - Правила доступа к рынкам (репутация, союзы, уровень, квесты)
+        - Гибридное ценообразование (базовые ставки + динамика спроса/предложения)
+        - Правила управления экономикой (контроль цен, предложения, налогов, доступа)
+        - Интеграция с economy-core-service и economy-trading-service
+
+    - id: components
+      title: "Компоненты"
+      body: |
+        ## economy-core-service (расширение)
+        **Port:** 8080 (существующий)
+        **API:** `/api/v1/economy/model/*`
+        
+        Компоненты:
+        - EconomyModelManager - управление конфигурацией экономической модели
+        - MarketTypeManager - управление типами рынков
+        - MarketAccessManager - управление правилами доступа
+        - PricingModelManager - управление конфигурацией ценообразования
+        - GovernanceRulesManager - управление правилами управления экономикой
+
+        ## Интеграции
+        - **Economy Trading Service:** Использование правил доступа и ценообразования
+        - **Social Service:** Проверка репутации и союзов для доступа к рынкам
+        - **Quest Service:** Проверка завершенных квестов для доступа
+        - **Event Bus (Kafka):** События изменения конфигурации модели
+
+    - id: api-endpoints
+      title: "API Endpoints"
+      body: |
+        GET /api/v1/economy/model/config
+        - Получить текущую конфигурацию экономической модели
+        - Response: EconomyModelConfig
+
+        PUT /api/v1/economy/model/config
+        - Обновить конфигурацию экономической модели (admin only)
+        - Request: EconomyModelConfig
+        - Response: EconomyModelConfig
+
+        GET /api/v1/economy/model/markets
+        - Получить список рынков
+        - Query: region_id, faction_id, market_type, is_global
+        - Response: Array of MarketType
+
+        GET /api/v1/economy/model/markets/{marketId}/access-rules
+        - Получить правила доступа к рынку
+        - Response: Array of MarketAccessRule
+
+        GET /api/v1/economy/model/markets/{marketId}/pricing-config
+        - Получить конфигурацию ценообразования
+        - Query: item_category, item_tier
+        - Response: Array of PricingModelConfig
+
+        GET /api/v1/economy/model/governance-rules
+        - Получить правила управления экономикой
+        - Query: entity_type, entity_id, rule_type, rule_scope
+        - Response: Array of EconomyGovernanceRule
+
+        POST /api/v1/economy/model/governance-rules
+        - Создать правило управления (admin only)
+        - Request: EconomyGovernanceRule
+        - Response: EconomyGovernanceRule
+
+    - id: database
+      title: "База данных"
+      body: |
+        ## Таблицы (из миграции V1_76)
+        
+        ### economy_model_config
+        - Конфигурация экономической модели
+        - Типы: player_driven, npc_driven, hybrid
+        - Параметры: price_volatility_factor, demand_supply_impact
+        
+        ### market_types
+        - Типы рынков (global, regional, faction)
+        - Параметры: base_tax_rate, player_tax_rate, npc_tax_rate
+        - Связи: region_id, faction_id
+        
+        ### market_access_rules
+        - Правила доступа к рынкам
+        - Типы доступа: reputation, level, quest, alliance
+        - Требования: requirement_value, requirement_item_id, requirement_quest_id
+        
+        ### pricing_model_config
+        - Конфигурация ценообразования
+        - Контроль: player_control, npc_control, hybrid
+        - Факторы: demand_impact_factor, supply_impact_factor, event_impact_factor
+        
+        ### economy_governance_rules
+        - Правила управления экономикой
+        - Типы сущностей: faction, region, global
+        - Типы правил: price_control, supply_control, tax_control, access_control
+        - Приоритеты и временные рамки
+
+    - id: performance-requirements
+      title: "Performance Requirements"
+      body: |
+        **Load:**
+        - Peak: 1,000 req/sec (market access checks)
+        - Concurrent: 10,000 users
+        - P99 latency: <50ms
+        
+        **Data Model (optimized):**
+        
+        ### EconomyModelConfig Entity
+        Fields ordered by size (struct alignment):
+        1. id (uuid) - 16 bytes
+        2. name (string) - 16 bytes
+        3. description (string) - 16 bytes
+        4. price_volatility_factor (decimal) - 8 bytes
+        5. demand_supply_impact (decimal) - 8 bytes
+        6. base_supply_npc_controlled (bool) - 1 byte
+        7. strategic_markets_player_controlled (bool) - 1 byte
+        8. regional_modifiers_faction_controlled (bool) - 1 byte
+        9. rare_items_player_only (bool) - 1 byte
+        10. is_active (bool) - 1 byte
+        
+        Expected struct size: ~72 bytes
+        Memory for 1k configs: ~72 KB
+        
+        **Hot Path Endpoints:**
+        - GET /api/v1/economy/model/markets/{marketId}/access-rules → 500 RPS (CRITICAL)
+        - GET /api/v1/economy/model/markets/{marketId}/pricing-config → 300 RPS (CRITICAL)
+        
+        Backend optimizations required: Level 1 (Standard)
+        - DB connection pooling (25 connections)
+        - Query caching (5min TTL)
+        - Batch operations for access checks
+
+    - id: integration-points
+      title: "Integration Points"
+      body: |
+        ## Economy Trading Service
+        - Использование правил доступа при проверке доступа к рынку
+        - Использование конфигурации ценообразования при расчете цен
+        - События изменения цен → обновление динамики спроса/предложения
+        
+        ## Social Service
+        - Проверка репутации игрока для доступа к фракционным рынкам
+        - Проверка союзов для доступа к союзным рынкам
+        
+        ## Quest Service
+        - Проверка завершенных квестов для доступа к рынкам
+        
+        ## Event Bus (Kafka)
+        - События изменения конфигурации модели
+        - События изменения правил доступа
+        - События изменения правил управления
+
