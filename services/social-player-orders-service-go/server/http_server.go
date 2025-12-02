@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/pkg/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,20 +35,10 @@ func NewHTTPServer(addr string, service *OrderService) *HTTPServer {
 	// Create handlers
 	handlers := NewOrderHandlers(service)
 
-	// Register API routes (will be generated)
-	// api.HandlerWithOptions(handlers, api.ChiServerOptions{
-	//     BaseURL:    "/api/v1",
-	//     BaseRouter: router,
-	// })
-
-	// Manual routes (for now)
-	router.Route("/api/v1/social/orders", func(r chi.Router) {
-		r.Get("/", handlers.ListOrders)
-		r.Post("/create", handlers.CreateOrder)
-		r.Get("/{orderId}", handlers.GetOrder)
-		r.Post("/{orderId}/accept", handlers.AcceptOrder)
-		r.Post("/{orderId}/complete", handlers.CompleteOrder)
-		r.Post("/{orderId}/cancel", handlers.CancelOrder)
+	// Register API routes using generated code
+	api.HandlerWithOptions(handlers, api.ChiServerOptions{
+		BaseURL:    "/api/v1",
+		BaseRouter: router,
 	})
 
 	// Health check

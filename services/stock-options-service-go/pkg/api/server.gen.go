@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -30,6 +30,40 @@ type ServerInterface interface {
 	// Список опционных позиций
 	// (GET /api/v1/options/positions)
 	ListOptionsPositions(w http.ResponseWriter, r *http.Request, params ListOptionsPositionsParams)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Купить опционный контракт
+// (POST /api/v1/options/buy)
+func (_ Unimplemented) BuyOptionsContract(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Список опционных контрактов
+// (GET /api/v1/options/contracts)
+func (_ Unimplemented) ListOptionsContracts(w http.ResponseWriter, r *http.Request, params ListOptionsContractsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Исполнить опцион
+// (POST /api/v1/options/exercise)
+func (_ Unimplemented) ExerciseOption(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Greeks опциона
+// (GET /api/v1/options/greeks/{position_id})
+func (_ Unimplemented) GetOptionsGreeks(w http.ResponseWriter, r *http.Request, positionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Список опционных позиций
+// (GET /api/v1/options/positions)
+func (_ Unimplemented) ListOptionsPositions(w http.ResponseWriter, r *http.Request, params ListOptionsPositionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -169,7 +203,7 @@ func (siw *ServerInterfaceWrapper) GetOptionsGreeks(w http.ResponseWriter, r *ht
 	// ------------- Path parameter "position_id" -------------
 	var positionId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "position_id", mux.Vars(r)["position_id"], &positionId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "position_id", chi.URLParam(r, "position_id"), &positionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "position_id", Err: err})
 		return
@@ -312,36 +346,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -354,15 +388,21 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/api/v1/options/buy", wrapper.BuyOptionsContract).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/options/contracts", wrapper.ListOptionsContracts).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/options/exercise", wrapper.ExerciseOption).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/options/greeks/{position_id}", wrapper.GetOptionsGreeks).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/options/positions", wrapper.ListOptionsPositions).Methods("GET")
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/options/buy", wrapper.BuyOptionsContract)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/options/contracts", wrapper.ListOptionsContracts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/options/exercise", wrapper.ExerciseOption)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/options/greeks/{position_id}", wrapper.GetOptionsGreeks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/options/positions", wrapper.ListOptionsPositions)
+	})
 
 	return r
 }

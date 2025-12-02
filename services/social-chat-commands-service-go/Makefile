@@ -3,7 +3,7 @@
 SERVICE_NAME := social-chat-commands-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := gorilla-server
+ROUTER_TYPE := chi-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
@@ -72,3 +72,4 @@ verify-api: check-deps
 
 clean:
 	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+

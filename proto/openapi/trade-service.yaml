@@ -1,0 +1,371 @@
+# Issue: #131
+openapi: 3.0.0
+info:
+  title: Trade Service API
+  description: |
+    Trade Service обеспечивает безопасную P2P торговлю между игроками.
+    Поддерживает блокировку предметов, двухэтапное подтверждение и audit trail.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necpgame.com
+    description: Production server
+  - url: https://staging-api.necpgame.com
+    description: Staging server
+
+tags:
+  - name: Trade Sessions
+    description: Управление торговыми сессиями
+  - name: Trade History
+    description: История сделок
+
+paths:
+  /api/v1/trade/sessions:
+    post:
+      tags: [Trade Sessions]
+      summary: Создать торговую сессию
+      operationId: createTradeSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTradeRequest"
+      responses:
+        "200":
+          description: Торговая сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSessionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "409":
+          description: Игрок уже в торговой сессии
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+
+  /api/v1/trade/sessions/{sessionId}:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Trade Sessions]
+      summary: Получить статус торговой сессии
+      operationId: getTradeSession
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Статус торговой сессии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSessionResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+    delete:
+      tags: [Trade Sessions]
+      summary: Отменить торговую сессию
+      operationId: cancelTradeSession
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Торговая сессия отменена
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/trade/sessions/{sessionId}/items:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Trade Sessions]
+      summary: Добавить предметы в торговое окно
+      operationId: addTradeItems
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddItemsRequest"
+      responses:
+        "200":
+          description: Предметы добавлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSessionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+
+  /api/v1/trade/sessions/{sessionId}/currency:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Trade Sessions]
+      summary: Добавить валюту в торговое окно
+      operationId: addTradeCurrency
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCurrencyRequest"
+      responses:
+        "200":
+          description: Валюта добавлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSessionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/trade/sessions/{sessionId}/ready:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Trade Sessions]
+      summary: Подтвердить готовность к сделке
+      operationId: setTradeReady
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadyRequest"
+      responses:
+        "200":
+          description: Готовность установлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSessionResponse"
+
+  /api/v1/trade/sessions/{sessionId}/complete:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Trade Sessions]
+      summary: Завершить сделку (обе стороны ready)
+      operationId: completeTrade
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Сделка завершена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeCompleteResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "409":
+          description: Обе стороны не готовы
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+
+  /api/v1/trade/history/{playerId}:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+    get:
+      tags: [Trade History]
+      summary: Получить историю сделок игрока
+      operationId: getTradeHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+      responses:
+        "200":
+          description: История сделок
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeHistoryResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CreateTradeRequest:
+      type: object
+      required:
+        - target_player_id
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+
+    TradeSessionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        trade_status:
+          type: string
+          enum: [pending, active, completed, cancelled, expired]
+        initiator_items:
+          type: array
+          items:
+            type: object
+        target_items:
+          type: array
+          items:
+            type: object
+        initiator_currency:
+          type: object
+        target_currency:
+          type: object
+        initiator_ready:
+          type: boolean
+        target_ready:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    AddItemsRequest:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+
+    AddCurrencyRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+      properties:
+        currency_type:
+          type: string
+          enum: [credits, premium_currency]
+        amount:
+          type: integer
+
+    ReadyRequest:
+      type: object
+      required:
+        - ready
+      properties:
+        ready:
+          type: boolean
+
+    TradeCompleteResponse:
+      type: object
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+        completed_at:
+          type: string
+          format: date-time
+        items_received:
+          type: array
+          items:
+            type: object
+        currency_received:
+          type: object
+
+    TradeHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        other_player_id:
+          type: string
+          format: uuid
+        items_given:
+          type: array
+          items:
+            type: object
+        items_received:
+          type: array
+          items:
+            type: object
+        currency_given:
+          type: object
+        currency_received:
+          type: object
+        completed_at:
+          type: string
+          format: date-time
+
+    TradeHistoryResponse:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeHistoryEntry"
+        total:
+          type: integer
+

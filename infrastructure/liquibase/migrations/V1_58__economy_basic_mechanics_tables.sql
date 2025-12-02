@@ -1,4 +1,4 @@
--- Issue: #140876080
+-- Issue: #60
 -- Economy Basic Mechanics Database Schema
 -- Создание таблиц для базовых экономических механик:
 -- - Обзор экономики (economy_overview)

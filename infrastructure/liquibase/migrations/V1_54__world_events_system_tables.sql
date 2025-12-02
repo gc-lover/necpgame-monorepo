@@ -1,4 +1,4 @@
--- Issue: #140875793
+-- Issue: #44
 -- World Events System Database Schema
 -- Создание таблиц для системы мировых событий:
 -- - Мировые события (world_events)
