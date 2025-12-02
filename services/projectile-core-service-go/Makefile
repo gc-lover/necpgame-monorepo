@@ -1,50 +1,74 @@
-# Issue: #1560
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
 SERVICE_NAME := projectile-core-service
+OAPI_CODEGEN := oapi-codegen
+REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := chi-server
-OPENAPI_SPEC := ../../proto/openapi/projectile-core-service.yaml
-BUNDLED_SPEC := projectile-core-service-bundled.yaml
-GENERATED_FILE := pkg/api/api.gen.go
 
-.PHONY: all verify-api bundle-api generate-api build test clean help
+SPEC_DIR := ../../proto/openapi
+API_DIR := pkg/api
+SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
+BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
 
-all: generate-api build
+# Split output files (SOLID compliance)
+TYPES_FILE := $(API_DIR)/types.gen.go
+SERVER_FILE := $(API_DIR)/server.gen.go
+SPEC_FILE := $(API_DIR)/spec.gen.go
 
-## verify-api: Verify OpenAPI spec validity
-verify-api:
-	@echo "🔍 Verifying OpenAPI spec..."
-	@npx --yes @redocly/cli lint $(OPENAPI_SPEC)
+check-deps:
+	@echo "Checking dependencies..."
+	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
+	@echo "OK Dependencies installed"
 
-## bundle-api: Bundle OpenAPI spec (resolve $ref)
-bundle-api:
-	@echo "📦 Bundling OpenAPI spec..."
-	@npx --yes @redocly/cli bundle $(OPENAPI_SPEC) -o $(BUNDLED_SPEC)
+install-deps:
+	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
 
-## generate-api: Generate API code from OpenAPI spec
-generate-api: verify-api bundle-api
-	@echo "⚙️ Generating API code..."
-	@oapi-codegen -config oapi-codegen.yaml $(BUNDLED_SPEC)
-	@echo "OK API code generated: $(GENERATED_FILE)"
+bundle-api: check-deps
+	@echo "Bundling: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "❌ Spec not found"; exit 1; fi
+	@mkdir -p $(API_DIR)
+	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "OK Bundled"
 
-## build: Build service
-build:
-	@echo "🔨 Building $(SERVICE_NAME)..."
-	@go build -o $(SERVICE_NAME) .
+generate-types: bundle-api
+	@echo "Generating types..."
+	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(TYPES_FILE) | awk '{print "OK types.gen.go: " $$1 " lines"}'
 
-## test: Run tests
-test:
-	@echo "🧪 Running tests..."
-	@go test -v ./...
+generate-server: bundle-api
+	@echo "Generating server..."
+	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SERVER_FILE) | awk '{print "OK server.gen.go: " $$1 " lines"}'
 
-## clean: Clean generated files and binaries
+generate-spec: bundle-api
+	@echo "Generating spec..."
+	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SPEC_FILE) | awk '{print "OK spec.gen.go: " $$1 " lines"}'
+
+check-file-sizes:
+	@echo ""
+	@echo "File size check (max 500 lines):"
+	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
+		if [ -f "$$file" ]; then \
+			lines=$$(wc -l < "$$file" | tr -d ' '); \
+			if [ $$lines -gt 500 ]; then \
+				echo "WARNING  $$file: $$lines lines (EXCEEDS)"; \
+			else \
+				echo "OK $$file: $$lines lines"; \
+			fi; \
+		fi; \
+	done
+
+generate-api: generate-types generate-server generate-spec check-file-sizes
+	@echo ""
+	@echo "OK Generation complete!"
+
+verify-api: check-deps
+	@echo "Verifying: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
+	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "OK Valid"
+
 clean:
-	@echo "🧹 Cleaning..."
-	@rm -f $(SERVICE_NAME) $(SERVICE_NAME).exe
-	@rm -f $(BUNDLED_SPEC)
-	@rm -f $(GENERATED_FILE)
-
-## help: Show this help
-help:
-	@echo "Available targets:"
-	@sed -n 's/^##//p' Makefile
-
+	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)

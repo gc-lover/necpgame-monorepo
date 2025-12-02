@@ -1,6 +1,6 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
-SERVICE_NAME := combat-sessions-service
+SERVICE_NAME := matchmaking
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := chi-server

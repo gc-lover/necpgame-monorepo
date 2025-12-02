@@ -1,81 +1,74 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-world-state-api verify-world-state-api
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
-WORLD_EVENTS_SPEC := world-events-core-service
-WORLD_STATE_SPEC := world-state-core-service
+SERVICE_NAME := world-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
-WORLD_EVENTS_SPEC_FILE := $(SPEC_DIR)/$(WORLD_EVENTS_SPEC).yaml
-WORLD_STATE_SPEC_FILE := $(SPEC_DIR)/$(WORLD_STATE_SPEC).yaml
-WORLD_EVENTS_BUNDLED := $(API_DIR)/$(WORLD_EVENTS_SPEC).bundled.yaml
-WORLD_STATE_BUNDLED := $(API_DIR)/worldstate/$(WORLD_STATE_SPEC).bundled.yaml
-WORLD_EVENTS_OUTPUT := $(API_DIR)/api.gen.go
-WORLD_STATE_OUTPUT := $(API_DIR)/worldstate/api.gen.go
+SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
+BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
+
+# Split output files (SOLID compliance)
+TYPES_FILE := $(API_DIR)/types.gen.go
+SERVER_FILE := $(API_DIR)/server.gen.go
+SPEC_FILE := $(API_DIR)/spec.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found. Install with: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found. Install Node.js"; exit 1; }
-	@command -v npx >/dev/null 2>&1 || { echo "❌ npx not found. Install Node.js"; exit 1; }
-	@echo "OK All dependencies are installed"
-
-install-deps:
-	@echo "Installing dependencies..."
-	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
+	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
 	@echo "OK Dependencies installed"
 
+install-deps:
+	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
+
 bundle-api: check-deps
-	@echo "Bundling OpenAPI specs..."
-	@if [ ! -f "$(WORLD_EVENTS_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(WORLD_EVENTS_SPEC_FILE)"; \
-		exit 1; \
-	fi
+	@echo "Bundling: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "❌ Spec not found"; exit 1; fi
 	@mkdir -p $(API_DIR)
-	@$(REDOCLY_CLI) bundle $(WORLD_EVENTS_SPEC_FILE) -o $(WORLD_EVENTS_BUNDLED) || { echo "❌ Failed to bundle $(WORLD_EVENTS_SPEC)"; exit 1; }
-	@echo "OK Bundled spec: $(WORLD_EVENTS_BUNDLED)"
+	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "OK Bundled"
 
-generate-world-state-api: check-deps
-	@echo "Generating world-state API..."
-	@if [ ! -f "$(WORLD_STATE_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(WORLD_STATE_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@mkdir -p $(API_DIR)/worldstate
-	@$(REDOCLY_CLI) bundle $(WORLD_STATE_SPEC_FILE) -o $(WORLD_STATE_BUNDLED) || { echo "❌ Failed to bundle $(WORLD_STATE_SPEC)"; exit 1; }
-	@$(OAPI_CODEGEN) -package worldstate -generate types,$(ROUTER_TYPE) -o $(WORLD_STATE_OUTPUT) $(WORLD_STATE_BUNDLED) || { echo "❌ Failed to generate $(WORLD_STATE_SPEC)"; exit 1; }
-	@echo "OK Generated $(WORLD_STATE_SPEC)"
+generate-types: bundle-api
+	@echo "Generating types..."
+	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(TYPES_FILE) | awk '{print "OK types.gen.go: " $$1 " lines"}'
 
-generate-api: bundle-api generate-world-state-api
-	@echo "Generating Go code from: $(WORLD_EVENTS_BUNDLED)"
-	@if [ ! -f "$(WORLD_EVENTS_BUNDLED)" ]; then \
-		echo "❌ Bundled spec not found: $(WORLD_EVENTS_BUNDLED)"; \
-		exit 1; \
-	fi
-	@$(OAPI_CODEGEN) -package api -generate types,$(ROUTER_TYPE) -o $(WORLD_EVENTS_OUTPUT) $(WORLD_EVENTS_BUNDLED) || { echo "❌ Failed to generate code"; exit 1; }
-	@echo "OK Generated code: $(WORLD_EVENTS_OUTPUT)"
+generate-server: bundle-api
+	@echo "Generating server..."
+	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SERVER_FILE) | awk '{print "OK server.gen.go: " $$1 " lines"}'
 
-verify-world-state-api: check-deps
-	@echo "Verifying world-state OpenAPI spec: $(WORLD_STATE_SPEC_FILE)"
-	@if [ ! -f "$(WORLD_STATE_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(WORLD_STATE_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@$(REDOCLY_CLI) lint $(WORLD_STATE_SPEC_FILE) || { echo "WARNING  $(WORLD_STATE_SPEC) validation failed"; exit 1; }
-	@echo "OK $(WORLD_STATE_SPEC) spec is valid"
+generate-spec: bundle-api
+	@echo "Generating spec..."
+	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SPEC_FILE) | awk '{print "OK spec.gen.go: " $$1 " lines"}'
 
-verify-api: check-deps verify-world-state-api
-	@echo "Verifying OpenAPI spec: $(WORLD_EVENTS_SPEC_FILE)"
-	@if [ ! -f "$(WORLD_EVENTS_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(WORLD_EVENTS_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@$(REDOCLY_CLI) lint $(WORLD_EVENTS_SPEC_FILE) || { echo "WARNING  OpenAPI spec validation failed"; exit 1; }
-	@echo "OK OpenAPI spec is valid"
+check-file-sizes:
+	@echo ""
+	@echo "File size check (max 500 lines):"
+	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
+		if [ -f "$$file" ]; then \
+			lines=$$(wc -l < "$$file" | tr -d ' '); \
+			if [ $$lines -gt 500 ]; then \
+				echo "WARNING  $$file: $$lines lines (EXCEEDS)"; \
+			else \
+				echo "OK $$file: $$lines lines"; \
+			fi; \
+		fi; \
+	done
+
+generate-api: generate-types generate-server generate-spec check-file-sizes
+	@echo ""
+	@echo "OK Generation complete!"
+
+verify-api: check-deps
+	@echo "Verifying: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
+	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "OK Valid"
 
 clean:
-	@echo "Cleaning generated files"
-	@rm -f $(WORLD_EVENTS_BUNDLED) $(WORLD_EVENTS_OUTPUT) $(WORLD_STATE_BUNDLED) $(WORLD_STATE_OUTPUT)
-	@echo "OK Cleaned generated files"
+	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)

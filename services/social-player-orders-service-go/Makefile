@@ -1,59 +1,74 @@
-.PHONY: generate-api clean verify-api check-deps install-deps bundle-core bundle-multi-exec bundle-all verify-all
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
+SERVICE_NAME := social-player-orders-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := chi-server
 
 SPEC_DIR := ../../proto/openapi
-CORE_SPEC := social-player-orders-core-service
-MULTI_EXEC_SPEC := social-player-orders-multi-executor-service
-SCHEMAS_SPEC := social-player-orders-schemas
+API_DIR := pkg/api
+SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
+BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
+
+# Split output files (SOLID compliance)
+TYPES_FILE := $(API_DIR)/types.gen.go
+SERVER_FILE := $(API_DIR)/server.gen.go
+SPEC_FILE := $(API_DIR)/spec.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found. Install with: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found. Install Node.js"; exit 1; }
-	@command -v npx >/dev/null 2>&1 || { echo "❌ npx not found. Install Node.js"; exit 1; }
-	@echo "OK All dependencies are installed"
-
-install-deps:
-	@echo "Installing dependencies..."
-	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
+	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
 	@echo "OK Dependencies installed"
 
-verify-all: check-deps
-	@echo "Verifying Player Orders OpenAPI specs..."
-	@$(REDOCLY_CLI) lint $(SPEC_DIR)/$(CORE_SPEC).yaml || { echo "WARNING  $(CORE_SPEC) validation failed"; exit 1; }
-	@$(REDOCLY_CLI) lint $(SPEC_DIR)/$(MULTI_EXEC_SPEC).yaml || { echo "WARNING  $(MULTI_EXEC_SPEC) validation failed"; exit 1; }
-	@$(REDOCLY_CLI) lint $(SPEC_DIR)/$(SCHEMAS_SPEC).yaml || { echo "WARNING  $(SCHEMAS_SPEC) validation failed"; exit 1; }
-	@echo "OK All Player Orders specs are valid"
+install-deps:
+	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
 
-bundle-core: check-deps
-	@echo "Bundling $(CORE_SPEC)..."
-	@$(REDOCLY_CLI) bundle $(SPEC_DIR)/$(CORE_SPEC).yaml --output $(SPEC_DIR)/$(CORE_SPEC)-bundled.yaml
-	@echo "OK $(CORE_SPEC) bundled"
+bundle-api: check-deps
+	@echo "Bundling: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "❌ Spec not found"; exit 1; fi
+	@mkdir -p $(API_DIR)
+	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "OK Bundled"
 
-bundle-multi-exec: check-deps
-	@echo "Bundling $(MULTI_EXEC_SPEC)..."
-	@$(REDOCLY_CLI) bundle $(SPEC_DIR)/$(MULTI_EXEC_SPEC).yaml --output $(SPEC_DIR)/$(MULTI_EXEC_SPEC)-bundled.yaml
-	@echo "OK $(MULTI_EXEC_SPEC) bundled"
+generate-types: bundle-api
+	@echo "Generating types..."
+	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(TYPES_FILE) | awk '{print "OK types.gen.go: " $$1 " lines"}'
 
-bundle-all: bundle-core bundle-multi-exec
-	@echo "OK All specs bundled"
+generate-server: bundle-api
+	@echo "Generating server..."
+	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SERVER_FILE) | awk '{print "OK server.gen.go: " $$1 " lines"}'
 
-generate-api: check-deps bundle-all
-	@echo "Generating Go code from OpenAPI specs..."
-	@mkdir -p pkg/api
-	@$(OAPI_CODEGEN) -config oapi-codegen.yaml $(SPEC_DIR)/$(CORE_SPEC)-bundled.yaml > pkg/api/core_api.gen.go
-	@$(OAPI_CODEGEN) -config oapi-codegen.yaml $(SPEC_DIR)/$(MULTI_EXEC_SPEC)-bundled.yaml > pkg/api/multi_exec_api.gen.go
-	@echo "OK Go code generated in pkg/api/"
+generate-spec: bundle-api
+	@echo "Generating spec..."
+	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SPEC_FILE) | awk '{print "OK spec.gen.go: " $$1 " lines"}'
 
-verify-api: verify-all
-	@echo "OK All OpenAPI specs verified"
+check-file-sizes:
+	@echo ""
+	@echo "File size check (max 500 lines):"
+	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
+		if [ -f "$$file" ]; then \
+			lines=$$(wc -l < "$$file" | tr -d ' '); \
+			if [ $$lines -gt 500 ]; then \
+				echo "WARNING  $$file: $$lines lines (EXCEEDS)"; \
+			else \
+				echo "OK $$file: $$lines lines"; \
+			fi; \
+		fi; \
+	done
+
+generate-api: generate-types generate-server generate-spec check-file-sizes
+	@echo ""
+	@echo "OK Generation complete!"
+
+verify-api: check-deps
+	@echo "Verifying: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
+	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "OK Valid"
 
 clean:
-	@echo "Cleaning generated files..."
-	@rm -rf pkg/api/*.gen.go
-	@rm -f $(SPEC_DIR)/*-bundled.yaml
-	@echo "OK Cleaned"
-
+	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)

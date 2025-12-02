@@ -1,120 +1,74 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-romance-core-api verify-romance-core-api generate-player-orders-api verify-player-orders-api
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
-FRIENDS_SPEC := social-friends-core-service
-ROMANCE_CORE_SPEC := social-romance-core-service
-PLAYER_ORDERS_CORE_SPEC := social-player-orders-core-service
-PLAYER_ORDERS_MULTI_SPEC := social-player-orders-multi-executor-service
+SERVICE_NAME := social-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
-FRIENDS_SPEC_FILE := $(SPEC_DIR)/$(FRIENDS_SPEC).yaml
-ROMANCE_CORE_SPEC_FILE := $(SPEC_DIR)/$(ROMANCE_CORE_SPEC).yaml
-PLAYER_ORDERS_CORE_SPEC_FILE := $(SPEC_DIR)/$(PLAYER_ORDERS_CORE_SPEC).yaml
-PLAYER_ORDERS_MULTI_SPEC_FILE := $(SPEC_DIR)/$(PLAYER_ORDERS_MULTI_SPEC).yaml
-FRIENDS_BUNDLED := $(API_DIR)/$(FRIENDS_SPEC).bundled.yaml
-ROMANCE_CORE_BUNDLED := $(API_DIR)/romancecore/$(ROMANCE_CORE_SPEC).bundled.yaml
-PLAYER_ORDERS_CORE_BUNDLED := $(API_DIR)/playerorders/$(PLAYER_ORDERS_CORE_SPEC).bundled.yaml
-PLAYER_ORDERS_MULTI_BUNDLED := $(API_DIR)/playerorders/$(PLAYER_ORDERS_MULTI_SPEC).bundled.yaml
-FRIENDS_OUTPUT := $(API_DIR)/api.gen.go
-ROMANCE_CORE_OUTPUT := $(API_DIR)/romancecore/api.gen.go
-PLAYER_ORDERS_CORE_OUTPUT := $(API_DIR)/playerorders/core_api.gen.go
-PLAYER_ORDERS_MULTI_OUTPUT := $(API_DIR)/playerorders/multi_api.gen.go
+SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
+BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
+
+# Split output files (SOLID compliance)
+TYPES_FILE := $(API_DIR)/types.gen.go
+SERVER_FILE := $(API_DIR)/server.gen.go
+SPEC_FILE := $(API_DIR)/spec.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found. Install with: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found. Install Node.js"; exit 1; }
-	@command -v npx >/dev/null 2>&1 || { echo "❌ npx not found. Install Node.js"; exit 1; }
-	@echo "OK All dependencies are installed"
-
-install-deps:
-	@echo "Installing dependencies..."
-	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
+	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
 	@echo "OK Dependencies installed"
 
+install-deps:
+	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
+
 bundle-api: check-deps
-	@echo "Bundling OpenAPI specs..."
-	@if [ ! -f "$(FRIENDS_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(FRIENDS_SPEC_FILE)"; \
-		exit 1; \
-	fi
+	@echo "Bundling: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "❌ Spec not found"; exit 1; fi
 	@mkdir -p $(API_DIR)
-	@$(REDOCLY_CLI) bundle $(FRIENDS_SPEC_FILE) -o $(FRIENDS_BUNDLED) || { echo "❌ Failed to bundle $(FRIENDS_SPEC)"; exit 1; }
-	@echo "OK Bundled spec: $(FRIENDS_BUNDLED)"
+	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "OK Bundled"
 
-generate-romance-core-api: check-deps
-	@echo "Generating romance-core API..."
-	@if [ ! -f "$(ROMANCE_CORE_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(ROMANCE_CORE_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@mkdir -p $(API_DIR)/romancecore
-	@$(REDOCLY_CLI) bundle $(ROMANCE_CORE_SPEC_FILE) -o $(ROMANCE_CORE_BUNDLED) || { echo "❌ Failed to bundle $(ROMANCE_CORE_SPEC)"; exit 1; }
-	@$(OAPI_CODEGEN) -package romancecore -generate types,$(ROUTER_TYPE) -o $(ROMANCE_CORE_OUTPUT) $(ROMANCE_CORE_BUNDLED) || { echo "❌ Failed to generate $(ROMANCE_CORE_SPEC)"; exit 1; }
-	@echo "OK Generated $(ROMANCE_CORE_SPEC)"
+generate-types: bundle-api
+	@echo "Generating types..."
+	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(TYPES_FILE) | awk '{print "OK types.gen.go: " $$1 " lines"}'
 
-generate-player-orders-api: check-deps
-	@echo "Generating player-orders API..."
-	@if [ ! -f "$(PLAYER_ORDERS_CORE_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(PLAYER_ORDERS_CORE_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@if [ ! -f "$(PLAYER_ORDERS_MULTI_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(PLAYER_ORDERS_MULTI_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@mkdir -p $(API_DIR)/playerorders
-	@$(REDOCLY_CLI) bundle $(PLAYER_ORDERS_CORE_SPEC_FILE) -o $(PLAYER_ORDERS_CORE_BUNDLED) || { echo "❌ Failed to bundle Player Orders Core"; exit 1; }
-	@$(REDOCLY_CLI) bundle $(PLAYER_ORDERS_MULTI_SPEC_FILE) -o $(PLAYER_ORDERS_MULTI_BUNDLED) || { echo "❌ Failed to bundle Player Orders Multi"; exit 1; }
-	@$(OAPI_CODEGEN) -package playerorders -generate types,$(ROUTER_TYPE) -o $(PLAYER_ORDERS_CORE_OUTPUT) $(PLAYER_ORDERS_CORE_BUNDLED) || { echo "❌ Failed to generate Player Orders Core"; exit 1; }
-	@$(OAPI_CODEGEN) -package playerorders -generate types,$(ROUTER_TYPE) -o $(PLAYER_ORDERS_MULTI_OUTPUT) $(PLAYER_ORDERS_MULTI_BUNDLED) || { echo "❌ Failed to generate Player Orders Multi"; exit 1; }
-	@echo "OK Generated Player Orders API"
+generate-server: bundle-api
+	@echo "Generating server..."
+	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SERVER_FILE) | awk '{print "OK server.gen.go: " $$1 " lines"}'
 
-generate-api: bundle-api generate-romance-core-api generate-player-orders-api
-	@echo "Generating Go code from: $(FRIENDS_BUNDLED)"
-	@if [ ! -f "$(FRIENDS_BUNDLED)" ]; then \
-		echo "❌ Bundled spec not found: $(FRIENDS_BUNDLED)"; \
-		exit 1; \
-	fi
-	@$(OAPI_CODEGEN) -package api -generate types,$(ROUTER_TYPE) -o $(FRIENDS_OUTPUT) $(FRIENDS_BUNDLED) || { echo "❌ Failed to generate code"; exit 1; }
-	@echo "OK Generated code: $(FRIENDS_OUTPUT)"
+generate-spec: bundle-api
+	@echo "Generating spec..."
+	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SPEC_FILE) | awk '{print "OK spec.gen.go: " $$1 " lines"}'
 
-verify-romance-core-api: check-deps
-	@echo "Verifying romance-core OpenAPI spec: $(ROMANCE_CORE_SPEC_FILE)"
-	@if [ ! -f "$(ROMANCE_CORE_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(ROMANCE_CORE_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@$(REDOCLY_CLI) lint $(ROMANCE_CORE_SPEC_FILE) || { echo "WARNING  $(ROMANCE_CORE_SPEC) validation failed"; exit 1; }
-	@echo "OK $(ROMANCE_CORE_SPEC) spec is valid"
+check-file-sizes:
+	@echo ""
+	@echo "File size check (max 500 lines):"
+	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
+		if [ -f "$$file" ]; then \
+			lines=$$(wc -l < "$$file" | tr -d ' '); \
+			if [ $$lines -gt 500 ]; then \
+				echo "WARNING  $$file: $$lines lines (EXCEEDS)"; \
+			else \
+				echo "OK $$file: $$lines lines"; \
+			fi; \
+		fi; \
+	done
 
-verify-player-orders-api: check-deps
-	@echo "Verifying player-orders OpenAPI specs..."
-	@if [ ! -f "$(PLAYER_ORDERS_CORE_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(PLAYER_ORDERS_CORE_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@if [ ! -f "$(PLAYER_ORDERS_MULTI_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(PLAYER_ORDERS_MULTI_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@$(REDOCLY_CLI) lint $(PLAYER_ORDERS_CORE_SPEC_FILE) || { echo "WARNING  Player Orders Core spec validation failed"; exit 1; }
-	@$(REDOCLY_CLI) lint $(PLAYER_ORDERS_MULTI_SPEC_FILE) || { echo "WARNING  Player Orders Multi spec validation failed"; exit 1; }
-	@echo "OK Player Orders specs are valid"
+generate-api: generate-types generate-server generate-spec check-file-sizes
+	@echo ""
+	@echo "OK Generation complete!"
 
-verify-api: check-deps verify-romance-core-api verify-player-orders-api
-	@echo "Verifying OpenAPI spec: $(FRIENDS_SPEC_FILE)"
-	@if [ ! -f "$(FRIENDS_SPEC_FILE)" ]; then \
-		echo "❌ OpenAPI spec not found: $(FRIENDS_SPEC_FILE)"; \
-		exit 1; \
-	fi
-	@$(REDOCLY_CLI) lint $(FRIENDS_SPEC_FILE) || { echo "WARNING  OpenAPI spec validation failed"; exit 1; }
-	@echo "OK OpenAPI spec is valid"
+verify-api: check-deps
+	@echo "Verifying: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
+	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "OK Valid"
 
 clean:
-	@echo "Cleaning generated files"
-	@rm -f $(FRIENDS_BUNDLED) $(FRIENDS_OUTPUT) $(ROMANCE_CORE_BUNDLED) $(ROMANCE_CORE_OUTPUT) $(PLAYER_ORDERS_CORE_BUNDLED) $(PLAYER_ORDERS_MULTI_BUNDLED) $(PLAYER_ORDERS_CORE_OUTPUT) $(PLAYER_ORDERS_MULTI_OUTPUT)
-	@echo "OK Cleaned generated files"
+	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)

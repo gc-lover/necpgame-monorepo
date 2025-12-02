@@ -1,9 +1,9 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
-SERVICE_NAME := combat-sessions-service
+SERVICE_NAME := social-chat-commands-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := chi-server
+ROUTER_TYPE := gorilla-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api

@@ -1,71 +1,74 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-weapon-combinations-api
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
+SERVICE_NAME := economy-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
 
 SPEC_DIR := ../../proto/openapi
+API_DIR := pkg/api
+SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
+BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
 
-TRADE_SERVICE_SPEC := economy-trade-sessions-service
-WEAPON_COMBINATIONS_SPEC := economy-weapon-combinations-service
-
-TRADE_API_DIR := pkg/api
-WEAPON_COMBINATIONS_API_DIR := pkg/weaponcombinationsapi
-
-TRADE_SPEC := $(SPEC_DIR)/$(TRADE_SERVICE_SPEC).yaml
-TRADE_BUNDLED_SPEC := $(TRADE_API_DIR)/$(TRADE_SERVICE_SPEC).bundled.yaml
-TRADE_OUTPUT_FILE := $(TRADE_API_DIR)/api.gen.go
-
-WEAPON_COMBINATIONS_SPEC_FILE := $(SPEC_DIR)/$(WEAPON_COMBINATIONS_SPEC).yaml
-WEAPON_COMBINATIONS_BUNDLED_SPEC := $(WEAPON_COMBINATIONS_API_DIR)/$(WEAPON_COMBINATIONS_SPEC).bundled.yaml
-WEAPON_COMBINATIONS_OUTPUT_FILE := $(WEAPON_COMBINATIONS_API_DIR)/api.gen.go
+# Split output files (SOLID compliance)
+TYPES_FILE := $(API_DIR)/types.gen.go
+SERVER_FILE := $(API_DIR)/server.gen.go
+SPEC_FILE := $(API_DIR)/spec.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found. Install with: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found. Install Node.js"; exit 1; }
-	@command -v npx >/dev/null 2>&1 || { echo "❌ npx not found. Install Node.js"; exit 1; }
-	@echo "OK All dependencies are installed"
-
-install-deps:
-	@echo "Installing dependencies..."
-	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
+	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
 	@echo "OK Dependencies installed"
 
+install-deps:
+	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest || true
+
 bundle-api: check-deps
-	@echo "Bundling trade OpenAPI spec: $(TRADE_SPEC)"
-	@if [ ! -f "$(TRADE_SPEC)" ]; then \
-		echo "❌ OpenAPI spec not found: $(TRADE_SPEC)"; \
-		exit 1; \
-	fi
-	@mkdir -p $(TRADE_API_DIR)
-	@$(REDOCLY_CLI) bundle $(TRADE_SPEC) -o $(TRADE_BUNDLED_SPEC) || { echo "❌ Failed to bundle OpenAPI spec"; exit 1; }
-	@echo "OK Bundled spec: $(TRADE_BUNDLED_SPEC)"
+	@echo "Bundling: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "❌ Spec not found"; exit 1; fi
+	@mkdir -p $(API_DIR)
+	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "OK Bundled"
 
-generate-api: bundle-api
-	@echo "Generating Go code from: $(TRADE_BUNDLED_SPEC)"
-	@if [ ! -f "$(TRADE_BUNDLED_SPEC)" ]; then \
-		echo "❌ Bundled spec not found: $(TRADE_BUNDLED_SPEC)"; \
-		exit 1; \
-	fi
-	@$(OAPI_CODEGEN) -package api -generate types,$(ROUTER_TYPE) -o $(TRADE_OUTPUT_FILE) $(TRADE_BUNDLED_SPEC) || { echo "❌ Failed to generate code"; exit 1; }
-	@echo "OK Generated code: $(TRADE_OUTPUT_FILE)"
+generate-types: bundle-api
+	@echo "Generating types..."
+	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(TYPES_FILE) | awk '{print "OK types.gen.go: " $$1 " lines"}'
 
-generate-weapon-combinations-api: check-deps
-	@echo "Generating weapon combinations API..."
-	@mkdir -p $(WEAPON_COMBINATIONS_API_DIR)
-	@$(REDOCLY_CLI) bundle $(WEAPON_COMBINATIONS_SPEC_FILE) -o $(WEAPON_COMBINATIONS_BUNDLED_SPEC) || { echo "❌ Failed to bundle $(WEAPON_COMBINATIONS_SPEC)"; exit 1; }
-	@$(OAPI_CODEGEN) -package weaponcombinationsapi -generate types,$(ROUTER_TYPE) -o $(WEAPON_COMBINATIONS_OUTPUT_FILE) $(WEAPON_COMBINATIONS_BUNDLED_SPEC) || { echo "❌ Failed to generate $(WEAPON_COMBINATIONS_SPEC)"; exit 1; }
-	@echo "OK Generated $(WEAPON_COMBINATIONS_SPEC)"
+generate-server: bundle-api
+	@echo "Generating server..."
+	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SERVER_FILE) | awk '{print "OK server.gen.go: " $$1 " lines"}'
+
+generate-spec: bundle-api
+	@echo "Generating spec..."
+	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
+	@wc -l $(SPEC_FILE) | awk '{print "OK spec.gen.go: " $$1 " lines"}'
+
+check-file-sizes:
+	@echo ""
+	@echo "File size check (max 500 lines):"
+	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
+		if [ -f "$$file" ]; then \
+			lines=$$(wc -l < "$$file" | tr -d ' '); \
+			if [ $$lines -gt 500 ]; then \
+				echo "WARNING  $$file: $$lines lines (EXCEEDS)"; \
+			else \
+				echo "OK $$file: $$lines lines"; \
+			fi; \
+		fi; \
+	done
+
+generate-api: generate-types generate-server generate-spec check-file-sizes
+	@echo ""
+	@echo "OK Generation complete!"
 
 verify-api: check-deps
-	@echo "Verifying OpenAPI specs..."
-	@$(REDOCLY_CLI) lint $(TRADE_SPEC) || { echo "WARNING  $(TRADE_SERVICE_SPEC) validation failed"; exit 1; }
-	@$(REDOCLY_CLI) lint $(WEAPON_COMBINATIONS_SPEC_FILE) || { echo "WARNING  $(WEAPON_COMBINATIONS_SPEC) validation failed"; exit 1; }
-	@echo "OK All OpenAPI specs are valid"
+	@echo "Verifying: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
+	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "OK Valid"
 
 clean:
-	@echo "Cleaning generated files"
-	@rm -f $(TRADE_BUNDLED_SPEC) $(TRADE_OUTPUT_FILE)
-	@rm -rf $(WEAPON_COMBINATIONS_API_DIR)
-	@echo "OK Cleaned generated files"
+	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
