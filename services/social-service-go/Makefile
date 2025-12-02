@@ -1,9 +1,9 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes generate-friends-api verify-friends-api
 
 SERVICE_NAME := social-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := gorilla-server
+ROUTER_TYPE := chi-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
@@ -14,6 +14,20 @@ BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
 TYPES_FILE := $(API_DIR)/types.gen.go
 SERVER_FILE := $(API_DIR)/server.gen.go
 SPEC_FILE := $(API_DIR)/spec.gen.go
+
+# Friends API specs
+FRIENDS_CORE_SPEC := social-friends-core-service
+FRIENDS_REQUESTS_SPEC := social-friends-requests-service
+FRIENDS_BLOCKS_SPEC := social-friends-blocks-service
+FRIENDS_STATUS_SPEC := social-friends-status-service
+
+FRIENDS_CORE_SPEC_FILE := $(SPEC_DIR)/$(FRIENDS_CORE_SPEC).yaml
+FRIENDS_REQUESTS_SPEC_FILE := $(SPEC_DIR)/$(FRIENDS_REQUESTS_SPEC).yaml
+FRIENDS_BLOCKS_SPEC_FILE := $(SPEC_DIR)/$(FRIENDS_BLOCKS_SPEC).yaml
+FRIENDS_STATUS_SPEC_FILE := $(SPEC_DIR)/$(FRIENDS_STATUS_SPEC).yaml
+
+FRIENDS_BUNDLED := $(API_DIR)/friends/$(FRIENDS_CORE_SPEC).bundled.yaml
+FRIENDS_OUTPUT := $(API_DIR)/friends/api.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
@@ -60,15 +74,40 @@ check-file-sizes:
 		fi; \
 	done
 
-generate-api: generate-types generate-server generate-spec check-file-sizes
+bundle-friends-api: check-deps
+	@echo "Bundling Friends OpenAPI specs..."
+	@mkdir -p $(API_DIR)/friends
+	@$(REDOCLY_CLI) bundle $(FRIENDS_CORE_SPEC_FILE) -o $(FRIENDS_BUNDLED) || exit 1
+	@echo "OK Bundled Friends spec: $(FRIENDS_BUNDLED)"
+
+generate-friends-api: bundle-friends-api
+	@echo "Generating Friends Go code from: $(FRIENDS_BUNDLED)"
+	@if [ ! -f "$(FRIENDS_BUNDLED)" ]; then \
+		echo "❌ Bundled spec not found: $(FRIENDS_BUNDLED)"; \
+		exit 1; \
+	fi
+	@$(OAPI_CODEGEN) -package friends -generate types,$(ROUTER_TYPE) -o $(FRIENDS_OUTPUT) $(FRIENDS_BUNDLED) || exit 1
+	@echo "OK Generated Friends code: $(FRIENDS_OUTPUT)"
+
+verify-friends-api: check-deps
+	@echo "Verifying Friends OpenAPI specs..."
+	@if [ ! -f "$(FRIENDS_CORE_SPEC_FILE)" ]; then \
+		echo "❌ OpenAPI spec not found: $(FRIENDS_CORE_SPEC_FILE)"; \
+		exit 1; \
+	fi
+	@$(REDOCLY_CLI) lint $(FRIENDS_CORE_SPEC_FILE) $(FRIENDS_REQUESTS_SPEC_FILE) $(FRIENDS_BLOCKS_SPEC_FILE) $(FRIENDS_STATUS_SPEC_FILE) || exit 1
+	@echo "OK Friends specs are valid"
+
+generate-api: generate-types generate-server generate-spec generate-friends-api check-file-sizes
 	@echo ""
 	@echo "OK Generation complete!"
 
-verify-api: check-deps
+verify-api: check-deps verify-friends-api
 	@echo "Verifying: $(SERVICE_SPEC)"
 	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
 	@echo "OK Valid"
 
 clean:
-	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE) $(FRIENDS_BUNDLED) $(FRIENDS_OUTPUT)
+
