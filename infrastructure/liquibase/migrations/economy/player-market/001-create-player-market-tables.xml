@@ -1,0 +1,344 @@
+<!-- Issue: #42 -->
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Player Market Listings Table -->
+    <changeSet id="create-player-market-listings-table" author="database-engineer">
+        <createTable tableName="player_market_listings" schemaName="economy">
+            <column name="listing_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="seller_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_template_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_rarity" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INTEGER" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="region" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_listings"
+            baseColumnNames="seller_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_player_market_listings_seller"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_player_market_listings_seller" tableName="player_market_listings" schemaName="economy">
+            <column name="seller_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_listings_item_type" tableName="player_market_listings" schemaName="economy">
+            <column name="item_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_listings_region" tableName="player_market_listings" schemaName="economy">
+            <column name="region"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_listings_status" tableName="player_market_listings" schemaName="economy">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_listings_expires_at" tableName="player_market_listings" schemaName="economy">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_listings_created_at" tableName="player_market_listings" schemaName="economy">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <!-- Composite indexes for common queries -->
+        <createIndex indexName="idx_player_market_listings_active" tableName="player_market_listings" schemaName="economy">
+            <column name="status"/>
+            <column name="region"/>
+            <column name="item_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_listings_search" tableName="player_market_listings" schemaName="economy">
+            <column name="item_type"/>
+            <column name="item_rarity"/>
+            <column name="price_ed"/>
+        </createIndex>
+
+        <comment>Player Market Listings table - stores active and expired listings</comment>
+    </changeSet>
+
+    <!-- Player Market Transactions Table -->
+    <changeSet id="create-player-market-transactions-table" author="database-engineer">
+        <createTable tableName="player_market_transactions" schemaName="economy">
+            <column name="transaction_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="listing_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seller_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="buyer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_template_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commission_ed" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seller_received_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INTEGER" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transaction_type" type="VARCHAR(20)" defaultValue="purchase">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_transactions"
+            baseColumnNames="listing_id"
+            referencedTableSchemaName="economy"
+            referencedTableName="player_market_listings"
+            referencedColumnNames="listing_id"
+            constraintName="fk_player_market_transactions_listing"
+            onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_transactions"
+            baseColumnNames="seller_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_player_market_transactions_seller"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_transactions"
+            baseColumnNames="buyer_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_player_market_transactions_buyer"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_player_market_transactions_seller" tableName="player_market_transactions" schemaName="economy">
+            <column name="seller_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_transactions_buyer" tableName="player_market_transactions" schemaName="economy">
+            <column name="buyer_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_transactions_created_at" tableName="player_market_transactions" schemaName="economy">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <comment>Player Market Transactions table - history of all purchases</comment>
+    </changeSet>
+
+    <!-- Player Market Reviews Table -->
+    <changeSet id="create-player-market-reviews-table" author="database-engineer">
+        <createTable tableName="player_market_reviews" schemaName="economy">
+            <column name="review_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="transaction_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reviewer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seller_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INTEGER">
+                <constraints nullable="false" checkConstraint="rating BETWEEN 1 AND 5"/>
+            </column>
+            <column name="comment" type="TEXT"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="published">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_reviews"
+            baseColumnNames="transaction_id"
+            referencedTableSchemaName="economy"
+            referencedTableName="player_market_transactions"
+            referencedColumnNames="transaction_id"
+            constraintName="fk_player_market_reviews_transaction"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_reviews"
+            baseColumnNames="reviewer_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_player_market_reviews_reviewer"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_reviews"
+            baseColumnNames="seller_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_player_market_reviews_seller"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_player_market_reviews_seller" tableName="player_market_reviews" schemaName="economy">
+            <column name="seller_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_reviews_reviewer" tableName="player_market_reviews" schemaName="economy">
+            <column name="reviewer_id"/>
+        </createIndex>
+
+        <!-- Unique constraint: one review per transaction -->
+        <addUniqueConstraint
+            schemaName="economy"
+            tableName="player_market_reviews"
+            columnNames="transaction_id, reviewer_id"
+            constraintName="uq_player_market_reviews_transaction_reviewer"/>
+
+        <comment>Player Market Reviews table - seller reputation system</comment>
+    </changeSet>
+
+    <!-- Player Market Seller Stats Table -->
+    <changeSet id="create-player-market-seller-stats-table" author="database-engineer">
+        <createTable tableName="player_market_seller_stats" schemaName="economy">
+            <column name="seller_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="total_sales" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_revenue_ed" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="average_rating" type="DECIMAL(3,2)" defaultValue="0.00"/>
+            <column name="total_reviews" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active_listings" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_sales_30d" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reputation_score" type="INTEGER" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_sale_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="player_market_seller_stats"
+            baseColumnNames="seller_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_player_market_seller_stats_seller"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for leaderboards -->
+        <createIndex indexName="idx_player_market_seller_stats_reputation" tableName="player_market_seller_stats" schemaName="economy">
+            <column name="reputation_score" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_seller_stats_revenue" tableName="player_market_seller_stats" schemaName="economy">
+            <column name="total_revenue_ed" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_player_market_seller_stats_rating" tableName="player_market_seller_stats" schemaName="economy">
+            <column name="average_rating" descending="true"/>
+        </createIndex>
+
+        <comment>Player Market Seller Stats table - aggregate seller statistics</comment>
+    </changeSet>
+
+</databaseChangeLog>
+

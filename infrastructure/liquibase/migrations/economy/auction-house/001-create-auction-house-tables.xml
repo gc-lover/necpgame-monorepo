@@ -1,0 +1,292 @@
+<!-- Issue: #42 -->
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Auctions Table -->
+    <changeSet id="create-auctions-table" author="database-engineer">
+        <createTable tableName="auctions" schemaName="economy">
+            <column name="auction_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="seller_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_template_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_rarity" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="starting_bid_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_bid_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="buyout_price_ed" type="INTEGER"/>
+            <column name="current_bidder_id" type="UUID"/>
+            <column name="bid_count" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INTEGER" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="duration_hours" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="auctions"
+            baseColumnNames="seller_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_auctions_seller"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="auctions"
+            baseColumnNames="current_bidder_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_auctions_current_bidder"
+            onDelete="SET NULL"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_auctions_seller" tableName="auctions" schemaName="economy">
+            <column name="seller_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auctions_current_bidder" tableName="auctions" schemaName="economy">
+            <column name="current_bidder_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auctions_item_type" tableName="auctions" schemaName="economy">
+            <column name="item_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auctions_status" tableName="auctions" schemaName="economy">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auctions_expires_at" tableName="auctions" schemaName="economy">
+            <column name="expires_at"/>
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auctions_created_at" tableName="auctions" schemaName="economy">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <!-- Composite indexes for common queries -->
+        <createIndex indexName="idx_auctions_active" tableName="auctions" schemaName="economy">
+            <column name="status"/>
+            <column name="item_type"/>
+            <column name="current_bid_ed"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auctions_search" tableName="auctions" schemaName="economy">
+            <column name="item_type"/>
+            <column name="item_rarity"/>
+            <column name="current_bid_ed"/>
+        </createIndex>
+
+        <comment>Auctions table - stores all auction lots</comment>
+    </changeSet>
+
+    <!-- Auction Bids Table -->
+    <changeSet id="create-auction-bids-table" author="database-engineer">
+        <createTable tableName="auction_bids" schemaName="economy">
+            <column name="bid_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="auction_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bidder_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bid_amount_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_leading" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_outbid" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="auction_bids"
+            baseColumnNames="auction_id"
+            referencedTableSchemaName="economy"
+            referencedTableName="auctions"
+            referencedColumnNames="auction_id"
+            constraintName="fk_auction_bids_auction"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="auction_bids"
+            baseColumnNames="bidder_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_auction_bids_bidder"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_auction_bids_auction" tableName="auction_bids" schemaName="economy">
+            <column name="auction_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auction_bids_bidder" tableName="auction_bids" schemaName="economy">
+            <column name="bidder_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auction_bids_leading" tableName="auction_bids" schemaName="economy">
+            <column name="is_leading"/>
+            <column name="auction_id"/>
+        </createIndex>
+
+        <comment>Auction Bids table - history of all bids</comment>
+    </changeSet>
+
+    <!-- Auction History Table -->
+    <changeSet id="create-auction-history-table" author="database-engineer">
+        <createTable tableName="auction_history" schemaName="economy">
+            <column name="history_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="auction_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seller_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="winner_id" type="UUID"/>
+            <column name="item_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_template_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="starting_bid_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="final_bid_ed" type="INTEGER"/>
+            <column name="buyout_price_ed" type="INTEGER"/>
+            <column name="settlement_method" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commission_ed" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seller_received_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bid_count" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="auction_history"
+            baseColumnNames="auction_id"
+            referencedTableSchemaName="economy"
+            referencedTableName="auctions"
+            referencedColumnNames="auction_id"
+            constraintName="fk_auction_history_auction"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="auction_history"
+            baseColumnNames="seller_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_auction_history_seller"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="auction_history"
+            baseColumnNames="winner_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_auction_history_winner"
+            onDelete="SET NULL"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_auction_history_seller" tableName="auction_history" schemaName="economy">
+            <column name="seller_id"/>
+            <column name="completed_at" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auction_history_winner" tableName="auction_history" schemaName="economy">
+            <column name="winner_id"/>
+            <column name="completed_at" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_auction_history_completed_at" tableName="auction_history" schemaName="economy">
+            <column name="completed_at" descending="true"/>
+        </createIndex>
+
+        <comment>Auction History table - completed auctions archive</comment>
+    </changeSet>
+
+</databaseChangeLog>
+
