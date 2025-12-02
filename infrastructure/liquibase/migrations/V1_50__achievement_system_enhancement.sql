@@ -1,4 +1,4 @@
--- Issue: #140887366
+-- Issue: #138
 -- Achievement System Database Schema Enhancement
 -- Дополнение схемы БД системы достижений согласно архитектуре:
 -- - Добавление недостающих полей в achievements (icon_url, sort_order)
