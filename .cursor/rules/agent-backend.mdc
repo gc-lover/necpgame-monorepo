@@ -6,1407 +6,330 @@ alwaysApply: true
 
 ## 🚀 Быстрый старт
 
-**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
 ---
 
-## ⚡ Быстрая валидация перед началом и после генерации
+## Роль
 
-### ПЕРЕД началом работы:
-
-```bash
-# 1. Проверка OpenAPI спецификации
-redocly lint proto/openapi/{service-name}.yaml
-
-# 2. Проверка размера спецификации (КРИТИЧНО!)
-wc -l proto/openapi/{service-name}.yaml
-
-# Если >500 строк и НЕ разбита на модули - СТОП!
-# Верни задачу API Designer: Update Status to 'API Designer - Returned'
-```
-
-**Чек-лист перед началом:**
-- [ ] OpenAPI spec существует и валиден
-- [ ] Спецификация <500 строк (или разбита на модули)
-- [ ] Архитектура готова (если системная задача)
-
-**Если спецификация >500 строк:** Верни задачу API Designer!
-
-### ПОСЛЕ генерации кода:
-
-```bash
-cd services/{service-name}-go
-
-# КРИТИЧЕСКАЯ ПРОВЕРКА: Размеры сгенерированных файлов
-make check-file-sizes
-
-# Ожидаемый вывод:
-# ✅ pkg/api/types.gen.go: 350 lines (OK)
-# ✅ pkg/api/server.gen.go: 280 lines (OK)
-# ✅ pkg/api/spec.gen.go: 120 lines (OK)
-
-# Если ⚠️ WARNING - файл >500 строк!
-# Действие: Верни задачу API Designer для разбиения спецификации
-```
-
-**Чек-лист после генерации:**
-- [ ] 3 файла созданы (types.gen.go, server.gen.go, spec.gen.go)
-- [ ] Каждый файл <500 строк
-- [ ] Код компилируется: `go build ./...`
-- [ ] Старый api.gen.go удален (если был)
-
-**Если файлы >500 строк:** Верни задачу API Designer!
-
----
-
-## ⚠️ ОБЯЗАТЕЛЬНО: Performance Optimizations
-
-**КРИТИЧНО:** Backend ОБЯЗАН применять оптимизации для MMOFPS RPG!
-
-**См. СТРОГИЕ требования:** `.cursor/PERFORMANCE_ENFORCEMENT.md`
-
-**Ключевые моменты:**
-- ❌ БЕЗ оптимизаций → задачу НЕЛЬЗЯ передавать (BLOCKER)
-- ✅ Используй `/backend-validate-optimizations #123` перед передачей
-- 🔄 Existing сервисы → ОБЯЗАТЕЛЬНО рефакторить (`/backend-refactor-service`)
-- 📖 ВСЕ оптимизации: `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` (120+ техник)
-
----
-
-## Роль агента
-
-Backend Developer реализует бекенд на Go по OpenAPI спецификации, создает микросервисы и реализует бизнес-логику.
-
-## ⚠️ КРИТИЧЕСКИ ВАЖНО: Миграция на Chi роутер
-
-**Chi - ЕДИНСТВЕННЫЙ роутер для ВСЕХ сервисов!**
-
-### ✅ Для НОВЫХ сервисов:
-- `ROUTER_TYPE := chi-server` в Makefile
-- `github.com/go-chi/chi/v5` как зависимость
-- Chi - современный, легковесный, быстрый роутер
-
-### 🔄 Для СУЩЕСТВУЮЩИХ сервисов с Gorilla:
-- **ОБЯЗАТЕЛЬНО мигрируй на Chi!**
-- Gorilla → Chi миграция обязательна для всех сервисов
-- Следуй инструкциям по миграции (см. секцию "Миграция с Gorilla на Chi" ниже)
-- После миграции удали все импорты `github.com/gorilla/mux`
-
-### ❌ Gorilla ЗАПРЕЩЕН:
-- Gorilla deprecated и НЕ используется в проекте
-- Все новые и существующие сервисы ДОЛЖНЫ использовать Chi
-- При обнаружении Gorilla → немедленная миграция на Chi
+Backend Developer реализует Go сервисы по OpenAPI спецификации, создает микросервисы, бизнес-логику.
 
 ## Область ответственности
 
-- Генерация кода из OpenAPI спецификаций через oapi-codegen
-- Реализация Go сервисов по OpenAPI
-- Создание handlers для endpoints (реализация сгенерированных интерфейсов)
-- Настройка базы данных
-- Реализация бизнес-логики
-- Написание тестов
+- Генерация кода из OpenAPI через **ogen** (NEW!) или oapi-codegen (legacy)
+- Реализация Go сервисов и handlers
+- Настройка БД, бизнес-логика
+- Тесты и оптимизации
+- **Миграция на ogen** для performance gains
 
 ## Статус в Project
 
 - **Статусы:** `Backend - Todo`, `Backend - In Progress`, `Backend - Blocked`, `Backend - Review`, `Backend - Returned`
-- **Функциональные метки (опционально):** `backend`, `protocol`, `infrastructure`
+- **Метки (опц):** `backend`, `protocol`, `infrastructure`
 
-## Workflow with Issues
-
-### 📋 Понимание статуса
-
-**`Backend - Todo`** = Задача ДЛЯ ТЕБЯ (Backend агента). Ты должен её взять!
+## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ задачу:** `Status:"Backend - Todo"` (это задачи для тебя)
-2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `Backend - In Progress`
-3. **РАБОТАТЬ:** Создавай код, тесты, коммиты
-4. **ПЕРЕДАТЬ:** Обнови статус на `Network - Todo` (системные) или `QA - Todo` (контент-квесты)
+1. **НАЙТИ:** `Status:"Backend - Todo"`
+2. **ВЗЯТЬ:** Обнови статус на `Backend - In Progress` (`7bc9d20f`)
+3. **РАБОТАТЬ:** Код, тесты, оптимизации
+4. **ПЕРЕДАТЬ:** `Network - Todo` (`944246f3`) или `QA - Todo` (`86ca422e`)
 
-### 📍 ID статусов
+**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
-- `Backend - In Progress`: `7bc9d20f`
-- `Network - Todo`: `944246f3`
-- `QA - Todo`: `86ca422e`
-- `API Designer - Returned`: `d0352ed3`
+## ⚡ Валидация (ОБЯЗАТЕЛЬНО!)
 
-**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
-
-## Общие правила
-
-См. `.cursor/AGENT_COMMON_RULES.md` для:
-- Оптимизация GitHub API
-- Управление метками
-- Git коммиты
-- Шаблоны возврата задач
-- Лимит размера файлов (max 500 строк)
-
-## Контентные квесты
-
-**Если Issue имеет метки `canon`, `lore`, `quest`:**
-
-**Импорт в БД (ОБЯЗАТЕЛЬНО):**
-1. Импортируй YAML через `POST /api/v1/gameplay/quests/content/reload` в `quest_definitions`
-2. Проверь импорт (загружен, данные корректны, доступен через API)
-3. После импорта Update Status to `QA - Todo`
-
-**Важно:** Без импорта контент не попадет в игру
-
-## Команды Cursor
-
-**Используй команды вместо ручных операций:**
-- `/backend-find-tasks` - найти задачи
-- `/backend-return-task #123` - вернуть задачу
-- `/backend-validate-result #123` - валидировать результат
-- `/backend-validate-optimizations #123` - **ОБЯЗАТЕЛЬНО перед передачей!**
-- `/backend-check-openapi #123` - проверить OpenAPI
-- `/backend-check-architecture #123` - проверить архитектуру
-- `/backend-import-quest-to-db #123` - импортировать квест в БД
-
-**Детали:** `.cursor/commands/backend-*.md`
-
-**⚠️ ОБЯЗАТЕЛЬНО:** Запускай `/backend-validate-optimizations #123` перед передачей задачи Network/QA!
-
-### 🔄 Быстрые команды для валидации
-
-**Проверка OpenAPI перед началом:**
+### ПЕРЕД началом:
 ```bash
-# Используй команду
-/backend-check-openapi #123
-
-# Или вручную:
-redocly lint proto/openapi/{service-name}.yaml
-wc -l proto/openapi/{service-name}.yaml  # Должно быть <500 или разбито
+redocly lint proto/openapi/{service}.yaml
+wc -l proto/openapi/{service}.yaml  # <500 или разбита
 ```
 
-**Валидация после генерации:**
+### ПОСЛЕ генерации:
 ```bash
-# Используй команду
-/backend-validate-result #123
-
-# Или вручную:
-cd services/{service-name}-go
-make check-file-sizes  # ОБЯЗАТЕЛЬНО!
-go build ./...
-go test ./...
+make check-file-sizes  # Каждый .gen.go <500 строк
+go build ./... && go test ./...
 ```
 
-**Возврат задачи если спецификация >500 строк:**
+### ПЕРЕД передачей (КРИТИЧНО!):
 ```bash
-# Используй команду
-/backend-return-task #123
-
-# Причина: "OpenAPI spec too large (XXX lines, not split into modules)"
-# Update Status to: API Designer - Returned
+/backend-validate-optimizations #123  # BLOCKER если failed!
 ```
 
-## Входные данные
+## ⚠️ Protocol Selection (CRITICAL!)
 
-- OpenAPI спецификация от API Designer (`proto/openapi/`)
-- Архитектура от Architect
-- Существующие Go сервисы
-- oapi-codegen установлен
+**ЧИТАЙ ОБЯЗАТЕЛЬНО:** `.cursor/PROTOCOL_SELECTION_GUIDE.md`
 
-## ⚠️ ОБЯЗАТЕЛЬНО: Проверка Makefile перед началом
+**Default: ogen (JSON REST) - 95% сервисов**
+- Matchmaking, inventory, profiles, admin panel
+- <1000 RPS, latency >10ms acceptable
+- Debugging/monitoring important
+- **Gains:** 90% faster vs oapi-codegen, easy debugging
 
-**Если создаешь НОВЫЙ сервис:**
+**Exception: Protobuf (Binary) - 5% сервисов**
+- Real-time game state (position, shooting) >1000 RPS
+- Voice chat metadata, zone sync
+- ТОЛЬКО если в списке `.cursor/PROTOCOL_SELECTION_GUIDE.md`
+- **Gains:** 2.5x faster, 50% smaller, но сложнее debugging
 
-1. **Создай Makefile** используя пример выше (секция "Пример Makefile")
-2. **Замени** `{service-name}` и `ROUTER_TYPE`
-3. **НЕ создавай** `oapi-codegen.yaml` (параметры в Makefile)
-4. **Создай** `.gitignore`:
-   ```gitignore
-   *.bundled.yaml
-   pkg/api/types.gen.go
-   pkg/api/server.gen.go
-   pkg/api/spec.gen.go
-   *.exe
-   *.test
-   ```
+**Статус генераторов:**
+- ✅ **НОВЫЕ REST сервисы** → `ogen` (90% faster!)
+- ⚡ **Real-time game state** → `protobuf` (см. guide)
+- 🔄 **Existing oapi-codegen** → Мигрируй на `ogen` (#1590)
+- ❌ **oapi-codegen для новых** → ЗАПРЕЩЕН
 
-**Если работаешь с СУЩЕСТВУЮЩИМ сервисом:**
+**Миграция:** `.cursor/OGEN_MIGRATION_GUIDE.md` ⬅️ **Полная инструкция!**
 
-1. **Проверь Makefile:**
-   ```bash
-   grep "generate-types:" services/{service}-go/Makefile
-   ```
-2. **Если НЕТ `generate-types`** → обнови Makefile (используй пример выше)
-3. **Если ЕСТЬ** → используй существующий Makefile
+## 📦 Генерация кода
 
-## Тестирование и Docker
+### ⚡ ogen (JSON REST) - DEFAULT для 95% сервисов
 
-**После генерации кода:**
-1. `make verify-api` → `make generate-api`
-2. `go build ./...` → `go test ./...`
-3. `docker build -t {service-name}:test services/{service-name}-go`
-4. Обнови `go.mod`: добавь `github.com/oapi-codegen/runtime`, запусти `go mod tidy`
+```makefile
+generate-api:
+	npx --yes @redocly/cli bundle ../../proto/openapi/$(SERVICE).yaml -o openapi-bundled.yaml
+	ogen --target pkg/api --package api --clean openapi-bundled.yaml
+```
 
-**Скрипты:** `./scripts/add-codegen-deps.sh`, `./scripts/validate-codegen.sh`
+**Генерирует:** ~20 файлов, каждый <200 строк (автоматически SOLID!)
 
-## Генерация кода из OpenAPI
+**Gains:** 90% faster, typed responses, no interface{} boxing
 
-**⚠️ КРИТИЧЕСКИ ВАЖНО:** Используй **РАЗДЕЛЬНУЮ ГЕНЕРАЦИЮ** для соблюдения SOLID и лимита 500 строк!
+**Когда использовать:**
+- ✅ REST API (matchmaking, inventory, profiles)
+- ✅ <1000 RPS
+- ✅ Latency >10ms acceptable
+- ✅ Need debugging/Swagger
 
-### Проблема старой генерации:
+**Гайд:** `.cursor/OGEN_MIGRATION_GUIDE.md`
 
-❌ **Старый подход** (1 файл): `api.gen.go` (2000-3000 строк) → нарушает SOLID и лимит 500 строк
-✅ **Новый подход** (3 файла): `types.gen.go`, `server.gen.go`, `spec.gen.go` (каждый <500 строк)
+### ⚡ protobuf (Binary) - ТОЛЬКО для real-time game state
 
----
+```makefile
+generate-proto:
+	protoc --go_out=. --go_opt=paths=source_relative proto/*.proto
+```
 
-### Быстрый старт (раздельная генерация):
+**Генерирует:** `.pb.go` файлы с оптимизированными Marshal/Unmarshal
 
-1. **Установи oapi-codegen:**
-   ```bash
-   go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
-   ```
+**Gains:** 2.5x faster encoding, 7.5x faster decoding, 50% smaller
 
-2. **Создай `Makefile` с раздельной генерацией:**
-   - См. `.cursor/CODE_GENERATION_TEMPLATE.md` для полного шаблона
-   - **ОБЯЗАТЕЛЬНО:** `generate-types`, `generate-server`, `generate-spec` как отдельные таргеты
+**Когда использовать:**
+- ⚡ Real-time game state (position, shooting) >1000 RPS
+- ⚡ Voice chat metadata
+- ⚡ Zone sync (internal microservices)
+- ⚡ ТОЛЬКО если в списке `.cursor/PROTOCOL_SELECTION_GUIDE.md`
 
-3. **НЕ создавай `oapi-codegen.yaml`:**
-   - При раздельной генерации параметры передаются через флаги в `Makefile`
+**НЕ используй protobuf для:**
+- ❌ Admin panel (debugging nightmare)
+- ❌ Public API (integration barrier)
+- ❌ Low traffic (<100 RPS)
+- ❌ Web browser clients
 
-4. **Сгенерируй код:**
-   ```bash
-   make generate-api  # Автоматически: bundle + generate-types + generate-server + generate-spec
-   ```
+**Шаблон:** `.cursor/CODE_GENERATION_TEMPLATE.md`
 
-5. **Проверь размеры файлов:**
-   ```bash
-   make check-file-sizes  # Проверка лимита 500 строк
-   ```
-
----
-
-### Структура (НОВАЯ - раздельная генерация):
+## 🏗️ Структура сервиса (SOLID)
 
 ```
 services/{service}-go/
 ├── pkg/api/
-│   ├── types.gen.go              # <500 строк (модели, схемы)
-│   ├── server.gen.go             # <500 строк (ServerInterface, роутер)
-│   └── spec.gen.go               # <500 строк (embedded OpenAPI spec)
+│   ├── types.gen.go    # <500 (сгенерирован)
+│   ├── server.gen.go   # <500 (сгенерирован)
+│   └── spec.gen.go     # <500 (сгенерирован)
 ├── server/
-│   ├── http_server.go            # ТОЛЬКО настройка сервера
-│   ├── middleware.go             # ВСЕ middleware
-│   ├── handlers.go               # ВСЕ handlers (реализация api.ServerInterface)
-│   ├── service.go                # Бизнес-логика
-│   └── repository.go             # БД
-├── Makefile                      # С раздельной генерацией
-└── .gitignore                    # Игнорирует *.gen.go и *.bundled.yaml
+│   ├── http_server.go  # ТОЛЬКО настройка сервера
+│   ├── middleware.go   # ВСЕ middleware
+│   ├── handlers.go     # ВСЕ handlers
+│   ├── service.go      # Бизнес-логика
+│   └── repository.go   # БД
+└── Makefile
 ```
 
-**ВАЖНО:** Пакет остается `api`, все типы доступны через `api.TypeName` (ничего не меняется для пользователя!)
-
----
-
-### Makefile команды (раздельная генерация):
-
-```makefile
-# Генерация в 3 файла
-generate-types        # types.gen.go - модели и схемы
-generate-server       # server.gen.go - ServerInterface и роутер
-generate-spec         # spec.gen.go - embedded OpenAPI spec
-generate-api          # Все 3 файла + проверка размеров
-
-# Утилиты
-bundle-api            # Bundle OpenAPI spec с $ref
-verify-api            # Lint OpenAPI spec
-check-file-sizes      # Проверка лимита 500 строк
-clean                 # Удаление сгенерированных файлов
-```
-
----
-
-### Пример Makefile (копируй этот шаблон):
-
-```makefile
-.PHONY: generate-api bundle-api clean verify-api check-deps generate-types generate-server generate-spec check-file-sizes
-
-SERVICE_NAME := {service-name}
-OAPI_CODEGEN := oapi-codegen
-REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := chi-server
-
-SPEC_DIR := ../../proto/openapi
-API_DIR := pkg/api
-SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-
-# Split output files (SOLID compliance)
-TYPES_FILE := $(API_DIR)/types.gen.go
-SERVER_FILE := $(API_DIR)/server.gen.go
-SPEC_FILE := $(API_DIR)/spec.gen.go
-
-check-deps:
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
-
-bundle-api: check-deps
-	@mkdir -p $(API_DIR)
-	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
-
-generate-types: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(TYPES_FILE) | awk '{print "✅ types.gen.go: " $$1 " lines"}'
-
-generate-server: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(SERVER_FILE) | awk '{print "✅ server.gen.go: " $$1 " lines"}'
-
-generate-spec: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(SPEC_FILE) | awk '{print "✅ spec.gen.go: " $$1 " lines"}'
-
-check-file-sizes:
-	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
-		if [ -f "$$file" ]; then \
-			lines=$$(wc -l < "$$file"); \
-			if [ $$lines -gt 500 ]; then echo "⚠️  $$file: $$lines lines"; \
-			else echo "✅ $$file: $$lines lines"; fi; \
-		fi; \
-	done
-
-generate-api: generate-types generate-server generate-spec check-file-sizes
-
-verify-api: check-deps
-	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
-
-clean:
-	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
-```
-
-**Замени:**
-- `{service-name}` → имя сервиса (например: `companion-service`)
-- `ROUTER_TYPE` → **ВСЕГДА chi-server** (для всех сервисов!)
-
-**Как определить что делать:**
-
-### ✅ НОВЫЙ сервис (создаешь с нуля):
-
-```makefile
-ROUTER_TYPE := chi-server  # ✅ ВСЕГДА chi!
-```
-
-**Зависимости:**
-- `github.com/go-chi/chi/v5` - роутер
-- `github.com/oapi-codegen/runtime` - runtime для oapi-codegen
-
-### 🔄 СУЩЕСТВУЮЩИЙ сервис (уже есть код):
-
-```bash
-# Проверь какой роутер используется
-grep -r "github.com/go-chi/chi" services/{service}-go/server/
-
-# Если Chi найден:
-ROUTER_TYPE := chi-server  # ✅ Всё в порядке, продолжай
-
-# Если Chi НЕ найден, проверь Gorilla:
-grep -r "github.com/gorilla/mux" services/{service}-go/server/
-
-# Если Gorilla найден:
-# ⚠️ ОБЯЗАТЕЛЬНАЯ МИГРАЦИЯ на Chi!
-# См. секцию "Миграция с Gorilla на Chi" ниже
-```
-
-**⚠️ КРИТИЧЕСКИ ВАЖНО:**
-- **ОБЯЗАТЕЛЬНО мигрируй** все Gorilla сервисы на Chi!
-- Chi и Gorilla имеют **разный API** (см. таблицу различий ниже)
-- Миграция требует переписывания `server/http_server.go`
-- Следуй инструкциям по миграции для минимизации ошибок
-
----
-
-### Реализация handlers (без изменений):
-
-```go
-// Issue: #123
-package server
-
-import (
-    "net/http"
-    "github.com/your-org/necpgame/services/{service}-go/pkg/api"
-)
-
-type Handlers struct {
-    service Service
-}
-
-// NewHandlers создает handlers с DI
-func NewHandlers(service Service) *Handlers {
-    return &Handlers{service: service}
-}
-
-// Реализация api.ServerInterface (сгенерированный интерфейс)
-func (h *Handlers) ListItems(w http.ResponseWriter, r *http.Request, params api.ListItemsParams) {
-    // Используй сгенерированные типы из types.gen.go
-    items, err := h.service.ListItems(r.Context(), params)
-    if err != nil {
-        respondError(w, http.StatusInternalServerError, err.Error())
-        return
-    }
-    
-    // Response типы тоже из types.gen.go
-    response := api.ListItemsResponse{
-        Items: items,
-    }
-    
-    respondJSON(w, http.StatusOK, response)
-}
-```
-
----
-
----
-
-### HTTP Server setup (chi router - для НОВЫХ сервисов):
-
-**ВАЖНО:** Chi и gorilla имеют **разный API**. НЕ пытайся мигрировать существующие сервисы с gorilla на chi!
-
-**Примеры различий:**
-
-| Операция | Chi | Gorilla |
-|----------|-----|---------|
-| Создание роутера | `chi.NewRouter()` | `mux.NewRouter()` |
-| Тип роутера | `chi.Router` | `*mux.Router` |
-| Subrouter | `router.Route("/api", func(r chi.Router) {...})` | `router.PathPrefix("/api").Subrouter()` |
-| Методы | `router.Get("/path", handler)` | `router.HandleFunc("/path", handler).Methods("GET")` |
-| Интеграция oapi | `api.HandlerWithOptions(h, api.ChiServerOptions{...})` | `api.HandlerFromMux(h, router)` |
-
----
-
-```go
-// Issue: #123
-package server
-
-import (
-    "net/http"
-    "github.com/go-chi/chi/v5"
-    "github.com/your-org/necpgame/services/{service}-go/pkg/api"
-)
-
-type HTTPServer struct {
-    addr    string
-    router  chi.Router
-    service Service
-}
-
-func NewHTTPServer(addr string, service Service) *HTTPServer {
-    router := chi.NewRouter()
-    
-    // Middleware
-    router.Use(loggingMiddleware)
-    router.Use(metricsMiddleware)
-    
-    // Handlers
-    handlers := NewHandlers(service)
-    
-    // Интеграция с oapi-codegen (chi)
-    api.HandlerWithOptions(handlers, api.ChiServerOptions{
-        BaseURL:    "/api/v1",
-        BaseRouter: router,
-    })
-    
-    // Health check
-    router.Get("/health", healthCheck)
-    
-    return &HTTPServer{
-        addr:   addr,
-        router: router,
-        service: service,
-    }
-}
-
-func (s *HTTPServer) Start() error {
-    return http.ListenAndServe(s.addr, s.router)
-}
-```
-
----
-
-## 🔄 Миграция с Gorilla на Chi (ОБЯЗАТЕЛЬНО!)
-
-**Если сервис использует Gorilla - ОБЯЗАТЕЛЬНО мигрируй на Chi!**
-
-**Полная инструкция:** `.cursor/GORILLA_TO_CHI_MIGRATION.md`
-
-**Краткая версия ниже:**
-
-### Шаг 1: Обновить Makefile
-
-```makefile
-# Было:
-ROUTER_TYPE := gorilla-server
-
-# Стало:
-ROUTER_TYPE := chi-server
-```
-
-### Шаг 2: Обновить go.mod
-
-```bash
-# Удалить Gorilla
-go mod edit -dropreplace github.com/gorilla/mux
-
-# Добавить Chi
-go get github.com/go-chi/chi/v5@latest
-go get github.com/oapi-codegen/runtime@latest
-go mod tidy
-```
-
-### Шаг 3: Переписать server/http_server.go
-
-**Было (Gorilla):**
-```go
-import "github.com/gorilla/mux"
-
-func NewHTTPServer(addr string, service Service) *HTTPServer {
-    router := mux.NewRouter()
-    
-    // Middleware
-    router.Use(loggingMiddleware)
-    
-    // Handlers
-    handlers := NewHandlers(service)
-    api.HandlerFromMux(handlers, router)
-    
-    // Health
-    router.HandleFunc("/health", healthCheck).Methods("GET")
-    
-    return &HTTPServer{addr: addr, router: router}
-}
-```
-
-**Стало (Chi):**
-```go
-import (
-    "github.com/go-chi/chi/v5"
-    "github.com/go-chi/chi/v5/middleware"
-)
-
-func NewHTTPServer(addr string, service Service) *HTTPServer {
-    router := chi.NewRouter()
-    
-    // Middleware
-    router.Use(middleware.Logger)
-    router.Use(loggingMiddleware)
-    
-    // Handlers
-    handlers := NewHandlers(service)
-    api.HandlerWithOptions(handlers, api.ChiServerOptions{
-        BaseURL:    "/api/v1",
-        BaseRouter: router,
-    })
-    
-    // Health
-    router.Get("/health", healthCheck)
-    
-    return &HTTPServer{addr: addr, router: router}
-}
-```
-
-### Шаг 4: Регенерировать код
-
-```bash
-cd services/{service-name}-go
-make clean
-make generate-api
-```
-
-### Шаг 5: Обновить импорты
-
-```bash
-# Удалить все импорты Gorilla
-# Заменить на Chi
-sed -i 's|github.com/gorilla/mux|github.com/go-chi/chi/v5|g' server/*.go
-```
-
-### Шаг 6: Проверить и закоммитить
-
-```bash
-go build ./...
-go test ./...
-
-git add .
-git commit -m "[backend] refactor: migrate from Gorilla to Chi router
-
-- Replace gorilla/mux with go-chi/chi/v5
-- Update Makefile: gorilla-server → chi-server
-- Rewrite server/http_server.go for Chi API
-- Update oapi-codegen integration
-- All tests passing
-
-BREAKING: Router migrated from Gorilla to Chi
-
-Related Issue: #123"
-```
-
-### Таблица миграции API:
-
-| Gorilla | Chi | Замечания |
-|---------|-----|-----------|
-| `mux.NewRouter()` | `chi.NewRouter()` | Создание роутера |
-| `*mux.Router` | `chi.Router` | Тип роутера |
-| `router.HandleFunc("/path", h).Methods("GET")` | `router.Get("/path", h)` | GET метод |
-| `router.HandleFunc("/path", h).Methods("POST")` | `router.Post("/path", h)` | POST метод |
-| `router.PathPrefix("/api").Subrouter()` | `router.Route("/api", func(r chi.Router){...})` | Subrouter |
-| `api.HandlerFromMux(h, router)` | `api.HandlerWithOptions(h, api.ChiServerOptions{...})` | oapi-codegen |
-
-### Middleware миграция:
-
-**Gorilla:**
-```go
-router.Use(loggingMiddleware)
-```
-
-**Chi:**
-```go
-import "github.com/go-chi/chi/v5/middleware"
-
-router.Use(middleware.Logger)      // Встроенный logger
-router.Use(middleware.Recoverer)   // Встроенный recoverer
-router.Use(loggingMiddleware)      // Кастомный
-```
-
-### Чек-лист миграции:
-
-- [ ] Обновлен Makefile (`chi-server`)
-- [ ] Обновлен go.mod (Chi добавлен, Gorilla удален)
-- [ ] Переписан `server/http_server.go`
-- [ ] Обновлены импорты
-- [ ] Регенерирован код (`make generate-api`)
-- [ ] Код компилируется (`go build ./...`)
-- [ ] Тесты проходят (`go test ./...`)
-- [ ] Коммит создан с префиксом `[backend]`
-
----
-
-### Паттерны
-
-**Makefile:**
-- Используй переменные (`SERVICE_NAME`, `ROUTER_TYPE`)
-- **ОБЯЗАТЕЛЬНО:** Раздельная генерация (`generate-types`, `generate-server`, `generate-spec`)
-- Добавь `check-file-sizes` для валидации лимита 500 строк
-
-**Handlers:**
-- Структура с DI через `New*Handlers()`
-- Используй сгенерированные типы из `api` пакета (ничего не меняется!)
-- Helpers для `respondJSON`/`respondError`
-
-**Middleware:**
-- **ВСЕ** в `middleware.go`, **НЕ** в `http_server.go`
-- DI для зависимостей
-
-**Роутер:**
-- **ЕДИНСТВЕННЫЙ роутер:** Chi (`chi-server`)
-  - Современный, легковесный, быстрый
-  - Отличная поддержка middleware
-  - Нативная интеграция с oapi-codegen
-  - `api.HandlerWithOptions()` для интеграции
-- **НОВЫЕ сервисы:** ВСЕГДА используй Chi
-- **СУЩЕСТВУЮЩИЕ с Chi:** продолжай использовать Chi
-- **СУЩЕСТВУЮЩИЕ с Gorilla:** ОБЯЗАТЕЛЬНО мигрируй на Chi!
-  - См. `.cursor/GORILLA_TO_CHI_MIGRATION.md`
-  - Миграция обязательна для всех сервисов
-
-**Валидация:**
-- Всегда `make verify-api` перед генерацией
-- Всегда `make check-file-sizes` после генерации
-
-**Поддерживаемые роутеры:**
-- **chi-server** ✅ (ЕДИНСТВЕННЫЙ стандарт)
-- gorilla-server ❌ (ЗАПРЕЩЕН, мигрируй на Chi)
-- echo-server, gin-server ❌ (НЕ используем)
-
----
-
-### Миграция существующих сервисов:
-
-**Если у сервиса уже есть `api.gen.go` >500 строк:**
-
-1. **Запусти скрипт миграции:**
-   ```bash
-   cd services/{service-name}-go
-   ../../scripts/migrate-to-split-generation.sh
-   ```
-
-2. **Удали старый файл:**
-   ```bash
-   rm -f pkg/api/api.gen.go
-   ```
-
-3. **Обнови `.gitignore`:**
-   ```gitignore
-   # Новая структура
-   pkg/api/types.gen.go
-   pkg/api/server.gen.go
-   pkg/api/spec.gen.go
-   
-   # Legacy (удалить, если есть)
-   pkg/api/api.gen.go
-   ```
-
-4. **Коммит:**
-   ```bash
-   git add Makefile .gitignore
-   git commit -m "[backend] refactor: migrate to split generation for SOLID compliance
-
-   - Split api.gen.go into types.gen.go, server.gen.go, spec.gen.go
-   - Each file <500 lines (SOLID compliance)
-   
-   Related Issue: #123"
-   ```
-
----
-
-### Внешние ссылки в OpenAPI:
-
-- Используй `@redocly/cli bundle` для разрешения `$ref` на `common.yaml`
-- **НЕ объединяй файлы вручную**
-- Bundled файлы в `.gitignore` (не коммитятся)
-- Bundle автоматически в `make bundle-api`
-
----
-
-### Чек-лист после генерации:
-
-- [ ] 3 файла созданы: `types.gen.go`, `server.gen.go`, `spec.gen.go`
-- [ ] Каждый файл <500 строк (`make check-file-sizes`)
-- [ ] Старый `api.gen.go` удален
-- [ ] `.gitignore` обновлен
-- [ ] Код компилируется: `go build ./...`
-- [ ] Тесты проходят: `go test ./...`
-- [ ] Docker образ собирается
+**SOLID:** Каждый файл = одна ответственность, max 500 строк
+
+## ⚡ Performance (ОБЯЗАТЕЛЬНО!)
+
+### BLOCKER (без этого НЕЛЬЗЯ передавать):
+- ❌ No context timeouts → FIX!
+- ❌ No DB pool config → FIX!
+- ❌ Goroutine leaks → FIX!
+- ❌ No struct alignment → FIX!
+
+### Уровень 1: Базовые (ВСЕ сервисы)
+- Context timeouts
+- DB pool (25-50 conn)
+- Struct alignment
+- Structured logging
+- Health/Metrics
+
+### Уровень 2: Hot Path (>100 RPS)
+- Memory pooling (`sync.Pool`)
+- Batch DB operations
+- Lock-free (`atomic`)
+- Zero allocations
+
+### Уровень 3: Game Servers (real-time)
+- Worker pool
+- Spatial partitioning
+- Adaptive tick rate
+- UDP для game state
+
+### 🆕 Новые техники (MMO/FPS):
+
+**Sessions & Inventory:**
+- Redis session store → stateless servers
+- Inventory caching → DB ↓95%
+- Diff updates → bandwidth ↓70-90%
+
+**Guilds & Trading:**
+- Guild action batching → DB ↓95%
+- Optimistic locking → no deadlocks
+- Transaction queue
+
+**Matchmaking & Anti-Cheat:**
+- Skill buckets → O(1) matching
+- Server-side validation
+- Anomaly detection
+
+**Database Advanced:**
+- Time-series partitioning → query ↓90%
+- Materialized views → 100x speedup
+- Covering indexes → ↓50-70%
+- Partial indexes → index size ↓60-80%
+
+**Cache Advanced:**
+- Pub/Sub invalidation
+- Cache warming
+- Negative caching
+
+**FPS-Specific:**
+- Server-side rewind (lag comp)
+- Dead reckoning
+- Frustum/Occluder culling
+
+**Resilience:**
+- Circuit breaker
+- Feature flags
+- Load shedding
+- Fallback strategies
+
+**Compression:**
+- Adaptive (LZ4/Zstandard)
+- Dictionary compression
+
+**Детали:** `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` (120+ техник в 13 частях)
+
+**Шаблоны:**
+- `.cursor/templates/backend-api-templates.md`
+- `.cursor/templates/backend-game-templates.md`
+- `.cursor/templates/backend-utils-templates.md`
+
+**Валидация:** `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md`
+
+## Команды
+
+- `/backend-find-tasks` - найти задачи
+- `/backend-validate-optimizations #123` - **ОБЯЗАТЕЛЬНО перед передачей!**
+- `/backend-validate-result #123` - проверка функционала
+- `/backend-refactor-service {service}` - аудит existing
+- `/backend-check-openapi #123` - проверка спецификации
+- `/backend-migrate-to-ogen {service}` - **NEW!** Миграция на ogen
+
+**Детали:** `.cursor/commands/backend-*.md`
+
+**ogen миграция:**
+- Гайд: `.cursor/OGEN_MIGRATION_GUIDE.md`
+- Reference: `services/combat-combos-service-ogen-go/`
+- Benchmarks: `go test -bench=BenchmarkOgen -benchmem`
+
+## Входные данные
+
+- OpenAPI от API Designer (`proto/openapi/`)
+- Архитектура от Architect
+- Existing Go сервисы
 
 ## Выходные данные
 
-- Go код в `services/` (сгенерированный + реализация)
-- Handlers для всех endpoints (сгенерированные интерфейсы + реализация)
-- Тесты
-- Миграции БД (если нужно)
-- Конфигурация oapi-codegen
-- Документация кода
+- Go код (сгенерированный + реализация)
+- Handlers (реализация api.ServerInterface)
+- Тесты, миграции БД
+- **Issue в начале:** `// Issue: #123`
 
-## Разбиение больших задач
+## Контентные квесты
 
-**См. `.cursor/AGENT_COMMON_RULES.md`**
+**Labels `canon`, `lore`, `quest`:**
+1. Импорт YAML: `POST /api/v1/gameplay/quests/content/reload`
+2. Проверка импорта
+3. Update Status: `QA - Todo`
 
-**Примеры:** Handler → User/Admin/Public handlers, Service → Interface/Implementation/Tests, API → Endpoints groups A/B/C
+## Переход к следующему
 
-## Критерии готовности
+**ОБЯЗАТЕЛЬНО перед передачей:**
+1. `/backend-validate-result #123` - функционал
+2. `/backend-validate-optimizations #123` - **КРИТИЧНО!**
+3. Обе ✅ → передавай
 
-**Используй:** `/backend-validate-result #123`
+**Системная:** `Network - Todo` + PR  
+**Контент-квест:** `QA - Todo`
 
-**Готово к передаче когда:**
-- [ ] Backend реализован, API работает
-- [ ] Тесты пройдены, код соответствует стандартам
-- [ ] Метрики и health checks настроены
-
-## Переход к следующему этапу
-
-**⚠️ ОБЯЗАТЕЛЬНЫЕ проверки перед передачей:**
-
-1. **Валидация функциональности:** `/backend-validate-result #123`
-2. **Валидация оптимизаций:** `/backend-validate-optimizations #123` ← **КРИТИЧНО!**
-3. Если обе проверки OK → передавай задачу
-
-**Контентный квест (labels `canon`, `lore`, `quest`):**
-1. `/backend-validate-result #123` - проверка функционала
-2. `/backend-validate-optimizations #123` - проверка оптимизаций
-3. Обнови Project: `Status = QA - Todo`
-4. Комментарий с отчетом об оптимизациях
-
-**Системная задача:**
-1. `/backend-validate-result #123` - проверка функционала  
-2. `/backend-validate-optimizations #123` - **ОБЯЗАТЕЛЬНО!**
-3. Обнови Project: `Status = Network - Todo`
-4. Создай PR: `[backend] feat: реализация для Issue #{number}`
-5. Комментарий с отчетом об оптимизациях
-
-**Шаблон комментария:**
+**Комментарий:**
 ```markdown
 ✅ Backend ready. Handed off to {NextAgent}
 
-**Optimizations applied:**
-- [x] Context timeouts (100ms for external calls)
-- [x] DB pool configured (25 connections)
-- [x] Memory pooling (3 pools: response, request, buffer)
-- [x] Batch operations (DB queries)
-- [x] Zero allocations in hot path
+**Optimizations:**
+- [x] Context timeouts, DB pool, Memory pooling
+- [x] Batch operations, Zero allocations
 
-**Performance:**
-- P99 latency: 8.5ms (✅ <10ms)
-- Throughput: 15k req/sec
-- Memory: stable, no leaks
+**Performance:** P99: 8.5ms, 15k req/sec
 
-PR: #{pr_number}
-Issue: #{issue_number}
+PR: #{pr} / Issue: #{issue}
 ```
-
-**См. `.cursor/AGENT_COMMON_RULES.md`**
-
-## Task Requirements Check
-
-**Перед началом работы:**
-1. Прочитай Issue полностью (требования, критерии приемки, комментарии)
-2. Проверь соответствие кода требованиям Issue
-3. При ошибках → вернись к Issue и проверь требования
-
-**См. `.cursor/AGENT_COMMON_RULES.md` для деталей**
 
 ## Стиль работы
 
-- **ОБЯЗАТЕЛЬНО используй oapi-codegen** для генерации кода из OpenAPI спецификаций
-- **ОБЯЗАТЕЛЬНО указывай Issue в начале каждого файла:** `// Issue: #123`
-- Следуй Go best practices
-- Используй структурированное логирование (JSON)
-- Экспортируй метрики на `/metrics`
-- Health checks через `/health`
-- Dependency injection где возможно
-- Маленькие классы (300-400 строк максимум)
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
-- **НЕ редактируй сгенерированный код** - реализуй бизнес-логику в отдельных файлах
-
-## ⚠️ КРИТИЧНО: Оптимизации для MMOFPS RPG
-
-**ОБЯЗАТЕЛЬНО применяй эти оптимизации в коде:**
-
-### 1. Memory Pooling (используй ВСЕГДА для hot path)
-
-```go
-// Переиспользуй объекты для снижения GC нагрузки
-var responsePool = sync.Pool{
-    New: func() interface{} {
-        return &Response{
-            Data: make([]byte, 0, 1024),
-        }
-    },
-}
-
-func Handler(w http.ResponseWriter, r *http.Request) {
-    resp := responsePool.Get().(*Response)
-    defer responsePool.Put(resp)
-    resp.Data = resp.Data[:0] // Reset slice
-    // Use resp...
-}
-```
-
-**Результат:** GC нагрузка ↓ 70-80%, latency стабильнее
-
-### 2. Batch Operations (критично для >100 RPS)
-
-```go
-// Плохо: N запросов к БД
-for _, id := range playerIDs {
-    player := db.GetPlayer(id) // N queries
-}
-
-// Хорошо: 1 запрос
-players := db.GetPlayersBatch(playerIDs) // 1 query
-```
-
-**Результат:** DB load ↓ 95%, latency ↓ 10x
-
-### 3. Lock-Free где возможно
-
-```go
-// Используй atomic вместо mutex для простых операций
-type Stats struct {
-    requestCount atomic.Int64 // Go 1.19+
-    errorCount   atomic.Int64
-}
-
-stats.requestCount.Add(1) // Lock-free!
-```
-
-**Результат:** Contention ↓ 90%, throughput ↑ 3-5x
-
-### 4. Context Deadlines (ОБЯЗАТЕЛЬНО)
-
-```go
-// Всегда устанавливай timeout для внешних вызовов
-ctx, cancel := context.WithTimeout(r.Context(), 100*time.Millisecond)
-defer cancel()
-
-resp, err := externalService.Call(ctx, req)
-```
-
-### 5. Горутины с лимитом
-
-```go
-// НЕ создавай безлимитные горутины
-type WorkerPool struct {
-    semaphore chan struct{}
-}
-
-func NewWorkerPool(size int) *WorkerPool {
-    return &WorkerPool{
-        semaphore: make(chan struct{}, size),
-    }
-}
-
-func (p *WorkerPool) Do(fn func()) {
-    p.semaphore <- struct{}{}
-    go func() {
-        defer func() { <-p.semaphore }()
-        fn()
-    }()
-}
-```
-
-### 6. Preallocation (где возможно)
-
-```go
-// Плохо: append без capacity
-items := []Item{}
-for i := 0; i < 1000; i++ {
-    items = append(items, Item{}) // Много реаллокаций
-}
-
-// Хорошо: preallocate
-items := make([]Item, 0, 1000)
-for i := 0; i < 1000; i++ {
-    items = append(items, Item{}) // Нет реаллокаций
-}
-```
-
-### 7. Defer в hot path (избегай)
-
-```go
-// Плохо в hot path (defer has overhead)
-func ProcessRequest() {
-    mu.Lock()
-    defer mu.Unlock() // ~50ns overhead
-    // ...
-}
-
-// Хорошо в hot path
-func ProcessRequest() {
-    mu.Lock()
-    // ...
-    mu.Unlock() // Manual unlock
-}
-```
-
-### 8. String vs []byte
-
-```go
-// В hot path используй []byte вместо string
-func ProcessData(data []byte) { // Не string!
-    // Работай с []byte напрямую
-}
-
-// Избегай конверсий string <-> []byte
-```
-
-### 9. Profiling endpoints (ОБЯЗАТЕЛЬНО)
-
-```go
-import _ "net/http/pprof"
-
-// В main.go для non-production или отдельный порт
-go func() {
-    http.ListenAndServe("localhost:6060", nil)
-}()
-```
-
-### 10. Правильные настройки runtime
-
-```go
-func init() {
-    // Для game servers
-    runtime.GOMAXPROCS(runtime.NumCPU() - 1) // 1 CPU для OS
-    debug.SetGCPercent(50) // Частый GC, короче паузы
-}
-```
-
-**ВАЖНО:** Эти оптимизации критичны для real-time game services (matchmaking, game state, player sync). Для обычных CRUD API можно быть менее строгим.
-
-### 11. Struct Field Alignment (экономия памяти 30-50%)
-
-```go
-// ❌ Плохо: неоптимальное выравнивание
-type Player struct {
-    IsActive bool   // 1 byte + 7 padding
-    ID       uint64 // 8 bytes
-    Level    uint8  // 1 byte + 7 padding
-}
-// 32 bytes total
-
-// ✅ Хорошо: большие поля первыми
-type Player struct {
-    ID       uint64 // 8 bytes
-    Level    uint8  // 1 byte
-    IsActive bool   // 1 byte
-}
-// 16 bytes total (50% экономия!)
-
-// Проверка: fieldalignment ./...
-```
-
-### 12. Goroutine Leak Detection
-
-```go
-import "go.uber.org/goleak"
-
-func TestMain(m *testing.M) {
-    goleak.VerifyTestMain(m) // Автопроверка leaks
-}
-
-func TestNoLeaks(t *testing.T) {
-    defer goleak.VerifyNone(t)
-    
-    server := NewServer()
-    server.Start()
-    server.Stop() // Должен cleanup все горутины
-}
-```
-
-### 13. Ring Buffer для Events (lock-free)
-
-```go
-// Для high-throughput event processing
-type RingBuffer struct {
-    buffer   []Event
-    size     int64
-    writePos atomic.Int64
-    readPos  atomic.Int64
-}
-
-func (rb *RingBuffer) Push(event Event) bool {
-    write := rb.writePos.Load()
-    next := (write + 1) % rb.size
-    
-    if next == rb.readPos.Load() {
-        return false // Full
-    }
-    
-    rb.buffer[write] = event
-    rb.writePos.Store(next)
-    return true
-}
-```
-
-### 14. FlatBuffers для Ultra-Low Latency
-
-```go
-// Когда Protobuf = bottleneck (после профилирования!)
-// FlatBuffers = zero-copy deserialization
-
-builder := flatbuffers.NewBuilder(1024)
-pos := CreatePosition(builder, x, y, z)
-builder.Finish(pos)
-
-// Send without copy
-conn.Write(builder.FinishedBytes())
-```
-
-**Использовать только если:** Protobuf показывает >5% CPU в профайлере
-
-### 15. Bounded Channels (защита от deadlocks)
-
-```go
-// ❌ Плохо: unbounded
-events := make(chan Event)
-
-// ✅ Хорошо: bounded + backpressure
-events := make(chan Event, 1000)
-
-select {
-case events <- event:
-    // OK
-case <-time.After(10 * time.Millisecond):
-    return ErrOverloaded // Shed load
-}
-```
-
-**КРИТИЧНО:** Для ВСЕХ production сервисов используй bounded channels!
-
-### 16. Wrapper Types для Hot Path (опционально)
-
-```go
-// types.gen.go (сгенерирован - НЕ трогаем):
-type Player struct {
-    Id     string `json:"id"`
-    Name   string `json:"name"`
-    Level  int32  `json:"level"`
-    Health int32  `json:"health"`
-}
-
-// player_internal.go (наш файл для hot path):
-// ОПТИМИЗАЦИЯ: Struct alignment + fixed sizes
-type PlayerInternal struct {
-    ID       uint64   // 8 bytes (parsed from string)
-    Health   int32    // 4 bytes
-    Level    int32    // 4 bytes
-    Name     [32]byte // 32 bytes (fixed, no allocation)
-    IsActive bool     // 1 byte
-}
-
-var playerInternalPool = sync.Pool{
-    New: func() interface{} {
-        return &PlayerInternal{}
-    },
-}
-
-// Конвертация из API type
-func ToInternal(p api.Player) *PlayerInternal {
-    internal := playerInternalPool.Get().(*PlayerInternal)
-    internal.ID, _ = strconv.ParseUint(p.Id, 10, 64)
-    internal.Health = p.Health
-    internal.Level = p.Level
-    copy(internal.Name[:], p.Name)
-    return internal
-}
-
-// В hot path используем internal type
-func (s *GameServer) ProcessPlayers(apiPlayers []api.Player) {
-    for _, p := range apiPlayers {
-        internal := ToInternal(p)
-        defer playerInternalPool.Put(internal)
-        
-        // Работа с internal (zero allocations!)
-        s.updateGameState(internal)
-    }
-}
-```
-
-**Когда использовать:**
-- ✅ Game servers (game state updates, position sync)
-- ✅ Hot path с >1000 ops/sec
-- ✅ После профилирования показало allocations
-- ❌ Обычные CRUD API (overkill)
-
-**Результат:** Allocations → 0, memory ↓ 40-60%
-
-### 17. API Designer Помогает!
-
-**Если API Designer упорядочил поля в OpenAPI (большие → маленькие):**
-- Сгенерированные structs уже оптимально выровнены
-- Wrapper types нужны только для extreme cases
-
-**Проверь OpenAPI:**
-```yaml
-# Поля должны быть: strings/objects → int64 → int32 → int16 → bool
-Player:
-  properties:
-    id: {type: string}      # Большое первым
-    position: {$ref: ...}   # Object
-    health: {type: integer} # int32
-    level: {type: integer}  # int32
-    is_active: {type: boolean} # Маленькое последним
-```
-
-## 📋 Чек-лист перед передачей задачи
-
-**ОБЯЗАТЕЛЬНО проверь перед handoff:**
-
-**См. `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` для полного чек-листа**
-
-**Все техники:** `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 75+ оптимизаций
-
-**Минимальные требования:**
-- [ ] Context timeouts для всех внешних вызовов
-- [ ] DB connection pool настроен (25-50 connections)
-- [ ] Struct fields упорядочены (проверено `fieldalignment`)
-- [ ] Тесты на goroutine leaks (с `goleak`)
-- [ ] Benchmarks для hot path (0 allocs/op)
-- [ ] Profiling endpoints включены (`pprof`)
-
-**Для game servers дополнительно:**
-- [ ] Memory pooling (`sync.Pool`) для частых объектов
-- [ ] Batch operations для DB queries
-- [ ] Spatial partitioning (если >100 объектов)
-- [ ] Worker pool для горутин
-- [ ] Adaptive tick rate
-
-**Шаблоны кода:** 
-- `.cursor/templates/backend-api-templates.md` - API handlers/service/repository
-- `.cursor/templates/backend-game-templates.md` - Game servers
-- `.cursor/templates/backend-utils-templates.md` - Utilities/tests/metrics
-
-## SOLID принципы
-
-**ОБЯЗАТЕЛЬНО соблюдай SOLID:**
-
-**SRP:** Каждый файл - одна ответственность. **НЕ пиши middleware и handlers в `http_server.go`!**
-
-**OCP:** Используй интерфейсы для расширяемости
-
-**LSP:** Реализации интерфейсов взаимозаменяемы, используй DI
-
-**ISP:** Маленькие, специфичные интерфейсы
-
-**DIP:** Зависимости через интерфейсы, DI в конструкторах
-
-**Структура:**
-- `http_server.go` - ТОЛЬКО настройка сервера и роутера
-- `middleware.go` - ВСЕ middleware функции
-- `handlers.go` - ВСЕ handlers (ServerInterface)
-- `service.go` - бизнес-логика
-- `repository.go` - работа с БД
-
-**НЕПРАВИЛЬНО:** middleware и handlers в `http_server.go`
-
-**ПРАВИЛЬНО:** разделение на отдельные файлы, middleware из `middleware.go`, handlers из `handlers.go`
-    api.HandlerWithOptions(handlers, api.ChiServerOptions{
-        BaseURL:    "/api/v1",
-        BaseRouter: router,
-    })
-    
-    // Health check
-    router.Get("/health", healthCheck)
-    
-    return &HTTPServer{
-        addr:   addr,
-        router: router,
-        service: service,
-    }
-}
-```
-
-### Чек-лист структуры кода
-
-При создании или рефакторинге сервиса проверь:
-
-- [ ] `http_server.go` содержит ТОЛЬКО настройку сервера и роутера
-- [ ] Все middleware функции вынесены в `middleware.go`
-- [ ] Все handlers вынесены в `handlers.go`
-- [ ] Бизнес-логика вынесена в `service.go`
-- [ ] Работа с БД вынесена в `repository.go`
-- [ ] Каждый файл не превышает 500 строк
-- [ ] Используется dependency injection через конструкторы
-- [ ] Интерфейсы определены для всех зависимостей
-
-### ⚠️ ВАЖНО: Dockerfile паттерн
-
-Все Dockerfile унифицированы: используй multi-stage build, Go 1.24-alpine, security context (non-root user appuser), health checks на `/metrics`, статическая линковка. Для сервисов с proto/ используй контекст из корня (context: .), без proto/ - из директории сервиса.
-
-### Dockerfile с генерацией кода
-
-**ОБЯЗАТЕЛЬНО** обнови Dockerfile для включения генерации кода перед сборкой:
-
-```dockerfile
-FROM golang:1.24-alpine AS builder
-
-WORKDIR /app
-
-RUN apk add --no-cache make nodejs npm
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-
-RUN make generate-api || true
-
-RUN go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux go build -o {service-name} -ldflags="-w -s" .
-
-FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates
-
-WORKDIR /app
-
-COPY --from=builder /app/{service-name} /app/
-
-EXPOSE {port}/tcp {metrics-port}
-
-ENTRYPOINT ["/app/{service-name}"]
-```
-
-**Важно:**
-- Установка `make`, `nodejs`, `npm` для генерации кода
-- `RUN make generate-api || true` - генерация кода с игнорированием ошибок (на случай если спецификация еще не готова)
-- Генерация происходит перед `go mod tidy` и сборкой
-
-### Миграция существующих сервисов на генерацию
-
-**Процесс миграции:**
-
-1. **Проверь наличие OpenAPI спецификации:**
-   - Убедись, что спецификация существует в `proto/openapi/{service-name}.yaml`
-   - Проверь, что спецификация валидна: `make verify-api`
-
-2. **Определи тип роутера:**
-   - Если используется `github.com/go-chi/chi/v5` → используй `chi-server`
-   - Если используется `github.com/gorilla/mux` → используй `gorilla-server` или перейди на chi
-
-3. **Создай файлы для генерации:**
-   - Скопируй улучшенный `Makefile` и адаптируй под имя сервиса
-   - Создай `oapi-codegen.yaml` с нужной конфигурацией
-   - Создай `.gitignore` для bundled файлов
-
-4. **Сгенерируй код:**
-   ```bash
-   cd services/{service}-go
-   make generate-api
-   ```
-
-5. **Мигрируй handlers:**
-   - Создай структуру handlers, реализующую `api.ServerInterface`
-   - Перенеси бизнес-логику из старых handlers
-   - Используй сгенерированные типы вместо ручных моделей
-   - Удали старые модели из `models/`, если они дублируют сгенерированные
-
-6. **Обнови HTTP сервер:**
-   - Используй `api.HandlerWithOptions()` для интеграции
-   - Удали ручную регистрацию routes
-   - Вынеси ВСЕ middleware в `middleware.go`
-   - `http_server.go` должен ТОЛЬКО настраивать сервер и регистрировать middleware/handlers
-
-7. **Проверь компиляцию:**
-   ```bash
-   go build ./...
-   go test ./...
-   ```
-
-8. **Обнови зависимости:**
-   - Убедись, что `go.mod` содержит необходимые зависимости
-   - Для chi: `github.com/go-chi/chi/v5`
-   - Для oapi-codegen: `github.com/oapi-codegen/runtime`
-
-**Важно при миграции:**
-- Сохрани существующую бизнес-логику
-- Не удаляй тесты сразу - адаптируй их под новую структуру
-- Проверь совместимость с существующим кодом
-- Убедись, что API endpoints остаются теми же
-
-## Формат вывода
-
-- Go код в соответствующих сервисах
-- Тесты рядом с кодом
-- Миграции в `infrastructure/liquibase/`
+- **ogen для новых/hot-path** или oapi-codegen для legacy
+- Go best practices, DI
+- Structured logging (JSON)
+- `/health`, `/metrics`, `pprof`
+- **Issue в начале файлов:** `// Issue: #123`
+- **Max 500 строк/файл**
+
+**При миграции на ogen:**
+1. Читай `.cursor/OGEN_MIGRATION_GUIDE.md`
+2. Используй `services/combat-combos-service-ogen-go/` как reference
+3. Benchmarks ОБЯЗАТЕЛЬНЫ для подтверждения gains
 
 ## Git коммиты
 
-**См. `.cursor/AGENT_COMMON_RULES.md` для формата коммитов**
+**Формат:** `[backend] {type}: {desc}\n\n{details}\n\nRelated Issue: #{n}`
 
-**Формат:** `[backend] {type}: {description}\n\n{details}\n\nRelated Issue: #{number}`
-
-**Типы:** `feat:`, `fix:`, `test:`, `refactor:`, `docs:`
-
-**Когда:** После реализации endpoint, исправления бага, добавления тестов, рефакторинга
+**Типы:** `feat:`, `fix:`, `test:`, `refactor:`
 
 ## Запреты
 
-- НЕ создавай клиентский код (UE5)
-- НЕ настраивай инфраструктуру (Docker/K8s)
-- НЕ оптимизируй сетевой код (это Network Engineer)
-- **НЕ обрабатывай контентные квесты** (передавай Content Writer)
-- ТОЛЬКО бекенд реализация
+- НЕ создавай клиент (UE5)
+- НЕ настраивай инфраструктуру
+- НЕ оптимизируй сетевой код (Network)
+- НЕ обрабатывай контент-квесты (Content Writer)
+- ТОЛЬКО backend
 
-## Миграция сервисов
+## 📚 Документация
 
-**Скрипты:** `scripts/add-codegen-deps.sh`, `scripts/validate-codegen.sh`, `scripts/update-makefiles.sh`
+**Performance:**
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 120+ техник
+- `.cursor/PERFORMANCE_ENFORCEMENT.md` - строгие требования
+- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - валидация
 
-**Чек-лист после генерации:**
-- [ ] `Makefile`, `oapi-codegen.yaml`, `.gitignore` созданы
-- [ ] `Dockerfile` обновлен, `go.mod` обновлен
-- [ ] `make verify-api` → `make generate-api` → `go build` → `go test` → `docker build`
-- [ ] Коммит с префиксом `[backend]`, указан Issue
+**Шаблоны:**
+- `.cursor/templates/backend-api-templates.md`
+- `.cursor/templates/backend-game-templates.md`
+- `.cursor/templates/backend-utils-templates.md`
+
+**Генерация:**
+- `.cursor/CODE_GENERATION_TEMPLATE.md` - Makefile (ogen)
+- `.cursor/OGEN_MIGRATION_GUIDE.md` - миграция на ogen
+
+**Общее:**
+- `.cursor/AGENT_COMMON_RULES.md` - общие правила
+- `.cursor/AGENT_SIMPLE_GUIDE.md` - быстрый старт
+- `.cursor/GITHUB_PROJECT_CONFIG.md` - конфигурация

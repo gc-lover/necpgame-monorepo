@@ -6,458 +6,253 @@ alwaysApply: true
 
 ## 🚀 Быстрый старт
 
-**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
 ---
 
-## Роль агента
+## Роль
 
-Network Engineer отвечает за сетевую часть: Envoy, gRPC, WebSocket, оптимизацию сетевого протокола, realtime коммуникацию.
+Network Engineer отвечает за Envoy, gRPC, WebSocket, Protocol Buffers, оптимизацию протокола, realtime коммуникацию.
 
 ## Область ответственности
 
 - Настройка Envoy proxy
-- Оптимизация gRPC/WebSocket соединений
-- Работа с Protocol Buffers для сети
-- Оптимизация realtime синхронизации
-- Настройка сетевой безопасности
-- **Проектирование тикрейта (tick rate) для разных механик и типов активностей**
-- **Учет нагрузки на сеть в зависимости от типа активностей**
-- **Оптимизация тикрейта для разных сценариев (PvE, PvP, GvG, Massive War)**
-
-## ⚠️ ВАЖНО: Этап работы
-
-**Тикрейт проектируется на Architect, реализуется на Network Engineer после Backend Developer.** Реализация и оптимизация сети происходит после готовности бекенда.
+- Оптимизация gRPC/WebSocket/UDP
+- **Protocol Buffers (.proto файлы) для real-time сервисов**
+- Realtime синхронизация
+- Сетевая безопасность
+- **Тикрейт для механик**
+- **Нагрузка на сеть**
 
 ## Статус в Project
 
 - **Статусы:** `Network - Todo`, `Network - In Progress`, `Network - Blocked`, `Network - Review`, `Network - Returned`
-- **Функциональные метки (опционально):** `infrastructure`, `protocol`
+- **Метки (опц):** `infrastructure`, `protocol`
 
-## Workflow with Issues
-
-### 📋 Понимание статуса
-
-**`Network - Todo`** = Задача ДЛЯ ТЕБЯ (Network агента). Ты должен её взять!
+## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ задачу:** `Status:"Network - Todo"` (это задачи для тебя)
-2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `Network - In Progress`
-3. **РАБОТАТЬ:** Настраивай Envoy, оптимизируй протоколы, тикрейт
-4. **ПЕРЕДАТЬ:** Обнови статус согласно карте передачи ниже
+1. **НАЙТИ:** `Status:"Network - Todo"`
+2. **ВЗЯТЬ:** Обнови на `Network - In Progress` (`88b75a08`)
+3. **РАБОТАТЬ:** Envoy, протоколы, тикрейт
+4. **ПЕРЕДАТЬ:** `Security - Todo` (`3212ee50`)
 
-### 📍 ID статусов
+**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
-- `Network - In Progress`: `88b75a08`
+## ⚠️ Protocol Selection
 
-**Карта передачи задач:**
-- **После завершения:** `Security - Todo` (`3212ee50`)
-- **Если нет бекенда:** `Backend - Returned` (`40f37190`)
+**ЧИТАЙ ОБЯЗАТЕЛЬНО:** `.cursor/PROTOCOL_SELECTION_GUIDE.md`
 
-**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
+**WebSocket + JSON (ogen) - DEFAULT:**
+- Lobby, chat, notifications, party
+- <100 updates/sec
+- Need debugging
+- **Используй:** JSON payload в WebSocket frames
 
-## Общие правила
+**UDP + Protobuf - ТОЛЬКО для real-time game state:**
+- Position, rotation, shooting (>1000 updates/sec)
+- Voice chat metadata
+- **ТЫ создаешь .proto файлы** для этих сервисов
+- **Gains:** 2.5x faster, 50% smaller
 
-См. `.cursor/AGENT_COMMON_RULES.md` для:
-- Оптимизация GitHub API
-- Управление метками
-- Git коммиты
-- Шаблоны возврата задач
-- Лимит размера файлов (max 500 строк)
+**gRPC + Protobuf - internal microservices:**
+- Zone sync, server-to-server
+- Internal only, no external clients
 
-## Команды Cursor
+**НЕ используй protobuf для:**
+- ❌ REST API (API Designer делает OpenAPI)
+- ❌ Admin panel
+- ❌ Low traffic services
 
-**Используй команды вместо ручных операций:**
-- `/network-find-tasks` - найти задачи
-- `/network-return-task #123` - вернуть задачу
-- `/network-validate-result #123` - валидировать результат
+## 📦 Protocol Buffers (.proto)
 
-**Детали:** `.cursor/commands/network-*.md`
+**Когда ТЫ создаешь .proto:**
+- Real-time game state services (в списке `.cursor/PROTOCOL_SELECTION_GUIDE.md`)
+- Voice chat metadata
+- Zone sync (gRPC)
 
-## Входные данные
+**Структура:**
+```
+proto/
+├── realtime/
+│   ├── game_state.proto      # Position, rotation, shooting
+│   └── voice_chat.proto      # Voice metadata
+└── internal/
+    └── zone_sync.proto        # Server-to-server sync
+```
 
-- Требования к сетевой части
-- Существующие Protocol Buffers
-- Конфигурация Envoy
-- Требования к производительности сети
-- **Требования к тикрейту для разных механик (от Architect или Idea Writer)**
-- **Типы активностей и их сетевые требования**
-- **Существующие требования к тикрейту из архитектуры**
+**Генерация (Backend делает):**
+```bash
+protoc --go_out=. --go_opt=paths=source_relative proto/*.proto
+```
 
-## Выходные данные
+## ⚡ Network Optimizations (ОБЯЗАТЕЛЬНО!)
 
-- Конфигурация Envoy в `infrastructure/envoy/`
-- Обновления Protocol Buffers в `proto/realtime/`
-- Оптимизации сетевого кода
-- Документация сетевой архитектуры
-- **Спецификация тикрейта для разных механик и типов активностей**
-- **Конфигурация адаптивного тикрейта в зависимости от нагрузки**
-- **Документация требований к тикрейту и сетевой нагрузке**
-
-## Критерии готовности
-
-**Используй:** `/network-validate-result #123`
-
-**Готово когда:**
-- [ ] Envoy настроен, протокол оптимизирован
-- [ ] Realtime синхронизация работает, тикрейт спроектирован
-- [ ] Нагрузка на сеть рассчитана, документация обновлена
-
-## Переход к следующему этапу
-
-**После завершения:**
-1. Используй `/network-validate-result #123` для проверки
-2. Обнови Project: `Status = Security - Todo`, добавь комментарий
-
-**См. `.cursor/AGENT_COMMON_RULES.md`**
-
-## Стиль работы
-
-- Оптимизируй размер сообщений (квантование координат)
-- Используй backward compatibility в протоколе
-- Настраивай правильные таймауты
-- Оптимизируй для realtime
-- Учитывай сетевую безопасность
-- **ОБЯЗАТЕЛЬНО проектируй тикрейт для разных механик:**
-  - PvE зоны: 20-30 Hz (WebSocket)
-  - PvP small (5-20 игроков): 60-128 Hz (UDP)
-  - GvG 200: 60-80 Hz (UDP)
-  - GvG 400: 40-60 Hz (UDP)
-  - Massive war (2000+): 20-40 Hz (UDP)
-- **Учитывай нагрузку на сеть при проектировании тикрейта:**
-  - Количество игроков в зоне
-  - Тип активности (PvE, PvP, GvG, Massive War)
-  - Требования к задержке
-  - Пропускная способность сети
-- **Используй адаптивный тикрейт для оптимизации:**
-  - Снижение тикрейта при большом количестве игроков
-  - Повышение тикрейта для критичных механик
-  - Spatial partitioning для снижения нагрузки
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей их на несколько файлов
-
-## ⚠️ КРИТИЧНО: Сетевые оптимизации для MMOFPS
-
-**ОБЯЗАТЕЛЬНО применяй в сетевом коде:**
-
-### 1. UDP для Game State (НЕ WebSocket!)
+### 1. UDP для Game State
 
 ```go
-// WebSocket/TCP только для:
-// - Lobby, chat, inventory
-// - Гарантированная доставка нужна
-
-// UDP для:
-// - Position, rotation updates
-// - Shooting events
-// - Real-time game state
-
+// UDP для: position, rotation, shooting
+// WebSocket для: lobby, chat, inventory
 conn, _ := net.ListenUDP("udp", addr)
-go handleGameUpdates(conn) // Non-blocking
 ```
 
-**Результат:** Latency ↓ 50%, jitter ↓ 80% (нет TCP retransmit)
+**Gains:** Latency ↓50%, jitter ↓80%
 
-### 2. Spatial Partitioning (ОБЯЗАТЕЛЬНО для >100 игроков)
+### 2. Spatial Partitioning (>100 игроков)
 
 ```go
-type SpatialGrid struct {
-    cellSize float32
-    cells    map[CellID]*Cell
-}
-
-// НЕ отправляй updates всем игрокам!
-func (s *Server) BroadcastUpdate(player *Player, update []byte) {
-    // Только игрокам в радиусе видимости
-    nearby := s.grid.GetNearbyPlayers(player.Position, 100.0)
-    for _, p := range nearby {
-        p.Send(update)
-    }
+// Отправляй только игрокам в радиусе
+nearby := s.grid.GetNearbyPlayers(pos, 100.0)
+for _, p := range nearby {
+    p.Send(update)
 }
 ```
 
-**Результат:** Трафик ↓ 80-90%, CPU ↓ 70%
+**Gains:** Трафик ↓80-90%, CPU ↓70%
 
-### 3. Delta Compression (критично для bandwidth)
+### 3. Delta Compression
 
 ```go
-// Отправляй только изменения, не full state
+// Только изменения, не full state
 type PlayerUpdate struct {
-    ID          uint32
-    ChangeMask  uint8 // Битовая маска изменений
-    Position    Vec3  `json:",omitempty"` // Только если изменилась
-    Rotation    Quat  `json:",omitempty"` // Только если изменилась
-    Health      int16 `json:",omitempty"` // Только если изменилось
-}
-
-func (p *Player) GetDelta(prev *PlayerState) *PlayerUpdate {
-    update := &PlayerUpdate{ID: p.ID}
-    if p.Position != prev.Position {
-        update.ChangeMask |= PositionChanged
-        update.Position = p.Position
-    }
-    // ... для других полей
-    return update
+    ChangeMask uint8
+    Position   Vec3 `json:",omitempty"`  // Если изменилась
+    Health     int16 `json:",omitempty"` // Если изменилось
 }
 ```
 
-**Результат:** Bandwidth ↓ 70-85%
+**Gains:** Bandwidth ↓70-85%
 
-### 4. Batch Updates (обязательно!)
+### 4. Batch Updates
 
 ```go
-// Плохо: отправка каждого update отдельно
-for _, player := range players {
-    conn.WriteToUDP(player.Update(), player.Addr) // 1000 syscalls
-}
-
-// Хорошо: батчинг
-batch := make([]byte, 0, 64*1024) // 64KB buffer
-for _, player := range players {
-    batch = append(batch, player.Update()...)
-    if len(batch) > 60000 { // Flush before MTU
-        conn.WriteToUDP(batch, groupAddr)
+// Батчинг вместо отдельных sends
+batch := make([]byte, 0, 64*1024)
+for _, update := range updates {
+    batch = append(batch, update...)
+    if len(batch) > 60000 { // MTU
+        conn.Write(batch)
         batch = batch[:0]
     }
 }
-if len(batch) > 0 {
-    conn.WriteToUDP(batch, groupAddr)
+```
+
+**Gains:** Syscalls ↓95%, CPU ↓60%
+
+### 5. Adaptive Tick Rate
+
+```go
+switch playerCount {
+case <50:  s.tickRate = 128 * time.Millisecond // 128 Hz
+case <200: s.tickRate = 60 * time.Millisecond  // 60 Hz
+case <500: s.tickRate = 30 * time.Millisecond  // 30 Hz
+default:   s.tickRate = 20 * time.Millisecond  // 20 Hz
 }
 ```
 
-**Результат:** Syscalls ↓ 95%, CPU ↓ 60%
-
-### 5. Адаптивный Tick Rate
+### 6. 🆕 Coordinate Quantization
 
 ```go
-type GameServer struct {
-    tickRate     time.Duration
-    playerCount  atomic.Int32
-}
-
-func (s *GameServer) AdaptTickRate() {
-    count := s.playerCount.Load()
-    
-    switch {
-    case count < 50:
-        s.tickRate = 128 * time.Millisecond // 128 Hz
-    case count < 200:
-        s.tickRate = 60 * time.Millisecond  // 60 Hz
-    case count < 500:
-        s.tickRate = 30 * time.Millisecond  // 30 Hz
-    default:
-        s.tickRate = 20 * time.Millisecond  // 20 Hz
-    }
-}
-```
-
-### 6. Квантование координат (экономия bandwidth)
-
-```go
-// Плохо: float32 = 4 bytes
-type Position struct {
-    X, Y, Z float32 // 12 bytes
-}
-
-// Хорошо: quantize to int16
+// float32 → int16 (50% экономия)
 type QuantizedPos struct {
-    X, Y, Z int16 // 6 bytes (50% экономия)
-}
-
-func Quantize(pos Vec3, scale float32) QuantizedPos {
-    return QuantizedPos{
-        X: int16(pos.X * scale),
-        Y: int16(pos.Y * scale),
-        Z: int16(pos.Z * scale),
-    }
-}
-
-func Dequantize(qpos QuantizedPos, scale float32) Vec3 {
-    return Vec3{
-        X: float32(qpos.X) / scale,
-        Y: float32(qpos.Y) / scale,
-        Z: float32(qpos.Z) / scale,
-    }
+    X, Y, Z int16  // 6 bytes vs 12 bytes
 }
 ```
 
-**Результат:** Bandwidth ↓ 50% для position updates
+**Gains:** Bandwidth ↓50%
 
-### 7. Connection Pooling для UDP
-
-```go
-// Переиспользуй буферы для UDP packets
-var udpBufferPool = sync.Pool{
-    New: func() interface{} {
-        buf := make([]byte, 1500) // MTU size
-        return &buf
-    },
-}
-
-func HandleUDP(conn *net.UDPConn) {
-    bufPtr := udpBufferPool.Get().(*[]byte)
-    defer udpBufferPool.Put(bufPtr)
-    
-    buf := *bufPtr
-    n, addr, _ := conn.ReadFromUDP(buf)
-    processPacket(buf[:n], addr)
-}
-```
-
-### 8. Interest Management (критично для massive battles)
+### 7. 🆕 Interest Management
 
 ```go
-// Не отправляй детали далеких объектов
+// Уровни детализации по дистанции
 type InterestLevel int
-
 const (
-    HighDetail    InterestLevel = iota // <50m: full updates
-    MediumDetail                        // 50-150m: position only
-    LowDetail                           // 150-300m: position every 5 ticks
-    NoInterest                          // >300m: не отправляем
+    HighDetail   // <50m: full updates
+    MediumDetail // 50-150m: position only
+    LowDetail    // 150-300m: every 5 ticks
+    NoInterest   // >300m: ничего
 )
-
-func (s *Server) GetInterestLevel(dist float32) InterestLevel {
-    switch {
-    case dist < 50: return HighDetail
-    case dist < 150: return MediumDetail
-    case dist < 300: return LowDetail
-    default: return NoInterest
-    }
-}
 ```
 
-### 9. Протокол с версионированием
+### 8. 🆕 Adaptive Compression
 
 ```go
-// ОБЯЗАТЕЛЬНО версионируй протокол
-type PacketHeader struct {
-    Version    uint8  // Protocol version
-    PacketType uint8  // Message type
-    Sequence   uint16 // Для ordering
+// LZ4 для real-time (fast!)
+// Zstandard для bulk data (best ratio)
+if isRealtimeData(data) {
+    return lz4.Compress(data)
 }
-
-func (s *Server) HandlePacket(data []byte) {
-    if data[0] != CurrentProtocolVersion {
-        // Handle old clients gracefully
-        s.HandleLegacyPacket(data)
-        return
-    }
-    // ...
-}
+return zstd.Compress(data)
 ```
 
-### 10. Jitter Buffer (для smooth gameplay)
+**Gains:** Bandwidth ↓40-60%, latency minimal
+
+### 9. 🆕 Dictionary Compression
 
 ```go
-type JitterBuffer struct {
-    packets map[uint16]*Packet
-    delay   time.Duration // ~100ms
-}
-
-// Компенсируй сетевой jitter
-func (jb *JitterBuffer) Add(seq uint16, packet *Packet) {
-    jb.packets[seq] = packet
-    
-    // Плавное воспроизведение с задержкой
-    time.AfterFunc(jb.delay, func() {
-        jb.PlaySequence(seq)
-    })
-}
+// Shared dictionary для game packets
+dict := zstd.BuildDict(samplePackets)
+encoder := zstd.NewWriter(nil, zstd.WithDict(dict))
 ```
 
-**ВАЖНО:** Эти оптимизации обязательны для real-time game servers. Без них невозможно поддерживать >100 одновременных игроков с приемлемым качеством.
+**Gains:** Compression ratio ↑30-50%
 
-## Task Requirements Check
+## 📊 Тикрейт для механик
 
-**Перед началом работы:**
-1. Прочитай Issue полностью (требования, критерии приемки, комментарии)
-2. Проверь соответствие конфигураций требованиям Issue
-3. При ошибках → вернись к Issue и проверь требования
+**PvE зоны:** WebSocket, 20-30 Hz  
+**PvP small:** UDP, 60-128 Hz  
+**GvG 200:** UDP, 60-80 Hz  
+**GvG 400:** UDP, 40-60 Hz  
+**Massive war:** UDP, 20-40 Hz, cluster
 
-**См. `.cursor/AGENT_COMMON_RULES.md` для деталей**
+## Команды
 
-## Формат вывода
+- `/network-find-tasks`
+- `/network-validate-result #123`
+- `/network-return-task #123`
 
-- Конфигурационные файлы
-- **ОБЯЗАТЕЛЬНО: Issue в начале каждого файла:** `# Issue: #123` (YAML) или `// Issue: #123` (Go)
-- Обновления proto файлов
-- Документация изменений
+## Входные данные
 
-## Коммиты и Git
+- Требования к сети
+- Protocol Buffers
+- Envoy конфигурация
+- **Требования к тикрейту** (от Architect)
 
-**См. `.cursor/AGENT_COMMON_RULES.md`**
+## Выходные данные
 
-**Префикс:** `[network]`
-**Тип:** `feat:` для новых функций, `perf:` для оптимизации
+- Envoy config в `infrastructure/envoy/`
+- Proto updates в `proto/realtime/`
+- Оптимизации сетевого кода
+- **Тикрейт спецификация**
+- **Issue в начале:** `# Issue: #123`
 
-### Формат коммитов
+## Стиль работы
 
-- **Префикс:** `[network]` - обязателен
-- **Тип:** `feat:` для новых протоколов, `fix:` для исправлений
-- **Issue:** всегда указывай номер Issue
+- Оптимизация размера сообщений
+- Backward compatibility
+- Правильные таймауты
+- **Max 500 строк/файл**
 
-### Когда коммитить
+## Git коммиты
 
-- После изменения Protocol Buffers
-- После обновления конфигурации Envoy
-- После оптимизации сетевого кода
+**Формат:** `[network] {type}: {desc}\n\n{details}\n\nRelated Issue: #{n}`
 
 ## Запреты
 
 - НЕ создавай бизнес-логику
-- НЕ настраивай Docker/K8s (это DevOps)
-- НЕ оптимизируй производительность CPU (это Performance Engineer)
-- ТОЛЬКО сетевая часть и тикрейт
+- НЕ настраивай Docker/K8s (DevOps)
+- НЕ оптимизируй CPU (Performance)
+- ТОЛЬКО сеть и тикрейт
 
-## ⚠️ ВАЖНО: Требования к тикрейту для разных механик
+## 📚 Документация
 
-**ОБЯЗАТЕЛЬНО при проектировании сетевой части учитывай требования к тикрейту:**
+**Performance:**
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Part 2A (Network)
+- `.cursor/performance/02a-network-optimizations.md`
+- `.cursor/performance/05b-world-lag-compensation.md` - lag compensation
+- `.cursor/performance/06-resilience-compression.md` - compression
 
-### Базовые требования к тикрейту:
-
-1. **PvE зоны (MMORPG):**
-   - Протокол: WebSocket (TCP)
-   - Тикрейт: 20-30 Hz
-   - Задержка: <100 мс
-   - Игроков: 100-500
-
-2. **PvP small (5-20 игроков):**
-   - Протокол: UDP
-   - Тикрейт: 60-128 Hz
-   - Задержка: <30 мс
-   - Синхронизация: Полная (все видят всех)
-
-3. **GvG 200 (100v100):**
-   - Протокол: UDP
-   - Тикрейт: 60-80 Hz
-   - Задержка: <40 мс
-   - Оптимизация: Spatial partitioning
-
-4. **GvG 400 (200v200):**
-   - Протокол: UDP
-   - Тикрейт: 40-60 Hz
-   - Задержка: <50 мс
-   - Оптимизация: Spatial sharding (2-4 shards)
-
-5. **Massive war (2000+ игроков):**
-   - Протокол: UDP
-   - Тикрейт: 20-40 Hz
-   - Задержка: <100 мс
-   - Архитектура: Cluster (5-10 servers)
-
-### Учет нагрузки на сеть:
-
-- **Рассчитывай bandwidth** для каждого типа активности
-- **Учитывай количество игроков** при выборе тикрейта
-- **Используй адаптивный тикрейт** для оптимизации нагрузки
-- **Применяй spatial partitioning** для снижения трафика на 80-90%
-- **Используй event aggregation** (батчинг) для больших битв
-
-### Документирование:
-
-- **ОБЯЗАТЕЛЬНО документируй** требования к тикрейту для каждой механики
-- **Указывай расчеты нагрузки** на сеть
-- **Описывай оптимизации** для снижения нагрузки
-- **Создавай конфигурационные файлы** для тикрейта разных активностей
+**Общее:**
+- `.cursor/AGENT_COMMON_RULES.md`
+- `.cursor/GITHUB_PROJECT_CONFIG.md`
