@@ -1,0 +1,117 @@
+# Issue: #1575
+
+metadata:
+  title: "Архитектура системы модификаторов оружия"
+  version: "1.0.0"
+  created: "2025-12-02"
+  author: "Architect"
+  status: "draft"
+  related_issue: "#1575"
+  related_documents:
+    - "knowledge/analysis/tasks/ideas/weapon-modifiers-system-concept-part1.md"
+    - "knowledge/analysis/tasks/ideas/weapon-modifiers-system-concept-part2.md"
+
+summary:
+  description: |
+    Архитектура системы модификаторов оружия: обвес (10 типов), чипы (10 типов), 
+    прошивки кибер-деки (10 типов). Система слотов и комбинаций модификаторов.
+    
+  key_features:
+    - "30 типов модификаторов (обвес, чипы, прошивки)"
+    - "Система слотов (8 слотов total)"
+    - "Комбинации и синергии"
+    - "Интеграция с inventory-service"
+
+# ============================================================================
+# 1. КОМПОНЕНТЫ СИСТЕМЫ
+# ============================================================================
+
+components:
+  
+  modifier_manager:
+    description: "Управление модификаторами оружия"
+    responsibilities:
+      - "Регистрация модификаторов"
+      - "Валидация совместимости с слотами"
+      - "Установка/удаление модификаторов"
+      - "Расчет эффектов"
+    
+  slot_manager:
+    description: "Управление слотами модификаций"
+    responsibilities:
+      - "Управление слотами оружия"
+      - "Валидация заполненности слотов"
+      - "Открытие новых слотов (прогрессия)"
+    
+  effect_calculator:
+    description: "Расчет эффектов модификаторов"
+    responsibilities:
+      - "Расчет базовых эффектов"
+      - "Стакирование эффектов"
+      - "Синергии между модификаторами"
+      - "Балансировка для PvE/PvP"
+
+# ============================================================================
+# 2. ИНТЕГРАЦИЯ С СУЩЕСТВУЮЩИМИ СЕРВИСАМИ
+# ============================================================================
+
+integration:
+  
+  inventory_service:
+    description: "Расширение inventory-service для модификаторов"
+    new_endpoints:
+      - "POST /api/v1/inventory/weapons/{weapon_id}/modifiers"
+      - "DELETE /api/v1/inventory/weapons/{weapon_id}/modifiers/{slot}"
+      - "GET /api/v1/inventory/modifiers"
+    
+  character_service:
+    integration_point: "Кибер-дека (имплант) для прошивок"
+
+# ============================================================================
+# 3. DATA MODELS
+# ============================================================================
+
+data_models:
+  
+  Modifier:
+    fields:
+      id: "string"
+      name: "string"
+      type: "enum (attachment, chip, firmware)"
+      category: "string"
+      effects: "array<Effect>"
+      slot_type: "string"
+      rarity: "enum"
+      compatible_weapons: "array"
+      
+  WeaponModifierSlots:
+    fields:
+      weapon_id: "string"
+      attachment_slots: "array (4 slots)"
+      chip_slots: "array (3 slots)"
+      firmware_slot: "object (1 slot)"
+
+# ============================================================================
+# 4. РАЗБИЕНИЕ НА ПОДЗАДАЧИ
+# ============================================================================
+
+subtasks:
+  
+  database:
+    title: "Расширение БД для модификаторов"
+    tables:
+      - "weapon_modifiers"
+      - "weapon_modifier_slots"
+      - "modifier_effects"
+  
+  api_design:
+    title: "Расширение inventory-service OpenAPI"
+    file: "proto/openapi/inventory-service.yaml"
+  
+  backend:
+    title: "Реализация в inventory-service"
+    components:
+      - "ModifierHandlers"
+      - "ModifierService"
+      - "ModifierRepository"
+
