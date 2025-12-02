@@ -1,0 +1,600 @@
+# Issue: #1560
+
+metadata:
+  title: "Архитектура системы уникальных форм проджектайлов"
+  version: "1.0.0"
+  created: "2025-12-02"
+  author: "Architect"
+  status: "draft"
+  related_issue: "#1560"
+  related_documents:
+    - "knowledge/analysis/tasks/ideas/weapon-unique-projectile-forms-system-concept.md"
+    - "knowledge/implementation/architecture/combat-shooting-architecture.yaml"
+
+summary:
+  description: |
+    Архитектура системы уникальных форм проджектайлов для создания разнообразия в боевых механиках.
+    Система поддерживает 11 различных форм (точка, линия, веер, спираль, волна, круг, квадрат, цепь,
+    разделение, рикошеты, фазирование) с уникальными траекториями и характеристиками.
+    
+  key_features:
+    - "11 уникальных форм проджектайлов"
+    - "Расчет траекторий в реальном времени"
+    - "Совместимость с типами оружия"
+    - "Визуальные эффекты для каждой формы"
+    - "Интеграция с системой урона"
+
+# ============================================================================
+# 1. КОМПОНЕНТЫ СИСТЕМЫ
+# ============================================================================
+
+components:
+  
+  # 1.1. Projectile Form Manager
+  projectile_form_manager:
+    description: "Управление формами проджектайлов"
+    responsibilities:
+      - "Регистрация форм проджектайлов"
+      - "Валидация совместимости формы с оружием"
+      - "Получение параметров формы"
+      - "Управление жизненным циклом проджектайла"
+    
+    interfaces:
+      - "IProjectileFormRegistry"
+      - "IProjectileFormValidator"
+      - "IProjectileFormFactory"
+    
+    dependencies:
+      - "Weapon Service"
+      - "Combat Core Service"
+  
+  # 1.2. Trajectory Calculator
+  trajectory_calculator:
+    description: "Расчет траекторий для различных форм"
+    responsibilities:
+      - "Расчет траектории проджектайла"
+      - "Обработка физики движения"
+      - "Обработка столкновений"
+      - "Расчет промежуточных точек траектории"
+    
+    trajectory_types:
+      point:
+        algorithm: "linear_trajectory"
+        description: "Прямая траектория"
+        
+      line:
+        algorithm: "parallel_lines"
+        description: "Параллельные траектории (горизонтальная/вертикальная/диагональная)"
+        
+      fan:
+        algorithm: "cone_spread"
+        description: "Веерное рассеивание"
+        
+      spiral:
+        algorithm: "helical_trajectory"
+        description: "Спиральная траектория вокруг центральной оси"
+        
+      wave:
+        algorithm: "sinusoidal_trajectory"
+        description: "Волнообразная траектория (синусоида)"
+        
+      circle:
+        algorithm: "radial_spread"
+        description: "Круговое рассеивание (360°)"
+        
+      square:
+        algorithm: "grid_pattern"
+        description: "Квадратный паттерн"
+        
+      chain:
+        algorithm: "chain_reaction"
+        description: "Цепная реакция между целями"
+        
+      split:
+        algorithm: "split_trajectory"
+        description: "Разделение снаряда на части"
+        
+      ricochet:
+        algorithm: "bounce_trajectory"
+        description: "Рикошеты от поверхностей"
+        
+      phasing:
+        algorithm: "penetration_trajectory"
+        description: "Прохождение через препятствия"
+    
+    interfaces:
+      - "ITrajectoryCalculator"
+      - "ITrajectoryAlgorithm"
+    
+    dependencies:
+      - "Physics Engine"
+      - "Collision Detection"
+  
+  # 1.3. Projectile Spawner
+  projectile_spawner:
+    description: "Создание и спавн проджектайлов"
+    responsibilities:
+      - "Создание экземпляров проджектайлов"
+      - "Инициализация параметров"
+      - "Спавн проджектайлов в мире"
+      - "Управление пулом проджектайлов"
+    
+    interfaces:
+      - "IProjectileSpawner"
+      - "IProjectilePool"
+    
+    dependencies:
+      - "Object Pool Service"
+      - "World Service"
+  
+  # 1.4. Damage Calculator
+  damage_calculator:
+    description: "Расчет урона для форм проджектайлов"
+    responsibilities:
+      - "Расчет базового урона"
+      - "Распределение урона между снарядами"
+      - "Модификаторы урона для форм"
+      - "Критические удары"
+    
+    damage_distribution:
+      single_projectile:
+        description: "Одиночный снаряд (точка)"
+        damage_multiplier: 1.0
+        
+      multi_projectile:
+        description: "Множественные снаряды (линия, веер, круг, квадрат)"
+        damage_distribution: "равномерное распределение или суммирование"
+        
+      chain_damage:
+        description: "Цепной урон"
+        damage_falloff: [1.0, 0.7, 0.5, 0.3]
+        
+      ricochet_damage:
+        description: "Урон после рикошета"
+        damage_falloff: [1.0, 0.9, 0.8, 0.7, 0.6]
+    
+    interfaces:
+      - "IDamageCalculator"
+      - "IDamageDistributor"
+    
+    dependencies:
+      - "Combat Service"
+      - "Stats Service"
+  
+  # 1.5. Visual Effects Manager
+  visual_effects_manager:
+    description: "Визуальные эффекты для форм проджектайлов"
+    responsibilities:
+      - "Отображение траекторий"
+      - "Трассирующие линии"
+      - "Частицы и анимации"
+      - "Эффекты попадания"
+    
+    effects:
+      point: "single_tracer_line"
+      line: "multiple_tracer_lines"
+      fan: "fan_pattern_tracers"
+      spiral: "spiral_trail_effect"
+      wave: "wave_trail_effect"
+      circle: "radial_tracers"
+      square: "grid_pattern_tracers"
+      chain: "electric_arc_effect"
+      split: "explosion_split_effect"
+      ricochet: "bounce_spark_effect"
+      phasing: "quantum_phase_effect"
+    
+    interfaces:
+      - "IVisualEffectsManager"
+      - "ITrailRenderer"
+    
+    dependencies:
+      - "VFX System (UE5)"
+      - "Particle System"
+  
+  # 1.6. Compatibility Validator
+  compatibility_validator:
+    description: "Валидация совместимости форм с оружием"
+    responsibilities:
+      - "Проверка совместимости формы и типа оружия"
+      - "Валидация параметров"
+      - "Получение ограничений"
+    
+    compatibility_matrix:
+      pistols: ["point", "line", "fan", "spiral", "ricochet"]
+      rifles: ["point", "line", "phasing"]
+      shotguns: ["fan", "circle", "square", "split"]
+      smg: ["point", "line", "fan", "spiral"]
+      sniper_rifles: ["point", "phasing", "ricochet"]
+      launchers: ["point", "split"]
+      melee: ["wave", "chain"]
+      laser_weapons: ["point", "wave", "phasing"]
+      energy_weapons: ["chain", "wave", "spiral", "phasing"]
+      throwable: ["point", "fan", "ricochet"]
+    
+    interfaces:
+      - "ICompatibilityValidator"
+    
+    dependencies:
+      - "Weapon Service"
+
+# ============================================================================
+# 2. МИКРОСЕРВИСЫ
+# ============================================================================
+
+microservices:
+  
+  # 2.1. Projectile Core Service
+  projectile_core_service:
+    description: "Основной сервис для управления проджектайлами"
+    port: 8091
+    
+    endpoints:
+      - "POST /api/v1/projectile/spawn"
+      - "GET /api/v1/projectile/forms"
+      - "GET /api/v1/projectile/forms/{form_id}"
+      - "POST /api/v1/projectile/validate-compatibility"
+      - "GET /api/v1/projectile/compatibility-matrix"
+    
+    responsibilities:
+      - "Создание проджектайлов"
+      - "Управление формами"
+      - "Валидация совместимости"
+    
+    integration:
+      - service: "Combat Core Service"
+        purpose: "Интеграция с боевой системой"
+      - service: "Weapon Service"
+        purpose: "Получение данных оружия"
+      - service: "Physics Service"
+        purpose: "Расчет траекторий"
+  
+  # 2.2. Trajectory Service
+  trajectory_service:
+    description: "Сервис расчета траекторий"
+    port: 8092
+    
+    endpoints:
+      - "POST /api/v1/trajectory/calculate"
+      - "POST /api/v1/trajectory/chain"
+      - "POST /api/v1/trajectory/ricochet"
+      - "POST /api/v1/trajectory/split"
+    
+    responsibilities:
+      - "Расчет траекторий проджектайлов"
+      - "Обработка специальных форм (цепь, рикошеты, разделение)"
+      - "Расчет промежуточных точек"
+    
+    algorithms:
+      linear: "Прямая траектория"
+      parallel_lines: "Параллельные линии"
+      cone_spread: "Веерное рассеивание"
+      helical: "Спиральная траектория"
+      sinusoidal: "Волнообразная траектория"
+      radial: "Круговое рассеивание"
+      grid: "Квадратный паттерн"
+      chain: "Цепная реакция"
+      split: "Разделение"
+      bounce: "Рикошеты"
+      penetration: "Фазирование"
+    
+    integration:
+      - service: "Physics Service"
+        purpose: "Физические расчеты"
+      - service: "Collision Service"
+        purpose: "Обработка столкновений"
+  
+  # 2.3. Visual Effects Service (Client-side, UE5)
+  visual_effects_service:
+    description: "Клиентский сервис визуальных эффектов"
+    type: "client"
+    engine: "UE5"
+    
+    responsibilities:
+      - "Отображение траекторий"
+      - "Визуальные эффекты"
+      - "Трассирующие линии"
+      - "Частицы"
+    
+    vfx_systems:
+      - "Niagara Particle System"
+      - "Beam Emitters"
+      - "Trail Renderers"
+      - "Decals"
+
+# ============================================================================
+# 3. API ENDPOINTS (ВЫСОКОУРОВНЕВО)
+# ============================================================================
+
+api_endpoints:
+  
+  projectile_core:
+    base_path: "/api/v1/projectile"
+    
+    endpoints:
+      spawn_projectile:
+        method: "POST"
+        path: "/spawn"
+        description: "Создание проджектайла"
+        request:
+          weapon_id: "string"
+          form: "ProjectileForm"
+          origin: "Vector3"
+          direction: "Vector3"
+          modifiers: "array"
+        response:
+          projectile_id: "string"
+          success: "boolean"
+      
+      get_forms:
+        method: "GET"
+        path: "/forms"
+        description: "Получение списка форм проджектайлов"
+        response:
+          forms: "array<ProjectileForm>"
+      
+      validate_compatibility:
+        method: "POST"
+        path: "/validate-compatibility"
+        description: "Проверка совместимости формы с оружием"
+        request:
+          weapon_type: "string"
+          form: "string"
+        response:
+          compatible: "boolean"
+          restrictions: "array"
+  
+  trajectory:
+    base_path: "/api/v1/trajectory"
+    
+    endpoints:
+      calculate_trajectory:
+        method: "POST"
+        path: "/calculate"
+        description: "Расчет траектории проджектайла"
+        request:
+          form: "ProjectileForm"
+          origin: "Vector3"
+          direction: "Vector3"
+          parameters: "object"
+        response:
+          trajectory_points: "array<Vector3>"
+          time_steps: "array<float>"
+
+# ============================================================================
+# 4. ИНТЕГРАЦИЯ С СУЩЕСТВУЮЩЕЙ АРХИТЕКТУРОЙ
+# ============================================================================
+
+integration:
+  
+  combat_shooting_architecture:
+    path: "knowledge/implementation/architecture/combat-shooting-architecture.yaml"
+    integration_points:
+      - component: "Weapon System"
+        connection: "Получение данных оружия, типа оружия"
+      - component: "Damage System"
+        connection: "Расчет урона от проджектайлов"
+      - component: "Hit Detection"
+        connection: "Обработка попаданий"
+  
+  physics_system:
+    integration_points:
+      - "Физический движок для расчета траекторий"
+      - "Collision Detection для столкновений"
+      - "Raycasting для точечных проджектайлов"
+  
+  visual_effects_system:
+    integration_points:
+      - "VFX System (UE5) для визуальных эффектов"
+      - "Particle System для частиц"
+      - "Trail Renderers для трассирующих линий"
+
+# ============================================================================
+# 5. DATA MODELS
+# ============================================================================
+
+data_models:
+  
+  ProjectileForm:
+    fields:
+      id: "string (unique)"
+      name: "string"
+      type: "enum (point, line, fan, spiral, wave, circle, square, chain, split, ricochet, phasing)"
+      description: "string"
+      parameters: "object"
+      compatible_weapons: "array<WeaponType>"
+      visual_effect: "string"
+      
+  ProjectileInstance:
+    fields:
+      id: "string (unique)"
+      form: "ProjectileForm"
+      weapon_id: "string"
+      owner_id: "string"
+      origin: "Vector3"
+      direction: "Vector3"
+      velocity: "float"
+      damage: "float"
+      modifiers: "array<Modifier>"
+      trajectory_points: "array<Vector3>"
+      
+  TrajectoryParameters:
+    fields:
+      algorithm: "string"
+      spread_angle: "float (для веера)"
+      projectile_count: "int (для множественных снарядов)"
+      spiral_radius: "float (для спирали)"
+      wave_amplitude: "float (для волны)"
+      wave_frequency: "float (для волны)"
+      chain_max_targets: "int (для цепи)"
+      chain_radius: "float (для цепи)"
+      ricochet_count: "int (для рикошетов)"
+      split_count: "int (для разделения)"
+
+# ============================================================================
+# 6. РАЗБИЕНИЕ НА ПОДЗАДАЧИ
+# ============================================================================
+
+subtasks:
+  
+  database:
+    title: "Схема БД для форм проджектайлов"
+    description: "Создание таблиц и схем для хранения форм проджектайлов"
+    assignee: "Database Engineer"
+    tables:
+      - "projectile_forms"
+      - "projectile_compatibility"
+      - "trajectory_algorithms"
+  
+  api_design:
+    title: "OpenAPI спецификация для Projectile Core Service"
+    description: "Создание детальной OpenAPI спецификации"
+    assignee: "API Designer"
+    files:
+      - "proto/openapi/projectile-core-service.yaml"
+      - "proto/openapi/trajectory-service.yaml"
+  
+  backend_core:
+    title: "Реализация Projectile Core Service"
+    description: "Реализация основного сервиса проджектайлов"
+    assignee: "Backend Developer"
+    components:
+      - "ProjectileFormManager"
+      - "ProjectileSpawner"
+      - "CompatibilityValidator"
+  
+  backend_trajectory:
+    title: "Реализация Trajectory Service"
+    description: "Реализация сервиса траекторий"
+    assignee: "Backend Developer"
+    components:
+      - "TrajectoryCalculator"
+      - "Алгоритмы для каждой формы"
+  
+  client_vfx:
+    title: "Визуальные эффекты для форм проджектайлов (UE5)"
+    description: "Создание VFX для каждой формы"
+    assignee: "UE5 Developer"
+    systems:
+      - "Niagara Particle Systems"
+      - "Beam Emitters"
+      - "Trail Renderers"
+  
+  client_integration:
+    title: "Интеграция с клиентом (UE5)"
+    description: "Интеграция с системой оружия UE5"
+    assignee: "UE5 Developer"
+    components:
+      - "ProjectileVisualizer"
+      - "TrajectoryRenderer"
+
+# ============================================================================
+# 7. ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ
+# ============================================================================
+
+technical_requirements:
+  
+  performance:
+    trajectory_calculation: "<1ms для одиночного проджектайла"
+    multiple_projectiles: "<5ms для 10 проджектайлов"
+    vfx_rendering: "60+ FPS с множественными эффектами"
+    
+  scalability:
+    max_projectiles_per_frame: 100
+    max_active_projectiles: 1000
+    
+  reliability:
+    collision_detection: "100% точность для критических попаданий"
+    trajectory_accuracy: "99.9% точность расчета"
+    
+  compatibility:
+    weapon_types: "Все типы оружия из матрицы совместимости"
+    platforms: ["PC", "Console"]
+
+# ============================================================================
+# 8. ПРИОРИТЕТЫ РЕАЛИЗАЦИИ
+# ============================================================================
+
+implementation_priorities:
+  
+  phase_1:
+    priority: "High"
+    forms:
+      - "point (точка)"
+      - "fan (веер)"
+      - "chain (цепь)"
+    components:
+      - "Projectile Core Service"
+      - "Trajectory Calculator (базовые алгоритмы)"
+      - "Damage Calculator"
+    
+  phase_2:
+    priority: "Medium"
+    forms:
+      - "line (линия)"
+      - "spiral (спираль)"
+      - "phasing (фазирование)"
+    components:
+      - "Visual Effects Manager"
+      - "Compatibility Validator"
+    
+  phase_3:
+    priority: "Low"
+    forms:
+      - "wave (волна)"
+      - "circle (круг)"
+      - "square (квадрат)"
+      - "split (разделение)"
+      - "ricochet (рикошеты)"
+    components:
+      - "Advanced VFX"
+      - "Optimization"
+
+# ============================================================================
+# 9. РИСКИ И ОГРАНИЧЕНИЯ
+# ============================================================================
+
+risks:
+  
+  performance:
+    risk: "Высокая нагрузка при множественных проджектайлах"
+    mitigation: "Object pooling, LOD для VFX, оптимизация алгоритмов"
+    
+  complexity:
+    risk: "Сложность реализации некоторых форм (цепь, фазирование)"
+    mitigation: "Поэтапная реализация, прототипирование"
+    
+  balance:
+    risk: "Дисбаланс между формами"
+    mitigation: "Тестирование, балансировка на этапе QA"
+
+# ============================================================================
+# 10. СЛЕДУЮЩИЕ ШАГИ
+# ============================================================================
+
+next_steps:
+  
+  for_database_engineer:
+    - "Создать схему БД для projectile_forms"
+    - "Создать таблицу projectile_compatibility"
+    - "Создать миграции Liquibase"
+    
+  for_api_designer:
+    - "Создать OpenAPI спецификацию для Projectile Core Service"
+    - "Создать OpenAPI спецификацию для Trajectory Service"
+    - "Валидировать спецификации"
+    
+  for_backend_developer:
+    - "Реализовать Projectile Core Service (Go)"
+    - "Реализовать Trajectory Service (Go)"
+    - "Создать unit тесты"
+    - "Интеграция с Combat Service"
+    
+  for_ue5_developer:
+    - "Создать VFX для базовых форм (point, fan, chain)"
+    - "Создать TrajectoryRenderer"
+    - "Интеграция с Weapon System"
+
+# ============================================================================
+# КОНЕЦ ДОКУМЕНТА
+# ============================================================================
+
