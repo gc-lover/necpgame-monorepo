@@ -1,4 +1,4 @@
--- Issue: #140876072
+-- Issue: #58
 -- Combat Implants System Database Schema
 -- Создание таблиц для системы боевых имплантов:
 -- - Каталог имплантов (implants_catalog)
