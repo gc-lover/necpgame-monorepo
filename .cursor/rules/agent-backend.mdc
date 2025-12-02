@@ -348,22 +348,31 @@ clean:
 - `ROUTER_TYPE` → определи по импортам в коде:
 
 **Как определить ROUTER_TYPE:**
+
+**Для НОВОГО сервиса:**
+```makefile
+ROUTER_TYPE := chi-server  # ВСЕГДА используй chi для новых сервисов!
+```
+
+**Для СУЩЕСТВУЮЩЕГО сервиса:**
 ```bash
 # Проверь импорты в server/*.go
 grep -r "github.com/go-chi/chi" services/{service}-go/server/
 
-# Если найдено:
-ROUTER_TYPE := chi-server  # (рекомендуется)
+# Если найдено → используй chi:
+ROUTER_TYPE := chi-server
 
 # Если не найдено, проверь gorilla:
 grep -r "github.com/gorilla/mux" services/{service}-go/server/
 
-# Если найдено:
+# Если найдено → используй gorilla (НЕ меняй working code):
 ROUTER_TYPE := gorilla-server
 
 # Если ничего не найдено (новый сервис):
-ROUTER_TYPE := chi-server  # (используй chi по умолчанию)
+ROUTER_TYPE := chi-server  # По умолчанию chi
 ```
+
+**WARNING ВАЖНО:** НЕ меняй роутер у существующих сервисов! Chi и gorilla имеют разные API, миграция требует переписывания кода.
 
 ---
 
@@ -407,6 +416,75 @@ func (h *Handlers) ListItems(w http.ResponseWriter, r *http.Request, params api.
 
 ---
 
+---
+
+### HTTP Server setup (chi router - для НОВЫХ сервисов):
+
+**ВАЖНО:** Chi и gorilla имеют **разный API**. НЕ пытайся мигрировать существующие сервисы с gorilla на chi!
+
+**Примеры различий:**
+
+| Операция | Chi | Gorilla |
+|----------|-----|---------|
+| Создание роутера | `chi.NewRouter()` | `mux.NewRouter()` |
+| Тип роутера | `chi.Router` | `*mux.Router` |
+| Subrouter | `router.Route("/api", func(r chi.Router) {...})` | `router.PathPrefix("/api").Subrouter()` |
+| Методы | `router.Get("/path", handler)` | `router.HandleFunc("/path", handler).Methods("GET")` |
+| Интеграция oapi | `api.HandlerWithOptions(h, api.ChiServerOptions{...})` | `api.HandlerFromMux(h, router)` |
+
+---
+
+```go
+// Issue: #123
+package server
+
+import (
+    "net/http"
+    "github.com/go-chi/chi/v5"
+    "github.com/your-org/necpgame/services/{service}-go/pkg/api"
+)
+
+type HTTPServer struct {
+    addr    string
+    router  chi.Router
+    service Service
+}
+
+func NewHTTPServer(addr string, service Service) *HTTPServer {
+    router := chi.NewRouter()
+    
+    // Middleware
+    router.Use(loggingMiddleware)
+    router.Use(metricsMiddleware)
+    
+    // Handlers
+    handlers := NewHandlers(service)
+    
+    // Интеграция с oapi-codegen (chi)
+    api.HandlerWithOptions(handlers, api.ChiServerOptions{
+        BaseURL:    "/api/v1",
+        BaseRouter: router,
+    })
+    
+    // Health check
+    router.Get("/health", healthCheck)
+    
+    return &HTTPServer{
+        addr:   addr,
+        router: router,
+        service: service,
+    }
+}
+
+func (s *HTTPServer) Start() error {
+    return http.ListenAndServe(s.addr, s.router)
+}
+```
+
+**Для существующих сервисов с gorilla:** НЕ меняй код, используй `api.HandlerFromMux()`
+
+---
+
 ### Паттерны
 
 **Makefile:**
@@ -424,15 +502,18 @@ func (h *Handlers) ListItems(w http.ResponseWriter, r *http.Request, params api.
 - DI для зависимостей
 
 **Роутер:**
-- `chi-server` (рекомендуется) или `gorilla-server`
-- `api.HandlerWithOptions()` для интеграции
+- **НОВЫЕ сервисы:** ВСЕГДА используй `chi-server` (современный, легковесный, быстрый)
+- **СУЩЕСТВУЮЩИЕ сервисы:** используй тот что уже есть (НЕ меняй working code!)
+- Интеграция: `api.HandlerWithOptions()` для chi, `api.HandlerFromMux()` для gorilla
 
 **Валидация:**
 - Всегда `make verify-api` перед генерацией
 - Всегда `make check-file-sizes` после генерации
 
-**Типы серверов:**
-- `chi-server` (рекомендуется), `gorilla-server`, `echo-server`, `gin-server`
+**Поддерживаемые роутеры:**
+- **chi-server** OK (РЕКОМЕНДУЕТСЯ для новых сервисов)
+- gorilla-server WARNING (только для legacy кода)
+- echo-server, gin-server (не используем в проекте)
 
 ---
 
