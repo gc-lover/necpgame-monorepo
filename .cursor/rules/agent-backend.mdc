@@ -1112,6 +1112,81 @@ case <-time.After(10 * time.Millisecond):
 
 **КРИТИЧНО:** Для ВСЕХ production сервисов используй bounded channels!
 
+### 16. Wrapper Types для Hot Path (опционально)
+
+```go
+// types.gen.go (сгенерирован - НЕ трогаем):
+type Player struct {
+    Id     string `json:"id"`
+    Name   string `json:"name"`
+    Level  int32  `json:"level"`
+    Health int32  `json:"health"`
+}
+
+// player_internal.go (наш файл для hot path):
+// ОПТИМИЗАЦИЯ: Struct alignment + fixed sizes
+type PlayerInternal struct {
+    ID       uint64   // 8 bytes (parsed from string)
+    Health   int32    // 4 bytes
+    Level    int32    // 4 bytes
+    Name     [32]byte // 32 bytes (fixed, no allocation)
+    IsActive bool     // 1 byte
+}
+
+var playerInternalPool = sync.Pool{
+    New: func() interface{} {
+        return &PlayerInternal{}
+    },
+}
+
+// Конвертация из API type
+func ToInternal(p api.Player) *PlayerInternal {
+    internal := playerInternalPool.Get().(*PlayerInternal)
+    internal.ID, _ = strconv.ParseUint(p.Id, 10, 64)
+    internal.Health = p.Health
+    internal.Level = p.Level
+    copy(internal.Name[:], p.Name)
+    return internal
+}
+
+// В hot path используем internal type
+func (s *GameServer) ProcessPlayers(apiPlayers []api.Player) {
+    for _, p := range apiPlayers {
+        internal := ToInternal(p)
+        defer playerInternalPool.Put(internal)
+        
+        // Работа с internal (zero allocations!)
+        s.updateGameState(internal)
+    }
+}
+```
+
+**Когда использовать:**
+- OK Game servers (game state updates, position sync)
+- OK Hot path с >1000 ops/sec
+- OK После профилирования показало allocations
+- ❌ Обычные CRUD API (overkill)
+
+**Результат:** Allocations → 0, memory ↓ 40-60%
+
+### 17. API Designer Помогает!
+
+**Если API Designer упорядочил поля в OpenAPI (большие → маленькие):**
+- Сгенерированные structs уже оптимально выровнены
+- Wrapper types нужны только для extreme cases
+
+**Проверь OpenAPI:**
+```yaml
+# Поля должны быть: strings/objects → int64 → int32 → int16 → bool
+Player:
+  properties:
+    id: {type: string}      # Большое первым
+    position: {$ref: ...}   # Object
+    health: {type: integer} # int32
+    level: {type: integer}  # int32
+    is_active: {type: boolean} # Маленькое последним
+```
+
 ## 📋 Чек-лист перед передачей задачи
 
 **ОБЯЗАТЕЛЬНО проверь перед handoff:**

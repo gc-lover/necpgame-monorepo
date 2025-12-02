@@ -136,6 +136,167 @@ Architect структурирует идеи от Idea Writer, проектир
 - **ОБЯЗАТЕЛЬНО проектируй синхронизацию данных (Event Sourcing, CQRS, Saga Pattern) и тикрейт для разных механик на этапе Architect**
 - **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
 
+## WARNING КРИТИЧНО: Performance в архитектуре
+
+**Architect ОБЯЗАН учитывать performance при проектировании:**
+
+### 1. Data Model Performance
+
+**При проектировании сущностей указывай порядок полей:**
+
+```markdown
+## Player Entity
+
+**Fields (ordered by size for struct alignment):**
+1. ID (uuid/int64) - 8 bytes
+2. Position (Vector3) - 12 bytes
+3. Health (int32) - 4 bytes
+4. Level (int32) - 4 bytes
+5. IsActive (bool) - 1 byte
+
+**Performance notes:**
+- Fields ordered large → small for memory optimization
+- Expected struct size: ~32 bytes
+- For 10,000 players: ~320 KB memory
+```
+
+**Почему важно:** API Designer будет следовать этому порядку в OpenAPI → оптимальный generated код
+
+### 2. Hot Path Identification
+
+**Обязательно помечай hot path endpoints:**
+
+```markdown
+## API Endpoints
+
+**Hot Path (>1000 RPS expected):**
+- GET /api/v1/players (list)
+- GET /api/v1/game-state (real-time)
+- POST /api/v1/position-update (real-time)
+
+**Backend optimizations required:**
+- Memory pooling for responses
+- Batch DB queries
+- Spatial partitioning (game-state)
+- Zero allocations target
+
+**Cold Path (<100 RPS):**
+- GET /api/v1/admin/stats
+- POST /api/v1/admin/config
+
+**Backend optimizations:**
+- Standard practices sufficient
+```
+
+### 3. Нагрузка и масштабирование
+
+**Указывай ожидаемую нагрузку:**
+
+```markdown
+## Load Requirements
+
+**Matchmaking Service:**
+- Peak load: 5,000 requests/sec
+- Concurrent users: 50,000
+- P99 latency: <50ms
+- Data size: ~1KB per request
+
+**Performance architecture:**
+- Horizontal scaling: 10-20 pods
+- Caching layer: Redis (5min TTL)
+- DB read replicas: 3
+- Connection pooling: 25 per instance
+```
+
+### 4. Network Protocol для разных механик
+
+**Уже делаешь, но добавь performance требования:**
+
+```markdown
+## Network Requirements
+
+**PvP Small (5-20 players):**
+- Protocol: UDP
+- Tick rate: 128 Hz
+- Latency target: <30ms P99
+- **Backend requirements:**
+  - Lock-free structures
+  - Memory pooling
+  - Spatial partitioning
+  - Worker pool (max 1000 goroutines)
+
+**PvE Zone (100-500 players):**
+- Protocol: WebSocket
+- Tick rate: 20-30 Hz
+- Latency target: <100ms P99
+- **Backend requirements:**
+  - Standard optimizations
+  - DB batch queries
+  - Response pooling
+```
+
+## 💡 Передача информации следующим агентам
+
+**В архитектурном документе ОБЯЗАТЕЛЬНО указывай:**
+
+1. **Для API Designer:**
+   - Порядок полей в схемах (struct alignment)
+   - Какие endpoints hot path (нужна оптимизация)
+   - Какие типы использовать (int64 vs string для ID)
+
+2. **Для Backend:**
+   - Ожидаемая нагрузка (RPS, concurrent users)
+   - P99 latency targets
+   - Требования к оптимизациям (уровень 1/2/3)
+
+3. **Для Database:**
+   - Ожидаемый QPS (queries per second)
+   - Размер данных
+   - Индексы для hot queries
+   - **Порядок полей (большие → маленькие) для struct alignment**
+   - Expected row count и growth rate
+
+4. **Для Network:**
+   - Tick rate для каждой механики
+   - Bandwidth requirements
+   - Protocol (UDP/WebSocket/gRPC)
+
+## 📝 Шаблон архитектурного документа
+
+```markdown
+<!-- Issue: #123 -->
+# Architecture: Matchmaking Service
+
+## Performance Requirements
+
+**Load:**
+- Peak: 5,000 req/sec
+- Concurrent: 50,000 users
+- P99 latency: <50ms
+
+**Data Model (optimized):**
+
+### Player Entity
+Fields ordered by size (struct alignment):
+1. id (uuid) - 16 bytes
+2. rating (int64) - 8 bytes
+3. wins (int32) - 4 bytes
+4. losses (int32) - 4 bytes
+5. is_active (bool) - 1 byte
+
+Expected struct size: ~36 bytes
+Memory for 50k players: ~1.8 MB
+
+**Hot Path Endpoints:**
+- POST /api/v1/matchmaking/queue → 2000 RPS (CRITICAL)
+- GET /api/v1/matchmaking/status → 3000 RPS (CRITICAL)
+
+Backend optimizations required: Level 2 (Hot Path)
+- Memory pooling OK
+- Batch operations OK
+- Lock-free counters OK
+```
+
 ## Task Requirements Check
 
 **Перед началом работы:**
