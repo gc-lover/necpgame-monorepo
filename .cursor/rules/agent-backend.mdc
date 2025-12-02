@@ -345,7 +345,25 @@ clean:
 
 **Замени:**
 - `{service-name}` → имя сервиса (например: `companion-service`)
-- `ROUTER_TYPE` → `chi-server` или `gorilla-server` (смотри что используется в коде)
+- `ROUTER_TYPE` → определи по импортам в коде:
+
+**Как определить ROUTER_TYPE:**
+```bash
+# Проверь импорты в server/*.go
+grep -r "github.com/go-chi/chi" services/{service}-go/server/
+
+# Если найдено:
+ROUTER_TYPE := chi-server  # (рекомендуется)
+
+# Если не найдено, проверь gorilla:
+grep -r "github.com/gorilla/mux" services/{service}-go/server/
+
+# Если найдено:
+ROUTER_TYPE := gorilla-server
+
+# Если ничего не найдено (новый сервис):
+ROUTER_TYPE := chi-server  # (используй chi по умолчанию)
+```
 
 ---
 
