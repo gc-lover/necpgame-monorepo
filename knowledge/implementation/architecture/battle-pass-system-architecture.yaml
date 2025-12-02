@@ -1,762 +1,318 @@
+# Issue: #227
+
 metadata:
-  id: battle-pass-system-architecture
-  title: Архитектура системы Battle Pass
+  id: architecture-battle-pass-system
+  title: "Battle Pass System Architecture"
   document_type: architecture
-  category: systems
+  category: implementation
   status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-30T20:20:00Z
+  version: "1.0.0"
+  last_updated: 2025-12-02T18:30:00Z
   owners:
     - role: architect
-      contact: architect@necp.game
   tags:
-    - architecture
     - battle-pass
-    - backend
-    - economy
     - monetization
+    - progression
+    - architecture
   related_systems:
-    - economy-service-go
-    - gameplay-service-go
-    - achievement-service-go
+    - battle-pass-service
+    - economy-service
+    - notification-service
+    - quest-service
+    - achievement-service
   related_documents:
     - id: backend-battle-pass-overview
-      relation: extends
+      relation: implements
     - id: backend-battle-pass-part1-core
-      relation: extends
+      relation: implements
     - id: backend-battle-pass-part2-rewards
-      relation: extends
-  github_issue: 227
-  visibility: internal
-  audience:
-    - architect
-    - backend
-    - api-designer
+      relation: implements
 
 summary:
-  problem: |
-    Требуется спроектировать полную техническую архитектуру системы Battle Pass
-    для управления сезонами, прогрессией, наградами, премиум-треками и челленджами
-    для монетизации и retention игроков.
-  goal: |
-    Создать архитектурную схему системы Battle Pass с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Системы сезонов
-    - Системы прогрессии
-    - Системы наград
-    - Системы челленджей
-    - Технического задания для реализации
-  essence: |
-    Игровая система Battle Pass для управления сезонами, прогрессией, наградами
-    и премиум-треками для монетизации и retention игроков.
+  problem: "Необходима архитектура Battle Pass для сезонов, прогрессии, наград и премиум-треков."
+  goal: "Спроектировать систему Battle Pass с сезонами, прогрессией, наградами и челленджами."
+  essence: "Event-driven система сезонной прогрессии с бесплатным и премиум треками."
 
-architecture:
-  overview: |
-    Система Battle Pass состоит из восьми основных компонентов:
-    1. Season Manager - управление сезонами
-    2. Progression Manager - управление прогрессией
-    3. Reward Manager - управление наградами
-    4. Challenge Manager - управление челленджами
-    5. Premium Manager - управление премиум-треками
-    6. XP Calculator - расчёт опыта
-    7. Battle Pass Event Handler - обработка событий
-    8. Battle Pass Validator - валидация Battle Pass
+content:
+  sections:
+    - id: system-overview
+      title: "Обзор"
+      body: |
+        Battle Pass System:
+        - Сезонная прогрессия (100 уровней)
+        - Бесплатный и премиум треки
+        - Еженедельные челленджи
+        - Система XP источников
+        - Выдача наград
+        - Интеграция с экономикой
 
-  components:
-    - name: Season Manager
-      location: economy-service-go (модуль battle-pass)
-      responsibility: |
-        - Управление сезонами Battle Pass
-        - Создание и активация сезонов
-        - Завершение сезонов
-        - Переход между сезонами
-        - Трекинг активных сезонов
-      season_lifecycle: |
-        - CREATED: сезон создан
-        - ACTIVE: сезон активен
-        - ENDING: сезон завершается
-        - ENDED: сезон завершён
-      season_config: |
-        - Длительность сезона: 8-12 недель
-        - Максимальный уровень: 100
-        - Переход между сезонами: автоматический
-      endpoints:
-        - GET /api/v1/economy/battle-pass/season/current - текущий сезон
-        - GET /api/v1/economy/battle-pass/season/{season_id} - информация о сезоне
-        - POST /api/v1/economy/battle-pass/season/create - создание сезона (admin)
+    - id: components
+      title: "Компоненты"
+      body: |
+        ## battle-pass-service
+        **Port:** TBD (8087 recommended)
+        **API:** `/api/v1/economy/battle-pass/*`
+        
+        Компоненты:
+        - SeasonManager - управление сезонами
+        - ProgressionTracker - отслеживание прогресса
+        - RewardDistributor - выдача наград
+        - ChallengeGenerator - генерация челленджей
+        - PremiumHandler - обработка премиум покупок
+        - XPSystem - система опыта
 
-    - name: Progression Manager
-      location: economy-service-go (модуль battle-pass-progression)
-      responsibility: |
-        - Управление прогрессией Battle Pass
-        - Начисление опыта
-        - Повышение уровня
-        - Трекинг прогресса игроков
-        - Интеграция с источниками опыта
-      progression_tracks: |
-        - Free track: бесплатный трек
-        - Premium track: премиум трек
-      level_progression: |
-        - Линейная прогрессия: фиксированный XP на уровень
-        - Увеличение требований: каждый уровень требует больше XP
-        - Максимальный уровень: 100
-      endpoints:
-        - GET /api/v1/economy/battle-pass/progress/{player_id} - прогресс игрока
-        - POST /api/v1/economy/battle-pass/progress/xp/add - начисление опыта
-        - GET /api/v1/economy/battle-pass/progress/level/{level} - требования к уровню
+        ## Интеграции
+        - **Economy Service:** Проверка валюты, выдача наград
+        - **Notification Service:** Уведомления о прогрессе
+        - **Quest Service:** Интеграция с квестами
+        - **Achievement Service:** Связь с достижениями
+        - **Event Bus (Kafka):** События прогресса и наград
 
-    - name: Reward Manager
-      location: economy-service-go (модуль battle-pass-rewards)
-      responsibility: |
-        - Управление наградами Battle Pass
-        - Выдача наград игрокам
-        - Управление треками наград
-        - Валидация получения наград
-        - Интеграция с economy service
-      reward_tracks: |
-        - Free track: бесплатные награды
-        - Premium track: премиум награды
-      reward_types: |
-        - Currency: валюта
-        - Item: предметы
-        - Cosmetic: косметика
-        - XP Boost: бонус опыта
-        - Title: титулы
-      endpoints:
-        - GET /api/v1/economy/battle-pass/rewards/{season_id} - награды сезона
-        - POST /api/v1/economy/battle-pass/rewards/claim - получение награды
-        - GET /api/v1/economy/battle-pass/rewards/claimed/{player_id} - полученные награды
+    - id: api-endpoints
+      title: "API Endpoints"
+      body: |
+        GET /api/v1/economy/battle-pass/current
+        - Текущий сезон
+        - Response: Season info
 
-    - name: Challenge Manager
-      location: economy-service-go (модуль battle-pass-challenges)
-      responsibility: |
-        - Управление челленджами Battle Pass
-        - Генерация еженедельных челленджей
-        - Трекинг выполнения челленджей
-        - Начисление опыта за челленджи
-        - Интеграция с quest engine
-      challenge_types: |
-        - Daily challenges: ежедневные челленджи
-        - Weekly challenges: еженедельные челленджи
-        - Season challenges: сезонные челленджи
-      challenge_generation: |
-        - Еженедельная генерация: 5 челленджей в неделю
-        - Ротация челленджей: разные типы задач
-        - Балансировка сложности
-      endpoints:
-        - GET /api/v1/economy/battle-pass/challenges/weekly/{player_id} - еженедельные челленджи
-        - POST /api/v1/economy/battle-pass/challenges/complete - завершение челленджа
-        - GET /api/v1/economy/battle-pass/challenges/season/{player_id} - сезонные челленджи
+        GET /api/v1/economy/battle-pass/progress
+        - Прогресс игрока
+        - Query: player_id
+        - Response: Player progress
 
-    - name: Premium Manager
-      location: economy-service-go (модуль battle-pass-premium)
-      responsibility: |
-        - Управление премиум-треками
-        - Покупка премиум-подписки
-        - Активация премиум-трека
-        - Управление премиум-преимуществами
-        - Интеграция с payment service
-      premium_features: |
-        - Дополнительные награды на каждом уровне
-        - XP Boost: +25% опыта
-        - Эксклюзивные косметики
-        - Ранний доступ к контенту
-      purchase_logic: |
-        - Проверка наличия премиум-валюты
-        - Списание валюты
-        - Активация премиум-трека
-        - Выдача всех пропущенных премиум-наград
-      endpoints:
-        - POST /api/v1/economy/battle-pass/premium/purchase - покупка премиума
-        - GET /api/v1/economy/battle-pass/premium/status/{player_id} - статус премиума
-        - POST /api/v1/economy/battle-pass/premium/claim-all - получение всех премиум-наград
+        POST /api/v1/economy/battle-pass/claim
+        - Забрать награду уровня
+        - Request: level, track (free/premium)
+        - Response: Rewards
 
-    - name: XP Calculator
-      location: economy-service-go (модуль battle-pass-xp)
-      responsibility: |
-        - Расчёт опыта Battle Pass
-        - Начисление опыта за действия
-        - Применение модификаторов
-        - Расчёт требований к уровням
-      xp_sources: |
-        - Quest completion: завершение квестов
-        - Challenge completion: завершение челленджей
-        - Daily login: ежедневный вход
-        - Match completion: завершение матчей
-        - Achievement unlock: разблокировка достижений
-      xp_modifiers: |
-        - Premium boost: +25% для премиум
-        - Season boost: временные бонусы
-        - Event boost: бонусы событий
-      endpoints:
-        - POST /api/v1/economy/battle-pass/xp/calculate - расчёт опыта
-        - GET /api/v1/economy/battle-pass/xp/sources - источники опыта
+        POST /api/v1/economy/battle-pass/purchase-premium
+        - Купить премиум трек
+        - Request: player_id
+        - Response: Premium status
 
-    - name: Battle Pass Event Handler
-      location: economy-service-go (модуль battle-pass-events)
-      responsibility: |
-        - Обработка событий Battle Pass
-        - Публикация событий в event bus
-        - Подписка на события от других систем
-        - Уведомления игроков
-      battle_pass_events_published: |
-        - battle-pass:level-up
-        - battle-pass:reward-claimed
-        - battle-pass:premium-purchased
-        - battle-pass:challenge-completed
-        - battle-pass:season-started
-        - battle-pass:season-ended
-      battle_pass_events_consumed: |
-        - quest:completed
-        - achievement:unlocked
-        - match:completed
-        - player:login
-      endpoints:
-        - GET /api/v1/economy/battle-pass/events/{player_id} - события Battle Pass
+        GET /api/v1/economy/battle-pass/challenges/weekly
+        - Еженедельные челленджи
+        - Query: player_id
+        - Response: Weekly challenges
 
-    - name: Battle Pass Validator
-      location: economy-service-go (модуль battle-pass-validation)
-      responsibility: |
-        - Валидация Battle Pass
-        - Проверка прав доступа
-        - Валидация получения наград
-        - Защита от читов
-        - Аудит операций
-      validation_rules: |
-        - Проверка уровня для получения награды
-        - Проверка премиум-статуса
-        - Проверка источников опыта
-        - Проверка лимитов
-      endpoints:
-        - POST /api/v1/economy/battle-pass/validate - валидация Battle Pass
+        POST /api/v1/economy/battle-pass/challenges/{id}/complete
+        - Завершить челлендж
+        - Request: player_id
+        - Response: XP awarded
 
-  data_flow:
-    xp_award: |
-      1. Игрок выполняет действие (квест, матч, достижение)
-      2. Event bus получает событие
-      3. Battle Pass Event Handler получает событие
-      4. XP Calculator рассчитывает опыт
-      5. Применяются модификаторы (премиум, сезон, событие)
-      6. Опыт начисляется игроку
-      7. Progression Manager проверяет повышение уровня
-      8. Если уровень повышен - публикуется событие
-      9. Notification Service уведомляет игрока
+        GET /api/v1/economy/battle-pass/rewards
+        - Все награды сезона
+        - Query: season_id
+        - Response: Array of rewards
 
-    reward_claim: |
-      1. Игрок запрашивает получение награды
-      2. Battle Pass Validator проверяет права доступа
-      3. Проверяется уровень и премиум-статус
-      4. Reward Manager выдаёт награду
-      5. Economy Service получает валюту/предметы
-      6. Mail Service отправляет награды (если нужно)
-      7. Battle Pass Event Handler публикует событие
-      8. Notification Service уведомляет игрока
+    - id: database
+      title: "База данных"
+      body: |
+        ## battle_pass_seasons
+        ```sql
+        CREATE TABLE battle_pass_seasons (
+          id UUID PRIMARY KEY,
+          name VARCHAR(200),
+          start_date TIMESTAMP,
+          end_date TIMESTAMP,
+          is_active BOOLEAN,
+          max_level INT DEFAULT 100
+        );
+        ```
 
-    premium_purchase: |
-      1. Игрок запрашивает покупку премиума
-      2. Premium Manager проверяет наличие валюты
-      3. Economy Service списывает валюту
-      4. Премиум-трек активируется
-      5. Все пропущенные премиум-награды выдаются
-      6. Battle Pass Event Handler публикует событие
-      7. Analytics Service регистрирует покупку
-      8. Notification Service уведомляет игрока
+        ## battle_pass_rewards
+        ```sql
+        CREATE TABLE battle_pass_rewards (
+          id UUID PRIMARY KEY,
+          season_id UUID REFERENCES battle_pass_seasons(id),
+          level INT,
+          track VARCHAR(20), -- 'free' or 'premium'
+          reward_type VARCHAR(50),
+          reward_data JSONB,
+          UNIQUE(season_id, level, track)
+        );
+        ```
 
-    challenge_completion: |
-      1. Игрок завершает челлендж
-      2. Challenge Manager проверяет выполнение
-      3. XP Calculator начисляет опыт за челлендж
-      4. Progression Manager обновляет прогресс
-      5. Battle Pass Event Handler публикует событие
-      6. Notification Service уведомляет игрока
+        ## player_battle_pass_progress
+        ```sql
+        CREATE TABLE player_battle_pass_progress (
+          player_id UUID,
+          season_id UUID REFERENCES battle_pass_seasons(id),
+          current_level INT,
+          current_xp INT,
+          premium_owned BOOLEAN,
+          premium_purchased_at TIMESTAMP,
+          claimed_levels INT[],
+          PRIMARY KEY (player_id, season_id)
+        );
+        ```
 
-  integrations:
-    with_economy_service: |
-      - Выдача наград (валюта, предметы)
-      - Списание премиум-валюты
-      - Интеграция с экономической системой
+        ## weekly_challenges
+        ```sql
+        CREATE TABLE weekly_challenges (
+          id UUID PRIMARY KEY,
+          season_id UUID REFERENCES battle_pass_seasons(id),
+          week_number INT,
+          challenge_type VARCHAR(50),
+          description TEXT,
+          target_value INT,
+          xp_reward INT,
+          created_at TIMESTAMP
+        );
+        ```
 
-    with_gameplay_service: |
-      - Получение событий о квестах
-      - Интеграция с quest engine
-      - Получение событий о матчах
+        ## player_weekly_challenges
+        ```sql
+        CREATE TABLE player_weekly_challenges (
+          player_id UUID,
+          challenge_id UUID REFERENCES weekly_challenges(id),
+          progress INT,
+          completed BOOLEAN,
+          completed_at TIMESTAMP,
+          PRIMARY KEY (player_id, challenge_id)
+        );
+        ```
 
-    with_achievement_service: |
-      - Получение событий о достижениях
-      - Интеграция с системой достижений
+    - id: progression-system
+      title: "Система прогрессии"
+      body: |
+        ## XP Sources
+        - Quest completion
+        - Daily activities
+        - Weekly challenges
+        - Combat actions
+        - Social interactions
+        - Economic activities
 
-    with_mail_service: |
-      - Отправка наград через почту
-      - Уведомления о Battle Pass
+        ## Level Calculation
+        - XP required per level increases
+        - Formula: base_xp * (level * multiplier)
+        - Max level: 100
 
-    with_notification_service: |
-      - Уведомления о повышении уровня
-      - Уведомления о новых наградах
-      - Уведомления о челленджах
+        ## Premium Benefits
+        - Additional rewards per level
+        - XP boost (1.5x)
+        - Exclusive cosmetics
+        - Early access to rewards
 
-    with_analytics_service: |
-      - Регистрация покупок премиума
-      - Аналитика прогрессии
-      - Метрики retention
+    - id: season-system
+      title: "Система сезонов"
+      body: |
+        ## Season Lifecycle
+        1. Season creation
+        2. Season activation
+        3. Active period (8-12 weeks)
+        4. Season end
+        5. Rewards claim period (2 weeks)
+        6. Season archive
 
-    with_realtime_gateway: |
-      - Синхронизация прогресса Battle Pass
-      - Уведомления о событиях
-      - Обновления в реальном времени
+        ## Season Management
+        - One active season at a time
+        - Automatic progression reset
+        - Season-specific rewards
+        - Season themes and cosmetics
 
-  data_consistency:
-    strategy: Strong Consistency (ACID транзакции) для критичных операций
-    mechanisms:
-      - ACID транзакции для начисления опыта, выдачи наград и покупки премиума
-      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
-      - Валидация перед выдачей наград и покупкой премиума
-      - Синхронизация с другими сервисами через Event Bus
-      - Outbox Pattern для гарантированной доставки событий
-      - Saga Pattern для распределенных операций (выдача награды, покупка премиума, уведомление игрока)
+    - id: reward-system
+      title: "Система наград"
+      body: |
+        ## Reward Types
+        - Currency (eurodollars, cryptos)
+        - Items (equipment, consumables)
+        - Cosmetics (skins, emotes)
+        - XP boosters
+        - Titles
 
-  data_synchronization:
-    event_sourcing: |
-      Все изменения состояния Battle Pass (начисление опыта, повышение уровня, выдача наград, покупка премиума, завершение челленджа)
-      записываются как события в Event Store. Это обеспечивает полный аудит,
-      возможность восстановления состояния и "time travel" для отладки.
-      Примеры событий: XPAddedEvent, LevelUpEvent, RewardClaimedEvent, PremiumPurchasedEvent, ChallengeCompletedEvent.
-    cqrs_pattern: |
-      Разделение команд (начисление опыта, выдача наград, покупка премиума) и запросов
-      (получение прогресса, получение наград, получение челленджей) для оптимизации производительности
-      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
-    saga_pattern: |
-      Для распределенных транзакций, таких как выдача награды (выдача награды, обновление прогресса,
-      отправка уведомления) или покупка премиума (списание валюты, активация премиум-трека,
-      выдача всех пропущенных наград, отправка уведомления), используется Saga Pattern
-      для обеспечения атомарности операций между Economy Service, Mail Service и Notification Service.
-    outbox_pattern: |
-      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
-      который записывает события в транзакционную таблицу перед публикацией.
+        ## Reward Distribution
+        - Free track: every level
+        - Premium track: every level (additional)
+        - Claim mechanism: manual or auto
+        - Overflow handling: mail system
 
-  tickrate_specification:
-    xp_operations:
-      tickrate: Event-based (on-demand при событиях)
-      network_load: |
-        - Начисление опыта: event-based, ~0.1-1 events/sec на игрока
-        - Получение прогресса: event-based, ~0.01-0.05 requests/sec на игрока
-        - Общий трафик: ~0.2-0.5 KB/sec на игрока для опыта
-      latency_requirements: < 50-100ms для начисления опыта, < 30-100ms для получения прогресса
-      sync_strategy: Strong Consistency (ACID транзакции) для начисления опыта
+    - id: challenge-system
+      title: "Система челленджей"
+      body: |
+        ## Weekly Challenges
+        - 5 challenges per week
+        - Auto-generation on Monday
+        - XP rewards on completion
+        - Challenge types:
+          * Combat (kills, damage)
+          * Quest (completions)
+          * Social (interactions)
+          * Economic (trades, crafting)
+          * Exploration (locations)
 
-    reward_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Выдача наград: event-based, ~0.01-0.05 events/sec на игрока
-        - Получение наград: event-based, ~0.01-0.02 requests/sec на игрока
-        - Общий трафик: ~0.1-0.3 KB/sec на игрока для наград
-      latency_requirements: < 100-200ms для выдачи наград, < 30-100ms для получения наград
-      sync_strategy: Strong Consistency (ACID транзакции) для выдачи наград
+        ## Challenge Processing
+        1. Event received from game services
+        2. Match challenge criteria
+        3. Update progress
+        4. Check completion
+        5. Award XP if completed
 
-    premium_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Покупка премиума: event-based, ~0.001-0.01 events/sec на игрока
-        - Получение статуса премиума: event-based, ~0.01-0.02 requests/sec на игрока
-        - Общий трафик: ~0.1-0.2 KB/sec на игрока для премиума
-      latency_requirements: < 200-300ms для покупки премиума, < 30-100ms для получения статуса
-      sync_strategy: Strong Consistency (ACID транзакции) для покупки премиума
+    - id: event-driven
+      title: "Event-Driven Architecture"
+      body: |
+        ## Subscribed Events
+        - quest.completed
+        - combat.action
+        - economy.transaction
+        - social.interaction
+        - exploration.discovered
 
-    challenge_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Завершение челленджа: event-based, ~0.01-0.05 events/sec на игрока
-        - Получение челленджей: event-based, ~0.01-0.02 requests/sec на игрока
-        - Обновление прогресса: event-based, ~0.01-0.05 events/sec на игрока
-        - Общий трафик: ~0.1-0.4 KB/sec на игрока для челленджей
-      latency_requirements: < 50-150ms для завершения челленджа, < 30-100ms для получения челленджей
-      sync_strategy: Strong Consistency (ACID транзакции) для завершения челленджей
+        ## Published Events
+        - battle_pass.xp_awarded
+        - battle_pass.level_up
+        - battle_pass.reward_claimed
+        - battle_pass.premium_purchased
+        - battle_pass.challenge_completed
 
-    event_handling:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Публикация событий Battle Pass: event-based, ~0.1-0.5 events/sec
-        - Подписка на события: event-based, ~0.05-0.2 events/sec
-        - Общий трафик: ~0.2-0.8 KB/sec для событий
-      latency_requirements: < 100-300ms для публикации событий
-      sync_strategy: Eventual Consistency для событий (через Event Bus)
+        ## Event Processing
+        1. Receive event from Kafka
+        2. Calculate XP from event
+        3. Update player progress
+        4. Check level up
+        5. Check challenge progress
+        6. Publish battle pass events
 
-  database_schema:
-    tables:
-      - name: battle_pass_seasons
-        description: Сезоны Battle Pass
-        fields:
-          - id: UUID (PK)
-          - name: VARCHAR(255)
-          - description: TEXT
-          - start_date: TIMESTAMP
-          - end_date: TIMESTAMP
-          - status: ENUM (CREATED, ACTIVE, ENDING, ENDED)
-          - max_level: INTEGER (default: 100)
-          - is_active: BOOLEAN (default: true)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - status, start_date
-          - is_active
+    - id: premium-system
+      title: "Премиум система"
+      body: |
+        ## Premium Purchase
+        - Currency: Premium currency
+        - Price: Configurable per season
+        - Validation: Economy service
+        - Activation: Immediate
+        - Retroactive rewards: Yes (all previous levels)
 
-      - name: battle_pass_rewards
-        description: Награды Battle Pass
-        fields:
-          - id: UUID (PK)
-          - season_id: UUID (FK battle_pass_seasons)
-          - level: INTEGER
-          - track: ENUM (free, premium)
-          - reward_type: ENUM (currency, item, cosmetic, xp_boost, title)
-          - reward_data: JSONB
-          - is_active: BOOLEAN (default: true)
-          - created_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(season_id, level, track)
-        indexes:
-          - season_id, level
-          - track, level
+        ## Premium Features
+        - Premium track rewards
+        - XP boost (1.5x)
+        - Exclusive cosmetics
+        - Early access to content
 
-      - name: player_battle_pass_progress
-        description: Прогресс игроков в Battle Pass
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - season_id: UUID (FK battle_pass_seasons)
-          - level: INTEGER (default: 1)
-          - experience: BIGINT (default: 0)
-          - experience_to_next_level: BIGINT
-          - has_premium: BOOLEAN (default: false)
-          - premium_purchased_at: TIMESTAMP (nullable)
-          - last_xp_awarded_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(player_id, season_id)
-        indexes:
-          - player_id, season_id
-          - season_id, level
+appendix:
+  decisions:
+    - id: "bp-001"
+      decision: "Event-driven progression"
+      rationale: "Decoupling от других систем"
+    - id: "bp-002"
+      decision: "100 levels per season"
+      rationale: "Оптимальный баланс прогрессии"
+    - id: "bp-003"
+      decision: "Weekly challenges"
+      rationale: "Поддержание активности"
 
-      - name: player_battle_pass_rewards_claimed
-        description: Полученные награды игроков
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - season_id: UUID (FK battle_pass_seasons)
-          - reward_id: UUID (FK battle_pass_rewards)
-          - level: INTEGER
-          - track: ENUM (free, premium)
-          - claimed_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(player_id, season_id, reward_id)
-        indexes:
-          - player_id, season_id
-          - reward_id
-
-      - name: battle_pass_challenges
-        description: Челленджи Battle Pass
-        fields:
-          - id: UUID (PK)
-          - season_id: UUID (FK battle_pass_seasons)
-          - challenge_type: ENUM (daily, weekly, season)
-          - title: VARCHAR(255)
-          - description: TEXT
-          - objective: JSONB
-          - xp_reward: INTEGER
-          - week_number: INTEGER (nullable)
-          - is_active: BOOLEAN (default: true)
-          - created_at: TIMESTAMP
-        indexes:
-          - season_id, challenge_type
-          - week_number
-
-      - name: player_battle_pass_challenges
-        description: Прогресс игроков по челленджам
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - challenge_id: UUID (FK battle_pass_challenges)
-          - progress: INTEGER (default: 0)
-          - target: INTEGER
-          - is_completed: BOOLEAN (default: false)
-          - completed_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(player_id, challenge_id)
-        indexes:
-          - player_id, is_completed
-          - challenge_id, is_completed
-
-technical_specification:
-  backend_requirements:
-    - Реализация модулей в economy-service-go:
-      - battle-pass (управление сезонами)
-      - battle-pass-progression (прогрессия)
-      - battle-pass-rewards (награды)
-      - battle-pass-challenges (челленджи)
-      - battle-pass-premium (премиум)
-      - battle-pass-xp (опыт)
-      - battle-pass-events (события)
-      - battle-pass-validation (валидация)
-    - Интеграция с gameplay-service для событий
-    - Интеграция с achievement-service для достижений
-    - Оптимизация запросов к БД (индексы, кэширование)
-
-  realtime_requirements:
-    - Синхронизация прогресса Battle Pass через WebSocket
-    - Уведомления о повышении уровня
-    - Уведомления о новых наградах
-
-  performance_requirements:
-    - Начисление опыта < 50ms
-    - Получение награды < 100ms
-    - Покупка премиума < 200ms
-    - Поддержка до 1M активных игроков
-    - Поддержка до 100K начислений опыта в секунду
-
-  scalability_requirements:
-    - Горизонтальное масштабирование через economy-service
-    - Распределение нагрузки на Battle Pass
-    - Оптимизация запросов к БД (batch, индексы)
-    - Кэширование сезонов и наград в Redis
-
-subtasks:
-  - id: season-manager-module
-    title: Реализация модуля Season Manager
-    description: |
-      Управление сезонами
-      Создание и активация сезонов
-      Завершение сезонов
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: progression-manager-implementation
-    title: Реализация Progression Manager
-    description: |
-      Управление прогрессией
-      Начисление опыта
-      Повышение уровня
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: reward-manager
-    title: Реализация Reward Manager
-    description: |
-      Управление наградами
-      Выдача наград
-      Управление треками
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: challenge-manager
-    title: Реализация Challenge Manager
-    description: |
-      Управление челленджами
-      Генерация еженедельных челленджей
-      Трекинг выполнения
-    priority: high
-    estimated_time: 4-5 дней
-
-  - id: premium-manager
-    title: Реализация Premium Manager
-    description: |
-      Управление премиум-треками
-      Покупка премиума
-      Активация премиум-трека
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: xp-calculator
-    title: Реализация XP Calculator
-    description: |
-      Расчёт опыта
-      Начисление опыта за действия
-      Применение модификаторов
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: battle-pass-event-handler
-    title: Реализация Battle Pass Event Handler
-    description: |
-      Обработка событий Battle Pass
-      Публикация событий
-      Подписка на события
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: battle-pass-validator
-    title: Реализация Battle Pass Validator
-    description: |
-      Валидация Battle Pass
-      Проверка прав доступа
-      Защита от читов
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: database-optimization
-    title: Оптимизация БД и запросов
-    description: |
-      Создание индексов
-      Оптимизация запросов
-      Кэширование сезонов
-    priority: medium
-    estimated_time: 1-2 дня
-
-  - id: api-endpoints
-    title: Реализация REST API endpoints
-    description: |
-      Создание всех endpoints для Battle Pass
-      Интеграция с существующим API economy-service
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: integration-testing
-    title: Интеграционное тестирование
-    description: |
-      Тесты сезонов
-      Тесты прогрессии
-      Тесты наград
-      Тесты челленджей
-      Тесты интеграций
-    priority: high
-    estimated_time: 3-4 дня
-
-diagrams:
-  component_diagram: |
-    ```mermaid
-    graph TB
-        subgraph "Economy Service"
-            SM[Season Manager]
-            PM[Progression Manager]
-            RM[Reward Manager]
-            CM[Challenge Manager]
-            PRM[Premium Manager]
-            XPC[XP Calculator]
-            BPEH[Battle Pass Event Handler]
-            BPV[Battle Pass Validator]
-        end
-
-        subgraph "Database"
-            DB[(PostgreSQL<br/>battle_pass_seasons<br/>battle_pass_rewards<br/>player_battle_pass_progress<br/>battle_pass_challenges)]
-        end
-
-        subgraph "External Services"
-            ES[Economy Service]
-            GS[Gameplay Service]
-            AS[Achievement Service]
-            MS[Mail Service]
-            NS[Notification Service]
-            ANS[Analytics Service]
-            RG[Realtime Gateway]
-        end
-
-        subgraph "Client"
-            CL[UE5 Client]
-        end
-
-        CL -->|claim reward| RM
-        CL -->|purchase premium| PRM
-        GS -->|events| BPEH
-        AS -->|events| BPEH
-        BPEH --> XPC
-        XPC --> PM
-        PM --> RM
-        RM --> ES
-        PRM --> ES
-        CM --> GS
-        BPEH --> NS
-        BPEH --> RG
-        RG -->|push events| CL
-    ```
-
-  data_flow_diagram: |
-    ```mermaid
-    sequenceDiagram
-        participant E as Event
-        participant BPEH as Battle Pass Event Handler
-        participant XPC as XP Calculator
-        participant PM as Progression Manager
-        participant RM as Reward Manager
-
-        E->>BPEH: Game event
-        BPEH->>XPC: Calculate XP
-        XPC->>PM: Award XP
-        PM->>PM: Check level up
-        alt Level up
-            PM->>RM: Unlock rewards
-            RM->>RM: Notify player
-        end
-    ```
-
-decisions:
-  - id: adr-battle-pass-architecture
-    summary: |
-      Выбрана модульная архитектура внутри economy-service-go для обеспечения
-      тесной интеграции с экономической системой.
-
-  - id: adr-season-system
-    summary: |
-      Система сезонов обеспечивает регулярный контент и мотивирует игроков
-      возвращаться для получения новых наград.
-
-  - id: adr-premium-track
-    summary: |
-      Премиум-трек с дополнительными наградами и преимуществами обеспечивает
-      монетизацию и даёт игрокам выбор между бесплатным и платным контентом.
-
-  - id: adr-challenge-system
-    summary: |
-      Система челленджей с еженедельной генерацией обеспечивает разнообразие
-      контента и дополнительные источники опыта.
-
-  - id: adr-xp-sources
-    summary: |
-      Множественные источники опыта (квесты, матчи, достижения) обеспечивают
-      гибкость прогрессии и мотивируют различные типы игровой активности.
-
-validation:
-  architecture_complete: true
-  components_defined: true
-  microservices_identified: true
-  api_endpoints_described: true
-  technical_specification_ready: true
-  subtasks_defined: true
-
-next_steps:
-  - Передача задачи агенту API Designer для создания OpenAPI спецификации
-  - Детализация API endpoints
-  - Создание request/response схем
-  - Определение формата сезонов и наград
+implementation:
+  github_issue: 227
+  needs_task: true
+  next_steps:
+    - "Database: Миграции"
+    - "API Designer: OpenAPI"
+    - "Backend: Реализация"
 
 history:
-  - version: '1.1.0'
-    date: 2025-11-30
-    author: Architect Agent
-    changes: |
-      Добавлена детальная синхронизация данных:
-      - Event Sourcing для всех изменений состояния Battle Pass
-      - CQRS Pattern для разделения команд и запросов
-      - Saga Pattern для распределенных операций (выдача награды, покупка премиума)
-      - Outbox Pattern для гарантированной доставки событий
-      - Обновлена секция data_consistency с механизмами синхронизации
-      - Добавлена спецификация тикрейта для опыта, наград, премиума, челленджей и обработки событий
-  - version: '1.0.0'
-    date: 2025-11-23
-    author: Architect Agent
-    changes: |
-      Создана полная архитектура системы Battle Pass:
-      - Определены компоненты (Season Manager, Progression Manager, Reward Manager, Challenge Manager, Premium Manager, XP Calculator, Battle Pass Event Handler, Battle Pass Validator)
-      - Описаны треки (free, premium)
-      - Описаны API endpoints (высокоуровнево)
-      - Спроектированы потоки данных
-      - Определена структура БД (battle_pass_seasons, battle_pass_rewards, player_battle_pass_progress, player_battle_pass_rewards_claimed, battle_pass_challenges, player_battle_pass_challenges)
-      - Спроектирована система сезонов
-      - Спроектирована система прогрессии
-      - Спроектирована система наград
-      - Спроектирована система челленджей
-      - Создано техническое задание
-      - Разбито на подзадачи
-
-
+  - version: "1.0.0"
+    date: 2025-12-02
+    author: architect
+    changes: "Battle Pass System architecture"
