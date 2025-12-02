@@ -6,14 +6,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/gc-lover/necpgame-monorepo/services/achievement-service-go/server"
 	_ "github.com/lib/pq"
-	"github.com/gc-lover/necpgame/services/achievement-service-go/server"
 )
 
 func main() {
+	// Database connection
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable"
+		dbURL = "postgres://user:password@localhost:5432/necpgame?sslmode=disable"
 	}
 
 	db, err := sql.Open("postgres", dbURL)
@@ -22,18 +23,29 @@ func main() {
 	}
 	defer db.Close()
 
-	repository := server.NewPostgresRepository(db)
-	service := server.NewAchievementService(repository)
-
-	addr := os.Getenv("HTTP_ADDR")
-	if addr == "" {
-		addr = ":8094"
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	httpServer := server.NewHTTPServer(addr, service)
+	// Create repository
+	repo := server.NewRepository(db)
 
-	log.Printf("Starting Achievement Service on %s", addr)
-	if err := httpServer.Start(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Create service
+	svc := server.NewService(repo)
+
+	// Create handlers
+	handlers := server.NewHandlers(svc)
+
+	// Create HTTP server
+	addr := os.Getenv("HTTP_ADDR")
+	if addr == "" {
+		addr = ":8086"
+	}
+
+	srv := server.NewHTTPServer(addr, handlers, svc)
+
+	log.Printf("Starting achievement-service on %s", addr)
+	if err := srv.Start(); err != nil {
+		log.Fatalf("Server failed: %v", err)
 	}
 }
