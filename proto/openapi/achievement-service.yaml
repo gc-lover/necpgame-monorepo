@@ -1,36 +1,40 @@
 # Issue: #138
 
-openapi: 3.0.3
+openapi: 3.0.0
+
 info:
   title: Achievement Service API
-  description: |
-    API для системы достижений и титулов.
-    
-    Функциональность:
-    - Просмотр достижений
-    - Отслеживание прогресса
-    - Получение наград
-    - Управление титулами
   version: 1.0.0
+  description: |
+    API для управления достижениями игроков: получение достижений, отслеживание прогресса, выдача наград.
+    
+    Event-driven архитектура с подпиской на события из всех игровых сервисов.
 
 servers:
-  - url: https://api.necp.game/api/v1
-  - url: http://localhost:8086/api/v1
+  - url: http://localhost:8086
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
 
 security:
   - BearerAuth: []
 
 tags:
-  - name: Achievements
-  - name: Titles
+  - name: achievements
+    description: Управление достижениями
+  - name: progress
+    description: Прогресс игрока
+  - name: titles
+    description: Титулы игрока
 
 paths:
-  /world/achievements:
+  /api/v1/world/achievements:
     get:
-      summary: Все достижения
-      operationId: listAchievements
       tags:
-        - Achievements
+        - achievements
+      summary: Получить все достижения
+      description: Получить каталог всех достижений с фильтрацией
+      operationId: getAchievements
       parameters:
         - name: category
           in: query
@@ -40,6 +44,11 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/AchievementType'
+        - name: include_hidden
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Список достижений
@@ -47,252 +56,347 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [achievements]
                 properties:
                   achievements:
                     type: array
                     items:
                       $ref: '#/components/schemas/Achievement'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /world/achievements/{achievement_id}:
-    parameters:
-      - name: achievement_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    
+  /api/v1/world/achievements/{achievementId}:
     get:
-      summary: Детали достижения
-      operationId: getAchievement
       tags:
-        - Achievements
+        - achievements
+      summary: Получить детали достижения
+      operationId: getAchievementDetails
+      parameters:
+        - name: achievementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
-          description: Достижение
+          description: Детали достижения
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Achievement'
+                $ref: '#/components/schemas/AchievementDetails'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /players/{player_id}/achievements:
-    parameters:
-      - $ref: 'common.yaml#/components/parameters/PlayerId'
-    
+  /api/v1/players/{playerId}/achievements:
     get:
-      summary: Прогресс игрока
-      operationId: getPlayerAchievements
       tags:
-        - Achievements
+        - progress
+      summary: Получить прогресс игрока
+      description: Получить все достижения игрока и их прогресс
+      operationId: getPlayerProgress
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: unlocked_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: claimed_only
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
-          description: Прогресс
+          description: Прогресс игрока
           content:
             application/json:
               schema:
                 type: object
-                required: [achievements]
                 properties:
+                  total_achievements:
+                    type: integer
+                  unlocked_count:
+                    type: integer
+                  claimed_count:
+                    type: integer
                   achievements:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PlayerAchievement'
+                      $ref: '#/components/schemas/PlayerAchievementProgress'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /players/{player_id}/achievements/{achievement_id}/claim:
-    parameters:
-      - $ref: 'common.yaml#/components/parameters/PlayerId'
-      - name: achievement_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    
+  /api/v1/players/{playerId}/achievements/{achievementId}/claim:
     post:
-      summary: Забрать награду
-      operationId: claimAchievement
       tags:
-        - Achievements
+        - progress
+      summary: Забрать награду за достижение
+      operationId: claimAchievementReward
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: achievementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Награда получена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClaimResponse'
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+                  title_unlocked:
+                    type: boolean
+                  title:
+                    $ref: '#/components/schemas/PlayerTitle'
         '400':
-          description: Не разблокировано или уже забрано
-          content:
-            application/json:
-              schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /players/{player_id}/titles:
-    parameters:
-      - $ref: 'common.yaml#/components/parameters/PlayerId'
-    
+  /api/v1/players/{playerId}/titles:
     get:
-      summary: Титулы игрока
-      operationId: getPlayerTitles
       tags:
-        - Titles
+        - titles
+      summary: Получить титулы игрока
+      operationId: getPlayerTitles
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
-          description: Титулы
+          description: Титулы игрока
           content:
             application/json:
               schema:
                 type: object
-                required: [titles, active_title]
                 properties:
+                  active_title:
+                    $ref: '#/components/schemas/PlayerTitle'
                   titles:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Title'
-                  active_title:
-                    $ref: '#/components/schemas/Title'
-                    nullable: true
+                      $ref: '#/components/schemas/PlayerTitle'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
-  /players/{player_id}/titles/active:
-    parameters:
-      - $ref: 'common.yaml#/components/parameters/PlayerId'
-    
+  /api/v1/players/{playerId}/titles/active:
     put:
+      tags:
+        - titles
       summary: Установить активный титул
       operationId: setActiveTitle
-      tags:
-        - Titles
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [title_id]
+              required:
+                - title_id
               properties:
                 title_id:
                   type: string
                   format: uuid
-                  nullable: true
       responses:
         '200':
           description: Титул установлен
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/PlayerTitle'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
 components:
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+
   schemas:
     AchievementCategory:
       type: string
-      enum: [combat, exploration, economic, social, quests, progression, pvp, special]
+      enum:
+        - combat
+        - economy
+        - social
+        - exploration
+        - quests
+        - pvp
+        - pve
+        - special
 
     AchievementType:
       type: string
-      enum: [standard, progressive, repeatable]
+      enum:
+        - standard
+        - progressive
+        - repeatable
 
     Achievement:
-      allOf:
-        - $ref: 'common.yaml#/components/schemas/BaseEntity'
-        - type: object
-          required: [name, description, category, type, criteria, rewards]
-          properties:
-            name:
-              type: string
-            description:
-              type: string
-            category:
-              $ref: '#/components/schemas/AchievementCategory'
-            type:
-              $ref: '#/components/schemas/AchievementType'
-            criteria:
-              type: object
-              description: Критерии выполнения
-            rewards:
-              $ref: '#/components/schemas/Rewards'
-            icon:
-              type: string
-            rarity:
-              $ref: 'loot-system-service.yaml#/components/schemas/Rarity'
-
-    PlayerAchievement:
       type: object
-      required: [achievement_id, progress, max_progress, unlocked, claimed]
+      required:
+        - id
+        - name
+        - description
+        - category
+        - type
+        - required_count
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/AchievementCategory'
+        type:
+          $ref: '#/components/schemas/AchievementType'
+        icon_url:
+          type: string
+          format: uri
+        required_count:
+          type: integer
+          minimum: 1
+        reward_currency:
+          type: string
+        reward_amount:
+          type: integer
+          minimum: 0
+        hidden:
+          type: boolean
+          default: false
+
+    AchievementDetails:
+      allOf:
+        - $ref: '#/components/schemas/Achievement'
+        - type: object
+          properties:
+            reward_items:
+              type: array
+              items:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                  quantity:
+                    type: integer
+            title_id:
+              type: string
+              format: uuid
+            unlocked_by_count:
+              type: integer
+              description: Количество игроков, разблокировавших достижение
+
+    PlayerAchievementProgress:
+      type: object
+      required:
+        - achievement_id
+        - current_count
       properties:
         achievement_id:
           type: string
           format: uuid
         achievement:
           $ref: '#/components/schemas/Achievement'
-        progress:
+        current_count:
           type: integer
-        max_progress:
+          minimum: 0
+        required_count:
           type: integer
-        unlocked:
+          minimum: 1
+        unlocked_at:
+          type: string
+          format: date-time
+        claimed_at:
+          type: string
+          format: date-time
+        progress_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+
+    PlayerTitle:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        achievement_id:
+          type: string
+          format: uuid
+        is_active:
           type: boolean
         unlocked_at:
           type: string
           format: date-time
-          nullable: true
-        claimed:
-          type: boolean
-        claimed_at:
+
+    Reward:
+      type: object
+      required:
+        - type
+        - data
+      properties:
+        type:
           type: string
-          format: date-time
-          nullable: true
-
-    Rewards:
-      type: object
-      properties:
-        currency:
+          enum:
+            - currency
+            - item
+            - title
+        data:
           type: object
-          properties:
-            eurodollars:
-              type: integer
-            cryptos:
-              type: integer
-        items:
-          type: array
-          items:
-            type: string
-            format: uuid
-        titles:
-          type: array
-          items:
-            type: string
-            format: uuid
-        reputation:
-          type: object
-          additionalProperties:
-            type: integer
-        experience:
-          type: integer
-
-    ClaimResponse:
-      type: object
-      required: [success, rewards]
-      properties:
-        success:
-          type: boolean
-        rewards:
-          $ref: '#/components/schemas/Rewards'
-
-    Title:
-      allOf:
-        - $ref: 'common.yaml#/components/schemas/BaseEntity'
-        - type: object
-          required: [name]
-          properties:
-            name:
-              type: string
-            description:
-              type: string
-            rarity:
-              $ref: 'loot-system-service.yaml#/components/schemas/Rarity'
-            unlocked_at:
-              type: string
-              format: date-time
+          additionalProperties: true
