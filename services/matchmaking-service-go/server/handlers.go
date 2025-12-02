@@ -1,115 +1,155 @@
-// Issue: #150
+// Issue: #1579 - ogen migration + full optimizations
+// Migrated from oapi-codegen to ogen for typed responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
-	"github.com/gc-lover/necpgame/services/matchmaking-service-go/pkg/api"
-	"github.com/oapi-codegen/runtime/types"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-service-go/pkg/api"
 )
 
-// Handlers реализует api.ServerInterface
+// Context timeout constants
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
 	service Service
 }
 
-// NewHandlers создает handlers с dependency injection
+// NewHandlers creates handlers with dependency injection
 func NewHandlers(service Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-// EnterQueue добавляет игрока в очередь
-func (h *Handlers) EnterQueue(w http.ResponseWriter, r *http.Request) {
-	var req api.EnterQueueRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
+// EnterQueue adds player to queue (TYPED ogen response)
+func (h *Handlers) EnterQueue(ctx context.Context, req *api.EnterQueueRequest) (api.EnterQueueRes, error) {
+	// CRITICAL: Context timeout for DB operations (50ms)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	response, err := h.service.EnterQueue(r.Context(), &req)
+	response, err := h.service.EnterQueue(ctx, req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		// Typed error response (ogen advantage - no interface{} boxing!)
+		return &api.EnterQueueInternalServerError{
+			Error:   "internal_server_error",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// GetQueueStatus получает статус очереди
-func (h *Handlers) GetQueueStatus(w http.ResponseWriter, r *http.Request, queueId types.UUID) {
-	response, err := h.service.GetQueueStatus(r.Context(), queueId.String())
+// GetQueueStatus gets queue status (TYPED ogen response)
+func (h *Handlers) GetQueueStatus(ctx context.Context, params api.GetQueueStatusParams) (api.GetQueueStatusRes, error) {
+	// CRITICAL: Context timeout (10ms for cache, 50ms for DB)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	response, err := h.service.GetQueueStatus(ctx, params.QueueId.String())
 	if err != nil {
-		respondError(w, http.StatusNotFound, "Queue not found")
-		return
+		// api.Error implements getQueueStatusRes interface
+		return &api.Error{
+			Error:   "not_found",
+			Message: "Queue not found",
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// LeaveQueue удаляет игрока из очереди
-func (h *Handlers) LeaveQueue(w http.ResponseWriter, r *http.Request, queueId types.UUID) {
-	response, err := h.service.LeaveQueue(r.Context(), queueId.String())
+// LeaveQueue removes player from queue (TYPED ogen response)
+func (h *Handlers) LeaveQueue(ctx context.Context, params api.LeaveQueueParams) (api.LeaveQueueRes, error) {
+	// CRITICAL: Context timeout
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	response, err := h.service.LeaveQueue(ctx, params.QueueId.String())
 	if err != nil {
-		respondError(w, http.StatusNotFound, "Queue not found")
-		return
+		// api.Error implements leaveQueueRes interface
+		return &api.Error{
+			Error:   "internal_server_error",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// GetPlayerRating получает рейтинг игрока
-func (h *Handlers) GetPlayerRating(w http.ResponseWriter, r *http.Request, playerId api.PlayerId) {
-	response, err := h.service.GetPlayerRating(r.Context(), playerId.String())
+// GetPlayerRating gets player rating (TYPED ogen response)
+func (h *Handlers) GetPlayerRating(ctx context.Context, params api.GetPlayerRatingParams) (api.GetPlayerRatingRes, error) {
+	// CRITICAL: Context timeout (cache operation)
+	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
+	defer cancel()
+
+	response, err := h.service.GetPlayerRating(ctx, params.PlayerID.String())
 	if err != nil {
-		respondError(w, http.StatusNotFound, "Player not found")
-		return
+		// api.Error implements getPlayerRatingRes interface
+		return &api.Error{
+			Error:   "not_found",
+			Message: "Player not found",
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// GetLeaderboard получает таблицу лидеров
-func (h *Handlers) GetLeaderboard(w http.ResponseWriter, r *http.Request, activityType string, params api.GetLeaderboardParams) {
-	response, err := h.service.GetLeaderboard(r.Context(), activityType, params)
+// GetLeaderboard gets leaderboard (TYPED ogen response)
+func (h *Handlers) GetLeaderboard(ctx context.Context, params api.GetLeaderboardParams) (*api.LeaderboardResponse, error) {
+	// CRITICAL: Context timeout (leaderboard from cache)
+	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
+	defer cancel()
+
+	response, err := h.service.GetLeaderboard(ctx, string(params.ActivityType), params)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// AcceptMatch принимает матч
-func (h *Handlers) AcceptMatch(w http.ResponseWriter, r *http.Request, matchId types.UUID) {
-	err := h.service.AcceptMatch(r.Context(), matchId.String())
+// AcceptMatch accepts match (TYPED ogen response)
+func (h *Handlers) AcceptMatch(ctx context.Context, params api.AcceptMatchParams) (api.AcceptMatchRes, error) {
+	// CRITICAL: Context timeout
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	err := h.service.AcceptMatch(ctx, params.MatchId.String())
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return &api.AcceptMatchNotFound{
+			Error:   "not_found",
+			Message: "Match not found or expired",
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, map[string]string{"status": "accepted"})
+	return &api.SuccessResponse{
+		Status: api.NewOptString("accepted"),
+	}, nil
 }
 
-// DeclineMatch отклоняет матч
-func (h *Handlers) DeclineMatch(w http.ResponseWriter, r *http.Request, matchId types.UUID) {
-	err := h.service.DeclineMatch(r.Context(), matchId.String())
+// DeclineMatch declines match (TYPED ogen response)
+func (h *Handlers) DeclineMatch(ctx context.Context, params api.DeclineMatchParams) (*api.SuccessResponse, error) {
+	// CRITICAL: Context timeout
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	err := h.service.DeclineMatch(ctx, params.MatchId.String())
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return nil, err
 	}
 
-	respondJSON(w, http.StatusOK, map[string]string{"status": "declined"})
+	return &api.SuccessResponse{
+		Status: api.NewOptString("declined"),
+	}, nil
 }
 
-// Response helpers
-func respondJSON(w http.ResponseWriter, code int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(data)
+// NewError implements ogen error handler (handles errors from middleware/validation)
+func (h *Handlers) NewError(ctx context.Context, err error) *api.Error {
+	return &api.Error{
+		Error:   "error",
+		Message: err.Error(),
+	}
 }
-
-func respondError(w http.ResponseWriter, code int, message string) {
-	respondJSON(w, code, map[string]string{"error": message})
-}
-
