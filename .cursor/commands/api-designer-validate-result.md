@@ -1,29 +1,8 @@
 # Validate Result
 
-Check OpenAPI spec readiness before handoff to Backend.
+**Check readiness:**
+- [ ] OpenAPI spec valid, all endpoints described
 
-## Criteria
+**Handoff:** `Backend - Todo` (`72d37d44`)
 
-- [ ] OpenAPI spec created, validated
-- [ ] All endpoints described, schemas defined
-- [ ] Quality checklist passed
-
-**Result:**
-- OK Ready → handoff to Backend
-- ❌ Not ready → fix issues, don't handoff
-
-**On handoff:** Update Status to `Backend - Todo`
-
-**Update Status:**
-```javascript
-mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: project_item_id,
-  updated_field: {
-    id: 239690516  // число,
-    value: '{option_id}'  // id опции 'Backend - Todo' из list_project_fields
-  }
-});
-```
+**See:** `.cursor/AGENT_WORKFLOW_PART1.md`

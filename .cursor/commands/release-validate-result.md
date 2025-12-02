@@ -1,12 +1,7 @@
 # Validate Result
 
-Check release readiness.
+**Check:** Release ready
 
-## Criteria
+**Complete:** `Done` (`98236657`) + close Issue
 
-- [ ] Release notes created
-- [ ] GitHub Release created
-- [ ] Deployment successful
-- [ ] Monitoring configured
-
-**Result:** OK Ready / ❌ Not ready
+**See:** `.cursor/AGENT_WORKFLOW_PART2.md`
