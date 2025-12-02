@@ -1,0 +1,421 @@
+# Issue: #1574
+
+weapon_game_mechanics_system:
+  metadata:
+    issue: "#1574"
+    title: "Система игровых механик оружия"
+    description: "Архитектура системы управления ресурсами, прогрессии и балансировки оружия"
+    version: "1.0.0"
+    created: "2025-12-02"
+    status: "design"
+  
+  overview:
+    purpose: "Управление ресурсами оружия, прогрессия улучшений и балансировка для различных режимов игры"
+    scope:
+      - "Система управления ресурсами (боезапас, перегрев, кулдауны, энергия)"
+      - "Система прогрессии (улучшения, перки, модификации)"
+      - "Система балансировки (PvE, PvP, арены)"
+      - "Интеграция с inventory-service"
+      - "Интеграция с progression-service"
+    
+    integration_with_existing:
+      inventory_service: "Управление оружием и модификаторами"
+      progression_service: "Уровни и перки персонажа"
+      combat_session_service: "Применение балансировки в бою"
+      weapon_modifier_system: "Модификации через обвес, чипы, прошивки (Issue #1575)"
+  
+  components:
+    weapon_resource_manager:
+      description: "Управление ресурсами оружия"
+      responsibilities:
+        - "Отслеживание боезапаса"
+        - "Управление перегревом"
+        - "Контроль кулдаунов"
+        - "Управление энергией"
+      
+      subcomponents:
+        ammunition_manager:
+          description: "Управление боезапасом"
+          mechanics:
+            special_ammo:
+              description: "Ограниченный запас специальных снарядов"
+              replenishment:
+                - "Лут с врагов"
+                - "Покупка в магазинах"
+                - "Крафт (crafting-service)"
+              storage:
+                max_per_weapon: 100
+                max_total: 500
+                types:
+                  - "fire"
+                  - "ice"
+                  - "poison"
+                  - "electric"
+                  - "explosive"
+        
+        heat_manager:
+          description: "Управление перегревом"
+          mechanics:
+            heat_accumulation:
+              rate_per_shot: 10
+              max_heat: 100
+              cooling_rate: 20
+              overheat_threshold: 100
+            
+            overheat_penalty:
+              duration: "3-5 seconds"
+              effect: "Weapon blocked"
+              damage_to_weapon: "5% durability"
+            
+            cooling_mechanics:
+              passive_cooling: "20 heat/second"
+              active_cooling: "50 heat/second (manual action)"
+              cooling_attachments: "Increase cooling rate by 50%"
+        
+        cooldown_manager:
+          description: "Управление кулдаунами"
+          mechanics:
+            deployable_weapons:
+              mine: "10 seconds"
+              turret: "30 seconds"
+              trap: "15 seconds"
+              drone: "20 seconds"
+            
+            special_abilities:
+              ultimate: "60 seconds"
+              tactical: "20 seconds"
+              passive: "5 seconds"
+            
+            reduction:
+              perks: "10-30% reduction"
+              items: "5-15% reduction"
+              cyberdeck_firmware: "20% reduction"
+        
+        energy_manager:
+          description: "Управление энергией"
+          mechanics:
+            energy_weapons:
+              max_energy: 100
+              regen_rate: 10
+              cost_per_shot: 5-20
+              
+            energy_types:
+              battery: "Rechargeable, slow regen"
+              capacitor: "Fast discharge, fast regen"
+              reactor: "Constant supply, no regen needed"
+    
+    weapon_progression_system:
+      description: "Система прогрессии оружия"
+      responsibilities:
+        - "Управление уровнями оружия"
+        - "Система перков"
+        - "Интеграция с модификациями"
+      
+      subcomponents:
+        upgrade_manager:
+          description: "Управление улучшениями оружия"
+          mechanics:
+            upgrade_levels:
+              min_level: 0
+              max_level: 10
+              
+            stats_per_level:
+              damage: "+5%"
+              accuracy: "+2%"
+              range: "+1%"
+              critical_chance: "+0.5%"
+            
+            upgrade_cost:
+              formula: "base_cost * (level ^ 1.5)"
+              base_cost_by_rarity:
+                common: 100
+                uncommon: 250
+                rare: 500
+                epic: 1000
+                legendary: 2500
+            
+            upgrade_materials:
+              crafting_components: "Required per level"
+              rare_materials: "For levels 8-10"
+              credits: "Always required"
+        
+        perk_system:
+          description: "Система перков для оружия"
+          mechanics:
+            weapon_type_perks:
+              assault_rifle:
+                - "Fast Reload: -30% reload time"
+                - "Penetration: +50% armor pierce"
+                - "Suppression: Enemies take -20% accuracy"
+              
+              sniper_rifle:
+                - "Headhunter: +100% headshot damage"
+                - "Holdbreath: +50% accuracy when aiming"
+                - "Penetrating Shot: Pierce through enemies"
+              
+              shotgun:
+                - "Point Blank: +50% damage at close range"
+                - "Spread Control: -30% spread"
+                - "Knockback: Push enemies back"
+              
+              pistol:
+                - "Dual Wield: Use two pistols"
+                - "Quick Draw: Instant weapon switch"
+                - "Deadeye: Auto-aim critical spots"
+            
+            unlock_requirements:
+              player_level: "Unlock based on player level"
+              weapon_mastery: "Use weapon X times"
+              achievements: "Complete specific challenges"
+            
+            perk_points:
+              source: "Player level up, weapon mastery"
+              allocation: "Manual by player"
+              respec: "Possible with cost"
+        
+        modification_integration:
+          description: "Интеграция с системой модификаторов (Issue #1575)"
+          reference: "weapon-modifiers-system-architecture.yaml"
+          mechanics:
+            attachment_slots: "3-5 slots depending on weapon"
+            chip_slots: "1-3 slots depending on weapon rarity"
+            cyberdeck_firmware: "Global modification"
+    
+    balance_system:
+      description: "Система балансировки для различных режимов"
+      responsibilities:
+        - "Применение модификаторов баланса"
+        - "Адаптация под режим игры"
+        - "Контроль эффектов"
+      
+      subcomponents:
+        mode_balancer:
+          description: "Балансировка по режимам"
+          mechanics:
+            pve_mode:
+              damage_multiplier: 1.5
+              effect_multiplier: 1.2
+              destruction_enabled: true
+              special_ammo_drop_rate: 0.3
+              
+            pvp_mode:
+              damage_multiplier: 1.0
+              effect_multiplier: 0.8
+              destruction_enabled: false
+              special_ammo_drop_rate: 0.1
+              headshot_multiplier: 2.0
+              
+            arena_mode:
+              damage_multiplier: 1.0
+              effect_multiplier: 1.0
+              destruction_enabled: "limited"
+              weapon_presets: true
+              fair_play_balance: true
+              special_ammo_limited: true
+        
+        weapon_balancer:
+          description: "Балансировка оружия"
+          mechanics:
+            dps_normalization:
+              target_dps_by_class:
+                assault_rifle: 250
+                sniper_rifle: 400
+                shotgun: 300
+                pistol: 180
+                smg: 220
+              
+            trade_offs:
+              high_damage: "Low fire rate"
+              high_fire_rate: "Low damage"
+              high_accuracy: "Low mobility"
+              high_mobility: "Low accuracy"
+            
+            special_mechanics_balance:
+              unique_effect_power: "Compensated by resource cost"
+              synergy_multipliers: "Capped at 2.0x"
+              chain_damage_limit: "Max 5 targets"
+  
+  microservices:
+    weapon_resource_service:
+      description: "Микросервис управления ресурсами оружия"
+      integration_note: "Интегрируется с inventory-service"
+      
+      responsibilities:
+        - "Отслеживание ресурсов оружия (боезапас, перегрев, энергия)"
+        - "Применение кулдаунов"
+        - "Синхронизация между клиентом и сервером"
+      
+      endpoints:
+        - "GET /api/v1/weapons/resources/{weapon_id}"
+        - "POST /api/v1/weapons/resources/{weapon_id}/consume"
+        - "POST /api/v1/weapons/resources/{weapon_id}/reload"
+        - "GET /api/v1/weapons/resources/{weapon_id}/status"
+      
+      database_schema:
+        weapon_resources:
+          fields:
+            - "weapon_instance_id UUID PRIMARY KEY"
+            - "ammunition_current INT"
+            - "ammunition_max INT"
+            - "heat_current DECIMAL"
+            - "energy_current DECIMAL"
+            - "cooldowns JSONB"
+            - "updated_at TIMESTAMP"
+    
+    weapon_progression_service:
+      description: "Микросервис прогрессии оружия"
+      integration_note: "Интегрируется с progression-service"
+      
+      responsibilities:
+        - "Управление уровнями оружия"
+        - "Система перков"
+        - "Отслеживание мастерства"
+      
+      endpoints:
+        - "GET /api/v1/weapons/progression/{weapon_id}"
+        - "POST /api/v1/weapons/progression/{weapon_id}/upgrade"
+        - "GET /api/v1/weapons/perks"
+        - "POST /api/v1/weapons/perks/{perk_id}/unlock"
+        - "GET /api/v1/weapons/mastery/{weapon_type}"
+      
+      database_schema:
+        weapon_upgrades:
+          fields:
+            - "weapon_instance_id UUID PRIMARY KEY"
+            - "upgrade_level INT"
+            - "experience INT"
+            - "unlock_perks UUID[]"
+            - "created_at TIMESTAMP"
+            - "updated_at TIMESTAMP"
+        
+        weapon_perks:
+          fields:
+            - "perk_id UUID PRIMARY KEY"
+            - "weapon_type VARCHAR"
+            - "name VARCHAR"
+            - "description TEXT"
+            - "effect JSONB"
+            - "unlock_requirements JSONB"
+        
+        weapon_mastery:
+          fields:
+            - "player_id UUID"
+            - "weapon_type VARCHAR"
+            - "uses_count INT"
+            - "kills_count INT"
+            - "mastery_level INT"
+            - "PRIMARY KEY (player_id, weapon_type)"
+  
+  data_flow:
+    resource_consumption:
+      steps:
+        - "Client: Player fires weapon"
+        - "Client: Check local resources (prediction)"
+        - "Client → Backend: Consume resource request"
+        - "Backend: Validate and apply consumption"
+        - "Backend: Update database"
+        - "Backend → Client: Confirmation + new state"
+        - "Client: Sync state"
+    
+    weapon_upgrade:
+      steps:
+        - "Client: Player requests upgrade"
+        - "Client → Backend: Upgrade request"
+        - "Backend: Check materials and cost"
+        - "Backend: Apply upgrade"
+        - "Backend: Update weapon stats"
+        - "Backend → Client: New weapon stats"
+        - "Client: Update UI and weapon"
+    
+    perk_unlock:
+      steps:
+        - "Client: Player unlocks perk"
+        - "Client → Backend: Unlock request"
+        - "Backend: Check requirements"
+        - "Backend: Apply perk"
+        - "Backend: Update player perks"
+        - "Backend → Client: Confirmation"
+        - "Client: Update UI"
+  
+  integration:
+    with_inventory_service:
+      description: "Управление инвентарем оружия"
+      operations:
+        - "Get weapon instance"
+        - "Update weapon stats"
+        - "Add/remove modifications"
+    
+    with_progression_service:
+      description: "Прогрессия персонажа"
+      operations:
+        - "Get player level"
+        - "Get available perk points"
+        - "Update mastery stats"
+    
+    with_combat_session_service:
+      description: "Применение балансировки в бою"
+      operations:
+        - "Get game mode (PvE/PvP/Arena)"
+        - "Apply balance multipliers"
+        - "Track weapon usage"
+    
+    with_modifier_system:
+      description: "Модификации оружия (Issue #1575)"
+      reference: "weapon-modifiers-system-architecture.yaml"
+      operations:
+        - "Apply attachment effects"
+        - "Apply chip effects"
+        - "Apply firmware effects"
+  
+  technical_requirements:
+    performance:
+      resource_tracking: "Real-time, <10ms latency"
+      database_writes: "Batched every 5 seconds"
+      cache_usage: "Redis for active weapons"
+    
+    scalability:
+      concurrent_players: "10,000+"
+      weapons_per_player: "100+"
+      perks_total: "500+"
+    
+    reliability:
+      data_persistence: "Immediate for upgrades, delayed for resources"
+      failover: "Fallback to cached state"
+      backup: "Daily snapshots"
+  
+  implementation_notes:
+    phase_1:
+      - "Resource management (ammunition, heat, energy)"
+      - "Basic cooldowns"
+      - "Integration with inventory-service"
+    
+    phase_2:
+      - "Upgrade system (levels 0-10)"
+      - "Weapon mastery tracking"
+      - "Database schema for progression"
+    
+    phase_3:
+      - "Perk system (unlock, apply)"
+      - "Perk tree UI"
+      - "Respec mechanism"
+    
+    phase_4:
+      - "Balance system (PvE/PvP/Arena)"
+      - "Dynamic balance adjustments"
+      - "Telemetry and analytics"
+  
+  related_systems:
+    - issue: "#1575"
+      system: "Weapon Modifiers System"
+      file: "weapon-modifiers-system-architecture.yaml"
+    
+    - issue: "#1560"
+      system: "Projectile Forms System"
+      file: "projectile-forms-system-architecture.yaml"
+    
+    - system: "Inventory Service"
+      file: "proto/openapi/inventory-service.yaml"
+    
+    - system: "Progression Service"
+      file: "proto/openapi/progression-service.yaml"
+
