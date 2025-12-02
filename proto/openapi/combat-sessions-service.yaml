@@ -1,0 +1,144 @@
+# Issue: SOLID refactoring - create OpenAPI spec for combat-sessions-service
+openapi: 3.0.3
+
+info:
+  title: Combat Sessions Service API
+  version: 1.0.0
+  description: Combat session management API
+
+servers:
+  - url: http://localhost:8158
+    description: Local development
+
+tags:
+  - name: sessions
+
+paths:
+  /gameplay/combat/sessions:
+    post:
+      tags: [sessions]
+      operationId: createCombatSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatSession"
+    get:
+      tags: [sessions]
+      operationId: listCombatSessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CombatSession"
+  
+  /gameplay/combat/sessions/{session_id}:
+    get:
+      tags: [sessions]
+      operationId: getCombatSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatSession"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+    
+    delete:
+      tags: [sessions]
+      operationId: endCombatSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session ended
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+components:
+  schemas:
+    CreateSessionRequest:
+      type: object
+      required: [player_id, session_type]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        session_type:
+          type: string
+          enum: [pve, pvp, raid]
+        map_id:
+          type: string
+    
+    CombatSession:
+      type: object
+      required: [id, player_id, session_type, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        session_type:
+          type: string
+        status:
+          type: string
+          enum: [active, ended, abandoned]
+        created_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+  
+  securitySchemes:
+    $ref: "common.yaml#/components/securitySchemes"
+  
+  responses:
+    $ref: "common.yaml#/components/responses"
+
+security:
+  - BearerAuth: []
+
