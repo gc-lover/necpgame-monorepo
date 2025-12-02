@@ -1,42 +1,40 @@
-# Issue: #130
-
+# Multi-stage build for combat-sessions-service
 FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies for code generation
-RUN apk add --no-cache make nodejs npm
+RUN apk add --no-cache git ca-certificates tzdata
 
-# Copy go mod files
-COPY go.mod go.sum* ./
-RUN go mod download || true
+# Copy go modules
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Copy source
+# Copy source code (with already generated API code)
 COPY . .
-
-# Generate API code
-RUN make generate-api || true
-
-# Tidy dependencies
-RUN go mod tidy
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -o combat-sessions-service -ldflags="-w -s" .
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /app
 
-COPY --from=builder /app/combat-sessions-service /app/
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
 
-EXPOSE 8090/tcp 9090/tcp
+COPY --from=builder /app/combat-sessions-service /app/combat-sessions-service
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8158/tcp
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9090/metrics || exit 1
-
-USER nobody
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8158/health || exit 1
 
 ENTRYPOINT ["/app/combat-sessions-service"]
 

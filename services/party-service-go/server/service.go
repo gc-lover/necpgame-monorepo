@@ -3,103 +3,173 @@ package server
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"time"
 
 	"github.com/gc-lover/necpgame/services/party-service-go/pkg/api"
-	"github.com/oapi-codegen/runtime/types"
 )
 
-// Service интерфейс бизнес-логики
-type Service interface {
-	CreateParty(ctx context.Context, req *api.CreatePartyRequest) (*api.PartyResponse, error)
-	GetParty(ctx context.Context, partyID string) (*api.PartyResponse, error)
-	DeleteParty(ctx context.Context, partyID string) error
-	InviteToParty(ctx context.Context, partyID string, req *api.InviteRequest) (*api.InviteResponse, error)
-	AcceptInvite(ctx context.Context, inviteID string) error
-	DeclineInvite(ctx context.Context, inviteID string) error
-	LeaveParty(ctx context.Context, partyID string) error
-	KickMember(ctx context.Context, partyID, memberID string) error
-	UpdateSettings(ctx context.Context, partyID string, req *api.PartySettingsRequest) (*api.PartyResponse, error)
-	RollForLoot(ctx context.Context, partyID string, req *api.LootRollRequest) (*api.LootRollResponse, error)
-	PassLootRoll(ctx context.Context, partyID, rollID string) error
+type Party struct {
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	LeaderID   string    `json:"leader_id"`
+	Members    []string  `json:"members"`
+	MaxMembers int       `json:"max_members"`
+	LootMode   string    `json:"loot_mode"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-// PartyService реализует Service
 type PartyService struct {
-	repository Repository
+	repo *PartyRepository
 }
 
-// NewPartyService создает новый сервис
-func NewPartyService(repository Repository) Service {
-	return &PartyService{repository: repository}
+func NewPartyService(repo *PartyRepository) *PartyService {
+	return &PartyService{
+		repo: repo,
+	}
 }
 
-func (s *PartyService) CreateParty(ctx context.Context, req *api.CreatePartyRequest) (*api.PartyResponse, error) {
-	// TODO: Реализовать создание группы
-	leaderID := parseUUID("550e8400-e29b-41d4-a716-446655440000")
-	partyID := parseUUID("660e8400-e29b-41d4-a716-446655440001")
-	lootMode := api.PartyResponseLootModeFreeForAll
-	return &api.PartyResponse{
-		PartyId:  partyID,
-		LeaderId: leaderID,
-		Members:  []api.PartyMember{},
-		LootMode: lootMode,
+// CreateParty creates a new party
+func (s *PartyService) CreateParty(ctx context.Context, leaderID, name, lootMode string) (*Party, error) {
+	partyID := fmt.Sprintf("party-%d", time.Now().Unix())
+
+	party := &Party{
+		ID:         partyID,
+		Name:       name,
+		LeaderID:   leaderID,
+		Members:    []string{leaderID},
+		MaxMembers: 5,
+		LootMode:   lootMode,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+
+	if err := s.repo.CreateParty(ctx, party); err != nil {
+		return nil, fmt.Errorf("failed to create party: %w", err)
+	}
+
+	// TODO: Publish event to Event Bus
+	// eventBus.Publish("social.party.created", party)
+
+	return party, nil
+}
+
+// GetParty retrieves party by ID
+func (s *PartyService) GetParty(ctx context.Context, partyID string) (*Party, error) {
+	return s.repo.GetParty(ctx, partyID)
+}
+
+// DisbandParty disbands a party
+func (s *PartyService) DisbandParty(ctx context.Context, partyID string) error {
+	if err := s.repo.DeleteParty(ctx, partyID); err != nil {
+		return fmt.Errorf("failed to disband party: %w", err)
+	}
+
+	// TODO: Publish event to Event Bus
+	// eventBus.Publish("social.party.disbanded", partyID)
+
+	return nil
+}
+
+// InvitePlayer invites a player to the party
+func (s *PartyService) InvitePlayer(ctx context.Context, partyID, playerID string) (*api.InviteResponse, error) {
+	inviteID := fmt.Sprintf("invite-%d", time.Now().Unix())
+
+	invite := &api.InviteResponse{
+		InviteId:  inviteID,
+		PartyId:   partyID,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	}
+
+	// TODO: Store invite in database
+	// TODO: Publish event to Event Bus
+	// eventBus.Publish("social.party.invited", invite)
+
+	return invite, nil
+}
+
+// AcceptInvite accepts a party invite
+func (s *PartyService) AcceptInvite(ctx context.Context, inviteID, playerID string) (*Party, error) {
+	// TODO: Get party from invite
+	// TODO: Add player to party
+	// TODO: Delete invite
+	// TODO: Publish event
+
+	return &Party{
+		ID:       "party-001",
+		Name:     "Sample Party",
+		LeaderID: "leader-001",
+		Members:  []string{"leader-001", playerID},
 	}, nil
 }
 
-func (s *PartyService) GetParty(ctx context.Context, partyID string) (*api.PartyResponse, error) {
-	// TODO: Реализовать получение группы
-	return nil, errors.New("not implemented")
-}
-
-func (s *PartyService) DeleteParty(ctx context.Context, partyID string) error {
-	// TODO: Реализовать удаление группы
-	return nil
-}
-
-func (s *PartyService) InviteToParty(ctx context.Context, partyID string, req *api.InviteRequest) (*api.InviteResponse, error) {
-	// TODO: Реализовать приглашение
-	return nil, errors.New("not implemented")
-}
-
-func (s *PartyService) AcceptInvite(ctx context.Context, inviteID string) error {
-	// TODO: Реализовать принятие приглашения
-	return nil
-}
-
+// DeclineInvite declines a party invite
 func (s *PartyService) DeclineInvite(ctx context.Context, inviteID string) error {
-	// TODO: Реализовать отклонение приглашения
+	// TODO: Delete invite
+	// TODO: Publish event
 	return nil
 }
 
-func (s *PartyService) LeaveParty(ctx context.Context, partyID string) error {
-	// TODO: Реализовать выход из группы
+// LeaveParty removes a player from the party
+func (s *PartyService) LeaveParty(ctx context.Context, partyID, playerID string) error {
+	party, err := s.repo.GetParty(ctx, partyID)
+	if err != nil {
+		return fmt.Errorf("party not found: %w", err)
+	}
+
+	// Remove player from members
+	newMembers := make([]string, 0, len(party.Members)-1)
+	for _, member := range party.Members {
+		if member != playerID {
+			newMembers = append(newMembers, member)
+		}
+	}
+
+	party.Members = newMembers
+	party.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdateParty(ctx, party); err != nil {
+		return fmt.Errorf("failed to leave party: %w", err)
+	}
+
+	// TODO: Publish event
 	return nil
 }
 
-func (s *PartyService) KickMember(ctx context.Context, partyID, memberID string) error {
-	// TODO: Реализовать кик
+// KickMember kicks a player from the party
+func (s *PartyService) KickMember(ctx context.Context, partyID, playerID string) error {
+	return s.LeaveParty(ctx, partyID, playerID)
+}
+
+// UpdateSettings updates party settings
+func (s *PartyService) UpdateSettings(ctx context.Context, partyID string, settings *api.PartySettingsRequest) error {
+	party, err := s.repo.GetParty(ctx, partyID)
+	if err != nil {
+		return fmt.Errorf("party not found: %w", err)
+	}
+
+	if settings.LootMode != nil {
+		party.LootMode = string(*settings.LootMode)
+	}
+
+	party.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdateParty(ctx, party); err != nil {
+		return fmt.Errorf("failed to update settings: %w", err)
+	}
+
+	// TODO: Publish event
 	return nil
 }
 
-func (s *PartyService) UpdateSettings(ctx context.Context, partyID string, req *api.PartySettingsRequest) (*api.PartyResponse, error) {
-	// TODO: Реализовать обновление настроек
-	return nil, errors.New("not implemented")
+// RollForLoot handles loot roll
+func (s *PartyService) RollForLoot(ctx context.Context, partyID, playerID, itemID, rollType string) (*api.LootRollResponse, error) {
+	// TODO: Implement loot roll logic
+	return &api.LootRollResponse{
+		PlayerId: playerID,
+		ItemId:   itemID,
+		RollType: rollType,
+		Winner:   playerID,
+	}, nil
 }
-
-func (s *PartyService) RollForLoot(ctx context.Context, partyID string, req *api.LootRollRequest) (*api.LootRollResponse, error) {
-	// TODO: Реализовать roll
-	return nil, errors.New("not implemented")
-}
-
-func (s *PartyService) PassLootRoll(ctx context.Context, partyID, rollID string) error {
-	// TODO: Реализовать pass
-	return nil
-}
-
-func parseUUID(s string) types.UUID {
-	uuid := types.UUID{}
-	copy(uuid[:], s)
-	return uuid
-}
-

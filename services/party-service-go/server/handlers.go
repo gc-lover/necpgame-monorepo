@@ -6,174 +6,216 @@ import (
 	"net/http"
 
 	"github.com/gc-lover/necpgame/services/party-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/oapi-codegen/runtime/types"
 )
 
-// Handlers реализует api.ServerInterface
-type Handlers struct {
-	service Service
+// PartyHandlers implements api.ServerInterface
+type PartyHandlers struct {
+	service *PartyService
 }
 
-// NewHandlers создает handlers с dependency injection
-func NewHandlers(service Service) *Handlers {
-	return &Handlers{service: service}
+// NewPartyHandlers creates handlers with DI
+func NewPartyHandlers(service *PartyService) *PartyHandlers {
+	return &PartyHandlers{
+		service: service,
+	}
 }
 
-// CreateParty создает группу
-func (h *Handlers) CreateParty(w http.ResponseWriter, r *http.Request) {
+// CreateParty implements api.ServerInterface
+func (h *PartyHandlers) CreateParty(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	var req api.CreatePartyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
+		respondError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
-	
-	response, err := h.service.CreateParty(r.Context(), &req)
+
+	// TODO: Get player ID from auth context
+	leaderID := "player-001"
+
+	party, err := h.service.CreateParty(ctx, leaderID, req.Name, string(*req.LootMode))
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		respondError(w, http.StatusInternalServerError, "Failed to create party", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, response)
+
+	respondJSON(w, http.StatusCreated, party)
 }
 
-// GetParty получает информацию о группе
-func (h *Handlers) GetParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
-	response, err := h.service.GetParty(r.Context(), partyId.String())
+// GetParty implements api.ServerInterface
+func (h *PartyHandlers) GetParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	ctx := r.Context()
+
+	party, err := h.service.GetParty(ctx, string(partyId))
 	if err != nil {
-		respondError(w, http.StatusNotFound, "Party not found")
+		respondError(w, http.StatusNotFound, "Party not found", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, response)
+
+	respondJSON(w, http.StatusOK, party)
 }
 
-// DisbandParty распускает группу
-func (h *Handlers) DisbandParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
-	err := h.service.DeleteParty(r.Context(), partyId.String())
-	if err != nil {
-		respondError(w, http.StatusForbidden, err.Error())
+// DisbandParty implements api.ServerInterface
+func (h *PartyHandlers) DisbandParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	ctx := r.Context()
+
+	if err := h.service.DisbandParty(ctx, string(partyId)); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to disband party", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Party disbanded successfully",
+	})
 }
 
-// InvitePlayer приглашает игрока
-func (h *Handlers) InvitePlayer(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+// InvitePlayer implements api.ServerInterface
+func (h *PartyHandlers) InvitePlayer(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	ctx := r.Context()
+
 	var req api.InviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
+		respondError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
-	
-	response, err := h.service.InviteToParty(r.Context(), partyId.String(), &req)
+
+	invite, err := h.service.InvitePlayer(ctx, string(partyId), req.PlayerId.String())
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		respondError(w, http.StatusInternalServerError, "Failed to invite player", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, response)
+
+	respondJSON(w, http.StatusOK, invite)
 }
 
-// AcceptInvite принимает приглашение
-func (h *Handlers) AcceptInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID) {
-	err := h.service.AcceptInvite(r.Context(), inviteId.String())
+// AcceptInvite implements api.ServerInterface
+func (h *PartyHandlers) AcceptInvite(w http.ResponseWriter, r *http.Request, inviteId types.UUID) {
+	ctx := r.Context()
+
+	// TODO: Get player ID from auth context
+	playerID := "player-001"
+
+	party, err := h.service.AcceptInvite(ctx, inviteId.String(), playerID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		respondError(w, http.StatusInternalServerError, "Failed to accept invite", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, map[string]string{"status": "accepted"})
+
+	respondJSON(w, http.StatusOK, party)
 }
 
-// DeclineInvite отклоняет приглашение
-func (h *Handlers) DeclineInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID) {
-	err := h.service.DeclineInvite(r.Context(), inviteId.String())
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
+// DeclineInvite implements api.ServerInterface
+func (h *PartyHandlers) DeclineInvite(w http.ResponseWriter, r *http.Request, inviteId types.UUID) {
+	ctx := r.Context()
+
+	if err := h.service.DeclineInvite(ctx, inviteId.String()); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to decline invite", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, map[string]string{"status": "declined"})
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Invite declined successfully",
+	})
 }
 
-// LeaveParty выйти из группы
-func (h *Handlers) LeaveParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
-	err := h.service.LeaveParty(r.Context(), partyId.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+// LeaveParty implements api.ServerInterface
+func (h *PartyHandlers) LeaveParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	ctx := r.Context()
+
+	// TODO: Get player ID from auth context
+	playerID := "player-001"
+
+	if err := h.service.LeaveParty(ctx, string(partyId), playerID); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to leave party", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, map[string]string{"status": "left"})
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Left party successfully",
+	})
 }
 
-// KickMember кикнуть участника
-func (h *Handlers) KickMember(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
-	var req struct{ MemberId string `json:"memberId"` }
-	json.NewDecoder(r.Body).Decode(&req)
-	err := h.service.KickMember(r.Context(), partyId.String(), req.MemberId)
-	if err != nil {
-		respondError(w, http.StatusForbidden, err.Error())
+// KickMember implements api.ServerInterface
+func (h *PartyHandlers) KickMember(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	ctx := r.Context()
+
+	var req struct {
+		PlayerId string `json:"playerId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, map[string]string{"status": "kicked"})
+
+	if err := h.service.KickMember(ctx, string(partyId), req.PlayerId); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to kick member", err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Member kicked successfully",
+	})
 }
 
-// UpdateSettings обновить настройки группы
-func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+// UpdateSettings implements api.ServerInterface
+func (h *PartyHandlers) UpdateSettings(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	ctx := r.Context()
+
 	var req api.PartySettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
+		respondError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
-	
-	response, err := h.service.UpdateSettings(r.Context(), partyId.String(), &req)
-	if err != nil {
-		respondError(w, http.StatusForbidden, err.Error())
+
+	if err := h.service.UpdateSettings(ctx, string(partyId), &req); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to update settings", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, response)
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Settings updated successfully",
+	})
 }
 
-// RollForLoot сделать roll на лут
-func (h *Handlers) RollForLoot(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+// RollForLoot implements api.ServerInterface
+func (h *PartyHandlers) RollForLoot(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	ctx := r.Context()
+
 	var req api.LootRollRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
+		respondError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
-	
-	response, err := h.service.RollForLoot(r.Context(), partyId.String(), &req)
+
+	// TODO: Get player ID from auth context
+	playerID := "player-001"
+
+	result, err := h.service.RollForLoot(ctx, string(partyId), playerID, req.ItemId.String(), string(req.RollType))
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		respondError(w, http.StatusInternalServerError, "Failed to roll for loot", err)
 		return
 	}
-	
-	respondJSON(w, http.StatusOK, response)
+
+	respondJSON(w, http.StatusOK, result)
 }
 
-// PassLootRoll пропустить roll
-func (h *Handlers) PassLootRoll(w http.ResponseWriter, r *http.Request, partyId api.PartyId, rollId openapi_types.UUID) {
-	err := h.service.PassLootRoll(r.Context(), partyId.String(), rollId.String())
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	
-	respondJSON(w, http.StatusOK, map[string]string{"status": "passed"})
-}
-
-// Response helpers
-func respondJSON(w http.ResponseWriter, code int, data interface{}) {
+// Helper functions
+func respondJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
+	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(data)
 }
 
-func respondError(w http.ResponseWriter, code int, message string) {
-	respondJSON(w, code, map[string]string{"error": message})
+func respondError(w http.ResponseWriter, statusCode int, message string, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"error": map[string]interface{}{
+			"code":    statusCode,
+			"message": message,
+			"details": err.Error(),
+		},
+	})
 }
-

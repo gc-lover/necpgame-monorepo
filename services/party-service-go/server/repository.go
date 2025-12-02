@@ -3,79 +3,65 @@ package server
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
+	"sync"
 )
 
-// Repository интерфейс для работы с БД
-type Repository interface {
-	// Party operations
-	CreateParty(ctx context.Context, leaderID, name string) (string, error)
-	GetParty(ctx context.Context, partyID string) (interface{}, error)
-	DeleteParty(ctx context.Context, partyID string) error
-	UpdatePartySettings(ctx context.Context, partyID string, settings interface{}) error
-	
-	// Invite operations
-	CreateInvite(ctx context.Context, partyID, inviterID, inviteeID string) (string, error)
-	GetInvite(ctx context.Context, inviteID string) (interface{}, error)
-	UpdateInviteStatus(ctx context.Context, inviteID, status string) error
-	
-	// Member operations
-	AddMember(ctx context.Context, partyID, playerID string) error
-	RemoveMember(ctx context.Context, partyID, playerID string) error
+type PartyRepository struct {
+	mu      sync.RWMutex
+	parties map[string]*Party
 }
 
-// PostgresRepository реализует Repository
-type PostgresRepository struct {
-	db *sql.DB
+func NewPartyRepository() *PartyRepository {
+	return &PartyRepository{
+		parties: make(map[string]*Party),
+	}
 }
 
-// NewPostgresRepository создает новый repository
-func NewPostgresRepository(db *sql.DB) Repository {
-	return &PostgresRepository{db: db}
-}
+// CreateParty stores a new party
+func (r *PartyRepository) CreateParty(ctx context.Context, party *Party) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-func (r *PostgresRepository) CreateParty(ctx context.Context, leaderID, name string) (string, error) {
-	// TODO: INSERT в parties
-	return "party-123", nil
-}
-
-func (r *PostgresRepository) GetParty(ctx context.Context, partyID string) (interface{}, error) {
-	// TODO: SELECT
-	return nil, nil
-}
-
-func (r *PostgresRepository) DeleteParty(ctx context.Context, partyID string) error {
-	// TODO: DELETE
+	r.parties[party.ID] = party
 	return nil
 }
 
-func (r *PostgresRepository) UpdatePartySettings(ctx context.Context, partyID string, settings interface{}) error {
-	// TODO: UPDATE
+// GetParty retrieves a party by ID
+func (r *PartyRepository) GetParty(ctx context.Context, partyID string) (*Party, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	party, exists := r.parties[partyID]
+	if !exists {
+		return nil, fmt.Errorf("party not found")
+	}
+
+	return party, nil
+}
+
+// UpdateParty updates a party
+func (r *PartyRepository) UpdateParty(ctx context.Context, party *Party) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.parties[party.ID]; !exists {
+		return fmt.Errorf("party not found")
+	}
+
+	r.parties[party.ID] = party
 	return nil
 }
 
-func (r *PostgresRepository) CreateInvite(ctx context.Context, partyID, inviterID, inviteeID string) (string, error) {
-	// TODO: INSERT в party_invites
-	return "invite-123", nil
-}
+// DeleteParty removes a party
+func (r *PartyRepository) DeleteParty(ctx context.Context, partyID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-func (r *PostgresRepository) GetInvite(ctx context.Context, inviteID string) (interface{}, error) {
-	// TODO: SELECT
-	return nil, nil
-}
+	if _, exists := r.parties[partyID]; !exists {
+		return fmt.Errorf("party not found")
+	}
 
-func (r *PostgresRepository) UpdateInviteStatus(ctx context.Context, inviteID, status string) error {
-	// TODO: UPDATE
+	delete(r.parties, partyID)
 	return nil
 }
-
-func (r *PostgresRepository) AddMember(ctx context.Context, partyID, playerID string) error {
-	// TODO: UPDATE parties
-	return nil
-}
-
-func (r *PostgresRepository) RemoveMember(ctx context.Context, partyID, playerID string) error {
-	// TODO: UPDATE parties
-	return nil
-}
-

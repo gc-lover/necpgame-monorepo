@@ -1,17 +1,19 @@
+# Multi-stage build for stock-dividends-service
 FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache make git ca-certificates tzdata
+RUN apk add --no-cache git ca-certificates tzdata
 
-COPY services/stock-dividends-service-go/go.mod services/stock-dividends-service-go/go.sum ./
+# Copy go modules
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY services/stock-dividends-service-go ./services/stock-dividends-service-go
+# Copy source code (with already generated API code)
+COPY . .
 
-WORKDIR /app/services/stock-dividends-service-go
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o stock-dividends-service -ldflags="-w -s -extldflags '-static'" .
+# Build
+RUN CGO_ENABLED=0 GOOS=linux go build -o stock-dividends-service -ldflags="-w -s" .
 
 FROM alpine:latest
 
@@ -22,16 +24,17 @@ WORKDIR /app
 RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser
 
-COPY --from=builder /app/services/stock-dividends-service-go/stock-dividends-service /app/
+COPY --from=builder /app/stock-dividends-service /app/stock-dividends-service
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8080/tcp 9090
+EXPOSE 8146/tcp
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9090/metrics || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8146/health || exit 1
 
 ENTRYPOINT ["/app/stock-dividends-service"]
+
