@@ -1,0 +1,260 @@
+# Issue: #130
+
+metadata:
+  id: architecture-combat-session-part1
+  title: "Combat Session System Architecture - Part 1: Overview & Components"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-02T17:05:00Z
+  concept_approved: false
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - combat
+    - sessions
+    - gameplay
+    - architecture
+  topics:
+    - combat-sessions
+    - realtime-combat
+    - session-management
+  related_systems:
+    - gameplay-service
+    - character-service
+    - economy-service
+    - quest-service
+    - analytics-service
+    - security-service
+  related_documents:
+    - id: combat-session-part2
+      relation: continues
+    - id: combat-session-part3
+      relation: continues
+    - id: combat-session-backend
+      relation: implements
+  source: knowledge/implementation/architecture/combat-session-system-part1-overview.yaml
+  visibility: internal
+  audience:
+    - architects
+    - backend
+    - gameplay
+  risk_level: high
+
+summary:
+  problem: "Необходима стандартизованная архитектура для управления боевыми сессиями."
+  goal: "Спроектировать микросервисную архитектуру системы боевых сессий."
+  essence: "Часть 1 описывает обзор, компоненты, API endpoints и структуру БД."
+  key_points:
+    - Микросервисная архитектура с gameplay-service
+    - Event-driven интеграция через Kafka
+    - Авторитативный сервер
+    - База данных PostgreSQL + Redis
+
+content:
+  sections:
+    - id: system-overview
+      title: "Обзор системы"
+      body: |
+        Combat Session System управляет боевыми сессиями:
+        - Создание и настройка сессий (PvP/PvE/экстракт)
+        - Управление участниками
+        - Обработка боевых действий realtime
+        - Расчет урона, хитов, эффектов
+        - Выдача наград и лута
+        - Интеграция с квестами
+
+        Принципы:
+        - Авторитативный сервер
+        - Event-driven архитектура
+        - Микросервисы
+        - Realtime синхронизация
+        - Телеметрия и античит
+
+    - id: components
+      title: "Компоненты"
+      body: |
+        ## gameplay-service
+        **Ответственность:** Управление сессиями, валидация, расчет урона
+        **Технологии:** Go, PostgreSQL, Redis, Kafka
+        **Масштабируемость:** Stateless handlers + stateful session managers
+        
+        Компоненты:
+        - SessionManager - жизненный цикл сессий
+        - CombatEngine - расчет урона
+        - ActionValidator - античит валидация
+        - StateSync - синхронизация с клиентами
+        - EventPublisher - Kafka события
+
+        ## character-service
+        **Ответственность:** Персонажи, атрибуты, импланты
+        **API:** GET /characters/{id}/combat-stats
+
+        ## economy-service
+        **Ответственность:** Лут, награды
+        **Интеграция:** Слушает combat:ended
+        **API:** POST /economy/combat-rewards
+
+        ## quest-service
+        **Ответственность:** Квесты
+        **Интеграция:** Слушает combat:*
+        **API:** POST /quests/progress/combat-event
+
+        ## analytics-service
+        **Ответственность:** Телеметрия
+        **Интеграция:** Слушает combat:*
+
+        ## security-service
+        **Ответственность:** Античит
+        **Интеграция:** Анализирует combat:action
+        **API:** POST /security/validate-action
+
+        ## realtime-gateway-go
+        **Ответственность:** WebSocket/UDP
+        **Протоколы:** WebSocket (PvE), UDP (PvP)
+
+    - id: api-endpoints
+      title: "API Endpoints"
+      body: |
+        ## Session Management
+
+        POST /api/v1/gameplay/combat/sessions
+        - Создание сессии
+        - Request: session_type, participants, settings
+        - Response: session_id, session_state
+        - Events: combat.session.created
+
+        GET /api/v1/gameplay/combat/sessions/{id}
+        - Получение состояния
+        - Response: session_state, participants, turn
+
+        DELETE /api/v1/gameplay/combat/sessions/{id}
+        - Завершение сессии
+        - Events: combat.session.ended
+
+        ## Combat Actions
+
+        POST /api/v1/gameplay/combat/sessions/{id}/actions
+        - Выполнение действия
+        - Request: action_type, target_id, position
+        - Response: action_result, damage, effects
+        - Events: combat.action.executed
+        - Validation: Античит
+
+        GET /api/v1/gameplay/combat/sessions/{id}/state
+        - Realtime состояние
+        - Response: participants, turn_order, effects
+
+        ## Analytics
+
+        GET /api/v1/gameplay/combat/sessions/{id}/logs
+        - Логи сессии
+
+        GET /api/v1/gameplay/combat/sessions/{id}/stats
+        - Статистика
+
+    - id: database
+      title: "База данных"
+      body: |
+        ## PostgreSQL
+
+        ### combat_sessions
+        ```sql
+        CREATE TABLE combat_sessions (
+          id UUID PRIMARY KEY,
+          session_type VARCHAR(50),
+          zone_id VARCHAR(100),
+          status VARCHAR(20),
+          difficulty VARCHAR(20),
+          max_participants INT,
+          settings JSONB,
+          created_at TIMESTAMP,
+          started_at TIMESTAMP,
+          ended_at TIMESTAMP,
+          duration_seconds INT,
+          winner_team VARCHAR(50)
+        );
+
+        CREATE INDEX idx_sessions_status ON combat_sessions(status);
+        CREATE INDEX idx_sessions_created ON combat_sessions(created_at DESC);
+        ```
+
+        ### combat_participants
+        ```sql
+        CREATE TABLE combat_participants (
+          id UUID PRIMARY KEY,
+          session_id UUID REFERENCES combat_sessions(id),
+          player_id UUID,
+          character_id UUID,
+          team VARCHAR(50),
+          role VARCHAR(50),
+          damage_dealt BIGINT,
+          damage_taken BIGINT,
+          kills INT,
+          deaths INT,
+          assists INT,
+          health INT,
+          max_health INT,
+          status VARCHAR(20),
+          joined_at TIMESTAMP,
+          left_at TIMESTAMP
+        );
+
+        CREATE INDEX idx_participants_session ON combat_participants(session_id);
+        ```
+
+        ### combat_logs
+        ```sql
+        CREATE TABLE combat_logs (
+          id BIGSERIAL PRIMARY KEY,
+          session_id UUID REFERENCES combat_sessions(id),
+          event_type VARCHAR(50),
+          actor_id UUID,
+          target_id UUID,
+          action_data JSONB,
+          result_data JSONB,
+          timestamp TIMESTAMP,
+          sequence_number BIGINT
+        );
+
+        CREATE INDEX idx_logs_session ON combat_logs(session_id, sequence_number);
+        ```
+
+        ## Redis
+
+        session:{id} (Hash, TTL 3600s)
+        - status, participants, current_turn, last_action
+
+        player:{id}:combat (Hash, TTL 3600s)
+        - session_id, health, position, status
+
+appendix:
+  glossary:
+    - term: "Combat Session"
+      definition: "Инстанс боевого взаимодействия"
+  references:
+    - title: "Part 2: Data Flows"
+      url: "combat-session-system-part2-dataflows.yaml"
+    - title: "Part 3: Infrastructure"
+      url: "combat-session-system-part3-infrastructure.yaml"
+
+implementation:
+  github_issue: 130
+  needs_task: true
+  next_steps:
+    - "Database: Миграции для БД"
+    - "API Designer: OpenAPI спецификация"
+    - "Backend: Реализация handlers"
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-02
+    author: architect
+    changes: "Part 1 - обзор и компоненты"
+
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

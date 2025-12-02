@@ -1,0 +1,245 @@
+# Issue: #130
+
+metadata:
+  id: architecture-combat-session-part3
+  title: "Combat Session System Architecture - Part 3: Infrastructure"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-02T17:07:00Z
+  owners:
+    - role: architect
+  tags:
+    - combat
+    - infrastructure
+    - networking
+  related_documents:
+    - id: combat-session-part1
+      relation: continues
+    - id: combat-session-part2
+      relation: continues
+
+summary:
+  problem: "Необходимо описать сетевую архитектуру и инфраструктуру."
+  goal: "Документировать networking, масштабируемость, безопасность."
+  essence: "Part 3 описывает сеть, тикрейт, масштабируемость, деплой."
+
+content:
+  sections:
+    - id: network-architecture
+      title: "Сетевая архитектура"
+      body: |
+        ## Протоколы
+
+        ### PvE зоны (MMORPG)
+        - Протокол: WebSocket (TCP)
+        - Тикрейт: 20-30 Hz
+        - Задержка: <100 мс
+        - Игроков: 100-500
+
+        ### PvP small (Arenas)
+        - Протокол: UDP
+        - Тикрейт: 60-128 Hz
+        - Задержка: <30 мс
+        - Игроков: 5-20
+
+        ### GvG 200
+        - Протокол: UDP
+        - Тикрейт: 60-80 Hz
+        - Задержка: <40 мс
+        - Игроков: 100v100
+        - Оптимизация: Spatial partitioning
+
+        ### GvG 400
+        - Протокол: UDP
+        - Тикрейт: 40-60 Hz
+        - Задержка: <50 мс
+        - Игроков: 200v200
+        - Оптимизация: Spatial sharding (2-4)
+
+        ### Massive war
+        - Протокол: UDP
+        - Тикрейт: 20-40 Hz
+        - Задержка: <100 мс
+        - Игроков: 2000+
+        - Архитектура: Cluster (5-10 servers)
+
+        ## Server-Authoritative
+
+        - Клиент → намерения (input)
+        - Сервер → валидация всех действий
+        - Сервер → расчет урона, движения
+        - Клиент → результаты + обновление
+        - Client-side prediction
+        - Lag compensation + rewind buffer
+
+    - id: scalability
+      title: "Масштабируемость"
+      body: |
+        ## Horizontal Scaling
+
+        ### Gameplay Service
+        - Stateless HTTP handlers
+        - Stateful session managers (sticky)
+        - Шардирование: session_id % num_shards
+        - Load balancing: Envoy
+
+        ### Database
+        - Партиции: combat_sessions по created_at
+        - Read replicas: Analytics
+        - Redis cluster
+
+        ### Kafka
+        - Партиции: По session_id
+        - Consumer groups: Параллельная обработка
+
+        ## Performance Targets
+
+        - Latency P99: <50ms (API)
+        - Throughput: 10,000 actions/sec/instance
+        - Capacity: 1,000 sessions/instance
+        - DB Write: 50,000 logs/sec
+        - Event Bus: 100,000 events/sec
+
+    - id: security
+      title: "Безопасность"
+      body: |
+        ## Auth
+
+        - JWT токены
+        - Session tokens (TTL 1h)
+        - Rate limiting: 100 actions/min/player
+        - IP throttling: DDoS защита
+
+        ## Anti-Cheat
+
+        - Speed Hack: Max speed validation
+        - Teleport: Position delta validation
+        - Aimbot: Accuracy pattern analysis
+        - Cooldown: Server-side tracking
+        - Macro: Action timing analysis
+
+        ## Data Protection
+
+        - TLS 1.3: WebSocket/UDP
+        - PostgreSQL: PII, stats
+        - Redis: Temporary data
+
+    - id: monitoring
+      title: "Мониторинг"
+      body: |
+        ## Metrics (Prometheus)
+
+        combat_sessions_total (counter)
+        combat_sessions_active (gauge)
+        combat_sessions_duration_seconds (histogram)
+        combat_actions_total (counter)
+        combat_actions_invalid (counter)
+        combat_api_latency_seconds (histogram)
+        combat_event_processing_duration (histogram)
+        combat_anticheat_violations (counter)
+
+        ## Logs (Loki)
+
+        - JSON logging
+        - session_id, player_id
+        - Correlation: trace_id
+
+        ## Tracing (Tempo)
+
+        - Distributed tracing
+        - Correlation: logs + metrics
+        - Sampling: 10% (normal), 100% (errors)
+
+        ## Dashboards (Grafana)
+
+        - Combat Session Overview
+        - Performance Dashboard
+        - Anti-Cheat Dashboard
+        - Player Behavior Analytics
+
+    - id: deployment
+      title: "Деплой"
+      body: |
+        ## Kubernetes
+
+        ### Gameplay Service
+        ```yaml
+        replicas: 10
+        resources:
+          requests:
+            cpu: 2000m
+            memory: 4Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        ```
+
+        ### Realtime Gateway
+        ```yaml
+        replicas: 20
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        ```
+
+        ### PostgreSQL
+        ```yaml
+        type: StatefulSet
+        replicas: 3 (1 primary + 2 replicas)
+        storage: 1TB SSD
+        ```
+
+        ### Redis Cluster
+        ```yaml
+        type: StatefulSet
+        replicas: 6 (3 masters + 3 replicas)
+        memory: 16GB/instance
+        ```
+
+        ### Kafka Cluster
+        ```yaml
+        replicas: 5
+        partitions: 20/topic
+        replication_factor: 3
+        ```
+
+        ## CI/CD
+
+        - GitHub Actions: Build + Test
+        - Docker images
+        - ArgoCD: K8s deploy
+        - Canary: Critical services
+
+appendix:
+  glossary:
+    - term: "Tick Rate"
+      definition: "Частота обновления состояния сервером"
+    - term: "Server-Authoritative"
+      definition: "Сервер контролирует все действия"
+  decisions:
+    - id: "arch-001"
+      decision: "Event-driven через Kafka"
+      rationale: "Асинхронная интеграция"
+    - id: "arch-002"
+      decision: "Server-authoritative"
+      rationale: "Предотвращение читерства"
+    - id: "arch-003"
+      decision: "WebSocket (PvE) + UDP (PvP)"
+      rationale: "Оптимизация под задержку"
+
+implementation:
+  github_issue: 130
+  blockers: []
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-02
+    author: architect
+    changes: "Part 3 - инфраструктура"
+
