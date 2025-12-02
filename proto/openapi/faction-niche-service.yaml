@@ -1,0 +1,269 @@
+# Issue: #1442
+
+openapi: 3.0.0
+
+info:
+  title: Faction Niche Service API
+  version: 1.0.0
+  description: |
+    API для управления нишами и специализацией фракций.
+
+servers:
+  - url: http://localhost:8093
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: niches
+    description: Управление нишами
+
+paths:
+  /api/v1/niches/catalog:
+    get:
+      tags:
+        - niches
+      summary: Каталог ниш
+      description: Получить список доступных ниш
+      operationId: getNichesCatalog
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/NicheType'
+        - name: available_only
+          in: query
+          schema:
+            type: boolean
+          description: Только доступные ниши
+      responses:
+        '200':
+          description: Каталог ниш
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  niches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Niche'
+
+  /api/v1/factions/{factionId}/niches/claim:
+    post:
+      tags:
+        - niches
+      summary: Захватить нишу
+      description: Фракция захватывает нишу
+      operationId: claimNiche
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - niche_id
+              properties:
+                niche_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Ниша захвачена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NicheControl'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '409':
+          description: Ниша уже занята
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+
+  /api/v1/factions/{factionId}/niches/abandon/{nicheId}:
+    delete:
+      tags:
+        - niches
+      summary: Покинуть нишу
+      description: Фракция покидает нишу
+      operationId: abandonNiche
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: nicheId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Ниша покинута
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /api/v1/factions/{factionId}/niches/list:
+    get:
+      tags:
+        - niches
+      summary: Ниши фракции
+      description: Список контролируемых ниш
+      operationId: listFactionNiches
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список ниш
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  niches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NicheControl'
+
+  /api/v1/niches/{nicheId}/contest:
+    post:
+      tags:
+        - niches
+      summary: Оспорить нишу
+      description: Начать борьбу за нишу
+      operationId: contestNiche
+      parameters:
+        - name: nicheId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - challenger_faction_id
+              properties:
+                challenger_faction_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Оспаривание начато
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NicheContest'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+
+components:
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+
+  schemas:
+    NicheType:
+      type: string
+      enum:
+        - territorial
+        - economic
+        - political
+        - criminal
+        - technological
+        - social
+
+    Niche:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/NicheType'
+        description:
+          type: string
+        benefits:
+          type: object
+          additionalProperties: true
+        requirements:
+          type: object
+          additionalProperties: true
+        max_controllers:
+          type: integer
+        current_controllers:
+          type: integer
+        available:
+          type: boolean
+
+    NicheControl:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        niche_id:
+          type: string
+          format: uuid
+        niche_name:
+          type: string
+        controlled_since:
+          type: string
+          format: date-time
+        control_strength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        contested:
+          type: boolean
+        contested_by:
+          type: string
+          format: uuid
+
+    NicheContest:
+      type: object
+      properties:
+        niche_id:
+          type: string
+          format: uuid
+        current_controller:
+          type: string
+          format: uuid
+        challenger:
+          type: string
+          format: uuid
+        contest_started_at:
+          type: string
+          format: date-time
+

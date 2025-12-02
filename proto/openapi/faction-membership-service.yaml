@@ -1,0 +1,248 @@
+# Issue: #1442
+
+openapi: 3.0.0
+
+info:
+  title: Faction Membership Service API
+  version: 1.0.0
+  description: |
+    API для управления членством в фракциях: объединение кланов, управление членами.
+
+servers:
+  - url: http://localhost:8092
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: membership
+    description: Управление членством
+
+paths:
+  /api/v1/factions/{factionId}/members/add-clan:
+    post:
+      tags:
+        - membership
+      summary: Добавить клан в фракцию
+      operationId: addClan
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clan_id
+                - role
+              properties:
+                clan_id:
+                  type: string
+                  format: uuid
+                role:
+                  type: string
+                  enum: [leader, officer, council_member, member, recruit]
+                permissions:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Клан добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionMember'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /api/v1/factions/{factionId}/members/remove-clan/{clanId}:
+    delete:
+      tags:
+        - membership
+      summary: Удалить клан из фракции
+      operationId: removeClan
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: clanId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Клан удален
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /api/v1/factions/{factionId}/members/list:
+    get:
+      tags:
+        - membership
+      summary: Список членов фракции
+      operationId: listMembers
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [leader, officer, council_member, member, recruit]
+        - $ref: 'common.yaml#/components/parameters/PageParam'
+        - $ref: 'common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Список членов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FactionMember'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+
+  /api/v1/factions/{factionId}/members/{memberId}/rank:
+    put:
+      tags:
+        - membership
+      summary: Изменить ранг члена
+      operationId: updateMemberRank
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum: [leader, officer, council_member, member, recruit]
+                permissions:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Ранг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionMember'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /api/v1/players/{playerId}/factions:
+    get:
+      tags:
+        - membership
+      summary: Фракции игрока
+      description: Получить список фракций, в которых состоит игрок
+      operationId: getPlayerFactions
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список фракций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  factions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerFactionMembership'
+
+components:
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+
+  schemas:
+    FactionMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [leader, officer, council_member, member, recruit]
+        clan_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        permissions:
+          type: object
+          additionalProperties: true
+        appointed_at:
+          type: string
+          format: date-time
+        appointed_by:
+          type: string
+          format: uuid
+
+    PlayerFactionMembership:
+      type: object
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        role:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+

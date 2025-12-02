@@ -1,0 +1,326 @@
+# Issue: #1442
+
+openapi: 3.0.0
+
+info:
+  title: Faction Conflict Service API
+  version: 1.0.0
+  description: |
+    API для управления фракционными конфликтами: войны, битвы, разрешение.
+
+servers:
+  - url: http://localhost:8095
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: conflicts
+    description: Управление конфликтами
+
+paths:
+  /api/v1/factions/{factionId}/conflicts/declare-war:
+    post:
+      tags:
+        - conflicts
+      summary: Объявить войну
+      description: Объявить войну другой фракции
+      operationId: declareWar
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - defender_faction_id
+                - conflict_type
+              properties:
+                defender_faction_id:
+                  type: string
+                  format: uuid
+                conflict_type:
+                  $ref: '#/components/schemas/ConflictType'
+                description:
+                  type: string
+                  maxLength: 1000
+                stakes:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Война объявлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conflict'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '409':
+          description: Конфликт уже существует
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+
+  /api/v1/conflicts/active:
+    get:
+      tags:
+        - conflicts
+      summary: Активные конфликты
+      description: Получить список активных конфликтов
+      operationId: listActiveConflicts
+      parameters:
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по фракции
+        - name: conflict_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ConflictType'
+        - $ref: 'common.yaml#/components/parameters/PageParam'
+        - $ref: 'common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Список конфликтов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conflicts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conflict'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+
+  /api/v1/conflicts/{conflictId}/battle/report:
+    post:
+      tags:
+        - conflicts
+      summary: Отчет о битве
+      description: Зарегистрировать результат битвы в конфликте
+      operationId: reportBattle
+      parameters:
+        - name: conflictId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - attacker_score
+                - defender_score
+                - participants_count
+              properties:
+                attacker_score:
+                  type: integer
+                  minimum: 0
+                defender_score:
+                  type: integer
+                  minimum: 0
+                participants_count:
+                  type: integer
+                  minimum: 0
+                battle_data:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Битва зарегистрирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Battle'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /api/v1/conflicts/{conflictId}/resolve:
+    post:
+      tags:
+        - conflicts
+      summary: Разрешить конфликт
+      description: Завершить конфликт с определением победителя
+      operationId: resolveConflict
+      parameters:
+        - name: conflictId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - resolution_type
+              properties:
+                winner_faction_id:
+                  type: string
+                  format: uuid
+                resolution_type:
+                  type: string
+                  enum: [military_victory, diplomatic, economic, stalemate]
+      responses:
+        '200':
+          description: Конфликт разрешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conflict'
+
+  /api/v1/factions/{factionId}/conflicts/history:
+    get:
+      tags:
+        - conflicts
+      summary: История конфликтов
+      description: Получить историю конфликтов фракции
+      operationId: getConflictHistory
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ConflictStatus'
+        - $ref: 'common.yaml#/components/parameters/PageParam'
+        - $ref: 'common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: История конфликтов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conflicts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConflictHistory'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+
+components:
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+
+  schemas:
+    ConflictType:
+      type: string
+      enum:
+        - territorial
+        - economic
+        - political
+        - ideological
+        - resource
+
+    ConflictStatus:
+      type: string
+      enum:
+        - active
+        - resolved
+        - ongoing
+        - stalemate
+
+    Conflict:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        attacker_faction_id:
+          type: string
+          format: uuid
+        attacker_faction_name:
+          type: string
+        defender_faction_id:
+          type: string
+          format: uuid
+        defender_faction_name:
+          type: string
+        conflict_type:
+          $ref: '#/components/schemas/ConflictType'
+        status:
+          $ref: '#/components/schemas/ConflictStatus'
+        description:
+          type: string
+        stakes:
+          type: object
+          additionalProperties: true
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        winner_faction_id:
+          type: string
+          format: uuid
+        resolution_type:
+          type: string
+
+    Battle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conflict_id:
+          type: string
+          format: uuid
+        battle_date:
+          type: string
+          format: date-time
+        attacker_score:
+          type: integer
+        defender_score:
+          type: integer
+        participants_count:
+          type: integer
+        battle_data:
+          type: object
+          additionalProperties: true
+
+    ConflictHistory:
+      type: object
+      properties:
+        conflict:
+          $ref: '#/components/schemas/Conflict'
+        battles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Battle'
+        total_battles:
+          type: integer
+        attacker_wins:
+          type: integer
+        defender_wins:
+          type: integer
+
