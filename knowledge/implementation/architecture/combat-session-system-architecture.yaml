@@ -1,587 +1,753 @@
+# Issue: #130
+
 metadata:
-  id: combat-session-system-architecture
-  title: Архитектура системы боевых сессий
+  id: architecture-combat-session-system
+  title: "Combat Session System Architecture"
   document_type: architecture
-  category: systems
+  category: implementation
   status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-30T19:30:00Z
+  version: "1.0.0"
+  last_updated: 2025-12-02T17:05:00Z
+  concept_approved: false
   owners:
     - role: architect
       contact: architect@necp.game
   tags:
-    - architecture
     - combat
-    - backend
+    - sessions
     - gameplay
-    - realtime
+    - architecture
+  topics:
+    - combat-sessions
+    - realtime-combat
+    - session-management
   related_systems:
-    - gameplay-service-go
-    - character-service-go
-    - economy-service-go
-    - realtime-gateway-go
+    - gameplay-service
+    - character-service
+    - economy-service
+    - quest-service
+    - analytics-service
+    - security-service
   related_documents:
-    - id: backend-combat-session
-      relation: extends
-  github_issue: 130
+    - id: combat-session-backend
+      relation: implements
+    - id: combat-shooter-core
+      relation: references
+    - id: combat-pvp-pve
+      relation: references
+  source: knowledge/implementation/architecture/combat-session-system-architecture.yaml
   visibility: internal
   audience:
-    - architect
+    - architects
     - backend
-    - api-designer
+    - gameplay
+  risk_level: high
+
+review:
+  chain:
+    - role: architect
+      reviewer: ""
+      reviewed_at: ""
+      status: pending
+  next_actions:
+    - Review by Backend Team
+    - Review by Network Team
+    - API Designer handoff
 
 summary:
-  problem: |
-    Требуется спроектировать полную техническую архитектуру системы боевых сессий
-    для управления боями, расчёта урона, порядка ходов, наград и интеграции
-    с другими игровыми системами.
-  goal: |
-    Создать архитектурную схему системы боевых сессий с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Технического задания для реализации
-  essence: |
-    Event-driven система боевых сессий с поддержкой realtime синхронизации,
-    расчётом урона на сервере, управлением порядком ходов и интеграцией
-    с системами персонажей, экономики и квестов.
+  problem: "Необходима стандартизованная архитектура для управления боевыми сессиями с поддержкой realtime-боя, античита, телеметрии и интеграций."
+  goal: "Спроектировать полную микросервисную архитектуру системы боевых сессий для MMOFPS RPG."
+  essence: "Архитектура описывает компоненты, API endpoints, потоки данных, структуру БД и интеграции для управления боевыми сессиями."
+  key_points:
+    - Микросервисная архитектура с gameplay-service как ядром
+    - Event-driven интеграция через Kafka
+    - Авторитативный сервер для валидации действий
+    - Поддержка PvP/PvE режимов и экстракт-механик
+    - Интеграция с античитом и телеметрией
 
-architecture:
-  overview: |
-    Система боевых сессий состоит из четырёх основных компонентов:
-    1. Combat Session Manager - управление сессиями боёв
-    2. Damage Calculator - расчёт урона и эффектов
-    3. Turn Order Manager - управление порядком ходов
-    4. Combat Event Handler - обработка событий боя
+content:
+  sections:
+    - id: system-overview
+      title: "Обзор системы"
+      body: |
+        Combat Session System управляет полным жизненным циклом боевых сессий:
+        - Создание и настройка боевых сессий (PvP арены, PvE рейды, экстракт-зоны)
+        - Управление участниками и их состоянием
+        - Обработка боевых действий в реальном времени
+        - Расчет урона, хитов, статусных эффектов
+        - Управление порядком ходов и событиями
+        - Выдача наград и лута
+        - Интеграция с квестами и прогрессией
 
-  components:
-    - name: Combat Session Manager
-      location: gameplay-service-go (модуль combat-session)
-      responsibility: |
-        - Создание и управление боевыми сессиями
-        - Управление участниками боя (игроки, NPC, враги)
-        - Отслеживание статуса сессии (active, paused, completed, cancelled)
-        - Синхронизация состояния боя через realtime-gateway
-        - Управление жизненным циклом сессии
-      port: 8083 (gameplay-service-go)
-      endpoints:
-        - POST /api/v1/gameplay/combat/sessions - создание боевой сессии
-        - GET /api/v1/gameplay/combat/sessions/{session_id} - получение сессии
-        - PUT /api/v1/gameplay/combat/sessions/{session_id}/join - присоединение к бою
-        - PUT /api/v1/gameplay/combat/sessions/{session_id}/leave - выход из боя
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/start - запуск боя
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/end - завершение боя
-        - DELETE /api/v1/gameplay/combat/sessions/{session_id} - отмена сессии
+        Система построена на принципах:
+        - Авторитативный сервер (server-authoritative)
+        - Event-driven архитектура
+        - Микросервисная декомпозиция
+        - Realtime синхронизация через WebSocket/UDP
+        - Телеметрия и античит как первоклассные граждане
 
-    - name: Damage Calculator
-      location: gameplay-service-go (модуль combat-damage)
-      responsibility: |
-        - Расчёт урона на основе характеристик атакующего и защищающегося
-        - Применение модификаторов (критический удар, сопротивление, броня)
-        - Расчёт эффектов (статусы, баффы, дебаффы)
-        - Валидация урона (защита от читов)
-        - Логирование всех расчётов для аудита
-      integration: |
-        Получает данные о персонажах из character-service
-        Применяет формулы из механик боя
-      endpoints:
-        - POST /api/v1/gameplay/combat/calculate-damage - расчёт урона
-        - POST /api/v1/gameplay/combat/apply-effects - применение эффектов
+    - id: architecture-components
+      title: "Компоненты архитектуры"
+      body: |
+        ## Микросервисы
 
-    - name: Turn Order Manager
-      location: gameplay-service-go (модуль combat-turns)
-      responsibility: |
-        - Определение порядка ходов на основе инициативы
-        - Управление текущим ходом
-        - Обработка таймаутов ходов
-        - Переключение между участниками
-        - Управление фазой боя (подготовка, бой, завершение)
-      endpoints:
-        - GET /api/v1/gameplay/combat/sessions/{session_id}/turn-order - порядок ходов
-        - GET /api/v1/gameplay/combat/sessions/{session_id}/current-turn - текущий ход
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/next-turn - следующий ход
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/skip-turn - пропуск хода
-
-    - name: Combat Action Processor
-      location: gameplay-service-go (модуль combat-actions)
-      responsibility: |
-        - Обработка действий в бою (атака, защита, использование способностей)
-        - Валидация действий (доступность, ресурсы, условия)
-        - Применение действий к цели
-        - Обновление состояния боя
-        - Публикация событий боя
-      endpoints:
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/attack - атака
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/ability - использование способности
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/defend - защита
-        - POST /api/v1/gameplay/combat/sessions/{session_id}/item - использование предмета
-
-    - name: Combat Event Handler
-      location: gameplay-service-go (модуль combat-events)
-      responsibility: |
-        - Публикация событий боя в event bus
-        - Подписка на события от других систем
-        - Обработка событий завершения боя
-        - Интеграция с системами наград и прогрессии
-      events_published: |
-        - combat:session:started
-        - combat:session:ended
-        - combat:attack:performed
-        - combat:damage:dealt
-        - combat:participant:defeated
-        - combat:session:completed
-      events_subscribed: |
-        - character:stats:updated
-        - inventory:item:used
-        - quest:objective:completed
-
-  data_flow:
-    combat_start: |
-      1. Клиент запрашивает создание боевой сессии
-      2. Combat Session Manager создаёт сессию в БД
-      3. Добавляет участников (игроки, NPC, враги)
-      4. Turn Order Manager определяет порядок ходов
-      5. Combat Event Handler публикует событие combat:session:started
-      6. Realtime Gateway синхронизирует состояние с клиентами
-
-    combat_action: |
-      1. Клиент отправляет действие (атака/способность)
-      2. Combat Action Processor валидирует действие
-      3. Damage Calculator рассчитывает урон/эффекты
-      4. Обновляется состояние участников
-      5. Turn Order Manager переключает ход
-      6. Combat Event Handler публикует события
-      7. Realtime Gateway синхронизирует изменения
-
-    combat_end: |
-      1. Условие завершения боя выполнено (все враги побеждены/игроки побеждены/таймаут)
-      2. Combat Session Manager обновляет статус сессии
-      3. Награды рассчитываются и распределяются
-      4. Интеграция с economy-service для лута
-      5. Интеграция с quest-service для прогресса квестов
-      6. Combat Event Handler публикует событие combat:session:completed
-      7. Realtime Gateway уведомляет клиентов о завершении
-
-  integrations:
-    with_character_service: |
-      - Получение характеристик персонажей для расчёта урона
-      - Обновление здоровья и ресурсов после боя
-      - Применение опыта и прогрессии
-
-    with_economy_service: |
-      - Распределение лута после боя
-      - Интеграция с системой инвентаря
-      - Обработка экономических наград
-
-    with_quest_service: |
-      - Прогресс квестов на убийство врагов
-      - Завершение боевых целей квестов
-      - Триггеры событий квестов
-
-    with_realtime_gateway: |
-      - Realtime синхронизация состояния боя
-      - Push уведомления о событиях боя
-      - Синхронизация действий участников
-
-  data_consistency:
-    strategy: Strong Consistency (ACID транзакции) для критичных операций
-    mechanisms:
-      - ACID транзакции для создания и обновления боевых сессий
-      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
-      - Валидация перед выполнением действий в бою
-      - Синхронизация с другими сервисами через Event Bus
-      - Outbox Pattern для гарантированной доставки событий
-      - Saga Pattern для распределенных операций (создание сессии, распределение наград)
-
-  data_synchronization:
-    event_sourcing: |
-      Все изменения состояния боевых сессий (создание, действия, завершение)
-      записываются как события в Event Store. Это обеспечивает полный аудит,
-      возможность восстановления состояния и "time travel" для отладки.
-      Примеры событий: CombatSessionCreatedEvent, CombatActionPerformedEvent, CombatSessionEndedEvent.
-    cqrs_pattern: |
-      Разделение команд (создание сессии, выполнение действий) и запросов (получение сессии,
-      история действий) для оптимизации производительности и масштабируемости.
-      Read-модели могут быть кэшированы в Redis для быстрых запросов.
-    saga_pattern: |
-      Для распределенных транзакций, таких как завершение боя (расчет наград,
-      распределение лута, обновление прогресса квестов), используется
-      Saga Pattern для обеспечения атомарности операций между Gameplay Service,
-      Economy Service и Quest Service.
-    outbox_pattern: |
-      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
-      который записывает события в транзакционную таблицу перед публикацией.
-
-  tickrate_specification:
-    combat_actions:
-      tickrate: Event-based (on-demand) + 60-128 Hz для синхронизации состояния
-      network_load: |
-        - Выполнение действий: event-based, ~5-20 events/sec на сессию
-        - Синхронизация состояния: 60-128 Hz, ~3-5 KB/sec на участника
-        - Обновление позиций: 60-128 Hz, ~2-3 KB/sec на участника
-        - Общий трафик: ~5-10 KB/sec на участника
-      latency_requirements: < 30-100ms для обработки действий
-      sync_strategy: Strong Consistency для действий, Eventual Consistency для статистики
-
-    damage_calculation:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Расчет урона: event-based, ~5-10 events/sec на сессию
-        - Обновление здоровья: event-based, ~2-5 events/sec на участника
-        - Общий трафик: ~0.5-1 KB/sec на участника
-      latency_requirements: < 10-50ms для расчета урона
-      sync_strategy: Strong Consistency
-
-    turn_management:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Смена хода: event-based, ~0.1-0.5 events/sec на сессию
-        - Обновление порядка ходов: event-based, ~0.1-0.2 events/sec
-        - Общий трафик: ~0.1-0.2 KB/sec на сессию
-      latency_requirements: < 50-200ms для смены хода
-      sync_strategy: Strong Consistency
-
-  database_schema:
-    tables:
-      - name: combat_sessions
-        description: Боевые сессии
-        fields:
-          - id: UUID (PK)
-          - session_type: ENUM (pve, pvp, raid, arena)
-          - status: ENUM (created, active, paused, completed, cancelled)
-          - created_at: TIMESTAMP
-          - started_at: TIMESTAMP (nullable)
-          - ended_at: TIMESTAMP (nullable)
-          - current_turn: INTEGER
-          - turn_order: JSONB (массив participant_id)
-          - settings: JSONB (настройки боя)
-        indexes:
-          - status, created_at
-          - session_type, status
-
-      - name: combat_participants
-        description: Участники боевых сессий
-        fields:
-          - id: UUID (PK)
-          - session_id: UUID (FK)
-          - participant_type: ENUM (player, npc, enemy)
-          - participant_id: UUID (character_id или npc_id)
-          - team: INTEGER
-          - initiative: INTEGER
-          - health: INTEGER
-          - max_health: INTEGER
-          - status: ENUM (alive, defeated, escaped)
-          - position: JSONB (координаты)
-          - created_at: TIMESTAMP
-        indexes:
-          - session_id, status
-          - participant_id, participant_type
-
-      - name: combat_logs
-        description: Логи действий в бою
-        fields:
-          - id: UUID (PK)
-          - session_id: UUID (FK)
-          - turn_number: INTEGER
-          - actor_id: UUID (FK combat_participants)
-          - action_type: ENUM (attack, ability, defend, item, move)
-          - target_id: UUID (FK combat_participants, nullable)
-          - damage_dealt: INTEGER
-          - damage_type: VARCHAR
-          - effects_applied: JSONB
-          - result: JSONB (результат действия)
-          - created_at: TIMESTAMP
-        indexes:
-          - session_id, turn_number
-          - actor_id, created_at
-
-      - name: combat_rewards
-        description: Награды за боевые сессии
-        fields:
-          - id: UUID (PK)
-          - session_id: UUID (FK)
-          - participant_id: UUID (FK combat_participants)
-          - reward_type: ENUM (experience, loot, currency, quest_progress)
-          - reward_data: JSONB
-          - distributed: BOOLEAN
-          - created_at: TIMESTAMP
-        indexes:
-          - session_id, distributed
-          - participant_id
-
-technical_specification:
-  backend_requirements:
-    - Реализация модулей в gameplay-service-go:
-      - combat-session (управление сессиями)
-      - combat-damage (расчёт урона)
-      - combat-turns (порядок ходов)
-      - combat-actions (обработка действий)
-      - combat-events (события)
-    - Интеграция с character-service для получения характеристик
-    - Интеграция с economy-service для распределения лута
-    - Интеграция с realtime-gateway для синхронизации
-    - Реализация формул расчёта урона из механик боя
-
-  realtime_requirements:
-    - Синхронизация состояния боя через WebSocket
-    - Push уведомления о событиях боя
-    - Обновление состояния участников в реальном времени
-    - Обработка действий с низкой задержкой (< 100ms)
-
-  performance_requirements:
-    - Обработка действия в бою < 50ms
-    - Расчёт урона < 10ms
-    - Поддержка до 100 одновременных боевых сессий
-    - Поддержка до 20 участников в одной сессии
-    - Кэширование характеристик персонажей
-
-  scalability_requirements:
-    - Горизонтальное масштабирование через gameplay-service
-    - Распределение нагрузки на боевые сессии
-    - Оптимизация запросов к БД (batch, индексы)
-    - Кэширование активных сессий в памяти (Redis)
-
-  security_requirements:
-    - Валидация всех действий на сервере
-    - Защита от читов (проверка урона, ресурсов)
-    - Аудит всех действий в combat_logs
-    - Rate limiting для предотвращения спама действий
-
-subtasks:
-  - id: combat-session-module
-    title: Реализация модуля Combat Session Manager
-    description: |
-      Создание модуля управления боевыми сессиями
-      CRUD операции для сессий
-      Интеграция с БД
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: damage-calculator
-    title: Реализация Damage Calculator
-    description: |
-      Реализация формул расчёта урона
-      Применение модификаторов
-      Валидация расчётов
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: turn-order-manager
-    title: Реализация Turn Order Manager
-    description: |
-      Алгоритм определения порядка ходов
-      Управление текущим ходом
-      Обработка таймаутов
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: action-processor
-    title: Реализация Combat Action Processor
-    description: |
-      Обработка действий в бою
-      Валидация действий
-      Интеграция с Damage Calculator
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: event-handler
-    title: Реализация Combat Event Handler
-    description: |
-      Публикация событий боя
-      Подписка на события других систем
-      Интеграция с event bus
-    priority: medium
-    estimated_time: 2-3 дня
-
-  - id: realtime-integration
-    title: Интеграция с Realtime Gateway
-    description: |
-      Синхронизация состояния боя
-      Push уведомления о событиях
-      Оптимизация трафика
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: database-optimization
-    title: Оптимизация БД и запросов
-    description: |
-      Создание индексов
-      Оптимизация запросов
-      Кэширование активных сессий
-    priority: medium
-    estimated_time: 1-2 дня
-
-  - id: api-endpoints
-    title: Реализация REST API endpoints
-    description: |
-      Создание всех endpoints для боевых сессий
-      Интеграция с существующим API gameplay-service
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: integration-testing
-    title: Интеграционное тестирование
-    description: |
-      Тесты боевых сессий
-      Тесты расчёта урона
-      Тесты интеграций с другими сервисами
-    priority: high
-    estimated_time: 2-3 дня
-
-diagrams:
-  component_diagram: |
-    ```mermaid
-    graph TB
-        subgraph "Gameplay Service"
-            CSM[Combat Session Manager]
-            DC[Damage Calculator]
-            TOM[Turn Order Manager]
-            CAP[Combat Action Processor]
-            CEH[Combat Event Handler]
-        end
-
-        subgraph "Database"
-            DB[(PostgreSQL<br/>combat_sessions<br/>combat_participants<br/>combat_logs)]
-        end
-
-        subgraph "External Services"
-            CHS[Character Service]
-            ES[Economy Service]
-            QS[Quest Service]
-            RG[Realtime Gateway]
-        end
-
-        subgraph "Client"
-            CL[UE5 Client]
-        end
-
-        CL -->|API requests| CSM
-        CSM --> CAP
-        CAP --> DC
-        CAP --> TOM
-        CSM -->|store| DB
-        CAP -->|store| DB
-        CSM -->|get stats| CHS
-        CSM -->|distribute loot| ES
-        CSM -->|quest progress| QS
-        CSM -->|sync state| RG
-        RG -->|push events| CL
-        CEH -->|publish| EventBus
-        EventBus -->|subscribe| CHS
-        EventBus -->|subscribe| ES
-        EventBus -->|subscribe| QS
-    ```
-
-  data_flow_diagram: |
-    ```mermaid
-    sequenceDiagram
-        participant CL as Client
-        participant CSM as Combat Session Manager
-        participant CAP as Action Processor
-        participant DC as Damage Calculator
-        participant TOM as Turn Order Manager
-        participant RG as Realtime Gateway
-        participant DB as Database
-
-        CL->>CSM: Create combat session
-        CSM->>DB: Store session
-        CSM->>TOM: Calculate turn order
-        CSM->>RG: Sync initial state
-        RG->>CL: Push session state
+        ### 1. gameplay-service (Core Combat Service)
+        **Ответственность:** Управление боевыми сессиями, валидация действий, расчет урона
+        **Технологии:** Go, PostgreSQL, Redis, Kafka
+        **Масштабируемость:** Горизонтальная, stateless handlers + stateful session managers
         
-        CL->>CAP: Perform action (attack)
-        CAP->>DC: Calculate damage
-        DC->>CAP: Return damage
-        CAP->>DB: Update participants
-        CAP->>TOM: Next turn
-        CAP->>RG: Sync state
-        RG->>CL: Push updates
-    ```
+        **Ключевые компоненты:**
+        - `SessionManager` - управление жизненным циклом сессий
+        - `CombatEngine` - расчет урона, хитов, статусных эффектов
+        - `ActionValidator` - валидация действий игроков (античит)
+        - `StateSync` - синхронизация состояния с клиентами
+        - `EventPublisher` - публикация событий в Kafka
 
-  combat_flow: |
-    ```mermaid
-    graph LR
-        subgraph "Combat Phases"
-            P1[Preparation<br/>Setup participants]
-            P2[Active Combat<br/>Turns and actions]
-            P3[Completion<br/>Rewards and cleanup]
-        end
+        ### 2. character-service
+        **Ответственность:** Управление персонажами, атрибутами, имплантами, способностями
+        **Интеграция:** Предоставляет данные о персонаже для боевых расчетов
+        **API:** `GET /characters/{id}/combat-stats`, `GET /characters/{id}/loadout`
 
-        subgraph "Actions"
-            A1[Attack]
-            A2[Ability]
-            A3[Defend]
-            A4[Item]
-        end
+        ### 3. economy-service
+        **Ответственность:** Управление лутом, наградами, экономикой
+        **Интеграция:** Получает события `combat:ended` и выдает награды
+        **API:** `POST /economy/combat-rewards`, `POST /economy/loot/generate`
 
-        P1 --> P2
-        P2 --> A1
-        P2 --> A2
-        P2 --> A3
-        P2 --> A4
-        A1 --> P2
-        A2 --> P2
-        A3 --> P2
-        A4 --> P2
-        P2 -->|end condition| P3
-    ```
+        ### 4. quest-service
+        **Ответственность:** Управление квестами и прогрессией
+        **Интеграция:** Подписан на события `combat:*` для обновления квестов
+        **API:** `POST /quests/progress/combat-event`
 
-decisions:
-  - id: adr-combat-architecture
-    summary: |
-      Выбрана модульная архитектура внутри gameplay-service-go для обеспечения
-      тесной интеграции с quest engine и минимизации задержек при обработке действий.
+        ### 5. analytics-service
+        **Ответственность:** Сбор и обработка телеметрии боев
+        **Интеграция:** Подписан на все события `combat:*`
+        **API:** `POST /analytics/combat-telemetry`
 
-  - id: adr-server-side-calculation
-    summary: |
-      Все расчёты урона выполняются на сервере для защиты от читов и обеспечения
-      консистентности игрового опыта.
+        ### 6. security-service (Anti-Cheat)
+        **Ответственность:** Обнаружение читерства, валидация действий
+        **Интеграция:** Анализирует события `combat:action` в реальном времени
+        **API:** `POST /security/validate-action`, `POST /security/report-suspicious`
 
-  - id: adr-realtime-sync
-    summary: |
-      Использование realtime-gateway для синхронизации состояния боя обеспечивает
-      низкую задержку и актуальность данных для всех участников.
+        ### 7. realtime-gateway-go
+        **Ответственность:** WebSocket/UDP соединения с клиентами
+        **Интеграция:** Проксирует события между клиентами и gameplay-service
+        **Протоколы:** WebSocket (PvE), UDP (PvP)
 
-  - id: adr-event-driven
-    summary: |
-      Event-driven архитектура позволяет другим системам реагировать на события боя
-      без прямой зависимости от combat system.
+        ## Инфраструктурные компоненты
 
-validation:
-  architecture_complete: true
-  components_defined: true
-  microservices_identified: true
-  api_endpoints_described: true
-  technical_specification_ready: true
-  subtasks_defined: true
+        ### PostgreSQL
+        **Назначение:** Хранение сессий, логов, статистики
+        **Схемы:** `combat_sessions`, `combat_logs`, `combat_participants`
 
-next_steps:
-  - Передача задачи агенту API Designer для создания OpenAPI спецификации
-  - Детализация API endpoints
-  - Создание request/response схем
+        ### Redis
+        **Назначение:** Кэширование активных сессий, состояния игроков
+        **TTL:** 1 час (активные сессии), 10 минут (кэш состояний)
+
+        ### Kafka
+        **Назначение:** Event bus для асинхронной интеграции
+        **Топики:** `combat.session.created`, `combat.action.executed`, `combat.session.ended`
+
+    - id: api-endpoints
+      title: "API Endpoints (High-Level)"
+      body: |
+        ## Combat Session Management
+
+        ### POST /api/v1/gameplay/combat/sessions
+        Создание новой боевой сессии
+        **Request:** 
+        - `session_type` (pvp_arena, pve_raid, extract_zone)
+        - `participants` (player_ids)
+        - `settings` (zone_id, difficulty, rules)
+        **Response:** `session_id`, `session_state`
+        **Events:** `combat.session.created`
+
+        ### GET /api/v1/gameplay/combat/sessions/{session_id}
+        Получение состояния боевой сессии
+        **Response:** `session_state`, `participants`, `current_turn`
+
+        ### DELETE /api/v1/gameplay/combat/sessions/{session_id}
+        Завершение боевой сессии
+        **Events:** `combat.session.ended`
+
+        ## Combat Actions
+
+        ### POST /api/v1/gameplay/combat/sessions/{session_id}/actions
+        Выполнение боевого действия
+        **Request:**
+        - `action_type` (attack, ability, move, reload, extract)
+        - `target_id` (для атак)
+        - `position` (для движения)
+        - `ability_id` (для способностей)
+        **Response:** `action_result`, `damage_dealt`, `effects_applied`
+        **Events:** `combat.action.executed`
+        **Validation:** Античит-проверки (speed, position, cooldowns)
+
+        ### GET /api/v1/gameplay/combat/sessions/{session_id}/state
+        Получение текущего состояния боя (realtime)
+        **Response:** `participants_state`, `turn_order`, `active_effects`
+
+        ## Combat Analytics
+
+        ### GET /api/v1/gameplay/combat/sessions/{session_id}/logs
+        Получение логов боевой сессии
+        **Response:** Array of combat events with timestamps
+
+        ### GET /api/v1/gameplay/combat/sessions/{session_id}/stats
+        Получение статистики боевой сессии
+        **Response:** Damage dealt/taken, kills, assists, accuracy
+
+        ## Integration Endpoints
+
+        ### POST /api/v1/gameplay/combat/rewards
+        Выдача наград за бой (вызывается economy-service)
+        **Request:** `session_id`, `winners`, `losers`
+
+        ### POST /api/v1/gameplay/combat/quest-progress
+        Обновление прогресса квестов (вызывается quest-service)
+        **Request:** `session_id`, `player_id`, `quest_id`
+
+    - id: data-flows
+      title: "Потоки данных"
+      body: |
+        ## 1. Создание боевой сессии
+
+        ```mermaid
+        sequenceDiagram
+            Client->>+Realtime Gateway: Create Combat Session
+            Realtime Gateway->>+Gameplay Service: POST /combat/sessions
+            Gameplay Service->>+Character Service: GET Combat Stats
+            Character Service-->>-Gameplay Service: Stats + Loadout
+            Gameplay Service->>PostgreSQL: INSERT combat_sessions
+            Gameplay Service->>Redis: SETEX session:{id}
+            Gameplay Service->>Kafka: Publish combat.session.created
+            Gameplay Service-->>-Realtime Gateway: Session Created
+            Realtime Gateway-->>-Client: Session ID + State
+            Kafka-->>Analytics Service: Event: combat.session.created
+        ```
+
+        ## 2. Обработка боевого действия
+
+        ```mermaid
+        sequenceDiagram
+            Client->>+Realtime Gateway: Execute Action (WebSocket/UDP)
+            Realtime Gateway->>+Gameplay Service: POST /combat/actions
+            Gameplay Service->>Security Service: Validate Action (Anti-Cheat)
+            Security Service-->>Gameplay Service: Validation Result
+            alt Action Valid
+                Gameplay Service->>Combat Engine: Calculate Damage
+                Combat Engine->>Redis: Update Session State
+                Gameplay Service->>PostgreSQL: INSERT combat_logs
+                Gameplay Service->>Kafka: Publish combat.action.executed
+                Gameplay Service-->>Realtime Gateway: Action Result
+                Realtime Gateway-->>Client: State Update
+                Kafka-->>Analytics Service: Event: combat.action.executed
+            else Action Invalid
+                Gameplay Service->>Security Service: Report Suspicious
+                Gameplay Service-->>Realtime Gateway: Action Rejected
+            end
+        ```
+
+        ## 3. Завершение боевой сессии
+
+        ```mermaid
+        sequenceDiagram
+            Gameplay Service->>+Gameplay Service: Session Timeout/Win Condition
+            Gameplay Service->>PostgreSQL: UPDATE combat_sessions (status=ended)
+            Gameplay Service->>Redis: DEL session:{id}
+            Gameplay Service->>Kafka: Publish combat.session.ended
+            Kafka-->>Economy Service: Event: combat.session.ended
+            Economy Service->>+Economy Service: Calculate Rewards
+            Economy Service->>Gameplay Service: POST /combat/rewards
+            Gameplay Service-->>-Client: Session Ended + Rewards
+            Kafka-->>Quest Service: Event: combat.session.ended
+            Quest Service->>Quest Service: Update Quest Progress
+            Kafka-->>Analytics Service: Event: combat.session.ended
+        ```
+
+    - id: database-schema
+      title: "Структура базы данных"
+      body: |
+        ## PostgreSQL Tables
+
+        ### combat_sessions
+        ```sql
+        CREATE TABLE combat_sessions (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          session_type VARCHAR(50) NOT NULL,  -- pvp_arena, pve_raid, extract_zone
+          zone_id VARCHAR(100),
+          status VARCHAR(20) NOT NULL,  -- pending, active, ended, aborted
+          difficulty VARCHAR(20),  -- normal, hard, elite
+          max_participants INT NOT NULL,
+          settings JSONB,
+          
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          started_at TIMESTAMP,
+          ended_at TIMESTAMP,
+          duration_seconds INT,
+          
+          winner_team VARCHAR(50),  -- team_a, team_b, draw, NULL
+          
+          CONSTRAINT valid_status CHECK (status IN ('pending', 'active', 'ended', 'aborted')),
+          CONSTRAINT valid_type CHECK (session_type IN ('pvp_arena', 'pve_raid', 'extract_zone', 'guild_war'))
+        );
+
+        CREATE INDEX idx_combat_sessions_status ON combat_sessions(status);
+        CREATE INDEX idx_combat_sessions_created ON combat_sessions(created_at DESC);
+        CREATE INDEX idx_combat_sessions_type ON combat_sessions(session_type);
+        ```
+
+        ### combat_participants
+        ```sql
+        CREATE TABLE combat_participants (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          session_id UUID NOT NULL REFERENCES combat_sessions(id) ON DELETE CASCADE,
+          player_id UUID NOT NULL,
+          character_id UUID NOT NULL,
+          
+          team VARCHAR(50),  -- team_a, team_b, solo
+          role VARCHAR(50),  -- assault, support, tech, stealth
+          
+          -- Combat Stats
+          damage_dealt BIGINT DEFAULT 0,
+          damage_taken BIGINT DEFAULT 0,
+          healing_done BIGINT DEFAULT 0,
+          kills INT DEFAULT 0,
+          deaths INT DEFAULT 0,
+          assists INT DEFAULT 0,
+          shots_fired INT DEFAULT 0,
+          shots_hit INT DEFAULT 0,
+          
+          -- State
+          health INT NOT NULL,
+          max_health INT NOT NULL,
+          status VARCHAR(20) DEFAULT 'alive',  -- alive, dead, extracted
+          
+          joined_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          left_at TIMESTAMP,
+          
+          CONSTRAINT valid_status CHECK (status IN ('alive', 'dead', 'extracted', 'disconnected'))
+        );
+
+        CREATE INDEX idx_participants_session ON combat_participants(session_id);
+        CREATE INDEX idx_participants_player ON combat_participants(player_id);
+        CREATE UNIQUE INDEX idx_participants_unique ON combat_participants(session_id, player_id);
+        ```
+
+        ### combat_logs
+        ```sql
+        CREATE TABLE combat_logs (
+          id BIGSERIAL PRIMARY KEY,
+          session_id UUID NOT NULL REFERENCES combat_sessions(id) ON DELETE CASCADE,
+          
+          event_type VARCHAR(50) NOT NULL,  -- attack, ability, move, reload, death, extract
+          actor_id UUID,  -- player who performed action
+          target_id UUID,  -- player who received action
+          
+          action_data JSONB,  -- weapon_id, ability_id, damage, position, etc.
+          result_data JSONB,  -- damage_dealt, effects_applied, etc.
+          
+          timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+          sequence_number BIGINT NOT NULL,
+          
+          CONSTRAINT valid_event_type CHECK (event_type IN (
+            'attack', 'ability', 'move', 'reload', 'death', 'extract',
+            'heal', 'revive', 'status_effect', 'objective_complete'
+          ))
+        );
+
+        CREATE INDEX idx_combat_logs_session ON combat_logs(session_id, sequence_number);
+        CREATE INDEX idx_combat_logs_timestamp ON combat_logs(timestamp DESC);
+        CREATE INDEX idx_combat_logs_actor ON combat_logs(actor_id);
+        ```
+
+        ## Redis Keys
+
+        ### Active Session State
+        ```
+        Key: session:{session_id}
+        Type: Hash
+        TTL: 3600 seconds
+        Fields:
+          - status: active
+          - participants: [player_ids]
+          - current_turn: player_id
+          - turn_number: int
+          - last_action: timestamp
+        ```
+
+        ### Player Combat State
+        ```
+        Key: player:{player_id}:combat
+        Type: Hash
+        TTL: 3600 seconds
+        Fields:
+          - session_id: UUID
+          - health: int
+          - position: {x,y,z}
+          - status: alive/dead
+          - last_action: timestamp
+        ```
+
+    - id: event-sourcing
+      title: "Event Sourcing & CQRS"
+      body: |
+        ## Event Bus (Kafka)
+
+        ### Topics
+
+        #### combat.session.created
+        ```json
+        {
+          "event_id": "uuid",
+          "event_type": "combat.session.created",
+          "timestamp": "2025-12-02T17:00:00Z",
+          "session_id": "uuid",
+          "session_type": "pvp_arena",
+          "participants": ["player_id1", "player_id2"],
+          "zone_id": "arena_01",
+          "settings": {}
+        }
+        ```
+
+        #### combat.action.executed
+        ```json
+        {
+          "event_id": "uuid",
+          "event_type": "combat.action.executed",
+          "timestamp": "2025-12-02T17:00:01Z",
+          "session_id": "uuid",
+          "actor_id": "player_id1",
+          "action_type": "attack",
+          "target_id": "player_id2",
+          "damage_dealt": 150,
+          "effects_applied": ["bleeding"],
+          "validation": {
+            "anti_cheat_passed": true,
+            "position_valid": true,
+            "cooldown_valid": true
+          }
+        }
+        ```
+
+        #### combat.session.ended
+        ```json
+        {
+          "event_id": "uuid",
+          "event_type": "combat.session.ended",
+          "timestamp": "2025-12-02T17:05:00Z",
+          "session_id": "uuid",
+          "winner_team": "team_a",
+          "duration_seconds": 300,
+          "participants_stats": [
+            {
+              "player_id": "uuid",
+              "damage_dealt": 5000,
+              "kills": 3,
+              "deaths": 1
+            }
+          ]
+        }
+        ```
+
+        ## Event Consumers
+
+        - **Economy Service:** Слушает `combat.session.ended` → выдает награды
+        - **Quest Service:** Слушает `combat.action.executed`, `combat.session.ended` → обновляет квесты
+        - **Analytics Service:** Слушает все `combat.*` → сохраняет телеметрию
+        - **Security Service:** Слушает `combat.action.executed` → детектит читы
+
+    - id: network-architecture
+      title: "Сетевая архитектура и тикрейт"
+      body: |
+        ## Протоколы синхронизации
+
+        ### PvE зоны (MMORPG)
+        - **Протокол:** WebSocket (TCP)
+        - **Тикрейт:** 20-30 Hz
+        - **Задержка:** <100 мс
+        - **Игроков:** 100-500
+        - **Использование:** Рейды, инстансы, открытый мир
+
+        ### PvP small (Arenas)
+        - **Протокол:** UDP
+        - **Тикрейт:** 60-128 Hz
+        - **Задержка:** <30 мс
+        - **Игроков:** 5-20
+        - **Синхронизация:** Полная (все видят всех)
+
+        ### GvG 200 (Guild Wars)
+        - **Протокол:** UDP
+        - **Тикрейт:** 60-80 Hz
+        - **Задержка:** <40 мс
+        - **Игроков:** 100v100
+        - **Оптимизация:** Spatial partitioning
+
+        ### GvG 400 (Large Guild Wars)
+        - **Протокол:** UDP
+        - **Тикрейт:** 40-60 Hz
+        - **Задержка:** <50 мс
+        - **Игроков:** 200v200
+        - **Оптимизация:** Spatial sharding (2-4 shards)
+
+        ### Massive war (Territory Wars)
+        - **Протокол:** UDP
+        - **Тикрейт:** 20-40 Hz
+        - **Задержка:** <100 мс
+        - **Игроков:** 2000+
+        - **Архитектура:** Cluster (5-10 servers)
+
+        ## Server-Authoritative Model
+
+        - Клиент отправляет **намерения** (input), а не состояние
+        - Сервер валидирует все действия
+        - Сервер рассчитывает урон, хиты, движение
+        - Клиент получает **результаты** и обновляет локальное состояние
+        - Клиент использует **client-side prediction** для отзывчивости
+        - Сервер использует **lag compensation** и **rewind buffer**
+
+        ## Anti-Cheat Integration
+
+        - Валидация скорости движения (max speed checks)
+        - Валидация позиции (teleport detection)
+        - Валидация частоты действий (cooldown checks)
+        - Валидация точности стрельбы (aimbot detection)
+        - Reconciliation при desync
+
+    - id: scalability
+      title: "Масштабируемость"
+      body: |
+        ## Horizontal Scaling
+
+        ### Gameplay Service
+        - Stateless HTTP handlers для API
+        - Stateful session managers (sticky sessions через Redis)
+        - Шардирование сессий по `session_id % num_shards`
+        - Load balancing через Envoy
+
+        ### Database Sharding
+        - Шардирование `combat_sessions` по `created_at` (временные партиции)
+        - Репликация read replicas для аналитики
+        - Redis cluster для кэша
+
+        ### Kafka Partitioning
+        - Партиционирование по `session_id` для гарантии порядка
+        - Несколько consumer groups для параллельной обработки
+
+        ## Performance Targets
+
+        - **Latency P99:** <50ms (API endpoints)
+        - **Throughput:** 10,000 actions/sec per instance
+        - **Session Capacity:** 1,000 active sessions per instance
+        - **Database Write Rate:** 50,000 logs/sec
+        - **Event Bus Throughput:** 100,000 events/sec
+
+    - id: security
+      title: "Безопасность"
+      body: |
+        ## Authentication & Authorization
+
+        - JWT токены для аутентификации
+        - Session tokens с TTL 1 час
+        - Rate limiting: 100 actions/min per player
+        - IP-based throttling для DDoS защиты
+
+        ## Anti-Cheat Measures
+
+        - **Speed Hack Detection:** Max speed validation
+        - **Teleport Detection:** Position delta validation
+        - **Aimbot Detection:** Accuracy pattern analysis
+        - **Cooldown Exploit:** Server-side cooldown tracking
+        - **Macro Detection:** Action timing analysis
+
+        ## Data Protection
+
+        - Шифрование WebSocket/UDP соединений (TLS 1.3)
+        - Sensitive data в PostgreSQL (PII, stats)
+        - Redis для временных данных (не критичны)
+
+    - id: monitoring
+      title: "Мониторинг и observability"
+      body: |
+        ## Metrics (Prometheus)
+
+        ### Combat Session Metrics
+        - `combat_sessions_total` (counter) - всего сессий
+        - `combat_sessions_active` (gauge) - активных сессий
+        - `combat_sessions_duration_seconds` (histogram) - длительность
+        - `combat_actions_total` (counter) - всего действий
+        - `combat_actions_invalid` (counter) - невалидных действий
+
+        ### Performance Metrics
+        - `combat_api_latency_seconds` (histogram) - задержка API
+        - `combat_event_processing_duration` (histogram) - обработка событий
+        - `combat_database_query_duration` (histogram) - запросы к БД
+
+        ### Anti-Cheat Metrics
+        - `combat_anticheat_violations` (counter) - нарушения
+        - `combat_suspicious_actions` (counter) - подозрительные действия
+
+        ## Logs (Loki)
+
+        - Структурированное логирование (JSON)
+        - Логи всех действий с `session_id`, `player_id`
+        - Корреляция логов с трейсами (trace_id)
+
+        ## Tracing (Tempo)
+
+        - Distributed tracing для всех запросов
+        - Корреляция с логами и метриками
+        - Trace sampling: 10% (normal), 100% (errors)
+
+        ## Dashboards (Grafana)
+
+        - Combat Session Overview
+        - Performance Dashboard
+        - Anti-Cheat Dashboard
+        - Player Behavior Analytics
+
+    - id: integrations
+      title: "Интеграции с другими системами"
+      body: |
+        ## Character Service Integration
+
+        - **API:** `GET /characters/{id}/combat-stats`
+        - **Data:** HP, атрибуты, импланты, способности, loadout
+        - **Caching:** Redis, TTL 10 минут
+        - **Fallback:** Default stats при недоступности
+
+        ## Economy Service Integration
+
+        - **Event:** `combat.session.ended`
+        - **API:** `POST /economy/combat-rewards`
+        - **Data:** Награды за победу, лут, опыт
+        - **Retry:** Exponential backoff при ошибках
+
+        ## Quest Service Integration
+
+        - **Event:** `combat.action.executed`, `combat.session.ended`
+        - **API:** `POST /quests/progress/combat-event`
+        - **Data:** Квестовые события (kills, damage, objectives)
+        - **Async:** Обработка через Kafka
+
+        ## Analytics Service Integration
+
+        - **Event:** Все `combat.*` события
+        - **API:** `POST /analytics/combat-telemetry`
+        - **Data:** Полная телеметрия боев
+        - **Storage:** ClickHouse для анализа
+
+        ## Security Service Integration
+
+        - **Event:** `combat.action.executed`
+        - **API:** `POST /security/validate-action`
+        - **Data:** Action data для анализа
+        - **Realtime:** Синхронная валидация (timeout 50ms)
+
+    - id: deployment
+      title: "Деплой и инфраструктура"
+      body: |
+        ## Kubernetes Deployment
+
+        ### Gameplay Service
+        ```yaml
+        replicas: 10
+        resources:
+          requests:
+            cpu: 2000m
+            memory: 4Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        ```
+
+        ### Realtime Gateway
+        ```yaml
+        replicas: 20
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        ```
+
+        ### PostgreSQL
+        ```yaml
+        type: StatefulSet
+        replicas: 3 (1 primary + 2 replicas)
+        storage: 1TB (SSD)
+        ```
+
+        ### Redis Cluster
+        ```yaml
+        type: StatefulSet
+        replicas: 6 (3 masters + 3 replicas)
+        memory: 16GB per instance
+        ```
+
+        ### Kafka Cluster
+        ```yaml
+        replicas: 5
+        partitions: 20 per topic
+        replication_factor: 3
+        ```
+
+        ## CI/CD
+
+        - GitHub Actions для сборки и тестов
+        - Docker images для сервисов
+        - ArgoCD для деплоя в K8s
+        - Canary deployments для критичных сервисов
+
+appendix:
+  glossary:
+    - term: "Combat Session"
+      definition: "Инстанс боевого взаимодействия между игроками и/или NPC"
+    - term: "Session Manager"
+      definition: "Компонент, управляющий жизненным циклом боевых сессий"
+    - term: "Combat Engine"
+      definition: "Компонент, отвечающий за расчет урона и боевых эффектов"
+    - term: "Action Validator"
+      definition: "Компонент античита, валидирующий действия игроков"
+  references:
+    - title: "Combat Shooter Core"
+      url: "knowledge/mechanics/combat/combat-shooter-core.yaml"
+    - title: "Combat PvP/PvE"
+      url: "knowledge/mechanics/combat/combat-pvp-pve.yaml"
+    - title: "Combat Session Backend"
+      url: "knowledge/implementation/backend/combat-session-backend.yaml"
+  decisions:
+    - id: "arch-001"
+      decision: "Использовать Event-driven архитектуру через Kafka"
+      rationale: "Обеспечивает асинхронную интеграцию и масштабируемость"
+      alternatives: "Синхронный REST API между сервисами"
+    - id: "arch-002"
+      decision: "Server-authoritative модель для боевых действий"
+      rationale: "Предотвращает читерство и обеспечивает честность игры"
+      alternatives: "Client-authoritative с валидацией"
+    - id: "arch-003"
+      decision: "Разные протоколы для PvE (WebSocket) и PvP (UDP)"
+      rationale: "Оптимизация под разные требования к задержке и надежности"
+      alternatives: "Единый протокол для всех режимов"
+
+implementation:
+  github_issue: 130
+  needs_task: true
+  next_steps:
+    - "API Designer: Создать OpenAPI спецификацию для Combat Session API"
+    - "Database: Создать миграции для combat_sessions, combat_participants, combat_logs"
+    - "Backend: Реализовать gameplay-service handlers"
+    - "Network: Настроить WebSocket/UDP gateway"
+    - "Security: Интегрировать античит валидацию"
+  blockers: []
 
 history:
-  - version: '1.1.0'
-    date: 2025-11-30
-    author: Architect Agent
-    changes: |
-      Добавлена детальная синхронизация данных:
-      - Event Sourcing для всех изменений состояния боевых сессий
-      - CQRS Pattern для разделения команд и запросов
-      - Saga Pattern для распределенных операций (завершение боя, распределение наград)
-      - Outbox Pattern для гарантированной доставки событий
-      - Обновлена секция data_consistency с механизмами синхронизации
-      - Добавлена спецификация тикрейта для боевых действий, расчета урона и управления ходами
-  - version: '1.0.0'
-    date: 2025-11-22
-    author: Architect Agent
-    changes: |
-      Создана полная архитектура системы боевых сессий:
-      - Определены компоненты (Session Manager, Damage Calculator, Turn Order Manager, Action Processor, Event Handler)
-      - Описаны API endpoints (высокоуровнево)
-      - Спроектированы потоки данных
-      - Определена структура БД
-      - Создано техническое задание
-      - Разбито на подзадачи
+  - version: "1.0.0"
+    date: 2025-12-02
+    author: architect
+    changes: "Создана полная архитектура системы боевых сессий"
 
-
+validation:
+  checksum: ""
+  schema_version: "1.0"
