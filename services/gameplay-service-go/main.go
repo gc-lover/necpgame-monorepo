@@ -9,129 +9,44 @@ import (
 	"time"
 
 	"github.com/necpgame/gameplay-service-go/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := server.GetLogger()
-	logger.Info("Gameplay Service (Go) starting...")
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetLevel(logrus.InfoLevel)
 
-	addr := getEnv("ADDR", "0.0.0.0:8083")
-	metricsAddr := getEnv("METRICS_ADDR", ":9093")
-	
-	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
-	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/3")
-
-	progressionService, err := server.NewProgressionService(dbURL, redisURL)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize progression service")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8097"
 	}
 
-	redisOpts, _ := redis.ParseURL(redisURL)
-	redisClient := redis.NewClient(redisOpts)
-	eventBus := server.NewRedisEventBus(redisClient)
+	addr := ":" + port
+	logger.WithField("address", addr).Info("Starting Gameplay Service")
 
-	progressionRepo := server.NewProgressionRepository(progressionService.GetDBPool())
-	questService, err := server.NewQuestService(dbURL, redisURL, progressionRepo, eventBus)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize quest service")
-	}
-
-	affixService, err := server.NewAffixService(progressionService.GetDBPool(), redisURL)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize affix service")
-	}
-
-	timeTrialService, err := server.NewTimeTrialService(progressionService.GetDBPool(), redisURL)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize time trial service")
-	}
-
-	comboService := server.NewComboService(progressionService.GetDBPool())
-
-	implantsStatsService := server.NewImplantsStatsService(progressionService.GetDBPool())
-
-	implantsMaintenanceService := server.NewImplantsMaintenanceService(progressionService.GetDBPool())
-
-	damageService := server.NewDamageService(progressionService.GetDBPool())
-
-	weaponMechanicsService, err := server.NewWeaponMechanicsService(progressionService.GetDBPool(), redisURL)
-	if err != nil {
-		logger.WithError(err).Warn("Failed to initialize weapon mechanics service")
-		weaponMechanicsService = nil
-	} else {
-		logger.Info("Weapon mechanics service initialized")
-	}
-
-	affixScheduler := server.NewAffixScheduler(affixService)
-	affixScheduler.Start()
-
-	progressionExperienceSubscriber := server.NewProgressionExperienceSubscriber(progressionService)
-	if err := progressionExperienceSubscriber.Start(); err != nil {
-		logger.WithError(err).Warn("Failed to start progression experience subscriber")
-	} else {
-		logger.Info("Progression experience subscriber started")
-	}
-
-	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService, timeTrialService, comboService, implantsStatsService, implantsMaintenanceService, damageService, weaponMechanicsService)
-
-	metricsMux := http.NewServeMux()
-	metricsMux.Handle("/metrics", promhttp.Handler())
-
-	metricsServer := &http.Server{
-		Addr:         metricsAddr,
-		Handler:      metricsMux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
+	httpServer := server.NewHTTPServer(addr, logger)
 
 	go func() {
-		logger.WithField("addr", metricsAddr).Info("Metrics server starting")
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Metrics server failed")
+		logger.Info("HTTP server listening on ", addr)
+		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
+			logger.WithError(err).Fatal("Failed to start HTTP server")
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		logger.Info("Shutting down server...")
-		cancel()
-
-		if affixScheduler != nil {
-			affixScheduler.Stop()
-		}
-
-		if progressionExperienceSubscriber != nil {
-			if err := progressionExperienceSubscriber.Stop(); err != nil {
-				logger.WithError(err).Error("Failed to stop progression experience subscriber")
-			}
-		}
-
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer shutdownCancel()
-		metricsServer.Shutdown(shutdownCtx)
-		httpServer.Shutdown(shutdownCtx)
-	}()
-
-	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
-		logger.WithError(err).Fatal("Server error")
+	if err := httpServer.Shutdown(ctx); err != nil {
+		logger.WithError(err).Error("Server forced to shutdown")
 	}
 
-	logger.Info("Server stopped")
+	logger.Info("Server exited")
 }
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
 

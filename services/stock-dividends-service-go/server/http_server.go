@@ -2,128 +2,89 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/necpgame/stock-dividends-service-go/pkg/api"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
-	logger *logrus.Logger
 	server *http.Server
+	logger *logrus.Logger
 }
 
-func NewHTTPServer(addr string) *HTTPServer {
+func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
+	handlers := NewStockHandlers(logger)
+
 	router := chi.NewRouter()
 
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router.Use(loggingMiddleware(logger))
+	router.Use(recoveryMiddleware(logger))
+	router.Use(corsMiddleware)
 
-	server := &HTTPServer{
-		addr:   addr,
-		router: router,
-		logger: GetLogger(),
-	}
-
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-
-	handlers := NewDividendsHandlers()
-
+	// Generated API handlers with Chi
 	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/v1",
 		BaseRouter: router,
 	})
 
-	router.Get("/health", server.healthCheck)
+	router.Handle("/metrics", promhttp.Handler())
 
-	return server
+	return &HTTPServer{
+		addr: addr,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		logger: logger,
+	}
 }
 
-func (s *HTTPServer) Start(ctx context.Context) error {
-	s.server = &http.Server{
-		Addr:         s.addr,
-		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
-	errChan := make(chan error, 1)
-	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			errChan <- err
-		}
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return s.Shutdown(context.Background())
-	}
+func (s *HTTPServer) Start() error {
+	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
+	return s.server.ListenAndServe()
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	if s.server != nil {
-		return s.server.Shutdown(ctx)
+	s.logger.Info("Shutting down HTTP server")
+	return s.server.Shutdown(ctx)
+}
+
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"duration": time.Since(start),
+			}).Info("HTTP request processed")
+		})
 	}
-	return nil
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
-}
-
-func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		s.logger.WithError(err).Error("Failed to encode JSON response")
+func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.WithField("error", err).Error("Panic recovered")
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
 	}
 }
 
-func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(recorder, r)
-
-		duration := time.Since(start)
-		s.logger.WithFields(logrus.Fields{
-			"method":      r.Method,
-			"path":        r.URL.Path,
-			"duration_ms": duration.Milliseconds(),
-			"status":      recorder.statusCode,
-		}).Info("HTTP request")
-	})
-}
-
-func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(recorder, r)
-
-		duration := time.Since(start).Seconds()
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(recorder.statusCode))
-		RecordRequestDuration(r.Method, r.URL.Path, duration)
-	})
-}
-
-func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
+func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -137,25 +98,3 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (sr *statusRecorder) WriteHeader(code int) {
-	sr.statusCode = code
-	sr.ResponseWriter.WriteHeader(code)
-}
-
-
-
-
-
-
-
-
-
-
-
-

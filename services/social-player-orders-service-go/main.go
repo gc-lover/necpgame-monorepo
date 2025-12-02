@@ -1,9 +1,7 @@
-// Issue: #81
 package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,53 +9,44 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/server"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetLevel(logrus.InfoLevel)
+
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8090"
+		port = "8097"
 	}
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://necpuser:necppass@localhost:5432/necpgame?sslmode=disable"
-	}
+	addr := ":" + port
+	logger.WithField("address", addr).Info("Starting Social Player Orders Service")
 
-	// Initialize repository
-	repo, err := server.NewOrderRepository(context.Background(), dbURL)
-	if err != nil {
-		log.Fatalf("Failed to initialize repository: %v", err)
-	}
-	defer repo.Close()
+	httpServer := server.NewHTTPServer(addr, logger)
 
-	// Initialize service
-	service := server.NewOrderService(repo)
-
-	// Initialize HTTP server
-	httpServer := server.NewHTTPServer(":"+port, service)
-
-	// Start server
 	go func() {
-		log.Printf("Starting Player Orders Service on port %s", port)
+		logger.Info("HTTP server listening on ", addr)
 		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			logger.WithError(err).Fatal("Failed to start HTTP server")
 		}
 	}()
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	logger.Info("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server shutdown error: %v", err)
+		logger.WithError(err).Error("Server forced to shutdown")
 	}
 
-	log.Println("Server stopped")
+	logger.Info("Server exited")
 }
+
 

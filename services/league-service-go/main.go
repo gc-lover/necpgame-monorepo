@@ -1,65 +1,52 @@
-// Issue: #44
 package main
 
 import (
 	"context"
-	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/league-service-go/server"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	// Database connection
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable"
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetLevel(logrus.InfoLevel)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8097"
 	}
 
-	ctx := context.Background()
-	dbpool, err := pgxpool.New(ctx, dbURL)
-	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
-	}
-	defer dbpool.Close()
+	addr := ":" + port
+	logger.WithField("address", addr).Info("Starting League Service")
 
-	// Ping database
-	if err := dbpool.Ping(ctx); err != nil {
-		log.Fatalf("Unable to ping database: %v\n", err)
-	}
+	httpServer := server.NewHTTPServer(addr, logger)
 
-	log.Println("Connected to database successfully")
-
-	// Initialize service layers
-	repository := server.NewLeagueRepository(dbpool)
-	service := server.NewLeagueService(repository)
-	httpServer := server.NewHTTPServer(":8093", service)
-
-	// Start server
 	go func() {
-		log.Printf("Starting League Service on :8093")
-		if err := httpServer.Start(); err != nil {
-			log.Fatalf("Server failed: %v", err)
+		logger.Info("HTTP server listening on ", addr)
+		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
+			logger.WithError(err).Fatal("Failed to start HTTP server")
 		}
 	}()
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	logger.Info("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		logger.WithError(err).Error("Server forced to shutdown")
 	}
 
-	log.Println("Server exited")
+	logger.Info("Server exited")
 }
+
 

@@ -135,7 +135,239 @@ Network Engineer отвечает за сетевую часть: Envoy, gRPC, W
   - Снижение тикрейта при большом количестве игроков
   - Повышение тикрейта для критичных механик
   - Spatial partitioning для снижения нагрузки
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
+- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей их на несколько файлов
+
+## WARNING КРИТИЧНО: Сетевые оптимизации для MMOFPS
+
+**ОБЯЗАТЕЛЬНО применяй в сетевом коде:**
+
+### 1. UDP для Game State (НЕ WebSocket!)
+
+```go
+// WebSocket/TCP только для:
+// - Lobby, chat, inventory
+// - Гарантированная доставка нужна
+
+// UDP для:
+// - Position, rotation updates
+// - Shooting events
+// - Real-time game state
+
+conn, _ := net.ListenUDP("udp", addr)
+go handleGameUpdates(conn) // Non-blocking
+```
+
+**Результат:** Latency ↓ 50%, jitter ↓ 80% (нет TCP retransmit)
+
+### 2. Spatial Partitioning (ОБЯЗАТЕЛЬНО для >100 игроков)
+
+```go
+type SpatialGrid struct {
+    cellSize float32
+    cells    map[CellID]*Cell
+}
+
+// НЕ отправляй updates всем игрокам!
+func (s *Server) BroadcastUpdate(player *Player, update []byte) {
+    // Только игрокам в радиусе видимости
+    nearby := s.grid.GetNearbyPlayers(player.Position, 100.0)
+    for _, p := range nearby {
+        p.Send(update)
+    }
+}
+```
+
+**Результат:** Трафик ↓ 80-90%, CPU ↓ 70%
+
+### 3. Delta Compression (критично для bandwidth)
+
+```go
+// Отправляй только изменения, не full state
+type PlayerUpdate struct {
+    ID          uint32
+    ChangeMask  uint8 // Битовая маска изменений
+    Position    Vec3  `json:",omitempty"` // Только если изменилась
+    Rotation    Quat  `json:",omitempty"` // Только если изменилась
+    Health      int16 `json:",omitempty"` // Только если изменилось
+}
+
+func (p *Player) GetDelta(prev *PlayerState) *PlayerUpdate {
+    update := &PlayerUpdate{ID: p.ID}
+    if p.Position != prev.Position {
+        update.ChangeMask |= PositionChanged
+        update.Position = p.Position
+    }
+    // ... для других полей
+    return update
+}
+```
+
+**Результат:** Bandwidth ↓ 70-85%
+
+### 4. Batch Updates (обязательно!)
+
+```go
+// Плохо: отправка каждого update отдельно
+for _, player := range players {
+    conn.WriteToUDP(player.Update(), player.Addr) // 1000 syscalls
+}
+
+// Хорошо: батчинг
+batch := make([]byte, 0, 64*1024) // 64KB buffer
+for _, player := range players {
+    batch = append(batch, player.Update()...)
+    if len(batch) > 60000 { // Flush before MTU
+        conn.WriteToUDP(batch, groupAddr)
+        batch = batch[:0]
+    }
+}
+if len(batch) > 0 {
+    conn.WriteToUDP(batch, groupAddr)
+}
+```
+
+**Результат:** Syscalls ↓ 95%, CPU ↓ 60%
+
+### 5. Адаптивный Tick Rate
+
+```go
+type GameServer struct {
+    tickRate     time.Duration
+    playerCount  atomic.Int32
+}
+
+func (s *GameServer) AdaptTickRate() {
+    count := s.playerCount.Load()
+    
+    switch {
+    case count < 50:
+        s.tickRate = 128 * time.Millisecond // 128 Hz
+    case count < 200:
+        s.tickRate = 60 * time.Millisecond  // 60 Hz
+    case count < 500:
+        s.tickRate = 30 * time.Millisecond  // 30 Hz
+    default:
+        s.tickRate = 20 * time.Millisecond  // 20 Hz
+    }
+}
+```
+
+### 6. Квантование координат (экономия bandwidth)
+
+```go
+// Плохо: float32 = 4 bytes
+type Position struct {
+    X, Y, Z float32 // 12 bytes
+}
+
+// Хорошо: quantize to int16
+type QuantizedPos struct {
+    X, Y, Z int16 // 6 bytes (50% экономия)
+}
+
+func Quantize(pos Vec3, scale float32) QuantizedPos {
+    return QuantizedPos{
+        X: int16(pos.X * scale),
+        Y: int16(pos.Y * scale),
+        Z: int16(pos.Z * scale),
+    }
+}
+
+func Dequantize(qpos QuantizedPos, scale float32) Vec3 {
+    return Vec3{
+        X: float32(qpos.X) / scale,
+        Y: float32(qpos.Y) / scale,
+        Z: float32(qpos.Z) / scale,
+    }
+}
+```
+
+**Результат:** Bandwidth ↓ 50% для position updates
+
+### 7. Connection Pooling для UDP
+
+```go
+// Переиспользуй буферы для UDP packets
+var udpBufferPool = sync.Pool{
+    New: func() interface{} {
+        buf := make([]byte, 1500) // MTU size
+        return &buf
+    },
+}
+
+func HandleUDP(conn *net.UDPConn) {
+    bufPtr := udpBufferPool.Get().(*[]byte)
+    defer udpBufferPool.Put(bufPtr)
+    
+    buf := *bufPtr
+    n, addr, _ := conn.ReadFromUDP(buf)
+    processPacket(buf[:n], addr)
+}
+```
+
+### 8. Interest Management (критично для massive battles)
+
+```go
+// Не отправляй детали далеких объектов
+type InterestLevel int
+
+const (
+    HighDetail    InterestLevel = iota // <50m: full updates
+    MediumDetail                        // 50-150m: position only
+    LowDetail                           // 150-300m: position every 5 ticks
+    NoInterest                          // >300m: не отправляем
+)
+
+func (s *Server) GetInterestLevel(dist float32) InterestLevel {
+    switch {
+    case dist < 50: return HighDetail
+    case dist < 150: return MediumDetail
+    case dist < 300: return LowDetail
+    default: return NoInterest
+    }
+}
+```
+
+### 9. Протокол с версионированием
+
+```go
+// ОБЯЗАТЕЛЬНО версионируй протокол
+type PacketHeader struct {
+    Version    uint8  // Protocol version
+    PacketType uint8  // Message type
+    Sequence   uint16 // Для ordering
+}
+
+func (s *Server) HandlePacket(data []byte) {
+    if data[0] != CurrentProtocolVersion {
+        // Handle old clients gracefully
+        s.HandleLegacyPacket(data)
+        return
+    }
+    // ...
+}
+```
+
+### 10. Jitter Buffer (для smooth gameplay)
+
+```go
+type JitterBuffer struct {
+    packets map[uint16]*Packet
+    delay   time.Duration // ~100ms
+}
+
+// Компенсируй сетевой jitter
+func (jb *JitterBuffer) Add(seq uint16, packet *Packet) {
+    jb.packets[seq] = packet
+    
+    // Плавное воспроизведение с задержкой
+    time.AfterFunc(jb.delay, func() {
+        jb.PlaySequence(seq)
+    })
+}
+```
+
+**ВАЖНО:** Эти оптимизации обязательны для real-time game servers. Без них невозможно поддерживать >100 одновременных игроков с приемлемым качеством.
 
 ## Task Requirements Check
 

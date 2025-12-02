@@ -137,6 +137,346 @@ UE5 Developer реализует клиент на Unreal Engine 5.7, интег
 - Используй Protobuf для сериализации
 - **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
 
+## WARNING КРИТИЧНО: Оптимизации UE5 для MMOFPS
+
+**ОБЯЗАТЕЛЬНО применяй для production-ready клиента:**
+
+### 1. Object Pooling (критично для performance)
+
+```cpp
+// Issue: #123
+// Переиспользуй объекты вместо Spawn/Destroy
+class GAME_API UObjectPool : public UObject
+{
+    GENERATED_BODY()
+    
+private:
+    TArray<AActor*> AvailableObjects;
+    TSubclassOf<AActor> ObjectClass;
+    
+public:
+    AActor* GetPooledObject()
+    {
+        if (AvailableObjects.Num() > 0)
+        {
+            AActor* Object = AvailableObjects.Pop();
+            Object->SetActorHiddenInGame(false);
+            return Object;
+        }
+        
+        // Spawn new если pool пустой
+        return GetWorld()->SpawnActor<AActor>(ObjectClass);
+    }
+    
+    void ReturnToPool(AActor* Object)
+    {
+        Object->SetActorHiddenInGame(true);
+        AvailableObjects.Add(Object);
+    }
+};
+
+// Используй для: projectiles, VFX, particles, UI widgets
+```
+
+**Результат:** FPS ↑ 30-50%, GC pauses ↓ 80%
+
+### 2. Network Interpolation (обязательно для smooth movement)
+
+```cpp
+// Issue: #123
+// Сгладь сетевые updates
+class GAME_API ANetworkedCharacter : public ACharacter
+{
+    GENERATED_BODY()
+    
+private:
+    FVector ServerLocation;
+    FVector ClientLocation;
+    float InterpolationAlpha;
+    
+public:
+    virtual void Tick(float DeltaTime) override
+    {
+        Super::Tick(DeltaTime);
+        
+        if (!IsLocallyControlled())
+        {
+            // Smooth interpolation между сетевыми updates
+            InterpolationAlpha = FMath::Clamp(InterpolationAlpha + DeltaTime * 10.0f, 0.0f, 1.0f);
+            ClientLocation = FMath::Lerp(ClientLocation, ServerLocation, InterpolationAlpha);
+            SetActorLocation(ClientLocation);
+        }
+    }
+    
+    UFUNCTION()
+    void OnRep_ServerLocation()
+    {
+        ServerLocation = GetActorLocation();
+        InterpolationAlpha = 0.0f; // Reset interpolation
+    }
+};
+```
+
+### 3. LOD для массовых сцен (обязательно >50 игроков)
+
+```cpp
+// Issue: #123
+// Управляй уровнем детализации по дистанции
+class GAME_API APlayerCharacterLOD : public ACharacter
+{
+    GENERATED_BODY()
+    
+public:
+    void UpdateLOD(float Distance, APlayerController* ViewerController)
+    {
+        if (Distance < 5000.0f) // Close: full detail
+        {
+            GetMesh()->SetSkeletalMeshLODLevel(0);
+            GetMesh()->SetUpdateAnimationInEditor(true);
+            SetActorTickEnabled(true);
+        }
+        else if (Distance < 15000.0f) // Medium: reduced detail
+        {
+            GetMesh()->SetSkeletalMeshLODLevel(1);
+            GetMesh()->SetUpdateAnimationInEditor(false);
+            SetActorTickEnabled(true);
+        }
+        else if (Distance < 30000.0f) // Far: minimal detail
+        {
+            GetMesh()->SetSkeletalMeshLODLevel(2);
+            GetMesh()->SetUpdateAnimationInEditor(false);
+            SetActorTickEnabled(false); // Freeze animations
+        }
+        else // Very far: hide or static mesh
+        {
+            SetActorHiddenInGame(true);
+        }
+    }
+};
+```
+
+**Результат:** FPS ↑ 100-200% в massive battles
+
+### 4. Async Loading (не блокируй game thread)
+
+```cpp
+// Issue: #123
+// Загружай ассеты асинхронно
+void AGameMode::LoadPlayerData(int32 PlayerID)
+{
+    FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+    
+    TArray<FSoftObjectPath> AssetsToLoad;
+    AssetsToLoad.Add(PlayerSkinPath);
+    AssetsToLoad.Add(PlayerWeaponPath);
+    
+    Streamable.RequestAsyncLoad(AssetsToLoad, FStreamableDelegate::CreateLambda([this, PlayerID]()
+    {
+        // Assets loaded, apply to player
+        OnPlayerAssetsLoaded(PlayerID);
+    }));
+}
+```
+
+### 5. Network Relevancy (не репликуй всё всем)
+
+```cpp
+// Issue: #123
+// Ограничь репликацию по дистанции
+class GAME_API AMyCharacter : public ACharacter
+{
+    GENERATED_BODY()
+    
+public:
+    AMyCharacter()
+    {
+        NetCullDistanceSquared = 1500000000.0f; // ~38km
+        NetUpdateFrequency = 30.0f; // 30 Hz для обычных игроков
+        MinNetUpdateFrequency = 10.0f; // 10 Hz для далеких
+        
+        bAlwaysRelevant = false;
+        bOnlyRelevantToOwner = false;
+    }
+    
+    virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, 
+                                   const FVector& SrcLocation) const override
+    {
+        // Custom relevancy logic
+        float DistSq = (SrcLocation - GetActorLocation()).SizeSquared();
+        return DistSq < NetCullDistanceSquared;
+    }
+};
+```
+
+**Результат:** Network traffic ↓ 70-80%
+
+### 6. Client-Side Prediction (reduce perceived lag)
+
+```cpp
+// Issue: #123
+// Предсказывай movement на клиенте
+class GAME_API UPredictiveMovementComponent : public UCharacterMovementComponent
+{
+    GENERATED_BODY()
+    
+private:
+    TArray<FSavedMove> PendingMoves;
+    
+public:
+    virtual void PerformMovement(float DeltaTime) override
+    {
+        if (IsLocallyControlled())
+        {
+            // Predict movement locally
+            FSavedMove Move;
+            Move.DeltaTime = DeltaTime;
+            Move.Acceleration = GetCurrentAcceleration();
+            
+            Super::PerformMovement(DeltaTime);
+            
+            PendingMoves.Add(Move);
+            SendMovementToServer(Move);
+        }
+        else
+        {
+            Super::PerformMovement(DeltaTime);
+        }
+    }
+    
+    void OnServerLocationUpdate(FVector ServerLocation)
+    {
+        // Reconcile: если разница большая, корректируй
+        float Error = (GetActorLocation() - ServerLocation).Size();
+        if (Error > 50.0f) // 50cm threshold
+        {
+            SetActorLocation(ServerLocation); // Snap
+            PendingMoves.Empty(); // Clear predictions
+        }
+    }
+};
+```
+
+### 7. Tick Optimization (не все нужно каждый frame)
+
+```cpp
+// Issue: #123
+// Оптимизируй tick frequency
+class GAME_API AOptimizedActor : public AActor
+{
+    GENERATED_BODY()
+    
+public:
+    AOptimizedActor()
+    {
+        // Tick каждые 0.1 секунды вместо каждого frame
+        PrimaryActorTick.bCanEverTick = true;
+        PrimaryActorTick.TickInterval = 0.1f;
+    }
+    
+    // Или используй Timers вместо Tick
+    void BeginPlay() override
+    {
+        Super::BeginPlay();
+        
+        GetWorldTimerManager().SetTimer(
+            UpdateTimer, 
+            this, 
+            &AOptimizedActor::UpdateLogic,
+            0.1f, // Every 100ms
+            true  // Looping
+        );
+    }
+    
+private:
+    FTimerHandle UpdateTimer;
+    void UpdateLogic() { /* Update logic here */ }
+};
+```
+
+**Результат:** CPU ↓ 40-60% для non-critical actors
+
+### 8. Rendering Optimization (massive battles)
+
+```cpp
+// Issue: #123
+// Batching и instancing для толпы
+class GAME_API UCrowdRenderingComponent : public USceneComponent
+{
+    GENERATED_BODY()
+    
+public:
+    void SetupInstancing()
+    {
+        // Используй Instanced Static Mesh для одинаковых моделей
+        UInstancedStaticMeshComponent* ISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("CrowdISM"));
+        ISM->SetStaticMesh(SoldierMesh);
+        
+        // Add 1000 soldiers as instances
+        for (int32 i = 0; i < 1000; ++i)
+        {
+            FTransform Transform;
+            Transform.SetLocation(GetRandomLocation());
+            ISM->AddInstance(Transform);
+        }
+    }
+};
+```
+
+**Результат:** Можно отрисовать 10x больше объектов при том же FPS
+
+### 9. Memory Management (избегай leaks)
+
+```cpp
+// Issue: #123
+// ВСЕГДА используй UPROPERTY для UObject*
+class GAME_API UMyComponent : public UActorComponent
+{
+    GENERATED_BODY()
+    
+    // ❌ Плохо: GC не увидит
+    UTexture2D* MyTexture;
+    
+    // OK Хорошо: GC управляет
+    UPROPERTY()
+    UTexture2D* MyTextureManaged;
+    
+    // OK Для non-UObject используй TSharedPtr
+    TSharedPtr<FMyData> SharedData;
+    
+    // OK Для массивов используй TArray (auto memory management)
+    TArray<int32> PlayerIDs;
+};
+```
+
+### 10. Profiling Tools (используй регулярно)
+
+```cpp
+// Issue: #123
+// Профилируй critical sections
+void AMyActor::ExpensiveFunction()
+{
+    SCOPE_CYCLE_COUNTER(STAT_ExpensiveFunction);
+    
+    // Your code here...
+}
+
+// В консоли UE5:
+// stat fps - показать FPS
+// stat unit - показать frame time breakdown
+// stat game - game thread time
+// stat gpu - GPU time
+// stat memory - memory usage
+// profilegpu - детальный GPU profile
+```
+
+**Целевые метрики для MMOFPS:**
+- **FPS:** Stable 60+ (120+ для competitive)
+- **Frame time:** <16ms (60 FPS) / <8ms (120 FPS)
+- **Network latency:** <50ms client→server
+- **Memory:** <4GB для client
+
+**ВАЖНО:** Эти оптимизации critical для competitive MMOFPS. Без них игроки будут жаловаться на лаги, stuttering и плохой netcode.
+
 ## Формат вывода
 
 - C++ код в `client/UE5/`

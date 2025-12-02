@@ -1,75 +1,110 @@
-// Issue: #81
 package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/pkg/api"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
-	addr    string
-	router  chi.Router
-	service *OrderService
-	server  *http.Server
+	addr   string
+	server *http.Server
+	logger *logrus.Logger
 }
 
-func NewHTTPServer(addr string, service *OrderService) *HTTPServer {
+func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
+	handlers := NewServiceHandlers(logger)
+
 	router := chi.NewRouter()
 
-	// Global middleware
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
+	router.Use(loggingMiddleware(logger))
+	router.Use(recoveryMiddleware(logger))
+	router.Use(corsMiddleware)
 
-	// Create handlers
-	handlers := NewOrderHandlers(service)
-
-	// Register API routes using generated code
+	// Generated API handlers with Chi
 	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
 		BaseRouter: router,
 	})
 
-	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", promhttp.Handler().ServeHTTP)
+	router.Handle("/metrics", promhttp.Handler())
+	router.Get("/health", healthCheckHandler)
 
 	return &HTTPServer{
-		addr:    addr,
-		router:  router,
-		service: service,
+		addr: addr,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		logger: logger,
 	}
 }
 
 func (s *HTTPServer) Start() error {
-	s.server = &http.Server{
-		Addr:    s.addr,
-		Handler: s.router,
-	}
+	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
 	return s.server.ListenAndServe()
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	if s.server != nil {
-		return s.server.Shutdown(ctx)
-	}
-	return nil
+	s.logger.Info("Shutting down HTTP server")
+	return s.server.Shutdown(ctx)
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"duration": time.Since(start),
+			}).Info("HTTP request processed")
+		})
+	}
+}
+
+func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.WithField("error", err).Error("Panic recovered")
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, `{"status":"ok","service":"player-orders"}`)
+	w.Write([]byte(`{"status":"healthy"}`))
 }
+
+
 

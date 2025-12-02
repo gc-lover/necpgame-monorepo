@@ -110,6 +110,285 @@ Performance Engineer оптимизирует производительност
 - Создавай бенчмарки
 - **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
 
+## WARNING КРИТИЧНО: Performance для MMOFPS RPG
+
+**ОБЯЗАТЕЛЬНЫЕ инструменты и практики:**
+
+### 1. Profiling инструменты (используй ВСЕГДА)
+
+```go
+// CPU Profiling
+import _ "net/http/pprof"
+
+func main() {
+    go func() {
+        log.Println(http.ListenAndServe("localhost:6060", nil))
+    }()
+}
+
+// Затем:
+// go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
+// go tool pprof -http=:8080 cpu.prof  // Web UI
+```
+
+**Команды для анализа:**
+```bash
+# CPU profile (30 секунд)
+curl http://localhost:6060/debug/pprof/profile?seconds=30 > cpu.prof
+go tool pprof -http=:8080 cpu.prof
+
+# Memory profile
+curl http://localhost:6060/debug/pprof/heap > mem.prof
+go tool pprof -http=:8080 mem.prof
+
+# Goroutine profile (проверка leaks)
+curl http://localhost:6060/debug/pprof/goroutine > goroutine.prof
+
+# Allocation profile (что создает GC pressure)
+curl http://localhost:6060/debug/pprof/allocs > allocs.prof
+```
+
+### 2. Benchmarking (критичные функции ДОЛЖНЫ иметь бенчмарки)
+
+```go
+// Обязательно для hot path функций
+func BenchmarkProcessPlayerUpdate(b *testing.B) {
+    player := &Player{ID: 1, Position: Vec3{}}
+    update := &Update{}
+    
+    b.ResetTimer() // Не измеряем setup
+    b.ReportAllocs() // Показывай allocations
+    
+    for i := 0; i < b.N; i++ {
+        ProcessUpdate(player, update)
+    }
+}
+
+// Запуск: go test -bench=. -benchmem -cpuprofile=cpu.prof
+```
+
+**Целевые метрики для game services:**
+- **Latency:** P99 < 10ms (P50 < 1ms)
+- **Allocations:** 0 allocs/op в hot path
+- **Throughput:** >10,000 ops/sec на core
+
+### 3. Memory Profiling (проверяй GC pressure)
+
+```go
+// Проверка allocation hotspots
+func main() {
+    f, _ := os.Create("mem.prof")
+    defer f.Close()
+    
+    runtime.GC() // Базовый GC
+    runtime.MemProfileRate = 1 // Детальный профиль
+    
+    // Run workload...
+    
+    pprof.WriteHeapProfile(f)
+}
+
+// Анализ: go tool pprof -alloc_space mem.prof
+```
+
+**Red flags (исправляй немедленно):**
+- Allocation в game loop: `[]byte` создаваемые каждый тик
+- String concatenation в hot path: `s += "text"`
+- Interface{} boxing в критичных местах
+- Closure allocations в loops
+
+### 4. Метрики производительности (ОБЯЗАТЕЛЬНО экспортируй)
+
+```go
+import "github.com/prometheus/client_golang/prometheus"
+
+var (
+    requestDuration = prometheus.NewHistogramVec(
+        prometheus.HistogramOpts{
+            Name:    "request_duration_seconds",
+            Help:    "Request duration",
+            Buckets: []float64{.001, .005, .01, .025, .05, .1, .5, 1}, // 1ms to 1s
+        },
+        []string{"handler"},
+    )
+    
+    gcPauseDuration = prometheus.NewHistogram(
+        prometheus.HistogramOpts{
+            Name:    "gc_pause_duration_seconds",
+            Help:    "GC pause duration",
+            Buckets: prometheus.ExponentialBuckets(0.0001, 2, 10), // 0.1ms to 100ms
+        },
+    )
+)
+
+// Мониторь GC
+func monitorGC() {
+    var stats runtime.MemStats
+    for {
+        runtime.ReadMemStats(&stats)
+        gcPauseDuration.Observe(float64(stats.PauseNs[(stats.NumGC+255)%256]) / 1e9)
+        time.Sleep(1 * time.Second)
+    }
+}
+```
+
+### 5. Оптимизация GC (для real-time services)
+
+```go
+func init() {
+    // Для game servers (prefer frequent short pauses)
+    debug.SetGCPercent(50) // Default 100
+    
+    // Или для latency-critical:
+    debug.SetGCPercent(25) // Очень частый GC
+    
+    // Мониторинг GC
+    go func() {
+        var stats debug.GCStats
+        for {
+            debug.ReadGCStats(&stats)
+            if stats.PauseTotal > 100*time.Millisecond {
+                log.Warn("High GC pause", "total", stats.PauseTotal)
+            }
+            time.Sleep(10 * time.Second)
+        }
+    }()
+}
+```
+
+**Целевые GC метрики:**
+- **Pause time:** P99 < 1ms
+- **Pause frequency:** Лучше частые короткие, чем редкие длинные
+- **Heap size:** Стабильный (нет утечек)
+
+### 6. Горутина leaks detection
+
+```go
+func TestNoGoroutineLeaks(t *testing.T) {
+    before := runtime.NumGoroutine()
+    
+    // Run your code
+    server := NewGameServer()
+    server.Start()
+    time.Sleep(1 * time.Second)
+    server.Stop()
+    
+    time.Sleep(100 * time.Millisecond) // Дай время на cleanup
+    after := runtime.NumGoroutine()
+    
+    if after > before+5 { // +5 для background tasks
+        t.Errorf("Goroutine leak: before=%d after=%d", before, after)
+        
+        // Debug: dump goroutines
+        buf := make([]byte, 1<<16)
+        n := runtime.Stack(buf, true)
+        t.Logf("Goroutines:\n%s", buf[:n])
+    }
+}
+```
+
+### 7. Load Testing (обязательно перед релизом)
+
+```bash
+# Используй vegeta для HTTP load testing
+echo "GET http://localhost:8080/api/v1/players" | \
+  vegeta attack -duration=60s -rate=1000/s | \
+  vegeta report
+
+# Или k6 для более сложных сценариев
+k6 run --vus 100 --duration 60s load-test.js
+```
+
+**Load test сценарии для game services:**
+- Constant load: 1000 RPS / 60 секунд
+- Spike test: 100 → 5000 RPS за 10s
+- Soak test: 500 RPS / 2 часа (memory leaks)
+- Stress test: увеличивай до failure point
+
+### 8. Database query optimization
+
+```go
+// Плохо: N+1 queries
+for _, playerID := range playerIDs {
+    player := db.GetPlayer(playerID) // 1000 queries
+    players = append(players, player)
+}
+
+// Хорошо: 1 batch query
+players := db.GetPlayersBatch(playerIDs) // 1 query
+
+// Используй EXPLAIN ANALYZE для проверки
+// SELECT ... -- Query takes 250ms
+// Add index:
+// CREATE INDEX idx_players_level ON players(level) WHERE active=true;
+// SELECT ... -- Query takes 5ms
+```
+
+**Целевые DB метрики:**
+- **Query time:** P95 < 10ms
+- **Connections:** < 50 active (используй pooling)
+- **Slow queries:** 0 queries > 100ms
+
+### 9. Caching strategy
+
+```go
+// Обязательно кэшируй частые запросы
+type Cache struct {
+    data sync.Map // Lock-free для reads
+    ttl  time.Duration
+}
+
+func (c *Cache) Get(key string) (interface{}, bool) {
+    val, ok := c.data.Load(key)
+    if !ok {
+        return nil, false
+    }
+    
+    entry := val.(*CacheEntry)
+    if time.Since(entry.CreatedAt) > c.ttl {
+        c.data.Delete(key) // Expired
+        return nil, false
+    }
+    
+    return entry.Value, true
+}
+```
+
+**Что кэшировать:**
+- Player profiles: TTL 5 минут
+- Game configs: TTL 1 час
+- Leaderboards: TTL 1 минута
+- Static data: No expiration
+
+### 10. Performance budgets (устанавливай лимиты)
+
+```go
+// Fail CI если performance регрессия
+func TestPerformanceBudget(t *testing.T) {
+    result := testing.Benchmark(BenchmarkCriticalPath)
+    
+    // Budget: max 1000 ns/op
+    if result.NsPerOp() > 1000 {
+        t.Errorf("Performance regression: %d ns/op (budget: 1000)", 
+            result.NsPerOp())
+    }
+    
+    // Budget: 0 allocs/op
+    if result.AllocsPerOp() > 0 {
+        t.Errorf("Allocation regression: %d allocs/op (budget: 0)", 
+            result.AllocsPerOp())
+    }
+}
+```
+
+**Performance budgets для MMOFPS:**
+- **Game tick:** < 8ms (для 128 Hz)
+- **Player update:** < 100μs
+- **DB query:** < 10ms (P95)
+- **API response:** < 50ms (P99)
+
+**ВАЖНО:** Performance optimization - это continuous process. Профилируй регулярно, особенно после добавления новых фич. Что быстро сейчас может стать bottleneck при масштабировании.
+
 ## Task Requirements Check
 
 **Перед началом работы:**

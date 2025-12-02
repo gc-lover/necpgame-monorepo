@@ -122,7 +122,290 @@ DevOps отвечает за Docker, Kubernetes, деплой, CI/CD, инфра
   - Настраивай алерты на критические события
   - Используй структурированное логирование (JSON)
   - Настраивай корреляцию логов/трейсов/метрик
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
+- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей их на несколько файлов
+
+## WARNING КРИТИЧНО: Инфраструктура для MMOFPS
+
+**ОБЯЗАТЕЛЬНЫЕ настройки для production game servers:**
+
+### 1. Kubernetes Resources (правильные лимиты)
+
+```yaml
+# Issue: #123
+# Game server pod с правильными ресурсами
+apiVersion: v1
+kind: Pod
+metadata:
+  name: game-server
+spec:
+  containers:
+  - name: game-server
+    resources:
+      requests:
+        memory: "512Mi"    # Минимум для старта
+        cpu: "500m"        # 0.5 CPU
+      limits:
+        memory: "2Gi"      # Max для game server
+        cpu: "2000m"       # 2 CPU max
+    
+    # CPU pinning для game servers (latency critical)
+    securityContext:
+      capabilities:
+        add: ["SYS_NICE"] # Для real-time priority
+```
+
+**Результат:** Stable performance, no throttling
+
+### 2. Horizontal Pod Autoscaler (для API services)
+
+```yaml
+# Issue: #123
+# Auto-scale при нагрузке
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: matchmaking-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: matchmaking-service
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Scale at 70% CPU
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50  # Scale up 50% at a time
+        periodSeconds: 60
+```
+
+### 3. Pod Disruption Budget (для availability)
+
+```yaml
+# Issue: #123
+# Защита critical services от одновременного shutdown
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: game-server-pdb
+spec:
+  minAvailable: 80%  # Минимум 80% pods должны быть доступны
+  selector:
+    matchLabels:
+      app: game-server
+```
+
+### 4. Network Policies (изоляция для security)
+
+```yaml
+# Issue: #123
+# Game servers принимают только UDP на game port
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: game-server-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: game-server
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {} # Any pod
+    ports:
+    - protocol: UDP
+      port: 7777  # Game port
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: database
+    ports:
+    - protocol: TCP
+      port: 5432
+```
+
+### 5. Prometheus Metrics (мониторинг)
+
+```yaml
+# Issue: #123
+# ServiceMonitor для автоматического scraping
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: game-server-metrics
+spec:
+  selector:
+    matchLabels:
+      app: game-server
+  endpoints:
+  - port: metrics
+    interval: 15s  # Scrape каждые 15 секунд
+    path: /metrics
+```
+
+**Обязательные метрики для game servers:**
+- `game_server_player_count` - текущие игроки
+- `game_server_tick_duration_seconds` - время game tick
+- `game_server_network_bytes_sent/received` - сетевой трафик
+- `game_server_match_duration_seconds` - длительность матчей
+
+### 6. Loki для логирования (structured logs)
+
+```yaml
+# Issue: #123
+# Promtail config для сбора логов
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 9080
+    
+    clients:
+    - url: http://loki:3100/loki/api/v1/push
+    
+    scrape_configs:
+    - job_name: kubernetes-pods
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        target_label: app
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+```
+
+### 7. Grafana Dashboards (для дебага)
+
+**Обязательные дашборды:**
+- **Game Server Overview:** Player count, TPS, latency, memory
+- **Network Performance:** Bandwidth, packet loss, RTT
+- **Database Performance:** Query time, connections, slow queries
+- **Application Metrics:** Request rate, error rate, duration
+
+### 8. Alerting Rules (критичные алерты)
+
+```yaml
+# Issue: #123
+# Prometheus alerts для game servers
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: game-server-alerts
+spec:
+  groups:
+  - name: game-server
+    interval: 30s
+    rules:
+    - alert: HighGameServerLatency
+      expr: histogram_quantile(0.99, game_server_tick_duration_seconds) > 0.05
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Game server P99 latency > 50ms"
+    
+    - alert: GameServerDown
+      expr: up{job="game-server"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Game server is down"
+    
+    - alert: HighMemoryUsage
+      expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Container memory usage > 90%"
+```
+
+### 9. Readiness/Liveness Probes (правильная конфигурация)
+
+```yaml
+# Issue: #123
+# Проверки здоровья сервиса
+spec:
+  containers:
+  - name: game-server
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+    
+    # Startup probe для медленного старта
+    startupProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      failureThreshold: 30
+      periodSeconds: 10
+```
+
+### 10. Affinity Rules (для optimal placement)
+
+```yaml
+# Issue: #123
+# Размести game servers на разных нодах для HA
+spec:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: game-server
+          topologyKey: kubernetes.io/hostname
+    
+    # Game servers на выделенных нодах
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-type
+            operator: In
+            values:
+            - game-server  # Выделенные ноды для game
+```
+
+**ВАЖНО:** Game servers требуют особой инфраструктуры - low latency, high CPU, UDP support. Эти конфигурации обеспечивают production-ready deployment.
 
 ## WARNING ВАЖНО: Оптимизация Docker и Kubernetes
 

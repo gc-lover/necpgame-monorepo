@@ -2,72 +2,109 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/go-chi/chi/v5"
-	"github.com/necpgame/referral-service-go/models"
+	"github.com/necpgame/referral-service-go/pkg/api"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
-	addr            string
-	router          chi.Router
-	referralService ReferralService
-	logger          *logrus.Logger
-	server          *http.Server
-	jwtValidator    *JwtValidator
-	authEnabled     bool
+	addr   string
+	server *http.Server
+	logger *logrus.Logger
 }
 
-func NewHTTPServer(addr string, referralService ReferralService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
+	handlers := NewServiceHandlers(logger)
+
 	router := chi.NewRouter()
-	server := &HTTPServer{
-		addr:            addr,
-		router:          router,
-		referralService: referralService,
-		logger:          GetLogger(),
-		jwtValidator:    jwtValidator,
-		authEnabled:     authEnabled,
+
+	router.Use(loggingMiddleware(logger))
+	router.Use(recoveryMiddleware(logger))
+	router.Use(corsMiddleware)
+
+	// Generated API handlers with Chi
+	api.HandlerWithOptions(handlers, api.ChiServerOptions{
+		BaseRouter: router,
+	})
+
+	router.Handle("/metrics", promhttp.Handler())
+	router.Get("/health", healthCheckHandler)
+
+	return &HTTPServer{
+		addr: addr,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		logger: logger,
 	}
-
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-
-	api := router.PathPrefix("/api/v1/growth/referral").Subrouter()
-
-	if authEnabled {
-		api.Use(server.authMiddleware)
-	}
-
-	api.Get("/code", server.getReferralCode)
-	api.Get("/code/generate", server.generateReferralCode)
-	api.Get("/code/{code}/validate", server.validateReferralCode)
-
-	api.Get("/register", server.registerWithCode)
-	api.Get("/status/{player_id}", server.getReferralStatus)
-
-	api.Get("/milestones/{player_id}", server.getMilestones)
-	api.Get("/milestones/{milestone_id}/claim", server.claimMilestoneReward)
-
-	api.Get("/rewards/distribute", server.distributeRewards)
-	api.Get("/rewards/history/{player_id}", server.getRewardHistory)
-
-	api.Get("/stats/{player_id}", server.getReferralStats)
-	api.Get("/stats/public/{code}", server.getPublicReferralStats)
-
-	api.Get("/leaderboard", server.getLeaderboard)
-	api.Get("/leaderboard/{player_id}/position", server.getLeaderboardPosition)
-
-	api.Get("/events/{player_id}", server.getEvents)
-
-	router.Get("/health", server.healthCheck)
-
-	return server
 }
+
+func (s *HTTPServer) Start() error {
+	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
+	return s.server.ListenAndServe()
+}
+
+func (s *HTTPServer) Shutdown(ctx context.Context) error {
+	s.logger.Info("Shutting down HTTP server")
+	return s.server.Shutdown(ctx)
+}
+
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"duration": time.Since(start),
+			}).Info("HTTP request processed")
+		})
+	}
+}
+
+func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.WithField("error", err).Error("Panic recovered")
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"healthy"}`))
+}
+
 
 

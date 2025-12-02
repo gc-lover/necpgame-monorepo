@@ -18,9 +18,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	repo := NewInMemoryRepository()
-	service := NewMaintenanceService(repo)
-	handlers := NewMaintenanceHandlers(service, logger)
+	handlers := NewMaintenanceHandlers(logger)
 
 	router := chi.NewRouter()
 
@@ -28,7 +26,10 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	router.Use(recoveryMiddleware(logger))
 	router.Use(corsMiddleware)
 
-	api.HandlerFromMux(handlers, router)
+	// Generated API handlers with Chi
+	api.HandlerWithOptions(handlers, api.ChiServerOptions{
+		BaseRouter: router,
+	})
 
 	router.Handle("/metrics", promhttp.Handler())
 	router.Get("/health", healthCheckHandler)

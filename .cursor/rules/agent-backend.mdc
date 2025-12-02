@@ -515,6 +515,10 @@ func (s *HTTPServer) Start() error {
 
 **Если сервис использует Gorilla - ОБЯЗАТЕЛЬНО мигрируй на Chi!**
 
+**Полная инструкция:** `.cursor/GORILLA_TO_CHI_MIGRATION.md`
+
+**Краткая версия ниже:**
+
 ### Шаг 1: Обновить Makefile
 
 ```makefile
@@ -681,24 +685,25 @@ router.Use(loggingMiddleware)      // Кастомный
 - DI для зависимостей
 
 **Роутер:**
-- **НОВЫЕ сервисы:** ВСЕГДА используй `chi-server`
+- **ЕДИНСТВЕННЫЙ роутер:** Chi (`chi-server`)
   - Современный, легковесный, быстрый
   - Отличная поддержка middleware
   - Нативная интеграция с oapi-codegen
   - `api.HandlerWithOptions()` для интеграции
-- **СУЩЕСТВУЮЩИЕ сервисы:** используй тот что уже есть
-  - Chi → оставляй Chi
-  - Gorilla → оставляй Gorilla (НЕ мигрируй!)
-  - НЕ меняй working code!
+- **НОВЫЕ сервисы:** ВСЕГДА используй Chi
+- **СУЩЕСТВУЮЩИЕ с Chi:** продолжай использовать Chi
+- **СУЩЕСТВУЮЩИЕ с Gorilla:** ОБЯЗАТЕЛЬНО мигрируй на Chi!
+  - См. `.cursor/GORILLA_TO_CHI_MIGRATION.md`
+  - Миграция обязательна для всех сервисов
 
 **Валидация:**
 - Всегда `make verify-api` перед генерацией
 - Всегда `make check-file-sizes` после генерации
 
 **Поддерживаемые роутеры:**
-- **chi-server** OK (СТАНДАРТ для новых сервисов)
-- gorilla-server WARNING (ТОЛЬКО для legacy кода, deprecated для новых)
-- echo-server, gin-server ❌ (НЕ используем в проекте)
+- **chi-server** OK (ЕДИНСТВЕННЫЙ стандарт)
+- gorilla-server ❌ (ЗАПРЕЩЕН, мигрируй на Chi)
+- echo-server, gin-server ❌ (НЕ используем)
 
 ---
 
@@ -820,6 +825,161 @@ router.Use(loggingMiddleware)      // Кастомный
 - Маленькие классы (300-400 строк максимум)
 - **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
 - **НЕ редактируй сгенерированный код** - реализуй бизнес-логику в отдельных файлах
+
+## WARNING КРИТИЧНО: Оптимизации для MMOFPS RPG
+
+**ОБЯЗАТЕЛЬНО применяй эти оптимизации в коде:**
+
+### 1. Memory Pooling (используй ВСЕГДА для hot path)
+
+```go
+// Переиспользуй объекты для снижения GC нагрузки
+var responsePool = sync.Pool{
+    New: func() interface{} {
+        return &Response{
+            Data: make([]byte, 0, 1024),
+        }
+    },
+}
+
+func Handler(w http.ResponseWriter, r *http.Request) {
+    resp := responsePool.Get().(*Response)
+    defer responsePool.Put(resp)
+    resp.Data = resp.Data[:0] // Reset slice
+    // Use resp...
+}
+```
+
+**Результат:** GC нагрузка ↓ 70-80%, latency стабильнее
+
+### 2. Batch Operations (критично для >100 RPS)
+
+```go
+// Плохо: N запросов к БД
+for _, id := range playerIDs {
+    player := db.GetPlayer(id) // N queries
+}
+
+// Хорошо: 1 запрос
+players := db.GetPlayersBatch(playerIDs) // 1 query
+```
+
+**Результат:** DB load ↓ 95%, latency ↓ 10x
+
+### 3. Lock-Free где возможно
+
+```go
+// Используй atomic вместо mutex для простых операций
+type Stats struct {
+    requestCount atomic.Int64 // Go 1.19+
+    errorCount   atomic.Int64
+}
+
+stats.requestCount.Add(1) // Lock-free!
+```
+
+**Результат:** Contention ↓ 90%, throughput ↑ 3-5x
+
+### 4. Context Deadlines (ОБЯЗАТЕЛЬНО)
+
+```go
+// Всегда устанавливай timeout для внешних вызовов
+ctx, cancel := context.WithTimeout(r.Context(), 100*time.Millisecond)
+defer cancel()
+
+resp, err := externalService.Call(ctx, req)
+```
+
+### 5. Горутины с лимитом
+
+```go
+// НЕ создавай безлимитные горутины
+type WorkerPool struct {
+    semaphore chan struct{}
+}
+
+func NewWorkerPool(size int) *WorkerPool {
+    return &WorkerPool{
+        semaphore: make(chan struct{}, size),
+    }
+}
+
+func (p *WorkerPool) Do(fn func()) {
+    p.semaphore <- struct{}{}
+    go func() {
+        defer func() { <-p.semaphore }()
+        fn()
+    }()
+}
+```
+
+### 6. Preallocation (где возможно)
+
+```go
+// Плохо: append без capacity
+items := []Item{}
+for i := 0; i < 1000; i++ {
+    items = append(items, Item{}) // Много реаллокаций
+}
+
+// Хорошо: preallocate
+items := make([]Item, 0, 1000)
+for i := 0; i < 1000; i++ {
+    items = append(items, Item{}) // Нет реаллокаций
+}
+```
+
+### 7. Defer в hot path (избегай)
+
+```go
+// Плохо в hot path (defer has overhead)
+func ProcessRequest() {
+    mu.Lock()
+    defer mu.Unlock() // ~50ns overhead
+    // ...
+}
+
+// Хорошо в hot path
+func ProcessRequest() {
+    mu.Lock()
+    // ...
+    mu.Unlock() // Manual unlock
+}
+```
+
+### 8. String vs []byte
+
+```go
+// В hot path используй []byte вместо string
+func ProcessData(data []byte) { // Не string!
+    // Работай с []byte напрямую
+}
+
+// Избегай конверсий string <-> []byte
+```
+
+### 9. Profiling endpoints (ОБЯЗАТЕЛЬНО)
+
+```go
+import _ "net/http/pprof"
+
+// В main.go для non-production или отдельный порт
+go func() {
+    http.ListenAndServe("localhost:6060", nil)
+}()
+```
+
+### 10. Правильные настройки runtime
+
+```go
+func init() {
+    // Для game servers
+    runtime.GOMAXPROCS(runtime.NumCPU() - 1) // 1 CPU для OS
+    debug.SetGCPercent(50) // Частый GC, короче паузы
+}
+```
+
+**ВАЖНО:** Эти оптимизации критичны для real-time game services (matchmaking, game state, player sync). Для обычных CRUD API можно быть менее строгим.
 
 ## SOLID принципы
 
