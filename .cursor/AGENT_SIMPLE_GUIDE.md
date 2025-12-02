@@ -99,6 +99,11 @@ Todo → Idea Writer → UI/UX Designer → UE5 → QA → Release → Done
 - project_number: `1`
 - status_field_id: `239690516`
 
+**Для Backend Developer:**
+- Роутер: Chi (`chi-server`) для ВСЕХ новых сервисов
+- НЕ используй Gorilla для новых (deprecated)
+- См. `.cursor/CHI_ROUTER_STANDARD.md`
+
 ---
 
 ## 🚨 Важные правила

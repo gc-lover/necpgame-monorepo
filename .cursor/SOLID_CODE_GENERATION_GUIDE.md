@@ -251,9 +251,11 @@ func (h *Handlers) ListChannels(w http.ResponseWriter, r *http.Request, params a
 
 2. **Backend Developer:**
    - OK Используй раздельную генерацию (3 файла)
+   - OK Используй Chi роутер для НОВЫХ сервисов (`chi-server`)
    - OK Проверяй размеры файлов: `make check-file-sizes`
    - OK Удаляй старый `api.gen.go` после миграции
    - ❌ НЕ используй старый подход (1 файл)
+   - ❌ НЕ используй Gorilla для новых сервисов (deprecated)
 
 3. **Оба агента:**
    - OK Каждый файл максимум 500 строк

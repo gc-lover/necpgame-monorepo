@@ -71,6 +71,15 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 - `project_node_id: 'PVT_kwHODCWAw84BIyie'`
 - `status_field_id: '239690516'`
 
+## Chi Router Standard (для Backend)
+
+**Chi - единый стандарт роутера для всех новых Go сервисов**
+
+См. `.cursor/CHI_ROUTER_STANDARD.md` для деталей:
+- OK НОВЫЕ сервисы → Chi обязательно (`chi-server`)
+- 🔄 СУЩЕСТВУЮЩИЕ сервисы → оставляй как есть (Chi или Gorilla)
+- ❌ НЕ мигрируй с Gorilla на Chi (разные API!)
+
 ## GitHub API
 
 **ALWAYS use `mcp_github_search_issues` instead of multiple `mcp_github_issue_read`**

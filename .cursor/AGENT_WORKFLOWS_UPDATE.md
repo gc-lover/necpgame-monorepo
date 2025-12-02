@@ -1,9 +1,10 @@
 # Сводка обновлений Workflow для всех агентов
 
 ## OK Обновлено:
-1. **Backend** - Done
+1. **Backend** - Done (+ Chi Router Standard)
 2. **Idea Writer** - Done
 3. **Architect** - Done
+4. **API Designer** - Done (+ Chi Router info)
 
 ## 📝 Нужно обновить:
 

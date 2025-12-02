@@ -25,7 +25,7 @@
 SERVICE_NAME := {service-name}
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := {chi-server|gorilla-server}
+ROUTER_TYPE := chi-server  # OK СТАНДАРТ для новых сервисов (НЕ меняй на gorilla!)
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
@@ -110,9 +110,16 @@ clean:
 
 **Замены:**
 - `{service-name}` - имя сервиса (например: `companion-service`, `inventory-service`)
-- `{chi-server|gorilla-server}` - тип роутера:
-  - `chi-server` - если используется `github.com/go-chi/chi/v5` (рекомендуется)
-  - `gorilla-server` - если используется `github.com/gorilla/mux`
+- `ROUTER_TYPE` уже установлен в `chi-server` - **это стандарт для всех новых сервисов!**
+
+**Типы роутеров:**
+- `chi-server` OK **СТАНДАРТ** - используй для всех НОВЫХ сервисов
+  - Зависимость: `github.com/go-chi/chi/v5`
+  - Современный, легковесный, быстрый
+- `gorilla-server` WARNING **LEGACY ONLY** - только для существующих сервисов
+  - Зависимость: `github.com/gorilla/mux`
+  - Deprecated для новых сервисов
+  - НЕ мигрируй с gorilla на chi (разные API!)
 
 ### 2. oapi-codegen.yaml (не используется при раздельной генерации)
 

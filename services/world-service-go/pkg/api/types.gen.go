@@ -13,22 +13,6 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// Defines values for ContinentClimate.
-const (
-	ContinentClimateArctic    ContinentClimate = "arctic"
-	ContinentClimateArid      ContinentClimate = "arid"
-	ContinentClimateTemperate ContinentClimate = "temperate"
-	ContinentClimateToxic     ContinentClimate = "toxic"
-	ContinentClimateTropical  ContinentClimate = "tropical"
-)
-
-// Defines values for ContinentStatus.
-const (
-	ContinentStatusActive     ContinentStatus = "active"
-	ContinentStatusDeveloping ContinentStatus = "developing"
-	ContinentStatusInactive   ContinentStatus = "inactive"
-)
-
 // Defines values for ContinentResourceType.
 const (
 	Energy     ContinentResourceType = "energy"
@@ -47,18 +31,27 @@ const (
 	CreateContinentRequestClimateTropical  CreateContinentRequestClimate = "tropical"
 )
 
-// Defines values for UpdateContinentRequestStatus.
+// Defines values for SchemasContinentClimate.
 const (
-	UpdateContinentRequestStatusActive     UpdateContinentRequestStatus = "active"
-	UpdateContinentRequestStatusDeveloping UpdateContinentRequestStatus = "developing"
-	UpdateContinentRequestStatusInactive   UpdateContinentRequestStatus = "inactive"
+	SchemasContinentClimateArctic    SchemasContinentClimate = "arctic"
+	SchemasContinentClimateArid      SchemasContinentClimate = "arid"
+	SchemasContinentClimateTemperate SchemasContinentClimate = "temperate"
+	SchemasContinentClimateToxic     SchemasContinentClimate = "toxic"
+	SchemasContinentClimateTropical  SchemasContinentClimate = "tropical"
+)
+
+// Defines values for SchemasContinentStatus.
+const (
+	SchemasContinentStatusActive     SchemasContinentStatus = "active"
+	SchemasContinentStatusDeveloping SchemasContinentStatus = "developing"
+	SchemasContinentStatusInactive   SchemasContinentStatus = "inactive"
 )
 
 // Defines values for ListContinentsParamsStatus.
 const (
-	Active     ListContinentsParamsStatus = "active"
-	Developing ListContinentsParamsStatus = "developing"
-	Inactive   ListContinentsParamsStatus = "inactive"
+	ListContinentsParamsStatusActive     ListContinentsParamsStatus = "active"
+	ListContinentsParamsStatusDeveloping ListContinentsParamsStatus = "developing"
+	ListContinentsParamsStatusInactive   ListContinentsParamsStatus = "inactive"
 )
 
 // Defines values for ListContinentsParamsClimate.
@@ -70,51 +63,10 @@ const (
 	Tropical  ListContinentsParamsClimate = "tropical"
 )
 
-// Continent defines model for Continent.
-type Continent struct {
-	// Climate Климат континента
-	Climate   *ContinentClimate `json:"climate,omitempty"`
-	CreatedAt *time.Time        `json:"created_at,omitempty"`
-
-	// Description Описание континента
-	Description *string `json:"description,omitempty"`
-
-	// GovernmentId ID правящей политической структуры
-	GovernmentId *openapi_types.UUID `json:"government_id,omitempty"`
-
-	// Id ID континента
-	Id openapi_types.UUID `json:"id"`
-
-	// Name Название континента
-	Name string `json:"name"`
-
-	// PlanetId ID планеты
-	PlanetId openapi_types.UUID `json:"planet_id"`
-
-	// Population Население континента
-	Population *int `json:"population,omitempty"`
-
-	// Resources Ресурсы континента
-	Resources *[]ContinentResource `json:"resources,omitempty"`
-
-	// Size Размер континента (в км²)
-	Size *float32 `json:"size,omitempty"`
-
-	// Status Статус континента
-	Status    ContinentStatus `json:"status"`
-	UpdatedAt *time.Time      `json:"updated_at,omitempty"`
-}
-
-// ContinentClimate Климат континента
-type ContinentClimate string
-
-// ContinentStatus Статус континента
-type ContinentStatus string
-
 // ContinentListResponse defines model for ContinentListResponse.
 type ContinentListResponse struct {
-	Continents *[]Continent `json:"continents,omitempty"`
-	Total      *int         `json:"total,omitempty"`
+	Continents *[]SchemasContinent `json:"continents,omitempty"`
+	Total      *int                `json:"total,omitempty"`
 }
 
 // ContinentResource defines model for ContinentResource.
@@ -163,15 +115,46 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// UpdateContinentRequest defines model for UpdateContinentRequest.
-type UpdateContinentRequest struct {
-	Description *string                       `json:"description,omitempty"`
-	Name        *string                       `json:"name,omitempty"`
-	Status      *UpdateContinentRequestStatus `json:"status,omitempty"`
+// SchemasContinent defines model for schemas-Continent.
+type SchemasContinent struct {
+	// Climate Климат континента
+	Climate   *SchemasContinentClimate `json:"climate,omitempty"`
+	CreatedAt *time.Time               `json:"created_at,omitempty"`
+
+	// Description Описание континента
+	Description *string `json:"description,omitempty"`
+
+	// GovernmentId ID правящей политической структуры
+	GovernmentId *openapi_types.UUID `json:"government_id,omitempty"`
+
+	// Id ID континента
+	Id openapi_types.UUID `json:"id"`
+
+	// Name Название континента
+	Name string `json:"name"`
+
+	// PlanetId ID планеты
+	PlanetId openapi_types.UUID `json:"planet_id"`
+
+	// Population Население континента
+	Population *int `json:"population,omitempty"`
+
+	// Resources Ресурсы континента
+	Resources *[]ContinentResource `json:"resources,omitempty"`
+
+	// Size Размер континента (в км²)
+	Size *float32 `json:"size,omitempty"`
+
+	// Status Статус континента
+	Status    SchemasContinentStatus `json:"status"`
+	UpdatedAt *time.Time             `json:"updated_at,omitempty"`
 }
 
-// UpdateContinentRequestStatus defines model for UpdateContinentRequest.Status.
-type UpdateContinentRequestStatus string
+// SchemasContinentClimate Климат континента
+type SchemasContinentClimate string
+
+// SchemasContinentStatus Статус континента
+type SchemasContinentStatus string
 
 // Limit defines model for Limit.
 type Limit = int
@@ -184,9 +167,6 @@ type BadRequest = Error
 
 // Forbidden defines model for Forbidden.
 type Forbidden = Error
-
-// NotFound defines model for NotFound.
-type NotFound = Error
 
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = Error
@@ -217,6 +197,3 @@ type ListContinentsParamsClimate string
 
 // CreateContinentJSONRequestBody defines body for CreateContinent for application/json ContentType.
 type CreateContinentJSONRequestBody = CreateContinentRequest
-
-// UpdateContinentJSONRequestBody defines body for UpdateContinent for application/json ContentType.
-type UpdateContinentJSONRequestBody = UpdateContinentRequest
