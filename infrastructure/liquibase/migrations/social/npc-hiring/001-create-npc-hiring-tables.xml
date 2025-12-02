@@ -1,0 +1,151 @@
+<!-- Issue: #43 -->
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- NPC Hirelings Table -->
+    <changeSet id="create-npc-hirelings-table" author="database-engineer">
+        <createTable tableName="npc_hirelings" schemaName="social">
+            <column name="hireling_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="employer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contract_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="salary_ed_per_day" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="skills" type="JSONB"/>
+            <column name="stats" type="JSONB"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="efficiency" type="INTEGER" defaultValue="100">
+                <constraints nullable="false" checkConstraint="efficiency BETWEEN 0 AND 150"/>
+            </column>
+            <column name="loyalty" type="INTEGER" defaultValue="50">
+                <constraints nullable="false" checkConstraint="loyalty BETWEEN 0 AND 100"/>
+            </column>
+            <column name="hired_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contract_expires_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="last_payment_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="terminated_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="social"
+            baseTableName="npc_hirelings"
+            baseColumnNames="employer_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_npc_hirelings_employer"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_npc_hirelings_employer" tableName="npc_hirelings" schemaName="social">
+            <column name="employer_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_npc_hirelings_role" tableName="npc_hirelings" schemaName="social">
+            <column name="role"/>
+        </createIndex>
+
+        <createIndex indexName="idx_npc_hirelings_status" tableName="npc_hirelings" schemaName="social">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_npc_hirelings_contract_expires" tableName="npc_hirelings" schemaName="social">
+            <column name="contract_expires_at"/>
+            <column name="status"/>
+        </createIndex>
+
+        <comment>NPC Hirelings table - hired NPCs by players</comment>
+    </changeSet>
+
+    <!-- NPC Candidates Table -->
+    <changeSet id="create-npc-candidates-table" author="database-engineer">
+        <createTable tableName="npc_candidates" schemaName="social">
+            <column name="candidate_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="npc_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience_years" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_salary_ed" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="skills" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stats" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="specializations" type="JSONB"/>
+            <column name="availability" type="VARCHAR(20)" defaultValue="available">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(100)"/>
+            <column name="reputation" type="INTEGER" defaultValue="50">
+                <constraints nullable="false" checkConstraint="reputation BETWEEN 0 AND 100"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_npc_candidates_role" tableName="npc_candidates" schemaName="social">
+            <column name="role"/>
+        </createIndex>
+
+        <createIndex indexName="idx_npc_candidates_availability" tableName="npc_candidates" schemaName="social">
+            <column name="availability"/>
+        </createIndex>
+
+        <createIndex indexName="idx_npc_candidates_region" tableName="npc_candidates" schemaName="social">
+            <column name="region"/>
+        </createIndex>
+
+        <!-- Composite index for search -->
+        <createIndex indexName="idx_npc_candidates_search" tableName="npc_candidates" schemaName="social">
+            <column name="role"/>
+            <column name="availability"/>
+            <column name="region"/>
+        </createIndex>
+
+        <comment>NPC Candidates table - available NPCs for hire</comment>
+    </changeSet>
+
+</databaseChangeLog>
+
