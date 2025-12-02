@@ -1,0 +1,190 @@
+<!-- Issue: #63 -->
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Margin Accounts Table -->
+    <changeSet id="create-margin-accounts-table" author="database-engineer">
+        <createTable tableName="margin_accounts" schemaName="economy">
+            <column name="margin_account_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="equity_value_ed" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="borrowed_ed" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_leverage" type="DECIMAL(5,2)" defaultValue="2.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="margin_level" type="DECIMAL(5,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maintenance_margin" type="DECIMAL(5,2)" defaultValue="30.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_margin_call_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="margin_accounts"
+            baseColumnNames="player_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_margin_accounts_player"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_margin_accounts_player" tableName="margin_accounts" schemaName="economy">
+            <column name="player_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_margin_accounts_margin_level" tableName="margin_accounts" schemaName="economy">
+            <column name="margin_level"/>
+        </createIndex>
+
+        <comment>Margin Accounts table - margin trading accounts</comment>
+    </changeSet>
+
+    <!-- Short Positions Table -->
+    <changeSet id="create-short-positions-table" author="database-engineer">
+        <createTable tableName="short_positions" schemaName="economy">
+            <column name="short_position_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stock_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="shares_shorted" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entry_price" type="DECIMAL(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_price" type="DECIMAL(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unrealized_profit_ed" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="borrow_fee_rate" type="DECIMAL(5,2)" defaultValue="5.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="open">
+                <constraints nullable="false"/>
+            </column>
+            <column name="opened_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="closed_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="short_positions"
+            baseColumnNames="player_id"
+            referencedTableSchemaName="character"
+            referencedTableName="characters"
+            referencedColumnNames="character_id"
+            constraintName="fk_short_positions_player"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="short_positions"
+            baseColumnNames="stock_id"
+            referencedTableSchemaName="economy"
+            referencedTableName="stocks"
+            referencedColumnNames="stock_id"
+            constraintName="fk_short_positions_stock"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_short_positions_player" tableName="short_positions" schemaName="economy">
+            <column name="player_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_short_positions_stock" tableName="short_positions" schemaName="economy">
+            <column name="stock_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <comment>Short Positions table - short selling positions</comment>
+    </changeSet>
+
+    <!-- Stock Dividends Table -->
+    <changeSet id="create-stock-dividends-table" author="database-engineer">
+        <createTable tableName="stock_dividends" schemaName="economy">
+            <column name="dividend_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="stock_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount_per_share" type="DECIMAL(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_date" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ex_dividend_date" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="scheduled">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableSchemaName="economy"
+            baseTableName="stock_dividends"
+            baseColumnNames="stock_id"
+            referencedTableSchemaName="economy"
+            referencedTableName="stocks"
+            referencedColumnNames="stock_id"
+            constraintName="fk_stock_dividends_stock"
+            onDelete="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_stock_dividends_stock" tableName="stock_dividends" schemaName="economy">
+            <column name="stock_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_stock_dividends_payment_date" tableName="stock_dividends" schemaName="economy">
+            <column name="payment_date"/>
+        </createIndex>
+
+        <createIndex indexName="idx_stock_dividends_status" tableName="stock_dividends" schemaName="economy">
+            <column name="status"/>
+        </createIndex>
+
+        <comment>Stock Dividends table - dividend schedules</comment>
+    </changeSet>
+
+</databaseChangeLog>
+
