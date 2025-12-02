@@ -1,96 +1,39 @@
+// Issue: #138
 package main
 
 import (
-	"context"
-	"net/http"
+	"database/sql"
+	"log"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
-	"github.com/necpgame/achievement-service-go/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	_ "github.com/lib/pq"
+	"github.com/gc-lover/necpgame/services/achievement-service-go/server"
 )
 
 func main() {
-	logger := server.GetLogger()
-	logger.Info("Achievement Service (Go) starting...")
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable"
+	}
 
-	addr := getEnv("ADDR", "0.0.0.0:8085")
-	metricsAddr := getEnv("METRICS_ADDR", ":9095")
-	
-	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
-	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/4")
-	keycloakURL := getEnv("KEYCLOAK_URL", "http://localhost:8080")
-	keycloakRealm := getEnv("KEYCLOAK_REALM", "necpgame")
-	authEnabled := getEnv("AUTH_ENABLED", "true") == "true"
-
-	achievementService, err := server.NewAchievementService(dbURL, redisURL)
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize achievement service")
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	repository := server.NewPostgresRepository(db)
+	service := server.NewAchievementService(repository)
+
+	addr := os.Getenv("HTTP_ADDR")
+	if addr == "" {
+		addr = ":8094"
 	}
 
-	var jwtValidator *server.JwtValidator
-	if authEnabled && keycloakURL != "" {
-		issuer := keycloakURL + "/realms/" + keycloakRealm
-		jwksURL := keycloakURL + "/realms/" + keycloakRealm + "/protocol/openid-connect/certs"
-		jwtValidator = server.NewJwtValidator(issuer, jwksURL, logger)
-		logger.WithFields(map[string]interface{}{
-			"issuer":  issuer,
-			"jwksURL": jwksURL,
-		}).Info("JWT authentication enabled")
-	} else {
-		logger.Info("JWT authentication disabled")
+	httpServer := server.NewHTTPServer(addr, service)
+
+	log.Printf("Starting Achievement Service on %s", addr)
+	if err := httpServer.Start(); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
 	}
-
-	httpServer := server.NewHTTPServer(addr, achievementService, jwtValidator, authEnabled)
-
-	metricsMux := http.NewServeMux()
-	metricsMux.Handle("/metrics", promhttp.Handler())
-
-	metricsServer := &http.Server{
-		Addr:         metricsAddr,
-		Handler:      metricsMux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	go func() {
-		logger.WithField("addr", metricsAddr).Info("Metrics server starting")
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Metrics server failed")
-		}
-	}()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		logger.Info("Shutting down server...")
-		cancel()
-
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer shutdownCancel()
-		metricsServer.Shutdown(shutdownCtx)
-		httpServer.Shutdown(shutdownCtx)
-	}()
-
-	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
-		logger.WithError(err).Fatal("Server error")
-	}
-
-	logger.Info("Server stopped")
 }
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
