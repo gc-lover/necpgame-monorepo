@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Issue: #139 -->
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-parties-table" author="database-engineer">
+        <createTable tableName="parties">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="leader_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="members" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_members" type="INTEGER" defaultValue="5">
+                <constraints nullable="false"/>
+            </column>
+            <column name="loot_mode" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quest_sharing" type="BOOLEAN" defaultValue="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="party_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_party_leader" tableName="parties">
+            <column name="leader_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_party_status" tableName="parties">
+            <column name="party_status"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="002-create-party-invites-table" author="database-engineer">
+        <createTable tableName="party_invites">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="party_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_invite_party" references="parties(id)" deleteCascade="true"/>
+            </column>
+            <column name="inviter_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="invitee_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="invite_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_invite_invitee" tableName="party_invites">
+            <column name="invitee_id"/>
+            <column name="invite_status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_invite_party" tableName="party_invites">
+            <column name="party_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
