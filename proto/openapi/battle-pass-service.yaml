@@ -1,0 +1,383 @@
+# Issue: SOLID refactoring - create full OpenAPI spec for battle-pass-service
+openapi: 3.0.3
+
+info:
+  title: Battle Pass Service API
+  version: 1.0.0
+  description: Battle Pass system API - сезонный боевой пропуск NECP Game
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8102
+    description: Local development
+
+tags:
+  - name: progress
+    description: Battle Pass progress management
+  - name: rewards
+    description: Reward management and claiming
+  - name: challenges
+    description: Weekly and season challenges
+  - name: seasons
+    description: Season management
+
+paths:
+  /api/v1/battle-pass/progress/xp:
+    post:
+      tags: [progress]
+      summary: Award Battle Pass XP
+      operationId: awardBattlePassXP
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [character_id, xp_amount]
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                xp_amount:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: XP awarded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_level:
+                    type: integer
+                  total_xp:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+  
+  /api/v1/battle-pass/rewards:
+    get:
+      tags: [rewards]
+      summary: Get season rewards
+      operationId: getSeasonRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: season_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of rewards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BattlePassReward'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+  
+  /api/v1/battle-pass/rewards/claim:
+    post:
+      tags: [rewards]
+      summary: Claim reward
+      operationId: claimReward
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [character_id, reward_id]
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                reward_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Reward claimed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+  
+  /api/v1/battle-pass/challenges/weekly:
+    get:
+      tags: [challenges]
+      summary: Get weekly challenges
+      operationId: getWeeklyChallenges
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Weekly challenges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WeeklyChallenge'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+  
+  /api/v1/battle-pass/challenges/season/{player_id}:
+    get:
+      tags: [challenges]
+      summary: Get season challenges for player
+      operationId: getSeasonChallenges
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Season challenges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SeasonChallenge'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+  
+  /api/v1/battle-pass/challenges/{challengeId}/complete:
+    post:
+      tags: [challenges]
+      summary: Complete challenge
+      operationId: completeChallenge
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: challengeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [character_id]
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Challenge completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  xp_awarded:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+  
+  /api/v1/battle-pass/season/{season_id}:
+    get:
+      tags: [seasons]
+      summary: Get season info
+      operationId: getSeasonInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Season information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattlePassSeason'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+  
+  /api/v1/battle-pass/season/create:
+    post:
+      tags: [seasons]
+      summary: Create new season
+      operationId: createSeason
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, start_date, end_date]
+              properties:
+                name:
+                  type: string
+                start_date:
+                  type: string
+                  format: date-time
+                end_date:
+                  type: string
+                  format: date-time
+                max_level:
+                  type: integer
+                  default: 100
+      responses:
+        '201':
+          description: Season created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattlePassSeason'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+
+components:
+  schemas:
+    BattlePassSeason:
+      type: object
+      required: [id, name, start_date, end_date, max_level, is_active]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        max_level:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    
+    BattlePassReward:
+      type: object
+      required: [id, season_id, level, reward_type]
+      properties:
+        id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+        reward_type:
+          type: string
+          enum: [currency, item, cosmetic, xp]
+        reward_data:
+          type: object
+        is_premium:
+          type: boolean
+          default: false
+    
+    WeeklyChallenge:
+      type: object
+      required: [id, season_id, week_number, title, xp_reward]
+      properties:
+        id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        week_number:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        xp_reward:
+          type: integer
+        progress_required:
+          type: integer
+        challenge_type:
+          type: string
+    
+    SeasonChallenge:
+      type: object
+      required: [id, season_id, title, xp_reward]
+      properties:
+        id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        xp_reward:
+          type: integer
+        progress_required:
+          type: integer
+  
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+  
+  responses:
+    $ref: 'common.yaml#/components/responses'
+
+security:
+  - BearerAuth: []
+
