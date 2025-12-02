@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/achievement-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 type Repository struct {
