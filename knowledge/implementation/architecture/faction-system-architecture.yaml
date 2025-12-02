@@ -1,181 +1,263 @@
-metadata:
-  id: faction-system-architecture
-  title: Архитектура системы фракций
-  document_type: architecture
-  category: systems
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-29T12:00:00Z
-  owners:
-    - role: architect
-      contact: architect@necp.game
-  tags:
-    - architecture
-    - faction
-    - social
-  related_systems:
-    - social-service-go
-  related_documents:
-    - id: cooperation-hierarchy-system-architecture
-      relation: extends
-    - id: guild-system-architecture
-      relation: extends
-  github_issue: 1442
-  visibility: internal
-  audience:
-    - architect
-    - backend
-    - social
-    - api-designer
-
-summary:
-  problem: |
-    Требуется спроектировать архитектуру системы фракций с многослойной системой,
-    обобщающей различные кооперации, включая объединение кланов в банды и занятие определенных ниш.
-  goal: |
-    Создать архитектурную схему системы фракций с определением:
-    - Микросервисов для управления фракциями
-    - Компонентов для многослойной системы фракций
-    - Объединения кланов в фракции
-    - Ниш и специализации
-    - Взаимодействия между фракциями
-    - API endpoints (высокоуровнево)
-    - Структуры БД
-    - Технического задания для реализации
-  essence: |
-    Многослойная система фракций для обобщения различных коопераций с объединением
-    кланов в банды и занятием определенных ниш.
+# Issue: #1442
 
 architecture:
-  overview: |
-    Система фракций состоит из следующих компонентов:
-    1. Faction Service - управление фракциями
-    2. Faction Layer Manager - управление слоями фракций
-    3. Faction Clan Manager - объединение кланов в фракции
-    4. Faction Niche Manager - управление нишами и специализацией
-    5. Faction Interaction Manager - взаимодействие между фракциями
+  name: "Faction System Architecture"
+  version: "1.0.0"
+  description: "Многослойная система фракций для обобщения коопераций игроков"
+  
+core_components:
+  - name: "Faction Core Service"
+    description: "Управление фракциями, создание, настройка, иерархия"
+    responsibilities:
+      - Создание и регистрация фракций
+      - Управление структурой фракции
+      - Иерархия внутри фракции
+      - Распределение ролей и полномочий
+    technologies:
+      - Go microservice
+      - PostgreSQL для хранения
+      - gRPC для внутренних коммуникаций
+      - REST API для клиентов
+    
+  - name: "Faction Membership Service"
+    description: "Управление членством в фракциях"
+    responsibilities:
+      - Объединение кланов в фракции
+      - Управление членами фракций
+      - Права и обязанности членов
+      - Ранги и роли
+    technologies:
+      - Go microservice
+      - PostgreSQL
+      - Redis для кэширования активных членов
+    
+  - name: "Faction Niche Service"
+    description: "Управление нишами и специализацией фракций"
+    responsibilities:
+      - Каталог доступных ниш
+      - Захват и контроль ниш
+      - Защита ниш от конкурентов
+      - Уникальные способности фракций
+    technologies:
+      - Go microservice
+      - PostgreSQL для ниш
+      - Event sourcing для истории контроля
+    
+  - name: "Faction Relations Service"
+    description: "Управление отношениями между фракциями"
+    responsibilities:
+      - Типы отношений (союз, нейтрал, вражда)
+      - Дипломатия и договоры
+      - Конфликты и войны
+      - История взаимодействий
+    technologies:
+      - Go microservice
+      - PostgreSQL для отношений
+      - Graph DB (Neo4j) для сети отношений
+    
+  - name: "Faction Conflict Service"
+    description: "Управление фракционными конфликтами"
+    responsibilities:
+      - Объявление войн
+      - Боевые действия
+      - Экономические санкции
+      - Разрешение конфликтов
+    technologies:
+      - Go microservice
+      - PostgreSQL
+      - Event sourcing для истории конфликтов
+    
+  - name: "Faction Analytics Service"
+    description: "Аналитика фракций и их активности"
+    responsibilities:
+      - Статистика фракций
+      - Метрики влияния
+      - Рейтинги фракций
+      - Прогнозирование событий
+    technologies:
+      - Go microservice
+      - ClickHouse для аналитики
+      - Prometheus metrics
 
-  microservices:
-    - name: faction-service
-      location: social-service-go (модуль faction)
-      port: 8084
-      responsibility: |
-        Управление фракциями:
-        - CRUD операции с фракциями
-        - Управление информацией о фракциях
-        - Управление статусом фракций
-      endpoints:
-        - POST /api/v1/social/factions - создание фракции
-        - GET /api/v1/social/factions/{factionId} - информация о фракции
-        - PUT /api/v1/social/factions/{factionId} - обновление фракции
-        - DELETE /api/v1/social/factions/{factionId} - удаление фракции
+microservices:
+  - name: "faction-core-service"
+    port: 8091
+    endpoints:
+      - "POST /api/v1/factions/create"
+      - "GET /api/v1/factions/{id}"
+      - "PUT /api/v1/factions/{id}"
+      - "DELETE /api/v1/factions/{id}"
+      - "GET /api/v1/factions/list"
+      - "POST /api/v1/factions/{id}/hierarchy/update"
+    
+  - name: "faction-membership-service"
+    port: 8092
+    endpoints:
+      - "POST /api/v1/factions/{id}/members/add-clan"
+      - "DELETE /api/v1/factions/{id}/members/remove-clan/{clan_id}"
+      - "GET /api/v1/factions/{id}/members/list"
+      - "PUT /api/v1/factions/{id}/members/{member_id}/rank"
+      - "GET /api/v1/players/{player_id}/factions"
+    
+  - name: "faction-niche-service"
+    port: 8093
+    endpoints:
+      - "GET /api/v1/niches/catalog"
+      - "POST /api/v1/factions/{id}/niches/claim"
+      - "DELETE /api/v1/factions/{id}/niches/abandon/{niche_id}"
+      - "GET /api/v1/factions/{id}/niches/list"
+      - "POST /api/v1/niches/{niche_id}/contest"
+    
+  - name: "faction-relations-service"
+    port: 8094
+    endpoints:
+      - "GET /api/v1/factions/{id}/relations"
+      - "PUT /api/v1/factions/{id}/relations/{target_id}"
+      - "POST /api/v1/factions/{id}/diplomacy/treaty"
+      - "GET /api/v1/factions/{id}/relations/graph"
+    
+  - name: "faction-conflict-service"
+    port: 8095
+    endpoints:
+      - "POST /api/v1/factions/{id}/conflicts/declare-war"
+      - "GET /api/v1/conflicts/active"
+      - "POST /api/v1/conflicts/{id}/battle/report"
+      - "POST /api/v1/conflicts/{id}/resolve"
+      - "GET /api/v1/factions/{id}/conflicts/history"
 
-    - name: faction-layer-manager
-      location: social-service-go (модуль faction-layer)
-      port: 8084
-      responsibility: |
-        Управление слоями фракций:
-        - Создание слоев фракций
-        - Управление слоями
-        - Взаимодействие между слоями
-      endpoints:
-        - POST /api/v1/social/factions/{factionId}/layers - создание слоя
-        - GET /api/v1/social/factions/{factionId}/layers - список слоев
-        - PUT /api/v1/social/factions/{factionId}/layers/{layerId} - обновление слоя
+database_schema:
+  tables:
+    - name: "factions"
+      columns:
+        - "id UUID PRIMARY KEY"
+        - "name VARCHAR(100) NOT NULL"
+        - "type VARCHAR(50) NOT NULL" # criminal_gang, professional_guild, political_movement, corporate_alliance, religious_sect, scientific_org
+        - "ideology TEXT"
+        - "created_at TIMESTAMP"
+        - "updated_at TIMESTAMP"
+        - "leader_clan_id UUID"
+        - "status VARCHAR(50)" # active, disbanded, suspended
+    
+    - name: "faction_hierarchy"
+      columns:
+        - "id UUID PRIMARY KEY"
+        - "faction_id UUID REFERENCES factions(id)"
+        - "role VARCHAR(100)" # leader, officer, member
+        - "clan_id UUID"
+        - "permissions JSONB"
+        - "appointed_at TIMESTAMP"
+    
+    - name: "faction_niches"
+      columns:
+        - "id UUID PRIMARY KEY"
+        - "name VARCHAR(100) NOT NULL"
+        - "type VARCHAR(50)" # territorial, economic, political, criminal, technological, social
+        - "description TEXT"
+        - "benefits JSONB"
+        - "requirements JSONB"
+    
+    - name: "faction_niche_control"
+      columns:
+        - "id UUID PRIMARY KEY"
+        - "faction_id UUID REFERENCES factions(id)"
+        - "niche_id UUID REFERENCES faction_niches(id)"
+        - "controlled_since TIMESTAMP"
+        - "control_strength FLOAT" # 0.0 - 1.0
+        - "contested BOOLEAN DEFAULT false"
+    
+    - name: "faction_relations"
+      columns:
+        - "id UUID PRIMARY KEY"
+        - "faction_id UUID REFERENCES factions(id)"
+        - "target_faction_id UUID REFERENCES factions(id)"
+        - "relation_type VARCHAR(50)" # allied, neutral, competitive, hostile, trading
+        - "relation_value INT" # -100 to +100
+        - "updated_at TIMESTAMP"
+    
+    - name: "faction_conflicts"
+      columns:
+        - "id UUID PRIMARY KEY"
+        - "attacker_faction_id UUID REFERENCES factions(id)"
+        - "defender_faction_id UUID REFERENCES factions(id)"
+        - "conflict_type VARCHAR(50)" # territorial, economic, political, ideological, resource
+        - "status VARCHAR(50)" # active, resolved, ongoing
+        - "started_at TIMESTAMP"
+        - "ended_at TIMESTAMP"
+        - "winner_faction_id UUID"
 
-    - name: faction-clan-manager
-      location: social-service-go (модуль faction-clan)
-      port: 8084
-      responsibility: |
-        Объединение кланов в фракции:
-        - Добавление кланов в фракции
-        - Управление кланами в фракциях
-        - Объединение кланов в банды
-      endpoints:
-        - POST /api/v1/social/factions/{factionId}/clans/{clanId} - добавление клана
-        - DELETE /api/v1/social/factions/{factionId}/clans/{clanId} - удаление клана
-        - POST /api/v1/social/factions/{factionId}/bands - создание банды
-        - GET /api/v1/social/factions/{factionId}/bands - список банд
+integrations:
+  - service: "clan-service"
+    purpose: "Кланы как базовые единицы фракций"
+    interaction: "Кланы объединяются в фракции, фракции управляют кланами"
+  
+  - service: "corporation-service"
+    purpose: "Корпоративные фракции"
+    interaction: "Корпорации могут создавать или вступать в фракции"
+  
+  - service: "political-service"
+    purpose: "Политические фракции"
+    interaction: "Политические структуры как тип фракций"
+  
+  - service: "economy-service"
+    purpose: "Экономические механики фракций"
+    interaction: "Фракции участвуют в экономике через ниши"
+  
+  - service: "world-service"
+    purpose: "Влияние фракций на мир"
+    interaction: "Фракции контролируют территории и влияют на события"
+  
+  - service: "combat-service"
+    purpose: "Боевые действия между фракциями"
+    interaction: "Фракционные конфликты через PvP и PvE"
 
-    - name: faction-niche-manager
-      location: social-service-go (модуль faction-niche)
-      port: 8084
-      responsibility: |
-        Управление нишами и специализацией:
-        - Определение ниш фракций
-        - Управление специализацией
-        - Конкуренция за ниши
-      endpoints:
-        - POST /api/v1/social/factions/{factionId}/niches - определение ниши
-        - GET /api/v1/social/factions/{factionId}/niches - список ниш
-        - POST /api/v1/social/factions/{factionId}/niches/{nicheId}/compete - конкуренция за нишу
+events:
+  - "FactionCreated"
+  - "FactionDisbanded"
+  - "ClanJoinedFaction"
+  - "ClanLeftFaction"
+  - "NicheClaimed"
+  - "NicheAbandoned"
+  - "NicheContested"
+  - "RelationChanged"
+  - "WarDeclared"
+  - "ConflictResolved"
 
-    - name: faction-interaction-manager
-      location: social-service-go (модуль faction-interaction)
-      port: 8084
-      responsibility: |
-        Взаимодействие между фракциями:
-        - Управление взаимодействиями
-        - Фракционные конфликты
-        - Союзы между фракциями
-      endpoints:
-        - POST /api/v1/social/factions/{factionId1}/interact/{factionId2} - взаимодействие
-        - GET /api/v1/social/factions/{factionId}/interactions - список взаимодействий
-        - POST /api/v1/social/factions/{factionId1}/conflict/{factionId2} - конфликт
-        - POST /api/v1/social/factions/{factionId1}/alliance/{factionId2} - союз
+data_synchronization:
+  pattern: "Event Sourcing + CQRS"
+  description: "События фракций сохраняются в event store, проекции для быстрых запросов"
+  event_store: "PostgreSQL"
+  projections:
+    - "FactionState - текущее состояние фракции"
+    - "FactionMembershipView - список членов"
+    - "FactionNicheView - контролируемые ниши"
+    - "FactionRelationsGraph - граф отношений"
 
-  integrations:
-    guild_service: |
-      - Использование системы кланов
-      - Интеграция с гильдиями
+scalability:
+  sharding_strategy: "По континентам и регионам"
+  caching: "Redis для активных фракций и отношений"
+  read_replicas: "Для аналитики и отчетов"
 
-    world_service: |
-      - Интеграция с миром игры
-      - Управление территориями
+security:
+  authentication: "JWT tokens через auth-service"
+  authorization: "RBAC по ролям в фракции"
+  rate_limiting: "100 requests/minute для faction operations"
 
-  technical_tasks:
-    phase_1:
-      name: Faction Service Core
-      tasks:
-        - Реализация Faction Service
-        - CRUD операции с фракциями
-      estimated_effort: 4 days
+monitoring:
+  metrics:
+    - "faction_count" - количество активных фракций
+    - "faction_membership" - членство в фракциях
+    - "niche_control_distribution" - распределение ниш
+    - "conflict_count" - активные конфликты
+  alerts:
+    - "Массовое создание фракций (>10/minute)"
+    - "Критический конфликт (>1000 игроков вовлечено)"
 
-    phase_2:
-      name: Faction Layer Manager
-      tasks:
-        - Реализация Faction Layer Manager
-        - Управление слоями
-      estimated_effort: 3 days
+next_steps:
+  - "Передача Database Engineer для проектирования БД схемы"
+  - "Передача API Designer для создания OpenAPI спецификаций"
+  - "Интеграция с clan-service и corporation-service"
 
-    phase_3:
-      name: Faction Clan Manager
-      tasks:
-        - Реализация Faction Clan Manager
-        - Объединение кланов
-      estimated_effort: 3 days
-
-    phase_4:
-      name: Faction Niche Manager
-      tasks:
-        - Реализация Faction Niche Manager
-        - Управление нишами
-      estimated_effort: 3 days
-
-    phase_5:
-      name: Faction Interaction Manager
-      tasks:
-        - Реализация Faction Interaction Manager
-        - Взаимодействие между фракциями
-      estimated_effort: 3 days
-
-    phase_6:
-      name: Интеграции
-      tasks:
-        - Интеграция с Guild Service
-        - Интеграция с World Service
-        - WebSocket каналы
-      estimated_effort: 2 days
-
-    total_estimated_effort: 18 days
-
+related_issues:
+  - "#1433 - Иерархия коопераций"
+  - "#1435 - Система корпораций"
+  - "#1437 - Система политики"

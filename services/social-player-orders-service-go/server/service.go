@@ -144,3 +144,53 @@ func (s *OrderService) CancelOrder(ctx context.Context, orderID string) error {
 	return nil
 }
 
+// StartOrder начинает выполнение заказа
+func (s *OrderService) StartOrder(ctx context.Context, orderID string) error {
+	order, err := s.repo.GetOrder(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("order not found: %w", err)
+	}
+
+	if order.Status != "accepted" {
+		return fmt.Errorf("order must be accepted before starting")
+	}
+
+	order.Status = "in_progress"
+	order.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdateOrder(ctx, order); err != nil {
+		return fmt.Errorf("failed to start order: %w", err)
+	}
+
+	// TODO: Publish event to Event Bus
+	// eventBus.Publish("social.orders.started", order)
+
+	return nil
+}
+
+// ReviewOrder добавляет отзыв о заказе
+func (s *OrderService) ReviewOrder(ctx context.Context, orderID string, rating int, comment string) error {
+	order, err := s.repo.GetOrder(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("order not found: %w", err)
+	}
+
+	if order.Status != "completed" {
+		return fmt.Errorf("order must be completed before reviewing")
+	}
+
+	// TODO: Store review in database
+	// review := &Review{
+	//     OrderID:  orderID,
+	//     Rating:   rating,
+	//     Comment:  comment,
+	//     Created:  time.Now(),
+	// }
+	// s.repo.CreateReview(ctx, review)
+
+	// TODO: Publish event to Event Bus
+	// eventBus.Publish("social.orders.reviewed", review)
+
+	return nil
+}
+
