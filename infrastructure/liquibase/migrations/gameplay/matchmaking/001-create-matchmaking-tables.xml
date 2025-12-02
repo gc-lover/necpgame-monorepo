@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Issue: #150 -->
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-matchmaking-queues-table" author="database-engineer">
+        <createTable tableName="matchmaking_queues">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+            <column name="party_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+            <column name="activity_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="preferred_roles" type="TEXT[]">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rating" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating_range_min" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rating_range_max" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="queue_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entered_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_queue_activity_status" tableName="matchmaking_queues">
+            <column name="activity_type"/>
+            <column name="queue_status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_queue_rating" tableName="matchmaking_queues">
+            <column name="rating"/>
+            <column name="activity_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_queue_player" tableName="matchmaking_queues">
+            <column name="player_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_queue_party" tableName="matchmaking_queues">
+            <column name="party_id"/>
+        </createIndex>
+
+        <addCheckConstraint tableName="matchmaking_queues"
+            constraintName="chk_player_or_party"
+            checkCondition="(player_id IS NOT NULL AND party_id IS NULL) OR (player_id IS NULL AND party_id IS NOT NULL)"/>
+    </changeSet>
+
+    <changeSet id="002-create-player-ratings-table" author="database-engineer">
+        <createTable tableName="player_ratings">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_rating" type="INTEGER" defaultValue="1500">
+                <constraints nullable="false"/>
+            </column>
+            <column name="peak_rating" type="INTEGER" defaultValue="1500">
+                <constraints nullable="false"/>
+            </column>
+            <column name="wins" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="losses" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="draws" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_streak" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tier" type="VARCHAR(50)" defaultValue="bronze">
+                <constraints nullable="false"/>
+            </column>
+            <column name="league" type="INTEGER" defaultValue="4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="season_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_player_rating" tableName="player_ratings" unique="true">
+            <column name="player_id"/>
+            <column name="activity_type"/>
+            <column name="season_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_rating_tier" tableName="player_ratings">
+            <column name="current_rating"/>
+            <column name="tier"/>
+        </createIndex>
+
+        <createIndex indexName="idx_rating_leaderboard" tableName="player_ratings">
+            <column name="activity_type"/>
+            <column name="season_id"/>
+            <column name="current_rating" order="DESC"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="003-create-match-history-table" author="database-engineer">
+        <createTable tableName="match_history">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="match_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="team" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="result" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating_before" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating_after" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating_change" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="match_quality_score" type="DECIMAL(3,2)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="played_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_match_history_player" tableName="match_history">
+            <column name="player_id"/>
+            <column name="played_at" order="DESC"/>
+        </createIndex>
+
+        <createIndex indexName="idx_match_history_match" tableName="match_history">
+            <column name="match_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
