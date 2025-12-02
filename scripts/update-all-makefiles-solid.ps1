@@ -1,9 +1,34 @@
+# Issue: SOLID refactoring - update all Makefiles for split generation
+# Script: Mass update of Makefiles for all successfully refactored services
+
+$services = @(
+    @{Name="character-engram-compatibility-service"; Router="gorilla-server"},
+    @{Name="character-engram-core-service"; Router="gorilla-server"},
+    @{Name="combat-damage-service"; Router="gorilla-server"},
+    @{Name="combat-hacking-service"; Router="gorilla-server"},
+    @{Name="combat-implants-core-service"; Router="gorilla-server"},
+    @{Name="combat-sandevistan-service"; Router="chi-server"},
+    @{Name="hacking-core-service"; Router="gorilla-server"},
+    @{Name="quest-core-service"; Router="gorilla-server"},
+    @{Name="quest-skill-checks-conditions-service"; Router="gorilla-server"},
+    @{Name="quest-state-dialogue-service"; Router="gorilla-server"},
+    @{Name="seasonal-challenges-service"; Router="gorilla-server"},
+    @{Name="social-chat-channels-service"; Router="gorilla-server"},
+    @{Name="social-chat-history-service"; Router="gorilla-server"},
+    @{Name="social-chat-messages-service"; Router="gorilla-server"},
+    @{Name="stock-analytics-charts-service"; Router="chi-server"},
+    @{Name="stock-analytics-tools-service"; Router="chi-server"},
+    @{Name="stock-margin-service"; Router="gorilla-server"},
+    @{Name="stock-options-service"; Router="gorilla-server"}
+)
+
+$makefileTemplate = @'
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
-SERVICE_NAME := stock-margin-service
+SERVICE_NAME := {SERVICE_NAME}
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := gorilla-server
+ROUTER_TYPE := {ROUTER_TYPE}
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
@@ -72,3 +97,37 @@ verify-api: check-deps
 
 clean:
 	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+'@
+
+foreach ($svc in $services) {
+    $serviceDir = "services\$($svc.Name)-go"
+    $makefilePath = "$serviceDir\Makefile"
+    
+    Write-Host "Updating Makefile: $($svc.Name)" -ForegroundColor Cyan
+    
+    $content = $makefileTemplate -replace '\{SERVICE_NAME\}', $svc.Name
+    $content = $content -replace '\{ROUTER_TYPE\}', $svc.Router
+    
+    Set-Content -Path $makefilePath -Value $content -Encoding UTF8
+    
+    # Update .gitignore
+    $gitignorePath = "$serviceDir\.gitignore"
+    if (-not (Test-Path $gitignorePath)) {
+        $gitignoreContent = @"
+*.bundled.yaml
+pkg/api/types.gen.go
+pkg/api/server.gen.go
+pkg/api/spec.gen.go
+pkg/api/api.gen.go
+*.exe
+*.test
+*.out
+"@
+        Set-Content -Path $gitignorePath -Value $gitignoreContent -Encoding UTF8
+    }
+    
+    Write-Host "OK Updated $($svc.Name)" -ForegroundColor Green
+}
+
+Write-Host "`nOK All Makefiles updated!" -ForegroundColor Green
+

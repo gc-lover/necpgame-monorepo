@@ -5,12 +5,14 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
+	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -18,238 +20,198 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// Defines values for CombatParticipantParticipantType.
+// Defines values for ActionType.
 const (
-	CombatParticipantParticipantTypeEnemy  CombatParticipantParticipantType = "enemy"
-	CombatParticipantParticipantTypeNpc    CombatParticipantParticipantType = "npc"
-	CombatParticipantParticipantTypePlayer CombatParticipantParticipantType = "player"
+	ActionTypeAbility ActionType = "ability"
+	ActionTypeAttack  ActionType = "attack"
+	ActionTypeExtract ActionType = "extract"
+	ActionTypeHeal    ActionType = "heal"
+	ActionTypeMove    ActionType = "move"
+	ActionTypeReload  ActionType = "reload"
+	ActionTypeRevive  ActionType = "revive"
 )
 
-// Defines values for CombatParticipantStatus.
+// Defines values for CombatLogEventType.
 const (
-	Alive    CombatParticipantStatus = "alive"
-	Defeated CombatParticipantStatus = "defeated"
-	Escaped  CombatParticipantStatus = "escaped"
+	CombatLogEventTypeAbility CombatLogEventType = "ability"
+	CombatLogEventTypeAttack  CombatLogEventType = "attack"
+	CombatLogEventTypeDeath   CombatLogEventType = "death"
+	CombatLogEventTypeExtract CombatLogEventType = "extract"
+	CombatLogEventTypeMove    CombatLogEventType = "move"
+	CombatLogEventTypeReload  CombatLogEventType = "reload"
 )
 
-// Defines values for CombatSessionSessionType.
+// Defines values for Difficulty.
 const (
-	CombatSessionSessionTypeArena CombatSessionSessionType = "arena"
-	CombatSessionSessionTypePve   CombatSessionSessionType = "pve"
-	CombatSessionSessionTypePvp   CombatSessionSessionType = "pvp"
-	CombatSessionSessionTypeRaid  CombatSessionSessionType = "raid"
+	Elite  Difficulty = "elite"
+	Hard   Difficulty = "hard"
+	Normal Difficulty = "normal"
 )
 
-// Defines values for CombatSessionStatus.
+// Defines values for ParticipantRole.
 const (
-	Active    CombatSessionStatus = "active"
-	Cancelled CombatSessionStatus = "cancelled"
-	Completed CombatSessionStatus = "completed"
-	Created   CombatSessionStatus = "created"
-	Paused    CombatSessionStatus = "paused"
+	Assault ParticipantRole = "assault"
+	Stealth ParticipantRole = "stealth"
+	Support ParticipantRole = "support"
+	Tech    ParticipantRole = "tech"
 )
 
-// Defines values for CombatSessionEndResultResult.
+// Defines values for ParticipantStatus.
 const (
-	CombatSessionEndResultResultDefeat  CombatSessionEndResultResult = "defeat"
-	CombatSessionEndResultResultDraw    CombatSessionEndResultResult = "draw"
-	CombatSessionEndResultResultVictory CombatSessionEndResultResult = "victory"
+	ParticipantStatusAlive        ParticipantStatus = "alive"
+	ParticipantStatusDead         ParticipantStatus = "dead"
+	ParticipantStatusDisconnected ParticipantStatus = "disconnected"
+	ParticipantStatusExtracted    ParticipantStatus = "extracted"
 )
 
-// Defines values for CombatSessionEndResultRewardsRewardType.
+// Defines values for ParticipantTeam.
 const (
-	Currency      CombatSessionEndResultRewardsRewardType = "currency"
-	Experience    CombatSessionEndResultRewardsRewardType = "experience"
-	Loot          CombatSessionEndResultRewardsRewardType = "loot"
-	QuestProgress CombatSessionEndResultRewardsRewardType = "quest_progress"
+	Solo  ParticipantTeam = "solo"
+	TeamA ParticipantTeam = "team_a"
+	TeamB ParticipantTeam = "team_b"
 )
 
-// Defines values for CreateCombatSessionRequestSessionType.
+// Defines values for ParticipantStateStatus.
 const (
-	CreateCombatSessionRequestSessionTypeArena CreateCombatSessionRequestSessionType = "arena"
-	CreateCombatSessionRequestSessionTypePve   CreateCombatSessionRequestSessionType = "pve"
-	CreateCombatSessionRequestSessionTypePvp   CreateCombatSessionRequestSessionType = "pvp"
-	CreateCombatSessionRequestSessionTypeRaid  CreateCombatSessionRequestSessionType = "raid"
+	ParticipantStateStatusAlive        ParticipantStateStatus = "alive"
+	ParticipantStateStatusDead         ParticipantStateStatus = "dead"
+	ParticipantStateStatusDisconnected ParticipantStateStatus = "disconnected"
+	ParticipantStateStatusExtracted    ParticipantStateStatus = "extracted"
 )
 
-// Defines values for CreateCombatSessionRequestSettingsDifficulty.
+// Defines values for SessionStatus.
 const (
-	Easy      CreateCombatSessionRequestSettingsDifficulty = "easy"
-	Hard      CreateCombatSessionRequestSettingsDifficulty = "hard"
-	Nightmare CreateCombatSessionRequestSettingsDifficulty = "nightmare"
-	Normal    CreateCombatSessionRequestSettingsDifficulty = "normal"
+	Aborted SessionStatus = "aborted"
+	Active  SessionStatus = "active"
+	Ended   SessionStatus = "ended"
+	Pending SessionStatus = "pending"
 )
 
-// Defines values for JoinCombatRequestParticipantType.
+// Defines values for SessionType.
 const (
-	JoinCombatRequestParticipantTypeEnemy  JoinCombatRequestParticipantType = "enemy"
-	JoinCombatRequestParticipantTypeNpc    JoinCombatRequestParticipantType = "npc"
-	JoinCombatRequestParticipantTypePlayer JoinCombatRequestParticipantType = "player"
+	ExtractZone SessionType = "extract_zone"
+	GuildWar    SessionType = "guild_war"
+	PveRaid     SessionType = "pve_raid"
+	PvpArena    SessionType = "pvp_arena"
 )
 
-// Defines values for EndCombatSessionJSONBodyResult.
+// Defines values for StatusEffectEffectType.
 const (
-	EndCombatSessionJSONBodyResultDefeat  EndCombatSessionJSONBodyResult = "defeat"
-	EndCombatSessionJSONBodyResultDraw    EndCombatSessionJSONBodyResult = "draw"
-	EndCombatSessionJSONBodyResultVictory EndCombatSessionJSONBodyResult = "victory"
+	Bleeding StatusEffectEffectType = "bleeding"
+	Buffed   StatusEffectEffectType = "buffed"
+	Burning  StatusEffectEffectType = "burning"
+	Debuffed StatusEffectEffectType = "debuffed"
+	Poisoned StatusEffectEffectType = "poisoned"
+	Slowed   StatusEffectEffectType = "slowed"
+	Stunned  StatusEffectEffectType = "stunned"
 )
 
-// CombatParticipant defines model for CombatParticipant.
-type CombatParticipant struct {
+// ActionRequest defines model for ActionRequest.
+type ActionRequest struct {
+	AbilityId  *string             `json:"ability_id,omitempty"`
+	ActionType ActionType          `json:"action_type"`
+	Position   *Position3D         `json:"position,omitempty"`
+	TargetId   *openapi_types.UUID `json:"target_id,omitempty"`
+	WeaponId   *openapi_types.UUID `json:"weapon_id,omitempty"`
+}
+
+// ActionResponse defines model for ActionResponse.
+type ActionResponse struct {
+	ActionType     ActionType        `json:"action_type"`
+	DamageDealt    *int              `json:"damage_dealt,omitempty"`
+	EffectsApplied *[]StatusEffect   `json:"effects_applied,omitempty"`
+	Success        bool              `json:"success"`
+	Timestamp      time.Time         `json:"timestamp"`
+	Validation     *ActionValidation `json:"validation,omitempty"`
+}
+
+// ActionType defines model for ActionType.
+type ActionType string
+
+// ActionValidation defines model for ActionValidation.
+type ActionValidation struct {
+	AntiCheatPassed bool    `json:"anti_cheat_passed"`
+	CooldownValid   bool    `json:"cooldown_valid"`
+	Details         *string `json:"details,omitempty"`
+	PositionValid   bool    `json:"position_valid"`
+}
+
+// BaseEntity defines model for BaseEntity.
+type BaseEntity struct {
+	// Id Уникальный идентификатор
+	Id *openapi_types.UUID `json:"id,omitempty"`
+}
+
+// BaseEntityWithTimestamps defines model for BaseEntityWithTimestamps.
+type BaseEntityWithTimestamps struct {
+	// CreatedAt Дата создания
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 
-	// Effects Активные эффекты на участнике
-	Effects *[]openapi_types.UUID `json:"effects,omitempty"`
+	// ExpiresAt Дата истечения
+	ExpiresAt *time.Time `json:"expires_at"`
 
-	// Health Текущее здоровье
-	Health *int `json:"health,omitempty"`
-
-	// Id Уникальный ID участника в бою
+	// Id Уникальный идентификатор
 	Id *openapi_types.UUID `json:"id,omitempty"`
 
-	// Initiative Инициатива для определения порядка ходов
-	Initiative *int `json:"initiative,omitempty"`
-
-	// MaxHealth Максимальное здоровье
-	MaxHealth *int `json:"max_health,omitempty"`
-
-	// ParticipantId ID персонажа/NPC из соответствующей системы
-	ParticipantId *openapi_types.UUID `json:"participant_id,omitempty"`
-
-	// ParticipantType Тип участника
-	ParticipantType *CombatParticipantParticipantType `json:"participant_type,omitempty"`
-
-	// Position Позиция на поле боя (для тактического боя)
-	Position *struct {
-		X *float32 `json:"x,omitempty"`
-		Y *float32 `json:"y,omitempty"`
-		Z *float32 `json:"z,omitempty"`
-	} `json:"position,omitempty"`
-
-	// SessionId ID боевой сессии
-	SessionId *openapi_types.UUID `json:"session_id,omitempty"`
-
-	// Status Статус участника:
-	// - `alive` - жив, участвует в бою
-	// - `defeated` - повержен
-	// - `escaped` - сбежал из боя
-	Status *CombatParticipantStatus `json:"status,omitempty"`
-
-	// Team Номер команды (1 или 2)
-	Team *int `json:"team,omitempty"`
+	// UpdatedAt Дата обновления
+	UpdatedAt *time.Time `json:"updated_at"`
 }
 
-// CombatParticipantParticipantType Тип участника
-type CombatParticipantParticipantType string
-
-// CombatParticipantStatus Статус участника:
-// - `alive` - жив, участвует в бою
-// - `defeated` - повержен
-// - `escaped` - сбежал из боя
-type CombatParticipantStatus string
-
-// CombatSession defines model for CombatSession.
-type CombatSession struct {
-	// CreatedAt Время создания
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
-	// CurrentTurn Номер текущего хода
-	CurrentTurn *int `json:"current_turn,omitempty"`
-
-	// EndedAt Время завершения
-	EndedAt *time.Time `json:"ended_at,omitempty"`
-
-	// Id Уникальный ID сессии
-	Id *openapi_types.UUID `json:"id,omitempty"`
-
-	// Participants Список участников боя
-	Participants *[]CombatParticipant `json:"participants,omitempty"`
-
-	// SessionType Тип сессии
-	SessionType *CombatSessionSessionType `json:"session_type,omitempty"`
-
-	// Settings Настройки боя
-	Settings *map[string]interface{} `json:"settings,omitempty"`
-
-	// StartedAt Время запуска
-	StartedAt *time.Time `json:"started_at,omitempty"`
-
-	// Status Статус сессии:
-	// - `created` - создана, ожидает участников
-	// - `active` - идёт бой
-	// - `paused` - бой на паузе
-	// - `completed` - бой завершён
-	// - `cancelled` - бой отменён
-	Status *CombatSessionStatus `json:"status,omitempty"`
-
-	// TurnOrder Порядок ходов участников (IDs)
-	TurnOrder *[]openapi_types.UUID `json:"turn_order,omitempty"`
+// CombatLog defines model for CombatLog.
+type CombatLog struct {
+	ActionData     *map[string]interface{} `json:"action_data,omitempty"`
+	ActorId        *openapi_types.UUID     `json:"actor_id,omitempty"`
+	EventType      CombatLogEventType      `json:"event_type"`
+	Id             int64                   `json:"id"`
+	ResultData     *map[string]interface{} `json:"result_data,omitempty"`
+	SequenceNumber int64                   `json:"sequence_number"`
+	TargetId       *openapi_types.UUID     `json:"target_id,omitempty"`
+	Timestamp      time.Time               `json:"timestamp"`
 }
 
-// CombatSessionSessionType Тип сессии
-type CombatSessionSessionType string
+// CombatLogEventType defines model for CombatLog.EventType.
+type CombatLogEventType string
 
-// CombatSessionStatus Статус сессии:
-// - `created` - создана, ожидает участников
-// - `active` - идёт бой
-// - `paused` - бой на паузе
-// - `completed` - бой завершён
-// - `cancelled` - бой отменён
-type CombatSessionStatus string
+// CombatSessionResponse defines model for CombatSessionResponse.
+type CombatSessionResponse struct {
+	// CreatedAt Дата создания
+	CreatedAt  *time.Time  `json:"created_at,omitempty"`
+	Difficulty *Difficulty `json:"difficulty,omitempty"`
 
-// CombatSessionEndResult defines model for CombatSessionEndResult.
-type CombatSessionEndResult struct {
-	// CompletedAt Время завершения
-	CompletedAt *time.Time `json:"completed_at,omitempty"`
+	// ExpiresAt Дата истечения
+	ExpiresAt *time.Time `json:"expires_at"`
 
-	// Result Результат боя
-	Result *CombatSessionEndResultResult `json:"result,omitempty"`
+	// Id Уникальный идентификатор
+	Id           *openapi_types.UUID `json:"id,omitempty"`
+	Participants []Participant       `json:"participants"`
+	SessionType  SessionType         `json:"session_type"`
+	Status       SessionStatus       `json:"status"`
 
-	// Rewards Награды за бой для каждого участника
-	Rewards *[]struct {
-		// ParticipantId ID участника
-		ParticipantId *openapi_types.UUID `json:"participant_id,omitempty"`
-
-		// RewardData Данные награды (зависит от типа)
-		RewardData *map[string]interface{} `json:"reward_data,omitempty"`
-
-		// RewardType Тип награды
-		RewardType *CombatSessionEndResultRewardsRewardType `json:"reward_type,omitempty"`
-	} `json:"rewards,omitempty"`
-
-	// SessionId ID завершённой сессии
-	SessionId *openapi_types.UUID `json:"session_id,omitempty"`
+	// UpdatedAt Дата обновления
+	UpdatedAt  *time.Time `json:"updated_at"`
+	WinnerTeam *string    `json:"winner_team"`
+	ZoneId     *string    `json:"zone_id,omitempty"`
 }
 
-// CombatSessionEndResultResult Результат боя
-type CombatSessionEndResultResult string
-
-// CombatSessionEndResultRewardsRewardType Тип награды
-type CombatSessionEndResultRewardsRewardType string
-
-// CreateCombatSessionRequest defines model for CreateCombatSessionRequest.
-type CreateCombatSessionRequest struct {
-	// SessionType Тип боевой сессии
-	SessionType CreateCombatSessionRequestSessionType `json:"session_type"`
-
-	// Settings Настройки боя
-	Settings *struct {
-		// Difficulty Сложность (только для PvE)
-		Difficulty *CreateCombatSessionRequestSettingsDifficulty `json:"difficulty,omitempty"`
-
-		// MaxParticipants Максимальное количество участников
-		MaxParticipants *int `json:"max_participants,omitempty"`
-
-		// TurnTimeout Таймаут хода в секундах
-		TurnTimeout *int `json:"turn_timeout,omitempty"`
-	} `json:"settings,omitempty"`
+// CombatState defines model for CombatState.
+type CombatState struct {
+	CurrentTurn       openapi_types.UUID `json:"current_turn"`
+	ParticipantsState []ParticipantState `json:"participants_state"`
+	SessionId         openapi_types.UUID `json:"session_id"`
+	TurnNumber        *int               `json:"turn_number,omitempty"`
 }
 
-// CreateCombatSessionRequestSessionType Тип боевой сессии
-type CreateCombatSessionRequestSessionType string
+// CreateSessionRequest defines model for CreateSessionRequest.
+type CreateSessionRequest struct {
+	Difficulty   *Difficulty             `json:"difficulty,omitempty"`
+	Participants []openapi_types.UUID    `json:"participants"`
+	SessionType  SessionType             `json:"session_type"`
+	Settings     *map[string]interface{} `json:"settings,omitempty"`
+	ZoneId       *string                 `json:"zone_id,omitempty"`
+}
 
-// CreateCombatSessionRequestSettingsDifficulty Сложность (только для PvE)
-type CreateCombatSessionRequestSettingsDifficulty string
+// Difficulty defines model for Difficulty.
+type Difficulty string
 
 // Error defines model for Error.
 type Error struct {
@@ -266,27 +228,172 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// JoinCombatRequest defines model for JoinCombatRequest.
-type JoinCombatRequest struct {
-	// ParticipantId ID персонажа/NPC
-	ParticipantId openapi_types.UUID `json:"participant_id"`
-
-	// ParticipantType Тип участника
-	ParticipantType JoinCombatRequestParticipantType `json:"participant_type"`
-
-	// Position Начальная позиция на поле боя
-	Position *struct {
-		X *float32 `json:"x,omitempty"`
-		Y *float32 `json:"y,omitempty"`
-		Z *float32 `json:"z,omitempty"`
-	} `json:"position,omitempty"`
-
-	// Team Номер команды (1 или 2)
-	Team int `json:"team"`
+// LogsResponse defines model for LogsResponse.
+type LogsResponse struct {
+	Logs       []CombatLog        `json:"logs"`
+	Pagination PaginationResponse `json:"pagination"`
 }
 
-// JoinCombatRequestParticipantType Тип участника
-type JoinCombatRequestParticipantType string
+// PaginationResponse defines model for PaginationResponse.
+type PaginationResponse struct {
+	// HasMore Есть ли еще элементы
+	HasMore *bool `json:"has_more,omitempty"`
+
+	// Items Список элементов
+	Items []interface{} `json:"items"`
+
+	// Limit Количество элементов на странице
+	Limit *int `json:"limit,omitempty"`
+
+	// Offset Смещение для пагинации
+	Offset *int `json:"offset,omitempty"`
+
+	// Total Общее количество элементов
+	Total int `json:"total"`
+}
+
+// Participant defines model for Participant.
+type Participant struct {
+	Assists     *int               `json:"assists,omitempty"`
+	CharacterId openapi_types.UUID `json:"character_id"`
+	DamageDealt *int64             `json:"damage_dealt,omitempty"`
+	DamageTaken *int64             `json:"damage_taken,omitempty"`
+	Deaths      *int               `json:"deaths,omitempty"`
+	HealingDone *int64             `json:"healing_done,omitempty"`
+	Health      int                `json:"health"`
+	Kills       *int               `json:"kills,omitempty"`
+	MaxHealth   int                `json:"max_health"`
+	PlayerId    openapi_types.UUID `json:"player_id"`
+	Role        ParticipantRole    `json:"role"`
+	Status      ParticipantStatus  `json:"status"`
+	Team        ParticipantTeam    `json:"team"`
+}
+
+// ParticipantRole defines model for Participant.Role.
+type ParticipantRole string
+
+// ParticipantStatus defines model for Participant.Status.
+type ParticipantStatus string
+
+// ParticipantTeam defines model for Participant.Team.
+type ParticipantTeam string
+
+// ParticipantState defines model for ParticipantState.
+type ParticipantState struct {
+	ActiveEffects *[]StatusEffect        `json:"active_effects,omitempty"`
+	Health        int                    `json:"health"`
+	MaxHealth     *int                   `json:"max_health,omitempty"`
+	PlayerId      openapi_types.UUID     `json:"player_id"`
+	Position      *Position3D            `json:"position,omitempty"`
+	Status        ParticipantStateStatus `json:"status"`
+}
+
+// ParticipantStateStatus defines model for ParticipantState.Status.
+type ParticipantStateStatus string
+
+// ParticipantStats defines model for ParticipantStats.
+type ParticipantStats struct {
+	Accuracy    *float32           `json:"accuracy,omitempty"`
+	Assists     *int               `json:"assists,omitempty"`
+	DamageDealt int64              `json:"damage_dealt"`
+	DamageTaken *int64             `json:"damage_taken,omitempty"`
+	Deaths      int                `json:"deaths"`
+	HealingDone *int64             `json:"healing_done,omitempty"`
+	Kills       int                `json:"kills"`
+	PlayerId    openapi_types.UUID `json:"player_id"`
+	ShotsFired  *int               `json:"shots_fired,omitempty"`
+	ShotsHit    *int               `json:"shots_hit,omitempty"`
+}
+
+// Position3D defines model for Position3D.
+type Position3D struct {
+	// X Координата X
+	X float32 `json:"x"`
+
+	// Y Координата Y
+	Y float32 `json:"y"`
+
+	// Z Координата Z
+	Z float32 `json:"z"`
+}
+
+// Reward defines model for Reward.
+type Reward struct {
+	Currency struct {
+		Cryptos     *int `json:"cryptos,omitempty"`
+		Eurodollars *int `json:"eurodollars,omitempty"`
+	} `json:"currency"`
+	Experience int `json:"experience"`
+	Items      *[]struct {
+		ItemId   openapi_types.UUID `json:"item_id"`
+		Quantity int                `json:"quantity"`
+	} `json:"items,omitempty"`
+	PlayerId openapi_types.UUID `json:"player_id"`
+}
+
+// SessionEndResponse defines model for SessionEndResponse.
+type SessionEndResponse struct {
+	Rewards    *[]Reward          `json:"rewards,omitempty"`
+	SessionId  openapi_types.UUID `json:"session_id"`
+	Status     SessionStatus      `json:"status"`
+	WinnerTeam *string            `json:"winner_team"`
+}
+
+// SessionListResponse defines model for SessionListResponse.
+type SessionListResponse struct {
+	Items      []SessionSummary   `json:"items"`
+	Pagination PaginationResponse `json:"pagination"`
+}
+
+// SessionStatus defines model for SessionStatus.
+type SessionStatus string
+
+// SessionSummary defines model for SessionSummary.
+type SessionSummary struct {
+	CreatedAt        time.Time          `json:"created_at"`
+	Id               openapi_types.UUID `json:"id"`
+	ParticipantCount *int               `json:"participant_count,omitempty"`
+	SessionType      SessionType        `json:"session_type"`
+	Status           SessionStatus      `json:"status"`
+}
+
+// SessionType defines model for SessionType.
+type SessionType string
+
+// StatsResponse defines model for StatsResponse.
+type StatsResponse struct {
+	ParticipantsStats []ParticipantStats `json:"participants_stats"`
+	SessionId         openapi_types.UUID `json:"session_id"`
+	TotalDamage       *int64             `json:"total_damage,omitempty"`
+}
+
+// StatusEffect defines model for StatusEffect.
+type StatusEffect struct {
+	DurationSeconds int                    `json:"duration_seconds"`
+	EffectType      StatusEffectEffectType `json:"effect_type"`
+	Strength        *float32               `json:"strength,omitempty"`
+}
+
+// StatusEffectEffectType defines model for StatusEffect.EffectType.
+type StatusEffectEffectType string
+
+// TimestampFields defines model for TimestampFields.
+type TimestampFields struct {
+	// CreatedAt Дата создания
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// ExpiresAt Дата истечения
+	ExpiresAt *time.Time `json:"expires_at"`
+
+	// UpdatedAt Дата обновления
+	UpdatedAt *time.Time `json:"updated_at"`
+}
+
+// Limit defines model for Limit.
+type Limit = int
+
+// Offset defines model for Offset.
+type Offset = int
 
 // SessionId defines model for SessionId.
 type SessionId = openapi_types.UUID
@@ -294,8 +401,8 @@ type SessionId = openapi_types.UUID
 // BadRequest defines model for BadRequest.
 type BadRequest = Error
 
-// InternalServerError defines model for InternalServerError.
-type InternalServerError = Error
+// Forbidden defines model for Forbidden.
+type Forbidden = Error
 
 // NotFound defines model for NotFound.
 type NotFound = Error
@@ -303,101 +410,109 @@ type NotFound = Error
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = Error
 
-// EndCombatSessionJSONBody defines parameters for EndCombatSession.
-type EndCombatSessionJSONBody struct {
-	// Result Результат боя
-	Result EndCombatSessionJSONBodyResult `json:"result"`
+// ListCombatSessionsParams defines parameters for ListCombatSessions.
+type ListCombatSessionsParams struct {
+	// Limit Количество элементов на странице
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Смещение для пагинации
+	Offset      *Offset        `form:"offset,omitempty" json:"offset,omitempty"`
+	Status      *SessionStatus `form:"status,omitempty" json:"status,omitempty"`
+	SessionType *SessionType   `form:"session_type,omitempty" json:"session_type,omitempty"`
 }
 
-// EndCombatSessionJSONBodyResult defines parameters for EndCombatSession.
-type EndCombatSessionJSONBodyResult string
+// GetCombatLogsParams defines parameters for GetCombatLogs.
+type GetCombatLogsParams struct {
+	// Limit Количество элементов на странице
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 
-// LeaveCombatSessionJSONBody defines parameters for LeaveCombatSession.
-type LeaveCombatSessionJSONBody struct {
-	// ParticipantId ID участника который покидает бой
-	ParticipantId openapi_types.UUID `json:"participant_id"`
+	// Offset Смещение для пагинации
+	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // CreateCombatSessionJSONRequestBody defines body for CreateCombatSession for application/json ContentType.
-type CreateCombatSessionJSONRequestBody = CreateCombatSessionRequest
+type CreateCombatSessionJSONRequestBody = CreateSessionRequest
 
-// EndCombatSessionJSONRequestBody defines body for EndCombatSession for application/json ContentType.
-type EndCombatSessionJSONRequestBody EndCombatSessionJSONBody
-
-// JoinCombatSessionJSONRequestBody defines body for JoinCombatSession for application/json ContentType.
-type JoinCombatSessionJSONRequestBody = JoinCombatRequest
-
-// LeaveCombatSessionJSONRequestBody defines body for LeaveCombatSession for application/json ContentType.
-type LeaveCombatSessionJSONRequestBody LeaveCombatSessionJSONBody
+// ExecuteCombatActionJSONRequestBody defines body for ExecuteCombatAction for application/json ContentType.
+type ExecuteCombatActionJSONRequestBody = ActionRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Создание боевой сессии
-	// (POST /api/v1/gameplay/combat/sessions)
+	// Список сессий
+	// (GET /gameplay/combat/sessions)
+	ListCombatSessions(w http.ResponseWriter, r *http.Request, params ListCombatSessionsParams)
+	// Создать боевую сессию
+	// (POST /gameplay/combat/sessions)
 	CreateCombatSession(w http.ResponseWriter, r *http.Request)
-	// Отмена боевой сессии
-	// (DELETE /api/v1/gameplay/combat/sessions/{session_id})
-	CancelCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId)
-	// Получение боевой сессии
-	// (GET /api/v1/gameplay/combat/sessions/{session_id})
-	GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId)
-	// Завершение боя
-	// (POST /api/v1/gameplay/combat/sessions/{session_id}/end)
+	// Завершить сессию
+	// (DELETE /gameplay/combat/sessions/{sessionId})
 	EndCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId)
-	// Присоединение к бою
-	// (PUT /api/v1/gameplay/combat/sessions/{session_id}/join)
-	JoinCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId)
-	// Выход из боя
-	// (PUT /api/v1/gameplay/combat/sessions/{session_id}/leave)
-	LeaveCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId)
-	// Запуск боя
-	// (POST /api/v1/gameplay/combat/sessions/{session_id}/start)
-	StartCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId)
+	// Получить сессию
+	// (GET /gameplay/combat/sessions/{sessionId})
+	GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId)
+	// Выполнить действие
+	// (POST /gameplay/combat/sessions/{sessionId}/actions)
+	ExecuteCombatAction(w http.ResponseWriter, r *http.Request, sessionId SessionId)
+	// Логи сессии
+	// (GET /gameplay/combat/sessions/{sessionId}/logs)
+	GetCombatLogs(w http.ResponseWriter, r *http.Request, sessionId SessionId, params GetCombatLogsParams)
+	// Получить realtime состояние
+	// (GET /gameplay/combat/sessions/{sessionId}/state)
+	GetCombatState(w http.ResponseWriter, r *http.Request, sessionId SessionId)
+	// Статистика сессии
+	// (GET /gameplay/combat/sessions/{sessionId}/stats)
+	GetCombatStats(w http.ResponseWriter, r *http.Request, sessionId SessionId)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// Создание боевой сессии
-// (POST /api/v1/gameplay/combat/sessions)
+// Список сессий
+// (GET /gameplay/combat/sessions)
+func (_ Unimplemented) ListCombatSessions(w http.ResponseWriter, r *http.Request, params ListCombatSessionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Создать боевую сессию
+// (POST /gameplay/combat/sessions)
 func (_ Unimplemented) CreateCombatSession(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Отмена боевой сессии
-// (DELETE /api/v1/gameplay/combat/sessions/{session_id})
-func (_ Unimplemented) CancelCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Получение боевой сессии
-// (GET /api/v1/gameplay/combat/sessions/{session_id})
-func (_ Unimplemented) GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Завершение боя
-// (POST /api/v1/gameplay/combat/sessions/{session_id}/end)
+// Завершить сессию
+// (DELETE /gameplay/combat/sessions/{sessionId})
 func (_ Unimplemented) EndCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Присоединение к бою
-// (PUT /api/v1/gameplay/combat/sessions/{session_id}/join)
-func (_ Unimplemented) JoinCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+// Получить сессию
+// (GET /gameplay/combat/sessions/{sessionId})
+func (_ Unimplemented) GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Выход из боя
-// (PUT /api/v1/gameplay/combat/sessions/{session_id}/leave)
-func (_ Unimplemented) LeaveCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+// Выполнить действие
+// (POST /gameplay/combat/sessions/{sessionId}/actions)
+func (_ Unimplemented) ExecuteCombatAction(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Запуск боя
-// (POST /api/v1/gameplay/combat/sessions/{session_id}/start)
-func (_ Unimplemented) StartCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+// Логи сессии
+// (GET /gameplay/combat/sessions/{sessionId}/logs)
+func (_ Unimplemented) GetCombatLogs(w http.ResponseWriter, r *http.Request, sessionId SessionId, params GetCombatLogsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Получить realtime состояние
+// (GET /gameplay/combat/sessions/{sessionId}/state)
+func (_ Unimplemented) GetCombatState(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Статистика сессии
+// (GET /gameplay/combat/sessions/{sessionId}/stats)
+func (_ Unimplemented) GetCombatStats(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -409,6 +524,63 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListCombatSessions operation middleware
+func (siw *ServerInterfaceWrapper) ListCombatSessions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCombatSessionsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "session_type" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "session_type", r.URL.Query(), &params.SessionType)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_type", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCombatSessions(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // CreateCombatSession operation middleware
 func (siw *ServerInterfaceWrapper) CreateCombatSession(w http.ResponseWriter, r *http.Request) {
@@ -430,79 +602,17 @@ func (siw *ServerInterfaceWrapper) CreateCombatSession(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
-// CancelCombatSession operation middleware
-func (siw *ServerInterfaceWrapper) CancelCombatSession(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "session_id" -------------
-	var sessionId SessionId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CancelCombatSession(w, r, sessionId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetCombatSession operation middleware
-func (siw *ServerInterfaceWrapper) GetCombatSession(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "session_id" -------------
-	var sessionId SessionId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCombatSession(w, r, sessionId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // EndCombatSession operation middleware
 func (siw *ServerInterfaceWrapper) EndCombatSession(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// ------------- Path parameter "session_id" -------------
+	// ------------- Path parameter "sessionId" -------------
 	var sessionId SessionId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "sessionId", chi.URLParam(r, "sessionId"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sessionId", Err: err})
 		return
 	}
 
@@ -523,17 +633,17 @@ func (siw *ServerInterfaceWrapper) EndCombatSession(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
-// JoinCombatSession operation middleware
-func (siw *ServerInterfaceWrapper) JoinCombatSession(w http.ResponseWriter, r *http.Request) {
+// GetCombatSession operation middleware
+func (siw *ServerInterfaceWrapper) GetCombatSession(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// ------------- Path parameter "session_id" -------------
+	// ------------- Path parameter "sessionId" -------------
 	var sessionId SessionId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "sessionId", chi.URLParam(r, "sessionId"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sessionId", Err: err})
 		return
 	}
 
@@ -544,7 +654,7 @@ func (siw *ServerInterfaceWrapper) JoinCombatSession(w http.ResponseWriter, r *h
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.JoinCombatSession(w, r, sessionId)
+		siw.Handler.GetCombatSession(w, r, sessionId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -554,17 +664,17 @@ func (siw *ServerInterfaceWrapper) JoinCombatSession(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
-// LeaveCombatSession operation middleware
-func (siw *ServerInterfaceWrapper) LeaveCombatSession(w http.ResponseWriter, r *http.Request) {
+// ExecuteCombatAction operation middleware
+func (siw *ServerInterfaceWrapper) ExecuteCombatAction(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// ------------- Path parameter "session_id" -------------
+	// ------------- Path parameter "sessionId" -------------
 	var sessionId SessionId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "sessionId", chi.URLParam(r, "sessionId"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sessionId", Err: err})
 		return
 	}
 
@@ -575,7 +685,7 @@ func (siw *ServerInterfaceWrapper) LeaveCombatSession(w http.ResponseWriter, r *
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.LeaveCombatSession(w, r, sessionId)
+		siw.Handler.ExecuteCombatAction(w, r, sessionId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -585,17 +695,67 @@ func (siw *ServerInterfaceWrapper) LeaveCombatSession(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
-// StartCombatSession operation middleware
-func (siw *ServerInterfaceWrapper) StartCombatSession(w http.ResponseWriter, r *http.Request) {
+// GetCombatLogs operation middleware
+func (siw *ServerInterfaceWrapper) GetCombatLogs(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// ------------- Path parameter "session_id" -------------
+	// ------------- Path parameter "sessionId" -------------
 	var sessionId SessionId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "sessionId", chi.URLParam(r, "sessionId"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sessionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCombatLogsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCombatLogs(w, r, sessionId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCombatState operation middleware
+func (siw *ServerInterfaceWrapper) GetCombatState(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "sessionId" -------------
+	var sessionId SessionId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sessionId", chi.URLParam(r, "sessionId"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sessionId", Err: err})
 		return
 	}
 
@@ -606,7 +766,38 @@ func (siw *ServerInterfaceWrapper) StartCombatSession(w http.ResponseWriter, r *
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.StartCombatSession(w, r, sessionId)
+		siw.Handler.GetCombatState(w, r, sessionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCombatStats operation middleware
+func (siw *ServerInterfaceWrapper) GetCombatStats(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "sessionId" -------------
+	var sessionId SessionId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sessionId", chi.URLParam(r, "sessionId"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sessionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCombatStats(w, r, sessionId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -730,26 +921,507 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/api/v1/gameplay/combat/sessions", wrapper.CreateCombatSession)
+		r.Get(options.BaseURL+"/gameplay/combat/sessions", wrapper.ListCombatSessions)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/api/v1/gameplay/combat/sessions/{session_id}", wrapper.CancelCombatSession)
+		r.Post(options.BaseURL+"/gameplay/combat/sessions", wrapper.CreateCombatSession)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v1/gameplay/combat/sessions/{session_id}", wrapper.GetCombatSession)
+		r.Delete(options.BaseURL+"/gameplay/combat/sessions/{sessionId}", wrapper.EndCombatSession)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/api/v1/gameplay/combat/sessions/{session_id}/end", wrapper.EndCombatSession)
+		r.Get(options.BaseURL+"/gameplay/combat/sessions/{sessionId}", wrapper.GetCombatSession)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/api/v1/gameplay/combat/sessions/{session_id}/join", wrapper.JoinCombatSession)
+		r.Post(options.BaseURL+"/gameplay/combat/sessions/{sessionId}/actions", wrapper.ExecuteCombatAction)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/api/v1/gameplay/combat/sessions/{session_id}/leave", wrapper.LeaveCombatSession)
+		r.Get(options.BaseURL+"/gameplay/combat/sessions/{sessionId}/logs", wrapper.GetCombatLogs)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/api/v1/gameplay/combat/sessions/{session_id}/start", wrapper.StartCombatSession)
+		r.Get(options.BaseURL+"/gameplay/combat/sessions/{sessionId}/state", wrapper.GetCombatState)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/gameplay/combat/sessions/{sessionId}/stats", wrapper.GetCombatStats)
 	})
 
 	return r
+}
+
+type BadRequestJSONResponse Error
+
+type ForbiddenJSONResponse Error
+
+type NotFoundJSONResponse Error
+
+type UnauthorizedJSONResponse Error
+
+type ListCombatSessionsRequestObject struct {
+	Params ListCombatSessionsParams
+}
+
+type ListCombatSessionsResponseObject interface {
+	VisitListCombatSessionsResponse(w http.ResponseWriter) error
+}
+
+type ListCombatSessions200JSONResponse SessionListResponse
+
+func (response ListCombatSessions200JSONResponse) VisitListCombatSessionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateCombatSessionRequestObject struct {
+	Body *CreateCombatSessionJSONRequestBody
+}
+
+type CreateCombatSessionResponseObject interface {
+	VisitCreateCombatSessionResponse(w http.ResponseWriter) error
+}
+
+type CreateCombatSession201JSONResponse CombatSessionResponse
+
+func (response CreateCombatSession201JSONResponse) VisitCreateCombatSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateCombatSession400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response CreateCombatSession400JSONResponse) VisitCreateCombatSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateCombatSession401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response CreateCombatSession401JSONResponse) VisitCreateCombatSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type EndCombatSessionRequestObject struct {
+	SessionId SessionId `json:"sessionId"`
+}
+
+type EndCombatSessionResponseObject interface {
+	VisitEndCombatSessionResponse(w http.ResponseWriter) error
+}
+
+type EndCombatSession200JSONResponse SessionEndResponse
+
+func (response EndCombatSession200JSONResponse) VisitEndCombatSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type EndCombatSession403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response EndCombatSession403JSONResponse) VisitEndCombatSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCombatSessionRequestObject struct {
+	SessionId SessionId `json:"sessionId"`
+}
+
+type GetCombatSessionResponseObject interface {
+	VisitGetCombatSessionResponse(w http.ResponseWriter) error
+}
+
+type GetCombatSession200JSONResponse CombatSessionResponse
+
+func (response GetCombatSession200JSONResponse) VisitGetCombatSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCombatSession404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetCombatSession404JSONResponse) VisitGetCombatSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ExecuteCombatActionRequestObject struct {
+	SessionId SessionId `json:"sessionId"`
+	Body      *ExecuteCombatActionJSONRequestBody
+}
+
+type ExecuteCombatActionResponseObject interface {
+	VisitExecuteCombatActionResponse(w http.ResponseWriter) error
+}
+
+type ExecuteCombatAction200JSONResponse ActionResponse
+
+func (response ExecuteCombatAction200JSONResponse) VisitExecuteCombatActionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ExecuteCombatAction400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response ExecuteCombatAction400JSONResponse) VisitExecuteCombatActionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ExecuteCombatAction403JSONResponse Error
+
+func (response ExecuteCombatAction403JSONResponse) VisitExecuteCombatActionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCombatLogsRequestObject struct {
+	SessionId SessionId `json:"sessionId"`
+	Params    GetCombatLogsParams
+}
+
+type GetCombatLogsResponseObject interface {
+	VisitGetCombatLogsResponse(w http.ResponseWriter) error
+}
+
+type GetCombatLogs200JSONResponse LogsResponse
+
+func (response GetCombatLogs200JSONResponse) VisitGetCombatLogsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCombatStateRequestObject struct {
+	SessionId SessionId `json:"sessionId"`
+}
+
+type GetCombatStateResponseObject interface {
+	VisitGetCombatStateResponse(w http.ResponseWriter) error
+}
+
+type GetCombatState200JSONResponse CombatState
+
+func (response GetCombatState200JSONResponse) VisitGetCombatStateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCombatStatsRequestObject struct {
+	SessionId SessionId `json:"sessionId"`
+}
+
+type GetCombatStatsResponseObject interface {
+	VisitGetCombatStatsResponse(w http.ResponseWriter) error
+}
+
+type GetCombatStats200JSONResponse StatsResponse
+
+func (response GetCombatStats200JSONResponse) VisitGetCombatStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+// StrictServerInterface represents all server handlers.
+type StrictServerInterface interface {
+	// Список сессий
+	// (GET /gameplay/combat/sessions)
+	ListCombatSessions(ctx context.Context, request ListCombatSessionsRequestObject) (ListCombatSessionsResponseObject, error)
+	// Создать боевую сессию
+	// (POST /gameplay/combat/sessions)
+	CreateCombatSession(ctx context.Context, request CreateCombatSessionRequestObject) (CreateCombatSessionResponseObject, error)
+	// Завершить сессию
+	// (DELETE /gameplay/combat/sessions/{sessionId})
+	EndCombatSession(ctx context.Context, request EndCombatSessionRequestObject) (EndCombatSessionResponseObject, error)
+	// Получить сессию
+	// (GET /gameplay/combat/sessions/{sessionId})
+	GetCombatSession(ctx context.Context, request GetCombatSessionRequestObject) (GetCombatSessionResponseObject, error)
+	// Выполнить действие
+	// (POST /gameplay/combat/sessions/{sessionId}/actions)
+	ExecuteCombatAction(ctx context.Context, request ExecuteCombatActionRequestObject) (ExecuteCombatActionResponseObject, error)
+	// Логи сессии
+	// (GET /gameplay/combat/sessions/{sessionId}/logs)
+	GetCombatLogs(ctx context.Context, request GetCombatLogsRequestObject) (GetCombatLogsResponseObject, error)
+	// Получить realtime состояние
+	// (GET /gameplay/combat/sessions/{sessionId}/state)
+	GetCombatState(ctx context.Context, request GetCombatStateRequestObject) (GetCombatStateResponseObject, error)
+	// Статистика сессии
+	// (GET /gameplay/combat/sessions/{sessionId}/stats)
+	GetCombatStats(ctx context.Context, request GetCombatStatsRequestObject) (GetCombatStatsResponseObject, error)
+}
+
+type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
+type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+
+type StrictHTTPServerOptions struct {
+	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
+	ResponseErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictHTTPServerOptions{
+		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		},
+		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		},
+	}}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictHTTPServerOptions) ServerInterface {
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
+}
+
+type strictHandler struct {
+	ssi         StrictServerInterface
+	middlewares []StrictMiddlewareFunc
+	options     StrictHTTPServerOptions
+}
+
+// ListCombatSessions operation middleware
+func (sh *strictHandler) ListCombatSessions(w http.ResponseWriter, r *http.Request, params ListCombatSessionsParams) {
+	var request ListCombatSessionsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCombatSessions(ctx, request.(ListCombatSessionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCombatSessions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCombatSessionsResponseObject); ok {
+		if err := validResponse.VisitListCombatSessionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateCombatSession operation middleware
+func (sh *strictHandler) CreateCombatSession(w http.ResponseWriter, r *http.Request) {
+	var request CreateCombatSessionRequestObject
+
+	var body CreateCombatSessionJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateCombatSession(ctx, request.(CreateCombatSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateCombatSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateCombatSessionResponseObject); ok {
+		if err := validResponse.VisitCreateCombatSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EndCombatSession operation middleware
+func (sh *strictHandler) EndCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+	var request EndCombatSessionRequestObject
+
+	request.SessionId = sessionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EndCombatSession(ctx, request.(EndCombatSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EndCombatSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EndCombatSessionResponseObject); ok {
+		if err := validResponse.VisitEndCombatSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCombatSession operation middleware
+func (sh *strictHandler) GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+	var request GetCombatSessionRequestObject
+
+	request.SessionId = sessionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCombatSession(ctx, request.(GetCombatSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCombatSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCombatSessionResponseObject); ok {
+		if err := validResponse.VisitGetCombatSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExecuteCombatAction operation middleware
+func (sh *strictHandler) ExecuteCombatAction(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+	var request ExecuteCombatActionRequestObject
+
+	request.SessionId = sessionId
+
+	var body ExecuteCombatActionJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ExecuteCombatAction(ctx, request.(ExecuteCombatActionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExecuteCombatAction")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExecuteCombatActionResponseObject); ok {
+		if err := validResponse.VisitExecuteCombatActionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCombatLogs operation middleware
+func (sh *strictHandler) GetCombatLogs(w http.ResponseWriter, r *http.Request, sessionId SessionId, params GetCombatLogsParams) {
+	var request GetCombatLogsRequestObject
+
+	request.SessionId = sessionId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCombatLogs(ctx, request.(GetCombatLogsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCombatLogs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCombatLogsResponseObject); ok {
+		if err := validResponse.VisitGetCombatLogsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCombatState operation middleware
+func (sh *strictHandler) GetCombatState(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+	var request GetCombatStateRequestObject
+
+	request.SessionId = sessionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCombatState(ctx, request.(GetCombatStateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCombatState")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCombatStateResponseObject); ok {
+		if err := validResponse.VisitGetCombatStateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCombatStats operation middleware
+func (sh *strictHandler) GetCombatStats(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+	var request GetCombatStatsRequestObject
+
+	request.SessionId = sessionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCombatStats(ctx, request.(GetCombatStatsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCombatStats")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCombatStatsResponseObject); ok {
+		if err := validResponse.VisitGetCombatStatsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
