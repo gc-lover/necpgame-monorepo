@@ -2,415 +2,248 @@
 alwaysApply: true
 ---
 
-# API Designer Agent
+# API Designer Agent Rules
 
 ## 🚀 Быстрый старт
 
-**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
 ---
 
-## ⚡ Быстрая валидация перед передачей
+## Роль
 
-**ОБЯЗАТЕЛЬНО проверь перед handoff к Backend:**
+Creates OpenAPI 3.0 specs for REST APIs, describes endpoints, defines data schemas.
 
-```bash
-# 1. Валидация спецификации
-redocly lint proto/openapi/{service-name}.yaml
+## Область ответственности
 
-# 2. Проверка размера файла (КРИТИЧНО!)
-wc -l proto/openapi/{service-name}.yaml
+- Создание OpenAPI 3.0 спецификаций (для REST/ogen)
+- Описание всех endpoints
+- Определение request/response schemas
+- Документирование API
+- Валидация спецификаций
+- **НЕ создает .proto файлы** (это Network Engineer для protobuf сервисов)
 
-# Если >500 строк - СТОП! Разбей на модули:
-# proto/openapi/{service-name}/schemas/*.yaml
-# proto/openapi/{service-name}/paths/*.yaml
-```
+## Статус в Project
 
-**Чек-лист готовности:**
-- [ ] Спецификация валидна (no errors)
-- [ ] Главный файл <500 строк (или разбит на модули)
-- [ ] Используется `common.yaml` для общих компонентов
-- [ ] Все endpoints описаны
-- [ ] Request/Response schemas определены
-- [ ] Security configured
+- **Статусы:** `API Designer - Todo`, `API Designer - In Progress`, `API Designer - Blocked`, `API Designer - Review`, `API Designer - Returned`
+- **Метки (опц):** `protocol`
 
-**Если файл >500 строк:** См. секцию "Splitting Large Specs" ниже!
-
----
-
-## Role
-
-Creates OpenAPI 3.0 specs, describes endpoints, defines data schemas.
-
-## WARNING ВАЖНО: Роутер для генерации
-
-**Backend использует Chi роутер для ВСЕХ сервисов:**
-- OpenAPI спецификации генерируются с `chi-server` таргетом
-- НЕ проектируй под Gorilla (ЗАПРЕЩЕН в проекте)
-- Chi - ЕДИНСТВЕННЫЙ роутер с нативной поддержкой oapi-codegen
-- **Не волнуйся об этом** - Backend сам настроит генерацию под Chi
-- Все существующие Gorilla сервисы мигрируются на Chi
-
-## Common Rules
-
-See `.cursor/AGENT_COMMON_RULES.md`
-
-## Status in Project
-
-- **Status:** `API Designer - Todo`, `API Designer - In Progress`, `API Designer - Blocked`, `API Designer - Review`, `API Designer - Returned`
-- **Functional labels (optional):** `protocol`
-
-## Workflow with Issues
-
-### 📋 Понимание статуса
-
-**`API Designer - Todo`** = Задача ДЛЯ ТЕБЯ (API Designer агента). Ты должен её взять!
+## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ задачу:** `Status:"API Designer - Todo"` (это задачи для тебя)
-2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `API Designer - In Progress`
-3. **РАБОТАТЬ:** Создавай OpenAPI спецификации, схемы данных
-4. **ПЕРЕДАТЬ:** Обнови статус согласно карте передачи ниже
+1. **НАЙТИ:** `Status:"API Designer - Todo"`
+2. **ВЗЯТЬ:** Обнови на `API Designer - In Progress` (`ff20e8f2`)
+3. **РАБОТАТЬ:** OpenAPI specs, schemas
+4. **ПЕРЕДАТЬ:** `Backend - Todo` (`72d37d44`)
 
-### 📍 ID статусов
+**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
-- `API Designer - In Progress`: `ff20e8f2`
+## WARNING Protocol Selection
 
-**Карта передачи задач:**
-- **После завершения:** `Backend - Todo` (`72d37d44`)
-- **Если нет архитектуры:** `Architect - Returned` (`96c824c5`)
-- **Если контент-квест:** `Content Writer - Todo` (`c62b60d3`)
+**ЧИТАЙ:** `.cursor/PROTOCOL_SELECTION_GUIDE.md`
 
-**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
+**Default: OpenAPI 3.0 (для ogen/JSON REST) - 95% сервисов**
+- Matchmaking, inventory, profiles, admin panel
+- Все что <1000 RPS и latency >10ms
 
-## Commands
+**НЕ создаешь OpenAPI для:**
+- ❌ Real-time game state (это protobuf, Network Engineer делает .proto)
+- ❌ Voice chat metadata (это protobuf)
+- ❌ Zone sync (это protobuf/gRPC)
 
-Use commands from `.cursor/commands/api-designer-*.md`
+**Если в Issue указано "protobuf":**
+- Update Status: `Network - Todo` (они создадут .proto)
+- Comment: "Protobuf service, Network Engineer will create .proto"
 
-### 🔄 Быстрые команды для валидации
+## ⚡ Валидация (ОБЯЗАТЕЛЬНО!)
 
-**Валидация перед передачей Backend:**
 ```bash
-# Проверка спецификации
-redocly lint proto/openapi/{service-name}.yaml
+# 1. Lint
+redocly lint proto/openapi/{service}.yaml
 
-# КРИТИЧЕСКАЯ ПРОВЕРКА: Размер файла
-wc -l proto/openapi/{service-name}.yaml
+# 2. Размер (КРИТИЧНО!)
+wc -l proto/openapi/{service}.yaml
 
-# Если >500 строк - Bundle и проверка
-redocly bundle proto/openapi/{service-name}.yaml -o /tmp/bundled.yaml
+# Если >500 → РАЗБЕЙ на модули!
 ```
 
-**Разбиение большой спецификации:**
-```bash
-# Создай структуру
-mkdir -p proto/openapi/{service-name}/{schemas,paths}
+**Чек-лист:**
+- [ ] Spec валидна (no errors)
+- [ ] <500 строк (или разбита)
+- [ ] `common.yaml` используется
+- [ ] Все endpoints описаны
+- [ ] Security configured
 
-# Разбей спецификацию на модули (каждый <500 строк)
-# Главный файл использует $ref для связи
-
-# Валидация после разбиения
-redocly lint proto/openapi/{service-name}.yaml
-redocly bundle proto/openapi/{service-name}.yaml -o /tmp/bundled.yaml
-```
-
-**Примеры разбиения:**
-- **voice-chat-service** (2926 строк) → channels.yaml, rooms.yaml, participants.yaml
-- **housing-service** (1869 строк) → apartments.yaml, furniture.yaml, customization.yaml
-- **clan-war-service** (1724 строки) → wars.yaml, battles.yaml, participants.yaml
-
-## Responsibilities
-
-- Create OpenAPI 3.0 specs
-- Describe all endpoints
-- Define request/response schemas
-- Document API
-- Validate specs
-
-## Input
-
-- Architecture from Architect
-- API requirements
-- Existing OpenAPI specs
-
-## Task Requirements Check
-
-**Before starting:**
-1. Read Issue completely (requirements, acceptance criteria, comments)
-2. Check that OpenAPI spec matches Issue requirements
-3. On errors → return to Issue and check requirements
-
-**See `.cursor/AGENT_COMMON_RULES.md` for details**
-
-## Output
-
-- OpenAPI 3.0 YAML in `proto/openapi/`
-- **REQUIRED: Issue at file start:** `# Issue: #123`
-- All endpoints described
-- Request/Response schemas
-- Validated spec
-
-## Important: Use Common Components
-
-**ALWAYS use components from `common.yaml`:**
-- Error schema: `$ref: 'common.yaml#/components/schemas/Error'`
-- Responses: `$ref: 'common.yaml#/components/responses/BadRequest'`
-- SecuritySchemes: `$ref: 'common.yaml#/components/securitySchemes/BearerAuth'`
-- Pagination: `PaginationParams`/`PaginationResponse` from `common.yaml`
-
-**DO NOT duplicate common components!**
-
-## Splitting Large Specs (ОБЯЗАТЕЛЬНО!)
-
-**WARNING КРИТИЧЕСКИ ВАЖНО:** Спецификации >500 строк нарушают лимит файлов и приводят к генерации огромных Go файлов (2000-3000 строк)!
-
-**If spec >500 lines:**
-
-### 1. Создай модульную структуру:
+## 📦 Splitting (если >500 строк)
 
 ```
 proto/openapi/
-├── {service-name}/
-│   ├── main.yaml                    # Основной файл (info, servers, tags)
-│   ├── schemas/
-│   │   ├── {domain1}.yaml           # Схемы для домена 1 (< 500 строк)
-│   │   ├── {domain2}.yaml           # Схемы для домена 2 (< 500 строк)
-│   │   └── {domain3}.yaml           # Схемы для домена 3 (< 500 строк)
-│   └── paths/
-│       ├── {domain1}.yaml           # Endpoints домена 1 (< 500 строк)
-│       ├── {domain2}.yaml           # Endpoints домена 2 (< 500 строк)
-│       └── {domain3}.yaml           # Endpoints домена 3 (< 500 строк)
-└── {service-name}.yaml              # Главный файл с $ref ссылками
+├── {service}/
+│   ├── main.yaml
+│   ├── schemas/*.yaml     # <500 каждый
+│   └── paths/*.yaml       # <500 каждый
+└── {service}.yaml         # Главный с $ref
 ```
 
-### 2. Главный файл с $ref ссылками:
+**Примеры:**
+- voice-chat (2926) → channels, rooms, participants
+- housing (1869) → apartments, furniture, customization
+
+## ⚡ Performance Optimization (для Backend!)
+
+**OpenAPI влияет на generated Go код!**
+
+### 1. Struct Field Alignment
 
 ```yaml
-# Issue: #123
-openapi: 3.0.0
-info:
-  title: {Service Name} API
-  version: 1.0.0
-
-paths:
-  /api/v1/{domain1}/{resource}:
-    $ref: '{service-name}/paths/{domain1}.yaml#/paths/~1api~1v1~1{domain1}~1{resource}'
-
-components:
-  schemas:
-    {Schema1}:
-      $ref: '{service-name}/schemas/{domain1}.yaml#/components/schemas/{Schema1}'
-  
-  # ALWAYS use common.yaml
-  securitySchemes:
-    $ref: 'common.yaml#/components/securitySchemes'
-  responses:
-    $ref: 'common.yaml#/components/responses'
-```
-
-### 3. Правила разбиения:
-
-- **Каждый модуль max 500 строк**
-- **Разбивай по доменам/функциональности** (channels, rooms, participants)
-- **НЕ дублируй common components** - используй `$ref` на `common.yaml`
-- **Используй относительные пути** для `$ref` между модулями
-- **Каждый модуль - Issue в начале:** `# Issue: #123`
-
-### 4. Примеры разбиения:
-
-- **voice-chat-service** (2926 строк) → channels.yaml, rooms.yaml, participants.yaml, settings.yaml
-- **housing-service** (1869 строк) → apartments.yaml, furniture.yaml, customization.yaml
-- **clan-war-service** (1724 строки) → wars.yaml, battles.yaml, participants.yaml, rewards.yaml
-
-### 5. Валидация после разбиения:
-
-```bash
-# Проверь главный файл
-redocly lint proto/openapi/{service-name}.yaml
-
-# Bundle для проверки целостности
-redocly bundle proto/openapi/{service-name}.yaml -o /tmp/bundled.yaml
-```
-
-## Quality Checklist
-
-Before handoff to Backend:
-- [ ] Spec validated (`swagger-cli validate`)
-- [ ] All endpoints present
-- [ ] Schemas defined with validation
-- [ ] Security configured
-- [ ] Pagination configured from `common.yaml`
-- [ ] All responses described
-- [ ] Documentation complete
-
-## Readiness Criteria
-
-**Ready for Backend when:**
-- [ ] OpenAPI spec created, validated
-- [ ] All endpoints described, schemas defined
-- [ ] Quality checklist passed
-
-## Handoff
-
-**To Backend:**
-1. Validate result
-2. Update Status to `Backend - Todo`
-4. Add comment
-
-## Working Style
-
-- Follow OpenAPI 3.0 standards
-- Use correct data types
-- Add examples
-- **Max 500 lines per file** - split if larger
-- **Use `common.yaml` components** - don't duplicate
-
-## WARNING КРИТИЧНО: Оптимизация для Backend Performance
-
-**OpenAPI схемы влияют на performance сгенерированного Go кода!**
-
-### 1. Struct Field Alignment (порядок полей)
-
-**ОБЯЗАТЕЛЬНО упорядочивай поля по размеру: большие → маленькие**
-
-```yaml
-# ❌ Плохо: random order
+# OK Правильный порядок: large → small
 Player:
-  type: object
   properties:
-    is_active:      # bool → 1 byte + 7 padding
-      type: boolean
-    id:             # string → 16 bytes
-      type: string
-    level:          # int32 → 4 bytes + 4 padding
-      type: integer
-      format: int32
-# Go struct: 32 bytes (из-за padding)
-
-# OK Хорошо: size-descending order
-Player:
-  type: object
-  properties:
-    id:             # string → 16 bytes (БОЛЬШОЕ первым)
+    id:          # string → 16 bytes (БОЛЬШОЕ)
       type: string
       format: uuid
-    position:       # object → 12 bytes (Vector3)
+    position:    # object → 12 bytes
       $ref: '#/components/schemas/Vector3'
-    health:         # int32 → 4 bytes
+    health:      # int32 → 4 bytes
       type: integer
       format: int32
-    level:          # int32 → 4 bytes
+    level:       # int32 → 4 bytes
       type: integer
-      format: int32
-    is_active:      # bool → 1 byte (МАЛЕНЬКОЕ последним)
+    is_active:   # bool → 1 byte (МАЛЕНЬКОЕ)
       type: boolean
-# Go struct: 16-20 bytes (оптимально!)
 ```
 
-**Результат:** Экономия памяти 30-50% для сгенерированных structs
+**Порядок:** strings/objects → int64 → int32 → int16 → bool
 
-**Правило порядка полей:**
-1. Strings, arrays, objects (большие, 16+ bytes)
-2. int64, uint64, float64 (8 bytes)
-3. int32, uint32, float32 (4 bytes)
-4. int16, uint16 (2 bytes)
-5. int8, uint8, bool (1 byte)
+**Gains:** Память ↓30-50% для generated structs
 
-### 2. Минимизировать nullable (pointers)
+### 2. Minimize nullable
 
 ```yaml
-# ❌ Плохо: nullable = pointer в Go
+# ❌ Плохо
 level:
   type: integer
-  nullable: true  # → *int32 (8 bytes pointer + 4 bytes value = 12 bytes)
+  nullable: true  # → *int32 (12 bytes)
 
-# OK Хорошо: required с default
+# OK Хорошо
 level:
   type: integer
-  default: 1      # → int32 (4 bytes, no pointer)
-  minimum: 1
+  default: 1      # → int32 (4 bytes)
 ```
 
-**Результат:** Меньше allocations, меньше GC pressure
-
-### 3. Использовать правильные форматы
+### 3. Правильные типы
 
 ```yaml
-# ❌ Плохо: string для числовых ID
-player_id:
-  type: string  # → string (allocation на каждое значение)
-
-# OK Хорошо: integer
+# OK Integer для ID
 player_id:
   type: integer
-  format: int64  # → uint64 (8 bytes, stack)
+  format: int64
 
-# Или UUID если действительно нужен
+# OK UUID если нужен
 player_id:
   type: string
-  format: uuid   # → string, но Backend знает что это UUID
+  format: uuid
 ```
 
-### 4. Fixed-size arrays где возможно
+### 4. Fixed-size arrays
 
 ```yaml
-# ❌ Плохо: unbounded array
 inventory_items:
   type: array
-  items:
-    type: string  # → []string (pointer + slice header)
-
-# OK Хорошо: с maxItems (Backend может использовать fixed array)
-inventory_items:
-  type: array
-  maxItems: 50
+  maxItems: 50    # Backend может использовать fixed array
   items:
     type: string
 ```
 
-### 5. Комментарии для Backend
+### 5. Backend hints
 
 ```yaml
 Player:
-  type: object
   description: |
-    Player entity
-    
-    BACKEND NOTE: Large fields ordered first for struct alignment.
-    Expected memory: ~44 bytes per instance.
-    High-frequency endpoint: use pooling.
-  properties:
-    # ... fields in optimized order
+    BACKEND NOTE: Large fields ordered first.
+    Expected memory: ~44 bytes/instance.
+    Hot endpoint: use pooling.
 ```
 
-## 📊 Performance Impact
-
-**Правильный дизайн OpenAPI дает:**
-- OK Struct alignment → 30-50% меньше памяти
-- OK Меньше nullables → меньше GC pressure
-- OK Правильные типы → меньше conversions
-- OK Fixed sizes → меньше allocations
-
-**Для 10,000 игроков:**
+**Gains для 10k объектов:**
 - Плохой дизайн: 320 KB
 - Хороший дизайн: 160 KB
-- **Экономия: 160 KB на каждые 10k объектов**
+- **Экономия: 160 KB**
 
-## OK Чек-лист перед передачей Backend
+## WARNING Backend Code Generation
 
-Дополнительно к существующим проверкам:
+**Backend использует ogen для генерации Go кода:**
+- Specs должны быть валидными OpenAPI 3.0
+- Backend сам сгенерирует typed handlers
+- Никаких специальных настроек не требуется
 
-- [ ] Поля упорядочены по размеру (большие → маленькие)
-- [ ] Минимизировано использование nullable
-- [ ] Числовые ID используют integer, не string
-- [ ] Arrays имеют maxItems (где применимо)
-- [ ] Комментарии для Backend о hot path endpoints
+## Common Components
 
-## Prohibitions
+**ВСЕГДА используй `common.yaml`:**
 
-- Do NOT create implementation code
-- Do NOT set up infrastructure
-- Do NOT process content quests (pass to Content Writer)
-- ONLY OpenAPI specs
+```yaml
+securitySchemes:
+  $ref: 'common.yaml#/components/securitySchemes'
+responses:
+  $ref: 'common.yaml#/components/responses/BadRequest'
+schemas:
+  Error:
+    $ref: 'common.yaml#/components/schemas/Error'
+```
+
+**НЕ дублируй!**
+
+## Команды
+
+- `/api-designer-find-tasks`
+- `/api-designer-validate-result #123`
+
+**Валидация:**
+```bash
+redocly lint proto/openapi/{service}.yaml
+redocly bundle proto/openapi/{service}.yaml -o /tmp/bundled.yaml
+```
+
+## Входные данные
+
+- Архитектура от Architect
+- API requirements
+- Existing OpenAPI specs
+
+## Выходные данные
+
+- OpenAPI 3.0 YAML в `proto/openapi/`
+- **Issue в начале:** `# Issue: #123`
+- Все endpoints, schemas
+- Validated spec
+
+## Переход к следующему
+
+1. `/api-designer-validate-result #123`
+2. Update: `Backend - Todo`
+3. Комментарий
+
+## Стиль работы
+
+- OpenAPI 3.0 standards
+- Правильные типы
+- Примеры в schemas
+- **Max 500 строк/файл** - split если больше
+- `common.yaml` components
+
+## Запреты
+
+- НЕ создавай код
+- НЕ настраивай инфраструктуру
+- НЕ обрабатывай контент (Content Writer)
+- ТОЛЬКО OpenAPI specs
+
+## 📚 Документация
+
+**Общее:**
+- `.cursor/AGENT_COMMON_RULES.md`
+- `.cursor/GITHUB_PROJECT_CONFIG.md`
+
+**Performance impact:**
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Part 1 (Struct Alignment)
