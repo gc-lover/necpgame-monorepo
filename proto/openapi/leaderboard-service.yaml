@@ -1,0 +1,162 @@
+# Issue: SOLID refactoring - create full OpenAPI spec for leaderboard-service
+openapi: 3.0.3
+
+info:
+  title: Leaderboard Service API
+  version: 1.0.0
+  description: Leaderboard and ranking system API
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8124
+    description: Local development
+
+tags:
+  - name: leaderboards
+    description: Leaderboard management
+  - name: rankings
+    description: Player rankings
+
+paths:
+  /api/v1/leaderboard/global:
+    get:
+      tags: [leaderboards]
+      summary: Get global leaderboard
+      operationId: getGlobalLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/LimitParam'
+        - $ref: 'common.yaml#/components/parameters/OffsetParam'
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, all-time]
+            default: all-time
+      responses:
+        '200':
+          description: Global leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+  
+  /api/v1/leaderboard/faction/{faction_id}:
+    get:
+      tags: [leaderboards]
+      summary: Get faction leaderboard
+      operationId: getFactionLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/LimitParam'
+        - $ref: 'common.yaml#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: Faction leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+  
+  /api/v1/leaderboard/player/{player_id}/rank:
+    get:
+      tags: [rankings]
+      summary: Get player rank
+      operationId: getPlayerRank
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Player rank info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRank'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  schemas:
+    LeaderboardEntry:
+      type: object
+      required: [rank, player_id, player_name, score]
+      properties:
+        rank:
+          type: integer
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        score:
+          type: integer
+        faction_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+    
+    PlayerRank:
+      type: object
+      required: [player_id, global_rank, faction_rank, score]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        global_rank:
+          type: integer
+        faction_rank:
+          type: integer
+        score:
+          type: integer
+        percentile:
+          type: number
+          format: double
+  
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+  
+  responses:
+    $ref: 'common.yaml#/components/responses'
+
+security:
+  - BearerAuth: []
+
