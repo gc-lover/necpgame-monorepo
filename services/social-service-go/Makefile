@@ -1,4 +1,4 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes generate-friends-api verify-friends-api
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes generate-friends-api verify-friends-api generate-groups-api verify-groups-api
 
 SERVICE_NAME := social-service
 OAPI_CODEGEN := oapi-codegen
@@ -28,6 +28,14 @@ FRIENDS_STATUS_SPEC_FILE := $(SPEC_DIR)/$(FRIENDS_STATUS_SPEC).yaml
 
 FRIENDS_BUNDLED := $(API_DIR)/friends/$(FRIENDS_CORE_SPEC).bundled.yaml
 FRIENDS_OUTPUT := $(API_DIR)/friends/api.gen.go
+
+# Groups API specs
+GROUPS_CORE_SPEC := social-group-core-service
+
+GROUPS_CORE_SPEC_FILE := $(SPEC_DIR)/$(GROUPS_CORE_SPEC).yaml
+
+GROUPS_BUNDLED := $(API_DIR)/groups/$(GROUPS_CORE_SPEC).bundled.yaml
+GROUPS_OUTPUT := $(API_DIR)/groups/api.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
@@ -98,16 +106,40 @@ verify-friends-api: check-deps
 	@$(REDOCLY_CLI) lint $(FRIENDS_CORE_SPEC_FILE) $(FRIENDS_REQUESTS_SPEC_FILE) $(FRIENDS_BLOCKS_SPEC_FILE) $(FRIENDS_STATUS_SPEC_FILE) || exit 1
 	@echo "OK Friends specs are valid"
 
-generate-api: generate-types generate-server generate-spec generate-friends-api check-file-sizes
+bundle-groups-api: check-deps
+	@echo "Bundling Groups OpenAPI specs..."
+	@mkdir -p $(API_DIR)/groups
+	@$(REDOCLY_CLI) bundle $(GROUPS_CORE_SPEC_FILE) -o $(GROUPS_BUNDLED) || exit 1
+	@echo "OK Bundled Groups spec: $(GROUPS_BUNDLED)"
+
+generate-groups-api: bundle-groups-api
+	@echo "Generating Groups Go code from: $(GROUPS_BUNDLED)"
+	@if [ ! -f "$(GROUPS_BUNDLED)" ]; then \
+		echo "❌ Bundled spec not found: $(GROUPS_BUNDLED)"; \
+		exit 1; \
+	fi
+	@$(OAPI_CODEGEN) -package groups -generate types,$(ROUTER_TYPE) -o $(GROUPS_OUTPUT) $(GROUPS_BUNDLED) || exit 1
+	@echo "OK Generated Groups code: $(GROUPS_OUTPUT)"
+
+verify-groups-api: check-deps
+	@echo "Verifying Groups OpenAPI specs..."
+	@if [ ! -f "$(GROUPS_CORE_SPEC_FILE)" ]; then \
+		echo "❌ OpenAPI spec not found: $(GROUPS_CORE_SPEC_FILE)"; \
+		exit 1; \
+	fi
+	@$(REDOCLY_CLI) lint $(GROUPS_CORE_SPEC_FILE) || exit 1
+	@echo "OK Groups specs are valid"
+
+generate-api: generate-types generate-server generate-spec generate-friends-api generate-groups-api check-file-sizes
 	@echo ""
 	@echo "OK Generation complete!"
 
-verify-api: check-deps verify-friends-api
+verify-api: check-deps verify-friends-api verify-groups-api
 	@echo "Verifying: $(SERVICE_SPEC)"
 	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
 	@echo "OK Valid"
 
 clean:
-	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE) $(FRIENDS_BUNDLED) $(FRIENDS_OUTPUT)
+	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE) $(FRIENDS_BUNDLED) $(FRIENDS_OUTPUT) $(GROUPS_BUNDLED) $(GROUPS_OUTPUT)
 

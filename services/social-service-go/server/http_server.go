@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/social-service-go/pkg/api"
+	"github.com/necpgame/social-service-go/pkg/api/groups"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -20,6 +21,11 @@ type HTTPServer struct {
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	handlers := NewServiceHandlers(logger)
 
+	// Initialize group service with in-memory repository
+	groupRepo := NewInMemoryGroupRepository()
+	groupService := NewGroupService(groupRepo)
+	groupHandlers := NewGroupHandlers(logger, groupService)
+
 	router := chi.NewRouter()
 
 	router.Use(loggingMiddleware(logger))
@@ -28,6 +34,11 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 
 	// Generated API handlers with Chi
 	api.HandlerWithOptions(handlers, api.ChiServerOptions{
+		BaseRouter: router,
+	})
+
+	// Groups API handlers
+	groups.HandlerWithOptions(groupHandlers, groups.ChiServerOptions{
 		BaseRouter: router,
 	})
 
