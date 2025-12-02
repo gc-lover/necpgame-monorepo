@@ -1,0 +1,480 @@
+# Issue: #142
+openapi: 3.0.0
+info:
+  title: Loot Service API
+  description: |
+    Loot Service управляет генерацией и распределением предметов из таблиц лута.
+    Поддерживает Smart Loot, Bad Luck Protection, roll системы и world drops.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necpgame.com
+    description: Production server
+  - url: https://staging-api.necpgame.com
+    description: Staging server
+
+tags:
+  - name: Loot Generation
+    description: Генерация лута
+  - name: Loot Distribution
+    description: Распределение и выдача лута
+  - name: World Drops
+    description: Управление физическими объектами лута в мире
+  - name: Roll Management
+    description: Управление roll системой
+
+paths:
+  /api/v1/loot/generate:
+    post:
+      tags: [Loot Generation]
+      summary: Сгенерировать лут из таблицы (internal API)
+      operationId: generateLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateLootRequest"
+      responses:
+        "200":
+          description: Лут сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateLootResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/loot/distribute:
+    post:
+      tags: [Loot Distribution]
+      summary: Распределить лут между игроками (internal API)
+      operationId: distributeLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributeLootRequest"
+      responses:
+        "200":
+          description: Лут распределён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DistributeLootResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/loot/world-drops/{locationId}:
+    parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [World Drops]
+      summary: Получить список world drops в локации
+      operationId: getWorldDrops
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список world drops
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorldDropsListResponse"
+
+  /api/v1/loot/world-drops/{dropId}/pickup:
+    parameters:
+      - name: dropId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [World Drops]
+      summary: Подобрать world drop
+      operationId: pickupWorldDrop
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Лут подобран
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PickupDropResponse"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Лут уже подобран или недоступен
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+
+  /api/v1/loot/rolls/{rollId}:
+    parameters:
+      - name: rollId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Roll Management]
+      summary: Получить информацию о roll
+      operationId: getRollStatus
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Информация о roll
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RollStatusResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/loot/rolls/{rollId}/roll:
+    parameters:
+      - name: rollId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Roll Management]
+      summary: Сделать roll на предмет
+      operationId: rollForItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RollRequest"
+      responses:
+        "200":
+          description: Roll сделан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RollResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "409":
+          description: Roll уже сделан или недоступен
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+
+  /api/v1/loot/rolls/{rollId}/pass:
+    parameters:
+      - name: rollId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Roll Management]
+      summary: Отказаться от roll на предмет
+      operationId: passRoll
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Pass сделан
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/loot/player/{playerId}/history:
+    parameters:
+      - $ref: "common.yaml#/components/parameters/PlayerId"
+    get:
+      tags: [Loot Distribution]
+      summary: Получить историю лута игрока
+      operationId: getPlayerLootHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum: [common, uncommon, rare, epic, legendary]
+      responses:
+        "200":
+          description: История лута
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootHistoryResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    GenerateLootRequest:
+      type: object
+      required:
+        - source_type
+        - source_id
+        - player_id
+      properties:
+        source_type:
+          type: string
+          enum: [boss, quest, chest, mob]
+          description: Тип источника лута
+        source_id:
+          type: string
+          description: ID источника (NPC ID, Quest ID, etc.)
+        player_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+          description: ID группы (для party loot)
+        luck_modifier:
+          type: number
+          format: float
+          description: Модификатор удачи
+
+    GenerateLootResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        currency:
+          type: object
+          description: Валютные награды
+        world_drop_id:
+          type: string
+          format: uuid
+          description: ID world drop (если создан)
+
+    LootItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        item_level:
+          type: integer
+        bound_on_pickup:
+          type: boolean
+
+    DistributeLootRequest:
+      type: object
+      required:
+        - items
+        - distribution_mode
+        - player_ids
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        distribution_mode:
+          type: string
+          enum: [personal, shared, roll, master_loot]
+        player_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        location_id:
+          type: string
+          format: uuid
+          description: ID локации для world drop
+
+    DistributeLootResponse:
+      type: object
+      properties:
+        distribution_type:
+          type: string
+          enum: [direct, world_drop, roll]
+        world_drop_id:
+          type: string
+          format: uuid
+        roll_id:
+          type: string
+          format: uuid
+        distributed_to:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    WorldDrop:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        location_id:
+          type: string
+          format: uuid
+        position:
+          type: object
+          description: Координаты (x, y, z)
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        currency:
+          type: object
+        drop_status:
+          type: string
+          enum: [available, picked_up, expired]
+        owner_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+        expires_at:
+          type: string
+          format: date-time
+
+    WorldDropsListResponse:
+      type: object
+      properties:
+        drops:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorldDrop"
+
+    PickupDropResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        currency:
+          type: object
+        picked_up_at:
+          type: string
+          format: date-time
+
+    RollRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        roll_type:
+          type: string
+          enum: [need, greed]
+          description: Тип roll
+
+    RollResponse:
+      type: object
+      properties:
+        roll_value:
+          type: integer
+          description: Результат roll (1-100)
+        is_winner:
+          type: boolean
+          description: Победил ли в roll
+
+    RollStatusResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        roll_results:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              roll_value:
+                type: integer
+              roll_type:
+                type: string
+                enum: [need, greed, pass]
+        winner_id:
+          type: string
+          format: uuid
+        roll_status:
+          type: string
+          enum: [pending, completed, expired]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    LootHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        item_id:
+          type: string
+          format: uuid
+        item_rarity:
+          type: string
+        quantity:
+          type: integer
+        source_type:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+
+    LootHistoryResponse:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootHistoryEntry"
+        total:
+          type: integer
+
