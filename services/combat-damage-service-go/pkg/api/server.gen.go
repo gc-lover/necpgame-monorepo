@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -27,6 +27,34 @@ type ServerInterface interface {
 	// Продление эффекта
 	// (POST /gameplay/combat/effects/{effect_id}/extend)
 	ExtendEffect(w http.ResponseWriter, r *http.Request, effectId openapi_types.UUID)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Применение эффектов
+// (POST /gameplay/combat/apply-effects)
+func (_ Unimplemented) ApplyEffects(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Расчёт урона
+// (POST /gameplay/combat/calculate-damage)
+func (_ Unimplemented) CalculateDamage(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Удаление эффекта
+// (DELETE /gameplay/combat/effects/{effect_id})
+func (_ Unimplemented) RemoveEffect(w http.ResponseWriter, r *http.Request, effectId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Продление эффекта
+// (POST /gameplay/combat/effects/{effect_id}/extend)
+func (_ Unimplemented) ExtendEffect(w http.ResponseWriter, r *http.Request, effectId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -86,7 +114,7 @@ func (siw *ServerInterfaceWrapper) RemoveEffect(w http.ResponseWriter, r *http.R
 	// ------------- Path parameter "effect_id" -------------
 	var effectId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "effect_id", mux.Vars(r)["effect_id"], &effectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "effect_id", chi.URLParam(r, "effect_id"), &effectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "effect_id", Err: err})
 		return
@@ -117,7 +145,7 @@ func (siw *ServerInterfaceWrapper) ExtendEffect(w http.ResponseWriter, r *http.R
 	// ------------- Path parameter "effect_id" -------------
 	var effectId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "effect_id", mux.Vars(r)["effect_id"], &effectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "effect_id", chi.URLParam(r, "effect_id"), &effectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "effect_id", Err: err})
 		return
@@ -211,36 +239,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -253,13 +281,18 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/gameplay/combat/apply-effects", wrapper.ApplyEffects).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/gameplay/combat/calculate-damage", wrapper.CalculateDamage).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/gameplay/combat/effects/{effect_id}", wrapper.RemoveEffect).Methods("DELETE")
-
-	r.HandleFunc(options.BaseURL+"/gameplay/combat/effects/{effect_id}/extend", wrapper.ExtendEffect).Methods("POST")
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/gameplay/combat/apply-effects", wrapper.ApplyEffects)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/gameplay/combat/calculate-damage", wrapper.CalculateDamage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/gameplay/combat/effects/{effect_id}", wrapper.RemoveEffect)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/gameplay/combat/effects/{effect_id}/extend", wrapper.ExtendEffect)
+	})
 
 	return r
 }

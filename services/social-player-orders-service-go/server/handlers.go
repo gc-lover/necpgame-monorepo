@@ -5,26 +5,34 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/pkg/api"
+	"github.com/oapi-codegen/runtime/types"
 )
 
+// OrderHandlers implements api.ServerInterface
 type OrderHandlers struct {
 	service *OrderService
 }
 
+// NewOrderHandlers creates handlers with DI
 func NewOrderHandlers(service *OrderService) *OrderHandlers {
 	return &OrderHandlers{
 		service: service,
 	}
 }
 
-// ListOrders handles GET /social/orders
-func (h *OrderHandlers) ListOrders(w http.ResponseWriter, r *http.Request) {
+// ListOrders implements api.ServerInterface
+func (h *OrderHandlers) ListOrders(w http.ResponseWriter, r *http.Request, params api.ListOrdersParams) {
 	ctx := r.Context()
 
-	// Parse query parameters
-	orderType := r.URL.Query().Get("orderType")
-	status := r.URL.Query().Get("status")
+	// Convert params to service format
+	var orderType, status string
+	if params.OrderType != nil {
+		orderType = string(*params.OrderType)
+	}
+	if params.Status != nil {
+		status = string(*params.Status)
+	}
 
 	// Get orders from service
 	orders, err := h.service.ListOrders(ctx, orderType, status)
@@ -70,12 +78,11 @@ func (h *OrderHandlers) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, order)
 }
 
-// GetOrder handles GET /social/orders/{orderId}
-func (h *OrderHandlers) GetOrder(w http.ResponseWriter, r *http.Request) {
+// GetOrder implements api.ServerInterface
+func (h *OrderHandlers) GetOrder(w http.ResponseWriter, r *http.Request, orderId types.UUID) {
 	ctx := r.Context()
-	orderID := chi.URLParam(r, "orderId")
 
-	order, err := h.service.GetOrder(ctx, orderID)
+	order, err := h.service.GetOrder(ctx, orderId.String())
 	if err != nil {
 		respondError(w, http.StatusNotFound, "Order not found", err)
 		return
@@ -84,15 +91,14 @@ func (h *OrderHandlers) GetOrder(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, order)
 }
 
-// AcceptOrder handles POST /social/orders/{orderId}/accept
-func (h *OrderHandlers) AcceptOrder(w http.ResponseWriter, r *http.Request) {
+// AcceptOrder implements api.ServerInterface
+func (h *OrderHandlers) AcceptOrder(w http.ResponseWriter, r *http.Request, orderId types.UUID) {
 	ctx := r.Context()
-	orderID := chi.URLParam(r, "orderId")
 
 	// TODO: Get player ID from auth context
 	playerID := "player-001"
 
-	if err := h.service.AcceptOrder(ctx, orderID, playerID); err != nil {
+	if err := h.service.AcceptOrder(ctx, orderId.String(), playerID); err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to accept order", err)
 		return
 	}
@@ -102,12 +108,25 @@ func (h *OrderHandlers) AcceptOrder(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// CompleteOrder handles POST /social/orders/{orderId}/complete
-func (h *OrderHandlers) CompleteOrder(w http.ResponseWriter, r *http.Request) {
+// StartOrder implements api.ServerInterface
+func (h *OrderHandlers) StartOrder(w http.ResponseWriter, r *http.Request, orderId types.UUID) {
 	ctx := r.Context()
-	orderID := chi.URLParam(r, "orderId")
 
-	if err := h.service.CompleteOrder(ctx, orderID); err != nil {
+	if err := h.service.StartOrder(ctx, orderId.String()); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to start order", err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Order started successfully",
+	})
+}
+
+// CompleteOrder implements api.ServerInterface
+func (h *OrderHandlers) CompleteOrder(w http.ResponseWriter, r *http.Request, orderId types.UUID) {
+	ctx := r.Context()
+
+	if err := h.service.CompleteOrder(ctx, orderId.String()); err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to complete order", err)
 		return
 	}
@@ -117,18 +136,41 @@ func (h *OrderHandlers) CompleteOrder(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// CancelOrder handles POST /social/orders/{orderId}/cancel
-func (h *OrderHandlers) CancelOrder(w http.ResponseWriter, r *http.Request) {
+// CancelOrder implements api.ServerInterface
+func (h *OrderHandlers) CancelOrder(w http.ResponseWriter, r *http.Request, orderId types.UUID) {
 	ctx := r.Context()
-	orderID := chi.URLParam(r, "orderId")
 
-	if err := h.service.CancelOrder(ctx, orderID); err != nil {
+	if err := h.service.CancelOrder(ctx, orderId.String()); err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to cancel order", err)
 		return
 	}
 
 	respondJSON(w, http.StatusOK, map[string]string{
 		"message": "Order cancelled successfully",
+	})
+}
+
+// ReviewOrder implements api.ServerInterface
+func (h *OrderHandlers) ReviewOrder(w http.ResponseWriter, r *http.Request, orderId types.UUID) {
+	ctx := r.Context()
+
+	var req struct {
+		Rating  int    `json:"rating"`
+		Comment string `json:"comment"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
+
+	if err := h.service.ReviewOrder(ctx, orderId.String(), req.Rating, req.Comment); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to review order", err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Review submitted successfully",
 	})
 }
 

@@ -1,673 +1,328 @@
+# Issue: #142
+
 metadata:
-  id: loot-system-architecture
-  title: Архитектура системы лута (Loot System)
+  id: architecture-loot-system
+  title: "Loot System Architecture"
   document_type: architecture
-  category: systems
+  category: implementation
   status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-30T19:10:00Z
+  version: "1.0.0"
+  last_updated: 2025-12-02T18:25:00Z
   owners:
     - role: architect
-      contact: architect@necp.game
   tags:
-    - architecture
     - loot
-    - backend
     - economy
+    - gameplay
+    - architecture
   related_systems:
-    - loot-service-go
-    - economy-service-go
-    - gameplay-service-go
-    - inventory-service-go
-    - party-service-go
+    - economy-service
+    - gameplay-service
+    - inventory-service
+    - character-service
   related_documents:
-    - id: backend-loot-system-part1
-      relation: extends
-    - id: implementation-backend-loot-system-part2
-      relation: extends
-  github_issue: 142
-  visibility: internal
-  audience:
-    - architect
-    - backend
-    - api-designer
+    - id: loot-system-part1
+      relation: implements
+    - id: loot-system-part2
+      relation: implements
 
 summary:
-  problem: |
-    Требуется спроектировать полную техническую архитектуру системы лута
-    для генерации, распределения и выдачи предметов игрокам после боевых
-    действий, квестов и других событий с поддержкой различных режимов
-    распределения и продвинутых механик.
-  goal: |
-    Создать архитектурную схему системы лута с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Системы генерации лута
-    - Системы распределения лута
-    - Технического задания для реализации
-  essence: |
-    Экономическая система генерации и распределения лута с поддержкой
-    различных режимов (personal, party, shared), roll системы, smart loot,
-    world drops и гарантированных наград боссов.
+  problem: "Необходима архитектура генерации и распределения лута."
+  goal: "Спроектировать систему лута с loot tables, smart loot, boss rewards."
+  essence: "Архитектура описывает генерацию, распределение, roll system."
 
-architecture:
-  overview: |
-    Система лута состоит из шести основных компонентов:
-    1. Loot Generator - генерация лута из таблиц
-    2. Loot Distributor - распределение лута между игроками
-    3. Loot Roll Manager - управление roll системой для групп
-    4. Smart Loot Engine - умный лут с защитой от плохой удачи
-    5. World Drop Manager - управление мировыми дропами
-    6. Boss Loot Handler - обработка гарантированных наград боссов
+content:
+  sections:
+    - id: system-overview
+      title: "Обзор системы"
+      body: |
+        Loot System управляет:
+        - Генерация предметов из loot tables
+        - Распределение лута (personal/shared/roll)
+        - Smart loot (адаптация под класс)
+        - Boss guaranteed rewards
+        - Bad Luck Protection
+        - World drops management
+        - Anti-duplicate protection
 
-  components:
-    - name: Loot Generator
-      location: loot-service-go (модуль loot-generation)
-      responsibility: |
-        - Генерация лута из loot tables
-        - Применение luck модификаторов
-        - Генерация валюты
-        - Создание world drops
-        - Обработка различных источников лута (NPC, контейнеры, квесты)
-      loot_sources: |
-        - NPC death: лут при смерти NPC
-        - Container: лут из контейнеров
-        - Quest reward: награды за квесты
-        - Boss kill: лут от боссов
-        - World event: лут от мировых событий
-      endpoints:
-        - POST /api/v1/economy/loot/generate - генерация лута
-        - GET /api/v1/economy/loot/tables/{table_id} - получение loot table
-        - POST /api/v1/economy/loot/apply-luck - применение luck модификатора
+        Принципы:
+        - RNG с seed для воспроизводимости
+        - Smart loot для релевантности
+        - Fair distribution в группах
+        - Guaranteed rewards для боссов
+        - Event-driven интеграция
 
-    - name: Loot Distributor
-      location: loot-service-go (модуль loot-distribution)
-      responsibility: |
-        - Распределение лута между игроками
-        - Обработка различных режимов распределения
-        - Интеграция с inventory-service
-        - Уведомления о получении лута
-      distribution_modes: |
-        - personal: личный лут для каждого игрока
-        - party: общий лут для группы (с roll системой)
-        - shared: общий лут для всех участников
-        - boss: специальный режим для боссов
-      endpoints:
-        - POST /api/v1/economy/loot/distribute - распределение лута
-        - GET /api/v1/economy/loot/distribution/{distribution_id} - статус распределения
+    - id: components
+      title: "Компоненты"
+      body: |
+        ## economy-service (Loot Module)
+        **Ответственность:** Генерация и распределение лута
+        **Технологии:** Go, PostgreSQL, Redis, Kafka
+        **API:** `/api/v1/economy/loot/*`
+        
+        Компоненты:
+        - LootGenerator - генерация из tables
+        - SmartLootEngine - адаптация под класс
+        - DistributionManager - распределение в группах
+        - RollSystem - roll механика
+        - BadLuckProtection - гарантии дропа
 
-    - name: Loot Roll Manager
-      location: loot-service-go (модуль loot-rolls)
-      responsibility: |
-        - Управление roll системой для групп
-        - Создание roll сессий
-        - Обработка бросков игроков
-        - Определение победителя
-        - Таймауты и автоматическое распределение
-      roll_mechanics: |
-        - Need/Greed система
-        - Таймаут на выбор (30 секунд)
-        - Автоматическое распределение при таймауте
-        - Логирование всех бросков
-      endpoints:
-        - POST /api/v1/economy/loot/rolls/create - создание roll сессии
-        - POST /api/v1/economy/loot/rolls/{roll_id}/roll - бросок кубика
-        - GET /api/v1/economy/loot/rolls/{roll_id} - статус roll сессии
-        - POST /api/v1/economy/loot/rolls/{roll_id}/claim - получение предмета
+        ## Интеграции
+        - **Gameplay Service:** События combat:enemy-killed, raid:boss-defeated
+        - **Inventory Service:** Добавление предметов
+        - **Character Service:** Класс, специализация, luck stats
+        - **Party Service:** Режим распределения, участники
 
-    - name: Smart Loot Engine
-      location: loot-service-go (модуль smart-loot)
-      responsibility: |
-        - Умный лут с учётом истории игрока
-        - Защита от плохой удачи (Bad Luck Protection)
-        - Адаптация под стиль игры игрока
-        - Предотвращение дубликатов
-      smart_loot_features: |
-        - Отслеживание полученных предметов
-        - Приоритет новых предметов
-        - Адаптация под класс персонажа
-        - Учёт активности игрока
-      endpoints:
-        - POST /api/v1/economy/loot/smart/generate - умная генерация лута
-        - GET /api/v1/economy/loot/smart/history/{player_id} - история лута игрока
+    - id: api-endpoints
+      title: "API Endpoints"
+      body: |
+        ## Loot Drops
+        
+        GET /api/v1/economy/loot/drops/nearby
+        - Предметы в радиусе
+        - Query: position, radius
+        - Response: Array of world drops
 
-    - name: World Drop Manager
-      location: loot-service-go (модуль world-drops)
-      responsibility: |
-        - Управление мировыми дропами
-        - Создание world drops на карте
-        - Обработка подбора world drops
-        - Очистка истечённых world drops
-      world_drop_features: |
-        - Создание дропов на карте
-        - Визуализация для всех игроков
-        - Первый подобрал - получил
-        - Таймаут на подбор (5 минут)
-      endpoints:
-        - POST /api/v1/economy/loot/world-drops/create - создание world drop
-        - POST /api/v1/economy/loot/world-drops/{drop_id}/pickup - подбор world drop
-        - GET /api/v1/economy/loot/world-drops/nearby - ближайшие world drops
+        POST /api/v1/economy/loot/pickup
+        - Подбор предмета
+        - Request: drop_id
+        - Response: Item added to inventory
 
-    - name: Boss Loot Handler
-      location: loot-service-go (модуль boss-loot)
-      responsibility: |
-        - Обработка гарантированных наград боссов
-        - Специальные loot tables для боссов
-        - Распределение наград между участниками
-        - Уникальные предметы боссов
-      boss_loot_features: |
-        - Гарантированные награды
-        - Уникальные предметы
-        - Персональные награды для каждого участника
-        - Дополнительные награды за первый kill
-      endpoints:
-        - POST /api/v1/economy/loot/boss/generate - генерация лута босса
-        - POST /api/v1/economy/loot/boss/distribute - распределение наград босса
+        GET /api/v1/economy/loot/history
+        - История лута
+        - Query: limit, offset
+        - Response: Array of loot history
 
-  data_flow:
-    loot_generation: |
-      1. Событие происходит (NPC смерть, контейнер открыт, квест завершён)
-      2. Gameplay Service отправляет запрос на генерацию лута
-      3. Loot Generator выбирает loot table
-      4. Применяются luck модификаторы
-      5. Генерируются предметы и валюта
-      6. Определяется режим распределения
-      7. Loot Distributor распределяет лут
-      8. Inventory Service добавляет предметы
-      9. Notification Service уведомляет игроков
+        ## Loot Rolls
 
-    party_loot_distribution: |
-      1. Генерируется лут для группы
-      2. Loot Roll Manager создаёт roll сессию
-      3. Участники делают выбор (Need/Greed)
-      4. Определяется победитель
-      5. Предмет выдаётся победителю
-      6. Остальные предметы распределяются автоматически
-      7. Realtime Gateway синхронизирует состояние
+        GET /api/v1/economy/loot/rolls/active
+        - Активные roll'ы
+        - Response: Array of active rolls
 
-    world_drop_creation: |
-      1. Генерируется world drop
-      2. World Drop Manager создаёт дроп на карте
-      3. Координаты сохраняются в БД
-      4. Realtime Gateway уведомляет игроков в зоне
-      5. Игрок подбирает дроп
-      6. World Drop Manager обрабатывает подбор
-      7. Inventory Service добавляет предмет
+        POST /api/v1/economy/loot/rolls/{rollId}/submit
+        - Отправить roll
+        - Request: choice (need/greed/pass)
+        - Response: Roll result
 
-  integrations:
-    with_gameplay_service: |
-      - Получение событий о смерти NPC, открытии контейнеров
-      - Интеграция с боевыми сессиями
-      - Интеграция с квестами для наград
+        ## Loot Settings
 
-    with_inventory_service: |
-      - Добавление предметов в инвентарь
-      - Проверка свободного места
-      - Обработка переполнения инвентаря
+        PUT /api/v1/economy/loot/settings
+        - Настройки auto-loot
+        - Request: auto_loot preferences
+        - Response: Updated settings
 
-    with_party_service: |
-      - Получение информации о группе
-      - Распределение лута между участниками
-      - Roll система для групп
+    - id: database
+      title: "База данных"
+      body: |
+        ## loot_tables
+        ```sql
+        CREATE TABLE loot_tables (
+          id UUID PRIMARY KEY,
+          source_type VARCHAR(50),
+          source_id VARCHAR(100),
+          item_template_id UUID,
+          drop_chance DECIMAL(5,4),
+          min_quantity INT,
+          max_quantity INT,
+          min_quality INT,
+          max_quality INT,
+          rarity VARCHAR(20),
+          level_requirement INT,
+          conditions JSONB
+        );
+        ```
 
-    with_economy_service: |
-      - Выдача валюты
-      - Интеграция с экономической системой
-      - Учёт стоимости предметов
+        ## world_drops
+        ```sql
+        CREATE TABLE world_drops (
+          id UUID PRIMARY KEY,
+          items JSONB,
+          currency JSONB,
+          position JSONB,
+          zone_id VARCHAR(100),
+          created_at TIMESTAMP,
+          expires_at TIMESTAMP,
+          picked_up BOOLEAN,
+          picked_up_by UUID,
+          loot_mode VARCHAR(20)
+        );
+        ```
 
-    with_character_service: |
-      - Получение данных персонажа (luck, уровень)
-      - Применение модификаторов
-      - Учёт класса персонажа для smart loot
+        ## loot_rolls
+        ```sql
+        CREATE TABLE loot_rolls (
+          id UUID PRIMARY KEY,
+          party_id UUID,
+          item_id UUID,
+          roll_type VARCHAR(20),
+          participants JSONB,
+          results JSONB,
+          winner_id UUID,
+          status VARCHAR(20),
+          created_at TIMESTAMP,
+          expires_at TIMESTAMP
+        );
+        ```
 
-    with_realtime_gateway: |
-      - Уведомления о получении лута
-      - Синхронизация roll сессий
-      - Уведомления о world drops
+        ## loot_history
+        ```sql
+        CREATE TABLE loot_history (
+          id UUID PRIMARY KEY,
+          player_id UUID,
+          item_id UUID,
+          quantity INT,
+          source_type VARCHAR(50),
+          source_id UUID,
+          timestamp TIMESTAMP,
+          rarity VARCHAR(20)
+        );
+        ```
 
-  database_schema:
-    tables:
-      - name: loot_tables
-        description: Таблицы лута
-        fields:
-          - id: UUID (PK)
-          - name: VARCHAR(255)
-          - source_type: ENUM (npc, container, quest, boss, world_event)
-          - source_id: UUID
-          - min_items: INTEGER
-          - max_items: INTEGER
-          - currency_min: DECIMAL(20,2)
-          - currency_max: DECIMAL(20,2)
-          - luck_modifier: DECIMAL(5,2)
-          - is_active: BOOLEAN
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - source_type, source_id
-          - is_active
+    - id: loot-generation
+      title: "Генерация лута"
+      body: |
+        ## Loot Flow
 
-      - name: loot_table_entries
-        description: Записи в таблицах лута
-        fields:
-          - id: UUID (PK)
-          - loot_table_id: UUID (FK loot_tables)
-          - item_template_id: UUID (FK item_templates)
-          - weight: INTEGER
-          - min_quantity: INTEGER
-          - max_quantity: INTEGER
-          - drop_chance: DECIMAL(5,2)
-          - is_guaranteed: BOOLEAN
-          - min_level: INTEGER
-          - max_level: INTEGER
-        indexes:
-          - loot_table_id
-          - item_template_id
+        1. Enemy/Boss defeated
+        2. Gameplay Service → Event: combat:enemy-killed
+        3. Loot Service (consumer) → Triggered
+        4. Load loot_tables for source
+        5. RNG generation (with luck modifiers)
+        6. Smart Loot filter (class adaptation)
+        7. Bad Luck Protection check
+        8. Create world_drop OR direct add to inventory
+        9. Publish event: loot:generated
 
-      - name: loot_distributions
-        description: Распределения лута
-        fields:
-          - id: UUID (PK)
-          - source_type: ENUM (npc, container, quest, boss)
-          - source_id: UUID
-          - distribution_mode: ENUM (personal, party, shared, boss)
-          - party_id: UUID (FK parties, nullable)
-          - status: ENUM (pending, distributed, expired)
-          - created_at: TIMESTAMP
-          - distributed_at: TIMESTAMP (nullable)
-        indexes:
-          - source_type, source_id
-          - party_id, status
-          - status, created_at
+        ## Smart Loot Algorithm
 
-      - name: loot_distribution_items
-        description: Предметы в распределениях
-        fields:
-          - id: UUID (PK)
-          - distribution_id: UUID (FK loot_distributions)
-          - item_template_id: UUID (FK item_templates)
-          - quantity: INTEGER
-          - assigned_to: UUID (FK accounts, nullable)
-          - status: ENUM (pending, assigned, claimed)
-        indexes:
-          - distribution_id
-          - assigned_to, status
+        1. Get character class/specialization
+        2. Filter loot for relevant stats
+        3. Increase probability for class items
+        4. Remove irrelevant items
+        5. Apply luck modifiers
 
-      - name: loot_rolls
-        description: Roll сессии для групп
-        fields:
-          - id: UUID (PK)
-          - distribution_id: UUID (FK loot_distributions)
-          - item_id: UUID (FK loot_distribution_items)
-          - party_id: UUID (FK parties)
-          - status: ENUM (active, completed, expired)
-          - expires_at: TIMESTAMP
-          - winner_id: UUID (FK accounts, nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - distribution_id
-          - party_id, status
-          - expires_at
+        ## Bad Luck Protection
 
-      - name: loot_roll_participants
-        description: Участники roll сессий
-        fields:
-          - id: UUID (PK)
-          - roll_id: UUID (FK loot_rolls)
-          - account_id: UUID (FK accounts)
-          - choice: ENUM (need, greed, pass)
-          - roll_value: INTEGER
-          - rolled_at: TIMESTAMP (nullable)
-        indexes:
-          - roll_id, account_id (unique)
-          - roll_id, choice
+        - Track legendary drops per player
+        - If no legendary drop in 7 days → guarantee next
+        - Reset timer after legendary drop
+        - Storage: PostgreSQL + Redis cache
 
-      - name: world_drops
-        description: Мировые дропы
-        fields:
-          - id: UUID (PK)
-          - item_template_id: UUID (FK item_templates)
-          - quantity: INTEGER
-          - location_x: DECIMAL(10,2)
-          - location_y: DECIMAL(10,2)
-          - location_z: DECIMAL(10,2)
-          - world_id: UUID
-          - status: ENUM (active, picked_up, expired)
-          - created_at: TIMESTAMP
-          - expires_at: TIMESTAMP
-          - picked_up_by: UUID (FK accounts, nullable)
-          - picked_up_at: TIMESTAMP (nullable)
-        indexes:
-          - world_id, location_x, location_y
-          - status, expires_at
-          - status, created_at
+    - id: distribution
+      title: "Распределение лута"
+      body: |
+        ## Personal Loot
 
-      - name: player_loot_history
-        description: История лута игроков (для smart loot)
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - item_template_id: UUID (FK item_templates)
-          - source_type: ENUM (npc, container, quest, boss)
-          - obtained_at: TIMESTAMP
-          - luck_value: DECIMAL(5,2)
-        indexes:
-          - player_id, obtained_at
-          - item_template_id, player_id
+        - Each player gets own loot
+        - No competition
+        - Auto-pickup available
+        - Best for solo/casual
 
-technical_specification:
-  backend_requirements:
-    - Реализация модулей в loot-service-go:
-      - loot-generation (генерация лута)
-      - loot-distribution (распределение)
-      - loot-rolls (roll система)
-      - smart-loot (умный лут)
-      - world-drops (мировые дропы)
-      - boss-loot (лут боссов)
-    - Интеграция с gameplay-service для событий
-    - Интеграция с inventory-service для выдачи предметов
-    - Интеграция с party-service для группового лута
-    - Оптимизация запросов к БД (индексы, кэширование)
+        ## Party Roll
 
-  realtime_requirements:
-    - Уведомления о получении лута через WebSocket
-    - Синхронизация roll сессий в реальном времени
-    - Уведомления о world drops в зоне
+        - Items go to roll system
+        - Players: Need/Greed/Pass
+        - Highest roll wins
+        - Timeout: 60 seconds
+        - Fair for groups
 
-  performance_requirements:
-    - Генерация лута < 50ms
-    - Распределение лута < 100ms
-    - Создание roll сессии < 30ms
-    - Поддержка до 1000 активных world drops
-    - Поддержка до 100 активных roll сессий
+        ## Master Loot
 
-  scalability_requirements:
-    - Горизонтальное масштабирование через loot-service
-    - Распределение нагрузки на генерацию лута
-    - Оптимизация запросов к БД (batch, индексы)
-    - Кэширование loot tables
+        - Party leader distributes
+        - Manual assignment
+        - For organized groups/guilds
 
-  data_consistency:
-    strategy: Strong Consistency (ACID транзакции) для критичных операций
-    mechanisms:
-      - ACID транзакции для генерации и распределения лута
-      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
-      - Валидация перед выдачей предметов
-      - Синхронизация с другими сервисами через Event Bus
-      - Outbox Pattern для гарантированной доставки событий
-      - Saga Pattern для распределенных операций (генерация, распределение, выдача)
+        ## Boss Loot
 
-  data_synchronization:
-    event_sourcing: |
-      Все изменения лута записываются как события:
-      - LootGeneratedEvent - лут сгенерирован
-      - LootDistributedEvent - лут распределен
-      - LootRollCreatedEvent - roll сессия создана
-      - LootRollCompletedEvent - roll сессия завершена
-      - WorldDropCreatedEvent - world drop создан
-      - WorldDropPickedUpEvent - world drop подобран
-      
-      События хранятся в Event Store (Kafka topics) для:
-      - Восстановления состояния лута
-      - Аудит-лога операций
-      - Синхронизации с другими сервисами
-      - Аналитики и мониторинга
+        - Guaranteed rewards for all participants
+        - Extra boss-specific loot (roll)
+        - Achievement publishing
+        - Logging for audit
 
-    cqrs_pattern: |
-      Разделение команд и запросов:
-      - Write Model: Loot Generator обрабатывает команды (generate, distribute)
-      - Read Model: Оптимизированные представления для быстрого чтения лута
-      - Projections: Материализованные представления для частых запросов
-      - Event Handlers: Обработка событий для обновления read-моделей
+    - id: events
+      title: "Event Sourcing"
+      body: |
+        ## Topics
 
-    saga_pattern: |
-      Для распределенных операций:
-      - Loot Generation Saga: координация между loot, inventory, economy сервисами
-      - Loot Distribution Saga: координация между loot, party, inventory сервисами
-      - World Drop Pickup Saga: координация между loot, inventory, world сервисами
-      
-      Компенсирующие транзакции:
-      - Откат операций при ошибках
-      - Восстановление состояния при сбоях
+        ### loot.generated
+        ```json
+        {
+          "event_type": "loot.generated",
+          "source_type": "enemy",
+          "source_id": "uuid",
+          "items": [...],
+          "player_ids": [...]
+        }
+        ```
 
-    outbox_pattern: |
-      Гарантированная доставка событий:
-      - Запись событий в outbox таблицу в той же транзакции
-      - Outbox Processor публикует события в Event Bus
-      - Retry механизм для failed событий
-      - Идемпотентность обработки событий
+        ### loot.picked_up
+        ```json
+        {
+          "event_type": "loot.picked_up",
+          "player_id": "uuid",
+          "item_id": "uuid",
+          "drop_id": "uuid"
+        }
+        ```
 
-  tickrate_specification:
-    loot_operations:
-      tickrate: Event-based (on-demand)
-      description: |
-        Операции с лутом выполняются по требованию (event-based),
-        не требуют постоянного тикрейта.
-      network_load: |
-        - Генерация лута: event-based, ~5-10 events/sec на сервер
-        - Распределение лута: event-based, ~3-5 events/sec
-        - Roll сессии: event-based, ~1-3 events/sec
-        - World drops: event-based, ~0.5-1 events/sec
-        - Общий трафик: ~0.5-1 KB/sec на игрока
-      sync_strategy: Strong Consistency (ACID транзакции) для операций, Eventual для статистики
-      latency_requirements: |
-        - Генерация лута: < 50ms
-        - Распределение лута: < 100ms
-        - Создание roll сессии: < 30ms
-        - Подбор world drop: < 50ms
+        ### legendary.dropped
+        ```json
+        {
+          "event_type": "legendary.dropped",
+          "player_id": "uuid",
+          "item_id": "uuid",
+          "rarity": "legendary"
+        }
+        ```
 
-subtasks:
-  - id: loot-generator-module
-    title: Реализация модуля Loot Generator
-    description: |
-      Генерация лута из таблиц
-      Применение luck модификаторов
-      Создание world drops
-    priority: high
-    estimated_time: 4-5 дней
+        ## Consumers
+        - Inventory Service: Add items
+        - Achievement Service: Legendary drops
+        - Analytics Service: Loot statistics
 
-  - id: loot-distributor-implementation
-    title: Реализация Loot Distributor
-    description: |
-      Распределение лута между игроками
-      Обработка различных режимов
-      Интеграция с inventory-service
-    priority: high
-    estimated_time: 3-4 дня
+    - id: scalability
+      title: "Масштабируемость"
+      body: |
+        ## Caching
+        - Loot tables в Redis (TTL: 1 hour)
+        - Bad Luck Protection в Redis
+        - Active rolls в Redis (TTL: 2 minutes)
 
-  - id: loot-roll-manager
-    title: Реализация Loot Roll Manager
-    description: |
-      Управление roll системой
-      Обработка бросков игроков
-      Таймауты и автоматическое распределение
-    priority: high
-    estimated_time: 3-4 дня
+        ## Background Jobs
+        - Cleanup expired world drops (every 5 min)
+        - Cleanup expired rolls (every 1 min)
+        - Update loot table cache (every hour)
 
-  - id: smart-loot-engine
-    title: Реализация Smart Loot Engine
-    description: |
-      Умный лут с учётом истории
-      Защита от плохой удачи
-      Предотвращение дубликатов
-    priority: medium
-    estimated_time: 3-4 дня
+        ## Performance
+        - Loot generation: <50ms
+        - Pickup: <100ms
+        - Roll: <10ms
+        - DB queries: indexed
 
-  - id: world-drop-manager
-    title: Реализация World Drop Manager
-    description: |
-      Управление мировыми дропами
-      Обработка подбора
-      Очистка истечённых дропов
-    priority: medium
-    estimated_time: 2-3 дня
+appendix:
+  glossary:
+    - term: "Smart Loot"
+      definition: "Адаптация лута под класс персонажа"
+    - term: "Bad Luck Protection"
+      definition: "Гарантия legendary дропа раз в 7 дней"
+  decisions:
+    - id: "loot-001"
+      decision: "Smart Loot обязателен"
+      rationale: "Улучшает игровой опыт"
+    - id: "loot-002"
+      decision: "Multiple distribution modes"
+      rationale: "Гибкость для разных групп"
 
-  - id: boss-loot-handler
-    title: Реализация Boss Loot Handler
-    description: |
-      Обработка наград боссов
-      Гарантированные награды
-      Уникальные предметы
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: database-optimization
-    title: Оптимизация БД и запросов
-    description: |
-      Создание индексов
-      Оптимизация запросов
-      Кэширование loot tables
-    priority: medium
-    estimated_time: 1-2 дня
-
-  - id: api-endpoints
-    title: Реализация REST API endpoints
-    description: |
-      Создание всех endpoints для лута
-      Интеграция с существующим API
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: integration-testing
-    title: Интеграционное тестирование
-    description: |
-      Тесты генерации лута
-      Тесты распределения
-      Тесты roll системы
-      Тесты интеграций
-    priority: high
-    estimated_time: 2-3 дня
-
-diagrams:
-  component_diagram: |
-    ```mermaid
-    graph TB
-        subgraph "Loot Service"
-            LG[Loot Generator]
-            LD[Loot Distributor]
-            LRM[Loot Roll Manager]
-            SLE[Smart Loot Engine]
-            WDM[World Drop Manager]
-            BLH[Boss Loot Handler]
-        end
-
-        subgraph "Database"
-            DB[(PostgreSQL<br/>loot_tables<br/>loot_distributions<br/>loot_rolls<br/>world_drops)]
-        end
-
-        subgraph "External Services"
-            GS[Gameplay Service]
-            IS[Inventory Service]
-            PS[Party Service]
-            ES[Economy Service]
-            CS[Character Service]
-            RG[Realtime Gateway]
-        end
-
-        subgraph "Client"
-            CL[UE5 Client]
-        end
-
-        GS -->|loot request| LG
-        LG --> LD
-        LD --> LRM
-        LD --> SLE
-        LG --> WDM
-        GS -->|boss kill| BLH
-        LG -->|store| DB
-        LD -->|add items| IS
-        LRM -->|party info| PS
-        LD -->|currency| ES
-        SLE -->|player data| CS
-        LD -->|notify| RG
-        RG -->|push events| CL
-    ```
-
-  data_flow_diagram: |
-    ```mermaid
-    sequenceDiagram
-        participant NPC as NPC Death
-        participant GS as Gameplay Service
-        participant LG as Loot Generator
-        participant LD as Loot Distributor
-        participant LRM as Loot Roll Manager
-        participant IS as Inventory Service
-        participant RG as Realtime Gateway
-
-        NPC->>GS: NPC killed
-        GS->>LG: Generate loot
-        LG->>LG: Select loot table
-        LG->>LG: Apply luck modifier
-        LG->>LD: Distribute loot
-        LD->>LRM: Create roll session
-        LRM->>RG: Notify players
-        LRM->>LRM: Process rolls
-        LRM->>IS: Add items to winner
-        IS->>RG: Notify players
-    ```
-
-decisions:
-  - id: adr-loot-architecture
-    summary: |
-      Выбрана модульная архитектура внутри loot-service-go для обеспечения
-      централизованного управления всей системой лута.
-
-  - id: adr-loot-distribution-modes
-    summary: |
-      Множественные режимы распределения обеспечивают гибкость для разных
-      сценариев игры (solo, party, boss).
-
-  - id: adr-roll-system
-    summary: |
-      Roll система для групп обеспечивает справедливое распределение лута
-      и вовлечённость всех участников.
-
-  - id: adr-smart-loot
-    summary: |
-      Smart loot система повышает удовлетворённость игроков, предотвращая
-      дубликаты и адаптируясь под стиль игры.
-
-  - id: adr-world-drops
-    summary: |
-      World drops создают динамичный игровой мир и дополнительные возможности
-      для получения предметов.
-
-validation:
-  architecture_complete: true
-  components_defined: true
-  microservices_identified: true
-  api_endpoints_described: true
-  technical_specification_ready: true
-  subtasks_defined: true
-
-next_steps:
-  - Передача задачи агенту API Designer для создания OpenAPI спецификации
-  - Детализация API endpoints
-  - Создание request/response схем
-  - Определение алгоритмов генерации лута
+implementation:
+  github_issue: 142
+  needs_task: true
+  next_steps:
+    - "Database: Миграции для loot tables"
+    - "API Designer: OpenAPI спецификация"
+    - "Backend: Реализация Loot Module"
 
 history:
-  - version: '1.1.0'
-    date: 2025-11-30
-    author: Architect Agent
-    changes: |
-      Обновлена архитектура системы лута:
-      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
-      - Добавлена спецификация тикрейта для операций с лутом
-      - Расширен раздел data_consistency с механизмами синхронизации
-      - Добавлены требования к задержке для операций
-  - version: '1.0.0'
-    date: 2025-11-22
-    author: Architect Agent
-    changes: |
-      Создана полная архитектура системы лута:
-      - Определены компоненты (Loot Generator, Loot Distributor, Loot Roll Manager, Smart Loot Engine, World Drop Manager, Boss Loot Handler)
-      - Описаны API endpoints (высокоуровнево)
-      - Спроектированы потоки данных
-      - Определена структура БД (loot_tables, loot_table_entries, loot_distributions, loot_rolls, world_drops, player_loot_history)
-      - Спроектирована система генерации лута
-      - Спроектирована система распределения лута
-      - Создано техническое задание
-      - Разбито на подзадачи
-
-
+  - version: "1.0.0"
+    date: 2025-12-02
+    author: architect
+    changes: "Создана архитектура Loot System"

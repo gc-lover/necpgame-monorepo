@@ -1,0 +1,339 @@
+openapi: 3.0.3
+info:
+  title: Player Orders Multi-Executor Service API
+  version: 1.0.0
+  description: |
+    API для управления мульти-исполнительными заказами.
+    Включает приглашение и присоединение исполнителей.
+  contact:
+    name: NECP Game API Team
+    email: api@necp.game
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://api-dev.necp.game/v1
+    description: Development server
+tags:
+  - name: Multi-Executor
+    description: Мульти-исполнительные заказы
+paths:
+  /social/orders/{orderId}/executors/invite:
+    post:
+      tags:
+        - Multi-Executor
+      summary: Пригласить исполнителя
+      description: Приглашение дополнительного исполнителя для мульти-исполнительного заказа.
+      operationId: inviteExecutor
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Уникальный идентификатор заказа
+          schema:
+            type: string
+            format: uuid
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteExecutorRequest'
+      responses:
+        '200':
+          description: Приглашение успешно отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutorInvitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /social/orders/{orderId}/executors/join:
+    post:
+      tags:
+        - Multi-Executor
+      summary: Присоединиться к заказу
+      description: Присоединение к мульти-исполнительному заказу.
+      operationId: joinOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Уникальный идентификатор заказа
+          schema:
+            type: string
+            format: uuid
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешное присоединение к заказу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    InviteExecutorRequest:
+      type: object
+      required:
+        - executorId
+      properties:
+        executorId:
+          type: string
+          format: uuid
+          description: ID приглашаемого исполнителя
+        message:
+          type: string
+          maxLength: 200
+          description: Сообщение в приглашении
+    ExecutorInvitation:
+      type: object
+      required:
+        - id
+        - orderId
+        - executorId
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        executorId:
+          type: string
+          format: uuid
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - declined
+        createdAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    Order:
+      type: object
+      required:
+        - id
+        - clientId
+        - title
+        - description
+        - orderType
+        - status
+        - reward
+        - riskLevel
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор заказа
+        clientId:
+          type: string
+          format: uuid
+          description: ID заказчика (персонажа)
+        executorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID исполнителя (персонажа)
+        title:
+          type: string
+          maxLength: 100
+          description: Название заказа
+        description:
+          type: string
+          maxLength: 1000
+          description: Подробное описание заказа
+        orderType:
+          type: string
+          enum:
+            - combat
+            - hacking
+            - trade
+            - political
+            - intelligence
+            - medical
+            - rescue
+            - transport
+            - diplomatic
+            - social
+          description: Тип заказа
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - in_progress
+            - completed
+            - cancelled
+            - expired
+          description: Статус заказа
+        reward:
+          type: object
+          required:
+            - currency
+            - amount
+          properties:
+            currency:
+              type: string
+              enum:
+                - ed
+                - credits
+                - reputation
+              description: Валюта награды
+            amount:
+              type: integer
+              minimum: 0
+              description: Размер награды
+        riskLevel:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - extreme
+          description: Уровень риска
+        requirements:
+          type: object
+          description: Требования к исполнителю
+          properties:
+            minLevel:
+              type: integer
+              minimum: 1
+              description: Минимальный уровень персонажа
+            skills:
+              type: array
+              items:
+                type: string
+              description: Требуемые навыки
+            reputation:
+              type: integer
+              description: Минимальная репутация
+        executors:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список исполнителей (для мульти-исполнительных заказов)
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Крайний срок выполнения
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата и время создания заказа
+        updatedAt:
+          type: string
+          format: date-time
+          description: Дата и время последнего обновления
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата и время завершения заказа
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Доступ запрещен
+            code: ACCESS_DENIED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR

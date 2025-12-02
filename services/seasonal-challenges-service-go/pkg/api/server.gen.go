@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -36,6 +36,52 @@ type ServerInterface interface {
 	// Получить награды сезона
 	// (GET /seasons/{season_id}/rewards)
 	GetSeasonRewards(w http.ResponseWriter, r *http.Request, seasonId openapi_types.UUID, params GetSeasonRewardsParams)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Получить активные испытания
+// (GET /gameplay/seasonal/challenges/active)
+func (_ Unimplemented) GetActiveChallenges(w http.ResponseWriter, r *http.Request, params GetActiveChallengesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Завершить сезонное испытание
+// (POST /gameplay/seasonal/challenges/{challenge_id}/complete)
+func (_ Unimplemented) CompleteSeasonalChallenge(w http.ResponseWriter, r *http.Request, challengeId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Получить баланс сезонной валюты
+// (GET /gameplay/seasonal/currency/balance)
+func (_ Unimplemented) GetSeasonalCurrencyBalance(w http.ResponseWriter, r *http.Request, params GetSeasonalCurrencyBalanceParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Обменять сезонную валюту
+// (POST /gameplay/seasonal/currency/exchange)
+func (_ Unimplemented) ExchangeSeasonalCurrency(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Получить текущий сезон
+// (GET /seasons/current)
+func (_ Unimplemented) GetCurrentSeason(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Получить испытания сезона
+// (GET /seasons/{season_id}/challenges)
+func (_ Unimplemented) GetSeasonChallenges(w http.ResponseWriter, r *http.Request, seasonId openapi_types.UUID, params GetSeasonChallengesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Получить награды сезона
+// (GET /seasons/{season_id}/rewards)
+func (_ Unimplemented) GetSeasonRewards(w http.ResponseWriter, r *http.Request, seasonId openapi_types.UUID, params GetSeasonRewardsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -104,7 +150,7 @@ func (siw *ServerInterfaceWrapper) CompleteSeasonalChallenge(w http.ResponseWrit
 	// ------------- Path parameter "challenge_id" -------------
 	var challengeId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "challenge_id", mux.Vars(r)["challenge_id"], &challengeId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "challenge_id", chi.URLParam(r, "challenge_id"), &challengeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "challenge_id", Err: err})
 		return
@@ -216,7 +262,7 @@ func (siw *ServerInterfaceWrapper) GetSeasonChallenges(w http.ResponseWriter, r 
 	// ------------- Path parameter "season_id" -------------
 	var seasonId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "season_id", mux.Vars(r)["season_id"], &seasonId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "season_id", chi.URLParam(r, "season_id"), &seasonId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "season_id", Err: err})
 		return
@@ -266,7 +312,7 @@ func (siw *ServerInterfaceWrapper) GetSeasonRewards(w http.ResponseWriter, r *ht
 	// ------------- Path parameter "season_id" -------------
 	var seasonId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "season_id", mux.Vars(r)["season_id"], &seasonId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "season_id", chi.URLParam(r, "season_id"), &seasonId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "season_id", Err: err})
 		return
@@ -379,36 +425,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -421,19 +467,27 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/gameplay/seasonal/challenges/active", wrapper.GetActiveChallenges).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/gameplay/seasonal/challenges/{challenge_id}/complete", wrapper.CompleteSeasonalChallenge).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/gameplay/seasonal/currency/balance", wrapper.GetSeasonalCurrencyBalance).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/gameplay/seasonal/currency/exchange", wrapper.ExchangeSeasonalCurrency).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/seasons/current", wrapper.GetCurrentSeason).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/seasons/{season_id}/challenges", wrapper.GetSeasonChallenges).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/seasons/{season_id}/rewards", wrapper.GetSeasonRewards).Methods("GET")
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/gameplay/seasonal/challenges/active", wrapper.GetActiveChallenges)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/gameplay/seasonal/challenges/{challenge_id}/complete", wrapper.CompleteSeasonalChallenge)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/gameplay/seasonal/currency/balance", wrapper.GetSeasonalCurrencyBalance)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/gameplay/seasonal/currency/exchange", wrapper.ExchangeSeasonalCurrency)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/seasons/current", wrapper.GetCurrentSeason)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/seasons/{season_id}/challenges", wrapper.GetSeasonChallenges)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/seasons/{season_id}/rewards", wrapper.GetSeasonRewards)
+	})
 
 	return r
 }

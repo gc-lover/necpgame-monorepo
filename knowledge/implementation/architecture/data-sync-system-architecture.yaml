@@ -1,0 +1,324 @@
+# Issue: #1521
+
+metadata:
+  id: architecture-data-sync-system
+  title: "Data Synchronization System Architecture"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-02T18:20:00Z
+  owners:
+    - role: architect
+  tags:
+    - architecture
+    - data-sync
+    - consistency
+    - event-sourcing
+  related_systems:
+    - all-services
+  related_documents:
+    - id: data-synchronization-consistency-guide
+      relation: implements
+  visibility: internal
+  audience:
+    - architects
+    - backend
+    - database
+
+summary:
+  problem: "Необходима архитектура синхронизации данных между микросервисами."
+  goal: "Спроектировать систему синхронизации с Event Sourcing, CQRS, Saga."
+  essence: "Архитектура описывает Event Bus, Outbox Pattern, Saga Orchestration."
+
+content:
+  sections:
+    - id: system-overview
+      title: "Обзор системы"
+      body: |
+        Data Synchronization System обеспечивает:
+        - Синхронизацию между микросервисами
+        - Консистентность критичных данных
+        - Event-driven интеграцию
+        - Распределенные транзакции
+        - Разрешение конфликтов
+
+        Принципы:
+        - Server-authoritative (сервер - источник истины)
+        - Event-driven architecture
+        - Strong Consistency для критичных данных
+        - Eventual Consistency для некритичных
+        - Saga Pattern для распределенных транзакций
+
+    - id: components
+      title: "Компоненты"
+      body: |
+        ## Event Bus (Kafka)
+        **Ответственность:** Шина событий
+        **Технология:** Apache Kafka
+        **Топики:**
+        - character.* (персонажи)
+        - inventory.* (инвентарь)
+        - combat.* (бой)
+        - economy.* (экономика)
+        - quest.* (квесты)
+
+        ## Outbox Processor
+        **Ответственность:** Гарантированная доставка событий
+        **Технология:** Go, PostgreSQL
+        **Функции:**
+        - Чтение outbox таблиц
+        - Публикация событий в Kafka
+        - Удаление обработанных событий
+        - Retry механизм
+
+        ## Saga Orchestrator
+        **Ответственность:** Координация распределенных транзакций
+        **Технология:** Go, Redis
+        **Функции:**
+        - Создание saga инстансов
+        - Управление шагами saga
+        - Компенсирующие транзакции
+        - Мониторинг состояния
+
+        ## Conflict Resolver
+        **Ответственность:** Разрешение конфликтов
+        **Технология:** Go
+        **Стратегии:**
+        - Last-Write-Wins
+        - Version-based
+        - Custom business logic
+
+        ## State Sync Manager
+        **Ответственность:** Синхронизация клиент-сервер
+        **Технология:** WebSocket/UDP
+        **Функции:**
+        - Client-side prediction
+        - Server reconciliation
+        - Lag compensation
+
+    - id: event-bus-architecture
+      title: "Event Bus Architecture"
+      body: |
+        ## Kafka Configuration
+
+        Brokers: 5 nodes
+        Partitions: 20 per topic
+        Replication: 3
+        Retention: 7 days
+
+        ## Topic Structure
+
+        {domain}.{entity}.{action}
+
+        Examples:
+        - character.created
+        - character.leveledup
+        - inventory.item.added
+        - inventory.item.removed
+        - combat.session.started
+        - combat.action.executed
+        - economy.trade.completed
+        - quest.progress.updated
+
+        ## Event Schema
+
+        ```json
+        {
+          "event_id": "uuid",
+          "event_type": "character.leveledup",
+          "timestamp": "2025-12-02T18:00:00Z",
+          "correlation_id": "saga-123",
+          "causation_id": "event-abc",
+          "payload": {
+            "character_id": "uuid",
+            "old_level": 10,
+            "new_level": 11
+          },
+          "metadata": {
+            "source_service": "character-service",
+            "version": "1.0"
+          }
+        }
+        ```
+
+        ## Consumer Groups
+
+        - analytics-consumer (все события)
+        - quest-consumer (character.*, combat.*, economy.*)
+        - achievement-consumer (character.*, combat.*)
+        - notification-consumer (все события)
+
+    - id: outbox-pattern
+      title: "Outbox Pattern"
+      body: |
+        ## Database Schema
+
+        ```sql
+        CREATE TABLE outbox_events (
+          id BIGSERIAL PRIMARY KEY,
+          event_id UUID UNIQUE NOT NULL,
+          event_type VARCHAR(100) NOT NULL,
+          aggregate_id UUID NOT NULL,
+          payload JSONB NOT NULL,
+          metadata JSONB,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          processed_at TIMESTAMP,
+          retry_count INT DEFAULT 0,
+          error_message TEXT
+        );
+
+        CREATE INDEX idx_outbox_unprocessed
+        ON outbox_events(created_at)
+        WHERE processed_at IS NULL;
+        ```
+
+        ## Outbox Processor Flow
+
+        1. Poll outbox_events WHERE processed_at IS NULL
+        2. Publish event to Kafka
+        3. If success: UPDATE processed_at
+        4. If error: INCREMENT retry_count, log error
+        5. Max retries: 10
+        6. Cleanup processed events (>24h)
+
+        ## Service Integration
+
+        Each service has:
+        - outbox_events table
+        - Outbox processor worker
+        - Atomic write (data + event)
+
+    - id: saga-pattern
+      title: "Saga Pattern"
+      body: |
+        ## Saga Instance Schema
+
+        ```sql
+        CREATE TABLE saga_instances (
+          id UUID PRIMARY KEY,
+          saga_type VARCHAR(100) NOT NULL,
+          status VARCHAR(20) NOT NULL,
+          current_step INT NOT NULL,
+          payload JSONB NOT NULL,
+          compensation_stack JSONB,
+          created_at TIMESTAMP NOT NULL,
+          updated_at TIMESTAMP NOT NULL,
+          completed_at TIMESTAMP,
+          error_message TEXT
+        );
+        ```
+
+        ## Example: Item Purchase Saga
+
+        Steps:
+        1. Reserve inventory slot
+        2. Check character money
+        3. Deduct money
+        4. Add item to inventory
+        5. Publish completion event
+
+        Compensation (if error):
+        1. Remove item from inventory
+        2. Refund money
+        3. Release inventory slot
+
+        ## Orchestrator API
+
+        - POST /saga/start
+        - GET /saga/{id}/status
+        - POST /saga/{id}/compensate
+
+    - id: consistency-strategies
+      title: "Стратегии консистентности"
+      body: |
+        ## Strong Consistency
+
+        Данные:
+        - Деньги (eurodollars, cryptos)
+        - Инвентарь (items, slots)
+        - Персонаж (level, stats)
+        - Квесты (progress, rewards)
+
+        Реализация:
+        - ACID транзакции
+        - Serializable isolation
+        - Pessimistic locking
+        - Synchronous operations
+
+        ## Eventual Consistency
+
+        Данные:
+        - Статистика (kills, deaths)
+        - Логи (combat_logs, activity_logs)
+        - Аналитика (dashboards)
+        - Кэши (Redis)
+
+        Реализация:
+        - Async replication
+        - Event Sourcing
+        - CQRS
+        - Background jobs
+
+    - id: conflict-resolution
+      title: "Разрешение конфликтов"
+      body: |
+        ## Last-Write-Wins
+
+        Применение: Некритичные данные
+
+        ```go
+        if event.Timestamp > currentState.LastUpdate {
+          currentState = event.Payload
+        }
+        ```
+
+        ## Version-based
+
+        Применение: Критичные данные
+
+        ```go
+        if event.Version == currentState.Version + 1 {
+          apply(event)
+          currentState.Version++
+        } else {
+          conflict()
+        }
+        ```
+
+        ## Custom Business Logic
+
+        Применение: Сложные сценарии
+
+        Example: Inventory merge
+        - Both players added items
+        - Merge both changes
+        - Resolve slot conflicts
+
+appendix:
+  decisions:
+    - id: "sync-001"
+      decision: "Kafka как Event Bus"
+      rationale: "Высокая пропускная способность, гарантии доставки"
+    - id: "sync-002"
+      decision: "Outbox Pattern для событий"
+      rationale: "Гарантия атомарности данные + события"
+    - id: "sync-003"
+      decision: "Saga Pattern для распределенных транзакций"
+      rationale: "Гибкость, масштабируемость, compensations"
+
+implementation:
+  github_issue: 1521
+  needs_task: true
+  next_steps:
+    - "Database: Миграции для outbox_events, saga_instances"
+    - "Backend: Реализовать Outbox Processor"
+    - "Backend: Реализовать Saga Orchestrator"
+    - "Backend: Реализовать Conflict Resolver"
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-02
+    author: architect
+    changes: "Создана архитектура системы синхронизации"
+

@@ -1,0 +1,298 @@
+# Issue: #138
+
+openapi: 3.0.3
+info:
+  title: Achievement Service API
+  description: |
+    API для системы достижений и титулов.
+    
+    Функциональность:
+    - Просмотр достижений
+    - Отслеживание прогресса
+    - Получение наград
+    - Управление титулами
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/api/v1
+  - url: http://localhost:8086/api/v1
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Achievements
+  - name: Titles
+
+paths:
+  /world/achievements:
+    get:
+      summary: Все достижения
+      operationId: listAchievements
+      tags:
+        - Achievements
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/AchievementCategory'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/AchievementType'
+      responses:
+        '200':
+          description: Список достижений
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [achievements]
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Achievement'
+
+  /world/achievements/{achievementId}:
+    parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      summary: Детали достижения
+      operationId: getAchievement
+      tags:
+        - Achievements
+      responses:
+        '200':
+          description: Достижение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Achievement'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /players/{playerId}/achievements:
+    parameters:
+      - $ref: 'common.yaml#/components/parameters/PlayerId'
+    
+    get:
+      summary: Прогресс игрока
+      operationId: getPlayerAchievements
+      tags:
+        - Achievements
+      responses:
+        '200':
+          description: Прогресс
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [achievements]
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerAchievement'
+
+  /players/{playerId}/achievements/{achievementId}/claim:
+    parameters:
+      - $ref: 'common.yaml#/components/parameters/PlayerId'
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    post:
+      summary: Забрать награду
+      operationId: claimAchievement
+      tags:
+        - Achievements
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+        '400':
+          description: Не разблокировано или уже забрано
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+
+  /players/{playerId}/titles:
+    parameters:
+      - $ref: 'common.yaml#/components/parameters/PlayerId'
+    
+    get:
+      summary: Титулы игрока
+      operationId: getPlayerTitles
+      tags:
+        - Titles
+      responses:
+        '200':
+          description: Титулы
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [titles, active_title]
+                properties:
+                  titles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Title'
+                  active_title:
+                    $ref: '#/components/schemas/Title'
+                    nullable: true
+
+  /players/{playerId}/titles/active:
+    parameters:
+      - $ref: 'common.yaml#/components/parameters/PlayerId'
+    
+    put:
+      summary: Установить активный титул
+      operationId: setActiveTitle
+      tags:
+        - Titles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title_id]
+              properties:
+                title_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+      responses:
+        '200':
+          description: Титул установлен
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+
+components:
+  schemas:
+    AchievementCategory:
+      type: string
+      enum: [combat, exploration, economic, social, quests, progression, pvp, special]
+
+    AchievementType:
+      type: string
+      enum: [standard, progressive, repeatable]
+
+    Achievement:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/BaseEntity'
+        - type: object
+          required: [name, description, category, type, criteria, rewards]
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            category:
+              $ref: '#/components/schemas/AchievementCategory'
+            type:
+              $ref: '#/components/schemas/AchievementType'
+            criteria:
+              type: object
+              description: Критерии выполнения
+            rewards:
+              $ref: '#/components/schemas/Rewards'
+            icon:
+              type: string
+            rarity:
+              $ref: 'loot-system-service.yaml#/components/schemas/Rarity'
+
+    PlayerAchievement:
+      type: object
+      required: [achievement_id, progress, max_progress, unlocked, claimed]
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        achievement:
+          $ref: '#/components/schemas/Achievement'
+        progress:
+          type: integer
+        max_progress:
+          type: integer
+        unlocked:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+        claimed:
+          type: boolean
+        claimed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Rewards:
+      type: object
+      properties:
+        currency:
+          type: object
+          properties:
+            eurodollars:
+              type: integer
+            cryptos:
+              type: integer
+        items:
+          type: array
+          items:
+            type: string
+            format: uuid
+        titles:
+          type: array
+          items:
+            type: string
+            format: uuid
+        reputation:
+          type: object
+          additionalProperties:
+            type: integer
+        experience:
+          type: integer
+
+    ClaimResponse:
+      type: object
+      required: [success, rewards]
+      properties:
+        success:
+          type: boolean
+        rewards:
+          $ref: '#/components/schemas/Rewards'
+
+    Title:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/BaseEntity'
+        - type: object
+          required: [name]
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            rarity:
+              $ref: 'loot-system-service.yaml#/components/schemas/Rarity'
+            unlocked_at:
+              type: string
+              format: date-time
