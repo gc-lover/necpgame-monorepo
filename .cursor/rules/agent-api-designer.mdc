@@ -4,6 +4,12 @@ alwaysApply: true
 
 # API Designer Agent
 
+## 🚀 Быстрый старт
+
+**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+
+---
+
 ## Role
 
 Creates OpenAPI 3.0 specs, describes endpoints, defines data schemas.
@@ -19,23 +25,28 @@ See `.cursor/AGENT_COMMON_RULES.md`
 
 ## Workflow with Issues
 
-**Получение задачи:**
-- Найти задачи: `Status:"API Designer - Todo"`
-- При старте: обновить статус на `API Designer - In Progress` через `mcp_github_update_project_item`
+### 📋 Понимание статуса
 
-**Во время работы:**
-- `API Designer - Blocked` - если заблокирована
-- `API Designer - Review` - если на проверке
+**`API Designer - Todo`** = Задача ДЛЯ ТЕБЯ (API Designer агента). Ты должен её взять!
 
-**Передача другим агентам:**
-- После завершения: `Backend - Todo` (через `mcp_github_update_project_item` + комментарий)
-- Если нет архитектуры: `Architect - Returned` + комментарий с причиной
-- Если контент-квест: `Content Writer - Todo`
+### 🔄 Простой алгоритм
 
-**Возврат задачи:**
-- `API Designer - Returned` или `{CorrectAgent} - Returned` + комментарий
+1. **НАЙТИ задачу:** `Status:"API Designer - Todo"` (это задачи для тебя)
+2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `API Designer - In Progress`
+3. **РАБОТАТЬ:** Создавай OpenAPI спецификации, схемы данных
+4. **ПЕРЕДАТЬ:** Обнови статус согласно карте передачи ниже
 
-**Детали:** `.cursor/AGENT_COMMON_RULES.md`, `.cursor/AGENT_TASK_RETURN.md`, `.cursor/STATUS_HANDOFF_GUIDE.md`, `.cursor/HANDOFF_COMMENT_TEMPLATES.md`
+### 📍 ID статусов
+
+**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
+- `API Designer - In Progress`: `ff20e8f2`
+
+**Карта передачи задач:**
+- **После завершения:** `Backend - Todo` (`72d37d44`)
+- **Если нет архитектуры:** `Architect - Returned` (`96c824c5`)
+- **Если контент-квест:** `Content Writer - Todo` (`c62b60d3`)
+
+**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
 
 ## Commands
 
@@ -82,12 +93,77 @@ Use commands from `.cursor/commands/api-designer-*.md`
 
 **DO NOT duplicate common components!**
 
-## Splitting Large Specs
+## Splitting Large Specs (ОБЯЗАТЕЛЬНО!)
+
+**WARNING КРИТИЧЕСКИ ВАЖНО:** Спецификации >500 строк нарушают лимит файлов и приводят к генерации огромных Go файлов (2000-3000 строк)!
 
 **If spec >500 lines:**
-- Split by domains/modules
-- Use `$ref` between files
-- Each file max 500 lines
+
+### 1. Создай модульную структуру:
+
+```
+proto/openapi/
+├── {service-name}/
+│   ├── main.yaml                    # Основной файл (info, servers, tags)
+│   ├── schemas/
+│   │   ├── {domain1}.yaml           # Схемы для домена 1 (< 500 строк)
+│   │   ├── {domain2}.yaml           # Схемы для домена 2 (< 500 строк)
+│   │   └── {domain3}.yaml           # Схемы для домена 3 (< 500 строк)
+│   └── paths/
+│       ├── {domain1}.yaml           # Endpoints домена 1 (< 500 строк)
+│       ├── {domain2}.yaml           # Endpoints домена 2 (< 500 строк)
+│       └── {domain3}.yaml           # Endpoints домена 3 (< 500 строк)
+└── {service-name}.yaml              # Главный файл с $ref ссылками
+```
+
+### 2. Главный файл с $ref ссылками:
+
+```yaml
+# Issue: #123
+openapi: 3.0.0
+info:
+  title: {Service Name} API
+  version: 1.0.0
+
+paths:
+  /api/v1/{domain1}/{resource}:
+    $ref: '{service-name}/paths/{domain1}.yaml#/paths/~1api~1v1~1{domain1}~1{resource}'
+
+components:
+  schemas:
+    {Schema1}:
+      $ref: '{service-name}/schemas/{domain1}.yaml#/components/schemas/{Schema1}'
+  
+  # ALWAYS use common.yaml
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+  responses:
+    $ref: 'common.yaml#/components/responses'
+```
+
+### 3. Правила разбиения:
+
+- **Каждый модуль max 500 строк**
+- **Разбивай по доменам/функциональности** (channels, rooms, participants)
+- **НЕ дублируй common components** - используй `$ref` на `common.yaml`
+- **Используй относительные пути** для `$ref` между модулями
+- **Каждый модуль - Issue в начале:** `# Issue: #123`
+
+### 4. Примеры разбиения:
+
+- **voice-chat-service** (2926 строк) → channels.yaml, rooms.yaml, participants.yaml, settings.yaml
+- **housing-service** (1869 строк) → apartments.yaml, furniture.yaml, customization.yaml
+- **clan-war-service** (1724 строки) → wars.yaml, battles.yaml, participants.yaml, rewards.yaml
+
+### 5. Валидация после разбиения:
+
+```bash
+# Проверь главный файл
+redocly lint proto/openapi/{service-name}.yaml
+
+# Bundle для проверки целостности
+redocly bundle proto/openapi/{service-name}.yaml -o /tmp/bundled.yaml
+```
 
 ## Quality Checklist
 

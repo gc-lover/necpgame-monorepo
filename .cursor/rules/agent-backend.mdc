@@ -4,6 +4,12 @@ alwaysApply: true
 
 # Backend Developer Agent Rules
 
+## 🚀 Быстрый старт
+
+**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+
+---
+
 ## Роль агента
 
 Backend Developer реализует бекенд на Go по OpenAPI спецификации, создает микросервисы и реализует бизнес-логику.
@@ -24,15 +30,26 @@ Backend Developer реализует бекенд на Go по OpenAPI спец�
 
 ## Workflow with Issues
 
-**WARNING ВАЖНО: При взятии → сразу "In Progress". После завершения → статус следующего + комментарий**
+### 📋 Понимание статуса
 
-- Найти: `Status:"Backend - Todo"`
-- **СРАЗУ:** `Backend - In Progress` (`7bc9d20f`)
-- Передать (контент): `QA - Todo` (`86ca422e`) после импорта в БД
-- Передать (системные): `Network - Todo` (`944246f3`)
-- Вернуть (если проблемы): `API Designer - Returned` (`d0352ed3`)
+**`Backend - Todo`** = Задача ДЛЯ ТЕБЯ (Backend агента). Ты должен её взять!
 
-**Детали:** `.cursor/AGENT_WORKFLOW_PART1.md`, `.cursor/AGENT_WORKFLOW_PART2.md`
+### 🔄 Простой алгоритм
+
+1. **НАЙТИ задачу:** `Status:"Backend - Todo"` (это задачи для тебя)
+2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `Backend - In Progress`
+3. **РАБОТАТЬ:** Создавай код, тесты, коммиты
+4. **ПЕРЕДАТЬ:** Обнови статус на `Network - Todo` (системные) или `QA - Todo` (контент-квесты)
+
+### 📍 ID статусов
+
+**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
+- `Backend - In Progress`: `7bc9d20f`
+- `Network - Todo`: `944246f3`
+- `QA - Todo`: `86ca422e`
+- `API Designer - Returned`: `d0352ed3`
+
+**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
 
 ## Общие правила
 
@@ -85,51 +102,207 @@ Backend Developer реализует бекенд на Go по OpenAPI спец�
 
 ## Генерация кода из OpenAPI
 
-**ОБЯЗАТЕЛЬНО используй oapi-codegen!**
+**WARNING КРИТИЧЕСКИ ВАЖНО:** Используй **РАЗДЕЛЬНУЮ ГЕНЕРАЦИЮ** для соблюдения SOLID и лимита 500 строк!
 
-**Быстрый старт:**
-1. `go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest`
-2. Создай `oapi-codegen.yaml` с `package: api`, `generate: {models: true, strict-server: true}`
-3. Создай `Makefile` с командами `bundle-api`, `generate-api`, `verify-api`, `clean`
-4. `make generate-api` → автоматически bundle + generate
+### Проблема старой генерации:
 
-**Внешние ссылки:**
-- Используй `@redocly/cli bundle` для разрешения `$ref` на `common.yaml`
-- НЕ объединяй файлы вручную
-- Bundled файлы в `.gitignore` (не коммитятся)
+❌ **Старый подход** (1 файл): `api.gen.go` (2000-3000 строк) → нарушает SOLID и лимит 500 строк
+OK **Новый подход** (3 файла): `types.gen.go`, `server.gen.go`, `spec.gen.go` (каждый <500 строк)
 
-**Структура:**
+---
+
+### Быстрый старт (раздельная генерация):
+
+1. **Установи oapi-codegen:**
+   ```bash
+   go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+   ```
+
+2. **Создай `Makefile` с раздельной генерацией:**
+   - См. `.cursor/CODE_GENERATION_TEMPLATE.md` для полного шаблона
+   - **ОБЯЗАТЕЛЬНО:** `generate-types`, `generate-server`, `generate-spec` как отдельные таргеты
+
+3. **НЕ создавай `oapi-codegen.yaml`:**
+   - При раздельной генерации параметры передаются через флаги в `Makefile`
+
+4. **Сгенерируй код:**
+   ```bash
+   make generate-api  # Автоматически: bundle + generate-types + generate-server + generate-spec
+   ```
+
+5. **Проверь размеры файлов:**
+   ```bash
+   make check-file-sizes  # Проверка лимита 500 строк
+   ```
+
+---
+
+### Структура (НОВАЯ - раздельная генерация):
+
 ```
 services/{service}-go/
-├── pkg/api/api.gen.go          # Generated (don't edit!)
+├── pkg/api/
+│   ├── types.gen.go              # <500 строк (модели, схемы)
+│   ├── server.gen.go             # <500 строк (ServerInterface, роутер)
+│   └── spec.gen.go               # <500 строк (embedded OpenAPI spec)
 ├── server/
-│   ├── http_server.go          # ТОЛЬКО настройка сервера
-│   ├── middleware.go            # ВСЕ middleware
-│   ├── handlers.go              # ВСЕ handlers (ServerInterface)
-│   ├── service.go               # Бизнес-логика
-│   └── repository.go            # БД
-├── oapi-codegen.yaml
-└── Makefile
+│   ├── http_server.go            # ТОЛЬКО настройка сервера
+│   ├── middleware.go             # ВСЕ middleware
+│   ├── handlers.go               # ВСЕ handlers (реализация api.ServerInterface)
+│   ├── service.go                # Бизнес-логика
+│   └── repository.go             # БД
+├── Makefile                      # С раздельной генерацией
+└── .gitignore                    # Игнорирует *.gen.go и *.bundled.yaml
 ```
 
-**Реализация:**
-- Handlers: реализуй `api.ServerInterface` в `handlers.go`, используй DI, сгенерированные типы
-- Middleware: ВСЕ в `middleware.go`, НЕ в `http_server.go`, DI для зависимостей
-- **НЕ редактируй сгенерированный код**, **НЕ коммить bundled файлы**
+**ВАЖНО:** Пакет остается `api`, все типы доступны через `api.TypeName` (ничего не меняется для пользователя!)
+
+---
+
+### Makefile команды (раздельная генерация):
+
+```makefile
+# Генерация в 3 файла
+generate-types        # types.gen.go - модели и схемы
+generate-server       # server.gen.go - ServerInterface и роутер
+generate-spec         # spec.gen.go - embedded OpenAPI spec
+generate-api          # Все 3 файла + проверка размеров
+
+# Утилиты
+bundle-api            # Bundle OpenAPI spec с $ref
+verify-api            # Lint OpenAPI spec
+check-file-sizes      # Проверка лимита 500 строк
+clean                 # Удаление сгенерированных файлов
+```
+
+---
+
+### Реализация handlers (без изменений):
+
+```go
+// Issue: #123
+package server
+
+import (
+    "net/http"
+    "github.com/your-org/necpgame/services/{service}-go/pkg/api"
+)
+
+type Handlers struct {
+    service Service
+}
+
+// NewHandlers создает handlers с DI
+func NewHandlers(service Service) *Handlers {
+    return &Handlers{service: service}
+}
+
+// Реализация api.ServerInterface (сгенерированный интерфейс)
+func (h *Handlers) ListItems(w http.ResponseWriter, r *http.Request, params api.ListItemsParams) {
+    // Используй сгенерированные типы из types.gen.go
+    items, err := h.service.ListItems(r.Context(), params)
+    if err != nil {
+        respondError(w, http.StatusInternalServerError, err.Error())
+        return
+    }
+    
+    // Response типы тоже из types.gen.go
+    response := api.ListItemsResponse{
+        Items: items,
+    }
+    
+    respondJSON(w, http.StatusOK, response)
+}
+```
+
+---
 
 ### Паттерны
 
-**Makefile:** Используй переменные (`SERVICE_NAME`, `ROUTER_TYPE`), добавь `verify-api`
+**Makefile:**
+- Используй переменные (`SERVICE_NAME`, `ROUTER_TYPE`)
+- **ОБЯЗАТЕЛЬНО:** Раздельная генерация (`generate-types`, `generate-server`, `generate-spec`)
+- Добавь `check-file-sizes` для валидации лимита 500 строк
 
-**Handlers:** Структура с DI через `New*Handlers()`, используй сгенерированные типы, helpers для `respondJSON`/`respondError`
+**Handlers:**
+- Структура с DI через `New*Handlers()`
+- Используй сгенерированные типы из `api` пакета (ничего не меняется!)
+- Helpers для `respondJSON`/`respondError`
 
-**Middleware:** ВСЕ в `middleware.go`, НЕ в `http_server.go`, DI для зависимостей
+**Middleware:**
+- **ВСЕ** в `middleware.go`, **НЕ** в `http_server.go`
+- DI для зависимостей
 
-**Роутер:** `chi-server` (рекомендуется) или `gorilla-server`, `api.HandlerWithOptions()` для интеграции
+**Роутер:**
+- `chi-server` (рекомендуется) или `gorilla-server`
+- `api.HandlerWithOptions()` для интеграции
 
-**Валидация:** Всегда `make verify-api` перед генерацией
+**Валидация:**
+- Всегда `make verify-api` перед генерацией
+- Всегда `make check-file-sizes` после генерации
 
-**Типы серверов:** `chi-server` (рекомендуется), `gorilla-server`, `echo-server`, `gin-server`
+**Типы серверов:**
+- `chi-server` (рекомендуется), `gorilla-server`, `echo-server`, `gin-server`
+
+---
+
+### Миграция существующих сервисов:
+
+**Если у сервиса уже есть `api.gen.go` >500 строк:**
+
+1. **Запусти скрипт миграции:**
+   ```bash
+   cd services/{service-name}-go
+   ../../scripts/migrate-to-split-generation.sh
+   ```
+
+2. **Удали старый файл:**
+   ```bash
+   rm -f pkg/api/api.gen.go
+   ```
+
+3. **Обнови `.gitignore`:**
+   ```gitignore
+   # Новая структура
+   pkg/api/types.gen.go
+   pkg/api/server.gen.go
+   pkg/api/spec.gen.go
+   
+   # Legacy (удалить, если есть)
+   pkg/api/api.gen.go
+   ```
+
+4. **Коммит:**
+   ```bash
+   git add Makefile .gitignore
+   git commit -m "[backend] refactor: migrate to split generation for SOLID compliance
+
+   - Split api.gen.go into types.gen.go, server.gen.go, spec.gen.go
+   - Each file <500 lines (SOLID compliance)
+   
+   Related Issue: #123"
+   ```
+
+---
+
+### Внешние ссылки в OpenAPI:
+
+- Используй `@redocly/cli bundle` для разрешения `$ref` на `common.yaml`
+- **НЕ объединяй файлы вручную**
+- Bundled файлы в `.gitignore` (не коммитятся)
+- Bundle автоматически в `make bundle-api`
+
+---
+
+### Чек-лист после генерации:
+
+- [ ] 3 файла созданы: `types.gen.go`, `server.gen.go`, `spec.gen.go`
+- [ ] Каждый файл <500 строк (`make check-file-sizes`)
+- [ ] Старый `api.gen.go` удален
+- [ ] `.gitignore` обновлен
+- [ ] Код компилируется: `go build ./...`
+- [ ] Тесты проходят: `go test ./...`
+- [ ] Docker образ собирается
 
 ## Выходные данные
 
