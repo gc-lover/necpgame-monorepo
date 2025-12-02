@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -36,6 +36,52 @@ type ServerInterface interface {
 	// Стакан заявок
 	// (GET /api/v1/analytics/orderbook/{ticker})
 	GetOrderBook(w http.ResponseWriter, r *http.Request, ticker string, params GetOrderBookParams)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Список алертов
+// (GET /api/v1/analytics/alerts)
+func (_ Unimplemented) ListAlerts(w http.ResponseWriter, r *http.Request, params ListAlertsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Создать алерт
+// (POST /api/v1/analytics/alerts)
+func (_ Unimplemented) CreateAlert(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Удалить алерт
+// (DELETE /api/v1/analytics/alerts/{alert_id})
+func (_ Unimplemented) DeleteAlert(w http.ResponseWriter, r *http.Request, alertId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Обзор рынка
+// (GET /api/v1/analytics/dashboards/market)
+func (_ Unimplemented) GetMarketDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Портфельный дашборд
+// (GET /api/v1/analytics/dashboards/portfolio)
+func (_ Unimplemented) GetPortfolioDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Тепловая карта секторов
+// (GET /api/v1/analytics/heatmap)
+func (_ Unimplemented) GetHeatmap(w http.ResponseWriter, r *http.Request, params GetHeatmapParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Стакан заявок
+// (GET /api/v1/analytics/orderbook/{ticker})
+func (_ Unimplemented) GetOrderBook(w http.ResponseWriter, r *http.Request, ticker string, params GetOrderBookParams) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -124,7 +170,7 @@ func (siw *ServerInterfaceWrapper) DeleteAlert(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "alert_id" -------------
 	var alertId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "alert_id", mux.Vars(r)["alert_id"], &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "alert_id", chi.URLParam(r, "alert_id"), &alertId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "alert_id", Err: err})
 		return
@@ -235,7 +281,7 @@ func (siw *ServerInterfaceWrapper) GetOrderBook(w http.ResponseWriter, r *http.R
 	// ------------- Path parameter "ticker" -------------
 	var ticker string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "ticker", mux.Vars(r)["ticker"], &ticker, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ticker", chi.URLParam(r, "ticker"), &ticker, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ticker", Err: err})
 		return
@@ -340,36 +386,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -382,19 +428,27 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/api/v1/analytics/alerts", wrapper.ListAlerts).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/analytics/alerts", wrapper.CreateAlert).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/analytics/alerts/{alert_id}", wrapper.DeleteAlert).Methods("DELETE")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/analytics/dashboards/market", wrapper.GetMarketDashboard).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/analytics/dashboards/portfolio", wrapper.GetPortfolioDashboard).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/analytics/heatmap", wrapper.GetHeatmap).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/api/v1/analytics/orderbook/{ticker}", wrapper.GetOrderBook).Methods("GET")
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/analytics/alerts", wrapper.ListAlerts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/analytics/alerts", wrapper.CreateAlert)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/analytics/alerts/{alert_id}", wrapper.DeleteAlert)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/analytics/dashboards/market", wrapper.GetMarketDashboard)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/analytics/dashboards/portfolio", wrapper.GetPortfolioDashboard)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/analytics/heatmap", wrapper.GetHeatmap)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/analytics/orderbook/{ticker}", wrapper.GetOrderBook)
+	})
 
 	return r
 }

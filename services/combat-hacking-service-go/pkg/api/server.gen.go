@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -39,6 +39,58 @@ type ServerInterface interface {
 	// Состояние перегрева
 	// (GET /combat/hacking/overheat)
 	GetOverheatStatus(w http.ResponseWriter, r *http.Request)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Взлом цели
+// (POST /combat/hacking/attack)
+func (_ Unimplemented) HackTarget(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Активировать контрмеры
+// (POST /combat/hacking/countermeasures)
+func (_ Unimplemented) ActivateCountermeasures(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Список доступных демонов
+// (GET /combat/hacking/demons)
+func (_ Unimplemented) GetDemons(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Активировать демона
+// (POST /combat/hacking/demons/{demon_id}/activate)
+func (_ Unimplemented) ActivateDemon(w http.ResponseWriter, r *http.Request, demonId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Уровень ICE защиты
+// (GET /combat/hacking/ice/{target_id})
+func (_ Unimplemented) GetICELevel(w http.ResponseWriter, r *http.Request, targetId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Информация о сети
+// (GET /combat/hacking/networks/{network_id})
+func (_ Unimplemented) GetNetworkInfo(w http.ResponseWriter, r *http.Request, networkId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Получить доступ к сети
+// (POST /combat/hacking/networks/{network_id}/access)
+func (_ Unimplemented) AccessNetwork(w http.ResponseWriter, r *http.Request, networkId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Состояние перегрева
+// (GET /combat/hacking/overheat)
+func (_ Unimplemented) GetOverheatStatus(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -118,7 +170,7 @@ func (siw *ServerInterfaceWrapper) ActivateDemon(w http.ResponseWriter, r *http.
 	// ------------- Path parameter "demon_id" -------------
 	var demonId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "demon_id", mux.Vars(r)["demon_id"], &demonId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "demon_id", chi.URLParam(r, "demon_id"), &demonId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "demon_id", Err: err})
 		return
@@ -149,7 +201,7 @@ func (siw *ServerInterfaceWrapper) GetICELevel(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "target_id" -------------
 	var targetId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "target_id", mux.Vars(r)["target_id"], &targetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "target_id", chi.URLParam(r, "target_id"), &targetId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "target_id", Err: err})
 		return
@@ -180,7 +232,7 @@ func (siw *ServerInterfaceWrapper) GetNetworkInfo(w http.ResponseWriter, r *http
 	// ------------- Path parameter "network_id" -------------
 	var networkId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "network_id", mux.Vars(r)["network_id"], &networkId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "network_id", chi.URLParam(r, "network_id"), &networkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "network_id", Err: err})
 		return
@@ -211,7 +263,7 @@ func (siw *ServerInterfaceWrapper) AccessNetwork(w http.ResponseWriter, r *http.
 	// ------------- Path parameter "network_id" -------------
 	var networkId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "network_id", mux.Vars(r)["network_id"], &networkId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "network_id", chi.URLParam(r, "network_id"), &networkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "network_id", Err: err})
 		return
@@ -325,36 +377,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -367,21 +419,30 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/combat/hacking/attack", wrapper.HackTarget).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/combat/hacking/countermeasures", wrapper.ActivateCountermeasures).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/combat/hacking/demons", wrapper.GetDemons).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/combat/hacking/demons/{demon_id}/activate", wrapper.ActivateDemon).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/combat/hacking/ice/{target_id}", wrapper.GetICELevel).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/combat/hacking/networks/{network_id}", wrapper.GetNetworkInfo).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/combat/hacking/networks/{network_id}/access", wrapper.AccessNetwork).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/combat/hacking/overheat", wrapper.GetOverheatStatus).Methods("GET")
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/combat/hacking/attack", wrapper.HackTarget)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/combat/hacking/countermeasures", wrapper.ActivateCountermeasures)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/combat/hacking/demons", wrapper.GetDemons)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/combat/hacking/demons/{demon_id}/activate", wrapper.ActivateDemon)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/combat/hacking/ice/{target_id}", wrapper.GetICELevel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/combat/hacking/networks/{network_id}", wrapper.GetNetworkInfo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/combat/hacking/networks/{network_id}/access", wrapper.AccessNetwork)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/combat/hacking/overheat", wrapper.GetOverheatStatus)
+	})
 
 	return r
 }
