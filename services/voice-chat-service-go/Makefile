@@ -1,6 +1,8 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
-SERVICE_NAME := voice-chat-service
+# Use specific module instead of non-existent main file
+# voice-chat-channels-service is the primary module for this service
+SERVICE_NAME := voice-chat-channels-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
