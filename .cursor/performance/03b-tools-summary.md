@@ -205,9 +205,9 @@ grep -r "context.WithTimeout" server/
 
 # SUMMARY
 
-**Total:** 75+ techniques  
-**Categories:** 16  
-**Priority:** P0(10) + P1(15) + P2(12) + P3(3)
+**Total:** 110+ techniques  
+**Categories:** 22+  
+**Priority:** P0(15) + P1(20) + P2(18) + P3(5)
 
 **Gains:**
 - CRUD: +800% throughput
@@ -218,9 +218,11 @@ grep -r "context.WithTimeout" server/
 
 **All Parts:**
 1. [Memory, Concurrency, DB](./01-memory-concurrency-db.md)
-2. [Network](./02a-network-optimizations.md) + [Game Patterns](./02b-game-patterns.md)
+2. [Network](./02a-network-optimizations.md) + [Game](./02b-game-patterns.md)
 3. [Profiling](./03a-profiling-testing.md) + [Tools](./03b-tools-summary.md)
-4. [MMO-Specific Patterns](./04-mmo-specific-patterns.md) ⭐ NEW!
+4. [MMO Sessions](./04a-mmo-sessions-inventory.md) + [Persistence](./04b-persistence-matching.md) + [Anti-Cheat](./04c-matchmaking-anticheat.md)
+5. [Advanced MMO](./05-advanced-mmo-techniques.md) 🔥
+6. [Resilience](./06-resilience-compression.md) 🔥
 
 **Main:** [GO_BACKEND_PERFORMANCE_BIBLE.md](../)
 

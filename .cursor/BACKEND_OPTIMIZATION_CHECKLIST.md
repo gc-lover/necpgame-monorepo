@@ -50,41 +50,75 @@
 
 ## 🔍 Как проверять
 
-### Автоматические проверки:
+### ⚡ Используй автоматическую команду:
+
+```bash
+# ОБЯЗАТЕЛЬНО перед передачей задачи!
+/backend-validate-optimizations #123
+
+# Или вручную:
+./scripts/validate-backend-optimizations.sh services/{service}-go
+```
+
+**Output:**
+```
+🔍 Validating optimizations for {service}-go...
+
+OK Struct alignment: OK
+OK Goroutine leak tests: OK  
+OK Context timeouts: OK
+OK DB pool config: OK
+OK Structured logging: OK
+❌ Memory pooling: NOT FOUND (BLOCKER!)
+WARNING  Benchmarks: Missing
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+RESULT: ❌ VALIDATION FAILED
+BLOCKERS: 1
+WARNINGS: 1
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cannot proceed to next stage.
+Fix blockers and run validation again.
+```
+
+### Автоматические проверки (в скрипте):
 
 ```bash
 # 1. Struct alignment
 fieldalignment ./...
 
 # 2. Goroutine leaks
-go test -v ./... -run TestMain  # С goleak
+go test -v ./... -run TestMain
 
 # 3. Benchmarks
-go test -bench=. -benchmem | grep "allocs/op"
+go test -bench=. -benchmem
 
-# 4. Profiling
+# 4. Context timeouts
+grep -r "context.WithTimeout" server/
+
+# 5. DB pool
+grep -r "SetMaxOpenConns" .
+
+# 6. Memory pooling
+grep -r "sync.Pool" server/
+
+# 7. Structured logging
+grep -r "zap\." server/
+
+# 8. Profiling
+grep -r "pprof" main.go
+```
+
+### Ручная проверка (опционально):
+
+```bash
+# Profiling
 curl http://localhost:6060/debug/pprof/allocs > allocs.prof
 go tool pprof -top allocs.prof
 
-# 5. Linting
+# Linting
 golangci-lint run
-```
-
-### Ручные проверки:
-
-**Смотри код на:**
-```bash
-# Memory pooling
-grep -r "sync.Pool" server/
-
-# Batch operations  
-grep -r "Batch" server/repository.go
-
-# Context timeouts
-grep -r "context.WithTimeout" server/
-
-# Atomic operations
-grep -r "atomic\." server/
 ```
 
 ## 📊 Метрики успеха
@@ -160,9 +194,49 @@ Issue: #123
   run: go test -v -run TestMain ./...
 ```
 
+## 🔄 Рефакторинг существующих сервисов
+
+**Backend ОБЯЗАН рефакторить неоптимизированный код!**
+
+### Workflow при работе с existing service:
+
+```bash
+# 1. Аудит сервиса
+/backend-refactor-service {service-name}
+
+# 2. Получишь:
+# - Список проблем
+# - Рефакторинг план
+# - GitHub Issue для рефакторинга
+# - Expected gains
+
+# 3. Приоритизируй:
+# 🔴 BLOCKER → исправь немедленно (в текущей задаче)
+# 🟡 WARNING → создай Issue для отдельного рефакторинга
+# 🟢 IMPROVEMENTS → backlog
+
+# 4. Применяй оптимизации:
+# - Используй шаблоны из .cursor/templates/backend-*.md
+# - Следуй Performance Bible
+# - Валидируй после каждого изменения
+```
+
+### Правило:
+
+**НЕ оставляй сервисы неоптимизированными!**
+
+- Нашел неоптимизированный код → создай Issue
+- Работаешь с existing сервисом → применяй оптимизации
+- Каждый коммит → улучшение performance
+
+---
+
 ## 📚 См. также:
 
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - **120+ оптимизаций (13 parts)**
 - `.cursor/BACKEND_CODE_TEMPLATES.md` - шаблоны оптимизированного кода
+- `.cursor/PERFORMANCE_ENFORCEMENT.md` - **СТРОГИЕ требования**
 - `.cursor/rules/agent-backend.mdc` - полные правила Backend агента
-- `.cursor/commands/backend-validate-optimizations.md` - команда для проверки
+- `.cursor/commands/backend-validate-optimizations.md` - команда валидации
+- `.cursor/commands/backend-refactor-service.md` - команда рефакторинга
 

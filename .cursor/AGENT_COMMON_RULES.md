@@ -84,34 +84,65 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 
 ## Performance Optimizations (для Backend)
 
-**Backend ОБЯЗАН применять оптимизации для MMOFPS RPG**
+**WARNING КРИТИЧНО: Backend ОБЯЗАН применять оптимизации для MMOFPS RPG**
 
-**Базовые (ВСЕГДА):**
+**BLOCKER (задачу НЕЛЬЗЯ передавать без этого):**
+- ❌ НЕТ context timeouts → FIX before handoff
+- ❌ НЕТ DB pool config → FIX before handoff
+- ❌ Goroutine leaks → FIX before handoff
+- ❌ НЕТ struct alignment → FIX before handoff
+- ❌ НЕТ structured logging → FIX before handoff
+
+**Базовые (ВСЕГДА для ВСЕХ сервисов):**
 - Context timeouts для внешних вызовов
 - DB connection pool (25-50 connections)
-- Struct field alignment
-- Goroutine leak detection
-- Structured logging
+- Struct field alignment (fieldalignment)
+- Goroutine leak detection (goleak)
+- Structured logging (zap)
+- Health/Metrics endpoints
 
 **Hot Path (>100 RPS):**
 - Memory pooling (`sync.Pool`)
 - Batch DB operations
 - Lock-free structures (`atomic`)
 - Preallocation
-- Zero allocations
+- Zero allocations в benchmarks
 
-**Game Servers:**
+**Game Servers (real-time):**
 - Worker pool для горутин
 - Spatial partitioning (>100 объектов)
 - Adaptive tick rate
 - GC tuning (`GOGC=50`)
-- Profiling endpoints
+- Profiling endpoints (pprof)
+
+**PostgreSQL Advanced:**
+- pgBouncer (connection pooler)
+- Prepared statement cache
+- WAL tuning (для write-heavy)
+- JSONB indexes (для flexible data)
+
+**Redis Advanced:**
+- Pipelining (batch commands)
+- Lua scripts (atomic operations)
+- Redis Cluster (для scale)
+- Cache Pub/Sub (distributed invalidation)
+
+**Валидация ОБЯЗАТЕЛЬНА:**
+- Запускай `/backend-validate-optimizations #123` перед передачей
+- Если BLOCKER → исправь и повтори
+- Передавай ТОЛЬКО после OK validation passed
 
 **Детали:**
-- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - **ВСЕ оптимизации (75+ техник)**
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - **120+ оптимизаций** (13 parts)
 - `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист для валидации
 - `.cursor/templates/backend-*.md` - шаблоны кода
 - `/backend-validate-optimizations #123` - команда для проверки
+
+**Рефакторинг существующих сервисов:**
+- Backend ОБЯЗАН рефакторить неоптимизированный код
+- При работе с существующим сервисом - применяй оптимизации
+- Создавай отдельные Issues для рефакторинга если нашел проблемы
+- Используй `/backend-refactor-service {service-name}` для планирования
 
 ## GitHub API
 
