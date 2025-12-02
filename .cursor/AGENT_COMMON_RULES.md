@@ -82,6 +82,36 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 
 **Детали миграции:** См. секцию "Миграция с Gorilla на Chi" в `.cursor/rules/agent-backend.mdc`
 
+## Performance Optimizations (для Backend)
+
+**Backend ОБЯЗАН применять оптимизации для MMOFPS RPG**
+
+**Базовые (ВСЕГДА):**
+- Context timeouts для внешних вызовов
+- DB connection pool (25-50 connections)
+- Struct field alignment
+- Goroutine leak detection
+- Structured logging
+
+**Hot Path (>100 RPS):**
+- Memory pooling (`sync.Pool`)
+- Batch DB operations
+- Lock-free structures (`atomic`)
+- Preallocation
+- Zero allocations
+
+**Game Servers:**
+- Worker pool для горутин
+- Spatial partitioning (>100 объектов)
+- Adaptive tick rate
+- GC tuning (`GOGC=50`)
+- Profiling endpoints
+
+**Детали:**
+- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - полный чек-лист
+- `.cursor/BACKEND_CODE_TEMPLATES.md` - шаблоны кода
+- `/backend-validate-optimizations #123` - команда для проверки
+
 ## GitHub API
 
 **ALWAYS use `mcp_github_search_issues` instead of multiple `mcp_github_issue_read`**
