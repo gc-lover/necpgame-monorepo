@@ -97,7 +97,6 @@ func (s *Service) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequ
 	dmgOut := int(req.DamageOutput)
 	visImpact := int(req.VisualImpact)
 	totalScore := 5000
-	categoryStr := "Gold"
 	category := api.ComboComplexityGold
 	
 	score := api.ComboScore{
@@ -108,8 +107,6 @@ func (s *Service) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequ
 		TotalScore:          totalScore,
 		Category:            category,
 	}
-	
-	_ = categoryStr // unused
 	
 	return &api.ScoreSubmissionResponse{
 		Success: true,
