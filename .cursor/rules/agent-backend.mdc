@@ -146,11 +146,14 @@ Backend Developer реализует бекенд на Go по OpenAPI спец�
 - `/backend-find-tasks` - найти задачи
 - `/backend-return-task #123` - вернуть задачу
 - `/backend-validate-result #123` - валидировать результат
+- `/backend-validate-optimizations #123` - **ОБЯЗАТЕЛЬНО перед передачей!**
 - `/backend-check-openapi #123` - проверить OpenAPI
 - `/backend-check-architecture #123` - проверить архитектуру
 - `/backend-import-quest-to-db #123` - импортировать квест в БД
 
 **Детали:** `.cursor/commands/backend-*.md`
+
+**WARNING ОБЯЗАТЕЛЬНО:** Запускай `/backend-validate-optimizations #123` перед передачей задачи Network/QA!
 
 ### 🔄 Быстрые команды для валидации
 
@@ -791,16 +794,44 @@ router.Use(loggingMiddleware)      // Кастомный
 
 ## Переход к следующему этапу
 
+**WARNING ОБЯЗАТЕЛЬНЫЕ проверки перед передачей:**
+
+1. **Валидация функциональности:** `/backend-validate-result #123`
+2. **Валидация оптимизаций:** `/backend-validate-optimizations #123` ← **КРИТИЧНО!**
+3. Если обе проверки OK → передавай задачу
+
 **Контентный квест (labels `canon`, `lore`, `quest`):**
-1. Используй `/backend-validate-result #123` для проверки
-2. Обнови Project: `Status = QA - Todo`
-3. Комментарий: "OK Backend ready (импорт в БД выполнен). Handed off to QA\n\nIssue: #{number}"
+1. `/backend-validate-result #123` - проверка функционала
+2. `/backend-validate-optimizations #123` - проверка оптимизаций
+3. Обнови Project: `Status = QA - Todo`
+4. Комментарий с отчетом об оптимизациях
 
 **Системная задача:**
-1. Используй `/backend-validate-result #123` для проверки
-2. Обнови Project: `Status = Network - Todo`
-3. Создай PR: `[backend] feat: реализация для Issue #{number}`
-4. Комментарий: "OK Backend ready. Handed off to Network\n\nPR: #{number}"
+1. `/backend-validate-result #123` - проверка функционала  
+2. `/backend-validate-optimizations #123` - **ОБЯЗАТЕЛЬНО!**
+3. Обнови Project: `Status = Network - Todo`
+4. Создай PR: `[backend] feat: реализация для Issue #{number}`
+5. Комментарий с отчетом об оптимизациях
+
+**Шаблон комментария:**
+```markdown
+OK Backend ready. Handed off to {NextAgent}
+
+**Optimizations applied:**
+- [x] Context timeouts (100ms for external calls)
+- [x] DB pool configured (25 connections)
+- [x] Memory pooling (3 pools: response, request, buffer)
+- [x] Batch operations (DB queries)
+- [x] Zero allocations in hot path
+
+**Performance:**
+- P99 latency: 8.5ms (OK <10ms)
+- Throughput: 15k req/sec
+- Memory: stable, no leaks
+
+PR: #{pr_number}
+Issue: #{issue_number}
+```
 
 **См. `.cursor/AGENT_COMMON_RULES.md`**
 
@@ -980,6 +1011,132 @@ func init() {
 ```
 
 **ВАЖНО:** Эти оптимизации критичны для real-time game services (matchmaking, game state, player sync). Для обычных CRUD API можно быть менее строгим.
+
+### 11. Struct Field Alignment (экономия памяти 30-50%)
+
+```go
+// ❌ Плохо: неоптимальное выравнивание
+type Player struct {
+    IsActive bool   // 1 byte + 7 padding
+    ID       uint64 // 8 bytes
+    Level    uint8  // 1 byte + 7 padding
+}
+// 32 bytes total
+
+// OK Хорошо: большие поля первыми
+type Player struct {
+    ID       uint64 // 8 bytes
+    Level    uint8  // 1 byte
+    IsActive bool   // 1 byte
+}
+// 16 bytes total (50% экономия!)
+
+// Проверка: fieldalignment ./...
+```
+
+### 12. Goroutine Leak Detection
+
+```go
+import "go.uber.org/goleak"
+
+func TestMain(m *testing.M) {
+    goleak.VerifyTestMain(m) // Автопроверка leaks
+}
+
+func TestNoLeaks(t *testing.T) {
+    defer goleak.VerifyNone(t)
+    
+    server := NewServer()
+    server.Start()
+    server.Stop() // Должен cleanup все горутины
+}
+```
+
+### 13. Ring Buffer для Events (lock-free)
+
+```go
+// Для high-throughput event processing
+type RingBuffer struct {
+    buffer   []Event
+    size     int64
+    writePos atomic.Int64
+    readPos  atomic.Int64
+}
+
+func (rb *RingBuffer) Push(event Event) bool {
+    write := rb.writePos.Load()
+    next := (write + 1) % rb.size
+    
+    if next == rb.readPos.Load() {
+        return false // Full
+    }
+    
+    rb.buffer[write] = event
+    rb.writePos.Store(next)
+    return true
+}
+```
+
+### 14. FlatBuffers для Ultra-Low Latency
+
+```go
+// Когда Protobuf = bottleneck (после профилирования!)
+// FlatBuffers = zero-copy deserialization
+
+builder := flatbuffers.NewBuilder(1024)
+pos := CreatePosition(builder, x, y, z)
+builder.Finish(pos)
+
+// Send without copy
+conn.Write(builder.FinishedBytes())
+```
+
+**Использовать только если:** Protobuf показывает >5% CPU в профайлере
+
+### 15. Bounded Channels (защита от deadlocks)
+
+```go
+// ❌ Плохо: unbounded
+events := make(chan Event)
+
+// OK Хорошо: bounded + backpressure
+events := make(chan Event, 1000)
+
+select {
+case events <- event:
+    // OK
+case <-time.After(10 * time.Millisecond):
+    return ErrOverloaded // Shed load
+}
+```
+
+**КРИТИЧНО:** Для ВСЕХ production сервисов используй bounded channels!
+
+## 📋 Чек-лист перед передачей задачи
+
+**ОБЯЗАТЕЛЬНО проверь перед handoff:**
+
+**См. `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` для полного чек-листа**
+
+**Минимальные требования:**
+- [ ] Context timeouts для всех внешних вызовов
+- [ ] DB connection pool настроен (25-50 connections)
+- [ ] Struct fields упорядочены (проверено `fieldalignment`)
+- [ ] Тесты на goroutine leaks (с `goleak`)
+- [ ] Benchmarks для hot path (0 allocs/op)
+- [ ] Profiling endpoints включены (`pprof`)
+
+**Для game servers дополнительно:**
+- [ ] Memory pooling (`sync.Pool`) для частых объектов
+- [ ] Batch operations для DB queries
+- [ ] Spatial partitioning (если >100 объектов)
+- [ ] Worker pool для горутин
+- [ ] Adaptive tick rate
+
+**Шаблоны кода:** 
+- `.cursor/templates/backend-api-templates.md` - API handlers/service/repository
+- `.cursor/templates/backend-game-templates.md` - Game servers
+- `.cursor/templates/backend-utils-templates.md` - Utilities/tests/metrics
 
 ## SOLID принципы
 
