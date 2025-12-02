@@ -1,0 +1,185 @@
+# Issue: #130
+
+openapi: 3.0.3
+info:
+  title: Combat Session Schemas
+  version: 1.0.0
+
+components:
+  schemas:
+    Participant:
+      type: object
+      required: [player_id, character_id, team, role, health, max_health, status]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        team:
+          type: string
+          enum: [team_a, team_b, solo]
+        role:
+          type: string
+          enum: [assault, support, tech, stealth]
+        damage_dealt:
+          type: integer
+          format: int64
+        damage_taken:
+          type: integer
+          format: int64
+        healing_done:
+          type: integer
+          format: int64
+        kills:
+          type: integer
+        deaths:
+          type: integer
+        assists:
+          type: integer
+        health:
+          type: integer
+        max_health:
+          type: integer
+        status:
+          type: string
+          enum: [alive, dead, extracted, disconnected]
+
+    StatusEffect:
+      type: object
+      required: [effect_type, duration_seconds]
+      properties:
+        effect_type:
+          type: string
+          enum: [bleeding, burning, poisoned, stunned, slowed, buffed, debuffed]
+        duration_seconds:
+          type: integer
+          minimum: 1
+        strength:
+          type: number
+          format: float
+
+    ActionValidation:
+      type: object
+      required: [anti_cheat_passed, position_valid, cooldown_valid]
+      properties:
+        anti_cheat_passed:
+          type: boolean
+        position_valid:
+          type: boolean
+        cooldown_valid:
+          type: boolean
+        details:
+          type: string
+
+    ParticipantState:
+      type: object
+      required: [player_id, health, status]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        health:
+          type: integer
+        max_health:
+          type: integer
+        position:
+          $ref: 'common.yaml#/components/schemas/Position3D'
+        status:
+          type: string
+          enum: [alive, dead, extracted, disconnected]
+        active_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffect'
+
+    CombatLog:
+      type: object
+      required: [id, event_type, timestamp, sequence_number]
+      properties:
+        id:
+          type: integer
+          format: int64
+        event_type:
+          type: string
+          enum: [attack, ability, move, reload, death, extract]
+        actor_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        action_data:
+          type: object
+        result_data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+        sequence_number:
+          type: integer
+          format: int64
+
+    ParticipantStats:
+      type: object
+      required: [player_id, damage_dealt, kills, deaths]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        damage_dealt:
+          type: integer
+          format: int64
+        damage_taken:
+          type: integer
+          format: int64
+        healing_done:
+          type: integer
+          format: int64
+        kills:
+          type: integer
+        deaths:
+          type: integer
+        assists:
+          type: integer
+        shots_fired:
+          type: integer
+        shots_hit:
+          type: integer
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+    Reward:
+      type: object
+      required: [player_id, experience, currency]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        experience:
+          type: integer
+          minimum: 0
+        currency:
+          type: object
+          properties:
+            eurodollars:
+              type: integer
+            cryptos:
+              type: integer
+        items:
+          type: array
+          items:
+            type: object
+            required: [item_id, quantity]
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+
