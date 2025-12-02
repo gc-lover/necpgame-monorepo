@@ -7,27 +7,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/mux"
 	"github.com/necpgame/combat-implants-core-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *mux.Router
 	logger *logrus.Logger
 	server *http.Server
 }
 
 func NewHTTPServer(addr string) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router := mux.NewRouter()
 
 	server := &HTTPServer{
 		addr:   addr,
@@ -35,91 +28,79 @@ func NewHTTPServer(addr string) *HTTPServer {
 		logger: GetLogger(),
 	}
 
+	// Middleware
 	router.Use(server.loggingMiddleware)
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
+	// Handlers
 	handlers := NewCoreHandlers()
 
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	// Register handlers using oapi-codegen gorilla integration
+	api.HandlerFromMux(handlers, router)
 
-	router.Get("/health", server.healthCheck)
+	// Health check
+	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+
+	server.server = &http.Server{
+		Addr:         addr,
+		Handler:      router,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
 
 	return server
 }
 
-func (s *HTTPServer) Start(ctx context.Context) error {
-	s.server = &http.Server{
-		Addr:         s.addr,
-		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
-	errChan := make(chan error, 1)
-	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			errChan <- err
-		}
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return s.Shutdown(context.Background())
-	}
+func (s *HTTPServer) Start() error {
+	s.logger.WithField("addr", s.addr).Info("Combat Implants Core Service starting")
+	return s.server.ListenAndServe()
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	if s.server != nil {
-		return s.server.Shutdown(ctx)
-	}
-	return nil
+	s.logger.Info("Shutting down Combat Implants Core Service")
+	return s.server.Shutdown(ctx)
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "healthy",
+		"service": "combat-implants-core-service",
+	})
 }
 
-func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		s.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
+// Middleware functions
 
 func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(recorder, r)
-
-		duration := time.Since(start)
 		s.logger.WithFields(logrus.Fields{
-			"method":      r.Method,
-			"path":        r.URL.Path,
-			"duration_ms": duration.Milliseconds(),
-			"status":      recorder.statusCode,
-		}).Info("HTTP request")
+			"method": r.Method,
+			"path":   r.URL.Path,
+			"ip":     r.RemoteAddr,
+		}).Info("Request started")
+
+		next.ServeHTTP(w, r)
+
+		s.logger.WithFields(logrus.Fields{
+			"method":   r.Method,
+			"path":     r.URL.Path,
+			"duration": time.Since(start),
+		}).Info("Request completed")
 	})
 }
 
 func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
-		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(recorder, r)
-
+		next.ServeHTTP(w, r)
 		duration := time.Since(start).Seconds()
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(recorder.statusCode))
+
+		RecordRequest(r.Method, r.URL.Path, "200")
 		RecordRequestDuration(r.Method, r.URL.Path, duration)
 	})
 }
@@ -138,14 +119,3 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (sr *statusRecorder) WriteHeader(code int) {
-	sr.statusCode = code
-	sr.ResponseWriter.WriteHeader(code)
-}
-
