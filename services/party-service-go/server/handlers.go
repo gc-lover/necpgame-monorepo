@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gc-lover/necpgame/services/party-service-go/pkg/api"
-	"github.com/oapi-codegen/runtime/types"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Handlers реализует api.ServerInterface
@@ -37,7 +37,7 @@ func (h *Handlers) CreateParty(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetParty получает информацию о группе
-func (h *Handlers) GetParty(w http.ResponseWriter, r *http.Request, partyId types.UUID) {
+func (h *Handlers) GetParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
 	response, err := h.service.GetParty(r.Context(), partyId.String())
 	if err != nil {
 		respondError(w, http.StatusNotFound, "Party not found")
@@ -47,8 +47,8 @@ func (h *Handlers) GetParty(w http.ResponseWriter, r *http.Request, partyId type
 	respondJSON(w, http.StatusOK, response)
 }
 
-// DeleteParty распускает группу
-func (h *Handlers) DeleteParty(w http.ResponseWriter, r *http.Request, partyId types.UUID) {
+// DisbandParty распускает группу
+func (h *Handlers) DisbandParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
 	err := h.service.DeleteParty(r.Context(), partyId.String())
 	if err != nil {
 		respondError(w, http.StatusForbidden, err.Error())
@@ -58,8 +58,8 @@ func (h *Handlers) DeleteParty(w http.ResponseWriter, r *http.Request, partyId t
 	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
-// InviteToParty приглашает игрока
-func (h *Handlers) InviteToParty(w http.ResponseWriter, r *http.Request, partyId types.UUID) {
+// InvitePlayer приглашает игрока
+func (h *Handlers) InvitePlayer(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
 	var req api.InviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request")
@@ -76,7 +76,7 @@ func (h *Handlers) InviteToParty(w http.ResponseWriter, r *http.Request, partyId
 }
 
 // AcceptInvite принимает приглашение
-func (h *Handlers) AcceptInvite(w http.ResponseWriter, r *http.Request, inviteId types.UUID) {
+func (h *Handlers) AcceptInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID) {
 	err := h.service.AcceptInvite(r.Context(), inviteId.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -87,7 +87,7 @@ func (h *Handlers) AcceptInvite(w http.ResponseWriter, r *http.Request, inviteId
 }
 
 // DeclineInvite отклоняет приглашение
-func (h *Handlers) DeclineInvite(w http.ResponseWriter, r *http.Request, inviteId types.UUID) {
+func (h *Handlers) DeclineInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID) {
 	err := h.service.DeclineInvite(r.Context(), inviteId.String())
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
@@ -98,7 +98,7 @@ func (h *Handlers) DeclineInvite(w http.ResponseWriter, r *http.Request, inviteI
 }
 
 // LeaveParty выйти из группы
-func (h *Handlers) LeaveParty(w http.ResponseWriter, r *http.Request, partyId types.UUID) {
+func (h *Handlers) LeaveParty(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
 	err := h.service.LeaveParty(r.Context(), partyId.String())
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -109,8 +109,10 @@ func (h *Handlers) LeaveParty(w http.ResponseWriter, r *http.Request, partyId ty
 }
 
 // KickMember кикнуть участника
-func (h *Handlers) KickMember(w http.ResponseWriter, r *http.Request, partyId types.UUID, memberId types.UUID) {
-	err := h.service.KickMember(r.Context(), partyId.String(), memberId.String())
+func (h *Handlers) KickMember(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
+	var req struct{ MemberId string `json:"memberId"` }
+	json.NewDecoder(r.Body).Decode(&req)
+	err := h.service.KickMember(r.Context(), partyId.String(), req.MemberId)
 	if err != nil {
 		respondError(w, http.StatusForbidden, err.Error())
 		return
@@ -119,8 +121,8 @@ func (h *Handlers) KickMember(w http.ResponseWriter, r *http.Request, partyId ty
 	respondJSON(w, http.StatusOK, map[string]string{"status": "kicked"})
 }
 
-// UpdatePartySettings обновить настройки группы
-func (h *Handlers) UpdatePartySettings(w http.ResponseWriter, r *http.Request, partyId types.UUID) {
+// UpdateSettings обновить настройки группы
+func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
 	var req api.PartySettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request")
@@ -137,7 +139,7 @@ func (h *Handlers) UpdatePartySettings(w http.ResponseWriter, r *http.Request, p
 }
 
 // RollForLoot сделать roll на лут
-func (h *Handlers) RollForLoot(w http.ResponseWriter, r *http.Request, partyId types.UUID) {
+func (h *Handlers) RollForLoot(w http.ResponseWriter, r *http.Request, partyId api.PartyId) {
 	var req api.LootRollRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request")
@@ -154,7 +156,7 @@ func (h *Handlers) RollForLoot(w http.ResponseWriter, r *http.Request, partyId t
 }
 
 // PassLootRoll пропустить roll
-func (h *Handlers) PassLootRoll(w http.ResponseWriter, r *http.Request, partyId types.UUID, rollId types.UUID) {
+func (h *Handlers) PassLootRoll(w http.ResponseWriter, r *http.Request, partyId api.PartyId, rollId openapi_types.UUID) {
 	err := h.service.PassLootRoll(r.Context(), partyId.String(), rollId.String())
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
