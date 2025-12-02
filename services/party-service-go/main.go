@@ -2,39 +2,57 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/gc-lover/necpgame/services/party-service-go/server"
 )
 
 func main() {
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable"
-	}
+	// Initialize repository
+	repo := server.NewPartyRepository()
 
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-	defer db.Close()
+	// Initialize service
+	service := server.NewPartyService(repo)
 
-	repository := server.NewPostgresRepository(db)
-	service := server.NewPartyService(repository)
-
-	addr := os.Getenv("HTTP_ADDR")
-	if addr == "" {
-		addr = ":8091"
-	}
-
+	// Initialize HTTP server
+	addr := getEnv("SERVER_ADDR", ":8080")
 	httpServer := server.NewHTTPServer(addr, service)
 
-	log.Printf("Starting Party Service on %s", addr)
-	if err := httpServer.Start(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Start server
+	go func() {
+		log.Printf("Starting Party Service on %s", addr)
+		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	// Graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
 	}
+
+	log.Println("Server exited")
 }
 
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}

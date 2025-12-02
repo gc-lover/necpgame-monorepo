@@ -108,8 +108,9 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 - Profiling endpoints
 
 **Детали:**
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - полный чек-лист
-- `.cursor/BACKEND_CODE_TEMPLATES.md` - шаблоны кода
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - **ВСЕ оптимизации (75+ техник)**
+- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист для валидации
+- `.cursor/templates/backend-*.md` - шаблоны кода
 - `/backend-validate-optimizations #123` - команда для проверки
 
 ## GitHub API

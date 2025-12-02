@@ -5,7 +5,6 @@ go 1.24
 require (
 	github.com/getkin/kin-openapi v0.133.0
 	github.com/go-chi/chi/v5 v5.0.11
-	github.com/lib/pq v1.10.9
 	github.com/oapi-codegen/runtime v1.1.1
 )
 

@@ -3,34 +3,36 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/gc-lover/necpgame/services/party-service-go/pkg/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gc-lover/necpgame/services/party-service-go/pkg/api"
 )
 
-// HTTPServer HTTP сервер
 type HTTPServer struct {
 	addr    string
-	router  *chi.Mux
-	service Service
+	router  chi.Router
+	service *PartyService
+	server  *http.Server
 }
 
-// NewHTTPServer создает новый HTTP сервер
-func NewHTTPServer(addr string, service Service) *HTTPServer {
+func NewHTTPServer(addr string, service *PartyService) *HTTPServer {
 	router := chi.NewRouter()
 
-	// Middleware
+	// Global middleware
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(60 * time.Second))
 
-	// Handlers
-	handlers := NewHandlers(service)
+	// Create handlers
+	handlers := NewPartyHandlers(service)
 
-	// Mount API
+	// Register API routes using generated code
 	api.HandlerWithOptions(handlers, api.ChiServerOptions{
 		BaseURL:    "/api/v1",
 		BaseRouter: router,
@@ -38,7 +40,6 @@ func NewHTTPServer(addr string, service Service) *HTTPServer {
 
 	// Health check
 	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
 
 	return &HTTPServer{
 		addr:    addr,
@@ -47,22 +48,23 @@ func NewHTTPServer(addr string, service Service) *HTTPServer {
 	}
 }
 
-// Start запускает HTTP сервер
 func (s *HTTPServer) Start() error {
-	return http.ListenAndServe(s.addr, s.router)
+	s.server = &http.Server{
+		Addr:    s.addr,
+		Handler: s.router,
+	}
+	return s.server.ListenAndServe()
 }
 
-// Shutdown graceful shutdown
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
+	if s.server != nil {
+		return s.server.Shutdown(ctx)
+	}
 	return nil
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok"}`))
+	fmt.Fprintf(w, `{"status":"ok","service":"party"}`)
 }
-
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-}
-
