@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Issue: #151 -->
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-mail-messages-table" author="database-engineer">
+        <createTable tableName="mail_messages">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="sender_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+            <column name="recipient_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mail_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="body" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- Attachments -->
+            <column name="has_attachments" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attachment_items" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            <column name="attachment_currency" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- COD -->
+            <column name="cod_amount" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cod_currency" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="cod_paid" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            
+            <!-- Status -->
+            <column name="mail_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attachment_claimed" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            
+            <!-- Timestamps -->
+            <column name="sent_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="read_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="claimed_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- Return -->
+            <column name="returned_to_sender" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="return_reason" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_mail_recipient" tableName="mail_messages">
+            <column name="recipient_id"/>
+            <column name="mail_status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_mail_expires" tableName="mail_messages">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <createIndex indexName="idx_mail_sender" tableName="mail_messages">
+            <column name="sender_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_mail_type" tableName="mail_messages">
+            <column name="mail_type"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="002-create-mail-audit-log-table" author="database-engineer">
+        <createTable tableName="mail_audit_log">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="mail_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_audit_mail" references="mail_messages(id)"/>
+            </column>
+            <column name="action" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+            <column name="details" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_audit_mail" tableName="mail_audit_log">
+            <column name="mail_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_audit_timestamp" tableName="mail_audit_log">
+            <column name="timestamp"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
