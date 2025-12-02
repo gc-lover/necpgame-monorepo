@@ -1,4 +1,4 @@
--- Issue: #140875788
+-- Issue: #42
 -- Economy Trading Markets Auctions Database Schema
 -- Создание таблиц для экономической системы:
 -- - Игровой рынок (market_listings)
