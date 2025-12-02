@@ -1,3 +1,4 @@
+// Issue: #39
 package server
 
 import (
@@ -28,24 +29,30 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(60 * time.Second))
 
+	logger := GetLogger()
+	router.Use(loggingMiddleware(logger))
+	router.Use(metricsMiddleware())
+	router.Use(corsMiddleware())
+
+	handlers := NewSandevistanHandlers()
+	api.HandlerWithOptions(handlers, api.ChiServerOptions{
+		BaseURL:    "/api/v1",
+		BaseRouter: router,
+	})
+
+	router.Get("/health", healthCheck)
+
 	server := &HTTPServer{
 		addr:   addr,
 		router: router,
-		logger: GetLogger(),
-	}
-
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-
-	handlers := NewSandevistanHandlers()
-	api.HandlerFromMux(handlers, router)
-
-	server.server = &http.Server{
-		Addr:         addr,
-		Handler:      router,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		logger: logger,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
 	}
 
 	return server
@@ -59,42 +66,8 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-		next.ServeHTTP(ww, r)
-		s.logger.WithFields(logrus.Fields{
-			"method":    r.Method,
-			"path":      r.URL.Path,
-			"status":    ww.Status(),
-			"duration":  time.Since(start).String(),
-			"requestID": middleware.GetReqID(r.Context()),
-		}).Info("Request completed")
-	})
-}
-
-func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-		next.ServeHTTP(ww, r)
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(ww.Status()))
-		RecordRequestDuration(r.Method, r.URL.Path, time.Since(start).Seconds())
-	})
-}
-
-func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 
 func respondJSON(w http.ResponseWriter, statusCode int, data interface{}) {

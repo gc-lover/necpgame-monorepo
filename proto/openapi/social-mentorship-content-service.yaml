@@ -1,0 +1,235 @@
+# Issue: #303
+openapi: 3.0.3
+info:
+  title: Social Mentorship Content Service API
+  description: |
+    API для управления учебным контентом наставничества в NECPGAME.
+    
+    **Основные возможности:**
+    - Поиск учебного контента
+    - Создание учебного контента
+    - Просмотр информации о контенте
+    - Монетизация контента
+    
+    **Интеграции:**
+    - social-service - основная логика наставничества
+    - content-service - модерация и публикация контента
+    - economy-service - монетизация контента
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Mentorship Content
+    description: Учебный контент наставничества
+
+paths:
+  /social/mentorship/content:
+    get:
+      tags:
+        - Mentorship Content
+      summary: Поиск учебного контента
+      description: |
+        Возвращает список учебного контента с фильтрацией.
+      operationId: searchMentorshipContent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: content_type
+          in: query
+          schema:
+            type: string
+            enum: [guide, simulation, vr_scene, video, text]
+          description: Фильтр по типу контента
+        - name: skill_track
+          in: query
+          schema:
+            type: string
+          description: Фильтр по треку навыков
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по создателю
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список учебного контента
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MentorshipContent'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/content/create:
+    post:
+      tags:
+        - Mentorship Content
+      summary: Создать учебный контент
+      description: |
+        Создает новый учебный контент для наставничества.
+      operationId: createMentorshipContent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContentRequest'
+      responses:
+        '201':
+          description: Контент создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/content/{contentId}:
+    get:
+      tags:
+        - Mentorship Content
+      summary: Получить информацию о контенте
+      description: |
+        Возвращает детальную информацию об учебном контенте.
+      operationId: getMentorshipContent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контента
+      responses:
+        '200':
+          description: Информация о контенте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContent'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CreateContentRequest:
+      type: object
+      required:
+        - content_type
+        - content_name
+        - title
+        - skill_track
+      properties:
+        content_type:
+          type: string
+          enum: [guide, simulation, vr_scene, video, text]
+        content_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        skill_track:
+          type: string
+        content_data:
+          type: object
+          description: Данные контента (JSON)
+        price:
+          type: number
+          format: float
+          minimum: 0
+        is_public:
+          type: boolean
+          default: false
+
+    MentorshipContent:
+      type: object
+      required:
+        - id
+        - creator_id
+        - content_type
+        - content_name
+        - title
+        - skill_track
+      properties:
+        id:
+          type: string
+          format: uuid
+        creator_id:
+          type: string
+          format: uuid
+        content_type:
+          type: string
+          enum: [guide, simulation, vr_scene, video, text]
+        content_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        skill_track:
+          type: string
+        content_data:
+          type: object
+        moderation_status:
+          type: string
+          enum: [pending, approved, rejected]
+        monetization_status:
+          type: string
+          enum: [free, paid, subscription]
+        price:
+          type: number
+          format: float
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        views:
+          type: integer
+        usage_count:
+          type: integer
+        is_public:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

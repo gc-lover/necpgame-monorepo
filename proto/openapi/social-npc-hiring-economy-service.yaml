@@ -1,0 +1,317 @@
+# Issue: #304
+openapi: 3.0.3
+info:
+  title: Social NPC Hiring Economy Service API
+  description: |
+    API для управления экономикой найма NPC в NECPGAME.
+    
+    **Основные возможности:**
+    - Расчет зарплат нанятых NPC
+    - Выплата зарплат
+    - Отчеты по экономике найма
+    - Управление расходами и доходами
+    
+    **Интеграции:**
+    - social-service - основная логика найма NPC
+    - economy-service - обработка платежей и транзакций
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: NPC Hiring Economy
+    description: Экономика найма NPC
+
+paths:
+  /social/npc-hiring/economy/payroll:
+    get:
+      tags:
+        - NPC Hiring Economy
+      summary: Рассчитать зарплаты
+      description: |
+        Рассчитывает зарплаты для всех нанятых NPC за указанный период.
+      operationId: calculatePayroll
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода расчета
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода расчета
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по контракту
+      responses:
+        '200':
+          description: Расчет зарплат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollCalculationResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/economy/pay:
+    post:
+      tags:
+        - NPC Hiring Economy
+      summary: Выплатить зарплату
+      description: |
+        Выполняет выплату зарплаты нанятому NPC.
+      operationId: paySalary
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaySalaryRequest'
+      responses:
+        '200':
+          description: Зарплата выплачена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/economy/reports:
+    get:
+      tags:
+        - NPC Hiring Economy
+      summary: Получить отчеты по экономике найма
+      description: |
+        Возвращает отчеты по экономике найма NPC (расходы, доходы, ROI, инвестиции).
+      operationId: getEconomyReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: report_type
+          in: query
+          schema:
+            type: string
+            enum: [expenses, revenue, roi, investments, summary]
+          description: Тип отчета
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Отчеты по экономике
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EconomyReport'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    PayrollCalculationResponse:
+      type: object
+      required:
+        - period_start
+        - period_end
+        - total_amount
+        - payments
+      properties:
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        total_amount:
+          type: number
+          format: float
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/NPCPayment'
+        taxes:
+          type: number
+          format: float
+        net_amount:
+          type: number
+          format: float
+
+    PaySalaryRequest:
+      type: object
+      required:
+        - contract_id
+        - amount
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+
+    PaymentResponse:
+      type: object
+      required:
+        - payment_id
+        - contract_id
+        - status
+      properties:
+        payment_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        transaction_id:
+          type: string
+          format: uuid
+        paid_at:
+          type: string
+          format: date-time
+
+    NPCPayment:
+      type: object
+      required:
+        - contract_id
+        - npc_id
+        - amount
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        base_salary:
+          type: number
+          format: float
+        bonuses:
+          type: number
+          format: float
+        deductions:
+          type: number
+          format: float
+        total_amount:
+          type: number
+          format: float
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+
+    EconomyReport:
+      type: object
+      required:
+        - report_id
+        - report_type
+        - period_start
+        - period_end
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+          enum: [expenses, revenue, roi, investments, summary]
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        data:
+          type: object
+          properties:
+            total_expenses:
+              type: number
+              format: float
+            total_revenue:
+              type: number
+              format: float
+            roi:
+              type: number
+              format: float
+            investments:
+              type: number
+              format: float
+            taxes:
+              type: number
+              format: float
+            net_profit:
+              type: number
+              format: float
+        breakdown:
+          type: object
+          description: Детализация по типам найма (JSON)
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

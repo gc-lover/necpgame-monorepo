@@ -1,4 +1,4 @@
-// Issue: #141886477, #141886485
+// Issue: #1364, #141886477, #141886485
 package server
 
 import (
@@ -97,9 +97,24 @@ func (h *ResetHandlers) TriggerReset(w http.ResponseWriter, r *http.Request) {
 
 func (h *ResetHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+	
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to marshal JSON response")
+		w.WriteHeader(http.StatusInternalServerError)
+		errorResponse := api.Error{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to encode response",
+		}
+		if encodeErr := json.NewEncoder(w).Encode(errorResponse); encodeErr != nil {
+			h.logger.WithError(encodeErr).Error("Failed to encode error response")
+		}
+		return
+	}
+	
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
+	if _, err := w.Write(jsonData); err != nil {
+		h.logger.WithError(err).Error("Failed to write JSON response")
 	}
 }
 

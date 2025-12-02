@@ -1,0 +1,579 @@
+# Issue: #304
+openapi: 3.0.3
+info:
+  title: Social NPC Hiring Workforce Service API
+  description: |
+    API для управления нанятым персоналом NPC в NECPGAME.
+    
+    **Основные возможности:**
+    - Управление нанятым персоналом (workforce)
+    - Назначение и управление задачами
+    - Мониторинг эффективности и статуса NPC
+    - Взаимодействие с NPC
+    
+    **Интеграции:**
+    - social-service - основная логика найма NPC
+    - gameplay-service - выполнение задач
+    - npc-service - данные о NPC
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: NPC Hiring Workforce
+    description: Управление нанятым персоналом
+
+paths:
+  /social/npc-hiring/workforce:
+    get:
+      tags:
+        - NPC Hiring Workforce
+      summary: Получить список нанятых NPC
+      description: |
+        Возвращает список всех нанятых NPC для персонажа.
+      operationId: getWorkforce
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hiring_type
+          in: query
+          schema:
+            type: string
+            enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+          description: Фильтр по типу найма
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, busy, idle, terminated]
+          description: Фильтр по статусу
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список нанятых NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workforce:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkforceMember'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npcId}/assign-task:
+    post:
+      tags:
+        - NPC Hiring Workforce
+      summary: Назначить задачу NPC
+      description: |
+        Назначает задачу нанятому NPC.
+      operationId: assignTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTaskRequest'
+      responses:
+        '201':
+          description: Задача назначена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCTask'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npcId}/tasks:
+    get:
+      tags:
+        - NPC Hiring Workforce
+      summary: Получить список задач NPC
+      description: |
+        Возвращает список всех задач для указанного NPC.
+      operationId: getNPCTasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, failed, cancelled]
+          description: Фильтр по статусу задачи
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список задач NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NPCTask'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npcId}/tasks/{taskId}/update:
+    post:
+      tags:
+        - NPC Hiring Workforce
+      summary: Обновить задачу NPC
+      description: |
+        Обновляет существующую задачу NPC (изменение приоритета, статуса, параметров).
+      operationId: updateNPCTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор задачи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Задача обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCTask'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npcId}/performance:
+    get:
+      tags:
+        - NPC Hiring Workforce
+      summary: Получить эффективность NPC
+      description: |
+        Возвращает информацию об эффективности работы нанятого NPC.
+      operationId: getNPCPerformance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+      responses:
+        '200':
+          description: Эффективность NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCPerformance'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npcId}/status:
+    get:
+      tags:
+        - NPC Hiring Workforce
+      summary: Получить статус NPC
+      description: |
+        Возвращает текущий статус нанятого NPC (активен, занят, свободен, завершен).
+      operationId: getNPCStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+      responses:
+        '200':
+          description: Статус NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCStatus'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npcId}/interact:
+    post:
+      tags:
+        - NPC Hiring Workforce
+      summary: Взаимодействие с NPC
+      description: |
+        Инициирует взаимодействие с нанятым NPC (общение, обучение, поощрения, критика).
+      operationId: interactWithNPC
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractWithNPCRequest'
+      responses:
+        '200':
+          description: Взаимодействие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    WorkforceMember:
+      type: object
+      required:
+        - npc_id
+        - contract_id
+        - hiring_type
+        - status
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        status:
+          type: string
+          enum: [active, busy, idle, terminated]
+        autonomy_level:
+          type: string
+          enum: [direct, autonomous, hybrid]
+        current_task:
+          type: string
+          format: uuid
+          nullable: true
+        performance_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        loyalty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        hired_at:
+          type: string
+          format: date-time
+
+    AssignTaskRequest:
+      type: object
+      required:
+        - task_type
+        - task_description
+      properties:
+        task_type:
+          type: string
+          enum: [trade, quest, fix, protect, combat, negotiate, repair, hack]
+        task_description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        resources:
+          type: object
+          description: Ресурсы для задачи (JSON)
+        parameters:
+          type: object
+          description: Параметры задачи (JSON)
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        deadline:
+          type: string
+          format: date-time
+        resources:
+          type: object
+        parameters:
+          type: object
+
+    NPCTask:
+      type: object
+      required:
+        - id
+        - npc_id
+        - contract_id
+        - task_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        task_type:
+          type: string
+          enum: [trade, quest, fix, protect, combat, negotiate, repair, hack]
+        task_description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        resources:
+          type: object
+        parameters:
+          type: object
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        result:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NPCPerformance:
+      type: object
+      required:
+        - npc_id
+        - contract_id
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        efficiency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        tasks_completed:
+          type: integer
+        tasks_failed:
+          type: integer
+        average_task_time:
+          type: number
+          format: float
+        revenue_generated:
+          type: number
+          format: float
+        skills_improved:
+          type: array
+          items:
+            type: string
+        loyalty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        performance_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        last_updated:
+          type: string
+          format: date-time
+
+    NPCStatus:
+      type: object
+      required:
+        - npc_id
+        - status
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, busy, idle, terminated]
+        current_task:
+          type: string
+          format: uuid
+          nullable: true
+        location:
+          type: string
+        autonomy_level:
+          type: string
+          enum: [direct, autonomous, hybrid]
+        last_activity:
+          type: string
+          format: date-time
+        next_available:
+          type: string
+          format: date-time
+          nullable: true
+
+    InteractWithNPCRequest:
+      type: object
+      required:
+        - interaction_type
+      properties:
+        interaction_type:
+          type: string
+          enum: [communicate, train, reward, criticize, dismiss]
+        message:
+          type: string
+        resources:
+          type: object
+          description: Ресурсы для взаимодействия (JSON)
+
+    InteractionResponse:
+      type: object
+      required:
+        - interaction_id
+        - npc_id
+        - interaction_type
+      properties:
+        interaction_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum: [communicate, train, reward, criticize, dismiss]
+        npc_response:
+          type: string
+        loyalty_change:
+          type: number
+          format: float
+        performance_change:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

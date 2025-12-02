@@ -1,0 +1,524 @@
+# Issue: #1433
+openapi: 3.0.3
+info:
+  title: Social Group Core Service API
+  description: |
+    API для управления группами игроков (временные группы для заданий/заказов).
+    Группы - это временные объединения игроков для выполнения конкретных задач.
+    Максимальный размер группы: 8 игроков.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Group Core
+    description: Основные операции с группами игроков
+  - name: Group Members
+    description: Управление участниками группы
+  - name: Group Tasks
+    description: Управление заданиями группы
+
+paths:
+  /social/groups:
+    post:
+      tags:
+        - Group Core
+      summary: Создать группу
+      description: Создает новую временную группу игроков для выполнения заданий/заказов.
+      operationId: createGroup
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Group Core
+      summary: Поиск групп
+      description: Возвращает список групп с фильтрацией.
+      operationId: searchGroups
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, disbanded, completed]
+          description: Фильтр по статусу группы
+        - name: leader_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по лидеру группы
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список групп
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/groups/{group_id}:
+    get:
+      tags:
+        - Group Core
+      summary: Получить информацию о группе
+      description: Возвращает детальную информацию о группе.
+      operationId: getGroup
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID группы
+      responses:
+        '200':
+          description: Информация о группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Group Core
+      summary: Обновить информацию о группе
+      description: Обновляет информацию о группе (только лидер группы).
+      operationId: updateGroup
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID группы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGroupRequest'
+      responses:
+        '200':
+          description: Группа обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Group Core
+      summary: Распустить группу
+      description: Распускает группу (только лидер группы).
+      operationId: disbandGroup
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID группы
+      responses:
+        '200':
+          description: Группа распущена
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/groups/{group_id}/members:
+    get:
+      tags:
+        - Group Members
+      summary: Получить список участников группы
+      description: Возвращает список всех участников группы.
+      operationId: getGroupMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID группы
+      responses:
+        '200':
+          description: Список участников группы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GroupMember'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Group Members
+      summary: Добавить участника в группу
+      description: Добавляет участника в группу (только лидер группы).
+      operationId: addGroupMember
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID группы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddGroupMemberRequest'
+      responses:
+        '201':
+          description: Участник добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMember'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/groups/{group_id}/members/{member_id}:
+    delete:
+      tags:
+        - Group Members
+      summary: Удалить участника из группы
+      description: Удаляет участника из группы (лидер группы или сам участник).
+      operationId: removeGroupMember
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID группы
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID участника
+      responses:
+        '200':
+          description: Участник удален
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/groups/{group_id}/tasks:
+    get:
+      tags:
+        - Group Tasks
+      summary: Получить список заданий группы
+      description: Возвращает список заданий, связанных с группой.
+      operationId: getGroupTasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID группы
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список заданий группы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GroupTask'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Group:
+      type: object
+      required:
+        - id
+        - name
+        - leader_id
+        - status
+        - max_members
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID группы
+        name:
+          type: string
+          description: Название группы
+        description:
+          type: string
+          description: Описание группы
+        leader_id:
+          type: string
+          format: uuid
+          description: ID лидера группы
+        status:
+          type: string
+          enum: [active, disbanded, completed]
+          description: Статус группы
+        max_members:
+          type: integer
+          minimum: 2
+          maximum: 8
+          default: 8
+          description: Максимальное количество участников
+        member_count:
+          type: integer
+          description: Текущее количество участников
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания группы
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления группы
+        disbanded_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата роспуска группы
+
+    CreateGroupRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Название группы
+        description:
+          type: string
+          maxLength: 500
+          description: Описание группы
+        max_members:
+          type: integer
+          minimum: 2
+          maximum: 8
+          default: 8
+          description: Максимальное количество участников
+
+    UpdateGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Название группы
+        description:
+          type: string
+          maxLength: 500
+          description: Описание группы
+
+    GroupMember:
+      type: object
+      required:
+        - character_id
+        - role
+        - joined_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        character_name:
+          type: string
+          description: Имя персонажа
+        role:
+          type: string
+          enum: [leader, member]
+          description: Роль в группе
+        joined_at:
+          type: string
+          format: date-time
+          description: Дата присоединения к группе
+
+    AddGroupMemberRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа для добавления в группу
+
+    GroupTask:
+      type: object
+      required:
+        - id
+        - type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID задания
+        type:
+          type: string
+          enum: [quest, order, dungeon, raid]
+          description: Тип задания
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+          description: Статус задания
+        title:
+          type: string
+          description: Название задания
+        description:
+          type: string
+          description: Описание задания
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+
+

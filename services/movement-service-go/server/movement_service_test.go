@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -440,5 +441,132 @@ func TestMovementService_Shutdown(t *testing.T) {
 	service.Shutdown()
 
 	assert.Nil(t, service.gatewayConn)
+}
+
+// Issue: #309
+func TestMovementService_SavePosition_ConcurrentUpdates(t *testing.T) {
+	mockRepo := new(mockMovementRepository)
+	redisOpts, err := redis.ParseURL("redis://localhost:6379")
+	if err != nil {
+		t.Skipf("Skipping test due to Redis connection: %v", err)
+		return
+	}
+	redisClient := redis.NewClient(redisOpts)
+
+	service := &MovementService{
+		repo:   mockRepo,
+		cache:  redisClient,
+		logger: GetLogger(),
+	}
+
+	characterID := uuid.New()
+	req := &models.SavePositionRequest{
+		PositionX: 10.5,
+		PositionY: 20.3,
+		PositionZ: 30.1,
+		Yaw:       45.0,
+		VelocityX: 1.0,
+		VelocityY: 0.0,
+		VelocityZ: 0.0,
+	}
+
+	expectedPos := &models.CharacterPosition{
+		ID:          uuid.New(),
+		CharacterID: characterID,
+		PositionX:   req.PositionX,
+		PositionY:   req.PositionY,
+		PositionZ:   req.PositionZ,
+		Yaw:         req.Yaw,
+		VelocityX:   req.VelocityX,
+		VelocityY:   req.VelocityY,
+		VelocityZ:   req.VelocityZ,
+	}
+
+	mockRepo.On("SavePosition", mock.Anything, characterID, req).Return(expectedPos, nil).Times(10)
+
+	ctx := context.Background()
+	var wg sync.WaitGroup
+	numGoroutines := 10
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			pos, err := service.SavePosition(ctx, characterID, req)
+			assert.NoError(t, err)
+			assert.NotNil(t, pos)
+		}()
+	}
+
+	wg.Wait()
+	mockRepo.AssertExpectations(t)
+}
+
+// Issue: #309
+func TestMovementService_GetPosition_MultipleCharacters(t *testing.T) {
+	mockRepo := new(mockMovementRepository)
+	service := &MovementService{
+		repo:   mockRepo,
+		logger: GetLogger(),
+	}
+
+	characterID1 := uuid.New()
+	characterID2 := uuid.New()
+	characterID3 := uuid.New()
+
+	expectedPos1 := &models.CharacterPosition{
+		ID:          uuid.New(),
+		CharacterID: characterID1,
+		PositionX:   10.5,
+		PositionY:   20.3,
+		PositionZ:   30.1,
+		Yaw:         45.0,
+	}
+
+	expectedPos2 := &models.CharacterPosition{
+		ID:          uuid.New(),
+		CharacterID: characterID2,
+		PositionX:   11.5,
+		PositionY:   21.3,
+		PositionZ:   31.1,
+		Yaw:         46.0,
+	}
+
+	expectedPos3 := &models.CharacterPosition{
+		ID:          uuid.New(),
+		CharacterID: characterID3,
+		PositionX:   12.5,
+		PositionY:   22.3,
+		PositionZ:   32.1,
+		Yaw:         47.0,
+	}
+
+	mockRepo.On("GetPositionByCharacterID", mock.Anything, characterID1).Return(expectedPos1, nil)
+	mockRepo.On("GetPositionByCharacterID", mock.Anything, characterID2).Return(expectedPos2, nil)
+	mockRepo.On("GetPositionByCharacterID", mock.Anything, characterID3).Return(expectedPos3, nil)
+
+	ctx := context.Background()
+
+	pos1, err1 := service.GetPosition(ctx, characterID1)
+	pos2, err2 := service.GetPosition(ctx, characterID2)
+	pos3, err3 := service.GetPosition(ctx, characterID3)
+
+	require.NoError(t, err1)
+	require.NoError(t, err2)
+	require.NoError(t, err3)
+
+	assert.NotNil(t, pos1)
+	assert.NotNil(t, pos2)
+	assert.NotNil(t, pos3)
+
+	assert.Equal(t, characterID1, pos1.CharacterID)
+	assert.Equal(t, characterID2, pos2.CharacterID)
+	assert.Equal(t, characterID3, pos3.CharacterID)
+
+	assert.Equal(t, 10.5, pos1.PositionX)
+	assert.Equal(t, 11.5, pos2.PositionX)
+	assert.Equal(t, 12.5, pos3.PositionX)
+
+	mockRepo.AssertExpectations(t)
 }
 

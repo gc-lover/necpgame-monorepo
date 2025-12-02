@@ -38,3 +38,5 @@ func (h *HousingHandlers) GetApartmentPrestige(w http.ResponseWriter, r *http.Re
 	h.respondJSON(w, http.StatusOK, response)
 }
 
+
+

@@ -1,0 +1,307 @@
+# Issue: #303
+openapi: 3.0.3
+info:
+  title: Social Mentorship Academies Service API
+  description: |
+    API для управления академиями и образовательными центрами в NECPGAME.
+    
+    **Основные возможности:**
+    - Поиск и просмотр академий
+    - Запись в академии
+    - Управление программами обучения
+    - Отслеживание прогресса в академии
+    
+    **Интеграции:**
+    - social-service - основная логика наставничества
+    - world-service - проверка доступа к академиям
+    - economy-service - оплата обучения
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Mentorship Academies
+    description: Академии и образовательные центры
+
+paths:
+  /social/mentorship/academies:
+    get:
+      tags:
+        - Mentorship Academies
+      summary: Получить список академий
+      description: |
+        Возвращает список всех доступных академий с фильтрацией.
+      operationId: getAcademies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [corporate, gang, independent]
+          description: Фильтр по типу академии
+        - name: location
+          in: query
+          schema:
+            type: string
+          description: Фильтр по локации
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список академий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  academies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Academy'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/academies/{academyId}:
+    get:
+      tags:
+        - Mentorship Academies
+      summary: Получить информацию об академии
+      description: |
+        Возвращает детальную информацию об академии.
+      operationId: getAcademy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: academyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор академии
+      responses:
+        '200':
+          description: Информация об академии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Academy'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/academies/{academyId}/enroll:
+    post:
+      tags:
+        - Mentorship Academies
+      summary: Записаться в академию
+      description: |
+        Записывает персонажа в академию на программу обучения.
+      operationId: enrollInAcademy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: academyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор академии
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollInAcademyRequest'
+      responses:
+        '201':
+          description: Запись в академию выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademyEnrollment'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/academies/{academyId}/programs:
+    get:
+      tags:
+        - Mentorship Academies
+      summary: Получить программы академии
+      description: |
+        Возвращает список программ обучения, доступных в академии.
+      operationId: getAcademyPrograms
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: academyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор академии
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Фильтр по статусу программы
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список программ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  programs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AcademyProgram'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Academy:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [corporate, gang, independent]
+        location:
+          type: string
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        programs_count:
+          type: integer
+        students_count:
+          type: integer
+
+    EnrollInAcademyRequest:
+      type: object
+      required:
+        - program_id
+      properties:
+        program_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+
+    AcademyEnrollment:
+      type: object
+      required:
+        - id
+        - academy_id
+        - program_id
+        - character_id
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        academy_id:
+          type: string
+          format: uuid
+        program_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [enrolled, in-progress, completed, dropped]
+        payment_status:
+          type: string
+          enum: [pending, paid, refunded]
+        enrolled_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    AcademyProgram:
+      type: object
+      required:
+        - id
+        - academy_id
+        - name
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        academy_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        skill_track:
+          type: string
+        duration:
+          type: integer
+          description: Длительность программы в днях
+        cost:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [active, inactive]
+        students_count:
+          type: integer
+
+security:
+  - BearerAuth: []
+

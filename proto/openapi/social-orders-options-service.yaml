@@ -1,0 +1,228 @@
+# Issue: #305
+openapi: 3.0.3
+info:
+  title: Social Orders Options Service API
+  description: |
+    API для опционов на заказы между игроками в NECPGAME.
+    
+    **Основные возможности:**
+    - Покупка опционов на отмену заказов
+    - Использование опционов
+    - Получение информации об опционах
+    
+    **Типы опционов:**
+    - Customer Cancellation - опцион на отмену заказчиком
+    - Executor Cancellation - опцион на отмену исполнителем
+    - Mutual Cancellation - взаимный опцион
+    
+    **Интеграции:**
+    - social-service - основная логика заказов
+    - economy-service - обработка премий и компенсаций
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Player Orders Options
+    description: Опционы на заказы
+
+paths:
+  /social/orders/{orderId}/options/buy:
+    post:
+      tags:
+        - Player Orders Options
+      summary: Купить опцион на заказ
+      description: |
+        Покупает опцион на отмену заказа. Опцион защищает от потерь при отмене заказа.
+      operationId: buyOrderOption
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заказа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyOptionRequest'
+      responses:
+        '201':
+          description: Опцион куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderOption'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/options:
+    get:
+      tags:
+        - Player Orders Options
+      summary: Получить опционы на заказ
+      description: |
+        Возвращает список всех опционов, связанных с заказом.
+      operationId: getOrderOptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заказа
+        - name: option_type
+          in: query
+          schema:
+            type: string
+            enum: [customer_cancellation, executor_cancellation, mutual_cancellation]
+          description: Фильтр по типу опциона
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, exercised, expired]
+          description: Фильтр по статусу
+      responses:
+        '200':
+          description: Список опционов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  options:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrderOption'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/options/{optionId}/exercise:
+    post:
+      tags:
+        - Player Orders Options
+      summary: Использовать опцион
+      description: |
+        Использует опцион для отмены заказа с компенсацией согласно условиям опциона.
+      operationId: exerciseOrderOption
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заказа
+        - name: optionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор опциона
+      responses:
+        '200':
+          description: Опцион использован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderOption'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    BuyOptionRequest:
+      type: object
+      required:
+        - option_type
+      properties:
+        option_type:
+          type: string
+          enum: [customer_cancellation, executor_cancellation, mutual_cancellation]
+        premium:
+          type: number
+          format: float
+          nullable: true
+          description: Премия за опцион (если null, рассчитывается автоматически)
+
+    OrderOption:
+      type: object
+      required:
+        - id
+        - order_id
+        - option_type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        option_type:
+          type: string
+          enum: [customer_cancellation, executor_cancellation, mutual_cancellation]
+        buyer_id:
+          type: string
+          format: uuid
+        premium:
+          type: number
+          format: float
+        compensation_amount:
+          type: number
+          format: float
+        purchased_at:
+          type: string
+          format: date-time
+        exercised_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [active, exercised, expired]
+
+security:
+  - BearerAuth: []
+

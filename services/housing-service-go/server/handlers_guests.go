@@ -139,3 +139,5 @@ func (h *HousingHandlers) RemoveGuest(w http.ResponseWriter, r *http.Request, ap
 	h.respondJSON(w, http.StatusOK, response)
 }
 
+
+

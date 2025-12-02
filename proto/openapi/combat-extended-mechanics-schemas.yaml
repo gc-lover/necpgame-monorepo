@@ -1,0 +1,353 @@
+# Issue: #41
+# Schemas for Combat Extended Mechanics Service API
+openapi: 3.0.3
+
+components:
+  schemas:
+    CombatHackingRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - hacking_type
+        - target_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Идентификатор персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: Идентификатор боевой сессии
+        hacking_type:
+          type: string
+          enum: [disable_implant, control_device, access_network, infrastructure_hack]
+          description: Тип взлома
+        target_id:
+          type: string
+          format: uuid
+          description: Идентификатор цели взлома
+        network_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор сети (если требуется)
+
+    CombatHackingResponse:
+      type: object
+      required:
+        - success
+        - effects_applied
+      properties:
+        success:
+          type: boolean
+          description: Успешность взлома
+        effects_applied:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              target_id:
+                type: string
+                format: uuid
+              duration:
+                type: integer
+                description: Длительность эффекта в секундах
+
+    CombatHackingNetwork:
+      type: object
+      required:
+        - network_id
+        - network_name
+        - network_type
+        - access_level
+      properties:
+        network_id:
+          type: string
+          format: uuid
+        network_name:
+          type: string
+        network_type:
+          type: string
+          enum: [enemy, device, infrastructure, combat_scenario]
+        access_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        available_demons:
+          type: array
+          items:
+            type: string
+
+    CombatImplantActivationRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - implant_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        implant_id:
+          type: string
+          format: uuid
+
+    CombatImplantActivationResponse:
+      type: object
+      required:
+        - activation_id
+        - effects_applied
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+        effects_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatImplantEffect'
+        energy_used:
+          type: integer
+        humanity_cost:
+          type: integer
+
+    CombatImplantEffect:
+      type: object
+      required:
+        - effect_id
+        - effect_type
+        - applied_at
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        effect_type:
+          type: string
+        implant_id:
+          type: string
+          format: uuid
+        applied_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        modifiers:
+          type: object
+          description: Модификаторы эффекта
+
+    AdvancedAimRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_id
+        - target_position
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        target_position:
+          $ref: 'common.yaml#/components/schemas/Position3D'
+        accuracy_modifiers:
+          type: object
+          nullable: true
+
+    AdvancedAimResponse:
+      type: object
+      required:
+        - accuracy
+        - calculated_position
+      properties:
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        calculated_position:
+          $ref: 'common.yaml#/components/schemas/Position3D'
+        modifiers_applied:
+          type: array
+          items:
+            type: string
+
+    RecoilControlRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_id
+        - shots_fired
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        shots_fired:
+          type: integer
+          minimum: 1
+        control_skill:
+          type: number
+          format: float
+          nullable: true
+
+    RecoilControlResponse:
+      type: object
+      required:
+        - recoil_reduction
+        - final_spread
+      properties:
+        recoil_reduction:
+          type: number
+          format: float
+        final_spread:
+          type: number
+          format: float
+        control_applied:
+          type: boolean
+
+    CombatLoadout:
+      type: object
+      required:
+        - loadout_id
+        - character_id
+        - name
+        - weapons
+        - abilities
+        - implants
+      properties:
+        loadout_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        weapons:
+          type: array
+          items:
+            type: string
+            format: uuid
+        abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+        implants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        equipment:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+        is_active:
+          type: boolean
+
+    CombatLoadoutCreate:
+      type: object
+      required:
+        - character_id
+        - name
+        - weapons
+        - abilities
+        - implants
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        weapons:
+          type: array
+          items:
+            type: string
+            format: uuid
+        abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+        implants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        equipment:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+
+    CombatLoadoutEquipRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - loadout_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        loadout_id:
+          type: string
+          format: uuid
+
+    CombatMechanicsStatus:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - active_implants
+        - available_networks
+        - shooting_status
+        - active_loadout
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        active_implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatImplantEffect'
+        available_networks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatHackingNetwork'
+        shooting_status:
+          type: object
+          properties:
+            weapon_id:
+              type: string
+              format: uuid
+            accuracy:
+              type: number
+              format: float
+            recoil_control:
+              type: number
+              format: float
+        active_loadout:
+          $ref: '#/components/schemas/CombatLoadout'
+          nullable: true
+

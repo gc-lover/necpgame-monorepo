@@ -1,0 +1,502 @@
+# Issue: #317
+components:
+  schemas:
+    TriggerTravelEventRequest:
+      type: object
+      required:
+        - character_id
+        - zone_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        zone_id:
+          type: string
+          format: uuid
+          description: ID зоны перемещения
+        travel_mode:
+          type: string
+          enum: [walking, running, driving, flying]
+          default: walking
+          description: Режим перемещения
+
+    TriggerTravelEventResponse:
+      type: object
+      properties:
+        event_triggered:
+          type: boolean
+          description: Было ли активировано событие
+        event_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID активированного события (если событие было активировано)
+        event_type:
+          type: string
+          nullable: true
+          description: Тип активированного события
+        reason:
+          type: string
+          nullable: true
+          description: Причина отсутствия события (если событие не было активировано)
+
+    AvailableTravelEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEvent'
+        total:
+          type: integer
+          description: Общее количество доступных событий
+
+    TravelEvent:
+      type: object
+      required:
+        - id
+        - event_type
+        - title
+        - description
+        - base_probability
+        - cooldown_hours
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [ambush, political_rally, implant_market, infrastructure_accident, nomad_assistance, corporate_intrigue, network_failure, dao_voting, gray_market, brain_dance_boom, concordat_inspection, league_info_war, export_license]
+          description: Тип travel-события
+        title:
+          type: string
+          description: Название события
+        description:
+          type: string
+          description: Описание события
+        epochs:
+          type: array
+          items:
+            type: string
+          description: Эпохи, в которых доступно событие
+          example: [2020-2030, 2030-2045]
+        base_probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Базовая вероятность события (0-1)
+        cooldown_hours:
+          type: integer
+          minimum: 0
+          description: Cooldown в часах
+        skill_checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillCheckDefinition'
+          description: Доступные skill checks для события
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventReward'
+          description: Возможные награды
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventPenalty'
+          description: Возможные штрафы
+
+    SkillCheckDefinition:
+      type: object
+      required:
+        - skill
+        - dc
+      properties:
+        skill:
+          type: string
+          enum: [Combat, Stealth, Social, Technology, Medicine, Trader, Hacking, Politician, Legal, Athletics, Perception]
+          description: Навык для проверки
+        dc:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: Difficulty Class (сложность проверки)
+        optional:
+          type: boolean
+          default: false
+          description: Является ли проверка опциональной
+
+    TravelEventReward:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [loot, eddies, reputation, implant, experience]
+          description: Тип награды
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary]
+          nullable: true
+          description: Редкость лута (для type: loot)
+        probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Вероятность получения награды
+        min:
+          type: integer
+          nullable: true
+          description: Минимальное значение (для eddies, reputation)
+        max:
+          type: integer
+          nullable: true
+          description: Максимальное значение (для eddies, reputation)
+        faction:
+          type: string
+          nullable: true
+          description: Фракция для репутации (для type: reputation)
+          enum: [Citizens, Corpos, Nomads, NetWatch, DAO, Media]
+
+    TravelEventPenalty:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [damage, heat, reputation, confiscation]
+          description: Тип штрафа
+        severity:
+          type: string
+          enum: [light, medium, high]
+          nullable: true
+          description: Степень тяжести (для type: damage)
+        amount:
+          type: integer
+          nullable: true
+          description: Количество (для heat, reputation)
+        probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Вероятность применения штрафа (для confiscation)
+        faction:
+          type: string
+          nullable: true
+          description: Фракция для репутации (для type: reputation)
+
+    StartTravelEventRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+
+    TravelEventInstance:
+      type: object
+      required:
+        - id
+        - event_id
+        - character_id
+        - status
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [started, skill_check_pending, skill_check_completed, completed, cancelled]
+          description: Статус экземпляра события
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        skill_checks_performed:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillCheckResult'
+          description: Выполненные skill checks
+
+    SkillCheckRequest:
+      type: object
+      required:
+        - skill
+        - instance_id
+      properties:
+        skill:
+          type: string
+          enum: [Combat, Stealth, Social, Technology, Medicine, Trader, Hacking, Politician, Legal, Athletics, Perception]
+          description: Навык для проверки
+        instance_id:
+          type: string
+          format: uuid
+          description: ID экземпляра события
+
+    SkillCheckResponse:
+      type: object
+      required:
+        - success
+        - result
+        - dc
+        - critical
+      properties:
+        success:
+          type: boolean
+          description: Успешна ли проверка
+        result:
+          type: integer
+          description: Результат броска (d20 + модификаторы)
+        dc:
+          type: integer
+          description: Difficulty Class
+        critical:
+          type: string
+          enum: [none, success, failure]
+          description: Критический успех/провал
+        bonus_rewards:
+          type: boolean
+          default: false
+          description: Удвоенные награды (критический успех)
+        bonus_penalties:
+          type: boolean
+          default: false
+          description: Удвоенные штрафы (критический провал)
+
+    SkillCheckResult:
+      type: object
+      required:
+        - skill
+        - success
+        - result
+        - dc
+        - performed_at
+      properties:
+        skill:
+          type: string
+        success:
+          type: boolean
+        result:
+          type: integer
+        dc:
+          type: integer
+        critical:
+          type: string
+          enum: [none, success, failure]
+        performed_at:
+          type: string
+          format: date-time
+
+    CompleteTravelEventRequest:
+      type: object
+      required:
+        - instance_id
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+          description: ID экземпляра события
+        skip_rewards:
+          type: boolean
+          default: false
+          description: Пропустить выдачу наград (для отладки)
+
+    TravelEventCompletionResponse:
+      type: object
+      required:
+        - instance_id
+        - completed
+        - rewards_applied
+        - penalties_applied
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        completed:
+          type: boolean
+          description: Успешно ли завершено событие
+        rewards_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedReward'
+          description: Примененные награды
+        penalties_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPenalty'
+          description: Примененные штрафы
+
+    AppliedReward:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [loot, eddies, reputation, implant, experience]
+        amount:
+          type: integer
+          nullable: true
+        item_id:
+          type: string
+          format: uuid
+          nullable: true
+        faction:
+          type: string
+          nullable: true
+
+    AppliedPenalty:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [damage, heat, reputation, confiscation]
+        amount:
+          type: integer
+          nullable: true
+        severity:
+          type: string
+          enum: [light, medium, high]
+          nullable: true
+        faction:
+          type: string
+          nullable: true
+
+    CancelTravelEventRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Причина отмены
+
+    EpochTravelEventsResponse:
+      type: object
+      properties:
+        epoch_id:
+          type: string
+          description: ID эпохи
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEvent'
+        total:
+          type: integer
+
+    TravelEventCooldownResponse:
+      type: object
+      required:
+        - character_id
+        - cooldowns
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        cooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventCooldown'
+        next_available:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время, когда следующее событие станет доступным
+
+    EventCooldown:
+      type: object
+      required:
+        - event_type
+        - expires_at
+      properties:
+        event_type:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        remaining_hours:
+          type: number
+          format: float
+          description: Оставшиеся часы cooldown
+
+    TravelEventProbabilityResponse:
+      type: object
+      required:
+        - event_id
+        - probability
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Вероятность события (0-1)
+        modifiers:
+          type: object
+          properties:
+            base_chance:
+              type: number
+              format: float
+            level_modifier:
+              type: number
+              format: float
+            reputation_modifier:
+              type: number
+              format: float
+            time_modifier:
+              type: number
+              format: float
+            zone_modifier:
+              type: number
+              format: float
+
+    TravelEventRewardsResponse:
+      type: object
+      required:
+        - event_id
+        - rewards
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventReward'
+
+    TravelEventPenaltiesResponse:
+      type: object
+      required:
+        - event_id
+        - penalties
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventPenalty'
+

@@ -1,0 +1,167 @@
+# Issue: #303
+openapi: 3.0.3
+info:
+  title: Social Mentorship Chains Service API
+  description: |
+    API для управления цепочками наставничества в NECPGAME.
+    
+    **Основные возможности:**
+    - Создание цепочек наставничества
+    - Просмотр цепочек персонажа
+    - Управление типами цепочек (линейные, сетевые, фракционные, академические)
+    
+    **Интеграции:**
+    - social-service - основная логика наставничества
+    - factions-service - фракционные программы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Mentorship Chains
+    description: Цепочки наставничества
+
+paths:
+  /social/mentorship/chains/create:
+    post:
+      tags:
+        - Mentorship Chains
+      summary: Создать цепочку наставничества
+      description: |
+        Создает новую цепочку наставничества (линейную, сетевую, фракционную или академическую).
+      operationId: createMentorshipChain
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChainRequest'
+      responses:
+        '201':
+          description: Цепочка создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipChain'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/chains/{characterId}:
+    get:
+      tags:
+        - Mentorship Chains
+      summary: Получить цепочки персонажа
+      description: |
+        Возвращает все цепочки наставничества, в которых участвует персонаж.
+      operationId: getCharacterChains
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+        - name: chain_type
+          in: query
+          schema:
+            type: string
+            enum: [linear, network, faction, academy]
+          description: Фильтр по типу цепочки
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список цепочек
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chains:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MentorshipChain'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CreateChainRequest:
+      type: object
+      required:
+        - chain_name
+        - chain_type
+        - contract_ids
+      properties:
+        chain_name:
+          type: string
+        chain_type:
+          type: string
+          enum: [linear, network, faction, academy]
+        contract_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        character_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    MentorshipChain:
+      type: object
+      required:
+        - id
+        - chain_name
+        - chain_type
+      properties:
+        id:
+          type: string
+          format: uuid
+        chain_name:
+          type: string
+        chain_type:
+          type: string
+          enum: [linear, network, faction, academy]
+        contract_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        character_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        chain_level:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

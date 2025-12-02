@@ -1,0 +1,237 @@
+# Issue: #303
+openapi: 3.0.3
+info:
+  title: Social Mentorship Schedules Service API
+  description: |
+    API для управления расписанием уроков наставничества в NECPGAME.
+    
+    **Основные возможности:**
+    - Создание и управление расписанием уроков
+    - Получение расписания для контракта
+    - Обновление расписания
+    - Управление форматами обучения
+    
+    **Интеграции:**
+    - social-service - основная логика наставничества
+    - world-service - проверка доступа к локациям
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Mentorship Schedules
+    description: Расписание уроков наставничества
+
+paths:
+  /social/mentorship/schedule/create:
+    post:
+      tags:
+        - Mentorship Schedules
+      summary: Создать расписание урока
+      description: |
+        Создает новое расписание урока для контракта наставничества.
+      operationId: createMentorshipSchedule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScheduleRequest'
+      responses:
+        '201':
+          description: Расписание создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipSchedule'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/schedule/{contractId}:
+    get:
+      tags:
+        - Mentorship Schedules
+      summary: Получить расписание контракта
+      description: |
+        Возвращает расписание всех уроков для указанного контракта наставничества.
+      operationId: getContractSchedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, in-progress, completed, cancelled]
+          description: Фильтр по статусу
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Расписание контракта
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schedules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MentorshipSchedule'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/schedule/{scheduleId}/update:
+    post:
+      tags:
+        - Mentorship Schedules
+      summary: Обновить расписание
+      description: |
+        Обновляет существующее расписание урока.
+      operationId: updateMentorshipSchedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор расписания
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduleRequest'
+      responses:
+        '200':
+          description: Расписание обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipSchedule'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CreateScheduleRequest:
+      type: object
+      required:
+        - contract_id
+        - lesson_date
+        - format
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        lesson_date:
+          type: string
+          format: date-time
+        lesson_time:
+          type: string
+          format: time
+        location:
+          type: string
+        format:
+          type: string
+          enum: [theoretical, practical, content_based, examination, group, vr]
+        resources:
+          type: object
+          description: Ресурсы для урока (JSON)
+
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        lesson_date:
+          type: string
+          format: date-time
+        lesson_time:
+          type: string
+          format: time
+        location:
+          type: string
+        format:
+          type: string
+          enum: [theoretical, practical, content_based, examination, group, vr]
+        resources:
+          type: object
+        status:
+          type: string
+          enum: [scheduled, in-progress, completed, cancelled]
+
+    MentorshipSchedule:
+      type: object
+      required:
+        - id
+        - contract_id
+        - lesson_date
+        - format
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        lesson_date:
+          type: string
+          format: date-time
+        lesson_time:
+          type: string
+          format: time
+        location:
+          type: string
+        format:
+          type: string
+          enum: [theoretical, practical, content_based, examination, group, vr]
+        resources:
+          type: object
+        status:
+          type: string
+          enum: [scheduled, in-progress, completed, cancelled]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

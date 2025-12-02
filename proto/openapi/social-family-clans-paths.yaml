@@ -1,0 +1,114 @@
+# Issue: #302
+paths:
+  /social/families/{family_id}/adoption:
+    post:
+      tags:
+        - Adoption
+      summary: Усыновление или вступление в семью
+      description: |
+        Инициирует процесс усыновления или вступления игрока в семью NPC.
+      operationId: initiateAdoption
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-family-relationships-schemas.yaml#/components/schemas/AdoptionRequest'
+      responses:
+        '201':
+          description: Процесс усыновления инициирован
+          content:
+            application/json:
+              schema:
+                $ref: 'social-family-relationships-schemas.yaml#/components/schemas/AdoptionProcess'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/clans:
+    get:
+      tags:
+        - Clans
+      summary: Получить клановые союзы семьи
+      description: |
+        Возвращает список клановых союзов, в которые входит семья.
+      operationId: getFamilyClans
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      responses:
+        '200':
+          description: Список клановых союзов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clans:
+                    type: array
+                    items:
+                      $ref: 'social-family-relationships-schemas.yaml#/components/schemas/FamilyClan'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/families/{family_id}/guardianship:
+    get:
+      tags:
+        - Clans
+      summary: Получить информацию об опеке
+      description: |
+        Возвращает информацию об опеке над членами семьи.
+      operationId: getGuardianship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: family_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор семьи
+      responses:
+        '200':
+          description: Информация об опеке
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  guardianships:
+                    type: array
+                    items:
+                      $ref: 'social-family-relationships-schemas.yaml#/components/schemas/Guardianship'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

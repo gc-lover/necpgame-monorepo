@@ -67,3 +67,5 @@ func convertApplyEffectsResultToAPI(effects []CombatEffect) *damageapi.ApplyEffe
 
 
 
+
+

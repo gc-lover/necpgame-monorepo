@@ -1,0 +1,286 @@
+# Issue: #61
+# Schemas for Economy Player Market Service API
+openapi: 3.0.3
+
+components:
+  schemas:
+    CreateListingRequest:
+      type: object
+      required:
+        - character_id
+        - item_id
+        - price
+        - city_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: Цена продажи
+        description:
+          type: string
+          description: Описание объявления
+        city_id:
+          type: string
+          format: uuid
+          description: Город размещения объявления
+
+    MarketListing:
+      type: object
+      required:
+        - id
+        - seller_id
+        - item_id
+        - price
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        seller_name:
+          type: string
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        item_category:
+          type: string
+        item_quality:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, artifact]
+        item_level:
+          type: integer
+        price:
+          type: number
+          format: float
+        commission:
+          type: number
+          format: float
+          description: Комиссия с продажи
+        city_id:
+          type: string
+          format: uuid
+        city_name:
+          type: string
+        status:
+          type: string
+          enum: [active, sold, cancelled, expired]
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        views:
+          type: integer
+          description: Количество просмотров
+
+    UpdateListingRequest:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+          minimum: 0
+        description:
+          type: string
+
+    PurchaseRequest:
+      type: object
+      required:
+        - listing_id
+        - buyer_id
+      properties:
+        listing_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+
+    PurchaseResult:
+      type: object
+      required:
+        - purchase_id
+        - success
+      properties:
+        purchase_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        item_id:
+          type: string
+          format: uuid
+        price_paid:
+          type: number
+          format: float
+        purchased_at:
+          type: string
+          format: date-time
+
+    PurchaseHistory:
+      type: object
+      required:
+        - purchase_id
+        - listing_id
+        - item_id
+        - price_paid
+        - purchased_at
+      properties:
+        purchase_id:
+          type: string
+          format: uuid
+        listing_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        seller_name:
+          type: string
+        price_paid:
+          type: number
+          format: float
+        purchased_at:
+          type: string
+          format: date-time
+
+    SaleHistory:
+      type: object
+      required:
+        - sale_id
+        - listing_id
+        - item_id
+        - price_received
+        - sold_at
+      properties:
+        sale_id:
+          type: string
+          format: uuid
+        listing_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        buyer_id:
+          type: string
+          format: uuid
+        buyer_name:
+          type: string
+        price_received:
+          type: number
+          format: float
+          description: Цена после вычета комиссии
+        commission:
+          type: number
+          format: float
+        sold_at:
+          type: string
+          format: date-time
+
+    SellerProfile:
+      type: object
+      required:
+        - seller_id
+        - rating
+        - total_sales
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+        seller_name:
+          type: string
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        total_sales:
+          type: integer
+        total_revenue:
+          type: number
+          format: float
+        positive_reviews:
+          type: integer
+        negative_reviews:
+          type: integer
+        joined_at:
+          type: string
+          format: date-time
+
+    CreateReviewRequest:
+      type: object
+      required:
+        - purchase_id
+        - seller_id
+        - rating
+      properties:
+        purchase_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    SellerReview:
+      type: object
+      required:
+        - id
+        - purchase_id
+        - seller_id
+        - buyer_id
+        - rating
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        purchase_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        buyer_name:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+

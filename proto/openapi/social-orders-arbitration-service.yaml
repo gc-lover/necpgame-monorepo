@@ -1,0 +1,239 @@
+# Issue: #305
+openapi: 3.0.3
+info:
+  title: Social Orders Arbitration Service API
+  description: |
+    API для арбитража и разрешения споров по заказам в NECPGAME.
+    
+    **Основные возможности:**
+    - Запрос арбитража по заказу
+    - Получение информации об арбитраже
+    - Добавление доказательств
+    - Получение решений арбитража
+    
+    **Триггеры арбитража:**
+    - Нарушение условий заказа
+    - Споры о качестве выполнения
+    - Нарушение сроков
+    - Обман или мошенничество
+    
+    **Интеграции:**
+    - social-service - основная логика заказов
+    - economy-service - обработка компенсаций и штрафов
+    - reputation-service - обновление репутации
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Player Orders Arbitration
+    description: Арбитраж заказов
+
+paths:
+  /social/orders/{orderId}/arbitration/request:
+    post:
+      tags:
+        - Player Orders Arbitration
+      summary: Запросить арбитраж
+      description: |
+        Создает запрос на арбитраж по заказу. Арбитраж запускается при нарушении условий заказа.
+      operationId: requestArbitration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заказа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestArbitrationRequest'
+      responses:
+        '201':
+          description: Запрос на арбитраж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/arbitration/{caseId}:
+    get:
+      tags:
+        - Player Orders Arbitration
+      summary: Получить информацию об арбитраже
+      description: |
+        Возвращает детальную информацию об арбитражном деле, включая доказательства и решение.
+      operationId: getArbitrationCase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор арбитражного дела
+      responses:
+        '200':
+          description: Информация об арбитраже
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/arbitration/{caseId}/evidence:
+    post:
+      tags:
+        - Player Orders Arbitration
+      summary: Добавить доказательства
+      description: |
+        Добавляет доказательства к арбитражному делу. Доступно для участников спора.
+      operationId: addArbitrationEvidence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор арбитражного дела
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddEvidenceRequest'
+      responses:
+        '200':
+          description: Доказательства добавлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    RequestArbitrationRequest:
+      type: object
+      required:
+        - reason
+        - dispute_type
+      properties:
+        reason:
+          type: string
+          description: Причина запроса арбитража
+        dispute_type:
+          type: string
+          enum: [violation, quality_dispute, deadline_violation, fraud]
+        initial_evidence:
+          type: object
+          description: Начальные доказательства (JSON)
+          nullable: true
+
+    ArbitrationCase:
+      type: object
+      required:
+        - id
+        - order_id
+        - complainant_id
+        - defendant_id
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        complainant_id:
+          type: string
+          format: uuid
+        defendant_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        dispute_type:
+          type: string
+          enum: [violation, quality_dispute, deadline_violation, fraud]
+        evidence:
+          type: object
+          description: Доказательства (JSON)
+        status:
+          type: string
+          enum: [pending, investigating, resolved, dismissed]
+        decision:
+          type: object
+          nullable: true
+          properties:
+            compensation:
+              type: number
+              format: float
+            penalty:
+              type: number
+              format: float
+            reputation_changes:
+              type: object
+            block_duration:
+              type: integer
+              nullable: true
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AddEvidenceRequest:
+      type: object
+      required:
+        - evidence
+      properties:
+        evidence:
+          type: object
+          description: Доказательства (JSON)
+
+security:
+  - BearerAuth: []
+
