@@ -1,0 +1,364 @@
+# Issue: #307
+metadata:
+  id: arch-reputation-tiers-system
+  title: "Reputation Tiers System Architecture"
+  document_type: architecture
+  category: social
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-02T20:36:00Z
+  architect: ai-agent
+  github_issue: 307
+  related_documents:
+    - mechanics/social/reputation-tiers-detailed.yaml
+    - architecture/social-reputation-system-architecture.yaml
+
+summary:
+  problem: "Реализовать детальную систему уровней репутации от -100 до +100 с эффектами на экономику, боевку и доступ"
+  goal: "Создать микросервис для управления reputation tiers с effects engine"
+  essence: "Reputation Tiers Service вычисляет текущий tier и применяет модификаторы к ценам, доступу, NPC реакциям"
+
+components:
+  - name: "Reputation Tier Calculator"
+    type: core
+    responsibilities:
+      - "Вычисление текущего tier по репутации"
+      - "Мониторинг изменений tier"
+      - "Уведомления при переходе"
+    integration:
+      - reputation-core-service
+      - notification-service
+    
+  - name: "Effects Engine"
+    type: core
+    responsibilities:
+      - "Применение модификаторов к ценам"
+      - "Проверка доступа к территориям"
+      - "Модификаторы к квестам"
+      - "NPC реакции и агрессия"
+    integration:
+      - economy-service
+      - world-service
+      - quest-service
+      - npc-service
+    
+  - name: "Recovery System"
+    type: supporting
+    responsibilities:
+      - "Механики восстановления репутации"
+      - "Квесты для искупления"
+      - "Таймеры и cooldowns"
+    integration:
+      - quest-service
+      - social-service
+    
+  - name: "Tier History Tracker"
+    type: supporting
+    responsibilities:
+      - "История изменений tier"
+      - "Аналитика репутации"
+      - "Статистика по фракциям"
+    integration:
+      - analytics-service
+
+api_endpoints:
+  reputation_tiers:
+    base_path: "/api/v1/reputation/tiers"
+    endpoints:
+      - method: GET
+        path: "/players/{id}/tier"
+        description: "Текущий tier игрока с фракцией"
+        expected_rps: 1000
+        optimization_level: 2
+      
+      - method: GET
+        path: "/players/{id}/tier/effects"
+        description: "Активные эффекты tier"
+        expected_rps: 800
+        optimization_level: 1
+      
+      - method: GET
+        path: "/players/{id}/tier/history"
+        description: "История изменений tier"
+        expected_rps: 200
+        optimization_level: 1
+      
+      - method: GET
+        path: "/tiers"
+        description: "Список всех tiers с описанием"
+        expected_rps: 100
+        optimization_level: 1
+      
+      - method: GET
+        path: "/players/{id}/recovery/options"
+        description: "Доступные варианты восстановления"
+        expected_rps: 150
+        optimization_level: 1
+
+data_model:
+  entities:
+    - name: ReputationTier
+      description: "Уровень репутации"
+      fields_ordered_by_size:
+        - name: id
+          type: string
+          size: 16 bytes
+          description: "hated, hostile, unfriendly, neutral, friendly, honored, legendary"
+        - name: name
+          type: string
+          size: 16 bytes
+        - name: color
+          type: string
+          size: 16 bytes
+          description: "UI color code"
+        - name: min_reputation
+          type: int32
+          size: 4 bytes
+          description: "Минимальная репутация для tier"
+        - name: max_reputation
+          type: int32
+          size: 4 bytes
+          description: "Максимальная репутация для tier"
+      expected_struct_size: ~60 bytes
+      static_data: 7 tiers (loaded from config)
+    
+    - name: PlayerReputationTier
+      description: "Текущий tier игрока с фракцией"
+      fields_ordered_by_size:
+        - name: player_id
+          type: uuid
+          size: 16 bytes
+        - name: faction_id
+          type: uuid
+          size: 16 bytes
+        - name: tier_id
+          type: string
+          size: 16 bytes
+        - name: reputation_value
+          type: int32
+          size: 4 bytes
+        - name: previous_tier_id
+          type: string
+          size: 16 bytes
+        - name: tier_changed_at
+          type: timestamp
+          size: 8 bytes
+      expected_struct_size: ~80 bytes
+    
+    - name: TierEffect
+      description: "Эффект tier на систему"
+      fields_ordered_by_size:
+        - name: tier_id
+          type: string
+          size: 16 bytes
+        - name: effect_type
+          type: enum
+          size: 1 byte
+          description: "price, access, quest, npc_reaction"
+        - name: modifier_value
+          type: float32
+          size: 4 bytes
+          description: "Модификатор (0.8 = -20%, 1.5 = +50%)"
+      expected_struct_size: ~24 bytes
+
+database_schema:
+  tables:
+    - name: reputation_tiers
+      description: "Справочник tiers (7 записей)"
+      columns:
+        - id VARCHAR(20) PRIMARY KEY
+        - name VARCHAR(50) NOT NULL
+        - color VARCHAR(10) NOT NULL
+        - min_reputation INTEGER NOT NULL
+        - max_reputation INTEGER NOT NULL
+        - description TEXT
+      indexes: []
+      expected_rows: 7 (static)
+      seed_data: true
+    
+    - name: player_reputation_tiers
+      description: "Текущие tiers игроков"
+      columns:
+        - player_id UUID NOT NULL
+        - faction_id UUID NOT NULL
+        - tier_id VARCHAR(20) NOT NULL REFERENCES reputation_tiers(id)
+        - reputation_value INTEGER NOT NULL
+        - previous_tier_id VARCHAR(20)
+        - tier_changed_at TIMESTAMP NOT NULL DEFAULT NOW()
+        - PRIMARY KEY (player_id, faction_id)
+      indexes:
+        - "idx_player_tiers_player ON player_reputation_tiers(player_id)"
+        - "idx_player_tiers_tier ON player_reputation_tiers(tier_id)"
+      expected_rows: 100000 (10k players * 10 factions)
+      hot_queries:
+        - "SELECT tier_id FROM player_reputation_tiers WHERE player_id = ? AND faction_id = ?" (1000 QPS, <1ms)
+    
+    - name: tier_effects
+      description: "Эффекты каждого tier"
+      columns:
+        - id UUID PRIMARY KEY
+        - tier_id VARCHAR(20) NOT NULL REFERENCES reputation_tiers(id)
+        - effect_type VARCHAR(20) NOT NULL
+        - modifier_value REAL NOT NULL
+        - description TEXT
+      indexes:
+        - "idx_tier_effects_tier ON tier_effects(tier_id, effect_type)"
+      expected_rows: 50 (7 tiers * ~7 effects)
+      seed_data: true
+    
+    - name: tier_change_history
+      description: "История изменений tier"
+      columns:
+        - id UUID PRIMARY KEY
+        - player_id UUID NOT NULL
+        - faction_id UUID NOT NULL
+        - old_tier_id VARCHAR(20) NOT NULL
+        - new_tier_id VARCHAR(20) NOT NULL
+        - reputation_value INTEGER NOT NULL
+        - changed_at TIMESTAMP NOT NULL DEFAULT NOW()
+      indexes:
+        - "idx_tier_history_player ON tier_change_history(player_id, faction_id, changed_at DESC)"
+      expected_rows: 1000000 (много изменений)
+      partitioning: "BY RANGE (changed_at)"
+
+event_bus_contracts:
+  publishes:
+    - topic: "reputation.tier.changed"
+      description: "Tier игрока изменился"
+      payload:
+        player_id: uuid
+        faction_id: uuid
+        old_tier: string
+        new_tier: string
+        reputation: int32
+    
+    - topic: "reputation.tier.effects.applied"
+      description: "Эффекты tier применены"
+      payload:
+        player_id: uuid
+        faction_id: uuid
+        effects: array
+  
+  subscribes:
+    - topic: "reputation.value.changed"
+      description: "Репутация изменилась"
+      handler: "Recalculate tier and trigger effects"
+
+data_synchronization:
+  pattern: "CQRS + Event Sourcing"
+  read_model: "player_reputation_tiers (denormalized)"
+  write_model: "tier_change_history (event store)"
+  eventual_consistency: "Real-time (<100ms)"
+
+performance_requirements:
+  load:
+    peak_rps: 2000
+    concurrent_users: 10000
+    p99_latency: "<50ms"
+  
+  data_model_optimized: true
+  hot_path_endpoints:
+    - "GET /players/{id}/tier" (1000 RPS - CRITICAL)
+    - "GET /players/{id}/tier/effects" (800 RPS)
+  
+  backend_optimizations:
+    level: 2
+    required:
+      - "Memory pooling для tier calculations"
+      - "Response caching (1min TTL)"
+      - "Batch tier recalculations"
+      - "DB connection pool (25)"
+
+tick_rate:
+  type: event-based
+  tier_recalculation: "On reputation change (event-driven)"
+  effects_update: "Real-time"
+
+network_requirements:
+  protocol: HTTP/REST
+  expected_bandwidth: "Low"
+  latency_target: "<50ms P99"
+
+integration:
+  services:
+    - name: reputation-core-service
+      integration_type: Event Bus
+      description: "Получение reputation changes"
+    
+    - name: economy-service
+      integration_type: API
+      description: "Применение price modifiers"
+    
+    - name: world-service
+      integration_type: API
+      description: "Проверка доступа к территориям"
+    
+    - name: quest-service
+      integration_type: API
+      description: "Фильтрация доступных квестов"
+    
+    - name: npc-service
+      integration_type: API
+      description: "NPC реакции и агрессия"
+
+reputation_tiers_config:
+  tiers:
+    - id: hated
+      range: [-100, -76]
+      color: "#FF0000"
+      effects:
+        price_modifier: 2.0
+        access_blocked: true
+        npc_aggression: hostile
+    
+    - id: hostile
+      range: [-75, -51]
+      color: "#FF4500"
+      effects:
+        price_modifier: 1.5
+        access_limited: true
+        npc_aggression: aggressive
+    
+    - id: unfriendly
+      range: [-50, -26]
+      color: "#FFA500"
+      effects:
+        price_modifier: 1.2
+        quest_limited: true
+    
+    - id: neutral
+      range: [-25, 25]
+      color: "#FFFF00"
+      effects:
+        price_modifier: 1.0
+        default_access: true
+    
+    - id: friendly
+      range: [26, 50]
+      color: "#90EE90"
+      effects:
+        price_modifier: 0.9
+        bonus_quests: true
+    
+    - id: honored
+      range: [51, 75]
+      color: "#00FF00"
+      effects:
+        price_modifier: 0.8
+        exclusive_access: true
+    
+    - id: legendary
+      range: [76, 100]
+      color: "#FFD700"
+      effects:
+        price_modifier: 0.7
+        all_access: true
+        npc_support: true
+
+notes:
+  - "7 static tiers loaded from config"
+  - "Tier calculation on reputation change (event-driven)"
+  - "Effects applied real-time to economy/world/quest systems"
+  - "History tracking для analytics"
+  - "Level 2 optimizations для hot path"
+
