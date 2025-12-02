@@ -1,3 +1,7 @@
+-- Issue: #164
+-- Progression System Database Schema
+-- Таблицы для прогрессии персонажей, опыта, атрибутов и навыков
+
 CREATE SCHEMA IF NOT EXISTS progression;
 
 CREATE TABLE IF NOT EXISTS progression.character_progression (
