@@ -8,8 +8,11 @@
 
 ```
 НОВЫЙ сервис → Chi ✅
-СУЩЕСТВУЮЩИЙ сервис → оставь как есть 🔄
+СУЩЕСТВУЮЩИЙ с Chi → всё ОК ✅
+СУЩЕСТВУЮЩИЙ с Gorilla → МИГРИРУЙ на Chi! 🔄
 ```
+
+**Gorilla ЗАПРЕЩЕН - все сервисы ДОЛЖНЫ быть на Chi!**
 
 ---
 
@@ -35,13 +38,13 @@ router := chi.NewRouter()
 # Проверь что уже используется
 grep "github.com/go-chi/chi" services/{service}-go/server/
 
-# Chi найден → используй chi-server
+# Chi найден → всё ОК, продолжай работу
 # Chi НЕ найден → проверь gorilla
 
 grep "github.com/gorilla/mux" services/{service}-go/server/
 
-# Gorilla найден → используй gorilla-server
-# НЕ меняй на chi!
+# Gorilla найден → ОБЯЗАТЕЛЬНО мигрируй на Chi!
+# См. .cursor/rules/agent-backend.mdc секция "Миграция с Gorilla на Chi"
 ```
 
 ---
@@ -83,16 +86,19 @@ api.HandlerFromMux(handlers, router)
 ## ❓ FAQ
 
 **Q: Можно использовать Gorilla для нового сервиса?**  
-A: ❌ НЕТ. Chi - единственный стандарт для новых сервисов.
+A: ❌ НЕТ. Chi - единственный стандарт. Gorilla ЗАПРЕЩЕН.
 
 **Q: Нужно мигрировать существующий Gorilla сервис на Chi?**  
-A: ❌ НЕТ. Оставь working code как есть.
+A: ✅ ДА! ОБЯЗАТЕЛЬНО мигрируй на Chi. См. инструкции в agent-backend.mdc.
 
 **Q: В чем разница между Chi и Gorilla?**  
 A: Разный API (см. `.cursor/CHI_ROUTER_STANDARD.md` таблицу различий)
 
 **Q: Почему Chi, а не Gorilla?**  
-A: Chi современнее, легче, быстрее. Gorilla deprecated.
+A: Chi современнее, легче, быстрее. Gorilla deprecated и больше не используется.
+
+**Q: Сложно ли мигрировать с Gorilla на Chi?**  
+A: Нет, основная работа - переписать `http_server.go`. Подробная инструкция в документации.
 
 ---
 

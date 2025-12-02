@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/gameplay-service-go/models"
 	"github.com/necpgame/gameplay-service-go/pkg/api"
 	"github.com/necpgame/gameplay-service-go/pkg/combosapi"
@@ -44,7 +44,7 @@ type QuestServiceInterface interface {
 
 type HTTPServer struct {
 	addr             string
-	router           *mux.Router
+	router           chi.Router
 	progressionService ProgressionServiceInterface
 	questService     QuestServiceInterface
 	affixService     AffixServiceInterface
@@ -59,7 +59,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, implantsStatsService ImplantsStatsServiceInterface, implantsMaintenanceService ImplantsMaintenanceServiceInterface, damageService DamageServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
 		router:           router,
@@ -80,23 +80,23 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	router.Use(server.corsMiddleware)
 
 	progressionAPI := router.PathPrefix("/api/v1/gameplay/progression").Subrouter()
-	progressionAPI.HandleFunc("/characters/{character_id}", server.getProgression).Methods("GET")
-	progressionAPI.HandleFunc("/characters/{character_id}/experience", server.addExperience).Methods("POST")
-	progressionAPI.HandleFunc("/characters/{character_id}/skills/experience", server.addSkillExperience).Methods("POST")
-	progressionAPI.HandleFunc("/characters/{character_id}/attributes/allocate", server.allocateAttributePoint).Methods("POST")
-	progressionAPI.HandleFunc("/characters/{character_id}/skills/allocate", server.allocateSkillPoint).Methods("POST")
-	progressionAPI.HandleFunc("/characters/{character_id}/skills", server.getSkillProgression).Methods("GET")
+	progressionAPI.Get("/characters/{character_id}", server.getProgression)
+	progressionAPI.Get("/characters/{character_id}/experience", server.addExperience)
+	progressionAPI.Get("/characters/{character_id}/skills/experience", server.addSkillExperience)
+	progressionAPI.Get("/characters/{character_id}/attributes/allocate", server.allocateAttributePoint)
+	progressionAPI.Get("/characters/{character_id}/skills/allocate", server.allocateSkillPoint)
+	progressionAPI.Get("/characters/{character_id}/skills", server.getSkillProgression)
 
 	questAPI := router.PathPrefix("/api/v1/gameplay/quests").Subrouter()
-	questAPI.HandleFunc("/start", server.startQuest).Methods("POST")
-	questAPI.HandleFunc("/instances/{instance_id}", server.getQuestInstance).Methods("GET")
-	questAPI.HandleFunc("/instances/{instance_id}/dialogue", server.updateDialogue).Methods("POST")
-	questAPI.HandleFunc("/instances/{instance_id}/skill-check", server.performSkillCheck).Methods("POST")
-	questAPI.HandleFunc("/instances/{instance_id}/objectives/complete", server.completeObjective).Methods("POST")
-	questAPI.HandleFunc("/instances/{instance_id}/complete", server.completeQuest).Methods("POST")
-	questAPI.HandleFunc("/instances/{instance_id}/fail", server.failQuest).Methods("POST")
-	questAPI.HandleFunc("/characters/{character_id}", server.listQuestInstances).Methods("GET")
-	questAPI.HandleFunc("/content/reload", server.reloadQuestContent).Methods("POST")
+	questAPI.Get("/start", server.startQuest)
+	questAPI.Get("/instances/{instance_id}", server.getQuestInstance)
+	questAPI.Get("/instances/{instance_id}/dialogue", server.updateDialogue)
+	questAPI.Get("/instances/{instance_id}/skill-check", server.performSkillCheck)
+	questAPI.Get("/instances/{instance_id}/objectives/complete", server.completeObjective)
+	questAPI.Get("/instances/{instance_id}/complete", server.completeQuest)
+	questAPI.Get("/instances/{instance_id}/fail", server.failQuest)
+	questAPI.Get("/characters/{character_id}", server.listQuestInstances)
+	questAPI.Get("/content/reload", server.reloadQuestContent)
 
 	affixHandlers := NewAffixHandlers(affixService)
 	affixAPI := router.PathPrefix("/api/v1/gameplay").Subrouter()
@@ -104,11 +104,11 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 
 	timeTrialHandlers := NewTimeTrialHandlers(timeTrialService)
 	timeTrialAPI := router.PathPrefix("/api/v1/gameplay/time-trials").Subrouter()
-	timeTrialAPI.HandleFunc("/start", timeTrialHandlers.StartTimeTrial).Methods("POST")
-	timeTrialAPI.HandleFunc("/complete", timeTrialHandlers.CompleteTimeTrial).Methods("POST")
-	timeTrialAPI.HandleFunc("/sessions/{session_id}", timeTrialHandlers.GetTimeTrialSession).Methods("GET")
-	timeTrialAPI.HandleFunc("/weekly/current", timeTrialHandlers.GetCurrentWeeklyChallenge).Methods("GET")
-	timeTrialAPI.HandleFunc("/weekly/history", timeTrialHandlers.GetWeeklyChallengeHistory).Methods("GET")
+	timeTrialAPI.Get("/start", timeTrialHandlers.StartTimeTrial)
+	timeTrialAPI.Get("/complete", timeTrialHandlers.CompleteTimeTrial)
+	timeTrialAPI.Get("/sessions/{session_id}", timeTrialHandlers.GetTimeTrialSession)
+	timeTrialAPI.Get("/weekly/current", timeTrialHandlers.GetCurrentWeeklyChallenge)
+	timeTrialAPI.Get("/weekly/history", timeTrialHandlers.GetWeeklyChallengeHistory)
 
 	comboHandlers := NewComboHandlers(comboService)
 	comboAPI := router.PathPrefix("/api/v1/gameplay/combat/combos").Subrouter()
@@ -139,7 +139,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		weaponeffectsapi.HandlerFromMux(weaponEffectsHandlers, weaponAPI)
 		weaponadvancedapi.HandlerFromMux(weaponAdvancedHandlers, weaponAPI)
 	}
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 	return server
 }
 
@@ -172,3 +172,4 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	}
 	return nil
 }
+

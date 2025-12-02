@@ -15,36 +15,41 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get faction leaderboard
-	// (GET /api/v1/leaderboard/faction/{faction_id})
-	GetFactionLeaderboard(w http.ResponseWriter, r *http.Request, factionId openapi_types.UUID, params GetFactionLeaderboardParams)
-	// Get global leaderboard
-	// (GET /api/v1/leaderboard/global)
-	GetGlobalLeaderboard(w http.ResponseWriter, r *http.Request, params GetGlobalLeaderboardParams)
-	// Get player rank
-	// (GET /api/v1/leaderboard/player/{player_id}/rank)
-	GetPlayerRank(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID)
+
+	// (GET /gameplay/combat/sessions)
+	ListCombatSessions(w http.ResponseWriter, r *http.Request, params ListCombatSessionsParams)
+
+	// (POST /gameplay/combat/sessions)
+	CreateCombatSession(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /gameplay/combat/sessions/{session_id})
+	EndCombatSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID)
+
+	// (GET /gameplay/combat/sessions/{session_id})
+	GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// Get faction leaderboard
-// (GET /api/v1/leaderboard/faction/{faction_id})
-func (_ Unimplemented) GetFactionLeaderboard(w http.ResponseWriter, r *http.Request, factionId openapi_types.UUID, params GetFactionLeaderboardParams) {
+// (GET /gameplay/combat/sessions)
+func (_ Unimplemented) ListCombatSessions(w http.ResponseWriter, r *http.Request, params ListCombatSessionsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Get global leaderboard
-// (GET /api/v1/leaderboard/global)
-func (_ Unimplemented) GetGlobalLeaderboard(w http.ResponseWriter, r *http.Request, params GetGlobalLeaderboardParams) {
+// (POST /gameplay/combat/sessions)
+func (_ Unimplemented) CreateCombatSession(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Get player rank
-// (GET /api/v1/leaderboard/player/{player_id}/rank)
-func (_ Unimplemented) GetPlayerRank(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
+// (DELETE /gameplay/combat/sessions/{session_id})
+func (_ Unimplemented) EndCombatSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /gameplay/combat/sessions/{session_id})
+func (_ Unimplemented) GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -57,58 +62,8 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetFactionLeaderboard operation middleware
-func (siw *ServerInterfaceWrapper) GetFactionLeaderboard(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "faction_id" -------------
-	var factionId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "faction_id", chi.URLParam(r, "faction_id"), &factionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "faction_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetFactionLeaderboardParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetFactionLeaderboard(w, r, factionId, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetGlobalLeaderboard operation middleware
-func (siw *ServerInterfaceWrapper) GetGlobalLeaderboard(w http.ResponseWriter, r *http.Request) {
+// ListCombatSessions operation middleware
+func (siw *ServerInterfaceWrapper) ListCombatSessions(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -119,57 +74,38 @@ func (siw *ServerInterfaceWrapper) GetGlobalLeaderboard(w http.ResponseWriter, r
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetGlobalLeaderboardParams
+	var params ListCombatSessionsParams
 
-	// ------------- Optional query parameter "limit" -------------
+	// ------------- Optional query parameter "player_id" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "period" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "period", r.URL.Query(), &params.Period)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetGlobalLeaderboard(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetPlayerRank operation middleware
-func (siw *ServerInterfaceWrapper) GetPlayerRank(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "player_id" -------------
-	var playerId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "player_id", chi.URLParam(r, "player_id"), &playerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindQueryParameter("form", true, false, "player_id", r.URL.Query(), &params.PlayerId)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "player_id", Err: err})
 		return
 	}
 
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCombatSessions(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCombatSession operation middleware
+func (siw *ServerInterfaceWrapper) CreateCombatSession(w http.ResponseWriter, r *http.Request) {
+
 	ctx := r.Context()
 
 	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
@@ -177,7 +113,69 @@ func (siw *ServerInterfaceWrapper) GetPlayerRank(w http.ResponseWriter, r *http.
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPlayerRank(w, r, playerId)
+		siw.Handler.CreateCombatSession(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EndCombatSession operation middleware
+func (siw *ServerInterfaceWrapper) EndCombatSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "session_id" -------------
+	var sessionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EndCombatSession(w, r, sessionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCombatSession operation middleware
+func (siw *ServerInterfaceWrapper) GetCombatSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "session_id" -------------
+	var sessionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "session_id", chi.URLParam(r, "session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCombatSession(w, r, sessionId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -301,13 +299,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v1/leaderboard/faction/{faction_id}", wrapper.GetFactionLeaderboard)
+		r.Get(options.BaseURL+"/gameplay/combat/sessions", wrapper.ListCombatSessions)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v1/leaderboard/global", wrapper.GetGlobalLeaderboard)
+		r.Post(options.BaseURL+"/gameplay/combat/sessions", wrapper.CreateCombatSession)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v1/leaderboard/player/{player_id}/rank", wrapper.GetPlayerRank)
+		r.Delete(options.BaseURL+"/gameplay/combat/sessions/{session_id}", wrapper.EndCombatSession)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/gameplay/combat/sessions/{session_id}", wrapper.GetCombatSession)
 	})
 
 	return r

@@ -11,15 +11,20 @@
 **ОБЯЗАТЕЛЬНО используй Chi:**
 - `ROUTER_TYPE := chi-server` в Makefile
 - `github.com/go-chi/chi/v5` в go.mod
-- Chi - это наш **стандарт** для всех новых сервисов!
+- Chi - это **ЕДИНСТВЕННЫЙ** стандарт!
 
 ### 🔄 ДЛЯ СУЩЕСТВУЮЩИХ СЕРВИСОВ (уже есть код)
 
-**Используй то что уже есть:**
-- Если Chi → оставляй Chi
-- Если Gorilla → оставляй Gorilla
-- **НЕ мигрируй** с Gorilla на Chi (разные API!)
-- Сохраняй working code без изменений
+**ОБЯЗАТЕЛЬНАЯ МИГРАЦИЯ на Chi:**
+- Если Chi → всё отлично, продолжай
+- Если Gorilla → **ОБЯЗАТЕЛЬНО мигрируй на Chi!**
+- Gorilla ЗАПРЕЩЕН - все сервисы ДОЛЖНЫ использовать Chi
+- Следуй инструкциям по миграции в `.cursor/rules/agent-backend.mdc`
+
+### ❌ Gorilla ЗАПРЕЩЕН:
+- Gorilla deprecated и НЕ используется
+- ВСЕ сервисы ДОЛЖНЫ быть на Chi
+- При обнаружении Gorilla → немедленная миграция
 
 ---
 
@@ -241,36 +246,37 @@ func (h *Handlers) GetUser(w http.ResponseWriter, r *http.Request, userID string
 
 ---
 
-## 🚫 НЕ мигрируй существующие сервисы
+## 🔄 ОБЯЗАТЕЛЬНАЯ миграция Gorilla → Chi
 
-**ЕСЛИ сервис уже использует Gorilla:**
+**ЕСЛИ сервис использует Gorilla:**
 
-❌ **НЕ ДЕЛАЙ:**
+✅ **ОБЯЗАТЕЛЬНО МИГРИРУЙ:**
 ```bash
-# НЕ меняй ROUTER_TYPE
-ROUTER_TYPE := gorilla-server  # Оставь как есть!
+# 1. Обнови ROUTER_TYPE
+ROUTER_TYPE := chi-server
 
-# НЕ меняй импорты
-import "github.com/gorilla/mux"  # Не трогай!
+# 2. Замени импорты
+import "github.com/go-chi/chi/v5"
 
-# НЕ переписывай код
-router := mux.NewRouter()  # Working code!
+# 3. Перепиши код
+router := chi.NewRouter()
 ```
 
-✅ **ДЕЛАЙ:**
-```bash
-# Оставь всё как есть
-ROUTER_TYPE := gorilla-server
+**Процесс миграции:**
+1. Обнови `Makefile` → `chi-server`
+2. Обнови `go.mod` → добавь Chi, удали Gorilla
+3. Перепиши `server/http_server.go` под Chi API
+4. Регенерируй код: `make generate-api`
+5. Тестируй: `go build ./...` и `go test ./...`
+6. Коммит с префиксом `[backend] refactor: migrate to Chi`
 
-# Сохрани working code
-# Миграция займет много времени и не даст пользы
-```
+**Детальные инструкции:** См. `.cursor/rules/agent-backend.mdc` секция "Миграция с Gorilla на Chi"
 
-**Причина:**
-- Chi и Gorilla имеют **разный API**
-- Миграция требует **полной перезаписи** http_server.go
-- Риск **внести баги** в working code
-- **Нет выгоды** для существующего сервиса
+**Почему обязательно:**
+- Gorilla **deprecated** и больше не поддерживается
+- Chi - **единый стандарт** для всех сервисов
+- Унификация кодовой базы
+- Лучшая производительность и поддержка
 
 ---
 
@@ -278,7 +284,7 @@ ROUTER_TYPE := gorilla-server
 
 ### API Designer:
 
-- [ ] Знаю что Backend использует Chi для новых сервисов
+- [ ] Знаю что Backend использует ТОЛЬКО Chi для всех сервисов
 - [ ] НЕ беспокоюсь о типе роутера (Backend настроит)
 - [ ] Фокусируюсь на качестве OpenAPI спецификации
 
@@ -292,9 +298,41 @@ ROUTER_TYPE := gorilla-server
 
 #### Для СУЩЕСТВУЮЩЕГО сервиса:
 - [ ] Проверяю какой роутер уже используется
-- [ ] Если Chi → продолжаю использовать Chi
-- [ ] Если Gorilla → оставляю Gorilla (НЕ мигрирую!)
-- [ ] Сохраняю working code без изменений
+- [ ] Если Chi → продолжаю использовать Chi ✅
+- [ ] Если Gorilla → **ОБЯЗАТЕЛЬНО мигрирую на Chi!** ⚠️
+- [ ] Следую инструкциям по миграции из agent-backend.mdc
+- [ ] После миграции: тестирую, коммичу с префиксом `[backend] refactor: migrate to Chi`
+
+---
+
+## 🔍 Как найти все сервисы с Gorilla
+
+**PowerShell (Windows):**
+```powershell
+# Найти все сервисы использующие Gorilla
+Get-ChildItem -Path services -Recurse -Filter "*.go" | 
+  Select-String "github.com/gorilla/mux" | 
+  Select-Object -ExpandProperty Path -Unique
+
+# Подсчитать количество
+(Get-ChildItem -Path services -Recurse -Filter "*.go" | 
+  Select-String "github.com/gorilla/mux" | 
+  Select-Object -ExpandProperty Path -Unique).Count
+```
+
+**Bash (Linux/macOS):**
+```bash
+# Найти все сервисы использующие Gorilla
+find services -name "*.go" -type f -exec grep -l "github.com/gorilla/mux" {} \; | sort -u
+
+# Подсчитать количество
+find services -name "*.go" -type f -exec grep -l "github.com/gorilla/mux" {} \; | sort -u | wc -l
+```
+
+**Приоритизация миграции:**
+1. Начни с самых простых сервисов (мало endpoints)
+2. Затем средние сервисы
+3. В конце сложные сервисы (много endpoints, middleware)
 
 ---
 
@@ -305,7 +343,7 @@ ROUTER_TYPE := gorilla-server
 - Docs: https://go-chi.io/
 
 **В проекте:**
-- `.cursor/rules/agent-backend.mdc` - полные правила Backend агента
+- `.cursor/rules/agent-backend.mdc` - полные правила Backend агента (секция "Миграция с Gorilla на Chi")
 - `.cursor/CODE_GENERATION_TEMPLATE.md` - шаблон Makefile с Chi
 - `.cursor/SOLID_CODE_GENERATION_GUIDE.md` - гайд по генерации кода
 
@@ -313,11 +351,14 @@ ROUTER_TYPE := gorilla-server
 
 ## 🎯 Итог
 
-**Chi - единый стандарт для ВСЕХ новых Go сервисов в проекте!**
+**Chi - ЕДИНСТВЕННЫЙ роутер для ВСЕХ Go сервисов в проекте!**
 
 - ✅ Новые сервисы → Chi обязательно
-- 🔄 Существующие сервисы → оставляй как есть
-- ❌ НЕ мигрируй с Gorilla на Chi
+- ✅ Существующие с Chi → всё ОК
+- ⚠️ Существующие с Gorilla → **ОБЯЗАТЕЛЬНО мигрируй на Chi!**
+- ❌ Gorilla ЗАПРЕЩЕН во всем проекте
 
-**Вопросы?** См. `.cursor/rules/agent-backend.mdc`
+**Инструкции по миграции:** `.cursor/rules/agent-backend.mdc` секция "Миграция с Gorilla на Chi"
+
+**Вопросы?** См. `.cursor/rules/agent-backend.mdc` или `.cursor/ROUTER_QUICK_REFERENCE.md`
 

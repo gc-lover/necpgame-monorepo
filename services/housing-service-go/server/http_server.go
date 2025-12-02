@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/housing-service-go/models"
 	"github.com/necpgame/housing-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
@@ -33,7 +33,7 @@ type HousingServiceInterface interface {
 
 type HTTPServer struct {
 	addr          string
-	router        *mux.Router
+	router        chi.Router
 	housingService HousingServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
@@ -42,7 +42,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, housingService HousingServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:          addr,
 		router:        router,
@@ -67,7 +67,7 @@ func NewHTTPServer(addr string, housingService HousingServiceInterface, jwtValid
 		BaseRouter: apiRouter,
 	})
 
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 
 	return server
 }
@@ -530,4 +530,5 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.statusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
 }
+
 

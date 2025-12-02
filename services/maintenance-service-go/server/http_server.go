@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/maintenance-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -22,7 +22,7 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	service := NewMaintenanceService(repo)
 	handlers := NewMaintenanceHandlers(service, logger)
 
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 
 	router.Use(loggingMiddleware(logger))
 	router.Use(recoveryMiddleware(logger))
@@ -30,8 +30,8 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 
 	api.HandlerFromMux(handlers, router)
 
-	router.Handle("/metrics", promhttp.Handler()).Methods("GET")
-	router.HandleFunc("/health", healthCheckHandler).Methods("GET")
+	router.Handle("/metrics", promhttp.Handler())
+	router.Get("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,
@@ -104,4 +104,5 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
 }
+
 

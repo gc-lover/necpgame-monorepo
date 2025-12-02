@@ -63,18 +63,25 @@ make check-file-sizes
 
 Backend Developer реализует бекенд на Go по OpenAPI спецификации, создает микросервисы и реализует бизнес-логику.
 
-## ⚠️ ВАЖНО: Стандарт роутера
+## ⚠️ КРИТИЧЕСКИ ВАЖНО: Миграция на Chi роутер
 
-**Для НОВЫХ сервисов ВСЕГДА используй Chi роутер:**
+**Chi - ЕДИНСТВЕННЫЙ роутер для ВСЕХ сервисов!**
+
+### ✅ Для НОВЫХ сервисов:
 - `ROUTER_TYPE := chi-server` в Makefile
 - `github.com/go-chi/chi/v5` как зависимость
 - Chi - современный, легковесный, быстрый роутер
-- **НЕ используй Gorilla для новых сервисов!**
 
-**Для СУЩЕСТВУЮЩИХ сервисов:**
-- Используй тот роутер который уже есть (Chi или Gorilla)
-- **НЕ мигрируй** с Gorilla на Chi (разные API, требуется переписывание кода)
-- Сохраняй working code без изменений
+### 🔄 Для СУЩЕСТВУЮЩИХ сервисов с Gorilla:
+- **ОБЯЗАТЕЛЬНО мигрируй на Chi!**
+- Gorilla → Chi миграция обязательна для всех сервисов
+- Следуй инструкциям по миграции (см. секцию "Миграция с Gorilla на Chi" ниже)
+- После миграции удали все импорты `github.com/gorilla/mux`
+
+### ❌ Gorilla ЗАПРЕЩЕН:
+- Gorilla deprecated и НЕ используется в проекте
+- Все новые и существующие сервисы ДОЛЖНЫ использовать Chi
+- При обнаружении Gorilla → немедленная миграция на Chi
 
 ## Область ответственности
 
@@ -358,14 +365,14 @@ clean:
 
 **Замени:**
 - `{service-name}` → имя сервиса (например: `companion-service`)
-- `ROUTER_TYPE` → **chi-server для НОВЫХ сервисов** (см. ниже)
+- `ROUTER_TYPE` → **ВСЕГДА chi-server** (для всех сервисов!)
 
-**Как определить ROUTER_TYPE:**
+**Как определить что делать:**
 
 ### ✅ НОВЫЙ сервис (создаешь с нуля):
 
 ```makefile
-ROUTER_TYPE := chi-server  # ✅ ВСЕГДА chi для новых сервисов!
+ROUTER_TYPE := chi-server  # ✅ ВСЕГДА chi!
 ```
 
 **Зависимости:**
@@ -379,23 +386,21 @@ ROUTER_TYPE := chi-server  # ✅ ВСЕГДА chi для новых сервис
 grep -r "github.com/go-chi/chi" services/{service}-go/server/
 
 # Если Chi найден:
-ROUTER_TYPE := chi-server
+ROUTER_TYPE := chi-server  # ✅ Всё в порядке, продолжай
 
 # Если Chi НЕ найден, проверь Gorilla:
 grep -r "github.com/gorilla/mux" services/{service}-go/server/
 
 # Если Gorilla найден:
-ROUTER_TYPE := gorilla-server  # ⚠️ НЕ меняй на chi (legacy code)
-
-# Если ничего не найдено (новый сервис без кода):
-ROUTER_TYPE := chi-server  # ✅ Default
+# ⚠️ ОБЯЗАТЕЛЬНАЯ МИГРАЦИЯ на Chi!
+# См. секцию "Миграция с Gorilla на Chi" ниже
 ```
 
 **⚠️ КРИТИЧЕСКИ ВАЖНО:**
-- **НЕ мигрируй** существующие сервисы с Gorilla на Chi!
-- Chi и Gorilla имеют **несовместимый API** (см. таблицу различий ниже)
-- Миграция требует **полного переписывания** server/http_server.go
-- Сохраняй working code без изменений!
+- **ОБЯЗАТЕЛЬНО мигрируй** все Gorilla сервисы на Chi!
+- Chi и Gorilla имеют **разный API** (см. таблицу различий ниже)
+- Миграция требует переписывания `server/http_server.go`
+- Следуй инструкциям по миграции для минимизации ошибок
 
 ---
 
@@ -504,7 +509,158 @@ func (s *HTTPServer) Start() error {
 }
 ```
 
-**Для существующих сервисов с gorilla:** НЕ меняй код, используй `api.HandlerFromMux()`
+---
+
+## 🔄 Миграция с Gorilla на Chi (ОБЯЗАТЕЛЬНО!)
+
+**Если сервис использует Gorilla - ОБЯЗАТЕЛЬНО мигрируй на Chi!**
+
+### Шаг 1: Обновить Makefile
+
+```makefile
+# Было:
+ROUTER_TYPE := gorilla-server
+
+# Стало:
+ROUTER_TYPE := chi-server
+```
+
+### Шаг 2: Обновить go.mod
+
+```bash
+# Удалить Gorilla
+go mod edit -dropreplace github.com/gorilla/mux
+
+# Добавить Chi
+go get github.com/go-chi/chi/v5@latest
+go get github.com/oapi-codegen/runtime@latest
+go mod tidy
+```
+
+### Шаг 3: Переписать server/http_server.go
+
+**Было (Gorilla):**
+```go
+import "github.com/gorilla/mux"
+
+func NewHTTPServer(addr string, service Service) *HTTPServer {
+    router := mux.NewRouter()
+    
+    // Middleware
+    router.Use(loggingMiddleware)
+    
+    // Handlers
+    handlers := NewHandlers(service)
+    api.HandlerFromMux(handlers, router)
+    
+    // Health
+    router.HandleFunc("/health", healthCheck).Methods("GET")
+    
+    return &HTTPServer{addr: addr, router: router}
+}
+```
+
+**Стало (Chi):**
+```go
+import (
+    "github.com/go-chi/chi/v5"
+    "github.com/go-chi/chi/v5/middleware"
+)
+
+func NewHTTPServer(addr string, service Service) *HTTPServer {
+    router := chi.NewRouter()
+    
+    // Middleware
+    router.Use(middleware.Logger)
+    router.Use(loggingMiddleware)
+    
+    // Handlers
+    handlers := NewHandlers(service)
+    api.HandlerWithOptions(handlers, api.ChiServerOptions{
+        BaseURL:    "/api/v1",
+        BaseRouter: router,
+    })
+    
+    // Health
+    router.Get("/health", healthCheck)
+    
+    return &HTTPServer{addr: addr, router: router}
+}
+```
+
+### Шаг 4: Регенерировать код
+
+```bash
+cd services/{service-name}-go
+make clean
+make generate-api
+```
+
+### Шаг 5: Обновить импорты
+
+```bash
+# Удалить все импорты Gorilla
+# Заменить на Chi
+sed -i 's|github.com/gorilla/mux|github.com/go-chi/chi/v5|g' server/*.go
+```
+
+### Шаг 6: Проверить и закоммитить
+
+```bash
+go build ./...
+go test ./...
+
+git add .
+git commit -m "[backend] refactor: migrate from Gorilla to Chi router
+
+- Replace gorilla/mux with go-chi/chi/v5
+- Update Makefile: gorilla-server → chi-server
+- Rewrite server/http_server.go for Chi API
+- Update oapi-codegen integration
+- All tests passing
+
+BREAKING: Router migrated from Gorilla to Chi
+
+Related Issue: #123"
+```
+
+### Таблица миграции API:
+
+| Gorilla | Chi | Замечания |
+|---------|-----|-----------|
+| `mux.NewRouter()` | `chi.NewRouter()` | Создание роутера |
+| `*mux.Router` | `chi.Router` | Тип роутера |
+| `router.HandleFunc("/path", h).Methods("GET")` | `router.Get("/path", h)` | GET метод |
+| `router.HandleFunc("/path", h).Methods("POST")` | `router.Post("/path", h)` | POST метод |
+| `router.PathPrefix("/api").Subrouter()` | `router.Route("/api", func(r chi.Router){...})` | Subrouter |
+| `api.HandlerFromMux(h, router)` | `api.HandlerWithOptions(h, api.ChiServerOptions{...})` | oapi-codegen |
+
+### Middleware миграция:
+
+**Gorilla:**
+```go
+router.Use(loggingMiddleware)
+```
+
+**Chi:**
+```go
+import "github.com/go-chi/chi/v5/middleware"
+
+router.Use(middleware.Logger)      // Встроенный logger
+router.Use(middleware.Recoverer)   // Встроенный recoverer
+router.Use(loggingMiddleware)      // Кастомный
+```
+
+### Чек-лист миграции:
+
+- [ ] Обновлен Makefile (`chi-server`)
+- [ ] Обновлен go.mod (Chi добавлен, Gorilla удален)
+- [ ] Переписан `server/http_server.go`
+- [ ] Обновлены импорты
+- [ ] Регенерирован код (`make generate-api`)
+- [ ] Код компилируется (`go build ./...`)
+- [ ] Тесты проходят (`go test ./...`)
+- [ ] Коммит создан с префиксом `[backend]`
 
 ---
 
