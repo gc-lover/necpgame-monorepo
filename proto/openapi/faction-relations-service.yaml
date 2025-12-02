@@ -1,0 +1,273 @@
+# Issue: #1442
+
+openapi: 3.0.0
+
+info:
+  title: Faction Relations Service API
+  version: 1.0.0
+  description: |
+    API для управления отношениями между фракциями: дипломатия, договоры.
+
+servers:
+  - url: http://localhost:8094
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: relations
+    description: Отношения между фракциями
+
+paths:
+  /api/v1/factions/{factionId}/relations:
+    get:
+      tags:
+        - relations
+      summary: Отношения фракции
+      description: Получить все отношения фракции
+      operationId: getRelations
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: relation_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/RelationType'
+      responses:
+        '200':
+          description: Список отношений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  relations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FactionRelation'
+
+  /api/v1/factions/{factionId}/relations/{targetFactionId}:
+    put:
+      tags:
+        - relations
+      summary: Обновить отношения
+      description: Изменить тип отношений с другой фракцией
+      operationId: updateRelation
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: targetFactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - relation_type
+              properties:
+                relation_type:
+                  $ref: '#/components/schemas/RelationType'
+                relation_value:
+                  type: integer
+                  minimum: -100
+                  maximum: 100
+      responses:
+        '200':
+          description: Отношения обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionRelation'
+
+  /api/v1/factions/{factionId}/diplomacy/treaty:
+    post:
+      tags:
+        - relations
+      summary: Заключить договор
+      description: Создать дипломатический договор
+      operationId: createTreaty
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_faction_id
+                - treaty_type
+              properties:
+                target_faction_id:
+                  type: string
+                  format: uuid
+                treaty_type:
+                  type: string
+                  enum: [alliance, trade_agreement, non_aggression, mutual_defense]
+                terms:
+                  type: object
+                  additionalProperties: true
+                duration_days:
+                  type: integer
+      responses:
+        '201':
+          description: Договор создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Treaty'
+
+  /api/v1/factions/{factionId}/relations/graph:
+    get:
+      tags:
+        - relations
+      summary: Граф отношений
+      description: Получить граф отношений фракции
+      operationId: getRelationsGraph
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            default: 2
+            minimum: 1
+            maximum: 5
+      responses:
+        '200':
+          description: Граф отношений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationsGraph'
+
+components:
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+
+  schemas:
+    RelationType:
+      type: string
+      enum:
+        - allied
+        - neutral
+        - competitive
+        - hostile
+        - trading
+
+    FactionRelation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        target_faction_id:
+          type: string
+          format: uuid
+        target_faction_name:
+          type: string
+        relation_type:
+          $ref: '#/components/schemas/RelationType'
+        relation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        treaty_data:
+          type: object
+          additionalProperties: true
+        updated_at:
+          type: string
+          format: date-time
+
+    Treaty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        target_faction_id:
+          type: string
+          format: uuid
+        treaty_type:
+          type: string
+          enum: [alliance, trade_agreement, non_aggression, mutual_defense]
+        terms:
+          type: object
+          additionalProperties: true
+        signed_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, expired, violated, cancelled]
+
+    RelationsGraph:
+      type: object
+      properties:
+        center_faction_id:
+          type: string
+          format: uuid
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              faction_id:
+                type: string
+                format: uuid
+              faction_name:
+                type: string
+              level:
+                type: integer
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
+                type: string
+                format: uuid
+              to:
+                type: string
+                format: uuid
+              relation_type:
+                $ref: '#/components/schemas/RelationType'
+              relation_value:
+                type: integer
+
