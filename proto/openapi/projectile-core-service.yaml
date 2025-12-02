@@ -1,0 +1,369 @@
+# Issue: #1560
+
+openapi: 3.0.3
+info:
+  title: Projectile Core Service API
+  description: API для управления системой форм проджектайлов
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8091
+    description: Development server
+  - url: http://projectile-core-service:8091
+    description: Kubernetes service
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v1/projectile/forms:
+    get:
+      summary: Получить список всех форм проджектайлов
+      operationId: getProjectileForms
+      tags:
+        - Projectile Forms
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: type
+          in: query
+          description: Фильтр по типу формы
+          schema:
+            $ref: '#/components/schemas/ProjectileFormType'
+        - name: weapon_type
+          in: query
+          description: Фильтр по совместимости с типом оружия
+          schema:
+            $ref: '#/components/schemas/WeaponType'
+      responses:
+        '200':
+          description: Список форм проджектайлов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - forms
+                  - pagination
+                properties:
+                  forms:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProjectileForm'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /api/v1/projectile/forms/{form_id}:
+    get:
+      summary: Получить детали формы проджектайла
+      operationId: getProjectileForm
+      tags:
+        - Projectile Forms
+      parameters:
+        - name: form_id
+          in: path
+          required: true
+          description: ID формы проджектайла
+          schema:
+            type: string
+            example: "form_point"
+      responses:
+        '200':
+          description: Детали формы проджектайла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectileForm'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /api/v1/projectile/spawn:
+    post:
+      summary: Создать проджектайл
+      operationId: spawnProjectile
+      tags:
+        - Projectile Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpawnProjectileRequest'
+      responses:
+        '201':
+          description: Проджектайл создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpawnProjectileResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /api/v1/projectile/validate-compatibility:
+    post:
+      summary: Валидация совместимости формы с оружием
+      operationId: validateCompatibility
+      tags:
+        - Compatibility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCompatibilityRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /api/v1/projectile/compatibility-matrix:
+    get:
+      summary: Получить матрицу совместимости
+      operationId: getCompatibilityMatrix
+      tags:
+        - Compatibility
+      responses:
+        '200':
+          description: Матрица совместимости форм с оружием
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityMatrix'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    ProjectileFormType:
+      type: string
+      enum:
+        - point
+        - line
+        - fan
+        - spiral
+        - wave
+        - circle
+        - square
+        - chain
+        - split
+        - ricochet
+        - phasing
+      description: Тип формы проджектайла
+
+    WeaponType:
+      type: string
+      enum:
+        - pistols
+        - rifles
+        - shotguns
+        - smg
+        - sniper_rifles
+        - launchers
+        - melee
+        - laser_weapons
+        - energy_weapons
+        - throwable
+      description: Тип оружия
+
+    ProjectileForm:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - description
+        - parameters
+      properties:
+        id:
+          type: string
+          description: Уникальный ID формы
+          example: "form_point"
+        name:
+          type: string
+          description: Название формы
+          example: "Point"
+        type:
+          $ref: '#/components/schemas/ProjectileFormType'
+        description:
+          type: string
+          description: Описание формы
+          example: "Стандартная пуля - прямая траектория"
+        parameters:
+          type: object
+          description: JSON параметры формы
+          additionalProperties: true
+          example:
+            accuracy: "high"
+            damage_multiplier: 1.0
+        visual_effect:
+          type: string
+          description: ID визуального эффекта
+          example: "single_tracer_line"
+        compatible_weapons:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeaponType'
+          description: Совместимые типы оружия
+
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X координата
+        y:
+          type: number
+          format: float
+          description: Y координата
+        z:
+          type: number
+          format: float
+          description: Z координата
+
+    ProjectileModifier:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          description: Тип модификатора
+          example: "damage_multiplier"
+        value:
+          type: number
+          description: Значение модификатора
+          example: 1.5
+
+    SpawnProjectileRequest:
+      type: object
+      required:
+        - weapon_id
+        - form
+        - origin
+        - direction
+      properties:
+        weapon_id:
+          type: string
+          description: ID оружия
+          example: "weapon_123"
+        form:
+          $ref: '#/components/schemas/ProjectileFormType'
+        origin:
+          $ref: '#/components/schemas/Vector3'
+        direction:
+          $ref: '#/components/schemas/Vector3'
+        velocity:
+          type: number
+          format: float
+          description: Начальная скорость
+          default: 100.0
+        damage:
+          type: number
+          format: float
+          description: Базовый урон
+          example: 50.0
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectileModifier'
+          description: Модификаторы проджектайла
+
+    SpawnProjectileResponse:
+      type: object
+      required:
+        - projectile_id
+        - success
+      properties:
+        projectile_id:
+          type: string
+          description: ID созданного проджектайла
+          example: "projectile_abc123"
+        success:
+          type: boolean
+          description: Успешность создания
+          example: true
+        trajectory_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+          description: Точки траектории (опционально)
+
+    ValidateCompatibilityRequest:
+      type: object
+      required:
+        - weapon_type
+        - form
+      properties:
+        weapon_type:
+          $ref: '#/components/schemas/WeaponType'
+        form:
+          $ref: '#/components/schemas/ProjectileFormType'
+
+    CompatibilityResponse:
+      type: object
+      required:
+        - compatible
+      properties:
+        compatible:
+          type: boolean
+          description: Совместима ли форма с оружием
+          example: true
+        restrictions:
+          type: array
+          items:
+            type: string
+          description: Ограничения (если есть)
+          example: ["max_distance_limit", "requires_smart_link"]
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectileFormType'
+          description: Рекомендуемые формы для этого оружия
+
+    CompatibilityMatrix:
+      type: object
+      required:
+        - matrix
+      properties:
+        matrix:
+          type: object
+          description: Матрица совместимости
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/ProjectileFormType'
+          example:
+            pistols: ["point", "line", "fan", "spiral", "ricochet"]
+            shotguns: ["fan", "circle", "square", "split"]
+
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
