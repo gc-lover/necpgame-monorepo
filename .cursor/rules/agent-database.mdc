@@ -158,6 +158,184 @@ Database Engineer проектирует схемы БД, создает Liquiba
 - Документируй схемы БД
 - **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
 
+## ⚠️ КРИТИЧНО: Performance в Database Design
+
+**Database Engineer ОБЯЗАН учитывать performance:**
+
+### 1. Порядок колонок (для alignment)
+
+```sql
+-- ❌ Плохо: random order
+CREATE TABLE players (
+    is_active BOOLEAN,        -- 1 byte + padding
+    id BIGINT PRIMARY KEY,    -- 8 bytes
+    level INTEGER,            -- 4 bytes + padding
+    health INTEGER            -- 4 bytes
+);
+-- Row size: ~24 bytes (из-за padding)
+
+-- ✅ Хорошо: larger types first
+CREATE TABLE players (
+    id BIGINT PRIMARY KEY,    -- 8 bytes (БОЛЬШОЕ первым)
+    position_x REAL,          -- 4 bytes
+    position_y REAL,          -- 4 bytes
+    position_z REAL,          -- 4 bytes
+    health INTEGER,           -- 4 bytes
+    level INTEGER,            -- 4 bytes
+    is_active BOOLEAN         -- 1 byte (МАЛЕНЬКОЕ последним)
+);
+-- Row size: ~30 bytes (оптимально)
+```
+
+**Для 1,000,000 игроков:** 24MB → 30MB, но лучше cache locality
+
+### 2. Индексы для Hot Queries
+
+```sql
+-- ОБЯЗАТЕЛЬНО добавляй индексы для частых запросов
+
+-- Hot query: поиск игроков по уровню
+CREATE INDEX CONCURRENTLY idx_players_level 
+ON players(level) 
+WHERE is_active = true;  -- Partial index (меньше размер)
+
+-- Hot query: spatial queries
+CREATE INDEX idx_players_position 
+ON players USING GIST (position);  -- GIST для 2D/3D queries
+
+-- Hot query: sorted leaderboard
+CREATE INDEX idx_players_rating 
+ON players(rating DESC, id) 
+WHERE is_active = true;
+```
+
+### 3. Partitioning для больших таблиц
+
+```sql
+-- Для таблиц >10M rows используй partitioning
+
+-- Пример: game_events (миллионы событий в день)
+CREATE TABLE game_events (
+    id BIGSERIAL,
+    player_id BIGINT NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+) PARTITION BY RANGE (created_at);
+
+-- Партиции по дням (автоматический retention)
+CREATE TABLE game_events_2024_01 PARTITION OF game_events
+    FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+
+-- Старые партиции можно удалять (retention policy)
+```
+
+**Результат:** Query time ↓ 90% (сканируется только нужная партиция)
+
+### 4. Materialized Views для Heavy Queries
+
+```sql
+-- Для сложных аналитических запросов
+CREATE MATERIALIZED VIEW player_statistics AS
+SELECT 
+    player_id,
+    COUNT(*) as total_matches,
+    AVG(score) as avg_score,
+    MAX(score) as best_score
+FROM match_results
+GROUP BY player_id;
+
+-- Индекс на view
+CREATE INDEX idx_player_stats_avg ON player_statistics(avg_score DESC);
+
+-- Обновление через cron (не real-time!)
+REFRESH MATERIALIZED VIEW CONCURRENTLY player_statistics;
+```
+
+**Когда использовать:**
+- ✅ Leaderboards (обновление раз в минуту)
+- ✅ Analytics dashboards
+- ❌ Real-time game state (используй обычные таблицы)
+
+### 5. Connection Pooling Strategy
+
+```sql
+-- Рекомендации для Backend
+-- В миграции добавь комментарий:
+
+-- BACKEND NOTE: Connection pool settings
+-- For this table expected load:
+-- - Reads: 5000 QPS
+-- - Writes: 500 QPS
+-- Recommended pool size: 25-50 connections
+-- Use pgbouncer in transaction mode
+```
+
+### 6. Query Performance Hints
+
+```sql
+-- Добавляй комментарии для Backend про expected performance
+
+-- Hot query (expected: <5ms P95)
+-- SELECT * FROM players WHERE level BETWEEN 10 AND 20 AND is_active = true;
+-- Index: idx_players_level (covering)
+
+CREATE INDEX idx_players_level_covering 
+ON players(level, is_active, id, health) -- Covering index (no table lookup!)
+WHERE is_active = true;
+```
+
+## 📊 Performance Targets для БД
+
+**Указывай в миграциях:**
+
+```sql
+-- Issue: #123
+-- Table: players
+-- Expected rows: 1,000,000 (1M active players)
+-- Growth rate: 10,000/day
+-- Hot queries: 
+--   - get_by_id: 10,000 QPS (target: <1ms)
+--   - list_by_level: 1,000 QPS (target: <5ms)
+--   - update_position: 5,000 QPS (target: <2ms)
+
+CREATE TABLE players (
+    -- Optimized column order (large → small)
+    id BIGINT PRIMARY KEY,
+    position_x REAL NOT NULL,
+    position_y REAL NOT NULL,
+    position_z REAL NOT NULL,
+    health INTEGER NOT NULL DEFAULT 100,
+    level INTEGER NOT NULL DEFAULT 1,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Indexes for hot queries
+CREATE INDEX CONCURRENTLY idx_players_level ON players(level) WHERE is_active = true;
+CREATE INDEX CONCURRENTLY idx_players_position ON players USING GIST (point(position_x, position_y));
+```
+
+## 🎯 Handoff к API Designer
+
+**В комментарии указывай:**
+
+```markdown
+✅ Database schema ready. Handed off to API Designer
+
+**Performance considerations:**
+- Table: players (1M rows expected)
+- Hot columns ordered large → small
+- Covering indexes for main queries
+- Expected query time: <5ms P95
+
+**For API Designer:**
+- Use same field order in OpenAPI (id, position, health, level, is_active)
+- This ensures optimal struct alignment in generated Go code
+- Marked hot endpoints: GET /players, GET /game-state
+
+Issue: #123
+```
+
 ## Формат вывода
 
 - Liquibase миграции (YAML или SQL) в `infrastructure/liquibase/migrations/`
