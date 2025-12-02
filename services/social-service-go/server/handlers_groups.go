@@ -1,0 +1,340 @@
+// Issue: #1433
+package server
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/necpgame/social-service-go/pkg/api/groups"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/sirupsen/logrus"
+)
+
+// GroupHandlers implements groups.ServerInterface
+type GroupHandlers struct {
+	logger  *logrus.Logger
+	service GroupService
+}
+
+// NewGroupHandlers creates new group handlers
+func NewGroupHandlers(logger *logrus.Logger, service GroupService) *GroupHandlers {
+	return &GroupHandlers{
+		logger:  logger,
+		service: service,
+	}
+}
+
+// CreateGroup implements POST /social/groups
+func (h *GroupHandlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
+	var req groups.CreateGroupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Get authenticated character ID from context
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	group, err := h.service.CreateGroup(r.Context(), characterID, req)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to create group")
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, group)
+}
+
+// SearchGroups implements GET /social/groups
+func (h *GroupHandlers) SearchGroups(w http.ResponseWriter, r *http.Request, params groups.SearchGroupsParams) {
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	result, err := h.service.SearchGroups(r.Context(), characterID, params)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to search groups")
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, result)
+}
+
+// GetGroup implements GET /social/groups/{group_id}
+func (h *GroupHandlers) GetGroup(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID) {
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	group, err := h.service.GetGroup(r.Context(), groupId.String())
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get group")
+		respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, group)
+}
+
+// UpdateGroup implements PUT /social/groups/{group_id}
+func (h *GroupHandlers) UpdateGroup(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID) {
+	var req groups.UpdateGroupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	group, err := h.service.UpdateGroup(r.Context(), characterID, groupId.String(), req)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to update group")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, group)
+}
+
+// DisbandGroup implements DELETE /social/groups/{group_id}
+func (h *GroupHandlers) DisbandGroup(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID) {
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	err := h.service.DisbandGroup(r.Context(), characterID, groupId.String())
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to disband group")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"message": "Group disbanded"})
+}
+
+// GetGroupMembers implements GET /social/groups/{group_id}/members
+func (h *GroupHandlers) GetGroupMembers(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID) {
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	result, err := h.service.GetGroupMembers(r.Context(), groupId.String())
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get group members")
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, result)
+}
+
+// AddGroupMember implements POST /social/groups/{group_id}/members
+func (h *GroupHandlers) AddGroupMember(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID) {
+	var req groups.AddGroupMemberRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	member, err := h.service.AddGroupMember(r.Context(), characterID, groupId.String(), req)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to add group member")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		if err.Error() == "group full" {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, member)
+}
+
+// RemoveGroupMember implements DELETE /social/groups/{group_id}/members/{member_id}
+func (h *GroupHandlers) RemoveGroupMember(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID, memberId openapi_types.UUID) {
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	err := h.service.RemoveGroupMember(r.Context(), characterID, groupId.String(), memberId.String())
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to remove group member")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"message": "Member removed"})
+}
+
+// UpdateGroupMemberRole implements PUT /social/groups/{group_id}/members/{member_id}/role
+func (h *GroupHandlers) UpdateGroupMemberRole(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID, memberId openapi_types.UUID) {
+	var req struct {
+		Role groups.GroupMemberRole `json:"role"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	member, err := h.service.UpdateGroupMemberRole(r.Context(), characterID, groupId.String(), memberId.String(), req.Role)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to update member role")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, member)
+}
+
+// GetGroupTasks implements GET /social/groups/{group_id}/tasks
+func (h *GroupHandlers) GetGroupTasks(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID, params groups.GetGroupTasksParams) {
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	result, err := h.service.GetGroupTasks(r.Context(), groupId.String())
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get group tasks")
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, result)
+}
+
+// AddGroupTask implements POST /social/groups/{group_id}/tasks
+func (h *GroupHandlers) AddGroupTask(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID) {
+	var req struct {
+		TaskId   openapi_types.UUID  `json:"task_id"`
+		TaskType groups.GroupTaskType `json:"task_type"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	task, err := h.service.AddGroupTask(r.Context(), characterID, groupId.String(), req.TaskId, req.TaskType)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to add group task")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, task)
+}
+
+// UpdateGroupTask implements PUT /social/groups/{group_id}/tasks/{task_id}
+func (h *GroupHandlers) UpdateGroupTask(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID, taskId openapi_types.UUID) {
+	var req struct {
+		Status *groups.GroupTaskStatus `json:"status,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	task, err := h.service.UpdateGroupTask(r.Context(), characterID, groupId.String(), taskId.String(), req.Status)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to update group task")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, task)
+}
+
+// DeleteGroupTask implements DELETE /social/groups/{group_id}/tasks/{task_id}
+func (h *GroupHandlers) DeleteGroupTask(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID, taskId openapi_types.UUID) {
+	characterID := getCharacterIDFromContext(r.Context())
+	if characterID == "" {
+		respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	err := h.service.DeleteGroupTask(r.Context(), characterID, groupId.String(), taskId.String())
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to delete group task")
+		if err.Error() == "not group leader" {
+			respondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"message": "Task deleted"})
+}
+
