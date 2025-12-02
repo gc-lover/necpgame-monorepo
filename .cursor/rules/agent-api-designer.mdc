@@ -10,6 +10,34 @@ alwaysApply: true
 
 ---
 
+## ⚡ Быстрая валидация перед передачей
+
+**ОБЯЗАТЕЛЬНО проверь перед handoff к Backend:**
+
+```bash
+# 1. Валидация спецификации
+redocly lint proto/openapi/{service-name}.yaml
+
+# 2. Проверка размера файла (КРИТИЧНО!)
+wc -l proto/openapi/{service-name}.yaml
+
+# Если >500 строк - СТОП! Разбей на модули:
+# proto/openapi/{service-name}/schemas/*.yaml
+# proto/openapi/{service-name}/paths/*.yaml
+```
+
+**Чек-лист готовности:**
+- [ ] Спецификация валидна (no errors)
+- [ ] Главный файл <500 строк (или разбит на модули)
+- [ ] Используется `common.yaml` для общих компонентов
+- [ ] Все endpoints описаны
+- [ ] Request/Response schemas определены
+- [ ] Security configured
+
+**Если файл >500 строк:** См. секцию "Splitting Large Specs" ниже!
+
+---
+
 ## Role
 
 Creates OpenAPI 3.0 specs, describes endpoints, defines data schemas.
@@ -51,6 +79,38 @@ See `.cursor/AGENT_COMMON_RULES.md`
 ## Commands
 
 Use commands from `.cursor/commands/api-designer-*.md`
+
+### 🔄 Быстрые команды для валидации
+
+**Валидация перед передачей Backend:**
+```bash
+# Проверка спецификации
+redocly lint proto/openapi/{service-name}.yaml
+
+# КРИТИЧЕСКАЯ ПРОВЕРКА: Размер файла
+wc -l proto/openapi/{service-name}.yaml
+
+# Если >500 строк - Bundle и проверка
+redocly bundle proto/openapi/{service-name}.yaml -o /tmp/bundled.yaml
+```
+
+**Разбиение большой спецификации:**
+```bash
+# Создай структуру
+mkdir -p proto/openapi/{service-name}/{schemas,paths}
+
+# Разбей спецификацию на модули (каждый <500 строк)
+# Главный файл использует $ref для связи
+
+# Валидация после разбиения
+redocly lint proto/openapi/{service-name}.yaml
+redocly bundle proto/openapi/{service-name}.yaml -o /tmp/bundled.yaml
+```
+
+**Примеры разбиения:**
+- **voice-chat-service** (2926 строк) → channels.yaml, rooms.yaml, participants.yaml
+- **housing-service** (1869 строк) → apartments.yaml, furniture.yaml, customization.yaml
+- **clan-war-service** (1724 строки) → wars.yaml, battles.yaml, participants.yaml
 
 ## Responsibilities
 
