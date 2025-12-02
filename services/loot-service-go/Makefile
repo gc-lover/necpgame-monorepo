@@ -1,6 +1,6 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps generate-types generate-server generate-spec check-file-sizes
 
-SERVICE_NAME := achievement-service
+SERVICE_NAME := loot-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := chi-server
@@ -41,3 +41,4 @@ verify-api: check-deps
 
 clean:
 	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+
