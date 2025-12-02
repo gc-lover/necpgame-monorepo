@@ -1,5 +1,13 @@
 # Common Agent Rules
 
+## 🚀 НАЧНИ ЗДЕСЬ
+
+**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там всё просто и понятно!
+
+**Опытный?** Эти правила - для деталей и edge cases.
+
+---
+
 ## GitHub Project Configuration
 
 **Project parameters:** See `.cursor/GITHUB_PROJECT_CONFIG.md`
@@ -48,9 +56,8 @@
 ## Status Management
 
 **ВАЖНО:** 
-- Полное руководство по статусам и передаче задач - см. `.cursor/STATUS_HANDOFF_GUIDE.md`
-- Формат обновления статуса - см. `.cursor/UPDATE_STATUS_FORMAT.md`
 - Конфигурация проекта и ID статусов - см. `.cursor/GITHUB_PROJECT_CONFIG.md`
+- Простое руководство - см. `.cursor/AGENT_SIMPLE_GUIDE.md`
 
 **Status field shows current task state:**
 
@@ -152,8 +159,6 @@ const optionId = option.id;  // использовать в value
 
 **Шаблон комментария при передаче задачи:**
 
-**См. `.cursor/HANDOFF_COMMENT_TEMPLATES.md` для полного списка шаблонов**
-
 ```markdown
 OK {Work type} ready. Handed off to {NextAgent}
 
@@ -218,8 +223,6 @@ Format: `[{agent}] {type}: {description}`
 **If task not ready:**
 1. Update Status to `{CorrectAgent} - Returned`
 2. Add comment with reason
-
-**Details:** `.cursor/AGENT_TASK_RETURN.md`
 
 ## Issue Tracking in Files
 
