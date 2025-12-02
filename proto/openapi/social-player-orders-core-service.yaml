@@ -20,8 +20,6 @@ servers:
 tags:
   - name: Orders
     description: Основные операции с заказами
-  - name: Multi-Executor
-    description: Мульти-исполнительные заказы
 
 paths:
   /social/orders:
@@ -29,15 +27,14 @@ paths:
       tags:
         - Orders
       summary: Получить список заказов
-      description: |
-        Получение списка доступных заказов с фильтрацией и сортировкой.
+      description: Получение списка доступных заказов с фильтрацией и сортировкой.
       operationId: listOrders
       parameters:
         - $ref: 'common.yaml#/components/parameters/page'
         - $ref: 'common.yaml#/components/parameters/limit'
         - name: orderType
           in: query
-          description: Тип заказа (combat, hacking, trade, political, etc.)
+          description: Тип заказа
           schema:
             type: string
             enum: [combat, hacking, trade, political, intelligence, medical, rescue, transport, diplomatic, social]
@@ -50,12 +47,6 @@ paths:
         - name: minReward
           in: query
           description: Минимальная награда (ed)
-          schema:
-            type: integer
-            minimum: 0
-        - name: maxReward
-          in: query
-          description: Максимальная награда (ed)
           schema:
             type: integer
             minimum: 0
@@ -78,7 +69,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Order'
+                      $ref: 'social-player-orders-schemas.yaml#/components/schemas/Order'
                   pagination:
                     $ref: 'common.yaml#/components/schemas/PaginationResponse'
         '401':
@@ -91,8 +82,7 @@ paths:
       tags:
         - Orders
       summary: Создать новый заказ
-      description: |
-        Создание нового заказа от игрока.
+      description: Создание нового заказа от игрока.
       operationId: createOrder
       security:
         - BearerAuth: []
@@ -101,20 +91,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOrderRequest'
+              $ref: 'social-player-orders-schemas.yaml#/components/schemas/CreateOrderRequest'
       responses:
         '201':
           description: Заказ успешно создан
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/Order'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
@@ -123,8 +111,7 @@ paths:
       tags:
         - Orders
       summary: Получить информацию о заказе
-      description: |
-        Получение детальной информации о конкретном заказе.
+      description: Получение детальной информации о конкретном заказе.
       operationId: getOrder
       parameters:
         - name: orderId
@@ -142,7 +129,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/Order'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '404':
@@ -155,14 +142,12 @@ paths:
       tags:
         - Orders
       summary: Принять заказ
-      description: |
-        Принятие заказа исполнителем.
+      description: Принятие заказа исполнителем.
       operationId: acceptOrder
       parameters:
         - name: orderId
           in: path
           required: true
-          description: Уникальный идентификатор заказа
           schema:
             type: string
             format: uuid
@@ -174,13 +159,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/Order'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
         '500':
@@ -191,14 +174,12 @@ paths:
       tags:
         - Orders
       summary: Начать выполнение заказа
-      description: |
-        Начало выполнения принятого заказа.
+      description: Начало выполнения принятого заказа.
       operationId: startOrder
       parameters:
         - name: orderId
           in: path
           required: true
-          description: Уникальный идентификатор заказа
           schema:
             type: string
             format: uuid
@@ -210,13 +191,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/Order'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
         '500':
@@ -227,14 +206,12 @@ paths:
       tags:
         - Orders
       summary: Завершить выполнение заказа
-      description: |
-        Завершение выполнения заказа и получение награды.
+      description: Завершение выполнения заказа и получение награды.
       operationId: completeOrder
       parameters:
         - name: orderId
           in: path
           required: true
-          description: Уникальный идентификатор заказа
           schema:
             type: string
             format: uuid
@@ -245,20 +222,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CompleteOrderRequest'
+              $ref: 'social-player-orders-schemas.yaml#/components/schemas/CompleteOrderRequest'
       responses:
         '200':
           description: Заказ успешно завершен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderCompletionResult'
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/OrderCompletionResult'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
         '500':
@@ -269,14 +244,12 @@ paths:
       tags:
         - Orders
       summary: Отменить заказ
-      description: |
-        Отмена заказа (доступно для заказчика или исполнителя).
+      description: Отмена заказа (доступно для заказчика или исполнителя).
       operationId: cancelOrder
       parameters:
         - name: orderId
           in: path
           required: true
-          description: Уникальный идентификатор заказа
           schema:
             type: string
             format: uuid
@@ -287,20 +260,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CancelOrderRequest'
+              $ref: 'social-player-orders-schemas.yaml#/components/schemas/CancelOrderRequest'
       responses:
         '200':
           description: Заказ успешно отменен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/Order'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
         '500':
@@ -311,14 +282,12 @@ paths:
       tags:
         - Orders
       summary: Оставить отзыв о заказе
-      description: |
-        Оставление отзыва о выполненном заказе.
+      description: Оставление отзыва о выполненном заказе.
       operationId: reviewOrder
       parameters:
         - name: orderId
           in: path
           required: true
-          description: Уникальный идентификатор заказа
           schema:
             type: string
             format: uuid
@@ -329,98 +298,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderReviewRequest'
+              $ref: 'social-player-orders-schemas.yaml#/components/schemas/OrderReviewRequest'
       responses:
         '201':
           description: Отзыв успешно создан
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderReview'
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/OrderReview'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /social/orders/{orderId}/executors/invite:
-    post:
-      tags:
-        - Multi-Executor
-      summary: Пригласить исполнителя
-      description: |
-        Приглашение дополнительного исполнителя для мульти-исполнительного заказа.
-      operationId: inviteExecutor
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: Уникальный идентификатор заказа
-          schema:
-            type: string
-            format: uuid
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InviteExecutorRequest'
-      responses:
-        '200':
-          description: Приглашение успешно отправлено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExecutorInvitation'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /social/orders/{orderId}/executors/join:
-    post:
-      tags:
-        - Multi-Executor
-      summary: Присоединиться к заказу
-      description: |
-        Присоединение к мульти-исполнительному заказу.
-      operationId: joinOrder
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: Уникальный идентификатор заказа
-          schema:
-            type: string
-            format: uuid
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Успешное присоединение к заказу
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
         '500':
@@ -430,304 +319,4 @@ components:
   securitySchemes:
     BearerAuth:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
-  schemas:
-    Order:
-      type: object
-      required:
-        - id
-        - clientId
-        - title
-        - description
-        - orderType
-        - status
-        - reward
-        - riskLevel
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Уникальный идентификатор заказа
-        clientId:
-          type: string
-          format: uuid
-          description: ID заказчика (персонажа)
-        executorId:
-          type: string
-          format: uuid
-          nullable: true
-          description: ID исполнителя (персонажа)
-        title:
-          type: string
-          maxLength: 100
-          description: Название заказа
-        description:
-          type: string
-          maxLength: 1000
-          description: Подробное описание заказа
-        orderType:
-          type: string
-          enum: [combat, hacking, trade, political, intelligence, medical, rescue, transport, diplomatic, social]
-          description: Тип заказа
-        status:
-          type: string
-          enum: [pending, accepted, in_progress, completed, cancelled, expired]
-          description: Статус заказа
-        reward:
-          type: object
-          required:
-            - currency
-            - amount
-          properties:
-            currency:
-              type: string
-              enum: [ed, credits, reputation]
-              description: Валюта награды
-            amount:
-              type: integer
-              minimum: 0
-              description: Размер награды
-        riskLevel:
-          type: string
-          enum: [low, medium, high, extreme]
-          description: Уровень риска
-        requirements:
-          type: object
-          description: Требования к исполнителю
-          properties:
-            minLevel:
-              type: integer
-              minimum: 1
-              description: Минимальный уровень персонажа
-            skills:
-              type: array
-              items:
-                type: string
-              description: Требуемые навыки
-            reputation:
-              type: integer
-              description: Минимальная репутация
-        executors:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Список исполнителей (для мульти-исполнительных заказов)
-        deadline:
-          type: string
-          format: date-time
-          nullable: true
-          description: Крайний срок выполнения
-        createdAt:
-          type: string
-          format: date-time
-          description: Дата и время создания заказа
-        updatedAt:
-          type: string
-          format: date-time
-          description: Дата и время последнего обновления
-        completedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Дата и время завершения заказа
-
-    CreateOrderRequest:
-      type: object
-      required:
-        - title
-        - description
-        - orderType
-        - reward
-        - riskLevel
-      properties:
-        title:
-          type: string
-          maxLength: 100
-          description: Название заказа
-        description:
-          type: string
-          maxLength: 1000
-          description: Подробное описание заказа
-        orderType:
-          type: string
-          enum: [combat, hacking, trade, political, intelligence, medical, rescue, transport, diplomatic, social]
-          description: Тип заказа
-        reward:
-          type: object
-          required:
-            - currency
-            - amount
-          properties:
-            currency:
-              type: string
-              enum: [ed, credits, reputation]
-            amount:
-              type: integer
-              minimum: 0
-        riskLevel:
-          type: string
-          enum: [low, medium, high, extreme]
-          description: Уровень риска
-        requirements:
-          type: object
-          properties:
-            minLevel:
-              type: integer
-              minimum: 1
-            skills:
-              type: array
-              items:
-                type: string
-            reputation:
-              type: integer
-        deadline:
-          type: string
-          format: date-time
-          nullable: true
-          description: Крайний срок выполнения
-        multiExecutor:
-          type: boolean
-          default: false
-          description: Поддерживает ли заказ нескольких исполнителей
-
-    CompleteOrderRequest:
-      type: object
-      properties:
-        notes:
-          type: string
-          maxLength: 500
-          description: Заметки о выполнении заказа
-
-    OrderCompletionResult:
-      type: object
-      required:
-        - order
-        - rewards
-      properties:
-        order:
-          $ref: '#/components/schemas/Order'
-        rewards:
-          type: object
-          properties:
-            currency:
-              type: string
-            amount:
-              type: integer
-            reputationGain:
-              type: integer
-            experienceGain:
-              type: integer
-
-    CancelOrderRequest:
-      type: object
-      required:
-        - reason
-      properties:
-        reason:
-          type: string
-          maxLength: 500
-          description: Причина отмены заказа
-
-    OrderReviewRequest:
-      type: object
-      required:
-        - rating
-        - reviewType
-      properties:
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Оценка от 1 до 5
-        reviewType:
-          type: string
-          enum: [client_to_executor, executor_to_client]
-          description: Тип отзыва
-        comment:
-          type: string
-          maxLength: 500
-          description: Комментарий к отзыву
-
-    OrderReview:
-      type: object
-      required:
-        - id
-        - orderId
-        - reviewerId
-        - targetId
-        - rating
-        - reviewType
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        orderId:
-          type: string
-          format: uuid
-        reviewerId:
-          type: string
-          format: uuid
-          description: ID оставившего отзыв
-        targetId:
-          type: string
-          format: uuid
-          description: ID цели отзыва
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        reviewType:
-          type: string
-          enum: [client_to_executor, executor_to_client]
-        comment:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-
-    InviteExecutorRequest:
-      type: object
-      required:
-        - executorId
-      properties:
-        executorId:
-          type: string
-          format: uuid
-          description: ID приглашаемого исполнителя
-        message:
-          type: string
-          maxLength: 200
-          description: Сообщение в приглашении
-
-    ExecutorInvitation:
-      type: object
-      required:
-        - id
-        - orderId
-        - executorId
-        - status
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        orderId:
-          type: string
-          format: uuid
-        executorId:
-          type: string
-          format: uuid
-        message:
-          type: string
-          nullable: true
-        status:
-          type: string
-          enum: [pending, accepted, declined]
-        createdAt:
-          type: string
-          format: date-time
 

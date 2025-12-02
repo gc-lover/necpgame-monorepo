@@ -1,0 +1,105 @@
+# Issue: #81
+openapi: 3.0.3
+info:
+  title: Player Orders Multi-Executor Service API
+  version: 1.0.0
+  description: |
+    API для управления мульти-исполнительными заказами.
+    Включает приглашение и присоединение исполнителей.
+  
+  contact:
+    name: NECP Game API Team
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://api-dev.necp.game/v1
+    description: Development server
+
+tags:
+  - name: Multi-Executor
+    description: Мульти-исполнительные заказы
+
+paths:
+  /social/orders/{orderId}/executors/invite:
+    post:
+      tags:
+        - Multi-Executor
+      summary: Пригласить исполнителя
+      description: Приглашение дополнительного исполнителя для мульти-исполнительного заказа.
+      operationId: inviteExecutor
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Уникальный идентификатор заказа
+          schema:
+            type: string
+            format: uuid
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-player-orders-schemas.yaml#/components/schemas/InviteExecutorRequest'
+      responses:
+        '200':
+          description: Приглашение успешно отправлено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/ExecutorInvitation'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/executors/join:
+    post:
+      tags:
+        - Multi-Executor
+      summary: Присоединиться к заказу
+      description: Присоединение к мульти-исполнительному заказу.
+      operationId: joinOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Уникальный идентификатор заказа
+          schema:
+            type: string
+            format: uuid
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешное присоединение к заказу
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-orders-schemas.yaml#/components/schemas/Order'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
