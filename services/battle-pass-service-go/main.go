@@ -1,49 +1,51 @@
+// Issue: #227
 package main
 
 import (
-	"context"
+	"database/sql"
+	"log"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
-	"github.com/necpgame/battle-pass-service-go/server"
-	"github.com/sirupsen/logrus"
+	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/server"
+	_ "github.com/lib/pq"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
-	logger.Info("Battle Pass Service starting...")
-
-	addr := getEnv("ADDR", "0.0.0.0:8102")
-
-	httpServer := server.NewHTTPServer(addr, logger)
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		logger.Info("Shutting down server...")
-
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer shutdownCancel()
-		httpServer.Shutdown(shutdownCtx)
-	}()
-
-	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(); err != nil {
-		logger.WithError(err).Fatal("Server error")
+	// Database connection
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://user:password@localhost:5432/necpgame?sslmode=disable"
 	}
 
-	logger.Info("Server stopped")
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	return defaultValue
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
+
+	// Create repository
+	repo := server.NewRepository(db)
+
+	// Create service
+	svc := server.NewService(repo)
+
+	// Create handlers
+	handlers := server.NewHandlers(svc)
+
+	// Create HTTP server
+	addr := os.Getenv("HTTP_ADDR")
+	if addr == "" {
+		addr = ":8087"
+	}
+
+	srv := server.NewHTTPServer(addr, handlers, svc)
+
+	log.Printf("Starting battle-pass-service on %s", addr)
+	if err := srv.Start(); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	openapi_types "github.com/oapi-codegen/runtime/types"
+
 	"github.com/gc-lover/necpgame-monorepo/services/achievement-service-go/pkg/api"
 )
 
@@ -31,8 +33,8 @@ func (h *Handlers) GetAchievements(w http.ResponseWriter, r *http.Request, param
 }
 
 // GetAchievementDetails implements GET /api/v1/world/achievements/{achievementId}
-func (h *Handlers) GetAchievementDetails(w http.ResponseWriter, r *http.Request, achievementId string) {
-	details, err := h.service.GetAchievementDetails(r.Context(), achievementId)
+func (h *Handlers) GetAchievementDetails(w http.ResponseWriter, r *http.Request, achievementId openapi_types.UUID) {
+	details, err := h.service.GetAchievementDetails(r.Context(), achievementId.String())
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Achievement not found")
@@ -46,8 +48,8 @@ func (h *Handlers) GetAchievementDetails(w http.ResponseWriter, r *http.Request,
 }
 
 // GetPlayerProgress implements GET /api/v1/players/{playerId}/achievements
-func (h *Handlers) GetPlayerProgress(w http.ResponseWriter, r *http.Request, playerId string, params api.GetPlayerProgressParams) {
-	progress, err := h.service.GetPlayerProgress(r.Context(), playerId, params)
+func (h *Handlers) GetPlayerProgress(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, params api.GetPlayerProgressParams) {
+	progress, err := h.service.GetPlayerProgress(r.Context(), playerId.String(), params)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Player not found")
@@ -61,8 +63,8 @@ func (h *Handlers) GetPlayerProgress(w http.ResponseWriter, r *http.Request, pla
 }
 
 // ClaimAchievementReward implements POST /api/v1/players/{playerId}/achievements/{achievementId}/claim
-func (h *Handlers) ClaimAchievementReward(w http.ResponseWriter, r *http.Request, playerId string, achievementId string) {
-	result, err := h.service.ClaimReward(r.Context(), playerId, achievementId)
+func (h *Handlers) ClaimAchievementReward(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, achievementId openapi_types.UUID) {
+	result, err := h.service.ClaimReward(r.Context(), playerId.String(), achievementId.String())
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Achievement not found or not unlocked")
@@ -80,8 +82,8 @@ func (h *Handlers) ClaimAchievementReward(w http.ResponseWriter, r *http.Request
 }
 
 // GetPlayerTitles implements GET /api/v1/players/{playerId}/titles
-func (h *Handlers) GetPlayerTitles(w http.ResponseWriter, r *http.Request, playerId string) {
-	titles, err := h.service.GetPlayerTitles(r.Context(), playerId)
+func (h *Handlers) GetPlayerTitles(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
+	titles, err := h.service.GetPlayerTitles(r.Context(), playerId.String())
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Player not found")
@@ -119,7 +121,7 @@ func (h *Handlers) SetActiveTitle(w http.ResponseWriter, r *http.Request, player
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteStatus(status)
+	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
 }
 
