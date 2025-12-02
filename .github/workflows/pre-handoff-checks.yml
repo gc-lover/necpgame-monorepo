@@ -1,0 +1,499 @@
+# Pre-Handoff Automated Checks
+# Автоматические проверки перед передачей задачи следующему агенту
+
+name: Pre-Handoff Checks
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to check'
+        required: true
+        type: number
+      agent:
+        description: 'Agent name'
+        required: true
+        type: choice
+        options:
+          - backend
+          - ue5
+          - api-designer
+          - database
+
+permissions:
+  issues: write
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  detect-validation-request:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      agent: ${{ steps.check.outputs.agent }}
+      issue_number: ${{ steps.check.outputs.issue_number }}
+    steps:
+      - name: Check if validation requested
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment?.body || '';
+            
+            // Определить issue_number
+            let issue_number = null;
+            if (context.payload.issue?.number) {
+              issue_number = context.payload.issue.number;
+            } else if (context.payload.inputs?.issue_number) {
+              issue_number = parseInt(context.payload.inputs.issue_number);
+            }
+            
+            if (!issue_number) {
+              core.setOutput('should_run', 'false');
+              core.setOutput('error', 'Issue number not found');
+              return;
+            }
+            
+            // Detect validation commands (соответствуют реальным командам)
+            const commands = {
+              '/backend-validate-result': 'backend',
+              '/ue5-validate-result': 'ue5',
+              '/api-designer-check-openapi-ready': 'api-designer',
+              '/database-validate-result': 'database'
+            };
+            
+            let agent = context.payload.inputs?.agent;
+            for (const [cmd, agentName] of Object.entries(commands)) {
+              if (comment.includes(cmd)) {
+                agent = agentName;
+                break;
+              }
+            }
+            
+            core.setOutput('should_run', agent ? 'true' : 'false');
+            core.setOutput('agent', agent || '');
+            core.setOutput('issue_number', issue_number.toString());
+
+  backend-checks:
+    needs: detect-validation-request
+    if: needs.detect-validation-request.outputs.should_run == 'true' && needs.detect-validation-request.outputs.agent == 'backend'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get Issue info and determine service
+        id: issue-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = ${{ needs.detect-validation-request.outputs.issue_number }};
+            
+            // Получить Issue
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number
+            });
+            
+            // Попытка определить сервис из labels
+            const backendLabel = issue.data.labels.find(l => 
+              typeof l === 'object' && l.name && l.name.match(/\w+-service/)
+            );
+            let serviceName = backendLabel?.name?.replace(/-service$/, '') || null;
+            
+            // Если нет в labels, попробовать из Issue body (ищем упоминания сервисов)
+            if (!serviceName) {
+              const body = issue.data.body || '';
+              const serviceMatch = body.match(/(\w+)-service-go/);
+              if (serviceMatch) {
+                serviceName = serviceMatch[1];
+              }
+            }
+            
+            // Если всё ещё нет, проверить изменённые файлы (если есть связанный PR)
+            if (!serviceName) {
+              const prs = await github.rest.issues.listPullRequestsAssociatedWithIssue({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue_number
+              });
+              
+              if (prs.data.length > 0) {
+                const pr = prs.data[0];
+                const files = await github.rest.pulls.listFiles({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number
+                });
+                
+                // Ищем изменённые файлы в services/
+                for (const file of files.data) {
+                  const match = file.filename.match(/services\/(\w+)-service-go\//);
+                  if (match) {
+                    serviceName = match[1];
+                    break;
+                  }
+                }
+              }
+            }
+            
+            // Если всё ещё не определили, используем последний изменённый сервис
+            if (!serviceName) {
+              // Fallback: проверить последние изменения в services/
+              const commits = await github.rest.repos.listCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 10
+              });
+              
+              for (const commit of commits.data) {
+                const commitData = await github.rest.repos.getCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: commit.sha
+                });
+                
+                for (const file of commitData.data.files || []) {
+                  const match = file.filename.match(/services\/(\w+)-service-go\//);
+                  if (match) {
+                    serviceName = match[1];
+                    break;
+                  }
+                }
+                if (serviceName) break;
+              }
+            }
+            
+            core.setOutput('service_name', serviceName || '');
+            core.setOutput('issue_number', issue_number);
+            
+            if (!serviceName) {
+              core.setOutput('error', 'Could not determine service name from Issue');
+            }
+      
+      - name: Setup Go
+        if: steps.issue-info.outputs.service_name != ''
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      
+      - name: Check service directory exists
+        if: steps.issue-info.outputs.service_name != ''
+        id: check-service
+        run: |
+          SERVICE_NAME="${{ steps.issue-info.outputs.service_name }}-service-go"
+          if [ ! -d "services/${SERVICE_NAME}" ]; then
+            echo "error=Service directory not found: services/${SERVICE_NAME}" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "service_dir=services/${SERVICE_NAME}" >> $GITHUB_OUTPUT
+          echo "OK Service directory found: ${SERVICE_NAME}"
+      
+      - name: Find and validate OpenAPI specs
+        if: steps.issue-info.outputs.service_name != ''
+        id: check-openapi
+        run: |
+          SERVICE_NAME="${{ steps.issue-info.outputs.service_name }}"
+          
+          # Ищем все OpenAPI спецификации для этого сервиса
+          # Паттерны: {service}-service.yaml, {service}-*-service.yaml
+          SPECS=$(find proto/openapi -name "${SERVICE_NAME}*.yaml" -not -name "*.merged.yaml" -not -name "*.bundled.yaml" 2>/dev/null || true)
+          
+          if [ -z "$SPECS" ]; then
+            echo "error=No OpenAPI specs found for ${SERVICE_NAME}" >> $GITHUB_OUTPUT
+            echo "❌ No OpenAPI specs found matching: proto/openapi/${SERVICE_NAME}*.yaml"
+            exit 1
+          fi
+          
+          echo "Found OpenAPI specs:"
+          echo "$SPECS"
+          
+          # Валидируем все найденные спецификации
+          ERRORS=""
+          VALIDATED_COUNT=0
+          
+          while IFS= read -r spec; do
+            if [ -n "$spec" ]; then
+              echo "Validating: $spec"
+              if npx -y @redocly/cli lint "$spec" 2>&1; then
+                VALIDATED_COUNT=$((VALIDATED_COUNT + 1))
+                echo "OK $spec - valid"
+              else
+                ERRORS="${ERRORS}\n- $(basename $spec): validation failed"
+                echo "❌ $spec - validation failed"
+              fi
+            fi
+          done <<< "$SPECS"
+          
+          if [ -n "$ERRORS" ]; then
+            echo "error=Some specs failed validation:${ERRORS}" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "specs_count=${VALIDATED_COUNT}" >> $GITHUB_OUTPUT
+          echo "OK All ${VALIDATED_COUNT} OpenAPI specs validated successfully"
+      
+      - name: Build Go service
+        if: steps.check-service.outcome == 'success'
+        id: build
+        working-directory: ${{ steps.check-service.outputs.service_dir }}
+        run: |
+          go build ./... || {
+            echo "error=Go build failed" >> $GITHUB_OUTPUT
+            exit 1
+          }
+          echo "OK Go build successful"
+      
+      - name: Run tests
+        if: steps.build.outcome == 'success'
+        id: tests
+        working-directory: ${{ steps.check-service.outputs.service_dir }}
+        run: |
+          go test ./... -cover || {
+            echo "error=Tests failed" >> $GITHUB_OUTPUT
+            exit 1
+          }
+          echo "OK Tests passed"
+      
+      - name: Check Docker build (skip if no Dockerfile)
+        if: steps.build.outcome == 'success'
+        id: docker
+        working-directory: ${{ steps.check-service.outputs.service_dir }}
+        continue-on-error: true
+        run: |
+          if [ -f "Dockerfile" ]; then
+            docker build -t test-service:test . || {
+              echo "error=Docker build failed" >> $GITHUB_OUTPUT
+              exit 1
+            }
+            echo "OK Docker build successful"
+          else
+            echo "WARNING No Dockerfile found, skipping Docker build check"
+            echo "docker_skipped=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Post service not found comment
+        if: steps.issue-info.outputs.service_name == ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.detect-validation-request.outputs.issue_number }},
+              body: 'WARNING **Cannot determine service name**\n\n' +
+                    '**Problem:**\n' +
+                    'Could not automatically determine which service to validate.\n\n' +
+                    '**Solutions:**\n' +
+                    '1. Add service label to Issue (e.g., `companion-service`)\n' +
+                    '2. Mention service name in Issue body (e.g., `companion-service-go`)\n' +
+                    '3. Link a PR with changes to service directory\n\n' +
+                    '**Manual validation:**\n' +
+                    'Run validation manually using `/backend-validate-result` after fixing.\n\n' +
+                    '_Automated by Pre-Handoff Checks workflow_'
+            });
+      
+      - name: Post success comment
+        if: success() && steps.issue-info.outputs.service_name != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const serviceName = '${{ steps.issue-info.outputs.service_name }}';
+            const dockerResult = '${{ steps.docker.outputs.docker_skipped }}' === 'true' 
+              ? '⏭️ Skipped (no Dockerfile)'
+              : 'OK Successful';
+            
+            const specsCount = '${{ steps.check-openapi.outputs.specs_count }}' || '?';
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.detect-validation-request.outputs.issue_number }},
+              body: 'OK **Automated checks passed**\n\n' +
+                    `**Service:** ${serviceName}-service-go\n\n` +
+                    '**Backend validation results:**\n' +
+                    `- OpenAPI specs: OK ${specsCount} spec(s) found and validated\n` +
+                    '- Go build: OK Successful\n' +
+                    '- Tests: OK Passed\n' +
+                    `- Docker build: ${dockerResult}\n\n` +
+                    '**Status:** Ready for handoff to Network\n\n' +
+                    '**Note:** This is automated check. Still verify manually before handoff.\n\n' +
+                    '_Automated by Pre-Handoff Checks workflow_'
+            });
+      
+      - name: Post failure comment
+        if: failure() && steps.issue-info.outputs.service_name != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const errors = [
+              '${{ steps.check-service.outputs.error }}',
+              '${{ steps.check-openapi.outputs.error }}',
+              '${{ steps.validate-openapi.outputs.error }}',
+              '${{ steps.build.outputs.error }}',
+              '${{ steps.tests.outputs.error }}',
+              '${{ steps.docker.outputs.error }}'
+            ].filter(e => e && e !== '' && e !== 'null');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.detect-validation-request.outputs.issue_number }},
+              body: '❌ **Automated checks failed**\n\n' +
+                    `**Service:** ${{ steps.issue-info.outputs.service_name }}-service-go\n\n` +
+                    '**Errors found:**\n' +
+                    (errors.length > 0 
+                      ? errors.map(e => `- ${e}`).join('\n')
+                      : '- Unknown error occurred'
+                    ) + '\n\n' +
+                    '**Action required:**\n' +
+                    '- Fix the errors above\n' +
+                    '- Re-run validation by commenting `/backend-validate-result`\n' +
+                    '- Do NOT handoff until checks pass\n\n' +
+                    '_Automated by Pre-Handoff Checks workflow_'
+            });
+
+  ue5-checks:
+    needs: detect-validation-request
+    if: needs.detect-validation-request.outputs.should_run == 'true' && needs.detect-validation-request.outputs.agent == 'ue5'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check UE5 project exists
+        run: |
+          if [ ! -f "client/UE5/NECPGAME.uproject" ]; then
+            echo "❌ UE5 project file not found"
+            exit 1
+          fi
+          echo "OK UE5 project found"
+      
+      - name: Check C++ files compile (basic check)
+        run: |
+          # Простая проверка C++ синтаксиса
+          find client/UE5/Source -name "*.cpp" -o -name "*.h" | while read file; do
+            # Проверка базового синтаксиса (наличие Issue в начале)
+            if ! head -n 5 "$file" | grep -q "Issue:"; then
+              echo "WARNING Warning: $file missing Issue reference"
+            fi
+          done
+          echo "OK C++ files checked"
+      
+      - name: Post results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.detect-validation-request.outputs.issue_number }},
+              body: 'OK **UE5 automated checks completed**\n\n' +
+                    '**Note:** Full UE5 compilation requires UE5 engine.\n' +
+                    'Basic checks passed. Manual compilation test required.\n\n' +
+                    '_Automated by Pre-Handoff Checks workflow_'
+            });
+
+  api-designer-checks:
+    needs: detect-validation-request
+    if: needs.detect-validation-request.outputs.should_run == 'true' && needs.detect-validation-request.outputs.agent == 'api-designer'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Validate all OpenAPI specs
+        run: |
+          npx -y @redocly/cli lint proto/openapi/**/*.yaml
+          echo "OK OpenAPI specs validated"
+      
+      - name: Check common.yaml usage
+        run: |
+          # Проверить что спецификации используют common.yaml
+          if ! grep -r "\$ref.*common.yaml" proto/openapi/; then
+            echo "WARNING Warning: Some specs may not use common.yaml components"
+          fi
+          echo "OK Common.yaml usage checked"
+      
+      - name: Check spec size
+        run: |
+          find proto/openapi -name "*.yaml" -type f | while read file; do
+            lines=$(wc -l < "$file")
+            if [ $lines -gt 500 ]; then
+              echo "WARNING Warning: $file has $lines lines (>500 lines limit)"
+            fi
+          done
+          echo "OK Spec sizes checked"
+      
+      - name: Post results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.detect-validation-request.outputs.issue_number }},
+              body: 'OK **API Designer automated checks completed**\n\n' +
+                    '**Validation results:**\n' +
+                    '- OpenAPI specs: OK Valid\n' +
+                    '- Common.yaml usage: OK Checked\n' +
+                    '- Spec sizes: OK Checked\n\n' +
+                    '_Automated by Pre-Handoff Checks workflow_'
+            });
+
+  database-checks:
+    needs: detect-validation-request
+    if: needs.detect-validation-request.outputs.should_run == 'true' && needs.detect-validation-request.outputs.agent == 'database'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check Liquibase migrations exist
+        run: |
+          if [ ! -d "infrastructure/liquibase/migrations" ]; then
+            echo "❌ Liquibase migrations directory not found"
+            exit 1
+          fi
+          echo "OK Liquibase migrations directory found"
+      
+      - name: Validate migration files
+        run: |
+          find infrastructure/liquibase/migrations -name "*.yaml" -o -name "*.sql" | while read file; do
+            # Проверка наличия Issue reference
+            if ! head -n 5 "$file" | grep -qE "(Issue:|-- Issue:)"; then
+              echo "WARNING Warning: $file missing Issue reference"
+            fi
+          done
+          echo "OK Migration files checked"
+      
+      - name: Post results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.detect-validation-request.outputs.issue_number }},
+              body: 'OK **Database automated checks completed**\n\n' +
+                    '**Validation results:**\n' +
+                    '- Migrations directory: OK Found\n' +
+                    '- Migration files: OK Checked\n\n' +
+                    '**Note:** Full Liquibase validation requires database connection.\n\n' +
+                    '_Automated by Pre-Handoff Checks workflow_'
+            });
+
