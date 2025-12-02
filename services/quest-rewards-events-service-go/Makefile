@@ -1,6 +1,6 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps generate-types generate-server generate-spec check-file-sizes
 
-SERVICE_NAME := client-service
+SERVICE_NAME := quest-rewards-events-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
