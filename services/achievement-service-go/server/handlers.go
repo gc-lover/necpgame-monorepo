@@ -97,7 +97,7 @@ func (h *Handlers) GetPlayerTitles(w http.ResponseWriter, r *http.Request, playe
 }
 
 // SetActiveTitle implements PUT /api/v1/players/{playerId}/titles/active
-func (h *Handlers) SetActiveTitle(w http.ResponseWriter, r *http.Request, playerId string) {
+func (h *Handlers) SetActiveTitle(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
 	var req struct {
 		TitleID string `json:"title_id"`
 	}
@@ -106,7 +106,7 @@ func (h *Handlers) SetActiveTitle(w http.ResponseWriter, r *http.Request, player
 		return
 	}
 
-	title, err := h.service.SetActiveTitle(r.Context(), playerId, req.TitleID)
+	title, err := h.service.SetActiveTitle(r.Context(), playerId.String(), req.TitleID)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Title not found")
