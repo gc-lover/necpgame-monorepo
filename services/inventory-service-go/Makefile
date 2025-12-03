@@ -1,44 +1,33 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps generate-types generate-server generate-spec check-file-sizes
+# Issue: #1581 - ogen migration + performance optimizations
+.PHONY: generate-api clean verify-api check-deps check-file-sizes
 
 SERVICE_NAME := inventory-service
-OAPI_CODEGEN := oapi-codegen
+OGEN := ogen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := gorilla-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
 SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-
-TYPES_FILE := $(API_DIR)/types.gen.go
-SERVER_FILE := $(API_DIR)/server.gen.go
-SPEC_FILE := $(API_DIR)/spec.gen.go
+BUNDLED_SPEC := openapi-bundled.yaml
 
 check-deps:
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
-
-bundle-api: check-deps
-	@mkdir -p $(API_DIR)
-	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
-
-generate-types: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
-
-generate-server: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
-
-generate-spec: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
-
-check-file-sizes:
-	@echo "🔍 Checking generated file sizes..."
-
-generate-api: generate-types generate-server generate-spec check-file-sizes
+	@command -v $(OGEN) >/dev/null 2>&1 || { echo "❌ ogen not found. Install: go install -v github.com/ogen-go/ogen/cmd/ogen@latest"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "❌ node not found. Install Node.js"; exit 1; }
 
 verify-api: check-deps
+	@echo "🔍 Validating OpenAPI spec..."
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "OK OpenAPI spec is valid!"
+
+generate-api: check-deps verify-api
+	@echo "📦 Bundling OpenAPI spec..."
+	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "🔨 Generating ogen code..."
+	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
+	@echo "OK ogen code generated successfully!"
 
 clean:
-	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+	@echo "🧹 Cleaning generated files..."
+	@rm -rf $(API_DIR)/* $(BUNDLED_SPEC)
+	@echo "OK Clean complete!"
 

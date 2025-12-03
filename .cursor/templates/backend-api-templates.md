@@ -269,9 +269,21 @@ func (r *postgresRepo) GetPlayersBatch(ctx context.Context, playerIDs []string) 
 3. Адаптировать типы под OpenAPI spec
 4. Добавить бизнес-логику с сохранением оптимизаций
 
+## 🆕 Новые техники (2025)
+
+**MMO Patterns:**
+- Redis session store: `.cursor/performance/04a-mmo-sessions-inventory.md`
+- Inventory caching: `.cursor/performance/04a-mmo-sessions-inventory.md`
+- Materialized views: `.cursor/performance/05a-database-cache-advanced.md`
+
+**Resilience:**
+- Circuit breaker: `.cursor/performance/06-resilience-compression.md`
+- Load shedding: `.cursor/performance/06-resilience-compression.md`
+
 ## См. также
 
-- `.cursor/templates/backend-game-templates.md` - шаблоны для game servers
+- `.cursor/templates/backend-game-templates.md` - game servers
 - `.cursor/templates/backend-utils-templates.md` - utilities и tests
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист валидации
+- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 150+ техник
 

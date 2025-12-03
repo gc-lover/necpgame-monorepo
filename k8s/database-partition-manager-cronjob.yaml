@@ -1,0 +1,61 @@
+# Issue: #1582 - CronJob for automated partition management
+# Runs daily at 00:00 UTC to create future partitions and drop old ones
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-partition-manager
+  namespace: necpgame
+  labels:
+    app: database-partition-manager
+    component: database
+spec:
+  # Run daily at 00:00 UTC
+  schedule: "0 0 * * *"
+  
+  # Keep last 3 jobs for debugging
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: database-partition-manager
+        spec:
+          restartPolicy: OnFailure
+          
+          containers:
+          - name: partition-manager
+            image: necpgame/database-partition-manager:latest
+            imagePullPolicy: Always
+            
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: database-url
+            
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "500m"
+            
+            # Security context
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              readOnlyRootFilesystem: true
+          
+          # Priority for system jobs
+          priorityClassName: system-cluster-critical
+
+

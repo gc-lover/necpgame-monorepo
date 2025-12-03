@@ -1,0 +1,921 @@
+openapi: 3.0.3
+info:
+  title: Combat Combos & Synergies Service API
+  description: |
+    Полный API для системы комбо и синергий.
+
+    **Основные возможности:**
+    - Каталог комбо с фильтрацией
+    - Активация комбо и применение синергий
+    - Управление лоадаутами комбо
+    - Scoring и аналитика комбо
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Combo Catalog
+    description: Каталог комбо
+  - name: Combo Activation
+    description: Активация комбо
+  - name: Combo Loadouts
+    description: Управление лоадаутами
+  - name: Combo Scoring
+    description: Оценка комбо
+  - name: Combo Analytics
+    description: Аналитика комбо
+paths:
+  /gameplay/combat/combos/catalog:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить каталог комбо
+      operationId: getComboCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: combo_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ComboType'
+        - name: complexity
+          in: query
+          schema:
+            $ref: '#/components/schemas/ComboComplexity'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Каталог комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboCatalogResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/combos/{comboId}:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить детали комбо
+      operationId: getComboDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: comboId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/combos/activate:
+    post:
+      tags:
+        - Combo Activation
+      summary: Активировать комбо
+      operationId: activateCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateComboRequest'
+      responses:
+        '200':
+          description: Комбо активировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboActivationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/combos/synergy:
+    post:
+      tags:
+        - Combo Activation
+      summary: Применить синергию
+      operationId: applySynergy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplySynergyRequest'
+      responses:
+        '200':
+          description: Синергия применена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynergyApplicationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/combos/loadout:
+    get:
+      tags:
+        - Combo Loadouts
+      summary: Получить лоадаут комбо
+      operationId: getComboLoadout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лоадаут комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadout'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combo Loadouts
+      summary: Обновить лоадаут комбо
+      operationId: updateComboLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLoadoutRequest'
+      responses:
+        '200':
+          description: Лоадаут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/combos/score:
+    post:
+      tags:
+        - Combo Scoring
+      summary: Отправить результаты scoring
+      operationId: submitComboScore
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitScoreRequest'
+      responses:
+        '200':
+          description: Score отправлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreSubmissionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/combos/analytics:
+    get:
+      tags:
+        - Combo Analytics
+      summary: Получить аналитику комбо
+      operationId: getComboAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: combo_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Аналитика комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ComboType:
+      type: string
+      enum:
+        - solo
+        - team
+        - legendary
+      description: Тип комбо
+      example: solo
+    ComboComplexity:
+      type: string
+      enum:
+        - Bronze
+        - Silver
+        - Gold
+        - Platinum
+        - Legendary
+      description: Сложность комбо
+      example: Gold
+    SynergyType:
+      type: string
+      enum:
+        - ability
+        - team
+        - equipment
+        - implant
+        - timing
+      description: Тип синергии
+      example: ability
+    Combo:
+      type: object
+      required:
+        - id
+        - name
+        - combo_type
+        - complexity
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор комбо
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Название комбо
+          example: Aerial Devastation
+        description:
+          type: string
+          description: Описание комбо
+          example: Комбо из воздушных атак с максимальным уроном
+        combo_type:
+          $ref: '#/components/schemas/ComboType'
+        complexity:
+          $ref: '#/components/schemas/ComboComplexity'
+        requirements:
+          type: object
+          description: Требования для активации комбо
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+              example: 10
+            required_skills:
+              type: array
+              items:
+                type: string
+              example:
+                - acrobatics
+                - combat
+            required_abilities:
+              type: array
+              items:
+                type: string
+                format: uuid
+              example:
+                - 550e8400-e29b-41d4-a716-446655440001
+            min_participants:
+              type: integer
+              minimum: 1
+              example: 1
+            max_participants:
+              type: integer
+              minimum: 1
+              example: 5
+        sequence:
+          type: array
+          description: Последовательность действий для активации
+          items:
+            type: string
+          example:
+            - wall_run
+            - air_dash
+            - attack
+        bonuses:
+          type: object
+          description: Бонусы от комбо
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 1
+              example: 1.5
+            cooldown_reduction:
+              type: integer
+              minimum: 0
+              example: 10
+            special_effects:
+              type: array
+              items:
+                type: string
+              example:
+                - stun
+                - knockback
+        cooldown:
+          type: integer
+          description: Кулдаун комбо в секундах
+          minimum: 0
+          example: 30
+        chain_compatible:
+          type: boolean
+          description: Совместимость с chain-комбо
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+    ComboDetails:
+      allOf:
+        - $ref: '#/components/schemas/Combo'
+        - type: object
+          properties:
+            synergies:
+              type: array
+              items:
+                $ref: '#/components/schemas/Synergy'
+            chain_compatible_combos:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: ID комбо, совместимых для chain
+    Synergy:
+      type: object
+      required:
+        - id
+        - synergy_type
+        - combo_id
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        synergy_type:
+          $ref: '#/components/schemas/SynergyType'
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо, к которому применяется синергия
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: ID способностей для ability синергии
+        equipment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: ID экипировки для equipment синергии
+        implant_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: ID имплантов для implant синергии
+        team_size:
+          type: integer
+          minimum: 2
+          nullable: true
+          description: Размер команды для team синергии
+        timing_window:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Временное окно в миллисекундах для timing синергии
+        bonuses:
+          type: object
+          description: Бонусы от синергии
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 1
+            cooldown_reduction:
+              type: integer
+              minimum: 0
+            special_effects:
+              type: array
+              items:
+                type: string
+        requirements:
+          type: object
+          description: Требования для активации синергии
+    ActivateComboRequest:
+      type: object
+      required:
+        - character_id
+        - combo_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа, активирующего комбо
+          example: 550e8400-e29b-41d4-a716-446655440003
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо для активации
+          example: 550e8400-e29b-41d4-a716-446655440000
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID участников команды (для team/legendary комбо)
+          example:
+            - 550e8400-e29b-41d4-a716-446655440003
+            - 550e8400-e29b-41d4-a716-446655440004
+        context:
+          type: object
+          description: Контекст активации (позиция, состояние, окружение)
+          additionalProperties: true
+    ComboActivationResponse:
+      type: object
+      required:
+        - success
+        - activation_id
+      properties:
+        success:
+          type: boolean
+          description: Успешность активации
+          example: true
+        activation_id:
+          type: string
+          format: uuid
+          description: ID активации комбо
+          example: 550e8400-e29b-41d4-a716-446655440005
+        combo:
+          $ref: '#/components/schemas/Combo'
+        applied_synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Synergy'
+        bonuses_applied:
+          type: object
+          description: Примененные бонусы
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+            cooldown_reduction:
+              type: integer
+            special_effects:
+              type: array
+              items:
+                type: string
+        chain_combo_available:
+          type: boolean
+          description: Доступность chain-комбо
+          example: true
+        message:
+          type: string
+          description: Сообщение о результате
+          example: Combo activated successfully
+    ApplySynergyRequest:
+      type: object
+      required:
+        - activation_id
+        - synergy_id
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+          description: ID активации комбо
+          example: 550e8400-e29b-41d4-a716-446655440005
+        synergy_id:
+          type: string
+          format: uuid
+          description: ID синергии для применения
+          example: 550e8400-e29b-41d4-a716-446655440002
+        context:
+          type: object
+          description: Дополнительный контекст для синергии
+          additionalProperties: true
+    SynergyApplicationResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        synergy:
+          $ref: '#/components/schemas/Synergy'
+        bonuses_applied:
+          type: object
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+            cooldown_reduction:
+              type: integer
+            special_effects:
+              type: array
+              items:
+                type: string
+        message:
+          type: string
+          example: Synergy applied successfully
+    ComboLoadout:
+      type: object
+      required:
+        - id
+        - character_id
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440006
+        character_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        active_combos:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID активных комбо в лоадауте
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+            - 550e8400-e29b-41d4-a716-446655440007
+        preferences:
+          type: object
+          description: Настройки лоадаута
+          properties:
+            auto_activate:
+              type: boolean
+              description: Автоматическая активация комбо
+              example: false
+            priority_order:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Порядок приоритета комбо
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UpdateLoadoutRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        active_combos:
+          type: array
+          items:
+            type: string
+            format: uuid
+        preferences:
+          type: object
+          properties:
+            auto_activate:
+              type: boolean
+            priority_order:
+              type: array
+              items:
+                type: string
+                format: uuid
+    SubmitScoreRequest:
+      type: object
+      required:
+        - activation_id
+        - execution_difficulty
+        - damage_output
+        - visual_impact
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+        execution_difficulty:
+          type: integer
+          minimum: 0
+          maximum: 100
+        damage_output:
+          type: integer
+          minimum: 0
+        visual_impact:
+          type: integer
+          minimum: 0
+          maximum: 100
+        team_coordination:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+    ScoreSubmissionResponse:
+      type: object
+      required:
+        - success
+        - score
+      properties:
+        success:
+          type: boolean
+        score:
+          $ref: '#/components/schemas/ComboScore'
+        rewards:
+          type: object
+          nullable: true
+          description: Награды за score (если применимо)
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: string
+                format: uuid
+    AnalyticsResponse:
+      type: object
+      properties:
+        analytics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComboAnalytics'
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+    ComboCatalogResponse:
+      type: object
+      properties:
+        combos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Combo'
+        total:
+          type: integer
+          description: Общее количество комбо
+          example: 50
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    ComboScore:
+      type: object
+      required:
+        - activation_id
+        - total_score
+        - category
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440005
+        execution_difficulty:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Сложность исполнения (0-100)
+          example: 85
+        damage_output:
+          type: integer
+          minimum: 0
+          description: Выданный урон
+          example: 5000
+        visual_impact:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Визуальный эффект (0-100)
+          example: 90
+        team_coordination:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Координация команды (0-100, только для team комбо)
+          example: 75
+        total_score:
+          type: integer
+          minimum: 0
+          description: Общий score
+          example: 7500
+        category:
+          $ref: '#/components/schemas/ComboComplexity'
+        timestamp:
+          type: string
+          format: date-time
+    ComboAnalytics:
+      type: object
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+        total_activations:
+          type: integer
+          minimum: 0
+          description: Общее количество активаций
+          example: 1250
+        success_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Процент успешных активаций
+          example: 0.85
+        average_score:
+          type: number
+          format: float
+          minimum: 0
+          description: Средний score
+          example: 6500
+        average_category:
+          $ref: '#/components/schemas/ComboComplexity'
+        most_used_synergies:
+          type: array
+          items:
+            type: object
+            properties:
+              synergy_id:
+                type: string
+                format: uuid
+              synergy_type:
+                $ref: '#/components/schemas/SynergyType'
+              usage_count:
+                type: integer
+          description: Наиболее используемые синергии
+        chain_combo_count:
+          type: integer
+          minimum: 0
+          description: Количество chain-комбо
+          example: 150
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND

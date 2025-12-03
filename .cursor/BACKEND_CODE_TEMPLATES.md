@@ -40,6 +40,46 @@
 
 **Используй для:** Всех сервисов (обязательные utilities)
 
+### 4. 🆕 MMO Patterns (для MMO сервисов)
+
+**Файл:** `.cursor/performance/04a-mmo-sessions-inventory.md`
+
+**Содержит:**
+- Redis session store (stateless)
+- Inventory caching (multi-level)
+- Guild action batching
+- Trading с optimistic locking
+
+**Используй для:** Player sessions, inventory, guilds, trading
+
+### 5. 🆕 Advanced DB & Cache
+
+**Файлы:**
+- `.cursor/performance/05a-database-cache-advanced.md`
+- `.cursor/performance/07a-postgresql-advanced.md`
+- `.cursor/performance/07b-redis-database-comparison.md`
+
+**Содержит:**
+- Time-series partitioning
+- Materialized views
+- Distributed cache Pub/Sub
+- pgBouncer, LISTEN/NOTIFY
+
+**Используй для:** Large-scale БД, distributed cache
+
+### 6. 🆕 Resilience & Compression
+
+**Файл:** `.cursor/performance/06-resilience-compression.md`
+
+**Содержит:**
+- Circuit breakers
+- Feature flags
+- Load shedding
+- Adaptive compression (LZ4/Zstandard)
+- Fallback strategies
+
+**Используй для:** Production resilience, bandwidth optimization
+
 ## 🔧 Как использовать шаблоны
 
 ### Шаг 1: Определи тип сервиса
@@ -85,6 +125,17 @@ cat .cursor/templates/backend-api-templates.md
 - `udp_server.go` (если UDP нужен)
 - `worker_pool.go` (из Utilities Templates)
 - `cache.go` (из Utilities Templates)
+
+**Для MMO servers дополнительно:**
+- `session_store.go` - Redis sessions (Part 4A)
+- `inventory_cache.go` - Multi-level caching (Part 4A)
+- `guild_batcher.go` - Action batching (Part 4A)
+- `matchmaking_buckets.go` - O(1) matching (Part 4C)
+
+**Для FPS servers дополнительно:**
+- `lag_compensation.go` - Server-side rewind (Part 5B)
+- `dead_reckoning.go` - Prediction (Part 5B)
+- `visibility_culling.go` - Frustum/Occluder (Part 5B)
 
 ## 📋 Валидация
 

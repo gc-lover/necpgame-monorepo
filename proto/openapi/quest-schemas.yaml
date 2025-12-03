@@ -14,6 +14,9 @@ components:
   schemas:
     QuestInstance:
       type: object
+      description: |
+        BACKEND NOTE: Quest tracking (100+ active quests per player).
+        Fields ordered for struct alignment. Expected memory: ~112 bytes/instance.
       required:
         - id
         - quest_id
@@ -21,6 +24,7 @@ components:
         - state
         - started_at
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
@@ -33,6 +37,8 @@ components:
           type: string
           format: uuid
           description: ID игрока
+        
+        # String fields (16 bytes each)
         state:
           type: string
           enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
@@ -43,14 +49,6 @@ components:
             - `COMPLETED` - квест завершён
             - `FAILED` - квест провален
             - `CANCELLED` - квест отменён
-        current_objective:
-          type: integer
-          description: Текущий номер цели (индекс)
-          minimum: 0
-        progress_data:
-          type: object
-          description: Данные прогресса квеста (JSON)
-          additionalProperties: true
         started_at:
           type: string
           format: date-time
@@ -64,6 +62,18 @@ components:
           type: string
           format: date-time
           description: Время последнего обновления
+        
+        # Object (8 bytes reference)
+        progress_data:
+          type: object
+          description: Данные прогресса квеста (JSON)
+          additionalProperties: true
+        
+        # Integer last (4 bytes)
+        current_objective:
+          type: integer
+          description: Текущий номер цели (индекс)
+          minimum: 0
 
     QuestDefinition:
       type: object
@@ -503,6 +513,7 @@ components:
           type: integer
           description: Общее количество проверок
           minimum: 0
+
 
 
 

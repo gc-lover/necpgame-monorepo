@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gc-lover/necpgame/services/party-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/party-service-go/pkg/api"
 )
 
 type Party struct {

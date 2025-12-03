@@ -44,3 +44,6 @@ CREATE INDEX idx_weapon_modifier_slots_owner ON weapon_modifier_slots(owner_id);
 -- rollback DROP TABLE IF EXISTS weapon_modifier_slots;
 -- rollback DROP TABLE IF EXISTS weapon_modifiers;
 
+
+
+

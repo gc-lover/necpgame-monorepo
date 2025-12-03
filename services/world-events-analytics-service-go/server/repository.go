@@ -81,3 +81,6 @@ func (r *repository) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (
 	return analytics, err
 }
 
+
+
+

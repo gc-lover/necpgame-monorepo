@@ -1,51 +1,56 @@
-// Issue: #138
+// Issue: #145 - achievement-service BLOCKER optimizations
 package main
 
 import (
 	"database/sql"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/achievement-service-go/server"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
-	// Database connection
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://user:password@localhost:5432/necpgame?sslmode=disable"
-	}
+	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed: %v", err)
 	}
 	defer db.Close()
 
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(50)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
+	repository := server.NewPostgresRepository(db)
+	service := server.NewAchievementService(repository)
+
+	addr := getEnv("HTTP_ADDR", ":8097")
+	httpServer := server.NewHTTPServer(addr, service)
+
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":9097", mux)
+	}()
+
+	go func() {
+		http.ListenAndServe("localhost:6097", nil)
+	}()
+
+	log.Printf("OK Achievement Service on %s", addr)
+	httpServer.Start()
+}
+
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
 	}
-
-	// Create repository
-	repo := server.NewRepository(db)
-
-	// Create service
-	svc := server.NewService(repo)
-
-	// Create handlers
-	handlers := server.NewHandlers(svc)
-
-	// Create HTTP server
-	addr := os.Getenv("HTTP_ADDR")
-	if addr == "" {
-		addr = ":8086"
-	}
-
-	srv := server.NewHTTPServer(addr, handlers, svc)
-
-	log.Printf("Starting achievement-service on %s", addr)
-	if err := srv.Start(); err != nil {
-		log.Fatalf("Server failed: %v", err)
-	}
+	return fallback
 }

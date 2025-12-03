@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gc-lover/necpgame/services/mail-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
 )
 
 type HTTPServer struct {
@@ -51,4 +51,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
+
+
+
 

@@ -46,6 +46,7 @@ export EXCLUDED_PATTERNS=(
   "*.uexp"
   "*.ubulk"
   "*.ufont"
+  # Note: Additional patterns loaded from .githooks/pre-commit-exemptions.txt
 )
 
 check_file_extension() {
@@ -60,6 +61,21 @@ check_file_extension() {
   return 1
 }
 
+load_exemptions_from_file() {
+  local exemptions_file=".githooks/pre-commit-exemptions.txt"
+  
+  if [ -f "$exemptions_file" ]; then
+    while IFS= read -r line || [ -n "$line" ]; do
+      # Skip empty lines and comments
+      if [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]]; then
+        continue
+      fi
+      # Add to EXCLUDED_PATTERNS
+      EXCLUDED_PATTERNS+=("$line")
+    done < "$exemptions_file"
+  fi
+}
+
 is_excluded() {
   local file="$1"
   
@@ -70,4 +86,7 @@ is_excluded() {
   done
   return 1
 }
+
+# Load exemptions on script load
+load_exemptions_from_file
 

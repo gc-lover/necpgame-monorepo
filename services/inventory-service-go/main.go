@@ -1,14 +1,19 @@
+// Issue: #1581 - ogen migration + full optimizations
 package main
 
 import (
 	"context"
+	"database/sql"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/necpgame/inventory-service-go/server"
+	_ "github.com/lib/pq"
+	"github.com/go-redis/redis/v8"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -20,14 +25,35 @@ func main() {
 	metricsAddr := getEnv("METRICS_ADDR", ":9090")
 	
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
-	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/0")
+	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
 
-	inventoryService, err := server.NewInventoryService(dbURL, redisURL)
+	// Database connection
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize inventory service")
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
+	defer db.Close()
 
-	httpServer := server.NewHTTPServer(addr, inventoryService)
+	// CRITICAL: Configure DB pool (hot path - 10k RPS)
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(50)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
+	// Redis client for caching
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: redisAddr,
+	})
+
+	// Create optimized service with 3-tier caching
+	repo := server.NewRepository(db)
+	optimizedService := server.NewOptimizedInventoryService(redisClient, repo)
+
+	// Create ogen server
+	httpServer := server.NewOgenHTTPServer(addr, optimizedService)
+	if err != nil {
+		log.Fatalf("Failed to create server: %v", err)
+	}
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

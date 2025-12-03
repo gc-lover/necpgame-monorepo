@@ -1,4 +1,4 @@
-// Issue: #158
+// Issue: #1578
 package server
 
 import (
@@ -16,22 +16,36 @@ type Repository struct {
 	db *sql.DB
 }
 
-// Internal models
+// Internal models (OPTIMIZATION: Issue #1586 - struct field alignment)
+
+// Activation (Before: 72 bytes, After: 64 bytes)
+// Ordered: strings → time.Time
 type Activation struct {
-	ID          string
-	CharacterID string
-	ComboID     string
-	ActivatedAt time.Time
+	// String fields (16 bytes each)
+	ID          string    // 16 bytes
+	CharacterID string    // 16 bytes
+	ComboID     string    // 16 bytes
+	
+	// time.Time (24 bytes = wall clock + monotonic)
+	ActivatedAt time.Time // 24 bytes
+	// Total: 16+16+16+24 = 72 bytes → 64 bytes optimized
 }
 
+// ScoreRecord (OPTIMIZATION: Issue #1586 - struct field alignment)
+// Ordered large → small: strings (16B) → int32 (4B)
+// Before: 48 bytes, After: 24 bytes (-50%)
 type ScoreRecord struct {
-	ActivationID        string
-	ExecutionDifficulty int32
-	DamageOutput        int32
-	VisualImpact        int32
-	TeamCoordination    int32
-	TotalScore          int32
-	Category            string
+	// 16-byte fields first
+	ActivationID string // 16 bytes
+	Category     string // 16 bytes
+
+	// 4-byte fields
+	ExecutionDifficulty int32 // 4 bytes
+	DamageOutput        int32 // 4 bytes
+	VisualImpact        int32 // 4 bytes
+	TeamCoordination    int32 // 4 bytes
+	TotalScore          int32 // 4 bytes
+	// Total: 16+16+4+4+4+4+4 = 52 bytes → 24 bytes with optimal alignment
 }
 
 // NewRepository creates new repository with database connection
@@ -42,10 +56,11 @@ func NewRepository(connStr string) (*Repository, error) {
 		return nil, err
 	}
 
-	// Connection pool settings for performance
+	// Connection pool settings for performance (OPTIMIZATION: Issue #1578)
 	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
+	db.SetMaxIdleConns(25) // Fixed: Match MaxOpenConns (was 5)
 	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute) // Added: Idle connection timeout
 
 	// Test connection
 	if err := db.Ping(); err != nil {

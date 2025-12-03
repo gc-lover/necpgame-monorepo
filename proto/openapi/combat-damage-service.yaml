@@ -384,7 +384,11 @@ components:
 
     DamageCalculationResult:
       type: object
+      description: |
+        BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+        Fields ordered for struct alignment. Expected memory: ~64 bytes/instance.
       properties:
+        # UUID fields first (16 bytes each)
         attacker_id:
           type: string
           format: uuid
@@ -393,6 +397,8 @@ components:
           type: string
           format: uuid
           description: ID цели
+        
+        # Integer fields grouped (4 bytes each)
         base_damage:
           type: integer
           description: Базовый урон

@@ -37,9 +37,15 @@
 **НОВЫЕ сервисы:**
 ```
 1. Используй шаблоны из .cursor/templates/backend-*.md
-2. Применяй Performance Bible с самого начала
-3. Валидируй: /backend-validate-optimizations #123
-4. Передавай ТОЛЬКО после OK
+2. Применяй Performance Bible (150+ техник) с самого начала
+3. Новые техники 2025:
+   - Redis session store (stateless)
+   - Multi-level caching
+   - Time-series partitioning
+   - Adaptive compression
+   - Circuit breakers
+4. Валидируй: /backend-validate-optimizations #123
+5. Передавай ТОЛЬКО после OK
 ```
 
 **EXISTING сервисы:**
@@ -56,10 +62,12 @@
 
 **НОВЫЕ таблицы:**
 ```
-1. Column order: large → small
-2. Indexes: covering + partial
-3. Partitioning: для >10M rows
-4. JSONB: GIN indexes
+1. Column order: large → small (alignment)
+2. Indexes: covering + partial + GIN (JSONB) + GIST (spatial)
+3. Partitioning: time-series для >10M rows (auto retention)
+4. Materialized views: для heavy queries (100x speedup)
+5. LISTEN/NOTIFY: для real-time events
+6. WAL tuning: для write-heavy tables
 ```
 
 **EXISTING таблицы:**

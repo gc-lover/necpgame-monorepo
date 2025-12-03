@@ -353,9 +353,23 @@ func (h *Handlers) ProcessRequest(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
+## 🆕 Новые техники (2025)
+
+**Testing:**
+- PGO (Profile-Guided Optimization): `.cursor/performance/03a-profiling-testing.md`
+- Continuous profiling (Pyroscope): `.cursor/performance/03a-profiling-testing.md`
+
+**Resilience:**
+- TTL-based cleanup: `.cursor/performance/06-resilience-compression.md`
+- Bounded map growth: `.cursor/performance/06-resilience-compression.md`
+
+**Metrics:**
+- Game-specific metrics: `.cursor/performance/06-resilience-compression.md`
+
 ## См. также
 
 - `.cursor/templates/backend-api-templates.md` - API templates
 - `.cursor/templates/backend-game-templates.md` - Game server templates
 - `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - полный чек-лист
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 150+ техник
 

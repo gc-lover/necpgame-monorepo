@@ -205,3 +205,6 @@ ON CONFLICT DO NOTHING;
 -- rollback DROP TABLE IF EXISTS faction_hierarchy CASCADE;
 -- rollback DROP TABLE IF EXISTS factions CASCADE;
 
+
+
+

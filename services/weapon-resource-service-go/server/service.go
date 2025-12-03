@@ -63,3 +63,6 @@ func (s *Service) UpdateCooldown(ctx context.Context, weaponID string, req api.U
 	return resources, nil
 }
 
+
+
+

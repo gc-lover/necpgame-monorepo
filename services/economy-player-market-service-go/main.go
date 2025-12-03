@@ -1,9 +1,11 @@
-// Issue: #42
+// Issue: #1594 - economy-player-market ogen migration + optimizations
 package main
 
 import (
 	"context"
 	"log"
+	_ "net/http/pprof"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,7 +23,18 @@ func main() {
 	}
 
 	ctx := context.Background()
-	dbpool, err := pgxpool.New(ctx, dbURL)
+	
+	// Configure DB pool (standard service - 25 connections)
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		log.Fatalf("Unable to parse DATABASE_URL: %v\n", err)
+	}
+	config.MaxConns = 25
+	config.MinConns = 5
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 10 * time.Minute
+	
+	dbpool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
@@ -32,12 +45,17 @@ func main() {
 		log.Fatalf("Unable to ping database: %v\n", err)
 	}
 
-	log.Println("Connected to database successfully")
+	log.Println("OK Connected to database successfully (pool: 25 connections)")
 
-	// Initialize service layers
-	repository := server.NewPlayerMarketRepository(dbpool)
-	service := server.NewPlayerMarketService(repository)
-	httpServer := server.NewHTTPServer(":8094", service)
+	// pprof profiling endpoint
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6094")
+		log.Printf("🔧 pprof profiling on http://%s/debug/pprof", pprofAddr)
+		http.ListenAndServe(pprofAddr, nil)
+	}()
+
+	// Initialize service layers with ogen
+	httpServer := server.NewHTTPServerOgen(":8094")
 
 	// Start server
 	go func() {
@@ -61,5 +79,12 @@ func main() {
 	}
 
 	log.Println("Server exited")
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584
 	"os"
 	"os/signal"
 	"syscall"

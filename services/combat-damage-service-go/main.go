@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +21,15 @@ func main() {
 	metricsAddr := getEnv("METRICS_ADDR", ":9093")
 
 	httpServer := server.NewHTTPServer(addr)
+	
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6063")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

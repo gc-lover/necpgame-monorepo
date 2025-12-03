@@ -57,3 +57,6 @@ func (r *PostgresRepository) SaveLootHistory(ctx context.Context, playerID, item
 	return nil
 }
 
+
+
+

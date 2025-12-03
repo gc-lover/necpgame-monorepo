@@ -29,3 +29,6 @@ type EventAnalytics struct {
 	Aggregations map[string]interface{}
 }
 
+
+
+

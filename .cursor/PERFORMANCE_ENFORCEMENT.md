@@ -32,6 +32,9 @@
 - ❌ Goroutine leaks
 - ❌ No struct alignment
 - ❌ No structured logging
+- ❌ No profiling endpoints (pprof)
+- ❌ No health/metrics endpoints
+- ❌ Unbounded channels (для production)
 
 **Что делать при BLOCKER:**
 1. Исправь проблемы

@@ -38,15 +38,29 @@
 - [ ] **GC Tuning** - `GOGC` настроен (обычно 50 для game servers)
 - [ ] **Profiling Enabled** - `pprof` endpoints доступны (на отдельном порту)
 
-### OK Уровень 4: Advanced (опционально, по необходимости)
+### OK Уровень 4: MMO Patterns (для MMO/FPS игр)
+
+**Применяется к:** MMO сервисы, inventory, guilds, trading
+
+- [ ] **Redis Session Store** - stateless servers, horizontal scaling
+- [ ] **Inventory Caching** - multi-level (memory + Redis + DB)
+- [ ] **Guild Action Batching** - DB transactions ↓95%
+- [ ] **Optimistic Locking** - no deadlocks в trading
+- [ ] **Materialized Views** - для leaderboards (100x speedup)
+- [ ] **Time-Series Partitioning** - для >10M rows (query ↓90%)
+
+### OK Уровень 5: Advanced (опционально)
 
 **Применяется к:** Bottlenecks после профилирования
 
-- [ ] **Ring Buffer** - для event processing вместо channels
-- [ ] **Flyweight Pattern** - для shared game objects (weapons, items)
-- [ ] **FlatBuffers** - для ultra-low latency вместо Protobuf
-- [ ] **Copy-On-Write** - для read-heavy shared state
-- [ ] **SIMD/Assembly** - для векторных вычислений (physics)
+- [ ] **Server-Side Rewind** - lag compensation для FPS
+- [ ] **Dead Reckoning** - smooth при packet loss
+- [ ] **Adaptive Compression** - LZ4/Zstandard
+- [ ] **Dictionary Compression** - для game packets
+- [ ] **Circuit Breaker** - DB resilience
+- [ ] **Feature Flags** - graceful degradation
+- [ ] **Load Shedding** - backpressure handling
+- [ ] **FlatBuffers** - ultra-low latency (если Protobuf bottleneck)
 
 ## 🔍 Как проверять
 

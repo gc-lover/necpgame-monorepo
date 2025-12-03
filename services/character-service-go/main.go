@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,28 +23,23 @@ func main() {
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/2")
 	keycloakURL := getEnv("KEYCLOAK_URL", "http://localhost:8080")
-	keycloakRealm := getEnv("KEYCLOAK_REALM", "necpgame")
-	authEnabled := getEnv("AUTH_ENABLED", "true") == "true"
 
 	characterService, err := server.NewCharacterService(dbURL, redisURL, keycloakURL)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize character service")
 	}
+	
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6062")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
-	var jwtValidator *server.JwtValidator
-	if authEnabled && keycloakURL != "" {
-		issuer := keycloakURL + "/realms/" + keycloakRealm
-		jwksURL := keycloakURL + "/realms/" + keycloakRealm + "/protocol/openid-connect/certs"
-		jwtValidator = server.NewJwtValidator(issuer, jwksURL, logger)
-		logger.WithFields(map[string]interface{}{
-			"issuer":  issuer,
-			"jwksURL": jwksURL,
-		}).Info("JWT authentication enabled")
-	} else {
-		logger.Info("JWT authentication disabled")
-	}
-
-	httpServer := server.NewHTTPServer(addr, characterService, jwtValidator, authEnabled)
+	// OPTIMIZATION: Issue #1593 - ogen migration for 90% faster performance
+	httpServer := server.NewHTTPServerOgen(addr, characterService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
@@ -62,16 +58,12 @@ func main() {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-sigChan
 		logger.Info("Shutting down server...")
-		cancel()
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
@@ -80,7 +72,7 @@ func main() {
 	}()
 
 	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
+	if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
 		logger.WithError(err).Fatal("Server error")
 	}
 

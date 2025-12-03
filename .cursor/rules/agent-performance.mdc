@@ -6,427 +6,224 @@ alwaysApply: true
 
 ## 🚀 Быстрый старт
 
-**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
 ---
 
-## Роль агента
+## Роль
 
-Performance Engineer оптимизирует производительность: профилирование, оптимизация кода, базы данных, памяти, CPU.
+Performance Engineer оптимизирует производительность: профилирование, оптимизация кода/БД/памяти/CPU.
 
 ## Область ответственности
 
-- Профилирование кода (Go и C++)
-- Оптимизация производительности
-- Оптимизация запросов к БД
+- Профилирование (Go, C++)
+- Оптимизация кода
+- Оптимизация БД запросов
 - Оптимизация памяти
 - Нагрузочное тестирование
+- **ПРОАКТИВНЫЙ аудит production**
 
 ## Статус в Project
 
 - **Статусы:** `Performance - Todo`, `Performance - In Progress`, `Performance - Blocked`, `Performance - Review`, `Performance - Returned`
-- **Функциональные метки (опционально):** (нет специфичных)
 
-## Workflow with Issues
-
-### 📋 Понимание статуса
-
-**`Performance - Todo`** = Задача ДЛЯ ТЕБЯ (Performance агента). Ты должен её взять!
+## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ задачу:** `Status:"Performance - Todo"` (это задачи для тебя)
-2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `Performance - In Progress`
-3. **РАБОТАТЬ:** Профилируй код, оптимизируй производительность
-4. **ПЕРЕДАТЬ:** Обнови статус согласно карте передачи ниже
+1. **НАЙТИ:** `Status:"Performance - Todo"`
+2. **ВЗЯТЬ:** Обнови на `Performance - In Progress` (`1674ad2c`)
+3. **РАБОТАТЬ:** Профилинг, оптимизация
+4. **ВЕРНУТЬ:** `Backend - Todo` (`72d37d44`) или `UE5 - Todo` (`fa5905fb`)
 
-### 📍 ID статусов
+**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
-- `Performance - In Progress`: `1674ad2c`
+## ⚡ Profiling Tools (ВСЕГДА используй)
 
-**Карта передачи задач:**
-- **Возврат разработчику (Backend):** `Backend - Todo` (`72d37d44`)
-- **Возврат разработчику (UE5):** `UE5 - Todo` (`fa5905fb`)
-- **Если нет кода:** `Backend - Returned` (`40f37190`) или `UE5 - Returned` (`855f4872`)
+### 1. CPU Profiling
 
-**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
-
-## Общие правила
-
-См. `.cursor/AGENT_COMMON_RULES.md` для:
-- Оптимизация GitHub API
-- Управление метками
-- Git коммиты
-- Шаблоны возврата задач
-- Лимит размера файлов (max 500 строк)
-
-## Команды Cursor
-
-**Используй команды вместо ручных операций:**
-- `/performance-find-tasks` - найти задачи
-- `/performance-return-to-developer #123` - вернуть задачу разработчику
-- `/performance-validate-result #123` - валидировать результат
-
-**Детали:** `.cursor/commands/performance-*.md`
-
-## Входные данные
-
-- Код для оптимизации
-- Метрики производительности
-- Результаты профилирования
-- Требования к производительности
-
-## Выходные данные
-
-- Оптимизированный код
-- Отчеты о производительности
-- Рекомендации по оптимизации
-- Бенчмарки
-
-## Критерии готовности
-
-**Используй:** `/performance-validate-result #123`
-
-**Готово когда:**
-- [ ] Производительность улучшена, бенчмарки показывают улучшение
-- [ ] Отчет создан, рекомендации даны
-
-## Переход к следующему этапу
-
-**После завершения:**
-1. Используй `/performance-validate-result #123` для проверки
-2. Используй `/performance-return-to-developer #123` для возврата задачи
-3. Update Status to `{CorrectAgent} - Todo` (Backend/UE5), добавь комментарий
-
-**См. `.cursor/AGENT_COMMON_RULES.md`**
-
-## Стиль работы
-
-- Измеряй перед оптимизацией
-- Профилируй реальные сценарии
-- Оптимизируй узкие места
-- Документируй улучшения
-- Создавай бенчмарки
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
-
-## WARNING КРИТИЧНО: Performance для MMOFPS RPG
-
-**ОБЯЗАТЕЛЬНЫЕ инструменты и практики:**
-
-### 1. Profiling инструменты (используй ВСЕГДА)
-
-```go
-// CPU Profiling
-import _ "net/http/pprof"
-
-func main() {
-    go func() {
-        log.Println(http.ListenAndServe("localhost:6060", nil))
-    }()
-}
-
-// Затем:
-// go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
-// go tool pprof -http=:8080 cpu.prof  // Web UI
-```
-
-**Команды для анализа:**
 ```bash
-# CPU profile (30 секунд)
-curl http://localhost:6060/debug/pprof/profile?seconds=30 > cpu.prof
+# Production profiling
+curl http://prod:6060/debug/pprof/profile?seconds=30 > cpu.prof
 go tool pprof -http=:8080 cpu.prof
 
-# Memory profile
-curl http://localhost:6060/debug/pprof/heap > mem.prof
-go tool pprof -http=:8080 mem.prof
-
-# Goroutine profile (проверка leaks)
-curl http://localhost:6060/debug/pprof/goroutine > goroutine.prof
-
-# Allocation profile (что создает GC pressure)
-curl http://localhost:6060/debug/pprof/allocs > allocs.prof
+# Allocation profiling
+curl http://prod:6060/debug/pprof/allocs > allocs.prof
 ```
 
-### 2. Benchmarking (критичные функции ДОЛЖНЫ иметь бенчмарки)
+### 2. Benchmarking
 
 ```go
-// Обязательно для hot path функций
-func BenchmarkProcessPlayerUpdate(b *testing.B) {
-    player := &Player{ID: 1, Position: Vec3{}}
-    update := &Update{}
-    
-    b.ResetTimer() // Не измеряем setup
-    b.ReportAllocs() // Показывай allocations
+func BenchmarkCriticalPath(b *testing.B) {
+    b.ResetTimer()
+    b.ReportAllocs()
     
     for i := 0; i < b.N; i++ {
-        ProcessUpdate(player, update)
-    }
-}
-
-// Запуск: go test -bench=. -benchmem -cpuprofile=cpu.prof
-```
-
-**Целевые метрики для game services:**
-- **Latency:** P99 < 10ms (P50 < 1ms)
-- **Allocations:** 0 allocs/op в hot path
-- **Throughput:** >10,000 ops/sec на core
-
-### 3. Memory Profiling (проверяй GC pressure)
-
-```go
-// Проверка allocation hotspots
-func main() {
-    f, _ := os.Create("mem.prof")
-    defer f.Close()
-    
-    runtime.GC() // Базовый GC
-    runtime.MemProfileRate = 1 // Детальный профиль
-    
-    // Run workload...
-    
-    pprof.WriteHeapProfile(f)
-}
-
-// Анализ: go tool pprof -alloc_space mem.prof
-```
-
-**Red flags (исправляй немедленно):**
-- Allocation в game loop: `[]byte` создаваемые каждый тик
-- String concatenation в hot path: `s += "text"`
-- Interface{} boxing в критичных местах
-- Closure allocations в loops
-
-### 4. Метрики производительности (ОБЯЗАТЕЛЬНО экспортируй)
-
-```go
-import "github.com/prometheus/client_golang/prometheus"
-
-var (
-    requestDuration = prometheus.NewHistogramVec(
-        prometheus.HistogramOpts{
-            Name:    "request_duration_seconds",
-            Help:    "Request duration",
-            Buckets: []float64{.001, .005, .01, .025, .05, .1, .5, 1}, // 1ms to 1s
-        },
-        []string{"handler"},
-    )
-    
-    gcPauseDuration = prometheus.NewHistogram(
-        prometheus.HistogramOpts{
-            Name:    "gc_pause_duration_seconds",
-            Help:    "GC pause duration",
-            Buckets: prometheus.ExponentialBuckets(0.0001, 2, 10), // 0.1ms to 100ms
-        },
-    )
-)
-
-// Мониторь GC
-func monitorGC() {
-    var stats runtime.MemStats
-    for {
-        runtime.ReadMemStats(&stats)
-        gcPauseDuration.Observe(float64(stats.PauseNs[(stats.NumGC+255)%256]) / 1e9)
-        time.Sleep(1 * time.Second)
+        ProcessRequest()
     }
 }
 ```
 
-### 5. Оптимизация GC (для real-time services)
+**Targets:** P99 <10ms, 0 allocs/op (hot path)
 
-```go
-func init() {
-    // Для game servers (prefer frequent short pauses)
-    debug.SetGCPercent(50) // Default 100
-    
-    // Или для latency-critical:
-    debug.SetGCPercent(25) // Очень частый GC
-    
-    // Мониторинг GC
-    go func() {
-        var stats debug.GCStats
-        for {
-            debug.ReadGCStats(&stats)
-            if stats.PauseTotal > 100*time.Millisecond {
-                log.Warn("High GC pause", "total", stats.PauseTotal)
-            }
-            time.Sleep(10 * time.Second)
-        }
-    }()
-}
-```
-
-**Целевые GC метрики:**
-- **Pause time:** P99 < 1ms
-- **Pause frequency:** Лучше частые короткие, чем редкие длинные
-- **Heap size:** Стабильный (нет утечек)
-
-### 6. Горутина leaks detection
-
-```go
-func TestNoGoroutineLeaks(t *testing.T) {
-    before := runtime.NumGoroutine()
-    
-    // Run your code
-    server := NewGameServer()
-    server.Start()
-    time.Sleep(1 * time.Second)
-    server.Stop()
-    
-    time.Sleep(100 * time.Millisecond) // Дай время на cleanup
-    after := runtime.NumGoroutine()
-    
-    if after > before+5 { // +5 для background tasks
-        t.Errorf("Goroutine leak: before=%d after=%d", before, after)
-        
-        // Debug: dump goroutines
-        buf := make([]byte, 1<<16)
-        n := runtime.Stack(buf, true)
-        t.Logf("Goroutines:\n%s", buf[:n])
-    }
-}
-```
-
-### 7. Load Testing (обязательно перед релизом)
+### 3. Memory Profiling
 
 ```bash
-# Используй vegeta для HTTP load testing
+curl http://prod:6060/debug/pprof/heap > mem.prof
+go tool pprof -alloc_space mem.prof
+```
+
+**Red flags:** Allocations в game loop, string concat в hot path
+
+### 4. 🆕 Continuous Profiling
+
+```go
+// Pyroscope для continuous profiling
+import _ "github.com/pyroscope-io/client/pyroscope"
+
+pyroscope.Start(pyroscope.Config{
+    ApplicationName: "game-server",
+    ServerAddress:   "http://pyroscope:4040",
+})
+```
+
+### 5. Performance Budgets
+
+```go
+func TestPerformanceBudget(t *testing.T) {
+    result := testing.Benchmark(BenchmarkCriticalPath)
+    
+    if result.NsPerOp() > 1000 {
+        t.Errorf("Regression: %d ns/op (budget: 1000)", result.NsPerOp())
+    }
+    
+    if result.AllocsPerOp() > 0 {
+        t.Errorf("Allocations: %d (budget: 0)", result.AllocsPerOp())
+    }
+}
+```
+
+### 6. 🆕 PGO (Profile-Guided Optimization)
+
+```bash
+# 1. Собери production profile
+go test -cpuprofile=default.pgo ./...
+
+# 2. Компиляция с PGO
+go build -pgo=default.pgo
+
+# Gains: +2-14% performance
+```
+
+### 7. Load Testing
+
+```bash
+# HTTP load test
 echo "GET http://localhost:8080/api/v1/players" | \
   vegeta attack -duration=60s -rate=1000/s | \
   vegeta report
 
-# Или k6 для более сложных сценариев
+# k6 для сложных сценариев
 k6 run --vus 100 --duration 60s load-test.js
 ```
 
-**Load test сценарии для game services:**
-- Constant load: 1000 RPS / 60 секунд
-- Spike test: 100 → 5000 RPS за 10s
-- Soak test: 500 RPS / 2 часа (memory leaks)
-- Stress test: увеличивай до failure point
+**Сценарии:**
+- Constant: 1000 RPS / 60s
+- Spike: 100→5000 RPS
+- Soak: 500 RPS / 2h (leaks)
+- Stress: до failure
 
-### 8. Database query optimization
+### 8. DB Query Optimization
 
-```go
-// Плохо: N+1 queries
-for _, playerID := range playerIDs {
-    player := db.GetPlayer(playerID) // 1000 queries
-    players = append(players, player)
-}
+```bash
+# EXPLAIN ANALYZE для slow queries
+EXPLAIN ANALYZE SELECT * FROM players WHERE level = 10;
 
-// Хорошо: 1 batch query
-players := db.GetPlayersBatch(playerIDs) // 1 query
-
-// Используй EXPLAIN ANALYZE для проверки
-// SELECT ... -- Query takes 250ms
-// Add index:
-// CREATE INDEX idx_players_level ON players(level) WHERE active=true;
-// SELECT ... -- Query takes 5ms
+# Add index если >10ms
+CREATE INDEX idx_players_level ON players(level);
 ```
 
-**Целевые DB метрики:**
-- **Query time:** P95 < 10ms
-- **Connections:** < 50 active (используй pooling)
-- **Slow queries:** 0 queries > 100ms
-
-### 9. Caching strategy
+### 9. 🆕 Metrics & Observability
 
 ```go
-// Обязательно кэшируй частые запросы
-type Cache struct {
-    data sync.Map // Lock-free для reads
-    ttl  time.Duration
-}
+var (
+    requestDuration = prometheus.NewHistogram(...)
+    gcPauseDuration = prometheus.NewHistogram(...)
+    goroutineCount  = prometheus.NewGauge(...)
+)
 
-func (c *Cache) Get(key string) (interface{}, bool) {
-    val, ok := c.data.Load(key)
-    if !ok {
-        return nil, false
-    }
-    
-    entry := val.(*CacheEntry)
-    if time.Since(entry.CreatedAt) > c.ttl {
-        c.data.Delete(key) // Expired
-        return nil, false
-    }
-    
-    return entry.Value, true
+func monitorGC() {
+    runtime.ReadMemStats(&stats)
+    gcPauseDuration.Observe(stats.PauseNs[...])
 }
 ```
 
-**Что кэшировать:**
-- Player profiles: TTL 5 минут
-- Game configs: TTL 1 час
-- Leaderboards: TTL 1 минута
-- Static data: No expiration
+## Performance Targets
 
-### 10. Performance budgets (устанавливай лимиты)
+**MMOFPS:**
+- Game tick: <8ms (128 Hz)
+- Player update: <100μs
+- DB query: <10ms P95
+- API response: <50ms P99
 
-```go
-// Fail CI если performance регрессия
-func TestPerformanceBudget(t *testing.T) {
-    result := testing.Benchmark(BenchmarkCriticalPath)
-    
-    // Budget: max 1000 ns/op
-    if result.NsPerOp() > 1000 {
-        t.Errorf("Performance regression: %d ns/op (budget: 1000)", 
-            result.NsPerOp())
-    }
-    
-    // Budget: 0 allocs/op
-    if result.AllocsPerOp() > 0 {
-        t.Errorf("Allocation regression: %d allocs/op (budget: 0)", 
-            result.AllocsPerOp())
-    }
-}
-```
+## Команды
 
-**Performance budgets для MMOFPS:**
-- **Game tick:** < 8ms (для 128 Hz)
-- **Player update:** < 100μs
-- **DB query:** < 10ms (P95)
-- **API response:** < 50ms (P99)
+- `/performance-find-tasks`
+- `/performance-validate-result #123`
+- `/performance-return-to-developer #123`
 
-**ВАЖНО:** Performance optimization - это continuous process. Профилируй регулярно, особенно после добавления новых фич. Что быстро сейчас может стать bottleneck при масштабировании.
+## Входные данные
 
-## Task Requirements Check
+- Код для оптимизации
+- Метрики
+- Профили
+- Requirements
 
-**Перед началом работы:**
-1. Прочитай Issue полностью (требования, критерии приемки, комментарии)
-2. Проверь соответствие оптимизаций требованиям Issue
-3. При ошибках → вернись к Issue и проверь требования
-
-**См. `.cursor/AGENT_COMMON_RULES.md` для деталей**
-
-## Формат вывода
+## Выходные данные
 
 - Оптимизированный код
-- **ОБЯЗАТЕЛЬНО: Issue в начале каждого файла:** `// Issue: #123`
-- Отчеты в Markdown (`<!-- Issue: #123 -->`)
-- Бенчмарки в тестах
+- Отчеты (Markdown)
+- Бенчмарки
+- **Issue в начале:** `// Issue: #123`
 
-## Коммиты и Git
+## Переход к следующему
 
-**См. `.cursor/AGENT_COMMON_RULES.md`**
+1. `/performance-validate-result #123`
+2. `/performance-return-to-developer #123`
+3. Update: `Backend - Todo` или `UE5 - Todo`
+4. Комментарий с improvements
 
-**Префикс:** `[performance]`
-**Тип:** `perf:` для оптимизации
+## Стиль работы
 
-### Формат коммитов
+- Измеряй → оптимизируй → валидируй
+- Профилируй реальные сценарии
+- Документируй улучшения
+- **Max 500 строк/файл**
 
-- **Префикс:** `[performance]` - обязателен
-- **Тип:** `perf:` для оптимизаций
-- **Issue:** всегда указывай номер Issue
+## Git коммиты
 
-### Когда коммитить
-
-- После оптимизации кода
-- После создания бенчмарков
-- После обновления отчетов
+**Формат:** `[performance] perf: {desc}\n\n{details}\n\nRelated Issue: #{n}`
 
 ## Запреты
 
-- НЕ меняй бизнес-логику без необходимости
+- НЕ меняй бизнес-логику (без нужды)
 - НЕ настраивай инфраструктуру
-- НЕ создавай новый функционал
-- ТОЛЬКО оптимизация производительности
+- НЕ создавай функционал
+- ТОЛЬКО оптимизация
+
+## 📚 Документация
+
+**Performance Bible (120+ техник):**
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - навигация
+- `.cursor/performance/01-memory-concurrency-db.md`
+- `.cursor/performance/02a-network-optimizations.md`
+- `.cursor/performance/03a-profiling-testing.md`
+- `.cursor/performance/03b-tools-summary.md`
+
+**Enforcement:**
+- `.cursor/PERFORMANCE_ENFORCEMENT.md`
+- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md`
+
+**Общее:**
+- `.cursor/AGENT_COMMON_RULES.md`
+- `.cursor/GITHUB_PROJECT_CONFIG.md`

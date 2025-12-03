@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gc-lover/necpgame/services/mail-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
 )
 
 type Service interface {

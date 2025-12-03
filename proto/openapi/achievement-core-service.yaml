@@ -101,56 +101,75 @@ components:
   schemas:
     Achievement:
       type: object
+      description: |
+        BACKEND NOTE: Achievement tracking (1000+ achievements).
+        Fields ordered for struct alignment. Expected memory: ~136 bytes/instance.
+        Use materialized view for player stats (player_achievement_summary).
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
+        season_id:
+          type: string
+          format: uuid
+          nullable: true
+        
+        # String fields (16 bytes each)
         code:
           type: string
-        type:
-          $ref: "#/components/schemas/AchievementType"
-        category:
-          $ref: "#/components/schemas/AchievementCategory"
-        rarity:
-          $ref: "#/components/schemas/AchievementRarity"
         title:
           type: string
           maxLength: 200
         description:
           type: string
-        points:
-          type: integer
-          minimum: 0
-        conditions:
-          type: object
-          additionalProperties: true
-        rewards:
-          type: object
-          additionalProperties: true
-        is_hidden:
-          type: boolean
-          default: false
-        is_seasonal:
-          type: boolean
-          default: false
-        season_id:
-          type: string
-          format: uuid
-          nullable: true
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+        
+        # Enum/Object references (8 bytes each)
+        type:
+          $ref: "#/components/schemas/AchievementType"
+        category:
+          $ref: "#/components/schemas/AchievementCategory"
+        rarity:
+          $ref: "#/components/schemas/AchievementRarity"
+        conditions:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+        
+        # Integer (4 bytes)
+        points:
+          type: integer
+          minimum: 0
+        
+        # Boolean fields last (1 byte each)
+        is_hidden:
+          type: boolean
+          default: false
+        is_seasonal:
+          type: boolean
+          default: false
 
     AchievementsResponse:
       type: object
+      description: |
+        BACKEND NOTE: List response (paginated queries).
+        Fields ordered for struct alignment. Expected memory: ~32 bytes + array.
       properties:
+        # Array first (24 bytes: pointer + len + cap)
         achievements:
           type: array
           items:
             $ref: "#/components/schemas/Achievement"
+        
+        # Integer last (4 bytes)
         total:
           type: integer
 

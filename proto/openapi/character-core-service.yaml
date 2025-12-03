@@ -201,22 +201,46 @@ components:
 
     CharacterFull:
       type: object
+      description: |
+        BACKEND NOTE: Core character data. Fields ordered for struct alignment.
+        Expected memory: ~160 bytes/instance. Hot path queries.
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
+        
+        # String fields (16 bytes each)
         name:
           type: string
         class:
           type: string
         origin:
           type: string
-        level:
-          type: integer
-          minimum: 1
+        current_zone:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_played_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore_until:
+          type: string
+          format: date-time
+          nullable: true
+        
+        # Objects (8 bytes reference each)
         attributes:
           type: object
           additionalProperties: true
@@ -226,27 +250,16 @@ components:
         stats:
           type: object
           additionalProperties: true
-        current_zone:
-          type: string
+        
+        # Integer fields (4 bytes)
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+        
+        # Boolean fields last (1 byte)
         deleted:
           type: boolean
-        deleted_at:
-          type: string
-          format: date-time
-          nullable: true
-        can_restore_until:
-          type: string
-          format: date-time
-          nullable: true
-        last_played_at:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
 
     ValidateNameResponse:
       type: object
@@ -269,6 +282,7 @@ components:
 
 security:
   - BearerAuth: []
+
 
 
 

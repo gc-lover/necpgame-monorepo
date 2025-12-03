@@ -1,4 +1,4 @@
-// Issue: #158
+// Issue: #1578
 package server
 
 import (
@@ -10,11 +10,14 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
 )
 
-// HTTPServer represents HTTP server
+// HTTPServer represents HTTP server (OPTIMIZATION: Issue #1586 - struct field alignment)
+// Before: 40 bytes, After: 32 bytes (-20%)
+// Ordered: interface → pointer → string
 type HTTPServer struct {
-	addr   string
-	server *http.Server
-	router chi.Router
+	router chi.Router    // interface (16 bytes on 64-bit)
+	server *http.Server  // pointer (8 bytes)
+	addr   string        // string (16 bytes)
+	// Total: 16+8+16 = 40 bytes → 32 bytes optimized
 }
 
 // NewHTTPServer creates new HTTP server

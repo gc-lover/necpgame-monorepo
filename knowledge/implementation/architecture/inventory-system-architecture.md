@@ -307,3 +307,6 @@ Response: `{"repair_cost": 500, "durability_restored": 100}`
 
 **Конец документа**
 
+
+
+

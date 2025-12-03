@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,6 +44,17 @@ func main() {
 	}
 
 	redisClient := redis.NewClient(redisOpts)
+	
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6061")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine, /debug/pprof/allocs
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
+	
 	engramCreationRepo := server.NewEngramCreationRepository(dbPool)
 	engramCreationService := server.NewEngramCreationService(engramCreationRepo, redisClient)
 	
