@@ -183,3 +183,6 @@ VALUES
     ('660e8400-e29b-41d4-a716-446655440001', 1, 'Active Player', 'Play 10 matches', 'play_matches', 10, 500, NOW(), NOW() + INTERVAL '7 days'),
     ('660e8400-e29b-41d4-a716-446655440001', 1, 'Damage Dealer', 'Deal 100,000 damage', 'deal_damage', 100000, 1200, NOW(), NOW() + INTERVAL '7 days');
 
+
+
+

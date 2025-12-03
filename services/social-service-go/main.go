@@ -19,7 +19,7 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8143")
 
-	httpServer := server.NewHTTPServer(addr, logger)
+	httpServer := server.NewHTTPServerOgen(addr, logger)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

@@ -106,3 +106,6 @@ VALUES
     ('550e8400-e29b-41d4-a716-446655440031', 'Explorer', 'Discover 10 locations', 'exploration', 'progressive', 10, 'credits', 200),
     ('550e8400-e29b-41d4-a716-446655440032', 'World Traveler', 'Visit all continents', 'exploration', 'standard', 7, 'credits', 1000);
 
+
+
+

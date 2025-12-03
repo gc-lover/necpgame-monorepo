@@ -296,8 +296,24 @@ func (s *UDPServer) SendBatch(updates []PlayerUpdate, addrs []*net.UDPAddr) {
 }
 ```
 
+## 🆕 Новые техники (2025)
+
+**FPS Optimizations:**
+- Lag compensation: `.cursor/performance/05b-world-lag-compensation.md`
+- Dead reckoning: `.cursor/performance/05b-world-lag-compensation.md`
+- Visibility culling: `.cursor/performance/05b-world-lag-compensation.md`
+
+**MMO Scaling:**
+- Zone sharding: `.cursor/performance/05b-world-lag-compensation.md`
+- Instance management: `.cursor/performance/05b-world-lag-compensation.md`
+
+**Compression:**
+- Adaptive: `.cursor/performance/06-resilience-compression.md`
+- Dictionary: `.cursor/performance/06-resilience-compression.md`
+
 ## См. также
 
 - `.cursor/templates/backend-api-templates.md` - API handlers/service/repository
 - `.cursor/templates/backend-utils-templates.md` - utilities и tests
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 150+ техник
 

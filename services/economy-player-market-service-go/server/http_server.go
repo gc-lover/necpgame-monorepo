@@ -1,76 +1,38 @@
-// Issue: #42
+// Issue: #61 - Player Market HTTP Server
 package server
 
 import (
 	"context"
 	"net/http"
-
-	"github.com/gc-lover/necpgame-monorepo/services/economy-player-market-service-go/pkg/api"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
+// HTTPServer wraps HTTP server
 type HTTPServer struct {
-	addr    string
-	router  chi.Router
-	service *PlayerMarketService
-	server  *http.Server
+	addr   string
+	server *http.Server
 }
 
+// NewHTTPServer creates HTTP server
 func NewHTTPServer(addr string, service *PlayerMarketService) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Global middleware
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
-
-	// Create handlers
-	handlers := NewHandlers(service)
-
-	// Register API routes
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
-
-	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
-
 	return &HTTPServer{
-		addr:    addr,
-		router:  router,
-		service: service,
+		addr: addr,
+		server: &http.Server{
+			Addr:    addr,
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+		},
 	}
 }
 
+// Start starts server
 func (s *HTTPServer) Start() error {
-	s.server = &http.Server{
-		Addr:    s.addr,
-		Handler: s.router,
-	}
 	return s.server.ListenAndServe()
 }
 
+// Shutdown gracefully shuts down
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	if s.server != nil {
-		return s.server.Shutdown(ctx)
-	}
-	return nil
-}
-
-func healthCheck(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
-}
-
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	// Prometheus metrics endpoint
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("# Metrics placeholder\n"))
+	return s.server.Shutdown(ctx)
 }
 

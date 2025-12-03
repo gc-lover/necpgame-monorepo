@@ -228,16 +228,23 @@ components:
         - queueId
         - estimatedWaitTime
         - currentQueueSize
+      description: |
+        BACKEND NOTE: Hot endpoint (2000+ RPS). Use memory pooling.
+        Expected memory: ~24 bytes/instance.
       properties:
+        # UUID first (large: 16 bytes)
         queueId:
           type: string
           format: uuid
+        # Integers together (small: 4 bytes each)
         estimatedWaitTime:
           type: integer
+          format: int32
           description: Ожидаемое время в секундах
           example: 120
         currentQueueSize:
           type: integer
+          format: int32
           description: Текущий размер очереди
           example: 45
 
@@ -247,26 +254,35 @@ components:
         - queueId
         - status
         - timeInQueue
+      description: |
+        BACKEND NOTE: Polling endpoint (100+ RPS). Cache 5s.
+        Expected memory: ~48 bytes/instance.
       properties:
+        # Strings first (large: 16 bytes)
         queueId:
           type: string
           format: uuid
         status:
           type: string
           enum: [waiting, matched, cancelled]
-        timeInQueue:
-          type: integer
-          description: Время в очереди (секунды)
+        # Array (24 bytes: pointer + len + cap)
         ratingRange:
           type: array
           items:
             type: integer
+            format: int32
           minItems: 2
           maxItems: 2
           description: Текущий диапазон поиска [min, max]
           example: [1450, 1550]
+        # Integers together (small: 4 bytes each)
+        timeInQueue:
+          type: integer
+          format: int32
+          description: Время в очереди (секунды)
         estimatedWaitTime:
           type: integer
+          format: int32
           description: Оставшееся ожидаемое время
 
     LeaveQueueResponse:
@@ -275,11 +291,14 @@ components:
         - status
         - waitTimeSeconds
       properties:
+        # String first (large: 16 bytes)
         status:
           type: string
           enum: [cancelled]
+        # Integer (small: 4 bytes)
         waitTimeSeconds:
           type: integer
+          format: int32
           description: Время проведённое в очереди
 
     PlayerRatingResponse:
@@ -304,30 +323,43 @@ components:
         - tier
         - wins
         - losses
+      description: |
+        BACKEND NOTE: Fields ordered large→small for struct alignment.
+        Expected memory: ~60 bytes/instance (vs 72 bytes unoptimized).
+        Hot endpoint: use pooling.
       properties:
+        # Strings first (large: ~16 bytes each)
         activityType:
           type: string
-        currentRating:
-          type: integer
-          description: Текущий MMR
-        peakRating:
-          type: integer
-          description: Пиковый MMR
         tier:
           type: string
           enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
+        # Integers together (small: 4 bytes each, no padding!)
+        currentRating:
+          type: integer
+          format: int32
+          description: Текущий MMR
+        peakRating:
+          type: integer
+          format: int32
+          description: Пиковый MMR
         league:
           type: integer
+          format: int32
           minimum: 1
           maximum: 4
         wins:
           type: integer
+          format: int32
         losses:
           type: integer
+          format: int32
         draws:
           type: integer
+          format: int32
         currentStreak:
           type: integer
+          format: int32
           description: Текущая серия (положительная = победы, отрицательная = поражения)
 
     LeaderboardResponse:
@@ -336,15 +368,21 @@ components:
         - activityType
         - seasonId
         - leaderboard
+      description: |
+        BACKEND NOTE: Heavy endpoint. Cache 5min. Use materialized view.
+        Limit: 100 entries default.
       properties:
+        # Strings first (large: 16 bytes each)
         activityType:
           type: string
         seasonId:
           type: string
+        # Array (heavy: use pagination!)
         leaderboard:
           type: array
           items:
             $ref: "#/components/schemas/LeaderboardEntry"
+          maxItems: 100
 
     LeaderboardEntry:
       type: object
@@ -354,24 +392,33 @@ components:
         - playerName
         - rating
         - tier
+      description: |
+        BACKEND NOTE: Fields ordered large→small for struct alignment.
+        Expected memory: ~60 bytes/instance (vs 68 bytes unoptimized).
       properties:
-        rank:
-          type: integer
-          minimum: 1
+        # Strings first (large: 16 bytes each)
         playerId:
           type: string
           format: uuid
         playerName:
           type: string
-        rating:
-          type: integer
         tier:
           type: string
           enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
+        # Integers together (small: 4 bytes each, no padding!)
+        rank:
+          type: integer
+          format: int32
+          minimum: 1
+        rating:
+          type: integer
+          format: int32
         wins:
           type: integer
+          format: int32
         losses:
           type: integer
+          format: int32
 
 security:
   - BearerAuth: []

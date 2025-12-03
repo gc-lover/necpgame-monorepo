@@ -288,3 +288,6 @@ ON trajectory_algorithms(performance_cost, algorithm_type);
 -- rollback DROP TABLE IF EXISTS projectile_compatibility;
 -- rollback DROP TABLE IF EXISTS projectile_forms;
 
+
+
+

@@ -1,9 +1,11 @@
-// Issue: #158
+// Issue: #1578, #1584
 package main
 
 import (
 	"context"
 	"log"
+	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,6 +28,16 @@ func main() {
 
 	// Initialize service
 	service := server.NewService(repo)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6060")
+		log.Printf("Starting pprof server on %s", pprofAddr)
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
+	}()
 
 	// Create HTTP server
 	httpServer := server.NewHTTPServer(addr, service)
@@ -63,4 +75,5 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
 

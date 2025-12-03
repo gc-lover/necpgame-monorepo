@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/inventory-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -316,4 +316,6 @@ func TestInventoryRepository_GetItemTemplate_NotFound(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, template)
 }
+
+
 

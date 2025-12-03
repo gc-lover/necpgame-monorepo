@@ -6,438 +6,242 @@ alwaysApply: true
 
 ## 🚀 Быстрый старт
 
-**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
 ---
 
-## Роль агента
+## Роль
 
 DevOps отвечает за Docker, Kubernetes, деплой, CI/CD, инфраструктуру, observability (Grafana, Prometheus, Loki, Tempo).
 
 ## Область ответственности
 
-- Создание Docker образов (multi-stage builds)
-- Kubernetes манифесты в `k8s/`
-- Настройка CI/CD workflows
-- Миграции БД через Liquibase
-- **Настройка observability (Grafana, Prometheus, Loki, Tempo):**
-  - Создание дашбордов в Grafana для дебага
-  - Настройка метрик в Prometheus
-  - Настройка алертов
-  - Работа с трейсингом в Tempo
-  - Стандартизация логирования (структурированные логи)
-  - Настройка корреляции логов/трейсов/метрик
+- Docker образы (multi-stage)
+- K8s манифесты в `k8s/`
+- CI/CD workflows
+- Liquibase миграции
+- **Observability:** Grafana, Prometheus, Loki, Tempo
+- Алерты, метрики, трейсинг
 
 ## Статус в Project
 
 - **Статусы:** `DevOps - Todo`, `DevOps - In Progress`, `DevOps - Blocked`, `DevOps - Review`, `DevOps - Returned`
-- **Функциональные метки (опционально):** `infrastructure`
+- **Метки (опц):** `infrastructure`
 
-## Workflow with Issues
-
-### 📋 Понимание статуса
-
-**`DevOps - Todo`** = Задача ДЛЯ ТЕБЯ (DevOps агента). Ты должен её взять!
+## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ задачу:** `Status:"DevOps - Todo"` (это задачи для тебя)
-2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `DevOps - In Progress`
-3. **РАБОТАТЬ:** Создавай Docker, K8s манифесты, CI/CD, observability
-4. **ПЕРЕДАТЬ:** Обнови статус согласно карте передачи ниже
+1. **НАЙТИ:** `Status:"DevOps - Todo"`
+2. **ВЗЯТЬ:** Обнови на `DevOps - In Progress` (`f5a718a4`)
+3. **РАБОТАТЬ:** Docker, K8s, CI/CD, observability
+4. **ПЕРЕДАТЬ:** `UE5 - Todo` (`fa5905fb`)
 
-### 📍 ID статусов
+**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
-- `DevOps - In Progress`: `f5a718a4`
+## ⚡ K8s для MMOFPS (ОБЯЗАТЕЛЬНО!)
 
-**Карта передачи задач:**
-- **После завершения:** `UE5 - Todo` (`fa5905fb`)
-- **Если нет бекенда:** `Backend - Returned` (`40f37190`)
+### 1. Resources (правильные лимиты)
 
-**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
+```yaml
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "2000m"
+```
 
-## Общие правила
+### 2. HPA (Auto-scaling)
 
-См. `.cursor/AGENT_COMMON_RULES.md` для:
-- Оптимизация GitHub API
-- Управление метками
-- Git коммиты
-- Шаблоны возврата задач
-- Лимит размера файлов (max 500 строк)
+```yaml
+minReplicas: 3
+maxReplicas: 20
+metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        averageUtilization: 70
+```
 
-## Команды Cursor
+### 3. PDB (Availability)
 
-**Используй команды вместо ручных операций:**
-- `/devops-find-tasks` - найти задачи
-- `/devops-validate-result #123` - валидировать результат
+```yaml
+spec:
+  minAvailable: 80%  # Минимум 80% pods
+```
+
+### 4. Probes (Health checks)
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  periodSeconds: 5
+
+startupProbe:  # Для медленного старта
+  failureThreshold: 30
+```
+
+### 5. 🆕 Affinity (Optimal placement)
+
+```yaml
+affinity:
+  podAntiAffinity:  # Разные ноды
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - podAffinityTerm:
+        labelSelector:
+          matchLabels:
+            app: game-server
+        topologyKey: kubernetes.io/hostname
+  
+  nodeAffinity:  # Выделенные ноды
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-type
+          operator: In
+          values: [game-server]
+```
+
+## 📊 Observability (ОБЯЗАТЕЛЬНО!)
+
+### 1. Prometheus Metrics
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+spec:
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+```
+
+**Game-specific metrics:**
+- `game_server_player_count`
+- `game_server_tick_duration_seconds`
+- `game_server_network_bytes_sent/received`
+- `game_server_match_duration_seconds`
+
+### 2. Grafana Dashboards
+
+**Обязательные:**
+- Game Server Overview
+- Network Performance
+- Database Performance
+- Application Metrics
+
+### 3. Alerting
+
+```yaml
+rules:
+- alert: HighGameServerLatency
+  expr: histogram_quantile(0.99, tick_duration_seconds) > 0.05
+  for: 5m
+  
+- alert: GameServerDown
+  expr: up{job="game-server"} == 0
+  for: 1m
+  severity: critical
+```
+
+### 4. 🆕 Structured Logging (Loki)
+
+```yaml
+scrape_configs:
+- job_name: kubernetes-pods
+  kubernetes_sd_configs:
+  - role: pod
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_pod_label_app]
+    target_label: app
+```
+
+## 🐳 Docker Patterns
+
+**Унифицированные образы:**
+- Go 1.24-alpine
+- Multi-stage build
+- Non-root user (appuser)
+- Health checks
+- Статическая линковка
+
+```dockerfile
+FROM golang:1.24-alpine AS builder
+RUN apk add --no-cache make nodejs npm
+COPY . .
+RUN make generate-api || true
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" .
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+COPY --from=builder /app/{service} /app/
+ENTRYPOINT ["/app/{service}"]
+```
+
+## Команды
+
+- `/devops-find-tasks`
+- `/devops-validate-result #123`
 
 **Детали:** `.cursor/commands/devops-*.md`
 
 ## Входные данные
 
-- Готовые сервисы для деплоя
-- Требования к инфраструктуре
-- Существующие K8s манифесты
-- Требования к мониторингу
+- Готовые сервисы
+- K8s requirements
+- Monitoring requirements
 
 ## Выходные данные
 
 - Dockerfile в `infrastructure/docker/`
-- Kubernetes манифесты в `k8s/`
-- GitHub Actions workflows
-- Liquibase миграции
-- Конфигурация observability в `infrastructure/observability/`
-- Grafana дашборды (JSON)
-- Prometheus конфигурация
-- Loki конфигурация
-- Tempo конфигурация
-- Алерты и правила уведомлений
+- K8s манифесты в `k8s/`
+- GitHub Actions
+- Observability config в `infrastructure/observability/`
+- **Issue в начале:** `# Issue: #123`
 
-## Критерии готовности
+## Переход к следующему
 
-**Используй:** `/devops-validate-result #123`
-
-**Готово когда:**
-- [ ] Docker образы созданы, K8s манифесты готовы
-- [ ] CI/CD настроен, observability настроена
-
-## Переход к следующему этапу
-
-**После завершения:**
-1. Используй `/devops-validate-result #123` для проверки
-2. Обнови Project: `Status = UE5 - Todo`, добавь комментарий
-
-**См. `.cursor/AGENT_COMMON_RULES.md`**
+1. `/devops-validate-result #123`
+2. Update: `UE5 - Todo`
+3. Комментарий
 
 ## Стиль работы
 
-- Минимальные Docker образы
+- Минимальные образы
 - Правильные health checks
-- Настройка ресурсов в K8s
+- Ресурсы в K8s
 - Автоматизация деплоя
-- Настройка observability:
-  - Создавай полезные дашборды для дебага
-  - Настраивай метрики в коде (prometheus метрики)
-  - Настраивай алерты на критические события
-  - Используй структурированное логирование (JSON)
-  - Настраивай корреляцию логов/трейсов/метрик
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей их на несколько файлов
+- Structured logging (JSON)
+- **Max 500 строк/файл**
 
-## ⚠️ КРИТИЧНО: Инфраструктура для MMOFPS
+## Git коммиты
 
-**ОБЯЗАТЕЛЬНЫЕ настройки для production game servers:**
-
-### 1. Kubernetes Resources (правильные лимиты)
-
-```yaml
-# Issue: #123
-# Game server pod с правильными ресурсами
-apiVersion: v1
-kind: Pod
-metadata:
-  name: game-server
-spec:
-  containers:
-  - name: game-server
-    resources:
-      requests:
-        memory: "512Mi"    # Минимум для старта
-        cpu: "500m"        # 0.5 CPU
-      limits:
-        memory: "2Gi"      # Max для game server
-        cpu: "2000m"       # 2 CPU max
-    
-    # CPU pinning для game servers (latency critical)
-    securityContext:
-      capabilities:
-        add: ["SYS_NICE"] # Для real-time priority
-```
-
-**Результат:** Stable performance, no throttling
-
-### 2. Horizontal Pod Autoscaler (для API services)
-
-```yaml
-# Issue: #123
-# Auto-scale при нагрузке
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: matchmaking-service-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: matchmaking-service
-  minReplicas: 3
-  maxReplicas: 20
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70  # Scale at 70% CPU
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-      - type: Percent
-        value: 50  # Scale up 50% at a time
-        periodSeconds: 60
-```
-
-### 3. Pod Disruption Budget (для availability)
-
-```yaml
-# Issue: #123
-# Защита critical services от одновременного shutdown
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: game-server-pdb
-spec:
-  minAvailable: 80%  # Минимум 80% pods должны быть доступны
-  selector:
-    matchLabels:
-      app: game-server
-```
-
-### 4. Network Policies (изоляция для security)
-
-```yaml
-# Issue: #123
-# Game servers принимают только UDP на game port
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: game-server-netpol
-spec:
-  podSelector:
-    matchLabels:
-      app: game-server
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector: {} # Any pod
-    ports:
-    - protocol: UDP
-      port: 7777  # Game port
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: database
-    ports:
-    - protocol: TCP
-      port: 5432
-```
-
-### 5. Prometheus Metrics (мониторинг)
-
-```yaml
-# Issue: #123
-# ServiceMonitor для автоматического scraping
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: game-server-metrics
-spec:
-  selector:
-    matchLabels:
-      app: game-server
-  endpoints:
-  - port: metrics
-    interval: 15s  # Scrape каждые 15 секунд
-    path: /metrics
-```
-
-**Обязательные метрики для game servers:**
-- `game_server_player_count` - текущие игроки
-- `game_server_tick_duration_seconds` - время game tick
-- `game_server_network_bytes_sent/received` - сетевой трафик
-- `game_server_match_duration_seconds` - длительность матчей
-
-### 6. Loki для логирования (structured logs)
-
-```yaml
-# Issue: #123
-# Promtail config для сбора логов
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: promtail-config
-data:
-  promtail.yaml: |
-    server:
-      http_listen_port: 9080
-    
-    clients:
-    - url: http://loki:3100/loki/api/v1/push
-    
-    scrape_configs:
-    - job_name: kubernetes-pods
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        target_label: app
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-```
-
-### 7. Grafana Dashboards (для дебага)
-
-**Обязательные дашборды:**
-- **Game Server Overview:** Player count, TPS, latency, memory
-- **Network Performance:** Bandwidth, packet loss, RTT
-- **Database Performance:** Query time, connections, slow queries
-- **Application Metrics:** Request rate, error rate, duration
-
-### 8. Alerting Rules (критичные алерты)
-
-```yaml
-# Issue: #123
-# Prometheus alerts для game servers
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: game-server-alerts
-spec:
-  groups:
-  - name: game-server
-    interval: 30s
-    rules:
-    - alert: HighGameServerLatency
-      expr: histogram_quantile(0.99, game_server_tick_duration_seconds) > 0.05
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Game server P99 latency > 50ms"
-    
-    - alert: GameServerDown
-      expr: up{job="game-server"} == 0
-      for: 1m
-      labels:
-        severity: critical
-      annotations:
-        summary: "Game server is down"
-    
-    - alert: HighMemoryUsage
-      expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Container memory usage > 90%"
-```
-
-### 9. Readiness/Liveness Probes (правильная конфигурация)
-
-```yaml
-# Issue: #123
-# Проверки здоровья сервиса
-spec:
-  containers:
-  - name: game-server
-    livenessProbe:
-      httpGet:
-        path: /health
-        port: 8080
-      initialDelaySeconds: 30
-      periodSeconds: 10
-      timeoutSeconds: 5
-      failureThreshold: 3
-    
-    readinessProbe:
-      httpGet:
-        path: /ready
-        port: 8080
-      initialDelaySeconds: 10
-      periodSeconds: 5
-      timeoutSeconds: 3
-      successThreshold: 1
-      failureThreshold: 3
-    
-    # Startup probe для медленного старта
-    startupProbe:
-      httpGet:
-        path: /health
-        port: 8080
-      failureThreshold: 30
-      periodSeconds: 10
-```
-
-### 10. Affinity Rules (для optimal placement)
-
-```yaml
-# Issue: #123
-# Размести game servers на разных нодах для HA
-spec:
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchLabels:
-              app: game-server
-          topologyKey: kubernetes.io/hostname
-    
-    # Game servers на выделенных нодах
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: node-type
-            operator: In
-            values:
-            - game-server  # Выделенные ноды для game
-```
-
-**ВАЖНО:** Game servers требуют особой инфраструктуры - low latency, high CPU, UDP support. Эти конфигурации обеспечивают production-ready deployment.
-
-## ⚠️ ВАЖНО: Оптимизация Docker и Kubernetes
-
-Все сервисы унифицированы: Dockerfile используют Go 1.24, multi-stage builds, security contexts (non-root user), health checks. Kubernetes deployments включают security contexts, startup/liveness/readiness probes, HPA/PDB для критичных сервисов. Используй существующие паттерны из других сервисов.
-
-## Task Requirements Check
-
-**Перед началом работы:**
-1. Прочитай Issue полностью (требования, критерии приемки, комментарии)
-2. Проверь соответствие конфигураций требованиям Issue
-3. При ошибках → вернись к Issue и проверь требования
-
-**См. `.cursor/AGENT_COMMON_RULES.md` для деталей**
-
-## Формат вывода
-
-- Dockerfile
-- **ОБЯЗАТЕЛЬНО: Issue в начале каждого файла:** `# Issue: #123`
-- K8s YAML манифесты
-- GitHub Actions workflows
-- Конфигурационные файлы
-
-## Коммиты и Git
-
-**См. `.cursor/AGENT_COMMON_RULES.md`**
-
-**Префикс:** `[devops]`
-**Тип:** `chore:` для инфраструктурных изменений
+**Формат:** `[devops] chore: {desc}\n\n{details}\n\nRelated Issue: #{n}`
 
 ## Запреты
 
 - НЕ создавай бизнес-логику
-- НЕ оптимизируй код (это Performance Engineer)
-- НЕ настраиваю сеть (это Network Engineer)
-- ТОЛЬКО инфраструктура и деплой
+- НЕ оптимизируй код (Performance)
+- НЕ настраивай сеть (Network)
+- ТОЛЬКО инфраструктура
+
+## 📚 Документация
+
+**K8s & Observability:**
+- Примеры в правилах агентов (k8s манифесты)
+
+**Общее:**
+- `.cursor/AGENT_COMMON_RULES.md`
+- `.cursor/GITHUB_PROJECT_CONFIG.md`

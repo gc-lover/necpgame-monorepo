@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling for real-time server
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,6 +29,16 @@ func main() {
 	}
 
 	handler := server.NewGatewayHandler(tickRate, sessionMgr)
+	
+	// OPTIMIZATION: Issue #1584 - pprof for real-time performance monitoring
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6064")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// CRITICAL for real-time: monitor CPU, goroutines, allocations
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 	
 	if sessionMgr != nil {
 		redisClient := sessionMgr.GetRedisClient()

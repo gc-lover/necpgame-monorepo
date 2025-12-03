@@ -324,89 +324,129 @@ components:
   schemas:
     InventoryResponse:
       type: object
+      description: |
+        BACKEND NOTE: Hot endpoint (10k+ RPS). Fields ordered for struct alignment.
+        Expected memory: ~56 bytes/instance + items array.
+        3-tier caching: L1 memory (30s) → L2 Redis (5min) → L3 DB
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
-        max_slots:
-          type: integer
-        used_slots:
-          type: integer
+        
+        # Array (24 bytes: pointer + len + cap)
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItemResponse"
+        
+        # Float fields (4 bytes each, grouped)
         max_weight:
           type: number
           format: float
         current_weight:
           type: number
           format: float
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/InventoryItemResponse"
+        
+        # Integer fields (4 bytes each, grouped)
+        max_slots:
+          type: integer
+          format: int32
+        used_slots:
+          type: integer
+          format: int32
 
     InventoryItemResponse:
       type: object
+      description: |
+        BACKEND NOTE: Returned in arrays (100+ items). Optimal alignment critical.
+        Expected memory: ~80 bytes/instance.
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         item_id:
           type: string
           format: uuid
-        slot_index:
-          type: integer
-        quantity:
-          type: integer
-        is_equipped:
-          type: boolean
+        
+        # String fields (16 bytes each)
         equipment_slot:
           type: string
-        durability:
-          type: integer
-        max_durability:
-          type: integer
-        item_level:
-          type: integer
         rarity:
           type: string
+        acquired_at:
+          type: string
+          format: date-time
+        
+        # Object (8 bytes reference)
         mods:
           type: object
           description: Модификаторы предмета
+        
+        # Integer fields (4 bytes each, grouped)
+        slot_index:
+          type: integer
+          format: int32
+        quantity:
+          type: integer
+          format: int32
+        durability:
+          type: integer
+          format: int32
+        max_durability:
+          type: integer
+          format: int32
+        item_level:
+          type: integer
+          format: int32
+        
+        # Boolean fields last (1 byte each)
+        is_equipped:
+          type: boolean
         is_locked:
           type: boolean
         is_bound:
           type: boolean
-        acquired_at:
-          type: string
-          format: date-time
 
     AddItemRequest:
       type: object
       required:
         - item_id
       properties:
+        # UUID first (16 bytes)
         item_id:
           type: string
           format: uuid
+        # String (16 bytes)
+        rarity:
+          type: string
+        # Object (8 bytes reference)
+        mods:
+          type: object
+        # Integers together (4 bytes each)
         quantity:
           type: integer
+          format: int32
           default: 1
         item_level:
           type: integer
-        rarity:
-          type: string
-        mods:
-          type: object
+          format: int32
 
     UpdateItemRequest:
       type: object
       properties:
-        durability:
-          type: integer
+        # Object first (8 bytes)
         mods:
           type: object
+        # Integer (4 bytes)
+        durability:
+          type: integer
+          format: int32
+        # Boolean last (1 byte)
         is_locked:
           type: boolean
 
@@ -417,6 +457,7 @@ components:
       properties:
         target_slot:
           type: integer
+          format: int32
 
     EquipmentResponse:
       type: object
@@ -441,27 +482,37 @@ components:
 
     VaultResponse:
       type: object
+      description: |
+        BACKEND NOTE: Heavy objects. Cache in Redis 10min TTL.
+        Expected memory: ~72 bytes/instance + items array.
       properties:
+        # UUIDs first (16 bytes each)
         id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
-        vault_type:
-          type: string
-          enum: [personal, guild, shared]
         location_id:
           type: string
           format: uuid
-        max_slots:
-          type: integer
-        used_slots:
-          type: integer
+        # String (16 bytes)
+        vault_type:
+          type: string
+          enum: [personal, guild, shared]
+        # Array (24 bytes)
         items:
           type: array
+          maxItems: 200
           items:
             type: object
+        # Integers together (4 bytes each)
+        max_slots:
+          type: integer
+          format: int32
+        used_slots:
+          type: integer
+          format: int32
 
     VaultsListResponse:
       type: object

@@ -71,16 +71,14 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 - `project_node_id: 'PVT_kwHODCWAw84BIyie'`
 - `status_field_id: '239690516'`
 
-## Chi Router Standard (для Backend)
+## Backend Code Generation
 
-**Chi - ЕДИНСТВЕННЫЙ роутер для ВСЕХ Go сервисов**
+**ogen - стандарт для всех сервисов**
 
-- ✅ НОВЫЕ сервисы → Chi обязательно (`chi-server`)
-- 🔄 СУЩЕСТВУЮЩИЕ с Chi → всё ОК
-- ⚠️ СУЩЕСТВУЮЩИЕ с Gorilla → **ОБЯЗАТЕЛЬНО мигрируй на Chi!**
-- ❌ Gorilla ЗАПРЕЩЕН для всех сервисов
+- ✅ НОВЫЕ сервисы → `ogen` (90% faster!)
+- 🔄 СУЩЕСТВУЮЩИЕ → мигрируй на `ogen` (#1590)
 
-**Детали миграции:** См. секцию "Миграция с Gorilla на Chi" в `.cursor/rules/agent-backend.mdc`
+**Гайд:** `.cursor/OGEN_MIGRATION_GUIDE.md`
 
 ## Performance Optimizations (для Backend)
 
@@ -115,17 +113,30 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 - GC tuning (`GOGC=50`)
 - Profiling endpoints (pprof)
 
-**PostgreSQL Advanced:**
-- pgBouncer (connection pooler)
-- Prepared statement cache
-- WAL tuning (для write-heavy)
-- JSONB indexes (для flexible data)
+**🆕 Database Advanced (2025):**
+- Time-series partitioning → query ↓90%, auto retention
+- Materialized views → 100x speedup (leaderboards)
+- Covering indexes → query ↓50-70%
+- Partial indexes → index size ↓60-80%
+- pgBouncer → 10k connections to 25 pool
+- LISTEN/NOTIFY → real-time events
+- WAL tuning → write ↑50%
+- JSONB + GIN indexes
 
-**Redis Advanced:**
-- Pipelining (batch commands)
-- Lua scripts (atomic operations)
-- Redis Cluster (для scale)
-- Cache Pub/Sub (distributed invalidation)
+**🆕 Redis Advanced (2025):**
+- Session store (stateless servers)
+- Pipelining → round-trips ↓99%
+- Lua scripts (atomic ops)
+- Redis Cluster (millions ops/sec)
+- Pub/Sub invalidation (distributed cache)
+- Sorted sets (leaderboards)
+
+**🆕 Resilience (2025):**
+- Circuit breakers (DB resilience)
+- Feature flags (graceful degradation)
+- Load shedding (backpressure)
+- Fallback strategies (multi-level)
+- Connection retry (exponential backoff)
 
 **Валидация ОБЯЗАТЕЛЬНА:**
 - Запускай `/backend-validate-optimizations #123` перед передачей
@@ -133,9 +144,10 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 - Передавай ТОЛЬКО после ✅ validation passed
 
 **Детали:**
-- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - **120+ оптимизаций** (13 parts)
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист для валидации
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - **150+ оптимизаций** (13 parts, обновлено 2025)
+- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист с новыми техниками
 - `.cursor/templates/backend-*.md` - шаблоны кода
+- `.cursor/performance/*.md` - 13 частей Performance Bible
 - `/backend-validate-optimizations #123` - команда для проверки
 
 **Рефакторинг существующих сервисов:**

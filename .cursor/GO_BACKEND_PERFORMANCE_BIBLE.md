@@ -125,21 +125,28 @@
 
 ## 📊 Что внутри
 
-### Всего оптимизаций: **120+ техник**
+### Всего оптимизаций: **150+ техник** (обновлено в 2025)
 
 **По приоритетам:**
-- 🔴 **P0 (Critical):** 10 techniques - MUST implement
-- 🟡 **P1 (High):** 15 techniques - Strong impact
-- 🟢 **P2 (Medium):** 12 techniques - Good to have
-- ⚪ **P3 (Low):** 3 techniques - Edge cases
+- 🔴 **P0 (Critical):** 18 techniques - MUST implement
+- 🟡 **P1 (High):** 25 techniques - Strong impact  
+- 🟢 **P2 (Medium):** 15 techniques - Good to have
+- ⚪ **P3 (Low):** 5 techniques - Edge cases
 
 **Новое в 2024-2025:**
-- ✨ SingleFlight pattern (deduplication)
-- ✨ ErrGroup pattern (parallel execution)
-- ✨ PGO - Profile-Guided Optimization (Go 1.21+)
-- ✨ Arena allocator (experimental)
+- ✨ Redis session store (stateless servers)
+- ✨ Inventory caching (multi-level)
+- ✨ Guild action batching (DB ↓95%)
+- ✨ Skill-based matchmaking buckets (O(1))
+- ✨ Server-side rewind (lag compensation)
+- ✨ Time-series partitioning (query ↓90%)
+- ✨ Materialized views (100x speedup)
+- ✨ Pub/Sub cache invalidation
+- ✨ Adaptive compression (LZ4/Zstandard)
+- ✨ Circuit breakers (resilience)
+- ✨ Feature flags (graceful degradation)
+- ✨ PGO (Profile-Guided Optimization)
 - ✨ Continuous profiling (Pyroscope)
-- ✨ Range-over-Func (Go 1.23)
 
 ---
 

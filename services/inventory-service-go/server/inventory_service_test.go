@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/inventory-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -787,3 +787,5 @@ func TestInventoryService_AddItem_RepositoryError(t *testing.T) {
 	assert.Error(t, err)
 	mockRepo.AssertExpectations(t)
 }
+
+

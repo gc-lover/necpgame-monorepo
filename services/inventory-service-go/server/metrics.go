@@ -55,3 +55,5 @@ func SetInventoryItems(characterID string, count float64) {
 func RecordError(errorType string) {
 	inventoryErrorsTotal.WithLabelValues(errorType).Inc()
 }
+
+

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/inventory-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
@@ -243,3 +243,5 @@ func (r *InventoryRepository) GetItemTemplate(ctx context.Context, itemID string
 
 	return &template, nil
 }
+
+

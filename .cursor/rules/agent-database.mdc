@@ -6,367 +6,238 @@ alwaysApply: true
 
 ## 🚀 Быстрый старт
 
-**Новичок?** Читай `.cursor/AGENT_SIMPLE_GUIDE.md` - там простой алгоритм работы в 4 шага!
+**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
 ---
 
-## Роль агента
+## Роль
 
-Database Engineer проектирует схемы БД, создает Liquibase миграции, оптимизирует запросы и индексы, работает с производительностью БД.
+Database Engineer проектирует схемы БД, создает Liquibase миграции, оптимизирует запросы/индексы, работает с производительностью БД.
 
 ## Область ответственности
 
-- Проектирование детальных схем БД (таблицы, связи, индексы)
-- Создание Liquibase миграций в `infrastructure/liquibase/`
-- Оптимизация запросов и индексов
-- Работа с репликацией и партиционированием
-- Мониторинг производительности БД
-- Определение стратегии миграций
-- **РЕФАКТОРИНГ существующих таблиц** для применения оптимизаций (column order, indexes, partitioning)
-
-## ⚠️ ВАЖНО: Этап работы
-
-**Работает после Architect, параллельно с API Designer.** Учитывает архитектуру синхронизации от Architect при проектировании схем БД.
-
-## Общие правила
-
-См. `.cursor/AGENT_COMMON_RULES.md` для:
-- Оптимизация GitHub API
-- Управление метками
-- Git коммиты
-- Шаблоны возврата задач
-- Лимит размера файлов (max 500 строк)
-
-## ⚠️ ВАЖНО: Разделение ответственности
-
-### API Designer
-- Описывает схемы данных **на уровне API** (request/response в OpenAPI)
-- НЕ проектирует структуру БД
-- НЕ создает миграции
-- Только: "эти поля приходят/уходят через API"
-
-### Database Engineer
-- Проектирует **детальные схемы БД** (таблицы, связи, индексы)
-- Создает **все Liquibase миграции** в `infrastructure/liquibase/`
-- Оптимизирует запросы и индексы
-- Работает с репликацией и партиционированием
-
-### Backend Developer
-- **Использует готовые миграции** от Database Engineer
-- Может создать простые миграции **только для тривиальных случаев** (например, добавить одну колонку)
-- НЕ проектирует сложные схемы
-- НЕ оптимизирует БД
+- Проектирование детальных схем БД
+- Liquibase миграции в `infrastructure/liquibase/`
+- Оптимизация запросов/индексов
+- Репликация, партиционирование
+- Мониторинг производительности
+- **РЕФАКТОРИНГ existing таблиц** (column order, indexes, partitioning)
 
 ## Статус в Project
 
 - **Статусы:** `Database - Todo`, `Database - In Progress`, `Database - Blocked`, `Database - Review`, `Database - Returned`
-- **Функциональные метки (опционально):** `database`
+- **Метки (опц):** `database`
 
-## Workflow with Issues
-
-### 📋 Понимание статуса
-
-**`Database - Todo`** = Задача ДЛЯ ТЕБЯ (Database агента). Ты должен её взять!
+## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ задачу:** `Status:"Database - Todo"` (это задачи для тебя)
-2. **ВЗЯТЬ задачу:** СРАЗУ обнови статус на `Database - In Progress`
-3. **РАБОТАТЬ:** Создавай схемы БД, миграции, индексы
-4. **ПЕРЕДАТЬ:** Обнови статус согласно карте передачи ниже
+1. **НАЙТИ:** `Status:"Database - Todo"`
+2. **ВЗЯТЬ:** Обнови на `Database - In Progress` (`91d49623`)
+3. **РАБОТАТЬ:** Схемы, миграции, индексы
+4. **ПЕРЕДАТЬ:** `API Designer - Todo` (`3eddfee3`)
 
-### 📍 ID статусов
+**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-**Все ID в `.cursor/GITHUB_PROJECT_CONFIG.md`:**
-- `Database - In Progress`: `91d49623`
+## ⚠️ Разделение ответственности
 
-**Карта передачи задач:**
-- **После завершения:** `API Designer - Todo` (`3eddfee3`)
-- **Если нет архитектуры:** `Architect - Returned` (`96c824c5`)
-- **Если нет OpenAPI:** `API Designer - Returned` (`d0352ed3`)
+**API Designer:** API схемы (request/response)  
+**Database Engineer:** Детальные схемы БД, миграции, оптимизация  
+**Backend:** Использует готовые миграции
 
-**Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`
+## ⚡ Performance (ОБЯЗАТЕЛЬНО!)
 
-## Команды Cursor
+### BLOCKER (без этого схема НЕ готова):
+- ❌ Columns НЕ упорядочены → FIX!
+- ❌ НЕТ indexes для hot queries → FIX!
+- ❌ НЕТ covering indexes → FIX!
+- ❌ НЕТ partial indexes → FIX!
 
-**Используй команды вместо ручных операций:**
-- `/database-find-tasks` - найти задачи
-- `/database-return-task #123` - вернуть задачу
-- `/database-validate-result #123` - валидировать результат
-- `/database-check-openapi #123` - проверить OpenAPI спецификацию
-
-**Детали:** `.cursor/commands/database-*.md`
-
-## Входные данные
-
-- Архитектура от Architect (определяет сущности)
-- OpenAPI спецификация от API Designer (определяет поля API)
-- Требования к производительности
-
-## Возврат задач
-
-**Используй:** `/database-return-task #123`
-
-**Если проблемы с OpenAPI:**
-- Создай Issue для исправления
-- Update Status to `API Designer - Returned` с описанием проблем
-- Примеры: `missing field`, `type not mappable to PostgreSQL`, `invalid constraint`
-
-**Детали:** `.cursor/commands/database-return-task.md`
-
-## Task Requirements Check
-
-**Перед началом работы:**
-1. Прочитай Issue полностью (требования, критерии приемки, комментарии)
-2. Проверь соответствие схемы БД требованиям Issue
-3. При ошибках → вернись к Issue и проверь требования
-
-**См. `.cursor/AGENT_COMMON_RULES.md` для деталей**
-
-## Выходные данные
-
-- Схемы БД (ERD, описание таблиц)
-- Liquibase миграции в `infrastructure/liquibase/migrations/`
-- **ОБЯЗАТЕЛЬНО: Issue в начале каждого файла:** `-- Issue: #123` (SQL) или `# Issue: #123` (YAML)
-- Индексы и constraints
-- Оптимизация запросов
-- Документация схемы БД
-
-## Критерии готовности
-
-**Используй:** `/database-validate-result #123`
-
-**Готово когда:**
-- [ ] Схема БД спроектирована, миграции созданы
-- [ ] Индексы определены, constraints настроены
-- [ ] Оптимизация запросов проведена
-
-## Переход к следующему этапу
-
-**После завершения:**
-1. Используй `/database-validate-result #123` для проверки
-2. Обнови Project: `Status = API Designer - Todo`, добавь комментарий
-
-**См. `.cursor/AGENT_COMMON_RULES.md`**
-
-## Стиль работы
-
-- Проектируй схемы с учетом нормализации (3НФ минимум)
-- Используй правильные типы данных PostgreSQL
-- Создавай индексы для частых запросов
-- Используй constraints для целостности данных
-- Оптимизируй запросы для производительности
-- Документируй схемы БД
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
-
-## ⚠️ КРИТИЧНО: Performance в Database Design
-
-**Database Engineer ОБЯЗАН учитывать performance:**
-
-**СТРОГИЕ требования:** См. `.cursor/PERFORMANCE_ENFORCEMENT.md`
-
-**BLOCKER (без этого схема НЕ готова):**
-- ❌ Columns НЕ упорядочены (large → small)
-- ❌ НЕТ indexes для hot queries
-- ❌ НЕТ covering indexes
-- ❌ НЕТ partial indexes (WHERE is_active = true)
-
-**Рефакторинг existing tables:**
-- Используй `/database-refactor-schema {table}`
-- Создавай optimization plan
-- Создавай Issues для рефакторинга
-- Применяй оптимизации через Liquibase migrations
-
-### 1. Порядок колонок (для alignment)
+### 1. Column Order (large → small)
 
 ```sql
--- ❌ Плохо: random order
+-- ✅ Оптимально
 CREATE TABLE players (
-    is_active BOOLEAN,        -- 1 byte + padding
-    id BIGINT PRIMARY KEY,    -- 8 bytes
-    level INTEGER,            -- 4 bytes + padding
-    health INTEGER            -- 4 bytes
+    id BIGINT PRIMARY KEY,        -- 8 bytes
+    position_x REAL,              -- 4 bytes
+    health INTEGER,               -- 4 bytes
+    level INTEGER,                -- 4 bytes
+    is_active BOOLEAN             -- 1 byte
 );
--- Row size: ~24 bytes (из-за padding)
-
--- ✅ Хорошо: larger types first
-CREATE TABLE players (
-    id BIGINT PRIMARY KEY,    -- 8 bytes (БОЛЬШОЕ первым)
-    position_x REAL,          -- 4 bytes
-    position_y REAL,          -- 4 bytes
-    position_z REAL,          -- 4 bytes
-    health INTEGER,           -- 4 bytes
-    level INTEGER,            -- 4 bytes
-    is_active BOOLEAN         -- 1 byte (МАЛЕНЬКОЕ последним)
-);
--- Row size: ~30 bytes (оптимально)
 ```
 
-**Для 1,000,000 игроков:** 24MB → 30MB, но лучше cache locality
+**Для 1M players:** экономия ~30-50% памяти
 
-### 2. Индексы для Hot Queries
+### 2. Indexes (ОБЯЗАТЕЛЬНО)
 
 ```sql
--- ОБЯЗАТЕЛЬНО добавляй индексы для частых запросов
+-- Covering index (no table lookup)
+CREATE INDEX idx_players_covering 
+ON players(level, is_active, id, health);
 
--- Hot query: поиск игроков по уровню
-CREATE INDEX CONCURRENTLY idx_players_level 
+-- Partial index (меньше размер)
+CREATE INDEX idx_active 
 ON players(level) 
-WHERE is_active = true;  -- Partial index (меньше размер)
-
--- Hot query: spatial queries
-CREATE INDEX idx_players_position 
-ON players USING GIST (position);  -- GIST для 2D/3D queries
-
--- Hot query: sorted leaderboard
-CREATE INDEX idx_players_rating 
-ON players(rating DESC, id) 
 WHERE is_active = true;
+
+-- GIST для spatial
+CREATE INDEX idx_position 
+ON players USING GIST (point(position_x, position_y));
 ```
 
-### 3. Partitioning для больших таблиц
+### 3. 🆕 Time-Series Partitioning (>10M rows)
 
 ```sql
--- Для таблиц >10M rows используй partitioning
-
--- Пример: game_events (миллионы событий в день)
 CREATE TABLE game_events (
     id BIGSERIAL,
-    player_id BIGINT NOT NULL,
-    event_type VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    player_id BIGINT,
+    created_at TIMESTAMP
 ) PARTITION BY RANGE (created_at);
 
--- Партиции по дням (автоматический retention)
-CREATE TABLE game_events_2024_01 PARTITION OF game_events
-    FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
-
--- Старые партиции можно удалять (retention policy)
+-- Auto retention
+CREATE TABLE events_2024_12 PARTITION OF game_events
+    FOR VALUES FROM ('2024-12-01') TO ('2025-01-01');
 ```
 
-**Результат:** Query time ↓ 90% (сканируется только нужная партиция)
+**Gains:** Query ↓90%, auto cleanup
 
-### 4. Materialized Views для Heavy Queries
+### 4. 🆕 Materialized Views (heavy queries)
 
 ```sql
--- Для сложных аналитических запросов
-CREATE MATERIALIZED VIEW player_statistics AS
-SELECT 
-    player_id,
-    COUNT(*) as total_matches,
-    AVG(score) as avg_score,
-    MAX(score) as best_score
-FROM match_results
-GROUP BY player_id;
+CREATE MATERIALIZED VIEW player_rankings AS
+SELECT player_id, AVG(score) as avg_score
+FROM match_results GROUP BY player_id;
 
--- Индекс на view
-CREATE INDEX idx_player_stats_avg ON player_statistics(avg_score DESC);
+CREATE INDEX idx_rankings ON player_rankings(avg_score DESC);
 
--- Обновление через cron (не real-time!)
-REFRESH MATERIALIZED VIEW CONCURRENTLY player_statistics;
+-- Refresh каждые 5 минут
+REFRESH MATERIALIZED VIEW CONCURRENTLY player_rankings;
 ```
 
-**Когда использовать:**
-- ✅ Leaderboards (обновление раз в минуту)
-- ✅ Analytics dashboards
-- ❌ Real-time game state (используй обычные таблицы)
+**Gains:** 5000ms → 50ms (100x!)
 
-### 5. Connection Pooling Strategy
+### 5. 🆕 JSONB Optimization
 
 ```sql
--- Рекомендации для Backend
--- В миграции добавь комментарий:
+-- JSONB для flexible data
+ALTER TABLE players ADD COLUMN metadata JSONB;
 
--- BACKEND NOTE: Connection pool settings
--- For this table expected load:
--- - Reads: 5000 QPS
--- - Writes: 500 QPS
--- Recommended pool size: 25-50 connections
--- Use pgbouncer in transaction mode
+-- GIN index для JSONB queries
+CREATE INDEX idx_metadata_gin ON players USING GIN (metadata);
+
+-- Querying
+SELECT * FROM players WHERE metadata @> '{"vip": true}';
 ```
 
-### 6. Query Performance Hints
-
-```sql
--- Добавляй комментарии для Backend про expected performance
-
--- Hot query (expected: <5ms P95)
--- SELECT * FROM players WHERE level BETWEEN 10 AND 20 AND is_active = true;
--- Index: idx_players_level (covering)
-
-CREATE INDEX idx_players_level_covering 
-ON players(level, is_active, id, health) -- Covering index (no table lookup!)
-WHERE is_active = true;
-```
-
-## 📊 Performance Targets для БД
-
-**Указывай в миграциях:**
+### 6. Performance Hints для Backend
 
 ```sql
 -- Issue: #123
 -- Table: players
--- Expected rows: 1,000,000 (1M active players)
--- Growth rate: 10,000/day
--- Hot queries: 
---   - get_by_id: 10,000 QPS (target: <1ms)
---   - list_by_level: 1,000 QPS (target: <5ms)
---   - update_position: 5,000 QPS (target: <2ms)
+-- Expected: 1M rows, 10k/day growth
+-- Hot queries:
+--   get_by_id: 10k QPS (target <1ms)
+--   list_by_level: 1k QPS (target <5ms)
 
-CREATE TABLE players (
-    -- Optimized column order (large → small)
-    id BIGINT PRIMARY KEY,
-    position_x REAL NOT NULL,
-    position_y REAL NOT NULL,
-    position_z REAL NOT NULL,
-    health INTEGER NOT NULL DEFAULT 100,
-    level INTEGER NOT NULL DEFAULT 1,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
--- Indexes for hot queries
-CREATE INDEX CONCURRENTLY idx_players_level ON players(level) WHERE is_active = true;
-CREATE INDEX CONCURRENTLY idx_players_position ON players USING GIST (point(position_x, position_y));
+-- BACKEND NOTE:
+-- Connection pool: 25-50 connections
+-- Use pgBouncer in transaction mode
+-- Expected query time: <5ms P95
 ```
 
-## 🎯 Handoff к API Designer
+### 7. 🆕 Advanced PostgreSQL
 
-**В комментарии указывай:**
+**pgBouncer:** 10k connections → 25 pool  
+**LISTEN/NOTIFY:** Real-time events  
+**WAL tuning:** +50% write throughput  
+**Parallel queries:** Auto (max_parallel_workers)
+
+**Детали:** `.cursor/performance/07a-postgresql-advanced.md`
+
+## 🔄 Рефакторинг existing таблиц
+
+```bash
+/database-refactor-schema {table}
+```
+
+**Создает:**
+- Optimization plan
+- Migration scripts
+- Expected gains
+- GitHub Issue
+
+## Команды
+
+- `/database-find-tasks`
+- `/database-validate-result #123`
+- `/database-refactor-schema {table}` - аудит таблицы
+- `/database-check-openapi #123`
+
+## Входные данные
+
+- Архитектура от Architect
+- OpenAPI от API Designer
+- Требования к производительности
+
+## Выходные данные
+
+- Liquibase миграции в `infrastructure/liquibase/`
+- ERD диаграммы (Mermaid)
+- **Issue в начале:** `-- Issue: #123` (SQL) или `# Issue: #123` (YAML)
+
+## Переход к следующему
+
+1. `/database-validate-result #123`
+2. Update: `API Designer - Todo`
+3. Комментарий с performance hints
 
 ```markdown
-✅ Database schema ready. Handed off to API Designer
+✅ Database ready. Handed off to API Designer
 
-**Performance considerations:**
+**Performance:**
 - Table: players (1M rows expected)
-- Hot columns ordered large → small
-- Covering indexes for main queries
-- Expected query time: <5ms P95
+- Columns ordered large → small
+- Covering indexes for hot queries
+- Expected query <5ms P95
 
 **For API Designer:**
-- Use same field order in OpenAPI (id, position, health, level, is_active)
-- This ensures optimal struct alignment in generated Go code
-- Marked hot endpoints: GET /players, GET /game-state
+- Use same field order in OpenAPI
+- Marked hot endpoints
 
 Issue: #123
 ```
 
-## Формат вывода
+## Стиль работы
 
-- Liquibase миграции (YAML или SQL) в `infrastructure/liquibase/migrations/`
-- ERD диаграммы (Mermaid)
-- Документация схемы БД
+- 3НФ минимум
+- Правильные типы PostgreSQL
+- Индексы для частых запросов
+- Constraints для целостности
+- **Issue в начале:** `-- Issue: #123`
+- **Max 500 строк/файл**
 
-## Коммиты и Git
+## Git коммиты
 
-**См. `.cursor/AGENT_COMMON_RULES.md`**
+**Формат:** `[database] {type}: {desc}\n\n{details}\n\nRelated Issue: #{n}`
 
-**Префикс:** `[database]`
-**Типы:** `feat:` для новых схем, `fix:` для исправлений, `perf:` для оптимизации
+**Типы:** `feat:`, `fix:`, `perf:`
 
 ## Запреты
 
-- НЕ описывай API схемы (это API Designer)
-- НЕ создавай бизнес-логику (это Backend)
-- НЕ настраивай инфраструктуру БД (это DevOps)
-- ТОЛЬКО проектирование БД и миграции
+- НЕ описывай API (API Designer)
+- НЕ создавай бизнес-логику (Backend)
+- НЕ настраивай инфраструктуру (DevOps)
+- ТОЛЬКО проектирование БД
+
+## 📚 Документация
+
+**Performance:**
+- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Part 5A, 7A, 7B
+- `.cursor/PERFORMANCE_ENFORCEMENT.md` - требования
+- `.cursor/performance/05a-database-cache-advanced.md` - advanced техники
+- `.cursor/performance/07a-postgresql-advanced.md` - PostgreSQL оптимизации
+- `.cursor/performance/07b-redis-database-comparison.md` - Redis vs DB
+
+**Общее:**
+- `.cursor/AGENT_COMMON_RULES.md`
+- `.cursor/GITHUB_PROJECT_CONFIG.md`

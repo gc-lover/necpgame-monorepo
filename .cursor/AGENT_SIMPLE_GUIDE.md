@@ -100,9 +100,9 @@ Todo → Idea Writer → UI/UX Designer → UE5 → QA → Release → Done
 - status_field_id: `239690516`
 
 **Для Backend Developer:**
-- Роутер: Chi (`chi-server`) для ВСЕХ сервисов
-- Gorilla ЗАПРЕЩЕН - мигрируй на Chi если найден
-- Детали: `.cursor/rules/agent-backend.mdc`
+- Code gen: `ogen` (typed handlers, 90% faster)
+- Гайд: `.cursor/OGEN_MIGRATION_GUIDE.md`
+- Reference: `services/combat-combos-service-ogen-go/`
 
 ---
 

@@ -1,0 +1,65 @@
+# Issue: #1583 - CronJob for automated materialized view refresh
+# Runs every 5 minutes to keep leaderboards fresh
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-view-refresher
+  namespace: necpgame
+  labels:
+    app: database-view-refresher
+    component: database
+spec:
+  # Run every 5 minutes
+  schedule: "*/5 * * * *"
+  
+  # Keep last 3 jobs for debugging
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  # Allow 4 minutes for refresh (max refresh time)
+  # If exceeds, kill job to prevent overlap
+  activeDeadlineSeconds: 240
+  
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: database-view-refresher
+        spec:
+          restartPolicy: OnFailure
+          
+          containers:
+          - name: view-refresher
+            image: necpgame/database-view-refresher:latest
+            imagePullPolicy: Always
+            
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: database-url
+            
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "200m"
+              limits:
+                memory: "512Mi"
+                cpu: "1000m"
+            
+            # Security context
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              readOnlyRootFilesystem: true
+          
+          # Priority for system jobs
+          priorityClassName: system-cluster-critical
+
+

@@ -186,11 +186,31 @@ components:
 
     ParagonLevels:
       type: object
+      description: |
+        BACKEND NOTE: Endgame progression data (frequent queries).
+        Fields ordered for struct alignment. Expected memory: ~96 bytes/instance.
+        Use materialized view for rankings (paragon_stats).
       properties:
+        # UUID first (16 bytes)
         character_id:
           type: string
           format: uuid
           description: ID персонажа
+        
+        # String fields (16 bytes)
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+        
+        # Array (24 bytes: pointer + len + cap)
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParagonAllocation'
+          description: Распределение очков по характеристикам
+        
+        # Integer fields grouped (4 bytes each)
         paragon_level:
           type: integer
           minimum: 0
@@ -215,15 +235,6 @@ components:
           type: integer
           minimum: 1
           description: Опыт, требуемый для следующего уровня
-        allocations:
-          type: array
-          items:
-            $ref: '#/components/schemas/ParagonAllocation'
-          description: Распределение очков по характеристикам
-        updated_at:
-          type: string
-          format: date-time
-          description: Дата обновления
 
     DistributeParagonPointsRequest:
       type: object
@@ -248,10 +259,24 @@ components:
 
     ParagonStats:
       type: object
+      description: |
+        BACKEND NOTE: Statistics and rankings (use materialized view: progression.paragon_stats).
+        Fields ordered for struct alignment. Expected memory: ~64 bytes/instance.
+        Query from materialized view for 100x speedup!
       properties:
+        # UUID first (16 bytes)
         character_id:
           type: string
           format: uuid
+        
+        # Object (8 bytes reference)
+        points_by_stat:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        
+        # Integer fields grouped (4 bytes each)
         total_paragon_levels:
           type: integer
           minimum: 0
@@ -261,14 +286,11 @@ components:
         total_points_spent:
           type: integer
           minimum: 0
-        points_by_stat:
-          type: object
-          additionalProperties:
-            type: integer
-            minimum: 0
         global_rank:
           type: integer
           minimum: 1
+        
+        # Float last (4 bytes)
         percentile:
           type: number
           format: float

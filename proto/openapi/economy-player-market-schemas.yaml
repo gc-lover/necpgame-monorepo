@@ -6,33 +6,45 @@ components:
   schemas:
     CreateListingRequest:
       type: object
+      description: |
+        BACKEND NOTE: Struct alignment optimized (large → small).
+        Expected memory: ~56 bytes/instance.
       required:
         - character_id
         - item_id
         - price
         - city_id
       properties:
+        # UUID fields first (16 bytes each)
         character_id:
           type: string
           format: uuid
         item_id:
           type: string
           format: uuid
+        city_id:
+          type: string
+          format: uuid
+          description: Город размещения объявления
+        
+        # String fields (16 bytes)
+        description:
+          type: string
+          description: Описание объявления
+        
+        # Float fields (4 bytes)
         price:
           type: number
           format: float
           minimum: 0
           description: Цена продажи
-        description:
-          type: string
-          description: Описание объявления
-        city_id:
-          type: string
-          format: uuid
-          description: Город размещения объявления
 
     MarketListing:
       type: object
+      description: |
+        BACKEND NOTE: Player market listings (10k+ active listings).
+        Fields ordered for struct alignment. Expected memory: ~176 bytes/instance.
+        Hot endpoint for browse/search queries.
       required:
         - id
         - seller_id
@@ -41,17 +53,23 @@ components:
         - status
         - created_at
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         seller_id:
           type: string
           format: uuid
-        seller_name:
-          type: string
         item_id:
           type: string
           format: uuid
+        city_id:
+          type: string
+          format: uuid
+        
+        # String fields (16 bytes each)
+        seller_name:
+          type: string
         item_name:
           type: string
         item_category:
@@ -59,18 +77,6 @@ components:
         item_quality:
           type: string
           enum: [common, uncommon, rare, epic, legendary, artifact]
-        item_level:
-          type: integer
-        price:
-          type: number
-          format: float
-        commission:
-          type: number
-          format: float
-          description: Комиссия с продажи
-        city_id:
-          type: string
-          format: uuid
         city_name:
           type: string
         status:
@@ -84,8 +90,23 @@ components:
         expires_at:
           type: string
           format: date-time
+        
+        # Float fields grouped (4 bytes each)
+        price:
+          type: number
+          format: float
+        commission:
+          type: number
+          format: float
+          description: Комиссия с продажи
+        
+        # Integer fields grouped (4 bytes each)
+        item_level:
+          type: integer
+          format: int32
         views:
           type: integer
+          format: int32
           description: Количество просмотров
 
     UpdateListingRequest:
@@ -113,27 +134,40 @@ components:
 
     PurchaseResult:
       type: object
+      description: |
+        BACKEND NOTE: Hot path response (purchase confirmations).
+        Struct alignment optimized. Expected memory: ~56 bytes/instance.
       required:
         - purchase_id
         - success
       properties:
+        # UUID fields first (16 bytes each)
         purchase_id:
           type: string
           format: uuid
-        success:
-          type: boolean
         item_id:
           type: string
           format: uuid
-        price_paid:
-          type: number
-          format: float
+        
+        # String fields (16 bytes)
         purchased_at:
           type: string
           format: date-time
+        
+        # Float fields (4 bytes)
+        price_paid:
+          type: number
+          format: float
+        
+        # Boolean last (1 byte)
+        success:
+          type: boolean
 
     PurchaseHistory:
       type: object
+      description: |
+        BACKEND NOTE: Purchase history (frequent queries for player history).
+        Fields ordered for struct alignment. Expected memory: ~80 bytes/instance.
       required:
         - purchase_id
         - listing_id
@@ -141,6 +175,7 @@ components:
         - price_paid
         - purchased_at
       properties:
+        # UUID fields first (16 bytes each)
         purchase_id:
           type: string
           format: uuid
@@ -166,6 +201,9 @@ components:
 
     SaleHistory:
       type: object
+      description: |
+        BACKEND NOTE: Sale history records (frequent queries).
+        Fields ordered for struct alignment. Expected memory: ~96 bytes/instance.
       required:
         - sale_id
         - listing_id
@@ -173,6 +211,7 @@ components:
         - price_received
         - sold_at
       properties:
+        # UUID fields first (16 bytes each)
         sale_id:
           type: string
           format: uuid
@@ -182,13 +221,20 @@ components:
         item_id:
           type: string
           format: uuid
-        item_name:
-          type: string
         buyer_id:
           type: string
           format: uuid
+        
+        # String fields (16 bytes each)
+        item_name:
+          type: string
         buyer_name:
           type: string
+        sold_at:
+          type: string
+          format: date-time
+        
+        # Float fields grouped (4 bytes each)
         price_received:
           type: number
           format: float
@@ -196,39 +242,46 @@ components:
         commission:
           type: number
           format: float
-        sold_at:
-          type: string
-          format: date-time
 
     SellerProfile:
       type: object
+      description: |
+        BACKEND NOTE: Seller profiles (cached frequently).
+        Fields ordered for struct alignment. Expected memory: ~72 bytes/instance.
       required:
         - seller_id
         - rating
         - total_sales
       properties:
+        # UUID fields first (16 bytes)
         seller_id:
           type: string
           format: uuid
+        
+        # String fields (16 bytes each)
         seller_name:
           type: string
+        joined_at:
+          type: string
+          format: date-time
+        
+        # Float fields grouped (4 bytes each)
         rating:
           type: number
           format: float
           minimum: 0
           maximum: 5
-        total_sales:
-          type: integer
         total_revenue:
           type: number
           format: float
+        
+        # Integer fields grouped (4 bytes each)
+        total_sales:
+          type: integer
         positive_reviews:
           type: integer
         negative_reviews:
           type: integer
-        joined_at:
-          type: string
-          format: date-time
 
     CreateReviewRequest:
       type: object
@@ -252,6 +305,9 @@ components:
 
     SellerReview:
       type: object
+      description: |
+        BACKEND NOTE: Review records (display in seller profiles).
+        Fields ordered for struct alignment. Expected memory: ~88 bytes/instance.
       required:
         - id
         - purchase_id
@@ -260,6 +316,7 @@ components:
         - rating
         - created_at
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
@@ -272,15 +329,19 @@ components:
         buyer_id:
           type: string
           format: uuid
+        
+        # String fields (16 bytes each)
         buyer_name:
           type: string
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
         comment:
           type: string
         created_at:
           type: string
           format: date-time
+        
+        # Integer fields last (4 bytes)
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
 

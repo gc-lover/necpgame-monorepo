@@ -55,10 +55,17 @@ components:
         - name
         - code
         - type
+      description: |
+        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory: ~40 bytes/instance.
       properties:
+        # UUID fields first (16 bytes)
         id:
           type: string
           format: uuid
+          description: Идентификатор валюты
+        
+        # String fields (16 bytes each on 64-bit)
         name:
           type: string
           description: Название валюты
@@ -69,10 +76,14 @@ components:
           type: string
           enum: [primary, pvp_token, pve_credit, faction, regional]
           description: Тип валюты
+        
+        # Float fields (4 bytes)
         exchange_rate:
           type: number
           format: float
           description: Курс обмена к основной валюте (ED)
+        
+        # Boolean last (1 byte)
         tradeable:
           type: boolean
           description: Можно ли торговать валютой
@@ -83,13 +94,27 @@ components:
         - currency_id
         - character_id
         - balance
+      description: |
+        BACKEND NOTE: Hot endpoint (frequent updates). Fields ordered for alignment.
+        Expected memory: ~52 bytes/instance.
       properties:
+        # UUID fields first (16 bytes each)
         currency_id:
           type: string
           format: uuid
+          description: ID валюты
         character_id:
           type: string
           format: uuid
+          description: ID персонажа
+        
+        # String fields (16 bytes)
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+        
+        # Float fields together (4 bytes each)
         balance:
           type: number
           format: float
@@ -98,9 +123,6 @@ components:
           type: number
           format: float
           description: Заблокированная сумма (в торговле)
-        updated_at:
-          type: string
-          format: date-time
 
     Resource:
       type: object
@@ -109,15 +131,24 @@ components:
         - name
         - type
         - rarity
+      description: |
+        BACKEND NOTE: Config data, cached. Fields ordered for struct alignment.
+        Expected memory: ~64 bytes/instance.
       properties:
+        # UUID first (16 bytes)
         id:
           type: string
           format: uuid
+          description: ID ресурса
+        
+        # String fields (16 bytes each)
         name:
           type: string
+          description: Название ресурса
         type:
           type: string
           enum: [basic, rare, craft, implant, information]
+          description: Тип ресурса
         category:
           type: string
           enum: [raw_materials, electronics, bio_chem, data_assets]

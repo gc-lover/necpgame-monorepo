@@ -1,9 +1,11 @@
-// Issue: #1579 - ogen migration + DB pool + skill buckets
+// Issue: #1579, #1584
 package main
 
 import (
 	"database/sql"
 	"log"
+	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"time"
 
@@ -36,11 +38,18 @@ func main() {
 	// Service
 	service := server.NewMatchmakingService(repository)
 
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6060")
+		log.Printf("Starting pprof server on %s", pprofAddr)
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine, /debug/pprof/allocs
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
+	}()
+
 	// HTTP Server
-	addr := os.Getenv("HTTP_ADDR")
-	if addr == "" {
-		addr = ":8090"
-	}
+	addr := getEnv("HTTP_ADDR", ":8090")
 
 	httpServer := server.NewHTTPServer(addr, service)
 
@@ -50,4 +59,11 @@ func main() {
 	}
 }
 
+// getEnv gets environment variable with fallback
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}
 

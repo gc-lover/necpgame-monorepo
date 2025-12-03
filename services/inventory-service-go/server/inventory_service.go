@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/inventory-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -376,3 +376,5 @@ func (s *InventoryService) findFreeSlot(items []models.InventoryItem, capacity i
 
 	return -1
 }
+
+

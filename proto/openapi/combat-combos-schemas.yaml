@@ -26,12 +26,16 @@ components:
 
     Combo:
       type: object
+      description: |
+        BACKEND NOTE: Fields ordered for optimal struct alignment (large → small).
+        Expected memory: ~120 bytes/instance.
       required:
         - id
         - name
         - combo_type
         - complexity
       properties:
+        # 16-byte fields first (strings, UUIDs)
         id:
           type: string
           format: uuid
@@ -45,6 +49,12 @@ components:
           type: string
           description: Описание комбо
           example: "Комбо из воздушных атак с максимальным уроном"
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+        
+        # Objects (8-16 bytes)
         combo_type:
           $ref: '#/components/schemas/ComboType'
         complexity:
@@ -100,19 +110,19 @@ components:
               items:
                 type: string
               example: ["stun", "knockback"]
+        
+        # Integer fields (4 bytes)
         cooldown:
           type: integer
           description: Кулдаун комбо в секундах
           minimum: 0
           example: 30
+        
+        # Boolean fields last (1 byte)
         chain_compatible:
           type: boolean
           description: Совместимость с chain-комбо
           example: true
-        created_at:
-          type: string
-          format: date-time
-          description: Дата создания
 
     ComboCatalogResponse:
       type: object
@@ -144,21 +154,25 @@ components:
 
     Synergy:
       type: object
+      description: |
+        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory: ~80 bytes/instance.
       required:
         - id
         - synergy_type
         - combo_id
       properties:
+        # UUID fields first (16 bytes)
         id:
           type: string
           format: uuid
           example: "550e8400-e29b-41d4-a716-446655440002"
-        synergy_type:
-          $ref: '#/components/schemas/SynergyType'
         combo_id:
           type: string
           format: uuid
           description: ID комбо, к которому применяется синергия
+        
+        # Arrays (8 bytes slice header)
         ability_ids:
           type: array
           items:
@@ -180,16 +194,10 @@ components:
             format: uuid
           nullable: true
           description: ID имплантов для implant синергии
-        team_size:
-          type: integer
-          minimum: 2
-          nullable: true
-          description: Размер команды для team синергии
-        timing_window:
-          type: integer
-          minimum: 0
-          nullable: true
-          description: Временное окно в миллисекундах для timing синергии
+        
+        # Objects (reference type, 8 bytes)
+        synergy_type:
+          $ref: '#/components/schemas/SynergyType'
         bonuses:
           type: object
           description: Бонусы от синергии
@@ -208,6 +216,18 @@ components:
         requirements:
           type: object
           description: Требования для активации синергии
+        
+        # Integer fields (4 bytes)
+        team_size:
+          type: integer
+          minimum: 2
+          nullable: true
+          description: Размер команды для team синергии
+        timing_window:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Временное окно в миллисекундах для timing синергии
 
     ActivateComboRequest:
       type: object
@@ -395,15 +415,30 @@ components:
 
     ComboScore:
       type: object
+      description: |
+        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory: ~56 bytes/instance. Hot endpoint for scoring.
       required:
         - activation_id
         - total_score
         - category
       properties:
+        # UUID fields first (16 bytes)
         activation_id:
           type: string
           format: uuid
           example: "550e8400-e29b-41d4-a716-446655440005"
+        
+        # String fields (16 bytes)
+        timestamp:
+          type: string
+          format: date-time
+        
+        # Enum/Object (8 bytes reference)
+        category:
+          $ref: '#/components/schemas/ComboComplexity'
+        
+        # Integer fields (4 bytes each) - группировка для padding
         execution_difficulty:
           type: integer
           minimum: 0
@@ -433,11 +468,6 @@ components:
           minimum: 0
           description: Общий score
           example: 7500
-        category:
-          $ref: '#/components/schemas/ComboComplexity'
-        timestamp:
-          type: string
-          format: date-time
 
     SubmitScoreRequest:
       type: object

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/inventory-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
 )
 
 type mockInventoryService struct {
@@ -567,4 +567,6 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		t.Errorf("Expected status 'healthy', got %s", response["status"])
 	}
 }
+
+
 

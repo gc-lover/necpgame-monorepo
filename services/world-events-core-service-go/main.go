@@ -1,4 +1,4 @@
-// Issue: #44
+// Issue: #44, #1584
 package main
 
 import (
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling
 	"os"
 	"os/signal"
 	"syscall"
@@ -113,4 +114,6 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+
 

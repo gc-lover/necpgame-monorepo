@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584
 	"os"
 	"os/signal"
 	"syscall"
@@ -76,6 +77,8 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+
 
 
 

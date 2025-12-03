@@ -325,3 +325,6 @@ sequenceDiagram
 
 **См. [Part 2](./mail-system-architecture-part2.md) для бизнес-логики, событий и операций**
 
+
+
+
