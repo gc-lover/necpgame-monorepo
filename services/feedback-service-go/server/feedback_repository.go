@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/feedback-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -396,6 +396,7 @@ func (r *FeedbackRepository) GetStats(ctx context.Context) (*models.FeedbackStat
 
 	return stats, nil
 }
+
 
 
 

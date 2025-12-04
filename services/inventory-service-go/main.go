@@ -1,4 +1,4 @@
-// Issue: #1581 - ogen migration + full optimizations
+// Issue: #1581 - ogen migration + full optimizations, #1584 - pprof profiling
 package main
 
 import (
@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,11 +16,31 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/pyroscope-io/client/pyroscope" // Issue: #1611 - Continuous Profiling
 )
 
 func main() {
+	// Issue: #1611 - Continuous Profiling (Pyroscope)
+	pyroscope.Start(pyroscope.Config{
+		ApplicationName: "necpgame.inventory",
+		ServerAddress:   getEnv("PYROSCOPE_SERVER", "http://pyroscope:4040"),
+		ProfileTypes: []pyroscope.ProfileType{
+			pyroscope.ProfileCPU,
+			pyroscope.ProfileAllocObjects,
+			pyroscope.ProfileAllocSpace,
+			pyroscope.ProfileInuseObjects,
+			pyroscope.ProfileInuseSpace,
+		},
+		Tags: map[string]string{
+			"environment": getEnv("ENV", "development"),
+			"version":     getEnv("VERSION", "unknown"),
+		},
+		SampleRate: 100, // 100 Hz
+	})
+
 	logger := server.GetLogger()
 	logger.Info("Inventory Service (Go) starting...")
+	logger.Info("OK Pyroscope continuous profiling started")
 
 	addr := getEnv("ADDR", "0.0.0.0:8085")
 	metricsAddr := getEnv("METRICS_ADDR", ":9090")
@@ -69,6 +90,16 @@ func main() {
 		logger.WithField("addr", metricsAddr).Info("Metrics server starting")
 		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.WithError(err).Fatal("Metrics server failed")
+		}
+	}()
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6071")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
 

@@ -1,24 +1,38 @@
-// Handlers for housing-service-go - implements api.ServerInterface
+// Issue: #1597-#1599, ogen migration
 package server
 
 import (
-    "net/http"
-    "github.com/sirupsen/logrus"
+	"context"
+	"time"
+
+	housingapi "github.com/necpgame/housing-service-go/pkg/api"
+	"github.com/sirupsen/logrus"
 )
 
-// ServiceHandlers implements api.ServerInterface
-type ServiceHandlers struct {
-    logger *logrus.Logger
+// Context timeout constants (Issue #1604)
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+type Handlers struct {
+	logger *logrus.Logger
 }
 
-// NewServiceHandlers creates new handlers
-func NewServiceHandlers(logger *logrus.Logger) *ServiceHandlers {
-    return &ServiceHandlers{logger: logger}
+// NewHandlers creates new handlers
+func NewHandlers(logger *logrus.Logger) *Handlers {
+	return &Handlers{logger: logger}
 }
 
-// HealthCheck implements GET /health
-func (h *ServiceHandlers) HealthCheck(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte(`{"status":"ok"}`))
+// HealthCheck implements GET /health - TYPED response!
+func (h *Handlers) HealthCheck(ctx context.Context) (*housingapi.HealthCheckOK, error) {
+	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
+	defer cancel()
+	_ = ctx // Health check doesn't need DB, but timeout for consistency
+
+	// Return TYPED response (ogen will marshal directly!)
+	return &housingapi.HealthCheckOK{
+		Status: housingapi.NewOptString("ok"),
+	}, nil
 }

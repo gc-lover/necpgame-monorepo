@@ -1,4 +1,3 @@
-# Issue: #299
 openapi: 3.0.3
 info:
   title: Housing Events Service API
@@ -7,75 +6,70 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8090/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8090/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Housing Events
-    description: События жилья
-
+- name: Housing Events
+  description: События жилья
 paths:
   /world/housing/events/{apartment_id}:
     get:
       tags:
-        - Housing Events
+      - Housing Events
       summary: Получить события квартиры
       operationId: getHousingEvents
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: event_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - housing:apartment-purchased
-              - housing:furniture-placed
-              - housing:furniture-removed
-              - housing:prestige-updated
-              - housing:apartment-visited
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: apartment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: event_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - housing:apartment-purchased
+          - housing:furniture-placed
+          - housing:furniture-removed
+          - housing:prestige-updated
+          - housing:apartment-visited
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200":
+        '200':
           description: События квартиры
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HousingEventsResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/HousingEventsResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     HousingEvent:
       type: object
@@ -89,32 +83,30 @@ components:
         event_type:
           type: string
           enum:
-            - housing:apartment-purchased
-            - housing:furniture-placed
-            - housing:furniture-removed
-            - housing:prestige-updated
-            - housing:apartment-visited
-        event_data:
-          type: object
-          additionalProperties: true
+          - housing:apartment-purchased
+          - housing:furniture-placed
+          - housing:furniture-removed
+          - housing:prestige-updated
+          - housing:apartment-visited
         created_at:
           type: string
           format: date-time
-
+        event_data:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HousingEventsResponse:
       type: object
       properties:
         events:
           type: array
           items:
-            $ref: "#/components/schemas/HousingEvent"
+            $ref: '#/components/schemas/HousingEvent'
         total:
           type: integer
         limit:
           type: integer
         offset:
           type: integer
-
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

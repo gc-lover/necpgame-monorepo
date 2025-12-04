@@ -1,0 +1,124 @@
+# Issue: #104
+
+openapi: 3.0.3
+info:
+  title: Economy Service API
+  description: |
+    API для экономических механик: торговля, крафт, инвентарь, валюты, рынки, аукционы, биржа.
+    
+    **Основные модули:**
+    - Trading - P2P торговля
+    - Crafting - крафтинг предметов
+    - Inventory - управление инвентарем
+    - Currencies - валюты и ресурсы
+    - Markets - рынки и аукционы
+    - Stock Exchange - биржа
+    - Production Chains - производственные цепочки
+    
+    **Performance:**
+    - Hot endpoints: GET /economy/inventory, POST /economy/trade
+    - Expected load: 1k RPS, P99 <50ms
+    - Event-based для большинства операций
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Trading
+    description: Торговля
+  - name: Crafting
+    description: Крафтинг
+  - name: Inventory
+    description: Инвентарь
+  - name: Currencies
+    description: Валюты
+  - name: Markets
+    description: Рынки
+  - name: Stock Exchange
+    description: Биржа
+
+paths:
+  /economy/overview:
+    $ref: "economy-core-service.yaml#/paths/~1economy~1overview"
+  
+  /economy/currencies:
+    $ref: "economy-core-service.yaml#/paths/~1economy~1currencies"
+  
+  /economy/inventory:
+    get:
+      tags:
+        - Inventory
+      summary: Получить инвентарь
+      operationId: getInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Инвентарь
+          content:
+            application/json:
+              schema:
+                $ref: "economy-inventory-core-service.yaml#/components/schemas/Inventory"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /economy/trade/sessions:
+    $ref: "economy-trade-sessions-service.yaml#/paths/~1economy~1trade~1sessions"
+  
+  /economy/crafting/recipes:
+    get:
+      tags:
+        - Crafting
+      summary: Получить рецепты крафта
+      operationId: getCraftingRecipes
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список рецептов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipes:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /economy/market/listings:
+    $ref: "economy-player-market-service.yaml#/paths/~1economy~1market~1listings"
+  
+  /economy/stock/exchange:
+    $ref: "economy-stock-exchange-core-service.yaml#/paths/~1economy~1stock~1exchange"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  responses:
+    BadRequest:
+      $ref: "common.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "common.yaml#/components/responses/Unauthorized"
+    InternalServerError:
+      $ref: "common.yaml#/components/responses/InternalServerError"
+
+security:
+  - BearerAuth: []
+

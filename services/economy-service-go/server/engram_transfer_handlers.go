@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -57,7 +58,11 @@ func (s *HTTPServer) transferEngram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.engramTransferService.TransferEngram(r.Context(), engramID, fromCharacterID, req.ToCharacterID, req.TransferType, req.IsCopy, req.NewAttitudeType, req.TransferPrice)
+	// Context timeout for DB operations (Issue #1604)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	result, err := s.engramTransferService.TransferEngram(ctx, engramID, fromCharacterID, req.ToCharacterID, req.TransferType, req.IsCopy, req.NewAttitudeType, req.TransferPrice)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to transfer engram")
 		s.respondError(w, http.StatusInternalServerError, "Failed to transfer engram")
@@ -123,7 +128,11 @@ func (s *HTTPServer) loanEngram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.engramTransferService.LoanEngram(r.Context(), engramID, fromCharacterID, req.ToCharacterID, req.LoanDurationDays)
+	// Context timeout for DB operations (Issue #1604)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	result, err := s.engramTransferService.LoanEngram(ctx, engramID, fromCharacterID, req.ToCharacterID, req.LoanDurationDays)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to loan engram")
 		s.respondError(w, http.StatusInternalServerError, "Failed to loan engram")
@@ -187,7 +196,11 @@ func (s *HTTPServer) extractEngram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.engramTransferService.ExtractEngram(r.Context(), engramID, extractorCharacterID, req.TargetCharacterID, req.ExtractionMethod, req.RiskLevel)
+	// Context timeout for DB operations (Issue #1604)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	result, err := s.engramTransferService.ExtractEngram(ctx, engramID, extractorCharacterID, req.TargetCharacterID, req.ExtractionMethod, req.RiskLevel)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to extract engram")
 		s.respondError(w, http.StatusInternalServerError, "Failed to extract engram")
@@ -255,7 +268,11 @@ func (s *HTTPServer) tradeEngram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.engramTransferService.TradeEngram(r.Context(), engramID, fromCharacterID, req.TradeType, req.TargetCharacterID, req.Price, req.ExchangeItemID)
+	// Context timeout for DB operations (Issue #1604)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	result, err := s.engramTransferService.TradeEngram(ctx, engramID, fromCharacterID, req.TradeType, req.TargetCharacterID, req.Price, req.ExchangeItemID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to trade engram")
 		s.respondError(w, http.StatusInternalServerError, "Failed to trade engram")

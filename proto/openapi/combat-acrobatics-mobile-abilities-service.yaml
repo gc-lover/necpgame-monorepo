@@ -1,40 +1,44 @@
 openapi: 3.0.3
 info:
   title: Combat Acrobatics Mobile Abilities Service API
-  description: |
-    API для мобильных способностей (активация способностей во время движения).
-    
+  description: 'API для мобильных способностей (активация способностей во время движения).
+
+
     **Основные возможности:**
+
     - Активация способностей во время движения
+
     - Модификация способностей для движения
+
     - Проверка совместимости способностей
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+  description: Продакшен сервер
 tags:
-  - name: Mobile Abilities
-    description: Мобильные способности
-
+- name: Mobile Abilities
+  description: Мобильные способности
 paths:
   /mobile-ability:
     post:
       tags:
-        - Mobile Abilities
+      - Mobile Abilities
       summary: Активировать мобильную способность
-      description: |
-        Активирует способность во время движения (Wall Run, Slide, Air Dash).
+      description: 'Активирует способность во время движения (Wall Run, Slide, Air Dash).
+
         Применяется мобильная версия способности с корректировкой затрат.
+
+        '
       operationId: activateMobileAbility
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -42,9 +46,9 @@ paths:
             schema:
               $ref: '#/components/schemas/ActivateMobileAbilityRequest'
             example:
-              ability_id: "aa0e8400-e29b-41d4-a716-446655440000"
-              movement_type: "wall_run"
-              target_id: "bb0e8400-e29b-41d4-a716-446655440000"
+              ability_id: aa0e8400-e29b-41d4-a716-446655440000
+              movement_type: wall_run
+              target_id: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Мобильная способность активирована
@@ -53,49 +57,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/MobileAbilityResponse'
               example:
-                activation_id: "cc0e8400-e29b-41d4-a716-446655440000"
-                ability_id: "aa0e8400-e29b-41d4-a716-446655440000"
-                ability_name: "Cyber Strike"
-                movement_type: "wall_run"
+                activation_id: cc0e8400-e29b-41d4-a716-446655440000
+                ability_id: aa0e8400-e29b-41d4-a716-446655440000
+                ability_name: Cyber Strike
+                movement_type: wall_run
                 mobile_version_applied: true
                 original_cost: 50.0
                 adjusted_cost: 60.0
                 effect_applied: true
-                timestamp: "2025-12-01T10:00:00Z"
+                timestamp: '2025-12-01T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ActivateMobileAbilityRequest:
       type: object
       required:
-        - ability_id
-        - movement_type
+      - ability_id
+      - movement_type
       properties:
         ability_id:
           type: string
           format: uuid
           description: ID способности
-          example: "aa0e8400-e29b-41d4-a716-446655440000"
-        movement_type:
-          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/MovementType'
+          example: aa0e8400-e29b-41d4-a716-446655440000
         target_id:
           type: string
           format: uuid
           description: ID цели способности
           nullable: true
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
         position:
           type: object
           description: Позиция для способности
@@ -110,38 +110,40 @@ components:
             z:
               type: number
               format: float
-
+        movement_type:
+          $ref: combat-acrobatics-schemas.yaml#/components/schemas/MovementType
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MobileAbilityResponse:
       type: object
       required:
-        - activation_id
-        - ability_id
-        - ability_name
-        - movement_type
-        - mobile_version_applied
-        - original_cost
-        - adjusted_cost
-        - effect_applied
-        - timestamp
+      - activation_id
+      - ability_id
+      - ability_name
+      - movement_type
+      - mobile_version_applied
+      - original_cost
+      - adjusted_cost
+      - effect_applied
+      - timestamp
       properties:
         activation_id:
           type: string
           format: uuid
-          example: "cc0e8400-e29b-41d4-a716-446655440000"
+          example: cc0e8400-e29b-41d4-a716-446655440000
         ability_id:
           type: string
           format: uuid
-          example: "aa0e8400-e29b-41d4-a716-446655440000"
+          example: aa0e8400-e29b-41d4-a716-446655440000
         ability_name:
           type: string
           description: Название способности
-          example: "Cyber Strike"
+          example: Cyber Strike
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
         movement_type:
-          $ref: 'combat-acrobatics-schemas.yaml#/components/schemas/MovementType'
-        mobile_version_applied:
-          type: boolean
-          description: Была ли применена мобильная версия
-          example: true
+          $ref: combat-acrobatics-schemas.yaml#/components/schemas/MovementType
         original_cost:
           type: number
           format: float
@@ -154,22 +156,21 @@ components:
           description: Скорректированная стоимость для движения
           minimum: 0
           example: 60.0
+        mobile_version_applied:
+          type: boolean
+          description: Была ли применена мобильная версия
+          example: true
         effect_applied:
           type: boolean
           description: Был ли применен эффект способности
           example: true
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

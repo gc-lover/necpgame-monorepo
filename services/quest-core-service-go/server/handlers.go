@@ -1,203 +1,113 @@
+// Issue: #1597
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"errors"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
-type QuestHandlers struct{}
+// Context timeout constants
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
 
-func NewQuestHandlers() *QuestHandlers {
-	return &QuestHandlers{}
+var (
+	ErrNotFound = errors.New("not found")
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+type Handlers struct {
+	service *Service
 }
 
-func (h *QuestHandlers) StartQuest(w http.ResponseWriter, r *http.Request) {
-	var req api.StartQuestRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	questInstanceId := openapi_types.UUID(uuid.New())
-	playerId := openapi_types.UUID(uuid.New())
-	now := time.Now()
-	state := api.QuestInstanceStateINPROGRESS
-	currentObjective := 0
-
-	questInstance := api.QuestInstance{
-		Id:               questInstanceId,
-		QuestId:          req.QuestId,
-		PlayerId:         playerId,
-		State:            state,
-		StartedAt:        now,
-		CurrentObjective: &currentObjective,
-		ProgressData:     nil,
-		UpdatedAt:        &now,
-		CompletedAt:      nil,
-	}
-
-	response := api.StartQuestResponse{
-		QuestInstance: questInstance,
-		Dialogue:      nil,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+// NewHandlers creates new handlers
+func NewHandlers(redisClient *redis.Client) *Handlers {
+	repo := NewRepository()
+	service := NewService(repo, redisClient) // Issue: #1609 - pass Redis client
+	return &Handlers{service: service}
 }
 
-func (h *QuestHandlers) GetQuest(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	playerId := openapi_types.UUID(uuid.New())
-	questDefinitionId := openapi_types.UUID(uuid.New())
-	now := time.Now()
-	state := api.QuestInstanceStateINPROGRESS
-	currentObjective := 1
+// StartQuest - TYPED response!
+func (h *Handlers) StartQuest(ctx context.Context, req *api.StartQuestRequest) (api.StartQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	questInstance := api.QuestInstance{
-		Id:               questId,
-		QuestId:          questDefinitionId,
-		PlayerId:         playerId,
-		State:            state,
-		StartedAt:        now.Add(-24 * time.Hour),
-		CurrentObjective: &currentObjective,
-		ProgressData:     nil,
-		UpdatedAt:        &now,
-		CompletedAt:      nil,
+	result, err := h.service.StartQuest(ctx, req)
+	if err != nil {
+		return &api.StartQuestInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, questInstance)
+	return result, nil
 }
 
-func (h *QuestHandlers) GetPlayerQuests(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, params api.GetPlayerQuestsParams) {
-	questId1 := openapi_types.UUID(uuid.New())
-	questId2 := openapi_types.UUID(uuid.New())
-	questDefinitionId1 := openapi_types.UUID(uuid.New())
-	questDefinitionId2 := openapi_types.UUID(uuid.New())
-	now := time.Now()
-	state1 := api.QuestInstanceStateINPROGRESS
-	state2 := api.QuestInstanceStateCOMPLETED
-	currentObjective1 := 1
-	currentObjective2 := 2
-	completedAt2 := now.Add(-1 * time.Hour)
+// GetQuest - TYPED response!
+func (h *Handlers) GetQuest(ctx context.Context, params api.GetQuestParams) (api.GetQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	quests := []api.QuestInstance{
-		{
-			Id:               questId1,
-			QuestId:          questDefinitionId1,
-			PlayerId:         playerId,
-			State:            state1,
-			StartedAt:        now.Add(-48 * time.Hour),
-			CurrentObjective: &currentObjective1,
-			ProgressData:     nil,
-			UpdatedAt:        &now,
-			CompletedAt:      nil,
-		},
-		{
-			Id:               questId2,
-			QuestId:          questDefinitionId2,
-			PlayerId:         playerId,
-			State:            state2,
-			StartedAt:        now.Add(-72 * time.Hour),
-			CurrentObjective: &currentObjective2,
-			ProgressData:     nil,
-			UpdatedAt:        &completedAt2,
-			CompletedAt:      &completedAt2,
-		},
+	result, err := h.service.GetQuest(ctx, params.QuestID)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.GetQuestNotFound{}, nil
+		}
+		return &api.GetQuestInternalServerError{}, err
 	}
 
-	total := len(quests)
-
-	response := api.QuestListResponse{
-		Quests: quests,
-		Total:  total,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
-func (h *QuestHandlers) CancelQuest(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	playerId := openapi_types.UUID(uuid.New())
-	questDefinitionId := openapi_types.UUID(uuid.New())
-	now := time.Now()
-	state := api.QuestInstanceStateCANCELLED
-	currentObjective := 0
+// GetPlayerQuests - TYPED response!
+func (h *Handlers) GetPlayerQuests(ctx context.Context, params api.GetPlayerQuestsParams) (api.GetPlayerQuestsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	questInstance := api.QuestInstance{
-		Id:               questId,
-		QuestId:          questDefinitionId,
-		PlayerId:         playerId,
-		State:            state,
-		StartedAt:        now.Add(-24 * time.Hour),
-		CurrentObjective: &currentObjective,
-		ProgressData:     nil,
-		UpdatedAt:        &now,
-		CompletedAt:      nil,
+	result, err := h.service.GetPlayerQuests(ctx, params)
+	if err != nil {
+		return &api.GetPlayerQuestsInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, questInstance)
+	return result, nil
 }
 
-func (h *QuestHandlers) CompleteQuest(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	var req api.CompleteQuestRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
+// CancelQuest - TYPED response!
+func (h *Handlers) CancelQuest(ctx context.Context, params api.CancelQuestParams) (api.CancelQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	result, err := h.service.CancelQuest(ctx, params.QuestID)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.CancelQuestNotFound{}, nil
+		}
+		return &api.CancelQuestInternalServerError{}, err
 	}
 
-	playerId := openapi_types.UUID(uuid.New())
-	questDefinitionId := openapi_types.UUID(uuid.New())
-	now := time.Now()
-	state := api.QuestInstanceStateCOMPLETED
-	currentObjective := 3
-	experience := 1000
-	currency := 5000
-
-	questInstance := api.QuestInstance{
-		Id:               questId,
-		QuestId:          questDefinitionId,
-		PlayerId:         playerId,
-		State:            state,
-		StartedAt:        now.Add(-48 * time.Hour),
-		CurrentObjective: &currentObjective,
-		ProgressData:     nil,
-		UpdatedAt:        &now,
-		CompletedAt:      &now,
-	}
-
-	rewards := api.QuestRewards{
-		Experience: &experience,
-		Currency:   &currency,
-		Items:      nil,
-		Reputation: nil,
-		Titles:     nil,
-	}
-
-	response := api.CompleteQuestResponse{
-		QuestInstance: questInstance,
-		Rewards:       rewards,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
+// CompleteQuest - TYPED response!
+func (h *Handlers) CompleteQuest(ctx context.Context, req api.OptCompleteQuestRequest, params api.CompleteQuestParams) (api.CompleteQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
+	var reqPtr *api.CompleteQuestRequest
+	if req.IsSet() {
+		reqPtr = &req.Value
+	}
 
+	result, err := h.service.CompleteQuest(ctx, params.QuestID, reqPtr)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.CompleteQuestNotFound{}, nil
+		}
+		return &api.CompleteQuestInternalServerError{}, err
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	return result, nil
+}

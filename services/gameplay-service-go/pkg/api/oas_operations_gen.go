@@ -6,5 +6,19 @@ package api
 type OperationName = string
 
 const (
-	HealthCheckOperation OperationName = "HealthCheck"
+	ActivateAbilityOperation       OperationName = "ActivateAbility"
+	ActivateComboOperation         OperationName = "ActivateCombo"
+	CreateCombatSessionOperation   OperationName = "CreateCombatSession"
+	EndCombatSessionOperation      OperationName = "EndCombatSession"
+	GetAbilityCatalogOperation     OperationName = "GetAbilityCatalog"
+	GetArenaSessionsOperation      OperationName = "GetArenaSessions"
+	GetAvailableSynergiesOperation OperationName = "GetAvailableSynergies"
+	GetCombatSessionOperation      OperationName = "GetCombatSession"
+	GetComboCatalogOperation       OperationName = "GetComboCatalog"
+	GetExtractZonesOperation       OperationName = "GetExtractZones"
+	GetFreerunRoutesOperation      OperationName = "GetFreerunRoutes"
+	GetInstalledImplantsOperation  OperationName = "GetInstalledImplants"
+	GetLoadoutsOperation           OperationName = "GetLoadouts"
+	GetStealthStatusOperation      OperationName = "GetStealthStatus"
+	ListCombatSessionsOperation    OperationName = "ListCombatSessions"
 )

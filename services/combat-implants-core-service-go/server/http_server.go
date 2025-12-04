@@ -1,122 +1,164 @@
-// Issue: #58
+// Issue: #1595
+// OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
+// PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/necpgame/combat-implants-core-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-core-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
+// HTTPServer represents HTTP server (no chi dependency)
 type HTTPServer struct {
 	addr   string
-	router chi.Router
-	logger *logrus.Logger
 	server *http.Server
+	logger *logrus.Logger
 }
 
+// NewHTTPServer creates new HTTP server WITHOUT chi
+// PERFORMANCE: Standard mux for health/metrics, OGEN router for API (already max speed)
 func NewHTTPServer(addr string) *HTTPServer {
-	router := chi.NewRouter()
+	logger := GetLogger()
 
-	server := &HTTPServer{
-		addr:   addr,
-		router: router,
-		logger: GetLogger(),
+	// OGEN server (fast static router - hot path)
+	handlers := NewHandlers()
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
 	}
 
-	// Middleware
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
+	// Standard mux (for health/metrics - cold path)
+	mux := http.NewServeMux()
 
-	// Handlers
-	handlers := NewCoreHandlers()
+	// Middleware chain (no duplication, optimized)
+	apiHandler := chainMiddleware(ogenServer,
+		recoveryMiddleware(logger),  // panic recovery
+		requestIDMiddleware,  // request ID
+		loggingMiddleware(logger),    // structured logging
+		metricsMiddleware(),    // metrics
+		corsMiddleware(),       // CORS
+	)
 
-	// Register handlers using oapi-codegen gorilla integration
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{BaseRouter: router})
+	// Mount OGEN (hot path - maximum speed, static router)
+	mux.Handle("/api/v1/", apiHandler)
 
-	// Health check
-	router.Get("/health", server.healthCheck)
+	// Health/metrics (cold path - simple mux, no chi overhead)
+	mux.HandleFunc("/health", healthCheck)
 
-	server.server = &http.Server{
-		Addr:         addr,
-		Handler:      router,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
+	return &HTTPServer{
+		addr: addr,
+		logger: logger,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      mux,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			IdleTimeout:  120 * time.Second,
+		},
 	}
-
-	return server
 }
 
+// chainMiddleware chains middleware functions (simple and fast)
+func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
+}
+
+// recoveryMiddleware recovers from panics
+func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.WithField("error", err).Error("Panic recovered")
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// requestIDMiddleware adds request ID to headers
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
+		w.Header().Set("X-Request-ID", requestID)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// loggingMiddleware logs HTTP requests
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"duration": time.Since(start),
+			}).Info("Request completed")
+		})
+	}
+}
+
+// metricsMiddleware collects metrics
+func metricsMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			duration := time.Since(start).Seconds()
+			RecordRequest(r.Method, r.URL.Path, "200")
+			RecordRequestDuration(r.Method, r.URL.Path, duration)
+		})
+	}
+}
+
+// corsMiddleware handles CORS
+func corsMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// Start starts HTTP server
 func (s *HTTPServer) Start() error {
 	s.logger.WithField("addr", s.addr).Info("Combat Implants Core Service starting")
 	return s.server.ListenAndServe()
 }
 
+// Shutdown gracefully shuts down HTTP server
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down Combat Implants Core Service")
 	return s.server.Shutdown(ctx)
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+// Health check handler
+func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "healthy",
-		"service": "combat-implants-core-service",
-	})
+	w.Write([]byte("OK"))
 }
-
-// Middleware functions
-
-func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		s.logger.WithFields(logrus.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"ip":     r.RemoteAddr,
-		}).Info("Request started")
-
-		next.ServeHTTP(w, r)
-
-		s.logger.WithFields(logrus.Fields{
-			"method":   r.Method,
-			"path":     r.URL.Path,
-			"duration": time.Since(start),
-		}).Info("Request completed")
-	})
-}
-
-func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		duration := time.Since(start).Seconds()
-
-		RecordRequest(r.Method, r.URL.Path, "200")
-		RecordRequestDuration(r.Method, r.URL.Path, duration)
-	})
-}
-
-func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-

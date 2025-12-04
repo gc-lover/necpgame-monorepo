@@ -1,379 +1,373 @@
-# Issue: #135
 openapi: 3.0.0
 info:
   title: Inventory Service API
-  description: |
-    Inventory Service управляет инвентарём игрока, экипировкой, хранилищами.
+  description: 'Inventory Service управляет инвентарём игрока, экипировкой, хранилищами.
+
     Поддерживает durability, item level, modsи различные типы хранилищ.
+
+    '
   version: 1.0.0
-
 servers:
-  - url: https://api.necpgame.com
-    description: Production server
-  - url: https://staging-api.necpgame.com
-    description: Staging server
-
+- url: https://api.necpgame.com
+  description: Production server
+- url: https://staging-api.necpgame.com
+  description: Staging server
 tags:
-  - name: Inventory
-    description: Управление инвентарём
-  - name: Equipment
-    description: Управление экипировкой
-  - name: Storage
-    description: Управление хранилищами
-
+- name: Inventory
+  description: Управление инвентарём
+- name: Equipment
+  description: Управление экипировкой
+- name: Storage
+  description: Управление хранилищами
 paths:
   /api/v1/inventory/{player_id}:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
+    - $ref: common.yaml#/components/parameters/PlayerId
     get:
-      tags: [Inventory]
+      tags:
+      - Inventory
       summary: Получить инвентарь игрока
       operationId: getInventory
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Инвентарь игрока
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InventoryResponse"
-
+                $ref: '#/components/schemas/InventoryResponse'
   /api/v1/inventory/{player_id}/items:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
+    - $ref: common.yaml#/components/parameters/PlayerId
     post:
-      tags: [Inventory]
+      tags:
+      - Inventory
       summary: Добавить предмет в инвентарь (internal API)
       operationId: addItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddItemRequest"
+              $ref: '#/components/schemas/AddItemRequest'
       responses:
-        "200":
+        '200':
           description: Предмет добавлен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InventoryItemResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/InventoryItemResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/inventory/{player_id}/items/{item_id}:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
-      - name: item_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - $ref: common.yaml#/components/parameters/PlayerId
+    - name: item_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
-      tags: [Inventory]
+      tags:
+      - Inventory
       summary: Получить информацию о предмете
       operationId: getItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Информация о предмете
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InventoryItemResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
+                $ref: '#/components/schemas/InventoryItemResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
     patch:
-      tags: [Inventory]
+      tags:
+      - Inventory
       summary: Обновить предмет (например, durability)
       operationId: updateItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateItemRequest"
+              $ref: '#/components/schemas/UpdateItemRequest'
       responses:
-        "200":
+        '200':
           description: Предмет обновлён
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InventoryItemResponse"
+                $ref: '#/components/schemas/InventoryItemResponse'
     delete:
-      tags: [Inventory]
+      tags:
+      - Inventory
       summary: Удалить предмет из инвентаря
       operationId: removeItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Предмет удалён
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/inventory/{player_id}/items/{item_id}/move:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
-      - name: item_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - $ref: common.yaml#/components/parameters/PlayerId
+    - name: item_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Inventory]
+      tags:
+      - Inventory
       summary: Переместить предмет в другой слот
       operationId: moveItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MoveItemRequest"
+              $ref: '#/components/schemas/MoveItemRequest'
       responses:
-        "200":
+        '200':
           description: Предмет перемещён
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/inventory/{player_id}/equipment:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
+    - $ref: common.yaml#/components/parameters/PlayerId
     get:
-      tags: [Equipment]
+      tags:
+      - Equipment
       summary: Получить экипированные предметы
       operationId: getEquipment
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Экипированные предметы
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EquipmentResponse"
-
+                $ref: '#/components/schemas/EquipmentResponse'
   /api/v1/inventory/{player_id}/equipment/{item_id}:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
-      - name: item_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - $ref: common.yaml#/components/parameters/PlayerId
+    - name: item_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Equipment]
+      tags:
+      - Equipment
       summary: Экипировать предмет
       operationId: equipItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EquipItemRequest"
+              $ref: '#/components/schemas/EquipItemRequest'
       responses:
-        "200":
+        '200':
           description: Предмет экипирован
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EquipmentResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
+                $ref: '#/components/schemas/EquipmentResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
     delete:
-      tags: [Equipment]
+      tags:
+      - Equipment
       summary: Снять экипированный предмет
       operationId: unequipItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Предмет снят
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EquipmentResponse"
-
+                $ref: '#/components/schemas/EquipmentResponse'
   /api/v1/storage/{player_id}/vaults:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
+    - $ref: common.yaml#/components/parameters/PlayerId
     get:
-      tags: [Storage]
+      tags:
+      - Storage
       summary: Получить список хранилищ игрока
       operationId: getVaults
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Список хранилищ
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VaultsListResponse"
-
+                $ref: '#/components/schemas/VaultsListResponse'
   /api/v1/storage/vaults/{vault_id}:
     parameters:
-      - name: vault_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: vault_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
-      tags: [Storage]
+      tags:
+      - Storage
       summary: Получить содержимое хранилища
       operationId: getVault
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Содержимое хранилища
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VaultResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/VaultResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/storage/vaults/{vault_id}/items:
     parameters:
-      - name: vault_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: vault_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Storage]
+      tags:
+      - Storage
       summary: Переместить предмет в хранилище
       operationId: storeItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StoreItemRequest"
+              $ref: '#/components/schemas/StoreItemRequest'
       responses:
-        "200":
+        '200':
           description: Предмет помещён в хранилище
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/storage/vaults/{vault_id}/items/{item_id}:
     parameters:
-      - name: vault_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: item_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: vault_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: item_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     delete:
-      tags: [Storage]
+      tags:
+      - Storage
       summary: Забрать предмет из хранилища
       operationId: retrieveItem
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Предмет забран
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     InventoryResponse:
       type: object
-      description: |
-        BACKEND NOTE: Hot endpoint (10k+ RPS). Fields ordered for struct alignment.
+      description: 'BACKEND NOTE: Hot endpoint (10k+ RPS). Fields ordered for struct alignment.
+
         Expected memory: ~56 bytes/instance + items array.
+
         3-tier caching: L1 memory (30s) → L2 Redis (5min) → L3 DB
+
+        '
       properties:
-        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
-        
-        # Array (24 bytes: pointer + len + cap)
         items:
           type: array
           items:
-            $ref: "#/components/schemas/InventoryItemResponse"
-        
-        # Float fields (4 bytes each, grouped)
-        max_weight:
-          type: number
-          format: float
-        current_weight:
-          type: number
-          format: float
-        
-        # Integer fields (4 bytes each, grouped)
+            $ref: '#/components/schemas/InventoryItemResponse'
         max_slots:
           type: integer
           format: int32
         used_slots:
           type: integer
           format: int32
-
+        max_weight:
+          type: number
+          format: float
+        current_weight:
+          type: number
+          format: float
     InventoryItemResponse:
       type: object
-      description: |
-        BACKEND NOTE: Returned in arrays (100+ items). Optimal alignment critical.
+      description: 'BACKEND NOTE: Returned in arrays (100+ items). Optimal alignment critical.
+
         Expected memory: ~80 bytes/instance.
+
+        '
       properties:
-        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         item_id:
           type: string
           format: uuid
-        
-        # String fields (16 bytes each)
         equipment_slot:
           type: string
         rarity:
@@ -381,13 +375,9 @@ components:
         acquired_at:
           type: string
           format: date-time
-        
-        # Object (8 bytes reference)
         mods:
           type: object
           description: Модификаторы предмета
-        
-        # Integer fields (4 bytes each, grouped)
         slot_index:
           type: integer
           format: int32
@@ -403,31 +393,24 @@ components:
         item_level:
           type: integer
           format: int32
-        
-        # Boolean fields last (1 byte each)
         is_equipped:
           type: boolean
         is_locked:
           type: boolean
         is_bound:
           type: boolean
-
     AddItemRequest:
       type: object
       required:
-        - item_id
+      - item_id
       properties:
-        # UUID first (16 bytes)
         item_id:
           type: string
           format: uuid
-        # String (16 bytes)
         rarity:
           type: string
-        # Object (8 bytes reference)
         mods:
           type: object
-        # Integers together (4 bytes each)
         quantity:
           type: integer
           format: int32
@@ -435,30 +418,24 @@ components:
         item_level:
           type: integer
           format: int32
-
     UpdateItemRequest:
       type: object
       properties:
-        # Object first (8 bytes)
         mods:
           type: object
-        # Integer (4 bytes)
         durability:
           type: integer
           format: int32
-        # Boolean last (1 byte)
         is_locked:
           type: boolean
-
     MoveItemRequest:
       type: object
       required:
-        - target_slot
+      - target_slot
       properties:
         target_slot:
           type: integer
           format: int32
-
     EquipmentResponse:
       type: object
       properties:
@@ -469,24 +446,32 @@ components:
           type: object
           description: Экипированные предметы по слотам
           additionalProperties:
-            $ref: "#/components/schemas/InventoryItemResponse"
-
+            $ref: '#/components/schemas/InventoryItemResponse'
     EquipItemRequest:
       type: object
       required:
-        - equipment_slot
+      - equipment_slot
       properties:
         equipment_slot:
           type: string
-          enum: [head, chest, legs, feet, hands, weapon_main, weapon_off, accessory_1, accessory_2]                                                            
-
+          enum:
+          - head
+          - chest
+          - legs
+          - feet
+          - hands
+          - weapon_main
+          - weapon_off
+          - accessory_1
+          - accessory_2
     VaultResponse:
       type: object
-      description: |
-        BACKEND NOTE: Heavy objects. Cache in Redis 10min TTL.
+      description: 'BACKEND NOTE: Heavy objects. Cache in Redis 10min TTL.
+
         Expected memory: ~72 bytes/instance + items array.
+
+        '
       properties:
-        # UUIDs first (16 bytes each)
         id:
           type: string
           format: uuid
@@ -496,36 +481,34 @@ components:
         location_id:
           type: string
           format: uuid
-        # String (16 bytes)
         vault_type:
           type: string
-          enum: [personal, guild, shared]
-        # Array (24 bytes)
+          enum:
+          - personal
+          - guild
+          - shared
         items:
           type: array
           maxItems: 200
           items:
             type: object
-        # Integers together (4 bytes each)
         max_slots:
           type: integer
           format: int32
         used_slots:
           type: integer
           format: int32
-
     VaultsListResponse:
       type: object
       properties:
         vaults:
           type: array
           items:
-            $ref: "#/components/schemas/VaultResponse"
-
+            $ref: '#/components/schemas/VaultResponse'
     StoreItemRequest:
       type: object
       required:
-        - item_id
+      - item_id
       properties:
         item_id:
           type: string

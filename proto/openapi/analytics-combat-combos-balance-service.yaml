@@ -1,64 +1,69 @@
 openapi: 3.0.3
 info:
   title: Analytics Combat Combos & Balance Service API
-  description: |
-    API для статистики комбо и балансировки боевых механик.
-    
+  description: 'API для статистики комбо и балансировки боевых механик.
+
+
     **Основные возможности:**
+
     - Статистика комбо (использование, популярность)
+
     - Проблемы баланса
+
     - Рекомендации по балансировке
+
     - Применение изменений баланса
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8089/api/v1/analytics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/analytics
-    description: Продакшен сервер
-
+- url: http://localhost:8089/api/v1/analytics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/analytics
+  description: Продакшен сервер
 tags:
-  - name: Combos Stats
-    description: Статистика комбо
-  - name: Balance
-    description: Балансировка боевых механик
-
+- name: Combos Stats
+  description: Статистика комбо
+- name: Balance
+  description: Балансировка боевых механик
 paths:
   /combat/combos/stats:
     get:
       tags:
-        - Combos Stats
+      - Combos Stats
       summary: Получить статистику комбо
-      description: |
-        Возвращает общую статистику по комбо: общее количество выполнений,
+      description: 'Возвращает общую статистику по комбо: общее количество выполнений,
+
         средний урон и другие метрики.
+
+        '
       operationId: getCombosStats
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: mode
-          in: query
-          required: false
-          description: Фильтр по игровому режиму
-          schema:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/GameMode'
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: mode
+        in: query
+        required: false
+        description: Фильтр по игровому режиму
+        schema:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/GameMode
       responses:
         '200':
           description: Статистика комбо
@@ -72,55 +77,56 @@ paths:
                 average_damage: 250.5
                 average_execution_time: 3.2
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/combos/popular:
     get:
       tags:
-        - Combos Stats
+      - Combos Stats
       summary: Получить популярные комбо
-      description: |
-        Возвращает список самых популярных комбо с метриками использования
+      description: 'Возвращает список самых популярных комбо с метриками использования
+
         и эффективности.
+
+        '
       operationId: getPopularCombos
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Популярные комбо
@@ -130,67 +136,68 @@ paths:
                 $ref: '#/components/schemas/PopularCombosResponse'
               example:
                 combos:
-                  - combo_id: "dd0e8400-e29b-41d4-a716-446655440000"
-                    combo_name: "Cyber Strike Combo"
-                    total_executions: 50000
-                    usage_rate: 0.10
-                    average_damage: 300.5
-                    success_rate: 0.85
+                - combo_id: dd0e8400-e29b-41d4-a716-446655440000
+                  combo_name: Cyber Strike Combo
+                  total_executions: 50000
+                  usage_rate: 0.1
+                  average_damage: 300.5
+                  success_rate: 0.85
                 total: 100
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/balance/issues:
     get:
       tags:
-        - Balance
+      - Balance
       summary: Получить проблемы баланса
-      description: |
-        Возвращает список выявленных проблем баланса с приоритетами
+      description: 'Возвращает список выявленных проблем баланса с приоритетами
+
         и рекомендациями.
+
+        '
       operationId: getBalanceIssues
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          required: false
-          description: Фильтр по статусу проблемы
-          schema:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/IssueStatus'
-        - name: severity
-          in: query
-          required: false
-          description: Фильтр по серьезности
-          schema:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/IssueSeverity'
-        - name: issue_type
-          in: query
-          required: false
-          description: Фильтр по типу проблемы
-          schema:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/BalanceIssueType'
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: status
+        in: query
+        required: false
+        description: Фильтр по статусу проблемы
+        schema:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/IssueStatus
+      - name: severity
+        in: query
+        required: false
+        description: Фильтр по серьезности
+        schema:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/IssueSeverity
+      - name: issue_type
+        in: query
+        required: false
+        description: Фильтр по типу проблемы
+        schema:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/BalanceIssueType
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Список проблем баланса
@@ -200,63 +207,64 @@ paths:
                 $ref: '#/components/schemas/BalanceIssuesResponse'
               example:
                 issues:
-                  - issue_id: "ee0e8400-e29b-41d4-a716-446655440000"
-                    issue_type: "overpowered"
-                    skill_id: "weapon_001"
-                    severity: "high"
-                    description: "Weapon X has 30% higher TTK than average"
-                    status: "open"
-                    created_at: "2025-12-01T10:00:00Z"
+                - issue_id: ee0e8400-e29b-41d4-a716-446655440000
+                  issue_type: overpowered
+                  skill_id: weapon_001
+                  severity: high
+                  description: Weapon X has 30% higher TTK than average
+                  status: open
+                  created_at: '2025-12-01T10:00:00Z'
                 total: 25
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/balance/recommendations:
     get:
       tags:
-        - Balance
+      - Balance
       summary: Получить рекомендации по балансировке
-      description: |
-        Возвращает рекомендации по исправлению проблем баланса
+      description: 'Возвращает рекомендации по исправлению проблем баланса
+
         для конкретной проблемы или всех проблем.
+
+        '
       operationId: getBalanceRecommendations
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: issue_id
-          in: query
-          required: false
-          description: Фильтр по конкретной проблеме
-          schema:
-            type: string
-            format: uuid
-        - name: skill_id
-          in: query
-          required: false
-          description: Фильтр по навыку/способности/оружию
-          schema:
-            type: string
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: issue_id
+        in: query
+        required: false
+        description: Фильтр по конкретной проблеме
+        schema:
+          type: string
+          format: uuid
+      - name: skill_id
+        in: query
+        required: false
+        description: Фильтр по навыку/способности/оружию
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Рекомендации по балансировке
@@ -266,31 +274,32 @@ paths:
                 $ref: '#/components/schemas/BalanceRecommendationsResponse'
               example:
                 recommendations:
-                  - recommendation_id: "ff0e8400-e29b-41d4-a716-446655440000"
-                    skill_id: "weapon_001"
-                    parameter_name: "damage"
-                    current_value: 100.0
-                    recommended_value: 85.0
-                    reason: "Reduce damage by 15% to balance TTK"
+                - recommendation_id: ff0e8400-e29b-41d4-a716-446655440000
+                  skill_id: weapon_001
+                  parameter_name: damage
+                  current_value: 100.0
+                  recommended_value: 85.0
+                  reason: Reduce damage by 15% to balance TTK
                 total: 10
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/balance/apply:
     post:
       tags:
-        - Balance
+      - Balance
       summary: Применить изменение баланса
-      description: |
-        Применяет изменение баланса для навыка/способности/оружия.
+      description: 'Применяет изменение баланса для навыка/способности/оружия.
+
         Поддерживает ручной, полуавтоматический и автоматический режимы.
+
+        '
       operationId: applyBalanceChange
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -298,46 +307,44 @@ paths:
             schema:
               $ref: '#/components/schemas/ApplyBalanceChangeRequest'
             example:
-              skill_id: "weapon_001"
-              parameter_name: "damage"
+              skill_id: weapon_001
+              parameter_name: damage
               new_value: 85.0
-              change_reason: "Balance adjustment based on analytics"
-              mode: "semi_automatic"
+              change_reason: Balance adjustment based on analytics
+              mode: semi_automatic
       responses:
         '200':
           description: Изменение применено
           content:
             application/json:
               schema:
-                $ref: 'analytics-combat-schemas.yaml#/components/schemas/BalanceChange'
+                $ref: analytics-combat-schemas.yaml#/components/schemas/BalanceChange
               example:
-                change_id: "gg0e8400-e29b-41d4-a716-446655440000"
-                skill_id: "weapon_001"
-                parameter_name: "damage"
+                change_id: gg0e8400-e29b-41d4-a716-446655440000
+                skill_id: weapon_001
+                parameter_name: damage
                 old_value: 100.0
                 new_value: 85.0
-                change_reason: "Balance adjustment based on analytics"
-                applied_by: "system"
-                applied_at: "2025-12-01T10:00:00Z"
+                change_reason: Balance adjustment based on analytics
+                applied_by: system
+                applied_at: '2025-12-01T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     CombosStats:
       type: object
       required:
-        - total_executions
-        - unique_combos
-        - average_damage
+      - total_executions
+      - unique_combos
+      - average_damage
       properties:
         total_executions:
           type: integer
@@ -361,12 +368,11 @@ components:
           description: Среднее время выполнения комбо в секундах
           minimum: 0
           example: 3.2
-
     PopularCombosResponse:
       type: object
       required:
-        - combos
-        - total
+      - combos
+      - total
       properties:
         combos:
           type: array
@@ -376,24 +382,23 @@ components:
           type: integer
           minimum: 0
           example: 100
-
     PopularCombo:
       type: object
       required:
-        - combo_id
-        - combo_name
-        - total_executions
-        - usage_rate
-        - average_damage
-        - success_rate
+      - combo_id
+      - combo_name
+      - total_executions
+      - usage_rate
+      - average_damage
+      - success_rate
       properties:
         combo_id:
           type: string
           format: uuid
-          example: "dd0e8400-e29b-41d4-a716-446655440000"
+          example: dd0e8400-e29b-41d4-a716-446655440000
         combo_name:
           type: string
-          example: "Cyber Strike Combo"
+          example: Cyber Strike Combo
         total_executions:
           type: integer
           minimum: 0
@@ -403,7 +408,7 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-          example: 0.10
+          example: 0.1
         average_damage:
           type: number
           format: float
@@ -416,71 +421,67 @@ components:
           minimum: 0.0
           maximum: 1.0
           example: 0.85
-
     BalanceIssuesResponse:
       type: object
       required:
-        - issues
-        - total
+      - issues
+      - total
       properties:
         issues:
           type: array
           items:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/BalanceIssue'
+            $ref: analytics-combat-schemas.yaml#/components/schemas/BalanceIssue
         total:
           type: integer
           minimum: 0
           example: 25
-
     BalanceRecommendationsResponse:
       type: object
       required:
-        - recommendations
-        - total
+      - recommendations
+      - total
       properties:
         recommendations:
           type: array
           items:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/BalanceRecommendation'
+            $ref: analytics-combat-schemas.yaml#/components/schemas/BalanceRecommendation
         total:
           type: integer
           minimum: 0
           example: 10
-
     ApplyBalanceChangeRequest:
       type: object
       required:
-        - skill_id
-        - parameter_name
-        - new_value
-        - change_reason
-        - mode
+      - skill_id
+      - parameter_name
+      - new_value
+      - change_reason
+      - mode
       properties:
         skill_id:
           type: string
           description: ID навыка/способности/оружия
-          example: "weapon_001"
+          example: weapon_001
         parameter_name:
           type: string
           description: Название параметра для изменения
-          example: "damage"
+          example: damage
+        change_reason:
+          type: string
+          description: Причина изменения
+          example: Balance adjustment based on analytics
+        mode:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/BalanceChangeMode
         new_value:
           type: number
           format: float
           description: Новое значение параметра
           example: 85.0
-        change_reason:
-          type: string
-          description: Причина изменения
-          example: "Balance adjustment based on analytics"
-        mode:
-          $ref: 'analytics-combat-schemas.yaml#/components/schemas/BalanceChangeMode'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

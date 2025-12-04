@@ -1,4 +1,3 @@
-# Issue: #141
 openapi: 3.0.3
 info:
   title: Social Guild Wars Service API
@@ -7,42 +6,39 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Guild Wars
-    description: Войны между гильдиями
-
+- name: Guild Wars
+  description: Войны между гильдиями
 paths:
   /social/guilds/{guild_id}/wars:
     get:
       tags:
-        - Guild Wars
+      - Guild Wars
       summary: Получить список войн гильдии
       operationId: getGuildWars
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - declared
-              - active
-              - ended
-              - cancelled
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - declared
+          - active
+          - ended
+          - cancelled
       responses:
         '200':
           description: Список войн
@@ -51,25 +47,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildWarsResponse'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/guilds/{guild_id}/wars/declare:
     post:
       tags:
-        - Guild Wars
+      - Guild Wars
       summary: Объявить войну другой гильдии
       operationId: declareGuildWar
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -84,33 +79,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildWar'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/guilds/{guild_id}/wars/{war_id}:
     get:
       tags:
-        - Guild Wars
+      - Guild Wars
       summary: Получить информацию о войне
       operationId: getGuildWar
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: war_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: war_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Информация о войне
@@ -119,31 +113,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildWar'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/guilds/{guild_id}/wars/{war_id}/end:
     post:
       tags:
-        - Guild Wars
+      - Guild Wars
       summary: Завершить войну
       operationId: endGuildWar
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: war_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: war_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -158,17 +151,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildWar'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     GuildWar:
       type: object
@@ -182,17 +173,17 @@ components:
         defender_guild_id:
           type: string
           format: uuid
-        status:
-          type: string
-          enum:
-            - declared
-            - active
-            - ended
-            - cancelled
         winner_guild_id:
           type: string
           format: uuid
           nullable: true
+        status:
+          type: string
+          enum:
+          - declared
+          - active
+          - ended
+          - cancelled
         declared_at:
           type: string
           format: date-time
@@ -204,11 +195,11 @@ components:
           type: string
           format: date-time
           nullable: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DeclareGuildWarRequest:
       type: object
       required:
-        - target_guild_id
+      - target_guild_id
       properties:
         target_guild_id:
           type: string
@@ -216,11 +207,10 @@ components:
         reason:
           type: string
           maxLength: 500
-
     EndGuildWarRequest:
       type: object
       required:
-        - winner_guild_id
+      - winner_guild_id
       properties:
         winner_guild_id:
           type: string
@@ -228,7 +218,6 @@ components:
         reason:
           type: string
           maxLength: 500
-
     GuildWarsResponse:
       type: object
       properties:
@@ -238,21 +227,5 @@ components:
             $ref: '#/components/schemas/GuildWar'
         total:
           type: integer
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

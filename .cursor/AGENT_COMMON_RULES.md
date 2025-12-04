@@ -8,6 +8,29 @@
 
 ---
 
+## WARNING КРИТИЧЕСКИ ВАЖНО: Краткость и фокус на коде
+
+**НИКОГДА НЕ ДЕЛАЙ:**
+- ❌ Отчеты, summary, анализы, обзоры
+- ❌ Длинные объяснения (максимум 1-2 предложения)
+- ❌ Markdown файлы с отчетами/анализом
+- ❌ Verbose комментарии в коде
+- ❌ Таблицы статистики без запроса
+
+**ВСЕГДА ДЕЛАЙ:**
+- OK Работай с кодом напрямую
+- OK Краткие ответы (1-2 предложения)
+- OK Показывай только код и изменения
+- OK Минимум текста, максимум действий
+- OK Фокус на реализации
+
+**Комментарии:**
+- При передаче: `OK Ready. Handed off to {NextAgent}. Issue: #{number}`
+- При возврате: `WARNING Returned: {reason}. Issue: #{number}`
+- НЕ пиши длинные списки изменений
+
+---
+
 ## WARNING КРИТИЧЕСКИ ВАЖНО: Git команды
 
 ### OK РАЗРЕШЕННЫЕ git операции:
@@ -297,27 +320,31 @@ const optionId = option.id;  // использовать в value
 **Шаблон комментария при передаче задачи:**
 
 ```markdown
-OK {Work type} ready. Handed off to {NextAgent}
-
-{Optional details about what was completed}
-
-PR: #{number} (if applicable)
+OK Ready. Handed off to {NextAgent}
 Issue: #{number}
 ```
+
+**КРИТИЧЕСКИ ВАЖНО:**
+- ❌ НЕ пиши длинные описания что сделано
+- ❌ НЕ создавай summary/отчеты
+- ❌ НЕ перечисляй все изменения
+- OK Только краткое подтверждение готовности
+- OK Только номер Issue
 
 **Примечание:** В комментариях всегда указывай номер Issue в формате `#{number}`, а не `item_id` (project_item_id).
 
 **Шаблон комментария при возврате задачи:**
 ```markdown
-WARNING **Task returned: {reason}**
-
-**Missing:**
-- {what_is_missing}
-
-**Correct agent:** {Agent Name}
-
-**Status updated:** `{CorrectAgent} - Returned`
+WARNING Returned: {reason}
+Correct agent: {Agent Name}
+Issue: #{number}
 ```
+
+**КРИТИЧЕСКИ ВАЖНО:**
+- ❌ НЕ пиши длинные объяснения
+- ❌ НЕ создавай списки проблем
+- OK Только причина и правильный агент
+- OK Максимум 1-2 предложения
 
 ## Label Management
 

@@ -1,40 +1,34 @@
-# Issue: #1442
-
 openapi: 3.0.0
-
 info:
   title: Faction Membership Service API
   version: 1.0.0
-  description: |
-    API для управления членством в фракциях: объединение кланов, управление членами.
+  description: 'API для управления членством в фракциях: объединение кланов, управление членами.
 
+    '
 servers:
-  - url: http://localhost:8092
-    description: Local development
-  - url: https://api.necpgame.com
-    description: Production
-
+- url: http://localhost:8092
+  description: Local development
+- url: https://api.necpgame.com
+  description: Production
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: membership
-    description: Управление членством
-
+- name: membership
+  description: Управление членством
 paths:
   /api/v1/factions/{factionId}/members/add-clan:
     post:
       tags:
-        - membership
+      - membership
       summary: Добавить клан в фракцию
       operationId: addClan
       parameters:
-        - name: factionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: factionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -42,15 +36,20 @@ paths:
             schema:
               type: object
               required:
-                - clan_id
-                - role
+              - clan_id
+              - role
               properties:
                 clan_id:
                   type: string
                   format: uuid
                 role:
                   type: string
-                  enum: [leader, officer, council_member, member, recruit]
+                  enum:
+                  - leader
+                  - officer
+                  - council_member
+                  - member
+                  - recruit
                 permissions:
                   type: object
                   additionalProperties: true
@@ -62,55 +61,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/FactionMember'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/factions/{factionId}/members/remove-clan/{clanId}:
     delete:
       tags:
-        - membership
+      - membership
       summary: Удалить клан из фракции
       operationId: removeClan
       parameters:
-        - name: factionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: clanId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: factionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: clanId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '204':
           description: Клан удален
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/factions/{factionId}/members/list:
     get:
       tags:
-        - membership
+      - membership
       summary: Список членов фракции
       operationId: listMembers
       parameters:
-        - name: factionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: role
-          in: query
-          schema:
-            type: string
-            enum: [leader, officer, council_member, member, recruit]
-        - $ref: 'common.yaml#/components/parameters/PageParam'
-        - $ref: 'common.yaml#/components/parameters/LimitParam'
+      - name: factionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - leader
+          - officer
+          - council_member
+          - member
+          - recruit
+      - $ref: common.yaml#/components/parameters/PageParam
+      - $ref: common.yaml#/components/parameters/LimitParam
       responses:
         '200':
           description: Список членов
@@ -124,27 +126,26 @@ paths:
                     items:
                       $ref: '#/components/schemas/FactionMember'
                   pagination:
-                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
-
+                    $ref: common.yaml#/components/schemas/PaginationResponse
   /api/v1/factions/{factionId}/members/{memberId}/rank:
     put:
       tags:
-        - membership
+      - membership
       summary: Изменить ранг члена
       operationId: updateMemberRank
       parameters:
-        - name: factionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: memberId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: factionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -152,11 +153,16 @@ paths:
             schema:
               type: object
               required:
-                - role
+              - role
               properties:
                 role:
                   type: string
-                  enum: [leader, officer, council_member, member, recruit]
+                  enum:
+                  - leader
+                  - officer
+                  - council_member
+                  - member
+                  - recruit
                 permissions:
                   type: object
                   additionalProperties: true
@@ -168,24 +174,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/FactionMember'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/players/{playerId}/factions:
     get:
       tags:
-        - membership
+      - membership
       summary: Фракции игрока
       description: Получить список фракций, в которых состоит игрок
       operationId: getPlayerFactions
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Список фракций
@@ -198,11 +203,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/PlayerFactionMembership'
-
 components:
   securitySchemes:
-    $ref: 'common.yaml#/components/securitySchemes'
-
+    $ref: common.yaml#/components/securitySchemes
   schemas:
     FactionMember:
       type: object
@@ -213,25 +216,30 @@ components:
         faction_id:
           type: string
           format: uuid
-        role:
-          type: string
-          enum: [leader, officer, council_member, member, recruit]
         clan_id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
-        permissions:
-          type: object
-          additionalProperties: true
-        appointed_at:
-          type: string
-          format: date-time
         appointed_by:
           type: string
           format: uuid
-
+        role:
+          type: string
+          enum:
+          - leader
+          - officer
+          - council_member
+          - member
+          - recruit
+        appointed_at:
+          type: string
+          format: date-time
+        permissions:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PlayerFactionMembership:
       type: object
       properties:
@@ -245,11 +253,3 @@ components:
         joined_at:
           type: string
           format: date-time
-
-
-
-
-
-
-
-

@@ -4,12 +4,12 @@
 --comment: Create tables for party system
 
 CREATE TABLE IF NOT EXISTS social.parties (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    max_size INTEGER NOT NULL DEFAULT 5 CHECK (max_size >= 2 AND max_size <= 5),
-    loot_mode VARCHAR(50) NOT NULL DEFAULT 'free_for_all' CHECK (loot_mode IN ('free_for_all', 'round_robin', 'need_before_greed', 'master_looter')),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  loot_mode VARCHAR(50) NOT NULL DEFAULT 'free_for_all' CHECK (loot_mode IN ('free_for_all', 'round_robin', 'need_before_greed', 'master_looter')),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  max_size INTEGER NOT NULL DEFAULT 5 CHECK (max_size >= 2 AND max_size <= 5)
 );
 
 CREATE INDEX IF NOT EXISTS idx_parties_leader_id ON social.parties(leader_id);

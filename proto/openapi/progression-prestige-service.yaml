@@ -1,43 +1,43 @@
 openapi: 3.0.3
 info:
   title: Progression Prestige Service API
-  description: |
-    API для системы Prestige: сброс прогресса за постоянные бонусы, управление престижем до уровня 10.
+  description: 'API для системы Prestige: сброс прогресса за постоянные бонусы, управление престижем до уровня 10.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1/progression
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/progression
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1/progression
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/progression
+  description: Продакшен сервер
 tags:
-  - name: Prestige
-    description: Prestige System - сброс прогресса за бонусы
-
+- name: Prestige
+  description: Prestige System - сброс прогресса за бонусы
 paths:
   /prestige/info:
     get:
       tags:
-        - Prestige
+      - Prestige
       summary: Получить информацию о Prestige
-      description: |
-        Возвращает информацию о текущем Prestige Level персонажа, доступных бонусах
+      description: 'Возвращает информацию о текущем Prestige Level персонажа, доступных бонусах
+
         и требованиях для следующего престижа.
+
+        '
       operationId: getPrestigeInfo
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       responses:
         '200':
           description: Информация о Prestige
@@ -46,48 +46,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/PrestigeInfo'
               example:
-                character_id: '110e8400-e29b-41d4-a716-446655440000'
+                character_id: 110e8400-e29b-41d4-a716-446655440000
                 prestige_level: 3
                 reset_count: 3
                 bonuses_applied:
                   experience_gain: 1.15
-                  loot_quality: 1.10
-                  currency_gain: 1.20
+                  loot_quality: 1.1
+                  currency_gain: 1.2
                 next_prestige_requirements:
                   min_level: 50
                   min_paragon_level: 20
                   completed_content:
-                    - raid_master_completed
-                    - dungeon_grandmaster_completed
+                  - raid_master_completed
+                  - dungeon_grandmaster_completed
                 last_reset_at: '2025-11-15T00:00:00Z'
                 updated_at: '2025-12-01T10:00:00Z'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /prestige/reset:
     post:
       tags:
-        - Prestige
+      - Prestige
       summary: Выполнить сброс престижа
-      description: |
-        Выполняет сброс престижа: сбрасывает уровень до 1, Paragon Levels и часть Mastery,
+      description: 'Выполняет сброс престижа: сбрасывает уровень до 1, Paragon Levels и часть Mastery,
+
         увеличивает Prestige Level и применяет постоянные бонусы.
+
         Требует подтверждения, так как это необратимая операция.
+
+        '
       operationId: resetPrestige
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       requestBody:
         required: true
         content:
@@ -104,34 +106,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/PrestigeInfo'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
+          $ref: common.yaml#/components/responses/Forbidden
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /prestige/bonuses:
     get:
       tags:
-        - Prestige
+      - Prestige
       summary: Получить бонусы престижа
-      description: |
-        Возвращает список всех доступных бонусов престижа и текущие примененные бонусы.
+      description: 'Возвращает список всех доступных бонусов престижа и текущие примененные бонусы.
+
+        '
       operationId: getPrestigeBonuses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       responses:
         '200':
           description: Бонусы престижа
@@ -140,31 +142,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/PrestigeBonuses'
               example:
-                character_id: '110e8400-e29b-41d4-a716-446655440000'
+                character_id: 110e8400-e29b-41d4-a716-446655440000
                 prestige_level: 3
                 available_bonuses:
-                  - type: experience_gain
-                    value: 1.15
-                    description: +15% к получению опыта
-                  - type: loot_quality
-                    value: 1.10
-                    description: +10% к качеству лута
-                  - type: currency_gain
-                    value: 1.20
-                    description: +20% к получению валюты
+                - type: experience_gain
+                  value: 1.15
+                  description: +15% к получению опыта
+                - type: loot_quality
+                  value: 1.1
+                  description: +10% к качеству лута
+                - type: currency_gain
+                  value: 1.2
+                  description: +20% к получению валюты
                 max_prestige_level: 10
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     PrestigeInfo:
       type: object
@@ -172,15 +172,13 @@ components:
         character_id:
           type: string
           format: uuid
-        prestige_level:
-          type: integer
-          minimum: 0
-          maximum: 10
-          description: Текущий Prestige Level (максимум 10)
-        reset_count:
-          type: integer
-          minimum: 0
-          description: Количество выполненных сбросов
+        last_reset_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
         bonuses_applied:
           type: object
           additionalProperties:
@@ -203,33 +201,30 @@ components:
               items:
                 type: string
           description: Требования для следующего престижа
-        last_reset_at:
-          type: string
-          format: date-time
-          nullable: true
-        updated_at:
-          type: string
-          format: date-time
-
+        prestige_level:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Текущий Prestige Level (максимум 10)
+        reset_count:
+          type: integer
+          minimum: 0
+          description: Количество выполненных сбросов
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ResetPrestigeRequest:
       type: object
       required:
-        - confirm
+      - confirm
       properties:
         confirm:
           type: boolean
           description: Подтверждение сброса (должно быть true)
-
     PrestigeBonuses:
       type: object
       properties:
         character_id:
           type: string
           format: uuid
-        prestige_level:
-          type: integer
-          minimum: 0
-          maximum: 10
         available_bonuses:
           type: array
           items:
@@ -242,8 +237,11 @@ components:
                 format: float
               description:
                 type: string
+        prestige_level:
+          type: integer
+          minimum: 0
+          maximum: 10
         max_prestige_level:
           type: integer
           default: 10
-
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

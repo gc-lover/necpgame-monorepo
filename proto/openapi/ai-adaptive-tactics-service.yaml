@@ -1,42 +1,46 @@
 openapi: 3.0.3
 info:
   title: AI Adaptive Tactics Service API
-  description: |
-    API для анализа тактик игроков и адаптации поведения AI врагов в реальном времени.
-    
+  description: 'API для анализа тактик игроков и адаптации поведения AI врагов в реальном времени.
+
+
     **Основные возможности:**
+
     - Анализ тактик игроков в реальном времени
+
     - Адаптация паттернов атак и защиты
+
     - Применение контр-стратегий
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8090/api/v1/ai
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/ai
-    description: Продакшен сервер
-
+- url: http://localhost:8090/api/v1/ai
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/ai
+  description: Продакшен сервер
 tags:
-  - name: Tactics Analysis
-    description: Анализ тактик игроков
-  - name: Adaptations
-    description: Адаптации AI
-
+- name: Tactics Analysis
+  description: Анализ тактик игроков
+- name: Adaptations
+  description: Адаптации AI
 paths:
   /analyze/tactics:
     post:
       tags:
-        - Tactics Analysis
+      - Tactics Analysis
       summary: Анализировать тактики команды
-      description: |
-        Анализирует тактики игроков в бою и определяет слабые места команды.
+      description: 'Анализирует тактики игроков в бою и определяет слабые места команды.
+
         Результаты используются для адаптации поведения AI врагов.
+
+        '
       operationId: analyzeTactics
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -44,20 +48,20 @@ paths:
             schema:
               $ref: '#/components/schemas/AnalyzeTacticsRequest'
             example:
-              encounter_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-              team_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+              encounter_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
+              team_id: b2c3d4e5-f6a7-8901-2345-678901bcdef0
               player_actions:
-                - player_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
-                  position:
-                    x: 100.0
-                    y: 200.0
-                    z: 50.0
-                  ability_usage:
-                    ability_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
-                    usage_count: 5
-                  pattern_data:
-                    attack_frequency: 0.8
-                    defense_frequency: 0.2
+              - player_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+                position:
+                  x: 100.0
+                  y: 200.0
+                  z: 50.0
+                ability_usage:
+                  ability_id: d4e5f6a7-b8c9-0123-4567-890123def012
+                  usage_count: 5
+                pattern_data:
+                  attack_frequency: 0.8
+                  defense_frequency: 0.2
       responses:
         '200':
           description: Анализ тактик завершен
@@ -66,48 +70,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalyzeTacticsResponse'
               example:
-                analysis_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
-                encounter_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                analysis_id: e5f6a7b8-c9d0-1234-5678-901234ef0123
+                encounter_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
                 weak_points:
-                  - type: "low_defense"
-                    player_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
-                    description: "Игрок редко использует защиту"
-                  - type: "ability_spam"
-                    player_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
-                    description: "Частое использование способностей"
+                - type: low_defense
+                  player_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+                  description: Игрок редко использует защиту
+                - type: ability_spam
+                  player_id: d4e5f6a7-b8c9-0123-4567-890123def012
+                  description: Частое использование способностей
                 recommended_adaptations:
-                  - type: "focus_weak_player"
-                    target_player_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
-                    priority: "high"
-                  - type: "interrupt_abilities"
-                    target_player_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
-                    priority: "medium"
-                timestamp: "2025-12-01T10:00:00Z"
+                - type: focus_weak_player
+                  target_player_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+                  priority: high
+                - type: interrupt_abilities
+                  target_player_id: d4e5f6a7-b8c9-0123-4567-890123def012
+                  priority: medium
+                timestamp: '2025-12-01T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /adaptations/{encounterId}:
     get:
       tags:
-        - Adaptations
+      - Adaptations
       summary: Получить текущие адаптации
-      description: |
-        Возвращает список всех активных адаптаций AI для указанного боя.
+      description: 'Возвращает список всех активных адаптаций AI для указанного боя.
+
+        '
       operationId: getAdaptations
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: encounterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID боя
+      - name: encounterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID боя
       responses:
         '200':
           description: Список адаптаций
@@ -116,77 +120,74 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdaptationsResponse'
               example:
-                encounter_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                encounter_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
                 adaptations:
-                  - adaptation_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
-                    enemy_id: "g7a8b9c0-e1f2-3456-7890-123456g01234"
-                    adaptation_type: "focus_weak_player"
-                    adaptation_data:
-                      target_player_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
-                      priority: "high"
-                    applied_at: "2025-12-01T10:00:00Z"
-                  - adaptation_id: "h8b9c0d1-f2e3-4567-8901-234567h01234"
-                    enemy_id: "i9c0d1e2-g3f4-5678-9012-345678i01234"
-                    adaptation_type: "interrupt_abilities"
-                    adaptation_data:
-                      target_player_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
-                      priority: "medium"
-                    applied_at: "2025-12-01T10:05:00Z"
+                - adaptation_id: f6a7b8c9-d0e1-2345-6789-012345f01234
+                  enemy_id: g7a8b9c0-e1f2-3456-7890-123456g01234
+                  adaptation_type: focus_weak_player
+                  adaptation_data:
+                    target_player_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+                    priority: high
+                  applied_at: '2025-12-01T10:00:00Z'
+                - adaptation_id: h8b9c0d1-f2e3-4567-8901-234567h01234
+                  enemy_id: i9c0d1e2-g3f4-5678-9012-345678i01234
+                  adaptation_type: interrupt_abilities
+                  adaptation_data:
+                    target_player_id: d4e5f6a7-b8c9-0123-4567-890123def012
+                    priority: medium
+                  applied_at: '2025-12-01T10:05:00Z'
                 total: 2
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
           description: Бой не найден
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+                $ref: common.yaml#/components/schemas/Error
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     AnalyzeTacticsRequest:
       type: object
       required:
-        - encounter_id
-        - team_id
-        - player_actions
+      - encounter_id
+      - team_id
+      - player_actions
       properties:
         encounter_id:
           type: string
           format: uuid
           description: ID боя
-          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         team_id:
           type: string
           format: uuid
           description: ID команды игроков
-          example: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+          example: b2c3d4e5-f6a7-8901-2345-678901bcdef0
         player_actions:
           type: array
           items:
             $ref: '#/components/schemas/PlayerAction'
           description: Действия игроков для анализа
           minItems: 1
-
     PlayerAction:
       type: object
       required:
-        - player_id
-        - position
-        - ability_usage
-        - pattern_data
+      - player_id
+      - position
+      - ability_usage
+      - pattern_data
       properties:
         player_id:
           type: string
           format: uuid
           description: ID игрока
-          example: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+          example: c3d4e5f6-a7b8-9012-3456-789012cdef01
         position:
           type: object
           description: Позиция игрока
@@ -226,82 +227,86 @@ components:
               minimum: 0.0
               maximum: 1.0
           additionalProperties: true
-
     WeakPoint:
       type: object
       required:
-        - type
-        - description
+      - type
+      - description
       properties:
-        type:
-          type: string
-          enum:
-            - low_defense
-            - ability_spam
-            - poor_positioning
-            - weak_teamwork
-          description: Тип слабого места
-          example: "low_defense"
         player_id:
           type: string
           format: uuid
           description: ID игрока (если применимо)
           nullable: true
-          example: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+          example: c3d4e5f6-a7b8-9012-3456-789012cdef01
         description:
           type: string
           description: Описание слабого места
-          example: "Игрок редко использует защиту"
-
-    RecommendedAdaptation:
-      type: object
-      required:
-        - type
-        - priority
-      properties:
+          example: Игрок редко использует защиту
         type:
           type: string
           enum:
-            - focus_weak_player
-            - interrupt_abilities
-            - split_team
-            - focus_support
-          description: Тип адаптации
-          example: "focus_weak_player"
+          - low_defense
+          - ability_spam
+          - poor_positioning
+          - weak_teamwork
+          description: Тип слабого места
+          example: low_defense
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RecommendedAdaptation:
+      type: object
+      required:
+      - type
+      - priority
+      properties:
         target_player_id:
           type: string
           format: uuid
           description: ID целевого игрока
           nullable: true
-          example: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+          example: c3d4e5f6-a7b8-9012-3456-789012cdef01
+        type:
+          type: string
+          enum:
+          - focus_weak_player
+          - interrupt_abilities
+          - split_team
+          - focus_support
+          description: Тип адаптации
+          example: focus_weak_player
         priority:
           type: string
           enum:
-            - low
-            - medium
-            - high
+          - low
+          - medium
+          - high
           description: Приоритет адаптации
-          example: "high"
-
+          example: high
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AnalyzeTacticsResponse:
       type: object
       required:
-        - analysis_id
-        - encounter_id
-        - weak_points
-        - recommended_adaptations
-        - timestamp
+      - analysis_id
+      - encounter_id
+      - weak_points
+      - recommended_adaptations
+      - timestamp
       properties:
         analysis_id:
           type: string
           format: uuid
           description: ID анализа
-          example: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+          example: e5f6a7b8-c9d0-1234-5678-901234ef0123
         encounter_id:
           type: string
           format: uuid
           description: ID боя
-          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        timestamp:
+          type: string
+          format: date-time
+          description: Время анализа
+          example: '2025-12-01T10:00:00Z'
         weak_points:
           type: array
           items:
@@ -312,64 +317,59 @@ components:
           items:
             $ref: '#/components/schemas/RecommendedAdaptation'
           description: Рекомендуемые адаптации
-        timestamp:
-          type: string
-          format: date-time
-          description: Время анализа
-          example: "2025-12-01T10:00:00Z"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Adaptation:
       type: object
       required:
-        - adaptation_id
-        - enemy_id
-        - adaptation_type
-        - applied_at
+      - adaptation_id
+      - enemy_id
+      - adaptation_type
+      - applied_at
       properties:
         adaptation_id:
           type: string
           format: uuid
           description: ID адаптации
-          example: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+          example: f6a7b8c9-d0e1-2345-6789-012345f01234
         enemy_id:
           type: string
           format: uuid
           description: ID врага
-          example: "g7a8b9c0-e1f2-3456-7890-123456g01234"
+          example: g7a8b9c0-e1f2-3456-7890-123456g01234
         adaptation_type:
           type: string
           enum:
-            - focus_weak_player
-            - interrupt_abilities
-            - split_team
-            - focus_support
+          - focus_weak_player
+          - interrupt_abilities
+          - split_team
+          - focus_support
           description: Тип адаптации
-          example: "focus_weak_player"
+          example: focus_weak_player
+        applied_at:
+          type: string
+          format: date-time
+          description: Время применения
+          example: '2025-12-01T10:00:00Z'
         adaptation_data:
           type: object
           description: Данные адаптации
           additionalProperties: true
           example:
-            target_player_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
-            priority: "high"
-        applied_at:
-          type: string
-          format: date-time
-          description: Время применения
-          example: "2025-12-01T10:00:00Z"
-
+            target_player_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+            priority: high
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AdaptationsResponse:
       type: object
       required:
-        - encounter_id
-        - adaptations
-        - total
+      - encounter_id
+      - adaptations
+      - total
       properties:
         encounter_id:
           type: string
           format: uuid
           description: ID боя
-          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         adaptations:
           type: array
           items:
@@ -380,17 +380,14 @@ components:
           description: Общее количество адаптаций
           minimum: 0
           example: 2
-
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

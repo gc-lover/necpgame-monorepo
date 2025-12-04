@@ -1,15 +1,17 @@
+// Issue: #1584
 package main
 
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/support-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -31,7 +33,17 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize ticket service")
 	}
 
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Connection pool settings for performance (Issue #1605)
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to parse database URL")
+	}
+	config.MaxConns = 25
+	config.MinConns = 5
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 10 * time.Minute
+
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize database pool for SLA service")
 	}
@@ -53,6 +65,16 @@ func main() {
 	}
 
 	httpServer := server.NewHTTPServer(addr, ticketService, slaService, jwtValidator, authEnabled)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6081")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

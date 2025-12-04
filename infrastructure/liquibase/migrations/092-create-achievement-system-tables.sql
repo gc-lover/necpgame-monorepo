@@ -9,10 +9,11 @@
 
 -- Table: achievement_definitions
 CREATE TABLE IF NOT EXISTS achievement_definitions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(200) NOT NULL,
-    description TEXT NOT NULL,
-    category VARCHAR(50) NOT NULL CHECK (category IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title_id UUID,
+  description TEXT NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (category IN (
         'combat',
         'economy',
         'social',
@@ -22,21 +23,20 @@ CREATE TABLE IF NOT EXISTS achievement_definitions (
         'pve',
         'special'
     )),
-    type VARCHAR(20) NOT NULL CHECK (type IN (
+  type VARCHAR(20) NOT NULL CHECK (type IN (
         'standard',
         'progressive',
         'repeatable'
     )),
-    icon_url VARCHAR(500),
-    required_count INTEGER DEFAULT 1,
-    reward_currency VARCHAR(50),
-    reward_amount INTEGER DEFAULT 0,
-    reward_items JSONB DEFAULT '[]',
-    title_id UUID,
-    hidden BOOLEAN DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT achievement_definitions_name_unique UNIQUE (name)
+  icon_url VARCHAR(500),
+  reward_currency VARCHAR(50),
+  reward_items JSONB DEFAULT '[]',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  required_count INTEGER DEFAULT 1,
+  reward_amount INTEGER DEFAULT 0,
+  hidden BOOLEAN DEFAULT false,
+  CONSTRAINT achievement_definitions_name_unique UNIQUE (name)
 );
 
 CREATE INDEX idx_achievement_definitions_category ON achievement_definitions(category);
@@ -45,15 +45,15 @@ CREATE INDEX idx_achievement_definitions_hidden ON achievement_definitions(hidde
 
 -- Table: player_achievement_progress
 CREATE TABLE IF NOT EXISTS player_achievement_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID NOT NULL,
-    achievement_id UUID NOT NULL REFERENCES achievement_definitions(id) ON DELETE CASCADE,
-    current_count INTEGER DEFAULT 0,
-    unlocked_at TIMESTAMP,
-    claimed_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT player_achievement_progress_unique UNIQUE (player_id, achievement_id)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_id UUID NOT NULL,
+  achievement_id UUID NOT NULL REFERENCES achievement_definitions(id) ON DELETE CASCADE,
+  unlocked_at TIMESTAMP,
+  claimed_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  current_count INTEGER DEFAULT 0,
+  CONSTRAINT player_achievement_progress_unique UNIQUE (player_id, achievement_id)
 );
 
 CREATE INDEX idx_player_achievement_progress_player ON player_achievement_progress(player_id);
@@ -62,15 +62,15 @@ CREATE INDEX idx_player_achievement_progress_unlocked ON player_achievement_prog
 
 -- Table: player_titles
 CREATE TABLE IF NOT EXISTS player_titles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID NOT NULL,
-    title VARCHAR(100) NOT NULL,
-    description TEXT,
-    achievement_id UUID REFERENCES achievement_definitions(id) ON DELETE SET NULL,
-    is_active BOOLEAN DEFAULT false,
-    unlocked_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_id UUID NOT NULL,
+  achievement_id UUID REFERENCES achievement_definitions(id) ON DELETE SET NULL,
+  description TEXT,
+  title VARCHAR(100) NOT NULL,
+  unlocked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  is_active BOOLEAN DEFAULT false
 );
 
 CREATE INDEX idx_player_titles_player ON player_titles(player_id);
@@ -105,6 +105,7 @@ INSERT INTO achievement_definitions (id, name, description, category, type, requ
 VALUES
     ('550e8400-e29b-41d4-a716-446655440031', 'Explorer', 'Discover 10 locations', 'exploration', 'progressive', 10, 'credits', 200),
     ('550e8400-e29b-41d4-a716-446655440032', 'World Traveler', 'Visit all continents', 'exploration', 'standard', 7, 'credits', 1000);
+
 
 
 

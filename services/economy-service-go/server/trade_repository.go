@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/economy-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -101,6 +101,68 @@ func (r *TradeRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Tr
 	}
 
 	return &session, nil
+}
+
+// GetTradeSessionsBatch gets multiple trade sessions by IDs in one query (Issue #1608)
+// Performance: 1 query instead of N queries, DB round trips ↓90%
+func (r *TradeRepository) GetTradeSessionsBatch(ctx context.Context, sessionIDs []uuid.UUID) (map[uuid.UUID]*models.TradeSession, error) {
+	if len(sessionIDs) == 0 {
+		return make(map[uuid.UUID]*models.TradeSession), nil
+	}
+
+	query := `
+		SELECT id, initiator_id, recipient_id, initiator_offer, recipient_offer,
+			initiator_confirmed, recipient_confirmed, status, zone_id,
+			created_at, updated_at, expires_at, completed_at
+		FROM economy.trade_sessions
+		WHERE id = ANY($1)
+	`
+
+	rows, err := r.db.Query(ctx, query, sessionIDs)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to get trade sessions batch")
+		return nil, err
+	}
+	defer rows.Close()
+
+	sessions := make(map[uuid.UUID]*models.TradeSession)
+	for rows.Next() {
+		var session models.TradeSession
+		var initiatorOfferJSON []byte
+		var recipientOfferJSON []byte
+		var zoneID *uuid.UUID
+
+		err := rows.Scan(
+			&session.ID, &session.InitiatorID, &session.RecipientID,
+			&initiatorOfferJSON, &recipientOfferJSON,
+			&session.InitiatorConfirmed, &session.RecipientConfirmed,
+			&session.Status, &zoneID,
+			&session.CreatedAt, &session.UpdatedAt, &session.ExpiresAt,
+			&session.CompletedAt,
+		)
+		if err != nil {
+			r.logger.WithError(err).Error("Failed to scan trade session")
+			continue
+		}
+
+		session.ZoneID = zoneID
+		if len(initiatorOfferJSON) > 0 {
+			if err := json.Unmarshal(initiatorOfferJSON, &session.InitiatorOffer); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal initiator offer JSON")
+				session.InitiatorOffer = models.TradeOffer{}
+			}
+		}
+		if len(recipientOfferJSON) > 0 {
+			if err := json.Unmarshal(recipientOfferJSON, &session.RecipientOffer); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal recipient offer JSON")
+				session.RecipientOffer = models.TradeOffer{}
+			}
+		}
+
+		sessions[session.ID] = &session
+	}
+
+	return sessions, rows.Err()
 }
 
 func (r *TradeRepository) GetActiveByCharacter(ctx context.Context, characterID uuid.UUID) ([]models.TradeSession, error) {

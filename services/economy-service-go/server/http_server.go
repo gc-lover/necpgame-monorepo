@@ -8,9 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/necpgame/economy-service-go/models"
-	tradeapi "github.com/necpgame/economy-service-go/pkg/api"
-	"github.com/necpgame/economy-service-go/pkg/weaponcombinationsapi"
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,7 +28,6 @@ type HTTPServer struct {
 	addr                string
 	router              *mux.Router
 	tradeService        TradeServiceInterface
-	tradeHandlers       *TradeHandlers
 	engramCreationService EngramCreationServiceInterface
 	engramTransferService EngramTransferServiceInterface
 	weaponCombinationsService WeaponCombinationsServiceInterface
@@ -41,13 +39,11 @@ type HTTPServer struct {
 
 func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface, weaponCombinationsService WeaponCombinationsServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
-	tradeHandlers := NewTradeHandlers(tradeService)
 	
 	server := &HTTPServer{
 		addr:                addr,
 		router:              router,
 		tradeService:        tradeService,
-		tradeHandlers:       tradeHandlers,
 		engramCreationService: engramCreationService,
 		engramTransferService: engramTransferService,
 		weaponCombinationsService: weaponCombinationsService,
@@ -60,34 +56,37 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	apiRouter := router.PathPrefix("/api/v1").Subrouter()
+	// ogen server
+	handlers := NewEconomyHandlers(server.tradeService)
+	secHandler := NewSecurityHandler(server.jwtValidator)
 
-	if authEnabled {
-		apiRouter.Use(server.authMiddleware)
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	economy := apiRouter.PathPrefix("/economy").Subrouter()
+	router.PathPrefix("/api/v1").Handler(ogenServer)
 
-	tradeapi.HandlerFromMux(tradeHandlers, economy)
-
+	// Legacy endpoints (not in ogen API yet)
 	if server.engramCreationService != nil {
-		economy.HandleFunc("/engrams/create", server.createEngram).Methods("POST")
-		economy.HandleFunc("/engrams/create/cost/{chip_tier}", server.getEngramCreationCost).Methods("GET")
-		economy.HandleFunc("/engrams/create/validate", server.validateEngramCreation).Methods("POST")
+		router.HandleFunc("/api/v1/economy/engrams/create", server.createEngram).Methods("POST")
+		router.HandleFunc("/api/v1/economy/engrams/create/cost/{chip_tier}", server.getEngramCreationCost).Methods("GET")
+		router.HandleFunc("/api/v1/economy/engrams/create/validate", server.validateEngramCreation).Methods("POST")
 	}
 
 	if server.engramTransferService != nil {
-		economy.HandleFunc("/engrams/{engram_id}/transfer", server.transferEngram).Methods("POST")
-		economy.HandleFunc("/engrams/{engram_id}/loan", server.loanEngram).Methods("POST")
-		economy.HandleFunc("/engrams/{engram_id}/extract", server.extractEngram).Methods("POST")
-		economy.HandleFunc("/engrams/{engram_id}/trade", server.tradeEngram).Methods("POST")
+		router.HandleFunc("/api/v1/economy/engrams/{engram_id}/transfer", server.transferEngram).Methods("POST")
+		router.HandleFunc("/api/v1/economy/engrams/{engram_id}/loan", server.loanEngram).Methods("POST")
+		router.HandleFunc("/api/v1/economy/engrams/{engram_id}/extract", server.extractEngram).Methods("POST")
+		router.HandleFunc("/api/v1/economy/engrams/{engram_id}/trade", server.tradeEngram).Methods("POST")
 	}
 
-	if server.weaponCombinationsService != nil {
-		weaponCombinationsHandlers := NewWeaponCombinationsHandlers(server.weaponCombinationsService)
-		weaponCombinationsAPI := economy.PathPrefix("/weapons").Subrouter()
-		weaponcombinationsapi.HandlerFromMux(weaponCombinationsHandlers, weaponCombinationsAPI)
-	}
+	// TODO: Weapon combinations API - not in ogen spec yet
+	// if server.weaponCombinationsService != nil {
+	// 	weaponCombinationsHandlers := NewWeaponCombinationsHandlers(server.weaponCombinationsService)
+	// 	weaponCombinationsAPI := economy.PathPrefix("/weapons").Subrouter()
+	// 	weaponcombinationsapi.HandlerFromMux(weaponCombinationsHandlers, weaponCombinationsAPI)
+	// }
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

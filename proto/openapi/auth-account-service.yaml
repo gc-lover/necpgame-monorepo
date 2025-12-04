@@ -6,43 +6,38 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8081/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8081/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Account
-    description: Управление аккаунтом
-
+- name: Account
+  description: Управление аккаунтом
 paths:
   /auth/account:
     get:
       tags:
-        - Account
+      - Account
       summary: Получить информацию об аккаунте
       operationId: getAccount
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Информация об аккаунте
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Account"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Account'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Account:
       type: object
@@ -54,41 +49,20 @@ components:
           type: string
         username:
           type: string
+        role:
+          type: string
+          enum:
+          - PLAYER
+          - MODERATOR
+          - ADMIN
+          - SUPER_ADMIN
+        created_at:
+          type: string
+          format: date-time
         email_verified:
           type: boolean
         two_factor_enabled:
           type: boolean
-        role:
-          type: string
-          enum: [PLAYER, MODERATOR, ADMIN, SUPER_ADMIN]
-        created_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

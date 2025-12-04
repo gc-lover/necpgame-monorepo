@@ -1,12 +1,19 @@
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	"github.com/necpgame/quest-rewards-events-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/google/uuid"
+)
+
+// Context timeout constants (Issue #1604)
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
 )
 
 type QuestRewardsEventsHandlers struct{}
@@ -16,6 +23,10 @@ func NewQuestRewardsEventsHandlers() *QuestRewardsEventsHandlers {
 }
 
 func (h *QuestRewardsEventsHandlers) GetQuestRewards(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	experience := 1000
 	currency := 5000
 	itemId1 := openapi_types.UUID(uuid.New())
@@ -48,6 +59,10 @@ func (h *QuestRewardsEventsHandlers) GetQuestRewards(w http.ResponseWriter, r *h
 }
 
 func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	experience := 1000
 	currency := 5000
 	success := true
@@ -93,6 +108,10 @@ func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(w http.ResponseWrite
 }
 
 func (h *QuestRewardsEventsHandlers) GetQuestEvents(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID, params api.GetQuestEventsParams) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	eventId1 := openapi_types.UUID(uuid.New())
 	eventId2 := openapi_types.UUID(uuid.New())
 	eventId3 := openapi_types.UUID(uuid.New())
@@ -144,6 +163,7 @@ func (h *QuestRewardsEventsHandlers) GetQuestEvents(w http.ResponseWriter, r *ht
 
 	respondJSON(w, http.StatusOK, response)
 }
+
 
 
 

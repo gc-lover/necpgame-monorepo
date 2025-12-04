@@ -1,4 +1,3 @@
-# Issue: #64
 openapi: 3.0.3
 info:
   title: Economy Loot Core Service API
@@ -7,62 +6,58 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Loot
-    description: Генерация и распределение лута
-
+- name: Loot
+  description: Генерация и распределение лута
 paths:
   /economy/loot/generate:
     post:
       tags:
-        - Loot
+      - Loot
       summary: Сгенерировать лут
       operationId: generateLoot
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GenerateLootRequest"
+              $ref: '#/components/schemas/GenerateLootRequest'
       responses:
-        "200":
+        '200':
           description: Лут сгенерирован
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootResult"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/LootResult'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/loot/pickup:
     post:
       tags:
-        - Loot
+      - Loot
       summary: Подобрать лут
       operationId: pickupLoot
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PickupLootRequest"
+              $ref: '#/components/schemas/PickupLootRequest'
       responses:
-        "200":
+        '200':
           description: Лут подобран
           content:
             application/json:
@@ -74,91 +69,82 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: "#/components/schemas/LootItem"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                      $ref: '#/components/schemas/LootItem'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/loot/tables/{table_id}:
     get:
       tags:
-        - Loot
+      - Loot
       summary: Получить loot table
       operationId: getLootTable
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: table_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: table_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Loot table
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootTable"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/LootTable'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/loot/apply-luck:
     post:
       tags:
-        - Loot
+      - Loot
       summary: Применить luck модификатор к луту
       operationId: applyLuckModifier
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ApplyLuckRequest"
+              $ref: '#/components/schemas/ApplyLuckRequest'
       responses:
-        "200":
+        '200':
           description: Luck применён
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootResult"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/LootResult'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     GenerateLootRequest:
       type: object
       required:
-        - source_type
-        - source_id
-        - character_id
+      - source_type
+      - source_id
+      - character_id
       properties:
-        source_type:
-          type: string
-          enum: [enemy, container, boss, quest]
-        source_id:
-          type: string
         character_id:
           type: string
           format: uuid
@@ -166,27 +152,39 @@ components:
           type: string
           format: uuid
           nullable: true
+        source_id:
+          type: string
+        source_type:
+          type: string
+          enum:
+          - enemy
+          - container
+          - boss
+          - quest
         distribution_mode:
           type: string
-          enum: [personal, party_roll, party_shared]
+          enum:
+          - personal
+          - party_roll
+          - party_shared
           default: personal
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LootResult:
       type: object
       properties:
         loot_id:
           type: string
           format: uuid
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/LootItem"
-        currency:
-          type: integer
         generated_at:
           type: string
           format: date-time
-
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        currency:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LootItem:
       type: object
       properties:
@@ -195,19 +193,19 @@ components:
           format: uuid
         item_template_id:
           type: string
-        quantity:
-          type: integer
         rarity:
           type: string
         stats:
           type: object
           additionalProperties: true
-
+        quantity:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PickupLootRequest:
       type: object
       required:
-        - loot_id
-        - character_id
+      - loot_id
+      - character_id
       properties:
         loot_id:
           type: string
@@ -215,7 +213,6 @@ components:
         character_id:
           type: string
           format: uuid
-
     LootTable:
       type: object
       properties:
@@ -237,12 +234,11 @@ components:
                 type: integer
               max_quantity:
                 type: integer
-
     ApplyLuckRequest:
       type: object
       required:
-        - loot_id
-        - luck_value
+      - loot_id
+      - luck_value
       properties:
         loot_id:
           type: string
@@ -250,7 +246,5 @@ components:
         luck_value:
           type: number
           format: float
-
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

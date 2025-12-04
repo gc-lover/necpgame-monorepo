@@ -1,0 +1,63 @@
+// Issue: #1585 - Runtime Goroutine Leak Monitoring
+package server
+
+import (
+	"runtime"
+	"time"
+
+	"github.com/sirupsen/logrus"
+)
+
+// GoroutineMonitor monitors goroutine count and detects leaks
+type GoroutineMonitor struct {
+	maxGoroutines int
+	logger        *logrus.Logger
+	ctx           chan struct{}
+}
+
+// NewGoroutineMonitor creates a new goroutine monitor
+func NewGoroutineMonitor(max int, logger *logrus.Logger) *GoroutineMonitor {
+	return &GoroutineMonitor{
+		maxGoroutines: max,
+		logger:        logger,
+		ctx:           make(chan struct{}),
+	}
+}
+
+// Start starts monitoring goroutine count
+func (gm *GoroutineMonitor) Start() {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-gm.ctx:
+			return
+		case <-ticker.C:
+			count := runtime.NumGoroutine()
+
+			if count > gm.maxGoroutines {
+				gm.logger.WithFields(logrus.Fields{
+					"count": count,
+					"max":   gm.maxGoroutines,
+				}).Error("Goroutine leak detected")
+
+				// Dump goroutine stack traces
+				buf := make([]byte, 1<<20) // 1MB
+				n := runtime.Stack(buf, true)
+				gm.logger.WithField("stack", string(buf[:n])).Error("Goroutine dump")
+			} else {
+				gm.logger.WithField("count", count).Debug("Goroutine count OK")
+			}
+
+			// Prometheus metric (if metrics available)
+			// goroutineCount.Set(float64(count))
+		}
+	}
+}
+
+// Stop stops monitoring
+func (gm *GoroutineMonitor) Stop() {
+	close(gm.ctx)
+}
+

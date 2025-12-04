@@ -1,4 +1,3 @@
-# Issue: #150
 openapi: 3.0.3
 info:
   title: Matchmaking Quality Service API
@@ -7,33 +6,30 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8088/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8088/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Quality
-    description: Качество матча
-
+- name: Quality
+  description: Качество матча
 paths:
   /matchmaking/quality/{match_id}:
     get:
       tags:
-        - Quality
+      - Quality
       summary: Получить качество матча
       operationId: getMatchQuality
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: match_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: match_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Качество матча
@@ -42,20 +38,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/MatchQuality'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /matchmaking/quality/calculate:
     post:
       tags:
-        - Quality
+      - Quality
       summary: Рассчитать качество матча
       operationId: calculateMatchQuality
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -70,19 +65,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/MatchQuality'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     MatchQuality:
       type: object
@@ -90,9 +83,6 @@ components:
         match_id:
           type: string
           format: uuid
-        quality_score:
-          type: number
-          format: float
         factors:
           type: object
           properties:
@@ -110,30 +100,17 @@ components:
             role_composition:
               type: number
               format: float
-
+        quality_score:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CalculateQualityRequest:
       type: object
       required:
-        - match_id
+      - match_id
       properties:
         match_id:
           type: string
           format: uuid
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

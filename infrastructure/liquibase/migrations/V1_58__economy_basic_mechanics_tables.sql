@@ -15,15 +15,16 @@ CREATE SCHEMA IF NOT EXISTS economy;
 
 -- Таблица обзора экономической системы
 CREATE TABLE IF NOT EXISTS economy.economy_overview (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    region_id UUID, -- Assuming regions table exists
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  region_id UUID,
+  -- Assuming regions table exists
     currency_id UUID REFERENCES economy.currencies(id) ON DELETE SET NULL,
-    total_volume DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (total_volume >= 0),
-    active_trades INTEGER NOT NULL DEFAULT 0 CHECK (active_trades >= 0),
-    active_guilds INTEGER NOT NULL DEFAULT 0 CHECK (active_guilds >= 0),
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(region_id, currency_id)
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  total_volume DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (total_volume >= 0),
+  active_trades INTEGER NOT NULL DEFAULT 0 CHECK (active_trades >= 0),
+  active_guilds INTEGER NOT NULL DEFAULT 0 CHECK (active_guilds >= 0),
+  UNIQUE(region_id, currency_id)
 );
 
 -- Индексы для economy_overview
@@ -33,14 +34,14 @@ CREATE INDEX IF NOT EXISTS idx_economy_overview_updated_at ON economy.economy_ov
 
 -- Таблица торговых гильдий
 CREATE TABLE IF NOT EXISTS economy.trading_guilds (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    capital DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (capital >= 0),
-    member_count INTEGER NOT NULL DEFAULT 0 CHECK (member_count >= 0),
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  description TEXT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  capital DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (capital >= 0),
+  member_count INTEGER NOT NULL DEFAULT 0 CHECK (member_count >= 0)
 );
 
 -- Индексы для trading_guilds
@@ -67,14 +68,15 @@ CREATE INDEX IF NOT EXISTS idx_guild_members_role ON economy.guild_members(role)
 
 -- Таблица валют
 CREATE TABLE IF NOT EXISTS economy.currencies (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    code VARCHAR(10) NOT NULL UNIQUE,
-    name VARCHAR(100) NOT NULL,
-    region_id UUID, -- Assuming regions table exists
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  region_id UUID,
+  code VARCHAR(10) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- Assuming regions table exists
     exchange_rate DECIMAL(20,8) NOT NULL DEFAULT 1.0 CHECK (exchange_rate > 0),
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  is_active BOOLEAN NOT NULL DEFAULT true
 );
 
 -- Индексы для currencies
@@ -85,14 +87,14 @@ CREATE INDEX IF NOT EXISTS idx_currencies_exchange_rate ON economy.currencies(ex
 
 -- Таблица ресурсов
 CREATE TABLE IF NOT EXISTS economy.resources (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    category VARCHAR(50) NOT NULL,
-    base_price DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (base_price >= 0),
-    current_price DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (current_price >= 0),
-    description TEXT,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  category VARCHAR(50) NOT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  base_price DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (base_price >= 0),
+  current_price DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (current_price >= 0)
 );
 
 -- Индексы для resources
@@ -102,15 +104,17 @@ CREATE INDEX IF NOT EXISTS idx_resources_current_price ON economy.resources(curr
 
 -- Таблица влияния экономики на мир
 CREATE TABLE IF NOT EXISTS economy.world_economy_impact (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    region_id UUID, -- Assuming regions table exists
-    faction_id UUID, -- Assuming factions table exists
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  region_id UUID,
+  -- Assuming regions table exists
+    faction_id UUID,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- Assuming factions table exists
     economic_power DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (economic_power >= 0),
-    trade_volume DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (trade_volume >= 0),
-    influence_level INTEGER NOT NULL DEFAULT 0 CHECK (influence_level >= 0 AND influence_level <= 100),
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(region_id, faction_id)
+  trade_volume DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (trade_volume >= 0),
+  influence_level INTEGER NOT NULL DEFAULT 0 CHECK (influence_level >= 0 AND influence_level <= 100),
+  UNIQUE(region_id, faction_id)
 );
 
 -- Индексы для world_economy_impact
@@ -121,13 +125,15 @@ CREATE INDEX IF NOT EXISTS idx_world_economy_impact_economic_power ON economy.wo
 
 -- Таблица предметов в торговой сессии
 CREATE TABLE IF NOT EXISTS economy.trade_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id UUID NOT NULL REFERENCES economy.trade_sessions(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    item_id UUID NOT NULL, -- References items or character_items, depending on design
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID NOT NULL REFERENCES economy.trade_sessions(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  item_id UUID NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  depending on design
     quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    slot_index INTEGER,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  slot_index INTEGER,
+  -- References items or character_items
 );
 
 -- Индексы для trade_items

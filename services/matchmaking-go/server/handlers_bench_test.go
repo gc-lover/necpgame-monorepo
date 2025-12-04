@@ -1,94 +1,59 @@
-// Issue: #150 - Performance Benchmarks
+﻿// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
-	"sync"
 	"testing"
 
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 	"github.com/google/uuid"
-
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
-// BenchmarkEnterQueue tests EnterQueue performance
-// Target: <100μs per operation, 0 allocs (memory pooling!)
+// BenchmarkEnterQueue benchmarks EnterQueue handler
+// Target: <100Ојs per operation, minimal allocs
 func BenchmarkEnterQueue(b *testing.B) {
-	// Setup mock service
-	service := &Service{
-		queueResponsePool: newQueuePool(),
-	}
+	service := NewService(nil)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	req := &api.EnterQueueRequest{
-		ActivityType: api.EnterQueueRequestActivityTypePvp5v5,
-	}
-
-	b.ResetTimer()
 	b.ReportAllocs()
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.EnterQueue(ctx, req)
+		_, _ = handlers.EnterQueue(ctx)
 	}
 }
 
-// BenchmarkGetQueueStatus tests GetQueueStatus performance
-// Target: <50μs per operation (Redis cache hit)
+// BenchmarkGetQueueStatus benchmarks GetQueueStatus handler
+// Target: <100Ојs per operation, minimal allocs
 func BenchmarkGetQueueStatus(b *testing.B) {
-	service := &Service{
-		statusResponsePool: newStatusPool(),
-	}
+	service := NewService(nil)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	queueID := uuid.New()
+	params := api.GetQueueStatusParams{
+	}
 
-	b.ResetTimer()
 	b.ReportAllocs()
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetQueueStatus(ctx, api.GetQueueStatusParams{QueueId: queueID})
+		_, _ = handlers.GetQueueStatus(ctx, params)
 	}
 }
 
-// BenchmarkSkillBucketMatcher tests O(1) matching
-// Target: <1μs per operation (vs 1000μs for O(n) naive approach)
-func BenchmarkSkillBucketMatcher(b *testing.B) {
-	matcher := NewSkillBucketMatcher()
+// BenchmarkLeaveQueue benchmarks LeaveQueue handler
+// Target: <100Ојs per operation, minimal allocs
+func BenchmarkLeaveQueue(b *testing.B) {
+	service := NewService(nil)
+	handlers := NewHandlers(service)
 
-	// Populate with 10k players
-	for i := 0; i < 10000; i++ {
-		entry := &QueueEntry{
-			ID:           uuid.New(),
-			PlayerID:     uuid.New(),
-			ActivityType: "pvp_5v5",
-			Rating:       1500 + (i % 1000), // Spread ratings
-		}
-		matcher.AddToQueue(entry)
-	}
-
-	b.ResetTimer()
+	ctx := context.Background()
 	b.ReportAllocs()
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_ = matcher.GetQueueSize("pvp_5v5", 1750)
+		_, _ = handlers.LeaveQueue(ctx)
 	}
 }
 
-// Helper functions for benchmarks
-func newQueuePool() sync.Pool {
-	return sync.Pool{
-		New: func() interface{} {
-			return &api.QueueResponse{}
-		},
-	}
-}
-
-func newStatusPool() sync.Pool {
-	return sync.Pool{
-		New: func() interface{} {
-			return &api.QueueStatusResponse{}
-		},
-	}
-}

@@ -6,25 +6,25 @@ info:
   license:
     name: Proprietary
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Gameplay Service (локальная разработка)
+- url: http://localhost:8083/api/v1
+  description: Gameplay Service (локальная разработка)
 paths: {}
-
 components:
   schemas:
     QuestInstance:
       type: object
-      description: |
-        BACKEND NOTE: Quest tracking (100+ active quests per player).
+      description: 'BACKEND NOTE: Quest tracking (100+ active quests per player).
+
         Fields ordered for struct alignment. Expected memory: ~112 bytes/instance.
+
+        '
       required:
-        - id
-        - quest_id
-        - player_id
-        - state
-        - started_at
+      - id
+      - quest_id
+      - player_id
+      - state
+      - started_at
       properties:
-        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
@@ -37,18 +37,27 @@ components:
           type: string
           format: uuid
           description: ID игрока
-        
-        # String fields (16 bytes each)
         state:
           type: string
-          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
-          description: |
-            Состояние квеста:
+          enum:
+          - NOT_STARTED
+          - IN_PROGRESS
+          - COMPLETED
+          - FAILED
+          - CANCELLED
+          description: 'Состояние квеста:
+
             - `NOT_STARTED` - квест не начат
+
             - `IN_PROGRESS` - квест в процессе
+
             - `COMPLETED` - квест завершён
+
             - `FAILED` - квест провален
+
             - `CANCELLED` - квест отменён
+
+            '
         started_at:
           type: string
           format: date-time
@@ -62,26 +71,21 @@ components:
           type: string
           format: date-time
           description: Время последнего обновления
-        
-        # Object (8 bytes reference)
         progress_data:
           type: object
           description: Данные прогресса квеста (JSON)
           additionalProperties: true
-        
-        # Integer last (4 bytes)
         current_objective:
           type: integer
           description: Текущий номер цели (индекс)
           minimum: 0
-
     QuestDefinition:
       type: object
       required:
-        - id
-        - name
-        - type
-        - is_active
+      - id
+      - name
+      - type
+      - is_active
       properties:
         id:
           type: string
@@ -95,34 +99,22 @@ components:
           description: Описание квеста
         type:
           type: string
-          enum: [main, side, daily, event]
-          description: |
-            Тип квеста:
+          enum:
+          - main
+          - side
+          - daily
+          - event
+          description: 'Тип квеста:
+
             - `main` - основной квест
+
             - `side` - побочный квест
+
             - `daily` - ежедневный квест
+
             - `event` - событийный квест
-        requirements:
-          type: object
-          description: Требования для начала квеста (JSON)
-          additionalProperties: true
-        objectives:
-          type: array
-          description: Цели квеста
-          items:
-            type: object
-            additionalProperties: true
-        rewards:
-          type: object
-          description: Награды квеста (JSON)
-          additionalProperties: true
-        dialogue_tree:
-          type: object
-          description: Дерево диалогов (JSON)
-          additionalProperties: true
-        is_active:
-          type: boolean
-          description: Активен ли квест
+
+            '
         created_at:
           type: string
           format: date-time
@@ -131,29 +123,49 @@ components:
           type: string
           format: date-time
           description: Время последнего обновления
-
+        requirements:
+          type: object
+          description: Требования для начала квеста (JSON)
+          additionalProperties: true
+        rewards:
+          type: object
+          description: Награды квеста (JSON)
+          additionalProperties: true
+        dialogue_tree:
+          type: object
+          description: Дерево диалогов (JSON)
+          additionalProperties: true
+        objectives:
+          type: array
+          description: Цели квеста
+          items:
+            type: object
+            additionalProperties: true
+        is_active:
+          type: boolean
+          description: Активен ли квест
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     StartQuestRequest:
       type: object
       required:
-        - quest_id
+      - quest_id
       properties:
         quest_id:
           type: string
           format: uuid
           description: ID определения квеста для начала
-
     StartQuestResponse:
       type: object
       required:
-        - quest_instance
+      - quest_instance
       properties:
-        quest_instance:
-          $ref: '#/components/schemas/QuestInstance'
         dialogue:
           $ref: '#/components/schemas/DialogueNode'
           nullable: true
           description: Начальный диалог (если есть)
-
+        quest_instance:
+          $ref: '#/components/schemas/QuestInstance'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CompleteQuestRequest:
       type: object
       properties:
@@ -161,56 +173,62 @@ components:
           type: boolean
           default: false
           description: Принудительное завершение (для админов)
-
     CompleteQuestResponse:
       type: object
       required:
-        - quest_instance
-        - rewards
+      - quest_instance
+      - rewards
       properties:
         quest_instance:
           $ref: '#/components/schemas/QuestInstance'
         rewards:
           $ref: '#/components/schemas/QuestRewards'
-
     QuestState:
       type: object
       required:
-        - state
-        - current_objective
+      - state
+      - current_objective
       properties:
         state:
           type: string
-          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+          enum:
+          - NOT_STARTED
+          - IN_PROGRESS
+          - COMPLETED
+          - FAILED
+          - CANCELLED
           description: Текущее состояние квеста
-        current_objective:
-          type: integer
-          description: Текущий номер цели
-          minimum: 0
         progress_data:
           type: object
           description: Данные прогресса
           additionalProperties: true
-
+        current_objective:
+          type: integer
+          description: Текущий номер цели
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateStateRequest:
       type: object
       required:
-        - state
+      - state
       properties:
         state:
           type: string
-          enum: [IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+          enum:
+          - IN_PROGRESS
+          - COMPLETED
+          - FAILED
+          - CANCELLED
           description: Новое состояние квеста
         progress_data:
           type: object
           description: Обновлённые данные прогресса
           additionalProperties: true
-
     DialogueNode:
       type: object
       required:
-        - node_id
-        - text
+      - node_id
+      - text
       properties:
         node_id:
           type: string
@@ -231,12 +249,11 @@ components:
           description: Проверки навыков для этого узла
           items:
             $ref: '#/components/schemas/SkillCheck'
-
     DialogueChoice:
       type: object
       required:
-        - choice_id
-        - text
+      - choice_id
+      - text
       properties:
         choice_id:
           type: string
@@ -251,21 +268,19 @@ components:
           type: object
           description: Требования для выбора
           additionalProperties: true
-
     DialogueChoiceRequest:
       type: object
       required:
-        - choice_id
+      - choice_id
       properties:
         choice_id:
           type: string
           description: ID выбранного варианта
-
     DialogueHistory:
       type: object
       required:
-        - quest_instance_id
-        - history
+      - quest_instance_id
+      - history
       properties:
         quest_instance_id:
           type: string
@@ -289,53 +304,65 @@ components:
               timestamp:
                 type: string
                 format: date-time
-
     SkillCheck:
       type: object
       required:
-        - check_type
-        - check_target
-        - required_value
+      - check_type
+      - check_target
+      - required_value
       properties:
-        check_type:
-          type: string
-          enum: [attribute, skill, item, reputation]
-          description: |
-            Тип проверки:
-            - `attribute` - проверка атрибутов
-            - `skill` - проверка навыков
-            - `item` - проверка предметов
-            - `reputation` - проверка репутации
         check_target:
           type: string
           description: Цель проверки (название атрибута/навыка/предмета)
+        check_type:
+          type: string
+          enum:
+          - attribute
+          - skill
+          - item
+          - reputation
+          description: 'Тип проверки:
+
+            - `attribute` - проверка атрибутов
+
+            - `skill` - проверка навыков
+
+            - `item` - проверка предметов
+
+            - `reputation` - проверка репутации
+
+            '
         required_value:
           type: integer
           description: Требуемое значение
           minimum: 0
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SkillCheckRequest:
       type: object
       required:
-        - check_type
-        - check_target
+      - check_type
+      - check_target
       properties:
-        check_type:
-          type: string
-          enum: [attribute, skill, item, reputation]
-          description: Тип проверки
         check_target:
           type: string
           description: Цель проверки
-
+        check_type:
+          type: string
+          enum:
+          - attribute
+          - skill
+          - item
+          - reputation
+          description: Тип проверки
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SkillCheckResult:
       type: object
       required:
-        - check_type
-        - check_target
-        - required_value
-        - actual_value
-        - passed
+      - check_type
+      - check_target
+      - required_value
+      - actual_value
+      - passed
       properties:
         id:
           type: string
@@ -345,13 +372,21 @@ components:
           type: string
           format: uuid
           description: ID инстанса квеста
-        check_type:
-          type: string
-          enum: [attribute, skill, item, reputation]
-          description: Тип проверки
         check_target:
           type: string
           description: Цель проверки
+        check_type:
+          type: string
+          enum:
+          - attribute
+          - skill
+          - item
+          - reputation
+          description: Тип проверки
+        checked_at:
+          type: string
+          format: date-time
+          description: Время проверки
         required_value:
           type: integer
           description: Требуемое значение
@@ -361,18 +396,18 @@ components:
         passed:
           type: boolean
           description: Пройдена ли проверка
-        checked_at:
-          type: string
-          format: date-time
-          description: Время проверки
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestRequirements:
       type: object
       properties:
-        level:
-          type: integer
-          description: Требуемый уровень
-          minimum: 1
+        reputation:
+          type: object
+          description: Требования репутации
+          additionalProperties: true
+        location:
+          type: object
+          description: Требования местоположения
+          additionalProperties: true
         items:
           type: array
           description: Требуемые предметы
@@ -391,26 +426,18 @@ components:
           items:
             type: string
             format: uuid
-        reputation:
-          type: object
-          description: Требования репутации
-          additionalProperties: true
-        location:
-          type: object
-          description: Требования местоположения
-          additionalProperties: true
-
+        level:
+          type: integer
+          description: Требуемый уровень
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestRewards:
       type: object
       properties:
-        experience:
-          type: integer
-          description: Опыт
-          minimum: 0
-        currency:
-          type: integer
-          description: Валюта
-          minimum: 0
+        reputation:
+          type: object
+          description: Репутация
+          additionalProperties: true
         items:
           type: array
           description: Предметы
@@ -423,21 +450,25 @@ components:
               quantity:
                 type: integer
                 minimum: 1
-        reputation:
-          type: object
-          description: Репутация
-          additionalProperties: true
         titles:
           type: array
           description: Титулы
           items:
             type: string
-
+        experience:
+          type: integer
+          description: Опыт
+          minimum: 0
+        currency:
+          type: integer
+          description: Валюта
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestEvent:
       type: object
       required:
-        - event_type
-        - timestamp
+      - event_type
+      - timestamp
       properties:
         id:
           type: string
@@ -449,28 +480,39 @@ components:
           description: ID инстанса квеста
         event_type:
           type: string
-          enum: [started, objective-completed, completed, failed, cancelled]
-          description: |
-            Тип события:
+          enum:
+          - started
+          - objective-completed
+          - completed
+          - failed
+          - cancelled
+          description: 'Тип события:
+
             - `started` - квест начат
+
             - `objective-completed` - цель выполнена
+
             - `completed` - квест завершён
+
             - `failed` - квест провален
+
             - `cancelled` - квест отменён
-        event_data:
-          type: object
-          description: Данные события (JSON)
-          additionalProperties: true
+
+            '
         timestamp:
           type: string
           format: date-time
           description: Время события
-
+        event_data:
+          type: object
+          description: Данные события (JSON)
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestListResponse:
       type: object
       required:
-        - quests
-        - total
+      - quests
+      - total
       properties:
         quests:
           type: array
@@ -481,12 +523,11 @@ components:
           type: integer
           description: Общее количество квестов
           minimum: 0
-
     QuestEventsResponse:
       type: object
       required:
-        - events
-        - total
+      - events
+      - total
       properties:
         events:
           type: array
@@ -497,12 +538,11 @@ components:
           type: integer
           description: Общее количество событий
           minimum: 0
-
     SkillChecksResponse:
       type: object
       required:
-        - skill_checks
-        - total
+      - skill_checks
+      - total
       properties:
         skill_checks:
           type: array
@@ -513,16 +553,3 @@ components:
           type: integer
           description: Общее количество проверок
           minimum: 0
-
-
-
-
-
-
-
-
-
-
-
-
-

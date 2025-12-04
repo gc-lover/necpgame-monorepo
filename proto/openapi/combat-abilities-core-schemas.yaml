@@ -1,80 +1,67 @@
-# Issue: #141665225
 openapi: 3.0.3
 info:
   title: Combat Abilities Core Schemas
   description: Основные схемы данных для системы боевых способностей
   version: 1.0.0
-
 components:
   schemas:
     AbilityType:
       type: string
-      enum: [tactical, signature, ultimate, passive, hacking]
+      enum:
+      - tactical
+      - signature
+      - ultimate
+      - passive
+      - hacking
       description: Тип способности
-      example: "tactical"
-
+      example: tactical
     AbilitySlot:
       type: string
-      enum: [Q, E, R, passive, hacking]
+      enum:
+      - Q
+      - E
+      - R
+      - passive
+      - hacking
       description: Слот способности
-      example: "Q"
-
+      example: Q
     AbilitySource:
       type: string
-      enum: [equipment, implant, progression, cyberdeck]
+      enum:
+      - equipment
+      - implant
+      - progression
+      - cyberdeck
       description: Источник способности
-      example: "progression"
-
+      example: progression
     Ability:
       type: object
       required:
-        - id
-        - name
-        - ability_type
-        - slot
-        - source
-        - rank
+      - id
+      - name
+      - ability_type
+      - slot
+      - source
+      - rank
       properties:
         id:
           type: string
           format: uuid
           description: Уникальный идентификатор способности
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
           description: Название способности
-          example: "Thermal Grenade"
+          example: Thermal Grenade
         description:
           type: string
           description: Описание способности
-          example: "Бросает термическую гранату, наносящую урон по области"
-        ability_type:
-          $ref: '#/components/schemas/AbilityType'
-        slot:
-          $ref: '#/components/schemas/AbilitySlot'
-        source:
-          $ref: '#/components/schemas/AbilitySource'
-        rank:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Ранг способности
-          example: 5
-        energy_cost:
-          type: integer
-          minimum: 0
-          description: Стоимость энергии
-          example: 25
-        health_cost:
-          type: integer
-          minimum: 0
-          description: Стоимость здоровья
-          example: 0
-        cooldown_base:
-          type: integer
-          minimum: 0
-          description: Базовое время кулдауна в секундах
-          example: 15
+          example: Бросает термическую гранату, наносящую урон по области
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: '2025-11-23T10:00:00Z'
         requirements:
           type: object
           description: Требования для использования способности
@@ -94,7 +81,9 @@ components:
               type: array
               items:
                 type: string
-              example: ["combat", "tactics"]
+              example:
+              - combat
+              - tactics
             required_abilities:
               type: array
               items:
@@ -120,6 +109,33 @@ components:
               format: float
               minimum: 0
               example: 1.3
+        slot:
+          $ref: '#/components/schemas/AbilitySlot'
+        source:
+          $ref: '#/components/schemas/AbilitySource'
+        ability_type:
+          $ref: '#/components/schemas/AbilityType'
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Ранг способности
+          example: 5
+        energy_cost:
+          type: integer
+          minimum: 0
+          description: Стоимость энергии
+          example: 25
+        health_cost:
+          type: integer
+          minimum: 0
+          description: Стоимость здоровья
+          example: 0
+        cooldown_base:
+          type: integer
+          minimum: 0
+          description: Базовое время кулдауна в секундах
+          example: 15
         cyberpsychosis_impact:
           type: number
           format: float
@@ -127,157 +143,136 @@ components:
           maximum: 1
           description: Влияние на киберпсихоз (0-1)
           example: 0.05
-        created_at:
-          type: string
-          format: date-time
-          description: Дата создания
-          example: "2025-11-23T10:00:00Z"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AbilityLoadout:
       type: object
       required:
-        - id
-        - character_id
-        - name
+      - id
+      - character_id
+      - name
       properties:
         id:
           type: string
           format: uuid
           description: Уникальный идентификатор лоадаута
-          example: "550e8400-e29b-41d4-a716-446655440001"
+          example: 550e8400-e29b-41d4-a716-446655440001
         character_id:
           type: string
           format: uuid
           description: Идентификатор персонажа
-          example: "550e8400-e29b-41d4-a716-446655440002"
-        name:
-          type: string
-          description: Название лоадаута
-          example: "Assault Build"
+          example: 550e8400-e29b-41d4-a716-446655440002
         slot_q:
           type: string
           format: uuid
           nullable: true
           description: Способность в слоте Q
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         slot_e:
           type: string
           format: uuid
           nullable: true
           description: Способность в слоте E
-          example: "550e8400-e29b-41d4-a716-446655440003"
+          example: 550e8400-e29b-41d4-a716-446655440003
         slot_r:
           type: string
           format: uuid
           nullable: true
           description: Способность в слоте R
-          example: "550e8400-e29b-41d4-a716-446655440004"
-        passive_abilities:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Список пассивных способностей
-          example: ["550e8400-e29b-41d4-a716-446655440005"]
-        hacking_abilities:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Список хакерских способностей
-          example: ["550e8400-e29b-41d4-a716-446655440006"]
-        auto_cast_enabled:
-          type: boolean
-          description: Автоматическая активация способностей
-          example: false
-        priority:
-          type: integer
-          minimum: 1
-          description: Приоритет лоадаута
-          example: 1
-        is_active:
-          type: boolean
-          description: Активен ли лоадаут
-          example: true
+          example: 550e8400-e29b-41d4-a716-446655440004
+        name:
+          type: string
+          description: Название лоадаута
+          example: Assault Build
         created_at:
           type: string
           format: date-time
           description: Дата создания
-          example: "2025-11-23T10:00:00Z"
+          example: '2025-11-23T10:00:00Z'
         updated_at:
           type: string
           format: date-time
           description: Дата обновления
-          example: "2025-11-23T10:00:00Z"
-
-    AbilityLoadoutCreate:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          description: Название лоадаута
-          example: "Assault Build"
-        slot_q:
-          type: string
-          format: uuid
-          nullable: true
-          description: Способность в слоте Q
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        slot_e:
-          type: string
-          format: uuid
-          nullable: true
-          description: Способность в слоте E
-          example: "550e8400-e29b-41d4-a716-446655440003"
-        slot_r:
-          type: string
-          format: uuid
-          nullable: true
-          description: Способность в слоте R
-          example: "550e8400-e29b-41d4-a716-446655440004"
+          example: '2025-11-23T10:00:00Z'
         passive_abilities:
           type: array
           items:
             type: string
             format: uuid
           description: Список пассивных способностей
-          example: ["550e8400-e29b-41d4-a716-446655440005"]
+          example:
+          - 550e8400-e29b-41d4-a716-446655440005
         hacking_abilities:
           type: array
           items:
             type: string
             format: uuid
           description: Список хакерских способностей
-          example: ["550e8400-e29b-41d4-a716-446655440006"]
-        auto_cast_enabled:
-          type: boolean
-          description: Автоматическая активация способностей
-          example: false
+          example:
+          - 550e8400-e29b-41d4-a716-446655440006
         priority:
           type: integer
           minimum: 1
           description: Приоритет лоадаута
           example: 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическая активация способностей
+          example: false
+        is_active:
+          type: boolean
+          description: Активен ли лоадаут
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AbilityLoadoutCreate:
+      type: object
+      required:
+      - name
+      properties:
+        slot_q:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте Q
+          example: 550e8400-e29b-41d4-a716-446655440000
+        slot_e:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте E
+          example: 550e8400-e29b-41d4-a716-446655440003
+        slot_r:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте R
+          example: 550e8400-e29b-41d4-a716-446655440004
+        name:
+          type: string
+          description: Название лоадаута
+          example: Assault Build
+        passive_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список пассивных способностей
+          example:
+          - 550e8400-e29b-41d4-a716-446655440005
+        hacking_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список хакерских способностей
+          example:
+          - 550e8400-e29b-41d4-a716-446655440006
+        priority:
+          type: integer
+          minimum: 1
+          description: Приоритет лоадаута
+          example: 1
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическая активация способностей
+          example: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

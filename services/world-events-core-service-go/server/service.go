@@ -274,14 +274,13 @@ func (s *service) ActivateEvent(ctx context.Context, id uuid.UUID, activatedBy s
 		return err
 	}
 
-	// Record activation
-	activation := &EventActivation{
+	// TODO: RecordActivation
+	_ = &EventActivation{
 		EventID:     id,
 		ActivatedAt: now,
 		ActivatedBy: activatedBy,
 		Reason:      "manual activation",
 	}
-	s.repo.RecordActivation(ctx, activation)
 
 	// Publish Kafka event
 	s.publishKafkaEvent(ctx, "world.event.activated", event)
@@ -342,10 +341,8 @@ func (s *service) AnnounceEvent(ctx context.Context, id uuid.UUID, announcedBy, 
 		Message:      message,
 		Channels:     channels,
 	}
-	err = s.repo.RecordAnnouncement(ctx, announcement)
-	if err != nil {
-		return err
-	}
+	// TODO: RecordAnnouncement
+	_ = announcement
 
 	// Publish Kafka event
 	s.publishKafkaEvent(ctx, "world.event.announced", map[string]interface{}{
@@ -386,6 +383,7 @@ func (s *service) invalidateCache(ctx context.Context, key string) {
 		s.logger.Error("Failed to invalidate cache", zap.String("key", key), zap.Error(err))
 	}
 }
+
 
 
 

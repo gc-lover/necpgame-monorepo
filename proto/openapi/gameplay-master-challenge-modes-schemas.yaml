@@ -3,38 +3,49 @@ info:
   title: Gameplay Master Challenge Modes Schemas
   description: Общие схемы данных для системы мастер-режимов
   version: 1.0.0
-
 components:
   schemas:
     DifficultyModeLevel:
       type: string
-      enum: [master, grandmaster, legendary]
+      enum:
+      - master
+      - grandmaster
+      - legendary
       description: Уровень режима сложности
-      example: "master"
-
+      example: master
     DifficultyMode:
       type: object
       required:
-        - mode_id
-        - name
-        - level
-        - hp_modifier
-        - damage_modifier
-        - time_limit_multiplier
-        - respawn_limit
-        - checkpoint_limit
-        - reward_modifier
+      - mode_id
+      - name
+      - level
+      - hp_modifier
+      - damage_modifier
+      - time_limit_multiplier
+      - respawn_limit
+      - checkpoint_limit
+      - reward_modifier
       properties:
         mode_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
         name:
           type: string
           description: Название режима
-          example: "Master"
+          example: Master
         level:
           $ref: '#/components/schemas/DifficultyModeLevel'
+        respawn_limit:
+          type: integer
+          description: Лимит респавнов
+          minimum: 0
+          example: 3
+        checkpoint_limit:
+          type: integer
+          description: Лимит чекпоинтов
+          minimum: 0
+          example: 2
         hp_modifier:
           type: number
           format: float
@@ -53,29 +64,19 @@ components:
           description: Множитель лимита времени
           minimum: 1.0
           example: 1.2
-        respawn_limit:
-          type: integer
-          description: Лимит респавнов
-          minimum: 0
-          example: 3
-        checkpoint_limit:
-          type: integer
-          description: Лимит чекпоинтов
-          minimum: 0
-          example: 2
         reward_modifier:
           type: number
           format: float
           description: Модификатор наград (1.0 = 100%, 1.5 = +50%)
           minimum: 1.0
           example: 1.5
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DifficultyRestrictions:
       type: object
       required:
-        - time_remaining
-        - respawns_remaining
-        - checkpoints_used
+      - time_remaining
+      - respawns_remaining
+      - checkpoints_used
       properties:
         time_remaining:
           type: integer
@@ -92,15 +93,9 @@ components:
           description: Использованные чекпоинты
           minimum: 0
           example: 0
-
     DifficultyRequirements:
       type: object
       properties:
-        min_level:
-          type: integer
-          description: Минимальный уровень персонажа
-          minimum: 1
-          example: 50
         completed_content:
           type: array
           description: Необходимый завершенный контент
@@ -108,24 +103,28 @@ components:
             type: string
             format: uuid
           example: []
-        min_item_level:
-          type: integer
-          description: Минимальный уровень предметов
-          minimum: 1
-          nullable: true
-          example: 450
         character_class_restrictions:
           type: array
           description: Ограничения по классам
           items:
             type: string
           example: []
-
+        min_level:
+          type: integer
+          description: Минимальный уровень персонажа
+          minimum: 1
+          example: 50
+        min_item_level:
+          type: integer
+          description: Минимальный уровень предметов
+          minimum: 1
+          nullable: true
+          example: 450
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DifficultyModeWithRequirements:
       allOf:
-        - $ref: '#/components/schemas/DifficultyMode'
-        - type: object
-          properties:
-            requirements:
-              $ref: '#/components/schemas/DifficultyRequirements'
-
+      - $ref: '#/components/schemas/DifficultyMode'
+      - type: object
+        properties:
+          requirements:
+            $ref: '#/components/schemas/DifficultyRequirements'

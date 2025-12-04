@@ -1,62 +1,57 @@
-# Issue: #44
-.PHONY: generate-api bundle-api clean verify-api check-deps generate-types generate-server generate-spec check-file-sizes
+﻿# Issue: ogen migration
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
 
 SERVICE_NAME := world-events-core-service
-OAPI_CODEGEN := oapi-codegen
+OGEN := ogen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := chi-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
 SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-
-# Split output files (SOLID compliance)
-TYPES_FILE := $(API_DIR)/types.gen.go
-SERVER_FILE := $(API_DIR)/server.gen.go
-SPEC_FILE := $(API_DIR)/spec.gen.go
+BUNDLED_SPEC := openapi-bundled.yaml
 
 check-deps:
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
+	@command -v $(OGEN) >/dev/null 2>&1 || { echo "вќЊ ogen not found. Install: go install -v github.com/ogen-go/ogen/cmd/ogen@latest"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "вќЊ node not found. Install Node.js"; exit 1; }
+	@echo "вњ… Dependencies installed"
+
+install-deps:
+	@go install github.com/ogen-go/ogen/cmd/ogen@latest || true
 
 bundle-api: check-deps
-	@mkdir -p $(API_DIR)
+	@echo "Bundling: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "вќЊ Spec not found"; exit 1; fi
 	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "вњ… Bundled"
 
-generate-types: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(TYPES_FILE) | awk '{print "OK types.gen.go: " $$1 " lines"}'
-
-generate-server: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(SERVER_FILE) | awk '{print "OK server.gen.go: " $$1 " lines"}'
-
-generate-spec: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(SPEC_FILE) | awk '{print "OK spec.gen.go: " $$1 " lines"}'
-
-check-file-sizes:
-	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
-		if [ -f "$$file" ]; then \
-			lines=$$(wc -l < "$$file"); \
-			if [ $$lines -gt 500 ]; then echo "WARNING  $$file: $$lines lines"; \
-			else echo "OK $$file: $$lines lines"; fi; \
-		fi; \
-	done
-
-generate-api: generate-types generate-server generate-spec check-file-sizes
+generate-api: bundle-api
+	@echo "Generating ogen code..."
+	@mkdir -p $(API_DIR)
+	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
+	@echo "вњ… Generation complete!"
 
 verify-api: check-deps
+	@echo "Verifying: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "вњ… Valid"
 
 clean:
-	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+	@rm -f $(BUNDLED_SPEC)
+	@rm -rf $(API_DIR)/oas_*_gen.go
 
 
+.PHONY: bench bench-json bench-quick
 
+# Run benchmarks (human-readable)
+bench:
+	go test -run=^ -bench=. -benchmem ./server
 
+# Run benchmarks (JSON output for CI)
+bench-json:
+	@mkdir -p ../../.benchmarks/results
+	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/world-events-core-service_bench.json
 
-
-
-
+# Quick benchmark (short duration)
+bench-quick:
+	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server

@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/movement-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -30,10 +30,23 @@ type MovementService struct {
 	positionsMu    sync.RWMutex
 	gatewayConn    *websocket.Conn
 	gatewayConnMu  sync.RWMutex
+
+	// Memory pooling for hot path structs (Issue #1607)
+	positionPool sync.Pool
 }
 
 func NewMovementService(dbURL, redisURL, gatewayURL string, updateInterval time.Duration) (*MovementService, error) {
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Issue: #1605 - DB Connection Pool configuration
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	config.MaxConns = 50
+	config.MinConns = 10
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 1 * time.Minute
+	
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}
@@ -47,14 +60,23 @@ func NewMovementService(dbURL, redisURL, gatewayURL string, updateInterval time.
 
 	repo := NewMovementRepository(dbPool)
 
-	return &MovementService{
+	s := &MovementService{
 		repo:           repo,
 		cache:          redisClient,
 		logger:         GetLogger(),
 		gatewayURL:     gatewayURL,
 		updateInterval: updateInterval,
 		positions:      make(map[string]*models.EntityState),
-	}, nil
+	}
+
+	// Initialize memory pool (zero allocations target!)
+	s.positionPool = sync.Pool{
+		New: func() interface{} {
+			return &models.CharacterPosition{}
+		},
+	}
+
+	return s, nil
 }
 
 func (s *MovementService) GetPosition(ctx context.Context, characterID uuid.UUID) (*models.CharacterPosition, error) {

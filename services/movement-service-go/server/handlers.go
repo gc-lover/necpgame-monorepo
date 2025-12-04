@@ -1,90 +1,101 @@
-// Issue: #141888104
+// Issue: #141888104, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
+// Memory pooling for hot path (Issue #1607)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"sync"
+	"time"
 
-	"github.com/google/uuid"
-	"github.com/necpgame/movement-service-go/models"
-	"github.com/necpgame/movement-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/sirupsen/logrus"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/pkg/api"
 )
 
-type MovementHandlers struct {
+// Context timeout constants
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+// Issue: #1607 - Memory pooling for hot path
+type Handlers struct {
 	service MovementServiceInterface
-	logger  *logrus.Logger
+
+	// Memory pooling for hot path structs (Level 2 optimization)
+	positionPool        sync.Pool
+	positionHistoryPool sync.Pool
 }
 
-func NewMovementHandlers(service MovementServiceInterface) *MovementHandlers {
-	return &MovementHandlers{
-		service: service,
-		logger:  GetLogger(),
+// NewHandlers creates new handlers with memory pooling
+func NewHandlers(service MovementServiceInterface) *Handlers {
+	h := &Handlers{service: service}
+
+	// Initialize memory pools (zero allocations target!)
+	h.positionPool = sync.Pool{
+		New: func() interface{} {
+			return &api.CharacterPosition{}
+		},
 	}
+	h.positionHistoryPool = sync.Pool{
+		New: func() interface{} {
+			return &api.PositionHistory{}
+		},
+	}
+
+	return h
 }
 
-func (h *MovementHandlers) GetPosition(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	ctx := r.Context()
-	characterID := uuid.UUID(characterId)
+// GetPosition - TYPED response!
+func (h *Handlers) GetPosition(ctx context.Context, params api.GetPositionParams) (api.GetPositionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	position, err := h.service.GetPosition(ctx, characterID)
+	position, err := h.service.GetPosition(ctx, params.CharacterId)
 	if err != nil {
 		if err.Error() == "position not found" {
-			h.respondError(w, http.StatusNotFound, "position not found")
-			return
+			return &api.GetPositionNotFound{}, nil
 		}
-		h.logger.WithError(err).Error("Failed to get position")
-		h.respondError(w, http.StatusInternalServerError, "failed to get position")
-		return
+		return &api.GetPositionInternalServerError{}, err
 	}
 
 	if position == nil {
-		h.respondError(w, http.StatusNotFound, "position not found")
-		return
+		return &api.GetPositionNotFound{}, nil
 	}
 
-	apiPosition := toAPICharacterPosition(position)
-	h.respondJSON(w, http.StatusOK, apiPosition)
+	result := toAPICharacterPosition(position)
+	return &result, nil
 }
 
-func (h *MovementHandlers) SavePosition(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	ctx := r.Context()
-	characterID := uuid.UUID(characterId)
+// SavePosition - TYPED response!
+func (h *Handlers) SavePosition(ctx context.Context, req *api.SavePositionRequest, params api.SavePositionParams) (api.SavePositionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req api.SavePositionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	modelReq := toModelSavePositionRequest(&req)
-
-	position, err := h.service.SavePosition(ctx, characterID, modelReq)
+	modelReq := toModelSavePositionRequest(req)
+	position, err := h.service.SavePosition(ctx, params.CharacterId, modelReq)
 	if err != nil {
-		h.logger.WithError(err).Error("Failed to save position")
-		h.respondError(w, http.StatusInternalServerError, "failed to save position")
-		return
+		return &api.SavePositionInternalServerError{}, err
 	}
 
-	apiPosition := toAPICharacterPosition(position)
-	h.respondJSON(w, http.StatusOK, apiPosition)
+	result := toAPICharacterPosition(position)
+	return &result, nil
 }
 
-func (h *MovementHandlers) GetPositionHistory(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID, params api.GetPositionHistoryParams) {
-	ctx := r.Context()
-	characterID := uuid.UUID(characterId)
+// GetPositionHistory - TYPED response!
+func (h *Handlers) GetPositionHistory(ctx context.Context, params api.GetPositionHistoryParams) (api.GetPositionHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	limit := 50
-	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
-		limit = *params.Limit
+	if params.Limit.IsSet() && params.Limit.Value > 0 && params.Limit.Value <= 100 {
+		limit = params.Limit.Value
 	}
 
-	history, err := h.service.GetPositionHistory(ctx, characterID, limit)
+	history, err := h.service.GetPositionHistory(ctx, params.CharacterId, limit)
 	if err != nil {
-		h.logger.WithError(err).Error("Failed to get position history")
-		h.respondError(w, http.StatusInternalServerError, "failed to get position history")
-		return
+		return &api.GetPositionHistoryInternalServerError{}, err
 	}
 
 	apiHistory := make([]api.PositionHistory, len(history))
@@ -92,23 +103,8 @@ func (h *MovementHandlers) GetPositionHistory(w http.ResponseWriter, r *http.Req
 		apiHistory[i] = toAPIPositionHistory(&item)
 	}
 
-	h.respondJSON(w, http.StatusOK, apiHistory)
-}
-
-func (h *MovementHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (h *MovementHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-	}
-	h.respondJSON(w, status, errorResponse)
+	result := api.GetPositionHistoryOKApplicationJSON(apiHistory)
+	return &result, nil
 }
 
 func toAPICharacterPosition(pos *models.CharacterPosition) api.CharacterPosition {
@@ -116,29 +112,18 @@ func toAPICharacterPosition(pos *models.CharacterPosition) api.CharacterPosition
 		return api.CharacterPosition{}
 	}
 
-	apiID := openapi_types.UUID(pos.ID)
-	apiCharID := openapi_types.UUID(pos.CharacterID)
-
-	posX := float32(pos.PositionX)
-	posY := float32(pos.PositionY)
-	posZ := float32(pos.PositionZ)
-	yaw := float32(pos.Yaw)
-	velX := float32(pos.VelocityX)
-	velY := float32(pos.VelocityY)
-	velZ := float32(pos.VelocityZ)
-
 	return api.CharacterPosition{
-		Id:          &apiID,
-		CharacterId: &apiCharID,
-		PositionX:   &posX,
-		PositionY:   &posY,
-		PositionZ:   &posZ,
-		Yaw:         &yaw,
-		VelocityX:   &velX,
-		VelocityY:   &velY,
-		VelocityZ:   &velZ,
-		CreatedAt:   &pos.CreatedAt,
-		UpdatedAt:   &pos.UpdatedAt,
+		ID:          api.NewOptUUID(pos.ID),
+		CharacterID: api.NewOptUUID(pos.CharacterID),
+		PositionX:   api.NewOptFloat32(float32(pos.PositionX)),
+		PositionY:   api.NewOptFloat32(float32(pos.PositionY)),
+		PositionZ:   api.NewOptFloat32(float32(pos.PositionZ)),
+		Yaw:         api.NewOptFloat32(float32(pos.Yaw)),
+		VelocityX:   api.NewOptNilFloat32(float32(pos.VelocityX)),
+		VelocityY:   api.NewOptNilFloat32(float32(pos.VelocityY)),
+		VelocityZ:   api.NewOptNilFloat32(float32(pos.VelocityZ)),
+		CreatedAt:   api.NewOptDateTime(pos.CreatedAt),
+		UpdatedAt:   api.NewOptDateTime(pos.UpdatedAt),
 	}
 }
 
@@ -147,28 +132,17 @@ func toAPIPositionHistory(ph *models.PositionHistory) api.PositionHistory {
 		return api.PositionHistory{}
 	}
 
-	apiID := openapi_types.UUID(ph.ID)
-	apiCharID := openapi_types.UUID(ph.CharacterID)
-
-	posX := float32(ph.PositionX)
-	posY := float32(ph.PositionY)
-	posZ := float32(ph.PositionZ)
-	yaw := float32(ph.Yaw)
-	velX := float32(ph.VelocityX)
-	velY := float32(ph.VelocityY)
-	velZ := float32(ph.VelocityZ)
-
 	return api.PositionHistory{
-		Id:          &apiID,
-		CharacterId: &apiCharID,
-		PositionX:   &posX,
-		PositionY:   &posY,
-		PositionZ:   &posZ,
-		Yaw:         &yaw,
-		VelocityX:   &velX,
-		VelocityY:   &velY,
-		VelocityZ:   &velZ,
-		CreatedAt:   &ph.CreatedAt,
+		ID:          api.NewOptUUID(ph.ID),
+		CharacterID: api.NewOptUUID(ph.CharacterID),
+		PositionX:   api.NewOptFloat32(float32(ph.PositionX)),
+		PositionY:   api.NewOptFloat32(float32(ph.PositionY)),
+		PositionZ:   api.NewOptFloat32(float32(ph.PositionZ)),
+		Yaw:         api.NewOptFloat32(float32(ph.Yaw)),
+		VelocityX:   api.NewOptNilFloat32(float32(ph.VelocityX)),
+		VelocityY:   api.NewOptNilFloat32(float32(ph.VelocityY)),
+		VelocityZ:   api.NewOptNilFloat32(float32(ph.VelocityZ)),
+		CreatedAt:   api.NewOptDateTime(ph.CreatedAt),
 	}
 }
 
@@ -184,14 +158,14 @@ func toModelSavePositionRequest(req *api.SavePositionRequest) *models.SavePositi
 		Yaw:       float64(req.Yaw),
 	}
 
-	if req.VelocityX != nil {
-		modelReq.VelocityX = float64(*req.VelocityX)
+	if req.VelocityX.IsSet() && !req.VelocityX.Null {
+		modelReq.VelocityX = float64(req.VelocityX.Value)
 	}
-	if req.VelocityY != nil {
-		modelReq.VelocityY = float64(*req.VelocityY)
+	if req.VelocityY.IsSet() && !req.VelocityY.Null {
+		modelReq.VelocityY = float64(req.VelocityY.Value)
 	}
-	if req.VelocityZ != nil {
-		modelReq.VelocityZ = float64(*req.VelocityZ)
+	if req.VelocityZ.IsSet() && !req.VelocityZ.Null {
+		modelReq.VelocityZ = float64(req.VelocityZ.Value)
 	}
 
 	return modelReq

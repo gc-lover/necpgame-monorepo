@@ -1,8 +1,8 @@
 package server
 
 import (
-	feedbackapi "github.com/necpgame/feedback-service-go/pkg/api"
-	"github.com/necpgame/feedback-service-go/models"
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 )
 
 func convertFeedbackCategoryFromAPI(c feedbackapi.SubmitFeedbackRequestCategory) models.FeedbackCategory {
@@ -17,7 +17,7 @@ func convertFeedbackCategoryFromAPI(c feedbackapi.SubmitFeedbackRequestCategory)
 		return models.FeedbackCategoryTechnical
 	case feedbackapi.SubmitFeedbackRequestCategoryLore:
 		return models.FeedbackCategoryLore
-	case feedbackapi.SubmitFeedbackRequestCategoryUiUx:
+	case feedbackapi.SubmitFeedbackRequestCategoryUIUx:
 		return models.FeedbackCategoryUIUX
 	case feedbackapi.SubmitFeedbackRequestCategoryOther:
 		return models.FeedbackCategoryOther
@@ -40,7 +40,7 @@ func convertFeedbackCategoryToAPI(c models.FeedbackCategory) *feedbackapi.Feedba
 	case models.FeedbackCategoryLore:
 		result = feedbackapi.FeedbackCategoryLore
 	case models.FeedbackCategoryUIUX:
-		result = feedbackapi.FeedbackCategoryUiUx
+		result = feedbackapi.FeedbackCategoryUIUx
 	case models.FeedbackCategoryOther:
 		result = feedbackapi.FeedbackCategoryOther
 	default:
@@ -49,45 +49,25 @@ func convertFeedbackCategoryToAPI(c models.FeedbackCategory) *feedbackapi.Feedba
 	return &result
 }
 
-func convertGetFeedbackBoardParamsCategoryFromAPI(c feedbackapi.GetFeedbackBoardParamsCategory) models.FeedbackCategory {
+func convertFeedbackCategoryToAPIValue(c models.FeedbackCategory) feedbackapi.FeedbackCategory {
 	switch c {
-	case feedbackapi.GetFeedbackBoardParamsCategoryGameplay:
-		return models.FeedbackCategoryGameplay
-	case feedbackapi.GetFeedbackBoardParamsCategoryBalance:
-		return models.FeedbackCategoryBalance
-	case feedbackapi.GetFeedbackBoardParamsCategoryContent:
-		return models.FeedbackCategoryContent
-	case feedbackapi.GetFeedbackBoardParamsCategoryTechnical:
-		return models.FeedbackCategoryTechnical
-	case feedbackapi.GetFeedbackBoardParamsCategoryLore:
-		return models.FeedbackCategoryLore
-	case feedbackapi.GetFeedbackBoardParamsCategoryUiUx:
-		return models.FeedbackCategoryUIUX
-	case feedbackapi.GetFeedbackBoardParamsCategoryOther:
-		return models.FeedbackCategoryOther
+	case models.FeedbackCategoryGameplay:
+		return feedbackapi.FeedbackCategoryGameplay
+	case models.FeedbackCategoryBalance:
+		return feedbackapi.FeedbackCategoryBalance
+	case models.FeedbackCategoryContent:
+		return feedbackapi.FeedbackCategoryContent
+	case models.FeedbackCategoryTechnical:
+		return feedbackapi.FeedbackCategoryTechnical
+	case models.FeedbackCategoryLore:
+		return feedbackapi.FeedbackCategoryLore
+	case models.FeedbackCategoryUIUX:
+		return feedbackapi.FeedbackCategoryUIUx
+	case models.FeedbackCategoryOther:
+		return feedbackapi.FeedbackCategoryOther
 	default:
-		return models.FeedbackCategoryOther
+		return feedbackapi.FeedbackCategoryOther
 	}
 }
 
-func convertFeedbackCategoryToFeedbackBoardItemCategory(c models.FeedbackCategory) feedbackapi.FeedbackBoardItemCategory {
-	switch c {
-	case models.FeedbackCategoryGameplay:
-		return feedbackapi.FeedbackBoardItemCategoryGameplay
-	case models.FeedbackCategoryBalance:
-		return feedbackapi.FeedbackBoardItemCategoryBalance
-	case models.FeedbackCategoryContent:
-		return feedbackapi.FeedbackBoardItemCategoryContent
-	case models.FeedbackCategoryTechnical:
-		return feedbackapi.FeedbackBoardItemCategoryTechnical
-	case models.FeedbackCategoryLore:
-		return feedbackapi.FeedbackBoardItemCategoryLore
-	case models.FeedbackCategoryUIUX:
-		return feedbackapi.FeedbackBoardItemCategoryUiUx
-	case models.FeedbackCategoryOther:
-		return feedbackapi.FeedbackBoardItemCategoryOther
-	default:
-		return feedbackapi.FeedbackBoardItemCategoryOther
-	}
-}
 

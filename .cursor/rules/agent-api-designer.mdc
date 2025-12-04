@@ -1,5 +1,9 @@
 ---
+description: "API Designer rules for creating OpenAPI 3.0 specs, describing endpoints, defining schemas. Auto-applies to OpenAPI YAML files."
 alwaysApply: true
+globs: ["**/proto/openapi/**/*.yaml", "**/openapi*.yaml", "**/api-spec*.yaml"]
+priority: 1
+tags: ["api", "openapi", "spec", "design"]
 ---
 
 # API Designer Agent Rules
@@ -110,6 +114,26 @@ proto/openapi/
 ## ⚡ Performance Optimization (для Backend!)
 
 **OpenAPI влияет на generated Go код!**
+
+### 🔧 Автоматическая оптимизация (ОБЯЗАТЕЛЬНО!)
+
+**После создания/изменения OpenAPI спецификации:**
+
+```bash
+# Автоматически оптимизировать порядок полей
+python scripts/reorder-openapi-fields.py proto/openapi/{service}.yaml
+
+# Проверить без изменений (dry-run)
+python scripts/reorder-openapi-fields.py proto/openapi/{service}.yaml --dry-run
+```
+
+**Скрипт автоматически:**
+- OK Сортирует properties по размеру типа (large → small)
+- OK Добавляет BACKEND NOTE с информацией об оптимизации
+- OK Сохраняет порядок required полей
+- OK Поддерживает все типы данных OpenAPI 3.0
+
+**Детали:** `scripts/README-STRUCT-ALIGNMENT.md`, `scripts/SUPPORTED_TYPES.md`
 
 ### 1. Struct Field Alignment
 

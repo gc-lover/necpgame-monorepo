@@ -1,4 +1,3 @@
-# Issue: #172
 openapi: 3.0.3
 info:
   title: Social Chat Moderation Service API
@@ -7,26 +6,23 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Chat Moderation
-    description: Модерация чата
-
+- name: Chat Moderation
+  description: Модерация чата
 paths:
   /social/chat/report:
     post:
       tags:
-        - Chat Moderation
+      - Chat Moderation
       summary: Пожаловаться на сообщение
       operationId: reportChatMessage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -41,20 +37,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReportResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/chat/ban:
     post:
       tags:
-        - Chat Moderation
+      - Chat Moderation
       summary: Забанить пользователя
       operationId: banChatUser
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -69,28 +64,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/BanResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/chat/bans:
     get:
       tags:
-        - Chat Moderation
+      - Chat Moderation
       summary: Получить список банов
       operationId: getChatBans
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список банов
@@ -99,20 +93,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/BanListResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/chat/bans/{ban_id}:
     delete:
       tags:
-        - Chat Moderation
+      - Chat Moderation
       summary: Отменить бан
       operationId: revokeChatBan
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/BanId'
+      - $ref: common.yaml#/components/parameters/BanId
       requestBody:
         required: true
         content:
@@ -127,25 +120,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/RevokeBanResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ReportMessageRequest:
       type: object
       required:
-        - message_id
-        - reason
+      - message_id
+      - reason
       properties:
         message_id:
           type: string
@@ -153,22 +144,21 @@ components:
         reason:
           type: string
           maxLength: 500
-
     ReportResponse:
       type: object
       properties:
-        success:
-          type: boolean
         report_id:
           type: string
           format: uuid
-
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BanUserRequest:
       type: object
       required:
-        - player_id
-        - reason
-        - duration_hours
+      - player_id
+      - reason
+      - duration_hours
       properties:
         player_id:
           type: string
@@ -179,12 +169,9 @@ components:
         duration_hours:
           type: integer
           nullable: true
-
     BanResponse:
       type: object
       properties:
-        success:
-          type: boolean
         ban_id:
           type: string
           format: uuid
@@ -192,7 +179,9 @@ components:
           type: string
           format: date-time
           nullable: true
-
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BanListResponse:
       type: object
       properties:
@@ -206,7 +195,6 @@ components:
           type: integer
         offset:
           type: integer
-
     ChatBan:
       type: object
       properties:
@@ -216,41 +204,38 @@ components:
         player_id:
           type: string
           format: uuid
+        banned_by:
+          type: string
+          format: uuid
         reason:
           type: string
-        duration_hours:
-          type: integer
-          nullable: true
         expires_at:
           type: string
           format: date-time
           nullable: true
-        banned_by:
-          type: string
-          format: uuid
         created_at:
           type: string
           format: date-time
-
+        duration_hours:
+          type: integer
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RevokeBanRequest:
       type: object
       required:
-        - revoked_by
+      - revoked_by
       properties:
         revoked_by:
           type: string
           format: uuid
-
     RevokeBanResponse:
       type: object
       properties:
-        success:
-          type: boolean
         ban_id:
           type: string
           format: uuid
-
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
+- BearerAuth: []

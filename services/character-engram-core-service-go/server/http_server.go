@@ -1,3 +1,4 @@
+// Issue: ogen migration
 package server
 
 import (
@@ -38,8 +39,19 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewEngramHandlers()
-	api.HandlerFromMux(handlers, router)
+	handlers := NewHandlers()
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
+	}
+
+	router.Mount("/api/v1", ogenServer)
+
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
 
 	server.server = &http.Server{
 		Addr:         addr,
@@ -109,31 +121,11 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 	GetLogger().WithError(err).Error(details)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	code := http.StatusText(statusCode)
 	errorResponse := api.Error{
-		Code:    &code,
+		Code:    api.OptNilString{},
 		Message: details,
 	}
 	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
 		GetLogger().WithError(err).Error("Failed to encode JSON error response")
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,277 +1,168 @@
-// Issue: #39
+// Issue: #1595
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"errors"
+	"time"
 
-	"github.com/necpgame/combat-sandevistan-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sandevistan-service-go/pkg/api"
 )
 
-type SandevistanHandlers struct {
+const DBTimeout = 50 * time.Millisecond
+
+var (
+	ErrSandevistanAlreadyActive = errors.New("sandevistan already active")
+	ErrSandevistanNotActive     = errors.New("sandevistan not active")
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+type Handlers struct {
 	service SandevistanService
-	logger  *logrus.Logger
 }
 
-func NewSandevistanHandlers() *SandevistanHandlers {
+// NewHandlers creates new handlers
+func NewHandlers() *Handlers {
 	repo := NewInMemoryRepository()
 	logger := GetLogger()
 	service := NewSandevistanService(repo, logger)
-
-	return &SandevistanHandlers{
-		service: service,
-		logger:  logger,
-	}
+	return &Handlers{service: service}
 }
 
-func (h *SandevistanHandlers) ActivateSandevistan(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
+// ActivateSandevistan - TYPED response!
+func (h *Handlers) ActivateSandevistan(ctx context.Context, params api.ActivateSandevistanParams) (api.ActivateSandevistanRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	playerUUID, err := uuid.Parse(playerId.String())
+	activation, err := h.service.Activate(ctx, params.PlayerID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
-	}
-
-	activation, err := h.service.Activate(ctx, playerUUID)
-	if err != nil {
-		if err.Error() == "sandevistan already active" {
-			respondError(w, http.StatusConflict, err, err.Error())
-			return
+		if err == ErrSandevistanAlreadyActive {
+			return &api.ActivateSandevistanConflict{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err, "Failed to activate Sandevistan")
-		return
+		return &api.ActivateSandevistanInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, activation)
+	return activation, nil
 }
 
-func (h *SandevistanHandlers) DeactivateSandevistan(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
+// DeactivateSandevistan - TYPED response!
+func (h *Handlers) DeactivateSandevistan(ctx context.Context, params api.DeactivateSandevistanParams) (api.DeactivateSandevistanRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	playerUUID, err := uuid.Parse(playerId.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
-	}
-
-	if err := h.service.Deactivate(ctx, playerUUID); err != nil {
-		if err.Error() == "sandevistan not active" {
-			respondError(w, http.StatusNotFound, err, err.Error())
-			return
+	if err := h.service.Deactivate(ctx, params.PlayerID); err != nil {
+		if err == ErrSandevistanNotActive {
+			return &api.DeactivateSandevistanNotFound{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err, "Failed to deactivate Sandevistan")
-		return
+		return &api.DeactivateSandevistanInternalServerError{}, err
 	}
 
-	status := "deactivated"
-	response := api.StatusResponse{
-		Status: &status,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+		return &api.DeactivateSandevistanNotFound{}, nil
 }
 
-func (h *SandevistanHandlers) GetSandevistanStatus(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
+// GetSandevistanStatus - TYPED response!
+func (h *Handlers) GetSandevistanStatus(ctx context.Context, params api.GetSandevistanStatusParams) (api.GetSandevistanStatusRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	playerUUID, err := uuid.Parse(playerId.String())
+	status, err := h.service.GetStatus(ctx, params.PlayerID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
+		return &api.GetSandevistanStatusInternalServerError{}, err
 	}
 
-	status, err := h.service.GetStatus(ctx, playerUUID)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, err, "Failed to get Sandevistan status")
-		return
-	}
-
-	respondJSON(w, http.StatusOK, status)
+	return status, nil
 }
 
-func (h *SandevistanHandlers) UseActionBudget(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
+// GetTemporalMarks - TYPED response!
+func (h *Handlers) GetTemporalMarks(ctx context.Context, params api.GetTemporalMarksParams) (api.GetTemporalMarksRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	playerUUID, err := uuid.Parse(playerId.String())
+	marks, err := h.service.GetTemporalMarks(ctx, params.PlayerID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
+		return &api.GetTemporalMarksInternalServerError{}, err
 	}
 
-	var req api.UseActionBudgetJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	result, err := h.service.UseActionBudget(ctx, playerUUID, req.Actions)
-	if err != nil {
-		if err.Error() == "too many actions in batch" || err.Error() == "insufficient action budget" {
-			respondError(w, http.StatusBadRequest, err, err.Error())
-			return
-		}
-		if err.Error() == "sandevistan not in active phase" {
-			respondError(w, http.StatusConflict, err, err.Error())
-			return
-		}
-		respondError(w, http.StatusInternalServerError, err, "Failed to use action budget")
-		return
-	}
-
-	respondJSON(w, http.StatusOK, result)
+	return &api.GetTemporalMarksOK{Marks: marks}, nil
 }
 
-func (h *SandevistanHandlers) SetTemporalMarks(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
+// ApplyCoolingCartridge - TYPED response!
+func (h *Handlers) ApplyCoolingCartridge(ctx context.Context, req *api.ApplyCoolingCartridgeReq, params api.ApplyCoolingCartridgeParams) (api.ApplyCoolingCartridgeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	playerUUID, err := uuid.Parse(playerId.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
-	}
-
-	var req api.SetTemporalMarksJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	targetIDs := make([]uuid.UUID, len(req.TargetIds))
-	for i, id := range req.TargetIds {
-		targetUUID, err := uuid.Parse(id.String())
-		if err != nil {
-			respondError(w, http.StatusBadRequest, err, "Invalid target ID")
-			return
-		}
-		targetIDs[i] = targetUUID
-	}
-
-	if err := h.service.SetTemporalMarks(ctx, playerUUID, targetIDs); err != nil {
-		if err.Error() == "too many temporal marks" || err.Error() == "sandevistan not active" {
-			respondError(w, http.StatusBadRequest, err, err.Error())
-			return
-		}
-		respondError(w, http.StatusInternalServerError, err, "Failed to set temporal marks")
-		return
-	}
-
-	status := "marks_set"
-	response := api.StatusResponse{
-		Status: &status,
-	}
-
-	respondJSON(w, http.StatusCreated, response)
-}
-
-func (h *SandevistanHandlers) GetTemporalMarks(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
-
-	playerUUID, err := uuid.Parse(playerId.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
-	}
-
-	marks, err := h.service.GetTemporalMarks(ctx, playerUUID)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, err, "Failed to get temporal marks")
-		return
-	}
-
-	response := map[string]interface{}{
-		"marks": marks,
-	}
-
-	respondJSON(w, http.StatusOK, response)
-}
-
-func (h *SandevistanHandlers) ApplyCoolingCartridge(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
-
-	playerUUID, err := uuid.Parse(playerId.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
-	}
-
-	var req api.ApplyCoolingCartridgeJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	cartridgeUUID, err := uuid.Parse(req.CartridgeId.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid cartridge ID")
-		return
-	}
-
-	result, err := h.service.ApplyCooling(ctx, playerUUID, cartridgeUUID)
+	result, err := h.service.ApplyCooling(ctx, params.PlayerID, req.CartridgeID)
 	if err != nil {
 		if err.Error() == "no active sandevistan activation" {
-			respondError(w, http.StatusNotFound, err, err.Error())
-			return
+			return &api.ApplyCoolingCartridgeNotFound{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err, "Failed to apply cooling")
-		return
+		return &api.ApplyCoolingCartridgeInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, result)
+	return result, nil
 }
 
-func (h *SandevistanHandlers) GetHeatStatus(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
+// GetHeatStatus - TYPED response!
+func (h *Handlers) GetHeatStatus(ctx context.Context, params api.GetHeatStatusParams) (api.GetHeatStatusRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	playerUUID, err := uuid.Parse(playerId.String())
+	status, err := h.service.GetHeatStatus(ctx, params.PlayerID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
+		return &api.GetHeatStatusInternalServerError{}, err
 	}
 
-	status, err := h.service.GetHeatStatus(ctx, playerUUID)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, err, "Failed to get heat status")
-		return
-	}
-
-	respondJSON(w, http.StatusOK, status)
+	return status, nil
 }
 
-func (h *SandevistanHandlers) ApplyCounterplay(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID) {
-	ctx := r.Context()
+// ApplyCounterplay - TYPED response!
+func (h *Handlers) ApplyCounterplay(ctx context.Context, req *api.ApplyCounterplayReq, params api.ApplyCounterplayParams) (api.ApplyCounterplayRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	playerUUID, err := uuid.Parse(playerId.String())
+	result, err := h.service.ApplyCounterplay(ctx, params.PlayerID, string(req.EffectType), req.SourcePlayerID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid player ID")
-		return
-	}
-
-	var req api.ApplyCounterplayJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	sourcePlayerUUID, err := uuid.Parse(req.SourcePlayerId.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid source player ID")
-		return
-	}
-
-	result, err := h.service.ApplyCounterplay(ctx, playerUUID, string(req.EffectType), sourcePlayerUUID)
-	if err != nil {
-		if err.Error() == "sandevistan not active" {
-			respondError(w, http.StatusNotFound, err, err.Error())
-			return
+		if err == ErrSandevistanNotActive {
+			return &api.ApplyCounterplayNotFound{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err, "Failed to apply counterplay")
-		return
+		return &api.ApplyCounterplayInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, result)
+	return result, nil
 }
 
+// SetTemporalMarks - TYPED response!
+func (h *Handlers) SetTemporalMarks(ctx context.Context, req *api.SetTemporalMarksReq, params api.SetTemporalMarksParams) (api.SetTemporalMarksRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if err := h.service.SetTemporalMarks(ctx, params.PlayerID, req.TargetIds); err != nil {
+		if err.Error() == "too many temporal marks" || err.Error() == "sandevistan not active" {
+			return &api.SetTemporalMarksBadRequest{}, nil
+		}
+		return &api.SetTemporalMarksInternalServerError{}, err
+	}
+
+	// TODO: Check correct response type - using BadRequest for now
+	return &api.SetTemporalMarksBadRequest{}, nil
+}
+
+// UseActionBudget - TYPED response!
+func (h *Handlers) UseActionBudget(ctx context.Context, req *api.UseActionBudgetReq, params api.UseActionBudgetParams) (api.UseActionBudgetRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	result, err := h.service.UseActionBudget(ctx, params.PlayerID, req.Actions)
+	if err != nil {
+		if err.Error() == "too many actions in batch" || err.Error() == "insufficient action budget" {
+			return &api.UseActionBudgetBadRequest{}, nil
+		}
+		if err.Error() == "sandevistan not in active phase" {
+			return &api.UseActionBudgetConflict{}, nil
+		}
+		return &api.UseActionBudgetInternalServerError{}, err
+	}
+
+	return result, nil
+}

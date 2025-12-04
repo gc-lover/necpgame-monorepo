@@ -1,4 +1,4 @@
-// Issue: #1560
+// Issue: #1560, #1584
 
 package main
 
@@ -6,6 +6,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,13 +18,22 @@ import (
 func main() {
 	// Configuration
 	addr := getEnv("SERVER_ADDR", ":8091")
-	dbConnStr := getEnv("DATABASE_URL", "postgres://necpg:necpg@localhost:5432/necpg?sslmode=disable")
+	_ = getEnv("DATABASE_URL", "postgres://necpg:necpg@localhost:5432/necpg?sslmode=disable") // TODO: Use DB connection
 
 	// Initialize server
-	srv, err := server.NewHTTPServer(addr, dbConnStr)
-	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
-	}
+	repo := server.NewProjectileRepository(nil) // TODO: Add DB connection
+	service := server.NewProjectileService(repo)
+	srv := server.NewHTTPServer(addr, service)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6116")
+		log.Printf("pprof server starting on %s", pprofAddr)
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
+	}()
 
 	// Start server
 	go func() {
@@ -56,6 +66,7 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
 
 
 

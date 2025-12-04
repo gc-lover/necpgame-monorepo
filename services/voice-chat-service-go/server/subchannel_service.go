@@ -35,7 +35,17 @@ func NewSubchannelService(repo SubchannelRepositoryInterface) *SubchannelService
 }
 
 func NewSubchannelServiceFromDB(dbURL string) (*SubchannelService, error) {
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Issue: #1605 - DB Connection Pool configuration
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	config.MaxConns = 50
+	config.MinConns = 10
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 1 * time.Minute
+	
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}

@@ -28,21 +28,21 @@ END $$;
 
 -- Таблица курсов валютных пар
 CREATE TABLE IF NOT EXISTS economy.currency_exchange_rates (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    currency_pair VARCHAR(10) NOT NULL UNIQUE,
-    base_currency VARCHAR(10) NOT NULL,
-    quote_currency VARCHAR(10) NOT NULL,
-    rate DECIMAL(20,8) NOT NULL,
-    bid_rate DECIMAL(20,8) NOT NULL,
-    ask_rate DECIMAL(20,8) NOT NULL,
-    spread DECIMAL(10,4) NOT NULL DEFAULT 0.0000,
-    daily_volume DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    volatility DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (base_currency != quote_currency),
-    CHECK (bid_rate <= ask_rate),
-    CHECK (spread >= 0.0000)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  currency_pair VARCHAR(10) NOT NULL UNIQUE,
+  base_currency VARCHAR(10) NOT NULL,
+  quote_currency VARCHAR(10) NOT NULL,
+  last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rate DECIMAL(20,8) NOT NULL,
+  bid_rate DECIMAL(20,8) NOT NULL,
+  ask_rate DECIMAL(20,8) NOT NULL,
+  spread DECIMAL(10,4) NOT NULL DEFAULT 0.0000,
+  daily_volume DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  volatility DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  CHECK (base_currency != quote_currency),
+  CHECK (bid_rate <= ask_rate),
+  CHECK (spread >= 0.0000)
 );
 
 -- Индексы для currency_exchange_rates
@@ -55,14 +55,14 @@ CREATE INDEX IF NOT EXISTS idx_currency_exchange_rates_last_updated
 
 -- Таблица истории курсов валютных пар
 CREATE TABLE IF NOT EXISTS economy.currency_exchange_rate_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    currency_pair VARCHAR(10) NOT NULL,
-    rate DECIMAL(20,8) NOT NULL,
-    bid_rate DECIMAL(20,8) NOT NULL,
-    ask_rate DECIMAL(20,8) NOT NULL,
-    spread DECIMAL(10,4) NOT NULL DEFAULT 0.0000,
-    volume DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  currency_pair VARCHAR(10) NOT NULL,
+  recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rate DECIMAL(20,8) NOT NULL,
+  bid_rate DECIMAL(20,8) NOT NULL,
+  ask_rate DECIMAL(20,8) NOT NULL,
+  spread DECIMAL(10,4) NOT NULL DEFAULT 0.0000,
+  volume DECIMAL(20,2) NOT NULL DEFAULT 0.00
 );
 
 -- Индексы для currency_exchange_rate_history
@@ -73,26 +73,26 @@ CREATE INDEX IF NOT EXISTS idx_currency_exchange_rate_history_recorded
 
 -- Таблица ордеров на обмен валют
 CREATE TABLE IF NOT EXISTS economy.currency_exchange_orders (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    currency_pair VARCHAR(10) NOT NULL,
-    order_type currency_order_type NOT NULL,
-    side currency_order_side NOT NULL,
-    base_currency VARCHAR(10) NOT NULL,
-    quote_currency VARCHAR(10) NOT NULL,
-    amount DECIMAL(20,2) NOT NULL CHECK (amount > 0),
-    limit_rate DECIMAL(20,8),
-    executed_amount DECIMAL(20,2) NOT NULL DEFAULT 0.00 CHECK (executed_amount >= 0),
-    status currency_order_status NOT NULL DEFAULT 'pending',
-    fee DECIMAL(10,2) NOT NULL DEFAULT 0.00 CHECK (fee >= 0),
-    fee_discount DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (fee_discount >= 0 AND fee_discount <= 100.00),
-    ttl_seconds INTEGER CHECK (ttl_seconds IS NULL OR ttl_seconds > 0),
-    expires_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    executed_at TIMESTAMP,
-    CHECK (executed_amount <= amount),
-    CHECK (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  currency_pair VARCHAR(10) NOT NULL,
+  base_currency VARCHAR(10) NOT NULL,
+  quote_currency VARCHAR(10) NOT NULL,
+  expires_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  executed_at TIMESTAMP,
+  amount DECIMAL(20,2) NOT NULL CHECK (amount > 0),
+  limit_rate DECIMAL(20,8),
+  executed_amount DECIMAL(20,2) NOT NULL DEFAULT 0.00 CHECK (executed_amount >= 0),
+  fee DECIMAL(10,2) NOT NULL DEFAULT 0.00 CHECK (fee >= 0),
+  fee_discount DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (fee_discount >= 0 AND fee_discount <= 100.00),
+  ttl_seconds INTEGER CHECK (ttl_seconds IS NULL OR ttl_seconds > 0),
+  order_type currency_order_type NOT NULL,
+  side currency_order_side NOT NULL,
+  status currency_order_status NOT NULL DEFAULT 'pending',
+  CHECK (executed_amount <= amount),
+  CHECK (
         (order_type = 'limit' AND limit_rate IS NOT NULL) OR
         (order_type = 'instant' AND limit_rate IS NULL)
     )
@@ -110,18 +110,18 @@ CREATE INDEX IF NOT EXISTS idx_currency_exchange_orders_pair_type_side_status
 
 -- Таблица исполненных сделок
 CREATE TABLE IF NOT EXISTS economy.currency_exchange_trades (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    buy_order_id UUID NOT NULL REFERENCES economy.currency_exchange_orders(id) ON DELETE CASCADE,
-    sell_order_id UUID NOT NULL REFERENCES economy.currency_exchange_orders(id) ON DELETE CASCADE,
-    currency_pair VARCHAR(10) NOT NULL,
-    base_currency VARCHAR(10) NOT NULL,
-    quote_currency VARCHAR(10) NOT NULL,
-    amount DECIMAL(20,2) NOT NULL CHECK (amount > 0),
-    rate DECIMAL(20,8) NOT NULL CHECK (rate > 0),
-    total DECIMAL(20,2) NOT NULL CHECK (total > 0),
-    fee DECIMAL(10,2) NOT NULL DEFAULT 0.00 CHECK (fee >= 0),
-    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (buy_order_id != sell_order_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  buy_order_id UUID NOT NULL REFERENCES economy.currency_exchange_orders(id) ON DELETE CASCADE,
+  sell_order_id UUID NOT NULL REFERENCES economy.currency_exchange_orders(id) ON DELETE CASCADE,
+  currency_pair VARCHAR(10) NOT NULL,
+  base_currency VARCHAR(10) NOT NULL,
+  quote_currency VARCHAR(10) NOT NULL,
+  executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  amount DECIMAL(20,2) NOT NULL CHECK (amount > 0),
+  rate DECIMAL(20,8) NOT NULL CHECK (rate > 0),
+  total DECIMAL(20,2) NOT NULL CHECK (total > 0),
+  fee DECIMAL(10,2) NOT NULL DEFAULT 0.00 CHECK (fee >= 0),
+  CHECK (buy_order_id != sell_order_id)
 );
 
 -- Индексы для currency_exchange_trades
@@ -136,19 +136,19 @@ CREATE INDEX IF NOT EXISTS idx_currency_exchange_trades_executed_at
 
 -- Таблица лимитов рисков для игроков
 CREATE TABLE IF NOT EXISTS economy.currency_exchange_risk_limits (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    limit_type currency_risk_limit_type NOT NULL,
-    limit_value DECIMAL(20,2) NOT NULL CHECK (limit_value >= 0),
-    current_value DECIMAL(20,2) NOT NULL DEFAULT 0.00 CHECK (current_value >= 0),
-    period_start TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    period_end TIMESTAMP NOT NULL,
-    reset_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (current_value <= limit_value),
-    CHECK (period_start < period_end),
-    CHECK (reset_at >= period_end)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  period_start TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  period_end TIMESTAMP NOT NULL,
+  reset_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  limit_value DECIMAL(20,2) NOT NULL CHECK (limit_value >= 0),
+  current_value DECIMAL(20,2) NOT NULL DEFAULT 0.00 CHECK (current_value >= 0),
+  limit_type currency_risk_limit_type NOT NULL,
+  CHECK (current_value <= limit_value),
+  CHECK (period_start < period_end),
+  CHECK (reset_at >= period_end)
 );
 
 -- Индексы для currency_exchange_risk_limits

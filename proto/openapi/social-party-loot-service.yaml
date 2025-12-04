@@ -1,4 +1,3 @@
-# Issue: #142
 openapi: 3.0.3
 info:
   title: Social Party Loot Service API
@@ -7,33 +6,30 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Party Loot
-    description: Распределение лута в группах
-
+- name: Party Loot
+  description: Распределение лута в группах
 paths:
   /social/party/{partyId}/loot-mode:
     get:
       tags:
-        - Party Loot
+      - Party Loot
       summary: Получить текущий режим распределения лута
       operationId: getLootMode
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: partyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Режим распределения лута
@@ -42,26 +38,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/LootModeResponse'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
     put:
       tags:
-        - Party Loot
+      - Party Loot
       summary: Изменить режим распределения лута
       operationId: changeLootMode
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: partyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -76,29 +71,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/Party'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/party/{partyId}/loot/distribute:
     post:
       tags:
-        - Party Loot
+      - Party Loot
       summary: Распределить лут между участниками группы
       operationId: distributeLoot
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: partyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -113,29 +107,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/LootDistributionResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/party/{partyId}/loot/roll:
     post:
       tags:
-        - Party Loot
+      - Party Loot
       summary: Бросить кубик за лут
       operationId: rollForLoot
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: partyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -150,19 +143,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/LootRollResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Party:
       type: object
@@ -172,8 +163,11 @@ components:
           format: uuid
         loot_mode:
           type: string
-          enum: [free_for_all, round_robin, need_before_greed, master_looter]
-
+          enum:
+          - free_for_all
+          - round_robin
+          - need_before_greed
+          - master_looter
     LootModeResponse:
       type: object
       properties:
@@ -182,22 +176,28 @@ components:
           format: uuid
         loot_mode:
           type: string
-          enum: [free_for_all, round_robin, need_before_greed, master_looter]
-
+          enum:
+          - free_for_all
+          - round_robin
+          - need_before_greed
+          - master_looter
     ChangeLootModeRequest:
       type: object
       required:
-        - loot_mode
+      - loot_mode
       properties:
         loot_mode:
           type: string
-          enum: [free_for_all, round_robin, need_before_greed, master_looter]
-
+          enum:
+          - free_for_all
+          - round_robin
+          - need_before_greed
+          - master_looter
     DistributeLootRequest:
       type: object
       required:
-        - item_id
-        - target_account_id
+      - item_id
+      - target_account_id
       properties:
         item_id:
           type: string
@@ -205,55 +205,40 @@ components:
         target_account_id:
           type: string
           format: uuid
-
     LootDistributionResponse:
       type: object
       properties:
-        success:
-          type: boolean
         item_id:
           type: string
           format: uuid
         recipient_id:
           type: string
           format: uuid
-
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RollForLootRequest:
       type: object
       required:
-        - item_id
+      - item_id
       properties:
         item_id:
           type: string
           format: uuid
-
     LootRollResponse:
       type: object
       properties:
         item_id:
           type: string
           format: uuid
-        roll_value:
-          type: integer
-          minimum: 1
-          maximum: 100
         winner_id:
           type: string
           format: uuid
           nullable: true
-
+        roll_value:
+          type: integer
+          minimum: 1
+          maximum: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

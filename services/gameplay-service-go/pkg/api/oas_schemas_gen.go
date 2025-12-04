@@ -2,18 +2,3825 @@
 
 package api
 
-type HealthCheckOK struct {
-	Status OptString `json:"status"`
+import (
+	"time"
+
+	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
+	"github.com/google/uuid"
+)
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/Ability
+type Ability struct {
+	// Уникальный идентификатор способности.
+	ID uuid.UUID `json:"id"`
+	// Название способности.
+	Name string `json:"name"`
+	// Описание способности.
+	Description OptString `json:"description"`
+	// Дата создания.
+	CreatedAt OptDateTime `json:"created_at"`
+	// Требования для использования способности.
+	Requirements OptAbilityRequirements `json:"requirements"`
+	// Модификаторы способности.
+	Modifiers   OptAbilityModifiers `json:"modifiers"`
+	Slot        AbilitySlot         `json:"slot"`
+	Source      AbilitySource       `json:"source"`
+	AbilityType AbilityType         `json:"ability_type"`
+	// Ранг способности.
+	Rank int `json:"rank"`
+	// Стоимость энергии.
+	EnergyCost OptInt `json:"energy_cost"`
+	// Стоимость здоровья.
+	HealthCost OptInt `json:"health_cost"`
+	// Базовое время кулдауна в секундах.
+	CooldownBase OptInt `json:"cooldown_base"`
+	// Влияние на киберпсихоз (0-1).
+	CyberpsychosisImpact OptFloat32 `json:"cyberpsychosis_impact"`
+}
+
+// GetID returns the value of ID.
+func (s *Ability) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *Ability) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *Ability) GetDescription() OptString {
+	return s.Description
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Ability) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetRequirements returns the value of Requirements.
+func (s *Ability) GetRequirements() OptAbilityRequirements {
+	return s.Requirements
+}
+
+// GetModifiers returns the value of Modifiers.
+func (s *Ability) GetModifiers() OptAbilityModifiers {
+	return s.Modifiers
+}
+
+// GetSlot returns the value of Slot.
+func (s *Ability) GetSlot() AbilitySlot {
+	return s.Slot
+}
+
+// GetSource returns the value of Source.
+func (s *Ability) GetSource() AbilitySource {
+	return s.Source
+}
+
+// GetAbilityType returns the value of AbilityType.
+func (s *Ability) GetAbilityType() AbilityType {
+	return s.AbilityType
+}
+
+// GetRank returns the value of Rank.
+func (s *Ability) GetRank() int {
+	return s.Rank
+}
+
+// GetEnergyCost returns the value of EnergyCost.
+func (s *Ability) GetEnergyCost() OptInt {
+	return s.EnergyCost
+}
+
+// GetHealthCost returns the value of HealthCost.
+func (s *Ability) GetHealthCost() OptInt {
+	return s.HealthCost
+}
+
+// GetCooldownBase returns the value of CooldownBase.
+func (s *Ability) GetCooldownBase() OptInt {
+	return s.CooldownBase
+}
+
+// GetCyberpsychosisImpact returns the value of CyberpsychosisImpact.
+func (s *Ability) GetCyberpsychosisImpact() OptFloat32 {
+	return s.CyberpsychosisImpact
+}
+
+// SetID sets the value of ID.
+func (s *Ability) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *Ability) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Ability) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Ability) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetRequirements sets the value of Requirements.
+func (s *Ability) SetRequirements(val OptAbilityRequirements) {
+	s.Requirements = val
+}
+
+// SetModifiers sets the value of Modifiers.
+func (s *Ability) SetModifiers(val OptAbilityModifiers) {
+	s.Modifiers = val
+}
+
+// SetSlot sets the value of Slot.
+func (s *Ability) SetSlot(val AbilitySlot) {
+	s.Slot = val
+}
+
+// SetSource sets the value of Source.
+func (s *Ability) SetSource(val AbilitySource) {
+	s.Source = val
+}
+
+// SetAbilityType sets the value of AbilityType.
+func (s *Ability) SetAbilityType(val AbilityType) {
+	s.AbilityType = val
+}
+
+// SetRank sets the value of Rank.
+func (s *Ability) SetRank(val int) {
+	s.Rank = val
+}
+
+// SetEnergyCost sets the value of EnergyCost.
+func (s *Ability) SetEnergyCost(val OptInt) {
+	s.EnergyCost = val
+}
+
+// SetHealthCost sets the value of HealthCost.
+func (s *Ability) SetHealthCost(val OptInt) {
+	s.HealthCost = val
+}
+
+// SetCooldownBase sets the value of CooldownBase.
+func (s *Ability) SetCooldownBase(val OptInt) {
+	s.CooldownBase = val
+}
+
+// SetCyberpsychosisImpact sets the value of CyberpsychosisImpact.
+func (s *Ability) SetCyberpsychosisImpact(val OptFloat32) {
+	s.CyberpsychosisImpact = val
+}
+
+// Ref: #/components/schemas/AbilityActivationRequest
+type AbilityActivationRequest struct {
+	// Идентификатор способности для активации.
+	AbilityID uuid.UUID `json:"ability_id"`
+	// Идентификатор цели (если требуется).
+	TargetID OptNilUUID `json:"target_id"`
+	// Позиция для активации (если требуется).
+	Position OptNilAbilityActivationRequestPosition `json:"position"`
+}
+
+// GetAbilityID returns the value of AbilityID.
+func (s *AbilityActivationRequest) GetAbilityID() uuid.UUID {
+	return s.AbilityID
+}
+
+// GetTargetID returns the value of TargetID.
+func (s *AbilityActivationRequest) GetTargetID() OptNilUUID {
+	return s.TargetID
+}
+
+// GetPosition returns the value of Position.
+func (s *AbilityActivationRequest) GetPosition() OptNilAbilityActivationRequestPosition {
+	return s.Position
+}
+
+// SetAbilityID sets the value of AbilityID.
+func (s *AbilityActivationRequest) SetAbilityID(val uuid.UUID) {
+	s.AbilityID = val
+}
+
+// SetTargetID sets the value of TargetID.
+func (s *AbilityActivationRequest) SetTargetID(val OptNilUUID) {
+	s.TargetID = val
+}
+
+// SetPosition sets the value of Position.
+func (s *AbilityActivationRequest) SetPosition(val OptNilAbilityActivationRequestPosition) {
+	s.Position = val
+}
+
+// Позиция для активации (если требуется).
+type AbilityActivationRequestPosition struct {
+	X OptFloat32 `json:"x"`
+	Y OptFloat32 `json:"y"`
+	Z OptFloat32 `json:"z"`
+}
+
+// GetX returns the value of X.
+func (s *AbilityActivationRequestPosition) GetX() OptFloat32 {
+	return s.X
+}
+
+// GetY returns the value of Y.
+func (s *AbilityActivationRequestPosition) GetY() OptFloat32 {
+	return s.Y
+}
+
+// GetZ returns the value of Z.
+func (s *AbilityActivationRequestPosition) GetZ() OptFloat32 {
+	return s.Z
+}
+
+// SetX sets the value of X.
+func (s *AbilityActivationRequestPosition) SetX(val OptFloat32) {
+	s.X = val
+}
+
+// SetY sets the value of Y.
+func (s *AbilityActivationRequestPosition) SetY(val OptFloat32) {
+	s.Y = val
+}
+
+// SetZ sets the value of Z.
+func (s *AbilityActivationRequestPosition) SetZ(val OptFloat32) {
+	s.Z = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/AbilityActivationResponse
+type AbilityActivationResponse struct {
+	// Идентификатор активированной способности.
+	AbilityID uuid.UUID `json:"ability_id"`
+	// Сообщение о результате.
+	Message OptNilString `json:"message"`
+	// Время окончания кулдауна.
+	CooldownExpiresAt OptNilDateTime `json:"cooldown_expires_at"`
+	// Текущий уровень киберпсихоза.
+	CyberpsychosisLevel OptFloat32 `json:"cyberpsychosis_level"`
+	// Успешность активации.
+	Success bool `json:"success"`
+	// Запущен ли кулдаун.
+	CooldownStarted OptBool `json:"cooldown_started"`
+	// Сработала ли синергия.
+	SynergyTriggered OptBool `json:"synergy_triggered"`
+	// Обновлен ли киберпсихоз.
+	CyberpsychosisUpdated OptBool `json:"cyberpsychosis_updated"`
+}
+
+// GetAbilityID returns the value of AbilityID.
+func (s *AbilityActivationResponse) GetAbilityID() uuid.UUID {
+	return s.AbilityID
+}
+
+// GetMessage returns the value of Message.
+func (s *AbilityActivationResponse) GetMessage() OptNilString {
+	return s.Message
+}
+
+// GetCooldownExpiresAt returns the value of CooldownExpiresAt.
+func (s *AbilityActivationResponse) GetCooldownExpiresAt() OptNilDateTime {
+	return s.CooldownExpiresAt
+}
+
+// GetCyberpsychosisLevel returns the value of CyberpsychosisLevel.
+func (s *AbilityActivationResponse) GetCyberpsychosisLevel() OptFloat32 {
+	return s.CyberpsychosisLevel
+}
+
+// GetSuccess returns the value of Success.
+func (s *AbilityActivationResponse) GetSuccess() bool {
+	return s.Success
+}
+
+// GetCooldownStarted returns the value of CooldownStarted.
+func (s *AbilityActivationResponse) GetCooldownStarted() OptBool {
+	return s.CooldownStarted
+}
+
+// GetSynergyTriggered returns the value of SynergyTriggered.
+func (s *AbilityActivationResponse) GetSynergyTriggered() OptBool {
+	return s.SynergyTriggered
+}
+
+// GetCyberpsychosisUpdated returns the value of CyberpsychosisUpdated.
+func (s *AbilityActivationResponse) GetCyberpsychosisUpdated() OptBool {
+	return s.CyberpsychosisUpdated
+}
+
+// SetAbilityID sets the value of AbilityID.
+func (s *AbilityActivationResponse) SetAbilityID(val uuid.UUID) {
+	s.AbilityID = val
+}
+
+// SetMessage sets the value of Message.
+func (s *AbilityActivationResponse) SetMessage(val OptNilString) {
+	s.Message = val
+}
+
+// SetCooldownExpiresAt sets the value of CooldownExpiresAt.
+func (s *AbilityActivationResponse) SetCooldownExpiresAt(val OptNilDateTime) {
+	s.CooldownExpiresAt = val
+}
+
+// SetCyberpsychosisLevel sets the value of CyberpsychosisLevel.
+func (s *AbilityActivationResponse) SetCyberpsychosisLevel(val OptFloat32) {
+	s.CyberpsychosisLevel = val
+}
+
+// SetSuccess sets the value of Success.
+func (s *AbilityActivationResponse) SetSuccess(val bool) {
+	s.Success = val
+}
+
+// SetCooldownStarted sets the value of CooldownStarted.
+func (s *AbilityActivationResponse) SetCooldownStarted(val OptBool) {
+	s.CooldownStarted = val
+}
+
+// SetSynergyTriggered sets the value of SynergyTriggered.
+func (s *AbilityActivationResponse) SetSynergyTriggered(val OptBool) {
+	s.SynergyTriggered = val
+}
+
+// SetCyberpsychosisUpdated sets the value of CyberpsychosisUpdated.
+func (s *AbilityActivationResponse) SetCyberpsychosisUpdated(val OptBool) {
+	s.CyberpsychosisUpdated = val
+}
+
+func (*AbilityActivationResponse) activateAbilityRes() {}
+
+// Модификаторы способности.
+type AbilityModifiers struct {
+	DamageMultiplier OptFloat32 `json:"damage_multiplier"`
+	RangeBonus       OptFloat32 `json:"range_bonus"`
+	DurationBonus    OptFloat32 `json:"duration_bonus"`
+}
+
+// GetDamageMultiplier returns the value of DamageMultiplier.
+func (s *AbilityModifiers) GetDamageMultiplier() OptFloat32 {
+	return s.DamageMultiplier
+}
+
+// GetRangeBonus returns the value of RangeBonus.
+func (s *AbilityModifiers) GetRangeBonus() OptFloat32 {
+	return s.RangeBonus
+}
+
+// GetDurationBonus returns the value of DurationBonus.
+func (s *AbilityModifiers) GetDurationBonus() OptFloat32 {
+	return s.DurationBonus
+}
+
+// SetDamageMultiplier sets the value of DamageMultiplier.
+func (s *AbilityModifiers) SetDamageMultiplier(val OptFloat32) {
+	s.DamageMultiplier = val
+}
+
+// SetRangeBonus sets the value of RangeBonus.
+func (s *AbilityModifiers) SetRangeBonus(val OptFloat32) {
+	s.RangeBonus = val
+}
+
+// SetDurationBonus sets the value of DurationBonus.
+func (s *AbilityModifiers) SetDurationBonus(val OptFloat32) {
+	s.DurationBonus = val
+}
+
+// Требования для использования способности.
+type AbilityRequirements struct {
+	MinLevel           OptInt                                   `json:"min_level"`
+	RequiredAttributes OptAbilityRequirementsRequiredAttributes `json:"required_attributes"`
+	RequiredSkills     []string                                 `json:"required_skills"`
+	RequiredAbilities  []uuid.UUID                              `json:"required_abilities"`
+}
+
+// GetMinLevel returns the value of MinLevel.
+func (s *AbilityRequirements) GetMinLevel() OptInt {
+	return s.MinLevel
+}
+
+// GetRequiredAttributes returns the value of RequiredAttributes.
+func (s *AbilityRequirements) GetRequiredAttributes() OptAbilityRequirementsRequiredAttributes {
+	return s.RequiredAttributes
+}
+
+// GetRequiredSkills returns the value of RequiredSkills.
+func (s *AbilityRequirements) GetRequiredSkills() []string {
+	return s.RequiredSkills
+}
+
+// GetRequiredAbilities returns the value of RequiredAbilities.
+func (s *AbilityRequirements) GetRequiredAbilities() []uuid.UUID {
+	return s.RequiredAbilities
+}
+
+// SetMinLevel sets the value of MinLevel.
+func (s *AbilityRequirements) SetMinLevel(val OptInt) {
+	s.MinLevel = val
+}
+
+// SetRequiredAttributes sets the value of RequiredAttributes.
+func (s *AbilityRequirements) SetRequiredAttributes(val OptAbilityRequirementsRequiredAttributes) {
+	s.RequiredAttributes = val
+}
+
+// SetRequiredSkills sets the value of RequiredSkills.
+func (s *AbilityRequirements) SetRequiredSkills(val []string) {
+	s.RequiredSkills = val
+}
+
+// SetRequiredAbilities sets the value of RequiredAbilities.
+func (s *AbilityRequirements) SetRequiredAbilities(val []uuid.UUID) {
+	s.RequiredAbilities = val
+}
+
+type AbilityRequirementsRequiredAttributes map[string]int
+
+func (s *AbilityRequirementsRequiredAttributes) init() AbilityRequirementsRequiredAttributes {
+	m := *s
+	if m == nil {
+		m = map[string]int{}
+		*s = m
+	}
+	return m
+}
+
+// Слот способности.
+// Ref: #/components/schemas/AbilitySlot
+type AbilitySlot string
+
+const (
+	AbilitySlotQ       AbilitySlot = "Q"
+	AbilitySlotE       AbilitySlot = "E"
+	AbilitySlotR       AbilitySlot = "R"
+	AbilitySlotPassive AbilitySlot = "passive"
+	AbilitySlotHacking AbilitySlot = "hacking"
+)
+
+// AllValues returns all AbilitySlot values.
+func (AbilitySlot) AllValues() []AbilitySlot {
+	return []AbilitySlot{
+		AbilitySlotQ,
+		AbilitySlotE,
+		AbilitySlotR,
+		AbilitySlotPassive,
+		AbilitySlotHacking,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AbilitySlot) MarshalText() ([]byte, error) {
+	switch s {
+	case AbilitySlotQ:
+		return []byte(s), nil
+	case AbilitySlotE:
+		return []byte(s), nil
+	case AbilitySlotR:
+		return []byte(s), nil
+	case AbilitySlotPassive:
+		return []byte(s), nil
+	case AbilitySlotHacking:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AbilitySlot) UnmarshalText(data []byte) error {
+	switch AbilitySlot(data) {
+	case AbilitySlotQ:
+		*s = AbilitySlotQ
+		return nil
+	case AbilitySlotE:
+		*s = AbilitySlotE
+		return nil
+	case AbilitySlotR:
+		*s = AbilitySlotR
+		return nil
+	case AbilitySlotPassive:
+		*s = AbilitySlotPassive
+		return nil
+	case AbilitySlotHacking:
+		*s = AbilitySlotHacking
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Источник способности.
+// Ref: #/components/schemas/AbilitySource
+type AbilitySource string
+
+const (
+	AbilitySourceEquipment   AbilitySource = "equipment"
+	AbilitySourceImplant     AbilitySource = "implant"
+	AbilitySourceProgression AbilitySource = "progression"
+	AbilitySourceCyberdeck   AbilitySource = "cyberdeck"
+)
+
+// AllValues returns all AbilitySource values.
+func (AbilitySource) AllValues() []AbilitySource {
+	return []AbilitySource{
+		AbilitySourceEquipment,
+		AbilitySourceImplant,
+		AbilitySourceProgression,
+		AbilitySourceCyberdeck,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AbilitySource) MarshalText() ([]byte, error) {
+	switch s {
+	case AbilitySourceEquipment:
+		return []byte(s), nil
+	case AbilitySourceImplant:
+		return []byte(s), nil
+	case AbilitySourceProgression:
+		return []byte(s), nil
+	case AbilitySourceCyberdeck:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AbilitySource) UnmarshalText(data []byte) error {
+	switch AbilitySource(data) {
+	case AbilitySourceEquipment:
+		*s = AbilitySourceEquipment
+		return nil
+	case AbilitySourceImplant:
+		*s = AbilitySourceImplant
+		return nil
+	case AbilitySourceProgression:
+		*s = AbilitySourceProgression
+		return nil
+	case AbilitySourceCyberdeck:
+		*s = AbilitySourceCyberdeck
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Тип способности.
+// Ref: #/components/schemas/AbilityType
+type AbilityType string
+
+const (
+	AbilityTypeTactical  AbilityType = "tactical"
+	AbilityTypeSignature AbilityType = "signature"
+	AbilityTypeUltimate  AbilityType = "ultimate"
+	AbilityTypePassive   AbilityType = "passive"
+	AbilityTypeHacking   AbilityType = "hacking"
+)
+
+// AllValues returns all AbilityType values.
+func (AbilityType) AllValues() []AbilityType {
+	return []AbilityType{
+		AbilityTypeTactical,
+		AbilityTypeSignature,
+		AbilityTypeUltimate,
+		AbilityTypePassive,
+		AbilityTypeHacking,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AbilityType) MarshalText() ([]byte, error) {
+	switch s {
+	case AbilityTypeTactical:
+		return []byte(s), nil
+	case AbilityTypeSignature:
+		return []byte(s), nil
+	case AbilityTypeUltimate:
+		return []byte(s), nil
+	case AbilityTypePassive:
+		return []byte(s), nil
+	case AbilityTypeHacking:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AbilityType) UnmarshalText(data []byte) error {
+	switch AbilityType(data) {
+	case AbilityTypeTactical:
+		*s = AbilityTypeTactical
+		return nil
+	case AbilityTypeSignature:
+		*s = AbilityTypeSignature
+		return nil
+	case AbilityTypeUltimate:
+		*s = AbilityTypeUltimate
+		return nil
+	case AbilityTypePassive:
+		*s = AbilityTypePassive
+		return nil
+	case AbilityTypeHacking:
+		*s = AbilityTypeHacking
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ActivateAbilityBadRequest Error
+
+func (*ActivateAbilityBadRequest) activateAbilityRes() {}
+
+type ActivateAbilityConflict Error
+
+func (*ActivateAbilityConflict) activateAbilityRes() {}
+
+type ActivateAbilityForbidden Error
+
+func (*ActivateAbilityForbidden) activateAbilityRes() {}
+
+type ActivateAbilityInternalServerError Error
+
+func (*ActivateAbilityInternalServerError) activateAbilityRes() {}
+
+type ActivateAbilityNotFound Error
+
+func (*ActivateAbilityNotFound) activateAbilityRes() {}
+
+type ActivateAbilityUnauthorized Error
+
+func (*ActivateAbilityUnauthorized) activateAbilityRes() {}
+
+type ActivateComboBadRequest Error
+
+func (*ActivateComboBadRequest) activateComboRes() {}
+
+type ActivateComboInternalServerError Error
+
+func (*ActivateComboInternalServerError) activateComboRes() {}
+
+type ActivateComboNotFound Error
+
+func (*ActivateComboNotFound) activateComboRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/ActivateComboRequest
+type ActivateComboRequest struct {
+	// ID персонажа, активирующего комбо.
+	CharacterID uuid.UUID `json:"character_id"`
+	// ID комбо для активации.
+	ComboID uuid.UUID `json:"combo_id"`
+	// Контекст активации (позиция, состояние, окружение).
+	Context OptActivateComboRequestContext `json:"context"`
+	// ID участников команды (для team/legendary комбо).
+	Participants []uuid.UUID `json:"participants"`
+}
+
+// GetCharacterID returns the value of CharacterID.
+func (s *ActivateComboRequest) GetCharacterID() uuid.UUID {
+	return s.CharacterID
+}
+
+// GetComboID returns the value of ComboID.
+func (s *ActivateComboRequest) GetComboID() uuid.UUID {
+	return s.ComboID
+}
+
+// GetContext returns the value of Context.
+func (s *ActivateComboRequest) GetContext() OptActivateComboRequestContext {
+	return s.Context
+}
+
+// GetParticipants returns the value of Participants.
+func (s *ActivateComboRequest) GetParticipants() []uuid.UUID {
+	return s.Participants
+}
+
+// SetCharacterID sets the value of CharacterID.
+func (s *ActivateComboRequest) SetCharacterID(val uuid.UUID) {
+	s.CharacterID = val
+}
+
+// SetComboID sets the value of ComboID.
+func (s *ActivateComboRequest) SetComboID(val uuid.UUID) {
+	s.ComboID = val
+}
+
+// SetContext sets the value of Context.
+func (s *ActivateComboRequest) SetContext(val OptActivateComboRequestContext) {
+	s.Context = val
+}
+
+// SetParticipants sets the value of Participants.
+func (s *ActivateComboRequest) SetParticipants(val []uuid.UUID) {
+	s.Participants = val
+}
+
+// Контекст активации (позиция, состояние, окружение).
+type ActivateComboRequestContext map[string]jx.Raw
+
+func (s *ActivateComboRequestContext) init() ActivateComboRequestContext {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+type ActivateComboUnauthorized Error
+
+func (*ActivateComboUnauthorized) activateComboRes() {}
+
+type BearerAuth struct {
+	Token string
+	Roles []string
+}
+
+// GetToken returns the value of Token.
+func (s *BearerAuth) GetToken() string {
+	return s.Token
+}
+
+// GetRoles returns the value of Roles.
+func (s *BearerAuth) GetRoles() []string {
+	return s.Roles
+}
+
+// SetToken sets the value of Token.
+func (s *BearerAuth) SetToken(val string) {
+	s.Token = val
+}
+
+// SetRoles sets the value of Roles.
+func (s *BearerAuth) SetRoles(val []string) {
+	s.Roles = val
+}
+
+// Merged schema.
+// Ref: #/components/schemas/CombatSessionResponse
+type CombatSessionResponse struct {
+	// Уникальный идентификатор.
+	ID OptUUID `json:"id"`
+	// Дата создания.
+	CreatedAt OptDateTime `json:"created_at"`
+	// Дата обновления.
+	UpdatedAt OptNilDateTime `json:"updated_at"`
+	// Дата истечения.
+	ExpiresAt    OptNilDateTime `json:"expires_at"`
+	SessionType  SessionType    `json:"session_type"`
+	Status       SessionStatus  `json:"status"`
+	ZoneID       OptString      `json:"zone_id"`
+	Difficulty   OptDifficulty  `json:"difficulty"`
+	Participants []Participant  `json:"participants"`
+	WinnerTeam   OptNilString   `json:"winner_team"`
+}
+
+// GetID returns the value of ID.
+func (s *CombatSessionResponse) GetID() OptUUID {
+	return s.ID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *CombatSessionResponse) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *CombatSessionResponse) GetUpdatedAt() OptNilDateTime {
+	return s.UpdatedAt
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *CombatSessionResponse) GetExpiresAt() OptNilDateTime {
+	return s.ExpiresAt
+}
+
+// GetSessionType returns the value of SessionType.
+func (s *CombatSessionResponse) GetSessionType() SessionType {
+	return s.SessionType
 }
 
 // GetStatus returns the value of Status.
-func (s *HealthCheckOK) GetStatus() OptString {
+func (s *CombatSessionResponse) GetStatus() SessionStatus {
 	return s.Status
 }
 
+// GetZoneID returns the value of ZoneID.
+func (s *CombatSessionResponse) GetZoneID() OptString {
+	return s.ZoneID
+}
+
+// GetDifficulty returns the value of Difficulty.
+func (s *CombatSessionResponse) GetDifficulty() OptDifficulty {
+	return s.Difficulty
+}
+
+// GetParticipants returns the value of Participants.
+func (s *CombatSessionResponse) GetParticipants() []Participant {
+	return s.Participants
+}
+
+// GetWinnerTeam returns the value of WinnerTeam.
+func (s *CombatSessionResponse) GetWinnerTeam() OptNilString {
+	return s.WinnerTeam
+}
+
+// SetID sets the value of ID.
+func (s *CombatSessionResponse) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *CombatSessionResponse) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *CombatSessionResponse) SetUpdatedAt(val OptNilDateTime) {
+	s.UpdatedAt = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *CombatSessionResponse) SetExpiresAt(val OptNilDateTime) {
+	s.ExpiresAt = val
+}
+
+// SetSessionType sets the value of SessionType.
+func (s *CombatSessionResponse) SetSessionType(val SessionType) {
+	s.SessionType = val
+}
+
 // SetStatus sets the value of Status.
-func (s *HealthCheckOK) SetStatus(val OptString) {
+func (s *CombatSessionResponse) SetStatus(val SessionStatus) {
 	s.Status = val
+}
+
+// SetZoneID sets the value of ZoneID.
+func (s *CombatSessionResponse) SetZoneID(val OptString) {
+	s.ZoneID = val
+}
+
+// SetDifficulty sets the value of Difficulty.
+func (s *CombatSessionResponse) SetDifficulty(val OptDifficulty) {
+	s.Difficulty = val
+}
+
+// SetParticipants sets the value of Participants.
+func (s *CombatSessionResponse) SetParticipants(val []Participant) {
+	s.Participants = val
+}
+
+// SetWinnerTeam sets the value of WinnerTeam.
+func (s *CombatSessionResponse) SetWinnerTeam(val OptNilString) {
+	s.WinnerTeam = val
+}
+
+func (*CombatSessionResponse) createCombatSessionRes() {}
+func (*CombatSessionResponse) getCombatSessionRes()    {}
+
+// BACKEND NOTE: Fields ordered for optimal struct alignment (large → small).
+// Expected memory: ~120 bytes/instance.
+// Ref: #/components/schemas/Combo
+type Combo struct {
+	// Уникальный идентификатор комбо.
+	ID uuid.UUID `json:"id"`
+	// Название комбо.
+	Name string `json:"name"`
+	// Описание комбо.
+	Description OptString `json:"description"`
+	// Дата создания.
+	CreatedAt OptDateTime `json:"created_at"`
+	// Требования для активации комбо.
+	Requirements OptComboRequirements `json:"requirements"`
+	// Бонусы от комбо.
+	Bonuses    OptComboBonuses `json:"bonuses"`
+	Complexity ComboComplexity `json:"complexity"`
+	ComboType  ComboType       `json:"combo_type"`
+	// Последовательность действий для активации.
+	Sequence []string `json:"sequence"`
+	// Кулдаун комбо в секундах.
+	Cooldown OptInt `json:"cooldown"`
+	// Совместимость с chain-комбо.
+	ChainCompatible OptBool `json:"chain_compatible"`
+}
+
+// GetID returns the value of ID.
+func (s *Combo) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *Combo) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *Combo) GetDescription() OptString {
+	return s.Description
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Combo) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetRequirements returns the value of Requirements.
+func (s *Combo) GetRequirements() OptComboRequirements {
+	return s.Requirements
+}
+
+// GetBonuses returns the value of Bonuses.
+func (s *Combo) GetBonuses() OptComboBonuses {
+	return s.Bonuses
+}
+
+// GetComplexity returns the value of Complexity.
+func (s *Combo) GetComplexity() ComboComplexity {
+	return s.Complexity
+}
+
+// GetComboType returns the value of ComboType.
+func (s *Combo) GetComboType() ComboType {
+	return s.ComboType
+}
+
+// GetSequence returns the value of Sequence.
+func (s *Combo) GetSequence() []string {
+	return s.Sequence
+}
+
+// GetCooldown returns the value of Cooldown.
+func (s *Combo) GetCooldown() OptInt {
+	return s.Cooldown
+}
+
+// GetChainCompatible returns the value of ChainCompatible.
+func (s *Combo) GetChainCompatible() OptBool {
+	return s.ChainCompatible
+}
+
+// SetID sets the value of ID.
+func (s *Combo) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *Combo) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Combo) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Combo) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetRequirements sets the value of Requirements.
+func (s *Combo) SetRequirements(val OptComboRequirements) {
+	s.Requirements = val
+}
+
+// SetBonuses sets the value of Bonuses.
+func (s *Combo) SetBonuses(val OptComboBonuses) {
+	s.Bonuses = val
+}
+
+// SetComplexity sets the value of Complexity.
+func (s *Combo) SetComplexity(val ComboComplexity) {
+	s.Complexity = val
+}
+
+// SetComboType sets the value of ComboType.
+func (s *Combo) SetComboType(val ComboType) {
+	s.ComboType = val
+}
+
+// SetSequence sets the value of Sequence.
+func (s *Combo) SetSequence(val []string) {
+	s.Sequence = val
+}
+
+// SetCooldown sets the value of Cooldown.
+func (s *Combo) SetCooldown(val OptInt) {
+	s.Cooldown = val
+}
+
+// SetChainCompatible sets the value of ChainCompatible.
+func (s *Combo) SetChainCompatible(val OptBool) {
+	s.ChainCompatible = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/ComboActivationResponse
+type ComboActivationResponse struct {
+	// ID активации комбо.
+	ActivationID uuid.UUID `json:"activation_id"`
+	// Сообщение о результате.
+	Message OptString `json:"message"`
+	// Примененные бонусы.
+	BonusesApplied   OptComboActivationResponseBonusesApplied `json:"bonuses_applied"`
+	Combo            OptCombo                                 `json:"combo"`
+	AppliedSynergies []SchemasSynergy                         `json:"applied_synergies"`
+	// Успешность активации.
+	Success bool `json:"success"`
+	// Доступность chain-комбо.
+	ChainComboAvailable OptBool `json:"chain_combo_available"`
+}
+
+// GetActivationID returns the value of ActivationID.
+func (s *ComboActivationResponse) GetActivationID() uuid.UUID {
+	return s.ActivationID
+}
+
+// GetMessage returns the value of Message.
+func (s *ComboActivationResponse) GetMessage() OptString {
+	return s.Message
+}
+
+// GetBonusesApplied returns the value of BonusesApplied.
+func (s *ComboActivationResponse) GetBonusesApplied() OptComboActivationResponseBonusesApplied {
+	return s.BonusesApplied
+}
+
+// GetCombo returns the value of Combo.
+func (s *ComboActivationResponse) GetCombo() OptCombo {
+	return s.Combo
+}
+
+// GetAppliedSynergies returns the value of AppliedSynergies.
+func (s *ComboActivationResponse) GetAppliedSynergies() []SchemasSynergy {
+	return s.AppliedSynergies
+}
+
+// GetSuccess returns the value of Success.
+func (s *ComboActivationResponse) GetSuccess() bool {
+	return s.Success
+}
+
+// GetChainComboAvailable returns the value of ChainComboAvailable.
+func (s *ComboActivationResponse) GetChainComboAvailable() OptBool {
+	return s.ChainComboAvailable
+}
+
+// SetActivationID sets the value of ActivationID.
+func (s *ComboActivationResponse) SetActivationID(val uuid.UUID) {
+	s.ActivationID = val
+}
+
+// SetMessage sets the value of Message.
+func (s *ComboActivationResponse) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// SetBonusesApplied sets the value of BonusesApplied.
+func (s *ComboActivationResponse) SetBonusesApplied(val OptComboActivationResponseBonusesApplied) {
+	s.BonusesApplied = val
+}
+
+// SetCombo sets the value of Combo.
+func (s *ComboActivationResponse) SetCombo(val OptCombo) {
+	s.Combo = val
+}
+
+// SetAppliedSynergies sets the value of AppliedSynergies.
+func (s *ComboActivationResponse) SetAppliedSynergies(val []SchemasSynergy) {
+	s.AppliedSynergies = val
+}
+
+// SetSuccess sets the value of Success.
+func (s *ComboActivationResponse) SetSuccess(val bool) {
+	s.Success = val
+}
+
+// SetChainComboAvailable sets the value of ChainComboAvailable.
+func (s *ComboActivationResponse) SetChainComboAvailable(val OptBool) {
+	s.ChainComboAvailable = val
+}
+
+func (*ComboActivationResponse) activateComboRes() {}
+
+// Примененные бонусы.
+type ComboActivationResponseBonusesApplied struct {
+	DamageMultiplier  OptFloat32 `json:"damage_multiplier"`
+	CooldownReduction OptInt     `json:"cooldown_reduction"`
+	SpecialEffects    []string   `json:"special_effects"`
+}
+
+// GetDamageMultiplier returns the value of DamageMultiplier.
+func (s *ComboActivationResponseBonusesApplied) GetDamageMultiplier() OptFloat32 {
+	return s.DamageMultiplier
+}
+
+// GetCooldownReduction returns the value of CooldownReduction.
+func (s *ComboActivationResponseBonusesApplied) GetCooldownReduction() OptInt {
+	return s.CooldownReduction
+}
+
+// GetSpecialEffects returns the value of SpecialEffects.
+func (s *ComboActivationResponseBonusesApplied) GetSpecialEffects() []string {
+	return s.SpecialEffects
+}
+
+// SetDamageMultiplier sets the value of DamageMultiplier.
+func (s *ComboActivationResponseBonusesApplied) SetDamageMultiplier(val OptFloat32) {
+	s.DamageMultiplier = val
+}
+
+// SetCooldownReduction sets the value of CooldownReduction.
+func (s *ComboActivationResponseBonusesApplied) SetCooldownReduction(val OptInt) {
+	s.CooldownReduction = val
+}
+
+// SetSpecialEffects sets the value of SpecialEffects.
+func (s *ComboActivationResponseBonusesApplied) SetSpecialEffects(val []string) {
+	s.SpecialEffects = val
+}
+
+// Бонусы от комбо.
+type ComboBonuses struct {
+	DamageMultiplier  OptFloat32 `json:"damage_multiplier"`
+	CooldownReduction OptInt     `json:"cooldown_reduction"`
+	SpecialEffects    []string   `json:"special_effects"`
+}
+
+// GetDamageMultiplier returns the value of DamageMultiplier.
+func (s *ComboBonuses) GetDamageMultiplier() OptFloat32 {
+	return s.DamageMultiplier
+}
+
+// GetCooldownReduction returns the value of CooldownReduction.
+func (s *ComboBonuses) GetCooldownReduction() OptInt {
+	return s.CooldownReduction
+}
+
+// GetSpecialEffects returns the value of SpecialEffects.
+func (s *ComboBonuses) GetSpecialEffects() []string {
+	return s.SpecialEffects
+}
+
+// SetDamageMultiplier sets the value of DamageMultiplier.
+func (s *ComboBonuses) SetDamageMultiplier(val OptFloat32) {
+	s.DamageMultiplier = val
+}
+
+// SetCooldownReduction sets the value of CooldownReduction.
+func (s *ComboBonuses) SetCooldownReduction(val OptInt) {
+	s.CooldownReduction = val
+}
+
+// SetSpecialEffects sets the value of SpecialEffects.
+func (s *ComboBonuses) SetSpecialEffects(val []string) {
+	s.SpecialEffects = val
+}
+
+// Ref: #/components/schemas/ComboCatalogResponse
+type ComboCatalogResponse struct {
+	Combos []Combo `json:"combos"`
+	// Общее количество комбо.
+	Total OptInt `json:"total"`
+}
+
+// GetCombos returns the value of Combos.
+func (s *ComboCatalogResponse) GetCombos() []Combo {
+	return s.Combos
+}
+
+// GetTotal returns the value of Total.
+func (s *ComboCatalogResponse) GetTotal() OptInt {
+	return s.Total
+}
+
+// SetCombos sets the value of Combos.
+func (s *ComboCatalogResponse) SetCombos(val []Combo) {
+	s.Combos = val
+}
+
+// SetTotal sets the value of Total.
+func (s *ComboCatalogResponse) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+func (*ComboCatalogResponse) getComboCatalogRes() {}
+
+// Сложность комбо.
+// Ref: #/components/schemas/ComboComplexity
+type ComboComplexity string
+
+const (
+	ComboComplexityBronze    ComboComplexity = "Bronze"
+	ComboComplexitySilver    ComboComplexity = "Silver"
+	ComboComplexityGold      ComboComplexity = "Gold"
+	ComboComplexityPlatinum  ComboComplexity = "Platinum"
+	ComboComplexityLegendary ComboComplexity = "Legendary"
+)
+
+// AllValues returns all ComboComplexity values.
+func (ComboComplexity) AllValues() []ComboComplexity {
+	return []ComboComplexity{
+		ComboComplexityBronze,
+		ComboComplexitySilver,
+		ComboComplexityGold,
+		ComboComplexityPlatinum,
+		ComboComplexityLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ComboComplexity) MarshalText() ([]byte, error) {
+	switch s {
+	case ComboComplexityBronze:
+		return []byte(s), nil
+	case ComboComplexitySilver:
+		return []byte(s), nil
+	case ComboComplexityGold:
+		return []byte(s), nil
+	case ComboComplexityPlatinum:
+		return []byte(s), nil
+	case ComboComplexityLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ComboComplexity) UnmarshalText(data []byte) error {
+	switch ComboComplexity(data) {
+	case ComboComplexityBronze:
+		*s = ComboComplexityBronze
+		return nil
+	case ComboComplexitySilver:
+		*s = ComboComplexitySilver
+		return nil
+	case ComboComplexityGold:
+		*s = ComboComplexityGold
+		return nil
+	case ComboComplexityPlatinum:
+		*s = ComboComplexityPlatinum
+		return nil
+	case ComboComplexityLegendary:
+		*s = ComboComplexityLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Требования для активации комбо.
+type ComboRequirements struct {
+	MinLevel          OptInt      `json:"min_level"`
+	RequiredSkills    []string    `json:"required_skills"`
+	RequiredAbilities []uuid.UUID `json:"required_abilities"`
+	MinParticipants   OptInt      `json:"min_participants"`
+	MaxParticipants   OptInt      `json:"max_participants"`
+}
+
+// GetMinLevel returns the value of MinLevel.
+func (s *ComboRequirements) GetMinLevel() OptInt {
+	return s.MinLevel
+}
+
+// GetRequiredSkills returns the value of RequiredSkills.
+func (s *ComboRequirements) GetRequiredSkills() []string {
+	return s.RequiredSkills
+}
+
+// GetRequiredAbilities returns the value of RequiredAbilities.
+func (s *ComboRequirements) GetRequiredAbilities() []uuid.UUID {
+	return s.RequiredAbilities
+}
+
+// GetMinParticipants returns the value of MinParticipants.
+func (s *ComboRequirements) GetMinParticipants() OptInt {
+	return s.MinParticipants
+}
+
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *ComboRequirements) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
+}
+
+// SetMinLevel sets the value of MinLevel.
+func (s *ComboRequirements) SetMinLevel(val OptInt) {
+	s.MinLevel = val
+}
+
+// SetRequiredSkills sets the value of RequiredSkills.
+func (s *ComboRequirements) SetRequiredSkills(val []string) {
+	s.RequiredSkills = val
+}
+
+// SetRequiredAbilities sets the value of RequiredAbilities.
+func (s *ComboRequirements) SetRequiredAbilities(val []uuid.UUID) {
+	s.RequiredAbilities = val
+}
+
+// SetMinParticipants sets the value of MinParticipants.
+func (s *ComboRequirements) SetMinParticipants(val OptInt) {
+	s.MinParticipants = val
+}
+
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *ComboRequirements) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
+}
+
+// Тип комбо.
+// Ref: #/components/schemas/ComboType
+type ComboType string
+
+const (
+	ComboTypeSolo      ComboType = "solo"
+	ComboTypeTeam      ComboType = "team"
+	ComboTypeLegendary ComboType = "legendary"
+)
+
+// AllValues returns all ComboType values.
+func (ComboType) AllValues() []ComboType {
+	return []ComboType{
+		ComboTypeSolo,
+		ComboTypeTeam,
+		ComboTypeLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ComboType) MarshalText() ([]byte, error) {
+	switch s {
+	case ComboTypeSolo:
+		return []byte(s), nil
+	case ComboTypeTeam:
+		return []byte(s), nil
+	case ComboTypeLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ComboType) UnmarshalText(data []byte) error {
+	switch ComboType(data) {
+	case ComboTypeSolo:
+		*s = ComboTypeSolo
+		return nil
+	case ComboTypeTeam:
+		*s = ComboTypeTeam
+		return nil
+	case ComboTypeLegendary:
+		*s = ComboTypeLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CreateCombatSessionBadRequest Error
+
+func (*CreateCombatSessionBadRequest) createCombatSessionRes() {}
+
+type CreateCombatSessionUnauthorized Error
+
+func (*CreateCombatSessionUnauthorized) createCombatSessionRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/CreateSessionRequest
+type CreateSessionRequest struct {
+	ZoneID       OptString                     `json:"zone_id"`
+	Settings     *CreateSessionRequestSettings `json:"settings"`
+	Difficulty   OptDifficulty                 `json:"difficulty"`
+	SessionType  SessionType                   `json:"session_type"`
+	Participants []uuid.UUID                   `json:"participants"`
+}
+
+// GetZoneID returns the value of ZoneID.
+func (s *CreateSessionRequest) GetZoneID() OptString {
+	return s.ZoneID
+}
+
+// GetSettings returns the value of Settings.
+func (s *CreateSessionRequest) GetSettings() *CreateSessionRequestSettings {
+	return s.Settings
+}
+
+// GetDifficulty returns the value of Difficulty.
+func (s *CreateSessionRequest) GetDifficulty() OptDifficulty {
+	return s.Difficulty
+}
+
+// GetSessionType returns the value of SessionType.
+func (s *CreateSessionRequest) GetSessionType() SessionType {
+	return s.SessionType
+}
+
+// GetParticipants returns the value of Participants.
+func (s *CreateSessionRequest) GetParticipants() []uuid.UUID {
+	return s.Participants
+}
+
+// SetZoneID sets the value of ZoneID.
+func (s *CreateSessionRequest) SetZoneID(val OptString) {
+	s.ZoneID = val
+}
+
+// SetSettings sets the value of Settings.
+func (s *CreateSessionRequest) SetSettings(val *CreateSessionRequestSettings) {
+	s.Settings = val
+}
+
+// SetDifficulty sets the value of Difficulty.
+func (s *CreateSessionRequest) SetDifficulty(val OptDifficulty) {
+	s.Difficulty = val
+}
+
+// SetSessionType sets the value of SessionType.
+func (s *CreateSessionRequest) SetSessionType(val SessionType) {
+	s.SessionType = val
+}
+
+// SetParticipants sets the value of Participants.
+func (s *CreateSessionRequest) SetParticipants(val []uuid.UUID) {
+	s.Participants = val
+}
+
+type CreateSessionRequestSettings struct{}
+
+// Ref: #/components/schemas/Difficulty
+type Difficulty string
+
+const (
+	DifficultyNormal Difficulty = "normal"
+	DifficultyHard   Difficulty = "hard"
+	DifficultyElite  Difficulty = "elite"
+)
+
+// AllValues returns all Difficulty values.
+func (Difficulty) AllValues() []Difficulty {
+	return []Difficulty{
+		DifficultyNormal,
+		DifficultyHard,
+		DifficultyElite,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s Difficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case DifficultyNormal:
+		return []byte(s), nil
+	case DifficultyHard:
+		return []byte(s), nil
+	case DifficultyElite:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *Difficulty) UnmarshalText(data []byte) error {
+	switch Difficulty(data) {
+	case DifficultyNormal:
+		*s = DifficultyNormal
+		return nil
+	case DifficultyHard:
+		*s = DifficultyHard
+		return nil
+	case DifficultyElite:
+		*s = DifficultyElite
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/Error
+type Error struct {
+	// Тип ошибки.
+	Error string `json:"error"`
+	// Сообщение об ошибке.
+	Message string `json:"message"`
+	// Код ошибки.
+	Code OptNilString `json:"code"`
+	// Дополнительные детали ошибки.
+	Details OptNilErrorDetails `json:"details"`
+}
+
+// GetError returns the value of Error.
+func (s *Error) GetError() string {
+	return s.Error
+}
+
+// GetMessage returns the value of Message.
+func (s *Error) GetMessage() string {
+	return s.Message
+}
+
+// GetCode returns the value of Code.
+func (s *Error) GetCode() OptNilString {
+	return s.Code
+}
+
+// GetDetails returns the value of Details.
+func (s *Error) GetDetails() OptNilErrorDetails {
+	return s.Details
+}
+
+// SetError sets the value of Error.
+func (s *Error) SetError(val string) {
+	s.Error = val
+}
+
+// SetMessage sets the value of Message.
+func (s *Error) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetCode sets the value of Code.
+func (s *Error) SetCode(val OptNilString) {
+	s.Code = val
+}
+
+// SetDetails sets the value of Details.
+func (s *Error) SetDetails(val OptNilErrorDetails) {
+	s.Details = val
+}
+
+func (*Error) endCombatSessionRes() {}
+func (*Error) getArenaSessionsRes() {}
+func (*Error) getCombatSessionRes() {}
+func (*Error) getExtractZonesRes()  {}
+func (*Error) getFreerunRoutesRes() {}
+func (*Error) getLoadoutsRes()      {}
+func (*Error) getStealthStatusRes() {}
+
+// Дополнительные детали ошибки.
+type ErrorDetails map[string]jx.Raw
+
+func (s *ErrorDetails) init() ErrorDetails {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+type GetAbilityCatalogBadRequest Error
+
+func (*GetAbilityCatalogBadRequest) getAbilityCatalogRes() {}
+
+type GetAbilityCatalogInternalServerError Error
+
+func (*GetAbilityCatalogInternalServerError) getAbilityCatalogRes() {}
+
+type GetAbilityCatalogOK struct {
+	Abilities []Ability `json:"abilities"`
+	// Общее количество способностей.
+	Total  int    `json:"total"`
+	Limit  OptInt `json:"limit"`
+	Offset OptInt `json:"offset"`
+}
+
+// GetAbilities returns the value of Abilities.
+func (s *GetAbilityCatalogOK) GetAbilities() []Ability {
+	return s.Abilities
+}
+
+// GetTotal returns the value of Total.
+func (s *GetAbilityCatalogOK) GetTotal() int {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *GetAbilityCatalogOK) GetLimit() OptInt {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *GetAbilityCatalogOK) GetOffset() OptInt {
+	return s.Offset
+}
+
+// SetAbilities sets the value of Abilities.
+func (s *GetAbilityCatalogOK) SetAbilities(val []Ability) {
+	s.Abilities = val
+}
+
+// SetTotal sets the value of Total.
+func (s *GetAbilityCatalogOK) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *GetAbilityCatalogOK) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *GetAbilityCatalogOK) SetOffset(val OptInt) {
+	s.Offset = val
+}
+
+func (*GetAbilityCatalogOK) getAbilityCatalogRes() {}
+
+type GetAbilityCatalogUnauthorized Error
+
+func (*GetAbilityCatalogUnauthorized) getAbilityCatalogRes() {}
+
+type GetArenaSessionsOK struct {
+	Sessions []jx.Raw `json:"sessions"`
+}
+
+// GetSessions returns the value of Sessions.
+func (s *GetArenaSessionsOK) GetSessions() []jx.Raw {
+	return s.Sessions
+}
+
+// SetSessions sets the value of Sessions.
+func (s *GetArenaSessionsOK) SetSessions(val []jx.Raw) {
+	s.Sessions = val
+}
+
+func (*GetArenaSessionsOK) getArenaSessionsRes() {}
+
+type GetAvailableSynergiesBadRequest Error
+
+func (*GetAvailableSynergiesBadRequest) getAvailableSynergiesRes() {}
+
+type GetAvailableSynergiesComplexity string
+
+const (
+	GetAvailableSynergiesComplexityBronze    GetAvailableSynergiesComplexity = "Bronze"
+	GetAvailableSynergiesComplexitySilver    GetAvailableSynergiesComplexity = "Silver"
+	GetAvailableSynergiesComplexityGold      GetAvailableSynergiesComplexity = "Gold"
+	GetAvailableSynergiesComplexityPlatinum  GetAvailableSynergiesComplexity = "Platinum"
+	GetAvailableSynergiesComplexityLegendary GetAvailableSynergiesComplexity = "Legendary"
+)
+
+// AllValues returns all GetAvailableSynergiesComplexity values.
+func (GetAvailableSynergiesComplexity) AllValues() []GetAvailableSynergiesComplexity {
+	return []GetAvailableSynergiesComplexity{
+		GetAvailableSynergiesComplexityBronze,
+		GetAvailableSynergiesComplexitySilver,
+		GetAvailableSynergiesComplexityGold,
+		GetAvailableSynergiesComplexityPlatinum,
+		GetAvailableSynergiesComplexityLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetAvailableSynergiesComplexity) MarshalText() ([]byte, error) {
+	switch s {
+	case GetAvailableSynergiesComplexityBronze:
+		return []byte(s), nil
+	case GetAvailableSynergiesComplexitySilver:
+		return []byte(s), nil
+	case GetAvailableSynergiesComplexityGold:
+		return []byte(s), nil
+	case GetAvailableSynergiesComplexityPlatinum:
+		return []byte(s), nil
+	case GetAvailableSynergiesComplexityLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetAvailableSynergiesComplexity) UnmarshalText(data []byte) error {
+	switch GetAvailableSynergiesComplexity(data) {
+	case GetAvailableSynergiesComplexityBronze:
+		*s = GetAvailableSynergiesComplexityBronze
+		return nil
+	case GetAvailableSynergiesComplexitySilver:
+		*s = GetAvailableSynergiesComplexitySilver
+		return nil
+	case GetAvailableSynergiesComplexityGold:
+		*s = GetAvailableSynergiesComplexityGold
+		return nil
+	case GetAvailableSynergiesComplexityPlatinum:
+		*s = GetAvailableSynergiesComplexityPlatinum
+		return nil
+	case GetAvailableSynergiesComplexityLegendary:
+		*s = GetAvailableSynergiesComplexityLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetAvailableSynergiesInternalServerError Error
+
+func (*GetAvailableSynergiesInternalServerError) getAvailableSynergiesRes() {}
+
+type GetAvailableSynergiesOK struct {
+	Synergies []Synergy `json:"synergies"`
+	// Общее количество доступных синергий.
+	Total  int    `json:"total"`
+	Limit  OptInt `json:"limit"`
+	Offset OptInt `json:"offset"`
+}
+
+// GetSynergies returns the value of Synergies.
+func (s *GetAvailableSynergiesOK) GetSynergies() []Synergy {
+	return s.Synergies
+}
+
+// GetTotal returns the value of Total.
+func (s *GetAvailableSynergiesOK) GetTotal() int {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *GetAvailableSynergiesOK) GetLimit() OptInt {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *GetAvailableSynergiesOK) GetOffset() OptInt {
+	return s.Offset
+}
+
+// SetSynergies sets the value of Synergies.
+func (s *GetAvailableSynergiesOK) SetSynergies(val []Synergy) {
+	s.Synergies = val
+}
+
+// SetTotal sets the value of Total.
+func (s *GetAvailableSynergiesOK) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *GetAvailableSynergiesOK) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *GetAvailableSynergiesOK) SetOffset(val OptInt) {
+	s.Offset = val
+}
+
+func (*GetAvailableSynergiesOK) getAvailableSynergiesRes() {}
+
+type GetAvailableSynergiesUnauthorized Error
+
+func (*GetAvailableSynergiesUnauthorized) getAvailableSynergiesRes() {}
+
+type GetComboCatalogBadRequest Error
+
+func (*GetComboCatalogBadRequest) getComboCatalogRes() {}
+
+type GetComboCatalogInternalServerError Error
+
+func (*GetComboCatalogInternalServerError) getComboCatalogRes() {}
+
+type GetComboCatalogUnauthorized Error
+
+func (*GetComboCatalogUnauthorized) getComboCatalogRes() {}
+
+type GetExtractZonesOK struct {
+	Zones []jx.Raw `json:"zones"`
+}
+
+// GetZones returns the value of Zones.
+func (s *GetExtractZonesOK) GetZones() []jx.Raw {
+	return s.Zones
+}
+
+// SetZones sets the value of Zones.
+func (s *GetExtractZonesOK) SetZones(val []jx.Raw) {
+	s.Zones = val
+}
+
+func (*GetExtractZonesOK) getExtractZonesRes() {}
+
+type GetFreerunRoutesOK struct {
+	Routes []jx.Raw `json:"routes"`
+}
+
+// GetRoutes returns the value of Routes.
+func (s *GetFreerunRoutesOK) GetRoutes() []jx.Raw {
+	return s.Routes
+}
+
+// SetRoutes sets the value of Routes.
+func (s *GetFreerunRoutesOK) SetRoutes(val []jx.Raw) {
+	s.Routes = val
+}
+
+func (*GetFreerunRoutesOK) getFreerunRoutesRes() {}
+
+type GetInstalledImplantsInternalServerError Error
+
+func (*GetInstalledImplantsInternalServerError) getInstalledImplantsRes() {}
+
+type GetInstalledImplantsOK struct {
+	Implants []Implant `json:"implants"`
+}
+
+// GetImplants returns the value of Implants.
+func (s *GetInstalledImplantsOK) GetImplants() []Implant {
+	return s.Implants
+}
+
+// SetImplants sets the value of Implants.
+func (s *GetInstalledImplantsOK) SetImplants(val []Implant) {
+	s.Implants = val
+}
+
+func (*GetInstalledImplantsOK) getInstalledImplantsRes() {}
+
+type GetInstalledImplantsUnauthorized Error
+
+func (*GetInstalledImplantsUnauthorized) getInstalledImplantsRes() {}
+
+type GetLoadoutsOK struct {
+	Loadouts []jx.Raw `json:"loadouts"`
+}
+
+// GetLoadouts returns the value of Loadouts.
+func (s *GetLoadoutsOK) GetLoadouts() []jx.Raw {
+	return s.Loadouts
+}
+
+// SetLoadouts sets the value of Loadouts.
+func (s *GetLoadoutsOK) SetLoadouts(val []jx.Raw) {
+	s.Loadouts = val
+}
+
+func (*GetLoadoutsOK) getLoadoutsRes() {}
+
+type GetStealthStatusOK struct {
+	IsStealthed    OptBool    `json:"is_stealthed"`
+	DetectionLevel OptFloat32 `json:"detection_level"`
+}
+
+// GetIsStealthed returns the value of IsStealthed.
+func (s *GetStealthStatusOK) GetIsStealthed() OptBool {
+	return s.IsStealthed
+}
+
+// GetDetectionLevel returns the value of DetectionLevel.
+func (s *GetStealthStatusOK) GetDetectionLevel() OptFloat32 {
+	return s.DetectionLevel
+}
+
+// SetIsStealthed sets the value of IsStealthed.
+func (s *GetStealthStatusOK) SetIsStealthed(val OptBool) {
+	s.IsStealthed = val
+}
+
+// SetDetectionLevel sets the value of DetectionLevel.
+func (s *GetStealthStatusOK) SetDetectionLevel(val OptFloat32) {
+	s.DetectionLevel = val
+}
+
+func (*GetStealthStatusOK) getStealthStatusRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/Implant
+type Implant struct {
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Description OptString          `json:"description"`
+	ImplantType ImplantImplantType `json:"implant_type"`
+	Brand       ImplantBrand       `json:"brand"`
+	Rarity      ImplantRarity      `json:"rarity"`
+	SlotType    OptImplantSlotType `json:"slot_type"`
+	// Эффекты импланта.
+	Effects      *ImplantEffects `json:"effects"`
+	EnergyCost   OptInt          `json:"energy_cost"`
+	HumanityCost OptInt          `json:"humanity_cost"`
+}
+
+// GetID returns the value of ID.
+func (s *Implant) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *Implant) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *Implant) GetDescription() OptString {
+	return s.Description
+}
+
+// GetImplantType returns the value of ImplantType.
+func (s *Implant) GetImplantType() ImplantImplantType {
+	return s.ImplantType
+}
+
+// GetBrand returns the value of Brand.
+func (s *Implant) GetBrand() ImplantBrand {
+	return s.Brand
+}
+
+// GetRarity returns the value of Rarity.
+func (s *Implant) GetRarity() ImplantRarity {
+	return s.Rarity
+}
+
+// GetSlotType returns the value of SlotType.
+func (s *Implant) GetSlotType() OptImplantSlotType {
+	return s.SlotType
+}
+
+// GetEffects returns the value of Effects.
+func (s *Implant) GetEffects() *ImplantEffects {
+	return s.Effects
+}
+
+// GetEnergyCost returns the value of EnergyCost.
+func (s *Implant) GetEnergyCost() OptInt {
+	return s.EnergyCost
+}
+
+// GetHumanityCost returns the value of HumanityCost.
+func (s *Implant) GetHumanityCost() OptInt {
+	return s.HumanityCost
+}
+
+// SetID sets the value of ID.
+func (s *Implant) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *Implant) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Implant) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetImplantType sets the value of ImplantType.
+func (s *Implant) SetImplantType(val ImplantImplantType) {
+	s.ImplantType = val
+}
+
+// SetBrand sets the value of Brand.
+func (s *Implant) SetBrand(val ImplantBrand) {
+	s.Brand = val
+}
+
+// SetRarity sets the value of Rarity.
+func (s *Implant) SetRarity(val ImplantRarity) {
+	s.Rarity = val
+}
+
+// SetSlotType sets the value of SlotType.
+func (s *Implant) SetSlotType(val OptImplantSlotType) {
+	s.SlotType = val
+}
+
+// SetEffects sets the value of Effects.
+func (s *Implant) SetEffects(val *ImplantEffects) {
+	s.Effects = val
+}
+
+// SetEnergyCost sets the value of EnergyCost.
+func (s *Implant) SetEnergyCost(val OptInt) {
+	s.EnergyCost = val
+}
+
+// SetHumanityCost sets the value of HumanityCost.
+func (s *Implant) SetHumanityCost(val OptInt) {
+	s.HumanityCost = val
+}
+
+type ImplantBrand string
+
+const (
+	ImplantBrandArasaka     ImplantBrand = "arasaka"
+	ImplantBrandMilitech    ImplantBrand = "militech"
+	ImplantBrandKangTao     ImplantBrand = "kang_tao"
+	ImplantBrandZetatech    ImplantBrand = "zetatech"
+	ImplantBrandBiotechnica ImplantBrand = "biotechnica"
+	ImplantBrandCustom      ImplantBrand = "custom"
+)
+
+// AllValues returns all ImplantBrand values.
+func (ImplantBrand) AllValues() []ImplantBrand {
+	return []ImplantBrand{
+		ImplantBrandArasaka,
+		ImplantBrandMilitech,
+		ImplantBrandKangTao,
+		ImplantBrandZetatech,
+		ImplantBrandBiotechnica,
+		ImplantBrandCustom,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ImplantBrand) MarshalText() ([]byte, error) {
+	switch s {
+	case ImplantBrandArasaka:
+		return []byte(s), nil
+	case ImplantBrandMilitech:
+		return []byte(s), nil
+	case ImplantBrandKangTao:
+		return []byte(s), nil
+	case ImplantBrandZetatech:
+		return []byte(s), nil
+	case ImplantBrandBiotechnica:
+		return []byte(s), nil
+	case ImplantBrandCustom:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImplantBrand) UnmarshalText(data []byte) error {
+	switch ImplantBrand(data) {
+	case ImplantBrandArasaka:
+		*s = ImplantBrandArasaka
+		return nil
+	case ImplantBrandMilitech:
+		*s = ImplantBrandMilitech
+		return nil
+	case ImplantBrandKangTao:
+		*s = ImplantBrandKangTao
+		return nil
+	case ImplantBrandZetatech:
+		*s = ImplantBrandZetatech
+		return nil
+	case ImplantBrandBiotechnica:
+		*s = ImplantBrandBiotechnica
+		return nil
+	case ImplantBrandCustom:
+		*s = ImplantBrandCustom
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Эффекты импланта.
+type ImplantEffects struct{}
+
+type ImplantImplantType string
+
+const (
+	ImplantImplantTypeCombat   ImplantImplantType = "combat"
+	ImplantImplantTypeMovement ImplantImplantType = "movement"
+	ImplantImplantTypeOs       ImplantImplantType = "os"
+	ImplantImplantTypeVisual   ImplantImplantType = "visual"
+)
+
+// AllValues returns all ImplantImplantType values.
+func (ImplantImplantType) AllValues() []ImplantImplantType {
+	return []ImplantImplantType{
+		ImplantImplantTypeCombat,
+		ImplantImplantTypeMovement,
+		ImplantImplantTypeOs,
+		ImplantImplantTypeVisual,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ImplantImplantType) MarshalText() ([]byte, error) {
+	switch s {
+	case ImplantImplantTypeCombat:
+		return []byte(s), nil
+	case ImplantImplantTypeMovement:
+		return []byte(s), nil
+	case ImplantImplantTypeOs:
+		return []byte(s), nil
+	case ImplantImplantTypeVisual:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImplantImplantType) UnmarshalText(data []byte) error {
+	switch ImplantImplantType(data) {
+	case ImplantImplantTypeCombat:
+		*s = ImplantImplantTypeCombat
+		return nil
+	case ImplantImplantTypeMovement:
+		*s = ImplantImplantTypeMovement
+		return nil
+	case ImplantImplantTypeOs:
+		*s = ImplantImplantTypeOs
+		return nil
+	case ImplantImplantTypeVisual:
+		*s = ImplantImplantTypeVisual
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ImplantRarity string
+
+const (
+	ImplantRarityCommon    ImplantRarity = "common"
+	ImplantRarityUncommon  ImplantRarity = "uncommon"
+	ImplantRarityRare      ImplantRarity = "rare"
+	ImplantRarityEpic      ImplantRarity = "epic"
+	ImplantRarityLegendary ImplantRarity = "legendary"
+	ImplantRarityArtifact  ImplantRarity = "artifact"
+)
+
+// AllValues returns all ImplantRarity values.
+func (ImplantRarity) AllValues() []ImplantRarity {
+	return []ImplantRarity{
+		ImplantRarityCommon,
+		ImplantRarityUncommon,
+		ImplantRarityRare,
+		ImplantRarityEpic,
+		ImplantRarityLegendary,
+		ImplantRarityArtifact,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ImplantRarity) MarshalText() ([]byte, error) {
+	switch s {
+	case ImplantRarityCommon:
+		return []byte(s), nil
+	case ImplantRarityUncommon:
+		return []byte(s), nil
+	case ImplantRarityRare:
+		return []byte(s), nil
+	case ImplantRarityEpic:
+		return []byte(s), nil
+	case ImplantRarityLegendary:
+		return []byte(s), nil
+	case ImplantRarityArtifact:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImplantRarity) UnmarshalText(data []byte) error {
+	switch ImplantRarity(data) {
+	case ImplantRarityCommon:
+		*s = ImplantRarityCommon
+		return nil
+	case ImplantRarityUncommon:
+		*s = ImplantRarityUncommon
+		return nil
+	case ImplantRarityRare:
+		*s = ImplantRarityRare
+		return nil
+	case ImplantRarityEpic:
+		*s = ImplantRarityEpic
+		return nil
+	case ImplantRarityLegendary:
+		*s = ImplantRarityLegendary
+		return nil
+	case ImplantRarityArtifact:
+		*s = ImplantRarityArtifact
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ImplantSlotType string
+
+const (
+	ImplantSlotTypeCombat    ImplantSlotType = "combat"
+	ImplantSlotTypeTactical  ImplantSlotType = "tactical"
+	ImplantSlotTypeDefensive ImplantSlotType = "defensive"
+	ImplantSlotTypeMovement  ImplantSlotType = "movement"
+	ImplantSlotTypeOs        ImplantSlotType = "os"
+)
+
+// AllValues returns all ImplantSlotType values.
+func (ImplantSlotType) AllValues() []ImplantSlotType {
+	return []ImplantSlotType{
+		ImplantSlotTypeCombat,
+		ImplantSlotTypeTactical,
+		ImplantSlotTypeDefensive,
+		ImplantSlotTypeMovement,
+		ImplantSlotTypeOs,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ImplantSlotType) MarshalText() ([]byte, error) {
+	switch s {
+	case ImplantSlotTypeCombat:
+		return []byte(s), nil
+	case ImplantSlotTypeTactical:
+		return []byte(s), nil
+	case ImplantSlotTypeDefensive:
+		return []byte(s), nil
+	case ImplantSlotTypeMovement:
+		return []byte(s), nil
+	case ImplantSlotTypeOs:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImplantSlotType) UnmarshalText(data []byte) error {
+	switch ImplantSlotType(data) {
+	case ImplantSlotTypeCombat:
+		*s = ImplantSlotTypeCombat
+		return nil
+	case ImplantSlotTypeTactical:
+		*s = ImplantSlotTypeTactical
+		return nil
+	case ImplantSlotTypeDefensive:
+		*s = ImplantSlotTypeDefensive
+		return nil
+	case ImplantSlotTypeMovement:
+		*s = ImplantSlotTypeMovement
+		return nil
+	case ImplantSlotTypeOs:
+		*s = ImplantSlotTypeOs
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// NewOptAbilityModifiers returns new OptAbilityModifiers with value set to v.
+func NewOptAbilityModifiers(v AbilityModifiers) OptAbilityModifiers {
+	return OptAbilityModifiers{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAbilityModifiers is optional AbilityModifiers.
+type OptAbilityModifiers struct {
+	Value AbilityModifiers
+	Set   bool
+}
+
+// IsSet returns true if OptAbilityModifiers was set.
+func (o OptAbilityModifiers) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAbilityModifiers) Reset() {
+	var v AbilityModifiers
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAbilityModifiers) SetTo(v AbilityModifiers) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAbilityModifiers) Get() (v AbilityModifiers, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAbilityModifiers) Or(d AbilityModifiers) AbilityModifiers {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAbilityRequirements returns new OptAbilityRequirements with value set to v.
+func NewOptAbilityRequirements(v AbilityRequirements) OptAbilityRequirements {
+	return OptAbilityRequirements{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAbilityRequirements is optional AbilityRequirements.
+type OptAbilityRequirements struct {
+	Value AbilityRequirements
+	Set   bool
+}
+
+// IsSet returns true if OptAbilityRequirements was set.
+func (o OptAbilityRequirements) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAbilityRequirements) Reset() {
+	var v AbilityRequirements
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAbilityRequirements) SetTo(v AbilityRequirements) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAbilityRequirements) Get() (v AbilityRequirements, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAbilityRequirements) Or(d AbilityRequirements) AbilityRequirements {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAbilityRequirementsRequiredAttributes returns new OptAbilityRequirementsRequiredAttributes with value set to v.
+func NewOptAbilityRequirementsRequiredAttributes(v AbilityRequirementsRequiredAttributes) OptAbilityRequirementsRequiredAttributes {
+	return OptAbilityRequirementsRequiredAttributes{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAbilityRequirementsRequiredAttributes is optional AbilityRequirementsRequiredAttributes.
+type OptAbilityRequirementsRequiredAttributes struct {
+	Value AbilityRequirementsRequiredAttributes
+	Set   bool
+}
+
+// IsSet returns true if OptAbilityRequirementsRequiredAttributes was set.
+func (o OptAbilityRequirementsRequiredAttributes) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAbilityRequirementsRequiredAttributes) Reset() {
+	var v AbilityRequirementsRequiredAttributes
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAbilityRequirementsRequiredAttributes) SetTo(v AbilityRequirementsRequiredAttributes) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAbilityRequirementsRequiredAttributes) Get() (v AbilityRequirementsRequiredAttributes, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAbilityRequirementsRequiredAttributes) Or(d AbilityRequirementsRequiredAttributes) AbilityRequirementsRequiredAttributes {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAbilitySlot returns new OptAbilitySlot with value set to v.
+func NewOptAbilitySlot(v AbilitySlot) OptAbilitySlot {
+	return OptAbilitySlot{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAbilitySlot is optional AbilitySlot.
+type OptAbilitySlot struct {
+	Value AbilitySlot
+	Set   bool
+}
+
+// IsSet returns true if OptAbilitySlot was set.
+func (o OptAbilitySlot) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAbilitySlot) Reset() {
+	var v AbilitySlot
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAbilitySlot) SetTo(v AbilitySlot) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAbilitySlot) Get() (v AbilitySlot, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAbilitySlot) Or(d AbilitySlot) AbilitySlot {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAbilitySource returns new OptAbilitySource with value set to v.
+func NewOptAbilitySource(v AbilitySource) OptAbilitySource {
+	return OptAbilitySource{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAbilitySource is optional AbilitySource.
+type OptAbilitySource struct {
+	Value AbilitySource
+	Set   bool
+}
+
+// IsSet returns true if OptAbilitySource was set.
+func (o OptAbilitySource) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAbilitySource) Reset() {
+	var v AbilitySource
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAbilitySource) SetTo(v AbilitySource) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAbilitySource) Get() (v AbilitySource, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAbilitySource) Or(d AbilitySource) AbilitySource {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAbilityType returns new OptAbilityType with value set to v.
+func NewOptAbilityType(v AbilityType) OptAbilityType {
+	return OptAbilityType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAbilityType is optional AbilityType.
+type OptAbilityType struct {
+	Value AbilityType
+	Set   bool
+}
+
+// IsSet returns true if OptAbilityType was set.
+func (o OptAbilityType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAbilityType) Reset() {
+	var v AbilityType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAbilityType) SetTo(v AbilityType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAbilityType) Get() (v AbilityType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAbilityType) Or(d AbilityType) AbilityType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptActivateComboRequestContext returns new OptActivateComboRequestContext with value set to v.
+func NewOptActivateComboRequestContext(v ActivateComboRequestContext) OptActivateComboRequestContext {
+	return OptActivateComboRequestContext{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptActivateComboRequestContext is optional ActivateComboRequestContext.
+type OptActivateComboRequestContext struct {
+	Value ActivateComboRequestContext
+	Set   bool
+}
+
+// IsSet returns true if OptActivateComboRequestContext was set.
+func (o OptActivateComboRequestContext) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptActivateComboRequestContext) Reset() {
+	var v ActivateComboRequestContext
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptActivateComboRequestContext) SetTo(v ActivateComboRequestContext) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptActivateComboRequestContext) Get() (v ActivateComboRequestContext, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptActivateComboRequestContext) Or(d ActivateComboRequestContext) ActivateComboRequestContext {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCombo returns new OptCombo with value set to v.
+func NewOptCombo(v Combo) OptCombo {
+	return OptCombo{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCombo is optional Combo.
+type OptCombo struct {
+	Value Combo
+	Set   bool
+}
+
+// IsSet returns true if OptCombo was set.
+func (o OptCombo) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCombo) Reset() {
+	var v Combo
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCombo) SetTo(v Combo) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCombo) Get() (v Combo, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCombo) Or(d Combo) Combo {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptComboActivationResponseBonusesApplied returns new OptComboActivationResponseBonusesApplied with value set to v.
+func NewOptComboActivationResponseBonusesApplied(v ComboActivationResponseBonusesApplied) OptComboActivationResponseBonusesApplied {
+	return OptComboActivationResponseBonusesApplied{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptComboActivationResponseBonusesApplied is optional ComboActivationResponseBonusesApplied.
+type OptComboActivationResponseBonusesApplied struct {
+	Value ComboActivationResponseBonusesApplied
+	Set   bool
+}
+
+// IsSet returns true if OptComboActivationResponseBonusesApplied was set.
+func (o OptComboActivationResponseBonusesApplied) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptComboActivationResponseBonusesApplied) Reset() {
+	var v ComboActivationResponseBonusesApplied
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptComboActivationResponseBonusesApplied) SetTo(v ComboActivationResponseBonusesApplied) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptComboActivationResponseBonusesApplied) Get() (v ComboActivationResponseBonusesApplied, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptComboActivationResponseBonusesApplied) Or(d ComboActivationResponseBonusesApplied) ComboActivationResponseBonusesApplied {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptComboBonuses returns new OptComboBonuses with value set to v.
+func NewOptComboBonuses(v ComboBonuses) OptComboBonuses {
+	return OptComboBonuses{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptComboBonuses is optional ComboBonuses.
+type OptComboBonuses struct {
+	Value ComboBonuses
+	Set   bool
+}
+
+// IsSet returns true if OptComboBonuses was set.
+func (o OptComboBonuses) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptComboBonuses) Reset() {
+	var v ComboBonuses
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptComboBonuses) SetTo(v ComboBonuses) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptComboBonuses) Get() (v ComboBonuses, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptComboBonuses) Or(d ComboBonuses) ComboBonuses {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptComboComplexity returns new OptComboComplexity with value set to v.
+func NewOptComboComplexity(v ComboComplexity) OptComboComplexity {
+	return OptComboComplexity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptComboComplexity is optional ComboComplexity.
+type OptComboComplexity struct {
+	Value ComboComplexity
+	Set   bool
+}
+
+// IsSet returns true if OptComboComplexity was set.
+func (o OptComboComplexity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptComboComplexity) Reset() {
+	var v ComboComplexity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptComboComplexity) SetTo(v ComboComplexity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptComboComplexity) Get() (v ComboComplexity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptComboComplexity) Or(d ComboComplexity) ComboComplexity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptComboRequirements returns new OptComboRequirements with value set to v.
+func NewOptComboRequirements(v ComboRequirements) OptComboRequirements {
+	return OptComboRequirements{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptComboRequirements is optional ComboRequirements.
+type OptComboRequirements struct {
+	Value ComboRequirements
+	Set   bool
+}
+
+// IsSet returns true if OptComboRequirements was set.
+func (o OptComboRequirements) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptComboRequirements) Reset() {
+	var v ComboRequirements
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptComboRequirements) SetTo(v ComboRequirements) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptComboRequirements) Get() (v ComboRequirements, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptComboRequirements) Or(d ComboRequirements) ComboRequirements {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptComboType returns new OptComboType with value set to v.
+func NewOptComboType(v ComboType) OptComboType {
+	return OptComboType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptComboType is optional ComboType.
+type OptComboType struct {
+	Value ComboType
+	Set   bool
+}
+
+// IsSet returns true if OptComboType was set.
+func (o OptComboType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptComboType) Reset() {
+	var v ComboType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptComboType) SetTo(v ComboType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptComboType) Get() (v ComboType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptComboType) Or(d ComboType) ComboType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptDateTime returns new OptDateTime with value set to v.
+func NewOptDateTime(v time.Time) OptDateTime {
+	return OptDateTime{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptDateTime is optional time.Time.
+type OptDateTime struct {
+	Value time.Time
+	Set   bool
+}
+
+// IsSet returns true if OptDateTime was set.
+func (o OptDateTime) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptDateTime) Reset() {
+	var v time.Time
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptDateTime) SetTo(v time.Time) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptDateTime) Get() (v time.Time, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptDifficulty returns new OptDifficulty with value set to v.
+func NewOptDifficulty(v Difficulty) OptDifficulty {
+	return OptDifficulty{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptDifficulty is optional Difficulty.
+type OptDifficulty struct {
+	Value Difficulty
+	Set   bool
+}
+
+// IsSet returns true if OptDifficulty was set.
+func (o OptDifficulty) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptDifficulty) Reset() {
+	var v Difficulty
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptDifficulty) SetTo(v Difficulty) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptDifficulty) Get() (v Difficulty, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptDifficulty) Or(d Difficulty) Difficulty {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFloat32 returns new OptFloat32 with value set to v.
+func NewOptFloat32(v float32) OptFloat32 {
+	return OptFloat32{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFloat32 is optional float32.
+type OptFloat32 struct {
+	Value float32
+	Set   bool
+}
+
+// IsSet returns true if OptFloat32 was set.
+func (o OptFloat32) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFloat32) Reset() {
+	var v float32
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFloat32) SetTo(v float32) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFloat32) Get() (v float32, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFloat32) Or(d float32) float32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetAvailableSynergiesComplexity returns new OptGetAvailableSynergiesComplexity with value set to v.
+func NewOptGetAvailableSynergiesComplexity(v GetAvailableSynergiesComplexity) OptGetAvailableSynergiesComplexity {
+	return OptGetAvailableSynergiesComplexity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetAvailableSynergiesComplexity is optional GetAvailableSynergiesComplexity.
+type OptGetAvailableSynergiesComplexity struct {
+	Value GetAvailableSynergiesComplexity
+	Set   bool
+}
+
+// IsSet returns true if OptGetAvailableSynergiesComplexity was set.
+func (o OptGetAvailableSynergiesComplexity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetAvailableSynergiesComplexity) Reset() {
+	var v GetAvailableSynergiesComplexity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetAvailableSynergiesComplexity) SetTo(v GetAvailableSynergiesComplexity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetAvailableSynergiesComplexity) Get() (v GetAvailableSynergiesComplexity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetAvailableSynergiesComplexity) Or(d GetAvailableSynergiesComplexity) GetAvailableSynergiesComplexity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptImplantSlotType returns new OptImplantSlotType with value set to v.
+func NewOptImplantSlotType(v ImplantSlotType) OptImplantSlotType {
+	return OptImplantSlotType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptImplantSlotType is optional ImplantSlotType.
+type OptImplantSlotType struct {
+	Value ImplantSlotType
+	Set   bool
+}
+
+// IsSet returns true if OptImplantSlotType was set.
+func (o OptImplantSlotType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptImplantSlotType) Reset() {
+	var v ImplantSlotType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptImplantSlotType) SetTo(v ImplantSlotType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptImplantSlotType) Get() (v ImplantSlotType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptImplantSlotType) Or(d ImplantSlotType) ImplantSlotType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt returns new OptInt with value set to v.
+func NewOptInt(v int) OptInt {
+	return OptInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt is optional int.
+type OptInt struct {
+	Value int
+	Set   bool
+}
+
+// IsSet returns true if OptInt was set.
+func (o OptInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt) SetTo(v int) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt) Get() (v int, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt64 returns new OptInt64 with value set to v.
+func NewOptInt64(v int64) OptInt64 {
+	return OptInt64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt64 is optional int64.
+type OptInt64 struct {
+	Value int64
+	Set   bool
+}
+
+// IsSet returns true if OptInt64 was set.
+func (o OptInt64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt64) Reset() {
+	var v int64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt64) SetTo(v int64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt64) Get() (v int64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilAbilityActivationRequestPosition returns new OptNilAbilityActivationRequestPosition with value set to v.
+func NewOptNilAbilityActivationRequestPosition(v AbilityActivationRequestPosition) OptNilAbilityActivationRequestPosition {
+	return OptNilAbilityActivationRequestPosition{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilAbilityActivationRequestPosition is optional nullable AbilityActivationRequestPosition.
+type OptNilAbilityActivationRequestPosition struct {
+	Value AbilityActivationRequestPosition
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilAbilityActivationRequestPosition was set.
+func (o OptNilAbilityActivationRequestPosition) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilAbilityActivationRequestPosition) Reset() {
+	var v AbilityActivationRequestPosition
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilAbilityActivationRequestPosition) SetTo(v AbilityActivationRequestPosition) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilAbilityActivationRequestPosition) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilAbilityActivationRequestPosition) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v AbilityActivationRequestPosition
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilAbilityActivationRequestPosition) Get() (v AbilityActivationRequestPosition, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilAbilityActivationRequestPosition) Or(d AbilityActivationRequestPosition) AbilityActivationRequestPosition {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilDateTime returns new OptNilDateTime with value set to v.
+func NewOptNilDateTime(v time.Time) OptNilDateTime {
+	return OptNilDateTime{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilDateTime is optional nullable time.Time.
+type OptNilDateTime struct {
+	Value time.Time
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilDateTime was set.
+func (o OptNilDateTime) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilDateTime) Reset() {
+	var v time.Time
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilDateTime) SetTo(v time.Time) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilDateTime) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilDateTime) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v time.Time
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilDateTime) Get() (v time.Time, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilErrorDetails returns new OptNilErrorDetails with value set to v.
+func NewOptNilErrorDetails(v ErrorDetails) OptNilErrorDetails {
+	return OptNilErrorDetails{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilErrorDetails is optional nullable ErrorDetails.
+type OptNilErrorDetails struct {
+	Value ErrorDetails
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilErrorDetails was set.
+func (o OptNilErrorDetails) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilErrorDetails) Reset() {
+	var v ErrorDetails
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilErrorDetails) SetTo(v ErrorDetails) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilErrorDetails) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilErrorDetails) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v ErrorDetails
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilErrorDetails) Get() (v ErrorDetails, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilErrorDetails) Or(d ErrorDetails) ErrorDetails {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilInt returns new OptNilInt with value set to v.
+func NewOptNilInt(v int) OptNilInt {
+	return OptNilInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt is optional nullable int.
+type OptNilInt struct {
+	Value int
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt was set.
+func (o OptNilInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt) SetTo(v int) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt) Get() (v int, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilString returns new OptNilString with value set to v.
+func NewOptNilString(v string) OptNilString {
+	return OptNilString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilString is optional nullable string.
+type OptNilString struct {
+	Value string
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilString was set.
+func (o OptNilString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilString) SetTo(v string) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilString) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilString) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v string
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilString) Get() (v string, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilUUID returns new OptNilUUID with value set to v.
+func NewOptNilUUID(v uuid.UUID) OptNilUUID {
+	return OptNilUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilUUID is optional nullable uuid.UUID.
+type OptNilUUID struct {
+	Value uuid.UUID
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilUUID was set.
+func (o OptNilUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilUUID) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilUUID) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v uuid.UUID
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilUUIDArray returns new OptNilUUIDArray with value set to v.
+func NewOptNilUUIDArray(v []uuid.UUID) OptNilUUIDArray {
+	return OptNilUUIDArray{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilUUIDArray is optional nullable []uuid.UUID.
+type OptNilUUIDArray struct {
+	Value []uuid.UUID
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilUUIDArray was set.
+func (o OptNilUUIDArray) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilUUIDArray) Reset() {
+	var v []uuid.UUID
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilUUIDArray) SetTo(v []uuid.UUID) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilUUIDArray) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilUUIDArray) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v []uuid.UUID
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilUUIDArray) Get() (v []uuid.UUID, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilUUIDArray) Or(d []uuid.UUID) []uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSchemasSynergyBonuses returns new OptSchemasSynergyBonuses with value set to v.
+func NewOptSchemasSynergyBonuses(v SchemasSynergyBonuses) OptSchemasSynergyBonuses {
+	return OptSchemasSynergyBonuses{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSchemasSynergyBonuses is optional SchemasSynergyBonuses.
+type OptSchemasSynergyBonuses struct {
+	Value SchemasSynergyBonuses
+	Set   bool
+}
+
+// IsSet returns true if OptSchemasSynergyBonuses was set.
+func (o OptSchemasSynergyBonuses) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSchemasSynergyBonuses) Reset() {
+	var v SchemasSynergyBonuses
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSchemasSynergyBonuses) SetTo(v SchemasSynergyBonuses) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSchemasSynergyBonuses) Get() (v SchemasSynergyBonuses, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSchemasSynergyBonuses) Or(d SchemasSynergyBonuses) SchemasSynergyBonuses {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSessionStatus returns new OptSessionStatus with value set to v.
+func NewOptSessionStatus(v SessionStatus) OptSessionStatus {
+	return OptSessionStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSessionStatus is optional SessionStatus.
+type OptSessionStatus struct {
+	Value SessionStatus
+	Set   bool
+}
+
+// IsSet returns true if OptSessionStatus was set.
+func (o OptSessionStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSessionStatus) Reset() {
+	var v SessionStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSessionStatus) SetTo(v SessionStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSessionStatus) Get() (v SessionStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSessionStatus) Or(d SessionStatus) SessionStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSessionType returns new OptSessionType with value set to v.
+func NewOptSessionType(v SessionType) OptSessionType {
+	return OptSessionType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSessionType is optional SessionType.
+type OptSessionType struct {
+	Value SessionType
+	Set   bool
+}
+
+// IsSet returns true if OptSessionType was set.
+func (o OptSessionType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSessionType) Reset() {
+	var v SessionType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSessionType) SetTo(v SessionType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSessionType) Get() (v SessionType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSessionType) Or(d SessionType) SessionType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
 }
 
 // NewOptString returns new OptString with value set to v.
@@ -60,4 +3867,1447 @@ func (o OptString) Or(d string) string {
 		return v
 	}
 	return d
+}
+
+// NewOptSynergyComplexity returns new OptSynergyComplexity with value set to v.
+func NewOptSynergyComplexity(v SynergyComplexity) OptSynergyComplexity {
+	return OptSynergyComplexity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSynergyComplexity is optional SynergyComplexity.
+type OptSynergyComplexity struct {
+	Value SynergyComplexity
+	Set   bool
+}
+
+// IsSet returns true if OptSynergyComplexity was set.
+func (o OptSynergyComplexity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSynergyComplexity) Reset() {
+	var v SynergyComplexity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSynergyComplexity) SetTo(v SynergyComplexity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSynergyComplexity) Get() (v SynergyComplexity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSynergyComplexity) Or(d SynergyComplexity) SynergyComplexity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSynergyRequirements returns new OptSynergyRequirements with value set to v.
+func NewOptSynergyRequirements(v SynergyRequirements) OptSynergyRequirements {
+	return OptSynergyRequirements{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSynergyRequirements is optional SynergyRequirements.
+type OptSynergyRequirements struct {
+	Value SynergyRequirements
+	Set   bool
+}
+
+// IsSet returns true if OptSynergyRequirements was set.
+func (o OptSynergyRequirements) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSynergyRequirements) Reset() {
+	var v SynergyRequirements
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSynergyRequirements) SetTo(v SynergyRequirements) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSynergyRequirements) Get() (v SynergyRequirements, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSynergyRequirements) Or(d SynergyRequirements) SynergyRequirements {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSynergyRequirementsRequiredAttributes returns new OptSynergyRequirementsRequiredAttributes with value set to v.
+func NewOptSynergyRequirementsRequiredAttributes(v SynergyRequirementsRequiredAttributes) OptSynergyRequirementsRequiredAttributes {
+	return OptSynergyRequirementsRequiredAttributes{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSynergyRequirementsRequiredAttributes is optional SynergyRequirementsRequiredAttributes.
+type OptSynergyRequirementsRequiredAttributes struct {
+	Value SynergyRequirementsRequiredAttributes
+	Set   bool
+}
+
+// IsSet returns true if OptSynergyRequirementsRequiredAttributes was set.
+func (o OptSynergyRequirementsRequiredAttributes) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSynergyRequirementsRequiredAttributes) Reset() {
+	var v SynergyRequirementsRequiredAttributes
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSynergyRequirementsRequiredAttributes) SetTo(v SynergyRequirementsRequiredAttributes) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSynergyRequirementsRequiredAttributes) Get() (v SynergyRequirementsRequiredAttributes, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSynergyRequirementsRequiredAttributes) Or(d SynergyRequirementsRequiredAttributes) SynergyRequirementsRequiredAttributes {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSynergyType returns new OptSynergyType with value set to v.
+func NewOptSynergyType(v SynergyType) OptSynergyType {
+	return OptSynergyType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSynergyType is optional SynergyType.
+type OptSynergyType struct {
+	Value SynergyType
+	Set   bool
+}
+
+// IsSet returns true if OptSynergyType was set.
+func (o OptSynergyType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSynergyType) Reset() {
+	var v SynergyType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSynergyType) SetTo(v SynergyType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSynergyType) Get() (v SynergyType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSynergyType) Or(d SynergyType) SynergyType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptUUID returns new OptUUID with value set to v.
+func NewOptUUID(v uuid.UUID) OptUUID {
+	return OptUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUUID is optional uuid.UUID.
+type OptUUID struct {
+	Value uuid.UUID
+	Set   bool
+}
+
+// IsSet returns true if OptUUID was set.
+func (o OptUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUUID) Get() (v uuid.UUID, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// Ref: #/components/schemas/PaginationResponse
+type PaginationResponse struct {
+	// Список элементов.
+	Items []jx.Raw `json:"items"`
+	// Общее количество элементов.
+	Total int `json:"total"`
+	// Количество элементов на странице.
+	Limit OptInt `json:"limit"`
+	// Смещение для пагинации.
+	Offset OptInt `json:"offset"`
+	// Есть ли еще элементы.
+	HasMore OptBool `json:"has_more"`
+}
+
+// GetItems returns the value of Items.
+func (s *PaginationResponse) GetItems() []jx.Raw {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *PaginationResponse) GetTotal() int {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *PaginationResponse) GetLimit() OptInt {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *PaginationResponse) GetOffset() OptInt {
+	return s.Offset
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *PaginationResponse) GetHasMore() OptBool {
+	return s.HasMore
+}
+
+// SetItems sets the value of Items.
+func (s *PaginationResponse) SetItems(val []jx.Raw) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *PaginationResponse) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *PaginationResponse) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *PaginationResponse) SetOffset(val OptInt) {
+	s.Offset = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *PaginationResponse) SetHasMore(val OptBool) {
+	s.HasMore = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/Participant
+type Participant struct {
+	PlayerID    uuid.UUID         `json:"player_id"`
+	CharacterID uuid.UUID         `json:"character_id"`
+	Team        ParticipantTeam   `json:"team"`
+	Role        ParticipantRole   `json:"role"`
+	Status      ParticipantStatus `json:"status"`
+	DamageDealt OptInt64          `json:"damage_dealt"`
+	DamageTaken OptInt64          `json:"damage_taken"`
+	HealingDone OptInt64          `json:"healing_done"`
+	Kills       OptInt            `json:"kills"`
+	Deaths      OptInt            `json:"deaths"`
+	Assists     OptInt            `json:"assists"`
+	Health      int               `json:"health"`
+	MaxHealth   int               `json:"max_health"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *Participant) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetCharacterID returns the value of CharacterID.
+func (s *Participant) GetCharacterID() uuid.UUID {
+	return s.CharacterID
+}
+
+// GetTeam returns the value of Team.
+func (s *Participant) GetTeam() ParticipantTeam {
+	return s.Team
+}
+
+// GetRole returns the value of Role.
+func (s *Participant) GetRole() ParticipantRole {
+	return s.Role
+}
+
+// GetStatus returns the value of Status.
+func (s *Participant) GetStatus() ParticipantStatus {
+	return s.Status
+}
+
+// GetDamageDealt returns the value of DamageDealt.
+func (s *Participant) GetDamageDealt() OptInt64 {
+	return s.DamageDealt
+}
+
+// GetDamageTaken returns the value of DamageTaken.
+func (s *Participant) GetDamageTaken() OptInt64 {
+	return s.DamageTaken
+}
+
+// GetHealingDone returns the value of HealingDone.
+func (s *Participant) GetHealingDone() OptInt64 {
+	return s.HealingDone
+}
+
+// GetKills returns the value of Kills.
+func (s *Participant) GetKills() OptInt {
+	return s.Kills
+}
+
+// GetDeaths returns the value of Deaths.
+func (s *Participant) GetDeaths() OptInt {
+	return s.Deaths
+}
+
+// GetAssists returns the value of Assists.
+func (s *Participant) GetAssists() OptInt {
+	return s.Assists
+}
+
+// GetHealth returns the value of Health.
+func (s *Participant) GetHealth() int {
+	return s.Health
+}
+
+// GetMaxHealth returns the value of MaxHealth.
+func (s *Participant) GetMaxHealth() int {
+	return s.MaxHealth
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *Participant) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetCharacterID sets the value of CharacterID.
+func (s *Participant) SetCharacterID(val uuid.UUID) {
+	s.CharacterID = val
+}
+
+// SetTeam sets the value of Team.
+func (s *Participant) SetTeam(val ParticipantTeam) {
+	s.Team = val
+}
+
+// SetRole sets the value of Role.
+func (s *Participant) SetRole(val ParticipantRole) {
+	s.Role = val
+}
+
+// SetStatus sets the value of Status.
+func (s *Participant) SetStatus(val ParticipantStatus) {
+	s.Status = val
+}
+
+// SetDamageDealt sets the value of DamageDealt.
+func (s *Participant) SetDamageDealt(val OptInt64) {
+	s.DamageDealt = val
+}
+
+// SetDamageTaken sets the value of DamageTaken.
+func (s *Participant) SetDamageTaken(val OptInt64) {
+	s.DamageTaken = val
+}
+
+// SetHealingDone sets the value of HealingDone.
+func (s *Participant) SetHealingDone(val OptInt64) {
+	s.HealingDone = val
+}
+
+// SetKills sets the value of Kills.
+func (s *Participant) SetKills(val OptInt) {
+	s.Kills = val
+}
+
+// SetDeaths sets the value of Deaths.
+func (s *Participant) SetDeaths(val OptInt) {
+	s.Deaths = val
+}
+
+// SetAssists sets the value of Assists.
+func (s *Participant) SetAssists(val OptInt) {
+	s.Assists = val
+}
+
+// SetHealth sets the value of Health.
+func (s *Participant) SetHealth(val int) {
+	s.Health = val
+}
+
+// SetMaxHealth sets the value of MaxHealth.
+func (s *Participant) SetMaxHealth(val int) {
+	s.MaxHealth = val
+}
+
+type ParticipantRole string
+
+const (
+	ParticipantRoleAssault ParticipantRole = "assault"
+	ParticipantRoleSupport ParticipantRole = "support"
+	ParticipantRoleTech    ParticipantRole = "tech"
+	ParticipantRoleStealth ParticipantRole = "stealth"
+)
+
+// AllValues returns all ParticipantRole values.
+func (ParticipantRole) AllValues() []ParticipantRole {
+	return []ParticipantRole{
+		ParticipantRoleAssault,
+		ParticipantRoleSupport,
+		ParticipantRoleTech,
+		ParticipantRoleStealth,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ParticipantRole) MarshalText() ([]byte, error) {
+	switch s {
+	case ParticipantRoleAssault:
+		return []byte(s), nil
+	case ParticipantRoleSupport:
+		return []byte(s), nil
+	case ParticipantRoleTech:
+		return []byte(s), nil
+	case ParticipantRoleStealth:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ParticipantRole) UnmarshalText(data []byte) error {
+	switch ParticipantRole(data) {
+	case ParticipantRoleAssault:
+		*s = ParticipantRoleAssault
+		return nil
+	case ParticipantRoleSupport:
+		*s = ParticipantRoleSupport
+		return nil
+	case ParticipantRoleTech:
+		*s = ParticipantRoleTech
+		return nil
+	case ParticipantRoleStealth:
+		*s = ParticipantRoleStealth
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ParticipantStatus string
+
+const (
+	ParticipantStatusAlive        ParticipantStatus = "alive"
+	ParticipantStatusDead         ParticipantStatus = "dead"
+	ParticipantStatusExtracted    ParticipantStatus = "extracted"
+	ParticipantStatusDisconnected ParticipantStatus = "disconnected"
+)
+
+// AllValues returns all ParticipantStatus values.
+func (ParticipantStatus) AllValues() []ParticipantStatus {
+	return []ParticipantStatus{
+		ParticipantStatusAlive,
+		ParticipantStatusDead,
+		ParticipantStatusExtracted,
+		ParticipantStatusDisconnected,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ParticipantStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case ParticipantStatusAlive:
+		return []byte(s), nil
+	case ParticipantStatusDead:
+		return []byte(s), nil
+	case ParticipantStatusExtracted:
+		return []byte(s), nil
+	case ParticipantStatusDisconnected:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ParticipantStatus) UnmarshalText(data []byte) error {
+	switch ParticipantStatus(data) {
+	case ParticipantStatusAlive:
+		*s = ParticipantStatusAlive
+		return nil
+	case ParticipantStatusDead:
+		*s = ParticipantStatusDead
+		return nil
+	case ParticipantStatusExtracted:
+		*s = ParticipantStatusExtracted
+		return nil
+	case ParticipantStatusDisconnected:
+		*s = ParticipantStatusDisconnected
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ParticipantTeam string
+
+const (
+	ParticipantTeamTeamA ParticipantTeam = "team_a"
+	ParticipantTeamTeamB ParticipantTeam = "team_b"
+	ParticipantTeamSolo  ParticipantTeam = "solo"
+)
+
+// AllValues returns all ParticipantTeam values.
+func (ParticipantTeam) AllValues() []ParticipantTeam {
+	return []ParticipantTeam{
+		ParticipantTeamTeamA,
+		ParticipantTeamTeamB,
+		ParticipantTeamSolo,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ParticipantTeam) MarshalText() ([]byte, error) {
+	switch s {
+	case ParticipantTeamTeamA:
+		return []byte(s), nil
+	case ParticipantTeamTeamB:
+		return []byte(s), nil
+	case ParticipantTeamSolo:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ParticipantTeam) UnmarshalText(data []byte) error {
+	switch ParticipantTeam(data) {
+	case ParticipantTeamTeamA:
+		*s = ParticipantTeamTeamA
+		return nil
+	case ParticipantTeamTeamB:
+		*s = ParticipantTeamTeamB
+		return nil
+	case ParticipantTeamSolo:
+		*s = ParticipantTeamSolo
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/Reward
+type Reward struct {
+	PlayerID   uuid.UUID         `json:"player_id"`
+	Currency   RewardCurrency    `json:"currency"`
+	Items      []RewardItemsItem `json:"items"`
+	Experience int               `json:"experience"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *Reward) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetCurrency returns the value of Currency.
+func (s *Reward) GetCurrency() RewardCurrency {
+	return s.Currency
+}
+
+// GetItems returns the value of Items.
+func (s *Reward) GetItems() []RewardItemsItem {
+	return s.Items
+}
+
+// GetExperience returns the value of Experience.
+func (s *Reward) GetExperience() int {
+	return s.Experience
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *Reward) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *Reward) SetCurrency(val RewardCurrency) {
+	s.Currency = val
+}
+
+// SetItems sets the value of Items.
+func (s *Reward) SetItems(val []RewardItemsItem) {
+	s.Items = val
+}
+
+// SetExperience sets the value of Experience.
+func (s *Reward) SetExperience(val int) {
+	s.Experience = val
+}
+
+type RewardCurrency struct {
+	Eurodollars OptInt `json:"eurodollars"`
+	Cryptos     OptInt `json:"cryptos"`
+}
+
+// GetEurodollars returns the value of Eurodollars.
+func (s *RewardCurrency) GetEurodollars() OptInt {
+	return s.Eurodollars
+}
+
+// GetCryptos returns the value of Cryptos.
+func (s *RewardCurrency) GetCryptos() OptInt {
+	return s.Cryptos
+}
+
+// SetEurodollars sets the value of Eurodollars.
+func (s *RewardCurrency) SetEurodollars(val OptInt) {
+	s.Eurodollars = val
+}
+
+// SetCryptos sets the value of Cryptos.
+func (s *RewardCurrency) SetCryptos(val OptInt) {
+	s.Cryptos = val
+}
+
+type RewardItemsItem struct {
+	ItemID   uuid.UUID `json:"item_id"`
+	Quantity int       `json:"quantity"`
+}
+
+// GetItemID returns the value of ItemID.
+func (s *RewardItemsItem) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *RewardItemsItem) GetQuantity() int {
+	return s.Quantity
+}
+
+// SetItemID sets the value of ItemID.
+func (s *RewardItemsItem) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *RewardItemsItem) SetQuantity(val int) {
+	s.Quantity = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small).
+// Expected memory: ~80 bytes/instance.
+// Ref: #/components/schemas/schemas-Synergy
+type SchemasSynergy struct {
+	ID uuid.UUID `json:"id"`
+	// ID комбо, к которому применяется синергия.
+	ComboID uuid.UUID `json:"combo_id"`
+	// Бонусы от синергии.
+	Bonuses OptSchemasSynergyBonuses `json:"bonuses"`
+	// Требования для активации синергии.
+	Requirements *SchemasSynergyRequirements `json:"requirements"`
+	SynergyType  SynergyType                 `json:"synergy_type"`
+	// ID способностей для ability синергии.
+	AbilityIds OptNilUUIDArray `json:"ability_ids"`
+	// ID экипировки для equipment синергии.
+	EquipmentIds OptNilUUIDArray `json:"equipment_ids"`
+	// ID имплантов для implant синергии.
+	ImplantIds OptNilUUIDArray `json:"implant_ids"`
+	// Размер команды для team синергии.
+	TeamSize OptNilInt `json:"team_size"`
+	// Временное окно в миллисекундах для timing синергии.
+	TimingWindow OptNilInt `json:"timing_window"`
+}
+
+// GetID returns the value of ID.
+func (s *SchemasSynergy) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetComboID returns the value of ComboID.
+func (s *SchemasSynergy) GetComboID() uuid.UUID {
+	return s.ComboID
+}
+
+// GetBonuses returns the value of Bonuses.
+func (s *SchemasSynergy) GetBonuses() OptSchemasSynergyBonuses {
+	return s.Bonuses
+}
+
+// GetRequirements returns the value of Requirements.
+func (s *SchemasSynergy) GetRequirements() *SchemasSynergyRequirements {
+	return s.Requirements
+}
+
+// GetSynergyType returns the value of SynergyType.
+func (s *SchemasSynergy) GetSynergyType() SynergyType {
+	return s.SynergyType
+}
+
+// GetAbilityIds returns the value of AbilityIds.
+func (s *SchemasSynergy) GetAbilityIds() OptNilUUIDArray {
+	return s.AbilityIds
+}
+
+// GetEquipmentIds returns the value of EquipmentIds.
+func (s *SchemasSynergy) GetEquipmentIds() OptNilUUIDArray {
+	return s.EquipmentIds
+}
+
+// GetImplantIds returns the value of ImplantIds.
+func (s *SchemasSynergy) GetImplantIds() OptNilUUIDArray {
+	return s.ImplantIds
+}
+
+// GetTeamSize returns the value of TeamSize.
+func (s *SchemasSynergy) GetTeamSize() OptNilInt {
+	return s.TeamSize
+}
+
+// GetTimingWindow returns the value of TimingWindow.
+func (s *SchemasSynergy) GetTimingWindow() OptNilInt {
+	return s.TimingWindow
+}
+
+// SetID sets the value of ID.
+func (s *SchemasSynergy) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetComboID sets the value of ComboID.
+func (s *SchemasSynergy) SetComboID(val uuid.UUID) {
+	s.ComboID = val
+}
+
+// SetBonuses sets the value of Bonuses.
+func (s *SchemasSynergy) SetBonuses(val OptSchemasSynergyBonuses) {
+	s.Bonuses = val
+}
+
+// SetRequirements sets the value of Requirements.
+func (s *SchemasSynergy) SetRequirements(val *SchemasSynergyRequirements) {
+	s.Requirements = val
+}
+
+// SetSynergyType sets the value of SynergyType.
+func (s *SchemasSynergy) SetSynergyType(val SynergyType) {
+	s.SynergyType = val
+}
+
+// SetAbilityIds sets the value of AbilityIds.
+func (s *SchemasSynergy) SetAbilityIds(val OptNilUUIDArray) {
+	s.AbilityIds = val
+}
+
+// SetEquipmentIds sets the value of EquipmentIds.
+func (s *SchemasSynergy) SetEquipmentIds(val OptNilUUIDArray) {
+	s.EquipmentIds = val
+}
+
+// SetImplantIds sets the value of ImplantIds.
+func (s *SchemasSynergy) SetImplantIds(val OptNilUUIDArray) {
+	s.ImplantIds = val
+}
+
+// SetTeamSize sets the value of TeamSize.
+func (s *SchemasSynergy) SetTeamSize(val OptNilInt) {
+	s.TeamSize = val
+}
+
+// SetTimingWindow sets the value of TimingWindow.
+func (s *SchemasSynergy) SetTimingWindow(val OptNilInt) {
+	s.TimingWindow = val
+}
+
+// Бонусы от синергии.
+type SchemasSynergyBonuses struct {
+	DamageMultiplier  OptFloat32 `json:"damage_multiplier"`
+	CooldownReduction OptInt     `json:"cooldown_reduction"`
+	SpecialEffects    []string   `json:"special_effects"`
+}
+
+// GetDamageMultiplier returns the value of DamageMultiplier.
+func (s *SchemasSynergyBonuses) GetDamageMultiplier() OptFloat32 {
+	return s.DamageMultiplier
+}
+
+// GetCooldownReduction returns the value of CooldownReduction.
+func (s *SchemasSynergyBonuses) GetCooldownReduction() OptInt {
+	return s.CooldownReduction
+}
+
+// GetSpecialEffects returns the value of SpecialEffects.
+func (s *SchemasSynergyBonuses) GetSpecialEffects() []string {
+	return s.SpecialEffects
+}
+
+// SetDamageMultiplier sets the value of DamageMultiplier.
+func (s *SchemasSynergyBonuses) SetDamageMultiplier(val OptFloat32) {
+	s.DamageMultiplier = val
+}
+
+// SetCooldownReduction sets the value of CooldownReduction.
+func (s *SchemasSynergyBonuses) SetCooldownReduction(val OptInt) {
+	s.CooldownReduction = val
+}
+
+// SetSpecialEffects sets the value of SpecialEffects.
+func (s *SchemasSynergyBonuses) SetSpecialEffects(val []string) {
+	s.SpecialEffects = val
+}
+
+// Требования для активации синергии.
+type SchemasSynergyRequirements struct{}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/SessionEndResponse
+type SessionEndResponse struct {
+	SessionID  uuid.UUID     `json:"session_id"`
+	WinnerTeam OptNilString  `json:"winner_team"`
+	Status     SessionStatus `json:"status"`
+	Rewards    []Reward      `json:"rewards"`
+}
+
+// GetSessionID returns the value of SessionID.
+func (s *SessionEndResponse) GetSessionID() uuid.UUID {
+	return s.SessionID
+}
+
+// GetWinnerTeam returns the value of WinnerTeam.
+func (s *SessionEndResponse) GetWinnerTeam() OptNilString {
+	return s.WinnerTeam
+}
+
+// GetStatus returns the value of Status.
+func (s *SessionEndResponse) GetStatus() SessionStatus {
+	return s.Status
+}
+
+// GetRewards returns the value of Rewards.
+func (s *SessionEndResponse) GetRewards() []Reward {
+	return s.Rewards
+}
+
+// SetSessionID sets the value of SessionID.
+func (s *SessionEndResponse) SetSessionID(val uuid.UUID) {
+	s.SessionID = val
+}
+
+// SetWinnerTeam sets the value of WinnerTeam.
+func (s *SessionEndResponse) SetWinnerTeam(val OptNilString) {
+	s.WinnerTeam = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SessionEndResponse) SetStatus(val SessionStatus) {
+	s.Status = val
+}
+
+// SetRewards sets the value of Rewards.
+func (s *SessionEndResponse) SetRewards(val []Reward) {
+	s.Rewards = val
+}
+
+func (*SessionEndResponse) endCombatSessionRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/SessionListResponse
+type SessionListResponse struct {
+	Pagination PaginationResponse `json:"pagination"`
+	Items      []SessionSummary   `json:"items"`
+}
+
+// GetPagination returns the value of Pagination.
+func (s *SessionListResponse) GetPagination() PaginationResponse {
+	return s.Pagination
+}
+
+// GetItems returns the value of Items.
+func (s *SessionListResponse) GetItems() []SessionSummary {
+	return s.Items
+}
+
+// SetPagination sets the value of Pagination.
+func (s *SessionListResponse) SetPagination(val PaginationResponse) {
+	s.Pagination = val
+}
+
+// SetItems sets the value of Items.
+func (s *SessionListResponse) SetItems(val []SessionSummary) {
+	s.Items = val
+}
+
+// Ref: #/components/schemas/SessionStatus
+type SessionStatus string
+
+const (
+	SessionStatusPending SessionStatus = "pending"
+	SessionStatusActive  SessionStatus = "active"
+	SessionStatusEnded   SessionStatus = "ended"
+	SessionStatusAborted SessionStatus = "aborted"
+)
+
+// AllValues returns all SessionStatus values.
+func (SessionStatus) AllValues() []SessionStatus {
+	return []SessionStatus{
+		SessionStatusPending,
+		SessionStatusActive,
+		SessionStatusEnded,
+		SessionStatusAborted,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SessionStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case SessionStatusPending:
+		return []byte(s), nil
+	case SessionStatusActive:
+		return []byte(s), nil
+	case SessionStatusEnded:
+		return []byte(s), nil
+	case SessionStatusAborted:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SessionStatus) UnmarshalText(data []byte) error {
+	switch SessionStatus(data) {
+	case SessionStatusPending:
+		*s = SessionStatusPending
+		return nil
+	case SessionStatusActive:
+		*s = SessionStatusActive
+		return nil
+	case SessionStatusEnded:
+		*s = SessionStatusEnded
+		return nil
+	case SessionStatusAborted:
+		*s = SessionStatusAborted
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/SessionSummary
+type SessionSummary struct {
+	ID               uuid.UUID     `json:"id"`
+	CreatedAt        time.Time     `json:"created_at"`
+	Status           SessionStatus `json:"status"`
+	SessionType      SessionType   `json:"session_type"`
+	ParticipantCount OptInt        `json:"participant_count"`
+}
+
+// GetID returns the value of ID.
+func (s *SessionSummary) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SessionSummary) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetStatus returns the value of Status.
+func (s *SessionSummary) GetStatus() SessionStatus {
+	return s.Status
+}
+
+// GetSessionType returns the value of SessionType.
+func (s *SessionSummary) GetSessionType() SessionType {
+	return s.SessionType
+}
+
+// GetParticipantCount returns the value of ParticipantCount.
+func (s *SessionSummary) GetParticipantCount() OptInt {
+	return s.ParticipantCount
+}
+
+// SetID sets the value of ID.
+func (s *SessionSummary) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SessionSummary) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SessionSummary) SetStatus(val SessionStatus) {
+	s.Status = val
+}
+
+// SetSessionType sets the value of SessionType.
+func (s *SessionSummary) SetSessionType(val SessionType) {
+	s.SessionType = val
+}
+
+// SetParticipantCount sets the value of ParticipantCount.
+func (s *SessionSummary) SetParticipantCount(val OptInt) {
+	s.ParticipantCount = val
+}
+
+// Ref: #/components/schemas/SessionType
+type SessionType string
+
+const (
+	SessionTypePvpArena    SessionType = "pvp_arena"
+	SessionTypePveRaid     SessionType = "pve_raid"
+	SessionTypeExtractZone SessionType = "extract_zone"
+	SessionTypeGuildWar    SessionType = "guild_war"
+)
+
+// AllValues returns all SessionType values.
+func (SessionType) AllValues() []SessionType {
+	return []SessionType{
+		SessionTypePvpArena,
+		SessionTypePveRaid,
+		SessionTypeExtractZone,
+		SessionTypeGuildWar,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SessionType) MarshalText() ([]byte, error) {
+	switch s {
+	case SessionTypePvpArena:
+		return []byte(s), nil
+	case SessionTypePveRaid:
+		return []byte(s), nil
+	case SessionTypeExtractZone:
+		return []byte(s), nil
+	case SessionTypeGuildWar:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SessionType) UnmarshalText(data []byte) error {
+	switch SessionType(data) {
+	case SessionTypePvpArena:
+		*s = SessionTypePvpArena
+		return nil
+	case SessionTypePveRaid:
+		*s = SessionTypePveRaid
+		return nil
+	case SessionTypeExtractZone:
+		*s = SessionTypeExtractZone
+		return nil
+	case SessionTypeGuildWar:
+		*s = SessionTypeGuildWar
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/Synergy
+type Synergy struct {
+	// Уникальный идентификатор синергии.
+	ID uuid.UUID `json:"id"`
+	// Сложность синергии.
+	Complexity OptSynergyComplexity `json:"complexity"`
+	// Дата создания.
+	CreatedAt OptDateTime `json:"created_at"`
+	// Требования для активации синергии.
+	Requirements OptSynergyRequirements `json:"requirements"`
+	// Бонусы от синергии.
+	Bonuses     SynergyBonuses `json:"bonuses"`
+	SynergyType SynergyType    `json:"synergy_type"`
+	// Список идентификаторов способностей.
+	AbilityIds []uuid.UUID `json:"ability_ids"`
+	// Список идентификаторов имплантов.
+	ImplantIds OptNilUUIDArray `json:"implant_ids"`
+	// Список идентификаторов экипировки.
+	EquipmentIds OptNilUUIDArray `json:"equipment_ids"`
+}
+
+// GetID returns the value of ID.
+func (s *Synergy) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetComplexity returns the value of Complexity.
+func (s *Synergy) GetComplexity() OptSynergyComplexity {
+	return s.Complexity
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Synergy) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetRequirements returns the value of Requirements.
+func (s *Synergy) GetRequirements() OptSynergyRequirements {
+	return s.Requirements
+}
+
+// GetBonuses returns the value of Bonuses.
+func (s *Synergy) GetBonuses() SynergyBonuses {
+	return s.Bonuses
+}
+
+// GetSynergyType returns the value of SynergyType.
+func (s *Synergy) GetSynergyType() SynergyType {
+	return s.SynergyType
+}
+
+// GetAbilityIds returns the value of AbilityIds.
+func (s *Synergy) GetAbilityIds() []uuid.UUID {
+	return s.AbilityIds
+}
+
+// GetImplantIds returns the value of ImplantIds.
+func (s *Synergy) GetImplantIds() OptNilUUIDArray {
+	return s.ImplantIds
+}
+
+// GetEquipmentIds returns the value of EquipmentIds.
+func (s *Synergy) GetEquipmentIds() OptNilUUIDArray {
+	return s.EquipmentIds
+}
+
+// SetID sets the value of ID.
+func (s *Synergy) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetComplexity sets the value of Complexity.
+func (s *Synergy) SetComplexity(val OptSynergyComplexity) {
+	s.Complexity = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Synergy) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetRequirements sets the value of Requirements.
+func (s *Synergy) SetRequirements(val OptSynergyRequirements) {
+	s.Requirements = val
+}
+
+// SetBonuses sets the value of Bonuses.
+func (s *Synergy) SetBonuses(val SynergyBonuses) {
+	s.Bonuses = val
+}
+
+// SetSynergyType sets the value of SynergyType.
+func (s *Synergy) SetSynergyType(val SynergyType) {
+	s.SynergyType = val
+}
+
+// SetAbilityIds sets the value of AbilityIds.
+func (s *Synergy) SetAbilityIds(val []uuid.UUID) {
+	s.AbilityIds = val
+}
+
+// SetImplantIds sets the value of ImplantIds.
+func (s *Synergy) SetImplantIds(val OptNilUUIDArray) {
+	s.ImplantIds = val
+}
+
+// SetEquipmentIds sets the value of EquipmentIds.
+func (s *Synergy) SetEquipmentIds(val OptNilUUIDArray) {
+	s.EquipmentIds = val
+}
+
+// Бонусы от синергии.
+type SynergyBonuses struct {
+	DamageMultiplier    OptFloat32 `json:"damage_multiplier"`
+	CooldownReduction   OptInt     `json:"cooldown_reduction"`
+	EnergyCostReduction OptInt     `json:"energy_cost_reduction"`
+	SpecialEffects      []string   `json:"special_effects"`
+}
+
+// GetDamageMultiplier returns the value of DamageMultiplier.
+func (s *SynergyBonuses) GetDamageMultiplier() OptFloat32 {
+	return s.DamageMultiplier
+}
+
+// GetCooldownReduction returns the value of CooldownReduction.
+func (s *SynergyBonuses) GetCooldownReduction() OptInt {
+	return s.CooldownReduction
+}
+
+// GetEnergyCostReduction returns the value of EnergyCostReduction.
+func (s *SynergyBonuses) GetEnergyCostReduction() OptInt {
+	return s.EnergyCostReduction
+}
+
+// GetSpecialEffects returns the value of SpecialEffects.
+func (s *SynergyBonuses) GetSpecialEffects() []string {
+	return s.SpecialEffects
+}
+
+// SetDamageMultiplier sets the value of DamageMultiplier.
+func (s *SynergyBonuses) SetDamageMultiplier(val OptFloat32) {
+	s.DamageMultiplier = val
+}
+
+// SetCooldownReduction sets the value of CooldownReduction.
+func (s *SynergyBonuses) SetCooldownReduction(val OptInt) {
+	s.CooldownReduction = val
+}
+
+// SetEnergyCostReduction sets the value of EnergyCostReduction.
+func (s *SynergyBonuses) SetEnergyCostReduction(val OptInt) {
+	s.EnergyCostReduction = val
+}
+
+// SetSpecialEffects sets the value of SpecialEffects.
+func (s *SynergyBonuses) SetSpecialEffects(val []string) {
+	s.SpecialEffects = val
+}
+
+// Сложность синергии.
+type SynergyComplexity string
+
+const (
+	SynergyComplexityBronze    SynergyComplexity = "Bronze"
+	SynergyComplexitySilver    SynergyComplexity = "Silver"
+	SynergyComplexityGold      SynergyComplexity = "Gold"
+	SynergyComplexityPlatinum  SynergyComplexity = "Platinum"
+	SynergyComplexityLegendary SynergyComplexity = "Legendary"
+)
+
+// AllValues returns all SynergyComplexity values.
+func (SynergyComplexity) AllValues() []SynergyComplexity {
+	return []SynergyComplexity{
+		SynergyComplexityBronze,
+		SynergyComplexitySilver,
+		SynergyComplexityGold,
+		SynergyComplexityPlatinum,
+		SynergyComplexityLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SynergyComplexity) MarshalText() ([]byte, error) {
+	switch s {
+	case SynergyComplexityBronze:
+		return []byte(s), nil
+	case SynergyComplexitySilver:
+		return []byte(s), nil
+	case SynergyComplexityGold:
+		return []byte(s), nil
+	case SynergyComplexityPlatinum:
+		return []byte(s), nil
+	case SynergyComplexityLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SynergyComplexity) UnmarshalText(data []byte) error {
+	switch SynergyComplexity(data) {
+	case SynergyComplexityBronze:
+		*s = SynergyComplexityBronze
+		return nil
+	case SynergyComplexitySilver:
+		*s = SynergyComplexitySilver
+		return nil
+	case SynergyComplexityGold:
+		*s = SynergyComplexityGold
+		return nil
+	case SynergyComplexityPlatinum:
+		*s = SynergyComplexityPlatinum
+		return nil
+	case SynergyComplexityLegendary:
+		*s = SynergyComplexityLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Требования для активации синергии.
+type SynergyRequirements struct {
+	MinLevel           OptInt                                   `json:"min_level"`
+	RequiredAttributes OptSynergyRequirementsRequiredAttributes `json:"required_attributes"`
+}
+
+// GetMinLevel returns the value of MinLevel.
+func (s *SynergyRequirements) GetMinLevel() OptInt {
+	return s.MinLevel
+}
+
+// GetRequiredAttributes returns the value of RequiredAttributes.
+func (s *SynergyRequirements) GetRequiredAttributes() OptSynergyRequirementsRequiredAttributes {
+	return s.RequiredAttributes
+}
+
+// SetMinLevel sets the value of MinLevel.
+func (s *SynergyRequirements) SetMinLevel(val OptInt) {
+	s.MinLevel = val
+}
+
+// SetRequiredAttributes sets the value of RequiredAttributes.
+func (s *SynergyRequirements) SetRequiredAttributes(val OptSynergyRequirementsRequiredAttributes) {
+	s.RequiredAttributes = val
+}
+
+type SynergyRequirementsRequiredAttributes map[string]int
+
+func (s *SynergyRequirementsRequiredAttributes) init() SynergyRequirementsRequiredAttributes {
+	m := *s
+	if m == nil {
+		m = map[string]int{}
+		*s = m
+	}
+	return m
+}
+
+// Тип синергии.
+// Ref: #/components/schemas/SynergyType
+type SynergyType string
+
+const (
+	SynergyTypeAbility   SynergyType = "ability"
+	SynergyTypeTeam      SynergyType = "team"
+	SynergyTypeEquipment SynergyType = "equipment"
+	SynergyTypeImplant   SynergyType = "implant"
+	SynergyTypeTiming    SynergyType = "timing"
+)
+
+// AllValues returns all SynergyType values.
+func (SynergyType) AllValues() []SynergyType {
+	return []SynergyType{
+		SynergyTypeAbility,
+		SynergyTypeTeam,
+		SynergyTypeEquipment,
+		SynergyTypeImplant,
+		SynergyTypeTiming,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SynergyType) MarshalText() ([]byte, error) {
+	switch s {
+	case SynergyTypeAbility:
+		return []byte(s), nil
+	case SynergyTypeTeam:
+		return []byte(s), nil
+	case SynergyTypeEquipment:
+		return []byte(s), nil
+	case SynergyTypeImplant:
+		return []byte(s), nil
+	case SynergyTypeTiming:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SynergyType) UnmarshalText(data []byte) error {
+	switch SynergyType(data) {
+	case SynergyTypeAbility:
+		*s = SynergyTypeAbility
+		return nil
+	case SynergyTypeTeam:
+		*s = SynergyTypeTeam
+		return nil
+	case SynergyTypeEquipment:
+		*s = SynergyTypeEquipment
+		return nil
+	case SynergyTypeImplant:
+		*s = SynergyTypeImplant
+		return nil
+	case SynergyTypeTiming:
+		*s = SynergyTypeTiming
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }

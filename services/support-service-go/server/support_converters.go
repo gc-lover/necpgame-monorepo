@@ -1,10 +1,10 @@
+// Issue: ogen migration
 package server
 
 import (
 	"github.com/google/uuid"
-	supportapi "github.com/necpgame/support-service-go/pkg/api"
-	"github.com/necpgame/support-service-go/models"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
+	supportapi "github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
 )
 
 func convertCreateTicketRequestFromAPI(req *supportapi.CreateTicketRequest, playerID uuid.UUID) *models.CreateTicketRequest {
@@ -13,13 +13,13 @@ func convertCreateTicketRequestFromAPI(req *supportapi.CreateTicketRequest, play
 		Description: req.Description,
 	}
 
-	if req.Category != nil {
-		category := convertCreateTicketRequestCategoryFromAPI(*req.Category)
+	if req.Category.Set {
+		category := convertCreateTicketRequestCategoryFromAPI(req.Category.Value)
 		result.Category = category
 	}
 
-	if req.Priority != nil {
-		priority := convertTicketPriorityFromAPI(*req.Priority)
+	if req.Priority.Set {
+		priority := convertTicketPriorityFromAPI(req.Priority.Value)
 		result.Priority = &priority
 	}
 
@@ -30,45 +30,45 @@ func convertSupportTicketToAPI(ticket *models.SupportTicket) supportapi.SupportT
 	category := convertSupportTicketCategoryToAPI(ticket.Category)
 	priority := convertTicketPriorityToAPI(ticket.Priority)
 	status := convertTicketStatusToAPI(ticket.Status)
-	
+
 	result := supportapi.SupportTicket{
-		Id:          (*openapi_types.UUID)(&ticket.ID),
-		TicketNumber: &ticket.Number,
-		PlayerId:    (*openapi_types.UUID)(&ticket.PlayerID),
-		Category:    &category,
-		Priority:    &priority,
-		Status:      &status,
-		Subject:     &ticket.Subject,
-		Description: &ticket.Description,
-		CreatedAt:   &ticket.CreatedAt,
-		UpdatedAt:   &ticket.UpdatedAt,
+		ID:           supportapi.NewOptUUID(ticket.ID),
+		TicketNumber: supportapi.NewOptString(ticket.Number),
+		PlayerID:     supportapi.NewOptUUID(ticket.PlayerID),
+		Category:     supportapi.NewOptSupportTicketCategory(category),
+		Priority:     supportapi.NewOptTicketPriority(priority),
+		Status:       supportapi.NewOptTicketStatus(status),
+		Subject:      supportapi.NewOptString(ticket.Subject),
+		Description:  supportapi.NewOptString(ticket.Description),
+		CreatedAt:    supportapi.NewOptDateTime(ticket.CreatedAt),
+		UpdatedAt:    supportapi.NewOptDateTime(ticket.UpdatedAt),
 	}
 
 	if ticket.AssignedAgentID != nil {
-		result.AssignedAgentId = (*openapi_types.UUID)(ticket.AssignedAgentID)
+		result.AssignedAgentID = supportapi.NewOptNilUUID(*ticket.AssignedAgentID)
 	}
 
 	if ticket.ResolvedAt != nil {
-		result.ResolvedAt = ticket.ResolvedAt
+		result.ResolvedAt = supportapi.NewOptNilDateTime(*ticket.ResolvedAt)
 	}
 
 	if ticket.ClosedAt != nil {
-		result.ClosedAt = ticket.ClosedAt
+		result.ClosedAt = supportapi.NewOptNilDateTime(*ticket.ClosedAt)
 	}
 
 	if ticket.FirstResponseAt != nil {
-		result.FirstResponseAt = ticket.FirstResponseAt
+		result.FirstResponseAt = supportapi.NewOptNilDateTime(*ticket.FirstResponseAt)
 	}
 
 	if ticket.AssignedAgentID != nil {
 		assignedAt := ticket.UpdatedAt
-		result.AssignedAt = &assignedAt
+		result.AssignedAt = supportapi.NewOptNilDateTime(assignedAt)
 	}
 
 	return result
 }
 
-func convertTicketListResponseToTicketsResponse(response *models.TicketListResponse) supportapi.TicketsResponse {
+func convertTicketListResponseToTicketsResponse(response *models.TicketListResponse, limit, offset int) supportapi.TicketsResponse {
 	items := make([]supportapi.SupportTicket, len(response.Tickets))
 	for i, ticket := range response.Tickets {
 		items[i] = convertSupportTicketToAPI(&ticket)
@@ -79,33 +79,30 @@ func convertTicketListResponseToTicketsResponse(response *models.TicketListRespo
 		hasMore = response.Total > len(response.Tickets)
 	}
 
-	limit := len(response.Tickets)
-	offset := 0
-
 	return supportapi.TicketsResponse{
 		Items:   items,
 		Total:   response.Total,
-		HasMore: &hasMore,
-		Limit:   &limit,
-		Offset:  &offset,
+		HasMore: supportapi.NewOptBool(hasMore),
+		Limit:   supportapi.NewOptInt(limit),
+		Offset:  supportapi.NewOptInt(offset),
 	}
 }
 
 func convertUpdateTicketRequestFromAPI(req *supportapi.UpdateTicketRequest) *models.UpdateTicketRequest {
 	result := &models.UpdateTicketRequest{}
 
-	if req.Status != nil {
-		status := convertTicketStatusFromAPI(*req.Status)
+	if req.Status.Set {
+		status := convertTicketStatusFromAPI(req.Status.Value)
 		result.Status = &status
 	}
 
-	if req.Priority != nil {
-		priority := convertTicketPriorityFromAPI(*req.Priority)
+	if req.Priority.Set {
+		priority := convertTicketPriorityFromAPI(req.Priority.Value)
 		result.Priority = &priority
 	}
 
-	if req.Category != nil {
-		category := convertUpdateTicketRequestCategoryFromAPI(*req.Category)
+	if req.Category.Set {
+		category := convertUpdateTicketRequestCategoryFromAPI(req.Category.Value)
 		result.Category = &category
 	}
 
@@ -135,19 +132,19 @@ func convertCreateTicketRequestCategoryFromAPI(category supportapi.CreateTicketR
 
 func convertUpdateTicketRequestCategoryFromAPI(category supportapi.UpdateTicketRequestCategory) models.TicketCategory {
 	switch category {
-	case supportapi.TECHNICAL:
+	case supportapi.UpdateTicketRequestCategoryTECHNICAL:
 		return models.TicketCategoryTechnical
-	case supportapi.BILLING:
+	case supportapi.UpdateTicketRequestCategoryBILLING:
 		return models.TicketCategoryBilling
-	case supportapi.ACCOUNT:
+	case supportapi.UpdateTicketRequestCategoryACCOUNT:
 		return models.TicketCategoryAccount
-	case supportapi.GAMEPLAY:
+	case supportapi.UpdateTicketRequestCategoryGAMEPLAY:
 		return models.TicketCategoryGameplay
-	case supportapi.BUGREPORT:
+	case supportapi.UpdateTicketRequestCategoryBUGREPORT:
 		return models.TicketCategoryBug
-	case supportapi.FEATUREREQUEST:
+	case supportapi.UpdateTicketRequestCategoryFEATUREREQUEST:
 		return models.TicketCategorySuggestion
-	case supportapi.OTHER:
+	case supportapi.UpdateTicketRequestCategoryOTHER:
 		return models.TicketCategoryOther
 	default:
 		return models.TicketCategoryOther
@@ -247,24 +244,23 @@ func convertTicketStatusToAPI(status models.TicketStatus) supportapi.TicketStatu
 	}
 }
 
-func convertGetTicketsParamsStatusFromAPI(status supportapi.GetTicketsParamsStatus) models.TicketStatus {
+func convertGetTicketsStatusFromAPI(status supportapi.GetTicketsStatus) models.TicketStatus {
 	switch status {
-	case supportapi.GetTicketsParamsStatusOPEN:
+	case supportapi.GetTicketsStatusOPEN:
 		return models.TicketStatusOpen
-	case supportapi.GetTicketsParamsStatusASSIGNED:
+	case supportapi.GetTicketsStatusASSIGNED:
 		return models.TicketStatusAssigned
-	case supportapi.GetTicketsParamsStatusINPROGRESS:
+	case supportapi.GetTicketsStatusINPROGRESS:
 		return models.TicketStatusInProgress
-	case supportapi.GetTicketsParamsStatusWAITINGFORPLAYER:
+	case supportapi.GetTicketsStatusWAITINGFORPLAYER:
 		return models.TicketStatusWaiting
-	case supportapi.GetTicketsParamsStatusRESOLVED:
+	case supportapi.GetTicketsStatusRESOLVED:
 		return models.TicketStatusResolved
-	case supportapi.GetTicketsParamsStatusCLOSED:
+	case supportapi.GetTicketsStatusCLOSED:
 		return models.TicketStatusClosed
-	case supportapi.GetTicketsParamsStatusCANCELLED:
+	case supportapi.GetTicketsStatusCANCELLED:
 		return models.TicketStatusClosed
 	default:
 		return models.TicketStatusOpen
 	}
 }
-

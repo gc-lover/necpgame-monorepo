@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS gameplay.dialogue_state (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   quest_instance_id UUID NOT NULL,
   character_id UUID NOT NULL,
-  current_node VARCHAR(100) NOT NULL,
   visited_nodes TEXT[] NOT NULL DEFAULT '{}',
+  current_node VARCHAR(100) NOT NULL,
   choices JSONB NOT NULL DEFAULT '{}',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (quest_instance_id) REFERENCES gameplay.quest_instances(id) ON DELETE CASCADE

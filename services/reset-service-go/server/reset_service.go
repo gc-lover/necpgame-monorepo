@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/reset-service-go/models"
-	"github.com/necpgame/reset-service-go/pkg/api"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -24,11 +23,11 @@ type ResetRepositoryInterface interface {
 }
 
 type ResetService struct {
-	repo      ResetRepositoryInterface
-	cache     *redis.Client
-	cron      *cron.Cron
-	logger    *logrus.Logger
-	eventBus  EventBus
+	repo     ResetRepositoryInterface
+	cache    *redis.Client
+	cron     *cron.Cron
+	logger   *logrus.Logger
+	eventBus EventBus
 }
 
 type EventBus interface {
@@ -58,7 +57,17 @@ func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payl
 }
 
 func NewResetService(dbURL, redisURL string) (*ResetService, error) {
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Issue: #1605 - DB Connection Pool configuration
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	config.MaxConns = 50
+	config.MinConns = 10
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 1 * time.Minute
+	
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +265,7 @@ func (s *ResetService) TriggerReset(ctx context.Context, resetType models.ResetT
 	}
 }
 
-func (s *ResetService) GetResetStats(ctx context.Context) (*api.ResetStats, error) {
+func (s *ResetService) GetResetStats(ctx context.Context) (*models.ResetStats, error) {
 	lastDaily, err := s.repo.GetLastReset(ctx, models.ResetTypeDaily)
 	if err != nil {
 		return nil, err
@@ -283,10 +292,10 @@ func (s *ResetService) GetResetStats(ctx context.Context) (*api.ResetStats, erro
 		stats.LastWeeklyReset = lastWeekly.CompletedAt
 	}
 
-	return toAPIResetStats(stats), nil
+	return stats, nil
 }
 
-func (s *ResetService) GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*api.ResetListResponse, error) {
+func (s *ResetService) GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*models.ResetListResponse, error) {
 	var modelResetType *models.ResetType
 	if resetType != nil {
 		modelResetType = resetType
@@ -307,7 +316,7 @@ func (s *ResetService) GetResetHistory(ctx context.Context, resetType *models.Re
 		Total:  total,
 	}
 
-	return toAPIResetListResponse(response, limit, offset), nil
+	return response, nil
 }
 
 func getNextDailyReset(now time.Time, lastReset *models.ResetRecord) time.Time {
@@ -317,7 +326,7 @@ func getNextDailyReset(now time.Time, lastReset *models.ResetRecord) time.Time {
 	if lastReset != nil && lastReset.CompletedAt != nil {
 		lastResetTime := *lastReset.CompletedAt
 		lastResetDay := time.Date(lastResetTime.Year(), lastResetTime.Month(), lastResetTime.Day(), 0, 0, 0, 0, lastResetTime.Location())
-		
+
 		if lastResetDay.Equal(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())) {
 			next = next.Add(24 * time.Hour)
 		}
@@ -340,7 +349,7 @@ func getNextWeeklyReset(now time.Time, lastReset *models.ResetRecord) time.Time 
 		lastResetTime := *lastReset.CompletedAt
 		lastResetWeek := getWeekStart(lastResetTime)
 		currentWeek := getWeekStart(now)
-		
+
 		if lastResetWeek.Equal(currentWeek) {
 			next = next.Add(7 * 24 * time.Hour)
 		}
@@ -354,4 +363,3 @@ func getWeekStart(t time.Time) time.Time {
 	daysFromMonday := (int(weekday) + 6) % 7
 	return time.Date(t.Year(), t.Month(), t.Day()-daysFromMonday, 0, 0, 0, 0, t.Location())
 }
-

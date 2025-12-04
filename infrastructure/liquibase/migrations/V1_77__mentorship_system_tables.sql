@@ -67,20 +67,22 @@ END $$;
 
 -- Таблица договоров наставничества
 CREATE TABLE IF NOT EXISTS social.mentorship_contracts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    mentor_id UUID NOT NULL, -- FK accounts/characters
-    mentee_id UUID NOT NULL, -- FK accounts/characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  mentor_id UUID NOT NULL,
+  -- FK accounts/characters
+    mentee_id UUID NOT NULL,
+  contract_type VARCHAR(50),
+  skill_track VARCHAR(50),
+  terms JSONB DEFAULT '{}',
+  start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  end_date TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  payment_amount DECIMAL(10,2) DEFAULT 0 CHECK (payment_amount >= 0),
+  -- FK accounts/characters
     mentorship_type mentorship_type NOT NULL,
-    contract_type VARCHAR(50),
-    skill_track VARCHAR(50),
-    start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    end_date TIMESTAMP,
-    status mentorship_contract_status NOT NULL DEFAULT 'active',
-    payment_model mentorship_payment_model,
-    payment_amount DECIMAL(10,2) DEFAULT 0 CHECK (payment_amount >= 0),
-    terms JSONB DEFAULT '{}',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  status mentorship_contract_status NOT NULL DEFAULT 'active',
+  payment_model mentorship_payment_model
 );
 
 -- Индексы для mentorship_contracts
@@ -95,16 +97,16 @@ CREATE INDEX IF NOT EXISTS idx_mentorship_contracts_skill_track
 
 -- Таблица расписаний уроков
 CREATE TABLE IF NOT EXISTS social.mentorship_schedules (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
-    lesson_date TIMESTAMP NOT NULL,
-    lesson_time TIME,
-    location VARCHAR(255),
-    format lesson_format NOT NULL,
-    resources JSONB DEFAULT '{}',
-    status mentorship_schedule_status NOT NULL DEFAULT 'scheduled',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
+  location VARCHAR(255),
+  resources JSONB DEFAULT '{}',
+  lesson_date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  lesson_time TIME,
+  format lesson_format NOT NULL,
+  status mentorship_schedule_status NOT NULL DEFAULT 'scheduled'
 );
 
 -- Индексы для mentorship_schedules
@@ -115,20 +117,21 @@ CREATE INDEX IF NOT EXISTS idx_mentorship_schedules_lesson_date
 
 -- Таблица уроков наставничества
 CREATE TABLE IF NOT EXISTS social.mentorship_lessons (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
-    schedule_id UUID REFERENCES social.mentorship_schedules(id) ON DELETE SET NULL,
-    lesson_type VARCHAR(50),
-    format lesson_format NOT NULL,
-    content_id UUID, -- FK mentorship_content (nullable)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
+  schedule_id UUID REFERENCES social.mentorship_schedules(id) ON DELETE SET NULL,
+  content_id UUID,
+  lesson_type VARCHAR(50),
+  skill_progress JSONB DEFAULT '{}',
+  evaluation JSONB DEFAULT '{}',
+  -- FK mentorship_content (nullable)
     started_at TIMESTAMP,
-    completed_at TIMESTAMP,
-    duration INTEGER CHECK (duration >= 0),
-    skill_progress JSONB DEFAULT '{}',
-    evaluation JSONB DEFAULT '{}',
-    status mentorship_lesson_status NOT NULL DEFAULT 'scheduled',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  completed_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  duration INTEGER CHECK (duration >= 0),
+  format lesson_format NOT NULL,
+  status mentorship_lesson_status NOT NULL DEFAULT 'scheduled'
 );
 
 -- Индексы для mentorship_lessons
@@ -141,18 +144,19 @@ CREATE INDEX IF NOT EXISTS idx_mentorship_lessons_status_started
 
 -- Таблица прогресса навыков учеников
 CREATE TABLE IF NOT EXISTS social.mentorship_skill_progress (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
-    mentee_id UUID NOT NULL, -- FK accounts/characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
+  mentee_id UUID NOT NULL,
+  -- FK accounts/characters
     skill_track VARCHAR(50) NOT NULL,
-    skill_name VARCHAR(100) NOT NULL,
-    initial_level INTEGER NOT NULL DEFAULT 0 CHECK (initial_level >= 0),
-    current_level INTEGER NOT NULL DEFAULT 0 CHECK (current_level >= 0),
-    target_level INTEGER NOT NULL DEFAULT 0 CHECK (target_level >= 0),
-    experience_gained INTEGER NOT NULL DEFAULT 0 CHECK (experience_gained >= 0),
-    bonus_applied DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (bonus_applied >= 0),
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(contract_id, skill_track, skill_name)
+  skill_name VARCHAR(100) NOT NULL,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  bonus_applied DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (bonus_applied >= 0),
+  initial_level INTEGER NOT NULL DEFAULT 0 CHECK (initial_level >= 0),
+  current_level INTEGER NOT NULL DEFAULT 0 CHECK (current_level >= 0),
+  target_level INTEGER NOT NULL DEFAULT 0 CHECK (target_level >= 0),
+  experience_gained INTEGER NOT NULL DEFAULT 0 CHECK (experience_gained >= 0),
+  UNIQUE(contract_id, skill_track, skill_name)
 );
 
 -- Индексы для mentorship_skill_progress
@@ -165,17 +169,18 @@ CREATE INDEX IF NOT EXISTS idx_mentorship_skill_progress_skill_track
 
 -- Таблица репутации наставников
 CREATE TABLE IF NOT EXISTS social.mentor_reputation (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    mentor_id UUID NOT NULL, -- FK accounts/characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  mentor_id UUID NOT NULL,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- FK accounts/characters
     reputation_score DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (reputation_score >= 0 AND reputation_score <= 100),
-    total_students INTEGER NOT NULL DEFAULT 0 CHECK (total_students >= 0),
-    successful_graduates INTEGER NOT NULL DEFAULT 0 CHECK (successful_graduates >= 0),
-    average_rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (average_rating >= 0 AND average_rating <= 5),
-    total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
-    content_quality_score DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (content_quality_score >= 0 AND content_quality_score <= 100),
-    academy_rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (academy_rating >= 0 AND academy_rating <= 5),
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(mentor_id)
+  average_rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (average_rating >= 0 AND average_rating <= 5),
+  content_quality_score DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (content_quality_score >= 0 AND content_quality_score <= 100),
+  academy_rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (academy_rating >= 0 AND academy_rating <= 5),
+  total_students INTEGER NOT NULL DEFAULT 0 CHECK (total_students >= 0),
+  successful_graduates INTEGER NOT NULL DEFAULT 0 CHECK (successful_graduates >= 0),
+  total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
+  UNIQUE(mentor_id)
 );
 
 -- Индексы для mentor_reputation
@@ -188,13 +193,15 @@ CREATE INDEX IF NOT EXISTS idx_mentor_reputation_rating
 
 -- Таблица отзывов о наставниках
 CREATE TABLE IF NOT EXISTS social.mentorship_reviews (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
-    mentor_id UUID NOT NULL, -- FK accounts/characters
-    mentee_id UUID NOT NULL, -- FK accounts/characters
-    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    review_text TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
+  mentor_id UUID NOT NULL,
+  -- FK accounts/characters
+    mentee_id UUID NOT NULL,
+  review_text TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- FK accounts/characters
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5)
 );
 
 -- Индексы для mentorship_reviews
@@ -209,16 +216,16 @@ CREATE INDEX IF NOT EXISTS idx_mentorship_reviews_rating
 
 -- Таблица академий и образовательных центров
 CREATE TABLE IF NOT EXISTS social.academies (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    academy_name VARCHAR(255) NOT NULL,
-    academy_type academy_type NOT NULL,
-    location VARCHAR(255),
-    description TEXT,
-    rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (rating >= 0 AND rating <= 5),
-    total_students INTEGER NOT NULL DEFAULT 0 CHECK (total_students >= 0),
-    total_programs INTEGER NOT NULL DEFAULT 0 CHECK (total_programs >= 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  academy_name VARCHAR(255) NOT NULL,
+  location VARCHAR(255),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (rating >= 0 AND rating <= 5),
+  total_students INTEGER NOT NULL DEFAULT 0 CHECK (total_students >= 0),
+  total_programs INTEGER NOT NULL DEFAULT 0 CHECK (total_programs >= 0),
+  academy_type academy_type NOT NULL
 );
 
 -- Индексы для academies
@@ -229,17 +236,17 @@ CREATE INDEX IF NOT EXISTS idx_academies_rating
 
 -- Таблица программ академий
 CREATE TABLE IF NOT EXISTS social.academy_programs (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    academy_id UUID NOT NULL REFERENCES social.academies(id) ON DELETE CASCADE,
-    program_name VARCHAR(255) NOT NULL,
-    skill_track VARCHAR(50) NOT NULL,
-    duration INTEGER NOT NULL DEFAULT 0 CHECK (duration >= 0),
-    cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0),
-    requirements JSONB DEFAULT '{}',
-    schedule JSONB DEFAULT '{}',
-    status academy_program_status NOT NULL DEFAULT 'active',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  academy_id UUID NOT NULL REFERENCES social.academies(id) ON DELETE CASCADE,
+  program_name VARCHAR(255) NOT NULL,
+  skill_track VARCHAR(50) NOT NULL,
+  requirements JSONB DEFAULT '{}',
+  schedule JSONB DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0),
+  duration INTEGER NOT NULL DEFAULT 0 CHECK (duration >= 0),
+  status academy_program_status NOT NULL DEFAULT 'active'
 );
 
 -- Индексы для academy_programs
@@ -272,13 +279,13 @@ CREATE INDEX IF NOT EXISTS idx_academy_enrollments_status
 
 -- Таблица цепочек наставничества
 CREATE TABLE IF NOT EXISTS social.mentorship_chains (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    chain_name VARCHAR(255) NOT NULL,
-    chain_type mentorship_chain_type NOT NULL,
-    contract_ids UUID[] NOT NULL DEFAULT '{}',
-    character_ids UUID[] NOT NULL DEFAULT '{}',
-    chain_level INTEGER NOT NULL DEFAULT 1 CHECK (chain_level >= 1),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_ids UUID[] NOT NULL DEFAULT '{}',
+  character_ids UUID[] NOT NULL DEFAULT '{}',
+  chain_name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  chain_level INTEGER NOT NULL DEFAULT 1 CHECK (chain_level >= 1),
+  chain_type mentorship_chain_type NOT NULL
 );
 
 -- Индексы для mentorship_chains
@@ -289,23 +296,24 @@ CREATE INDEX IF NOT EXISTS idx_mentorship_chains_chain_level
 
 -- Таблица учебного контента
 CREATE TABLE IF NOT EXISTS social.mentorship_content (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    creator_id UUID NOT NULL, -- FK accounts/characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  creator_id UUID NOT NULL,
+  description TEXT,
+  content_name VARCHAR(255) NOT NULL,
+  title VARCHAR(255),
+  skill_track VARCHAR(50),
+  content_data JSONB DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
+  rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (rating >= 0 AND rating <= 5),
+  views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
+  usage_count INTEGER NOT NULL DEFAULT 0 CHECK (usage_count >= 0),
+  is_public BOOLEAN NOT NULL DEFAULT false,
+  -- FK accounts/characters
     content_type mentorship_content_type NOT NULL,
-    content_name VARCHAR(255) NOT NULL,
-    title VARCHAR(255),
-    description TEXT,
-    skill_track VARCHAR(50),
-    content_data JSONB DEFAULT '{}',
-    moderation_status content_moderation_status NOT NULL DEFAULT 'pending',
-    monetization_status content_monetization_status NOT NULL DEFAULT 'free',
-    price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
-    rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (rating >= 0 AND rating <= 5),
-    views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
-    usage_count INTEGER NOT NULL DEFAULT 0 CHECK (usage_count >= 0),
-    is_public BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  moderation_status content_moderation_status NOT NULL DEFAULT 'pending',
+  monetization_status content_monetization_status NOT NULL DEFAULT 'free'
 );
 
 -- Индексы для mentorship_content
@@ -322,16 +330,18 @@ CREATE INDEX IF NOT EXISTS idx_mentorship_content_moderation
 
 -- Таблица экономики наставничества
 CREATE TABLE IF NOT EXISTS social.mentorship_economy (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
-    payment_type mentorship_payment_model NOT NULL,
-    amount DECIMAL(10,2) NOT NULL CHECK (amount >= 0),
-    payer_id UUID NOT NULL, -- FK accounts/characters
-    recipient_id UUID NOT NULL, -- FK accounts/characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.mentorship_contracts(id) ON DELETE CASCADE,
+  payer_id UUID NOT NULL,
+  -- FK accounts/characters
+    recipient_id UUID NOT NULL,
+  transaction_id UUID,
+  -- FK accounts/characters
     payment_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status mentorship_payment_status NOT NULL DEFAULT 'pending',
-    transaction_id UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  amount DECIMAL(10,2) NOT NULL CHECK (amount >= 0),
+  payment_type mentorship_payment_model NOT NULL,
+  status mentorship_payment_status NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для mentorship_economy

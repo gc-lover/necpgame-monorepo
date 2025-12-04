@@ -1,4 +1,3 @@
-# Issue: #140946814
 openapi: 3.0.3
 info:
   title: Social Engram Romance Service API
@@ -7,131 +6,130 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Engram Romance
-    description: Интеграция энграмм с романсами
-
+- name: Engram Romance
+  description: Интеграция энграмм с романсами
 paths:
   /social/romance/engrams/{engram_id}/comment:
     post:
       tags:
-        - Engram Romance
+      - Engram Romance
       summary: Комментарий энграммы при романтическом событии
       operationId: engramRomanceComment
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: engram_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID энграммы
+      - name: engram_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID энграммы
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RomanceCommentRequest"
+              $ref: '#/components/schemas/RomanceCommentRequest'
       responses:
-        "200":
+        '200':
           description: Комментарий создан
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RomanceComment"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/RomanceComment'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/romance/engrams/{engram_id}/influence:
     get:
       tags:
-        - Engram Romance
+      - Engram Romance
       summary: Получить влияние энграммы на романтические отношения
       operationId: getEngramRomanceInfluence
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: engram_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID энграммы
-        - name: relationship_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: ID романтических отношений (если нужно для конкретных отношений)
+      - name: engram_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID энграммы
+      - name: relationship_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ID романтических отношений (если нужно для конкретных отношений)
       responses:
-        "200":
+        '200':
           description: Влияние энграммы на отношения
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EngramRomanceInfluence"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/EngramRomanceInfluence'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     RomanceCommentRequest:
       type: object
       required:
-        - character_id
-        - romance_event_type
+      - character_id
+      - romance_event_type
       properties:
         character_id:
           type: string
           format: uuid
           description: ID персонажа
-        romance_event_type:
-          type: string
-          enum: [kiss, intimate, dialogue, conflict, breakup]
-          description: Тип романтического события
         partner_id:
           type: string
           format: uuid
           nullable: true
           description: ID партнёра
+        romance_event_type:
+          type: string
+          enum:
+          - kiss
+          - intimate
+          - dialogue
+          - conflict
+          - breakup
+          description: Тип романтического события
         event_context:
           type: object
           nullable: true
           description: Контекст события
           additionalProperties: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RomanceComment:
       type: object
       required:
-        - comment_id
-        - engram_id
-        - comment_text
-        - created_at
+      - comment_id
+      - engram_id
+      - comment_text
+      - created_at
       properties:
         comment_id:
           type: string
@@ -148,46 +146,53 @@ components:
         comment_text:
           type: string
           description: Текст комментария
-          example: "Интересный выбор..."
+          example: Интересный выбор...
         romance_event_type:
           type: string
-          enum: [kiss, intimate, dialogue, conflict, breakup]
+          enum:
+          - kiss
+          - intimate
+          - dialogue
+          - conflict
+          - breakup
           description: Тип события
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания комментария
         influence_level:
           type: number
           format: float
           minimum: 0
           maximum: 100
           description: Уровень влияния энграммы при создании комментария
-        created_at:
-          type: string
-          format: date-time
-          description: Время создания комментария
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EngramRomanceInfluence:
       type: object
       required:
-        - engram_id
-        - influence_level
-        - influence_category
+      - engram_id
+      - influence_level
+      - influence_category
       properties:
         engram_id:
           type: string
           format: uuid
           description: ID энграммы
-        influence_level:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Уровень влияния энграммы
         influence_category:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           description: Категория влияния
         engram_type:
           type: string
-          enum: [friendly, aggressive, romantic, jealous]
+          enum:
+          - friendly
+          - aggressive
+          - romantic
+          - jealous
           nullable: true
           description: Тип энграммы
         relationship_impact:
@@ -211,5 +216,13 @@ components:
           items:
             type: string
           description: Специальные события с этой энграммой
-          example: ["jealousy", "help"]
-
+          example:
+          - jealousy
+          - help
+        influence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния энграммы
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

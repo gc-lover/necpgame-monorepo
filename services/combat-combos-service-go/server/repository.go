@@ -8,7 +8,7 @@ import (
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
 	_ "github.com/lib/pq"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
 )
 
 // Repository handles database operations
@@ -98,9 +98,9 @@ func (r *Repository) GetComboByID(ctx context.Context, comboId string) (*api.Com
 func (r *Repository) CreateActivation(ctx context.Context, req *api.ActivateComboRequest) (*Activation, error) {
 	// TODO: Implement real DB insert
 	activation := &Activation{
-		ID:          "act-" + req.ComboId.String(),
-		CharacterID: req.CharacterId.String(),
-		ComboID:     req.ComboId.String(),
+		ID:          "act-" + req.ComboID.String(),
+		CharacterID: req.CharacterID.String(),
+		ComboID:     req.ComboID.String(),
 		ActivatedAt: time.Now(),
 	}
 	return activation, nil
@@ -133,29 +133,36 @@ func (r *Repository) SaveSynergyApplication(ctx context.Context, activationId, s
 // GetComboLoadout returns character's combo loadout (STUB)
 func (r *Repository) GetComboLoadout(ctx context.Context, characterId string) (*api.ComboLoadout, error) {
 	// TODO: Implement real DB query
-	uuidVal := openapi_types.UUID{}
-	charUUID := openapi_types.UUID{}
-	_ = charUUID.UnmarshalText([]byte(characterId))
+	uuidVal := uuid.New()
+	charUUID, _ := uuid.Parse(characterId)
 
-	combos := []openapi_types.UUID{}
+	combos := []uuid.UUID{}
 
 	return &api.ComboLoadout{
-		Id:           uuidVal,
-		CharacterId:  charUUID,
-		ActiveCombos: &combos,
+		ID:           uuidVal,
+		CharacterID:  charUUID,
+		ActiveCombos: combos,
 	}, nil
 }
 
 // UpdateComboLoadout updates character's combo loadout (STUB)
 func (r *Repository) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoadoutRequest) (*api.ComboLoadout, error) {
 	// TODO: Implement real DB update
-	uuidVal := openapi_types.UUID{}
+	uuidVal := uuid.New()
+
+	prefs := api.OptComboLoadoutPreferences{}
+	if req.Preferences.IsSet() {
+		prefs = api.NewOptComboLoadoutPreferences(api.ComboLoadoutPreferences{
+			AutoActivate: req.Preferences.Value.AutoActivate,
+			PriorityOrder: req.Preferences.Value.PriorityOrder,
+		})
+	}
 
 	return &api.ComboLoadout{
-		Id:           uuidVal,
-		CharacterId:  req.CharacterId,
+		ID:           uuidVal,
+		CharacterID:  req.CharacterID,
 		ActiveCombos: req.ActiveCombos,
-		Preferences:  req.Preferences,
+		Preferences:  prefs,
 	}, nil
 }
 

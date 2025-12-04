@@ -1,4 +1,3 @@
-# Issue: #138
 openapi: 3.0.3
 info:
   title: Achievement Core Service API
@@ -7,106 +6,102 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Achievements
-    description: Управление достижениями
-
+- name: Achievements
+  description: Управление достижениями
 paths:
   /achievements:
     get:
       tags:
-        - Achievements
+      - Achievements
       summary: Получить список достижений
       operationId: getAchievements
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            $ref: "#/components/schemas/AchievementCategory"
-        - name: type
-          in: query
-          schema:
-            $ref: "#/components/schemas/AchievementType"
-        - name: rarity
-          in: query
-          schema:
-            $ref: "#/components/schemas/AchievementRarity"
-        - name: is_hidden
-          in: query
-          schema:
-            type: boolean
-        - name: is_seasonal
-          in: query
-          schema:
-            type: boolean
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: category
+        in: query
+        schema:
+          $ref: '#/components/schemas/AchievementCategory'
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/AchievementType'
+      - name: rarity
+        in: query
+        schema:
+          $ref: '#/components/schemas/AchievementRarity'
+      - name: is_hidden
+        in: query
+        schema:
+          type: boolean
+      - name: is_seasonal
+        in: query
+        schema:
+          type: boolean
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список достижений
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AchievementsResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/AchievementsResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /achievements/{achievementId}:
     get:
       tags:
-        - Achievements
+      - Achievements
       summary: Получить достижение
       operationId: getAchievement
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: achievementId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Достижение
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Achievement"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Achievement'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Achievement:
       type: object
-      description: |
-        BACKEND NOTE: Achievement tracking (1000+ achievements).
+      description: 'BACKEND NOTE: Achievement tracking (1000+ achievements).
+
         Fields ordered for struct alignment. Expected memory: ~136 bytes/instance.
+
         Use materialized view for player stats (player_achievement_summary).
+
+        '
       properties:
-        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
@@ -114,8 +109,6 @@ components:
           type: string
           format: uuid
           nullable: true
-        
-        # String fields (16 bytes each)
         code:
           type: string
         title:
@@ -129,80 +122,76 @@ components:
         updated_at:
           type: string
           format: date-time
-        
-        # Enum/Object references (8 bytes each)
-        type:
-          $ref: "#/components/schemas/AchievementType"
-        category:
-          $ref: "#/components/schemas/AchievementCategory"
-        rarity:
-          $ref: "#/components/schemas/AchievementRarity"
         conditions:
           type: object
           additionalProperties: true
         rewards:
           type: object
           additionalProperties: true
-        
-        # Integer (4 bytes)
+        category:
+          $ref: '#/components/schemas/AchievementCategory'
+        rarity:
+          $ref: '#/components/schemas/AchievementRarity'
+        type:
+          $ref: '#/components/schemas/AchievementType'
         points:
           type: integer
           minimum: 0
-        
-        # Boolean fields last (1 byte each)
         is_hidden:
           type: boolean
           default: false
         is_seasonal:
           type: boolean
           default: false
-
     AchievementsResponse:
       type: object
-      description: |
-        BACKEND NOTE: List response (paginated queries).
+      description: 'BACKEND NOTE: List response (paginated queries).
+
         Fields ordered for struct alignment. Expected memory: ~32 bytes + array.
+
+        '
       properties:
-        # Array first (24 bytes: pointer + len + cap)
         achievements:
           type: array
           items:
-            $ref: "#/components/schemas/Achievement"
-        
-        # Integer last (4 bytes)
+            $ref: '#/components/schemas/Achievement'
         total:
           type: integer
-
     AchievementType:
       type: string
-      enum: [one_time, progressive, hidden, seasonal, meta]
-
+      enum:
+      - one_time
+      - progressive
+      - hidden
+      - seasonal
+      - meta
     AchievementCategory:
       type: string
-      enum: [combat, exploration, social, crafting, collection, quest, pvp, pve, raid, other]
-
+      enum:
+      - combat
+      - exploration
+      - social
+      - crafting
+      - collection
+      - quest
+      - pvp
+      - pve
+      - raid
+      - other
     AchievementRarity:
       type: string
-      enum: [common, uncommon, rare, epic, legendary, mythic]
-
+      enum:
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
+      - mythic
     AchievementStatus:
       type: string
-      enum: [locked, in_progress, unlocked]
-
+      enum:
+      - locked
+      - in_progress
+      - unlocked
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

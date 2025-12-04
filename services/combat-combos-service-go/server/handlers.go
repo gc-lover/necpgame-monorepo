@@ -1,258 +1,147 @@
-// Issue: #1578
+// Issue: #1595
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Context timeout constants
-const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
-)
+const DBTimeout = 50 * time.Millisecond
 
-// Memory pool for response buffers (OPTIMIZATION: Issue #1578)
-var responsePool = sync.Pool{
-	New: func() interface{} {
-		return &bytes.Buffer{}
-	},
-}
-
-// Handlers implements api.ServerInterface
+// Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
 	service *Service
 }
 
-// NewHandlers creates new handlers with dependency injection
+// NewHandlers creates new handlers
 func NewHandlers(service *Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-// GetComboCatalog returns combo catalog with filtering
-func (h *Handlers) GetComboCatalog(w http.ResponseWriter, r *http.Request, params api.GetComboCatalogParams) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetComboCatalog - TYPED response!
+func (h *Handlers) GetComboCatalog(ctx context.Context, params api.GetComboCatalogParams) (api.GetComboCatalogRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	catalog, err := h.service.GetComboCatalog(ctx, params)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.GetComboCatalogInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, catalog)
+	return catalog, nil
 }
 
-// GetComboDetails returns detailed combo information
-func (h *Handlers) GetComboDetails(w http.ResponseWriter, r *http.Request, comboId openapi_types.UUID) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetComboDetails - TYPED response!
+func (h *Handlers) GetComboDetails(ctx context.Context, params api.GetComboDetailsParams) (api.GetComboDetailsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	details, err := h.service.GetComboDetails(ctx, comboId.String())
+	details, err := h.service.GetComboDetails(ctx, params.ComboId.String())
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Combo not found")
-			return
+			return &api.GetComboDetailsNotFound{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.GetComboDetailsInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, details)
+	return details, nil
 }
 
-// ActivateCombo activates combo for character
-func (h *Handlers) ActivateCombo(w http.ResponseWriter, r *http.Request) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// ActivateCombo - TYPED response!
+func (h *Handlers) ActivateCombo(ctx context.Context, req *api.ActivateComboRequest) (api.ActivateComboRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	var req api.ActivateComboRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	response, err := h.service.ActivateCombo(ctx, &req)
+	response, err := h.service.ActivateCombo(ctx, req)
 	if err != nil {
 		if err == ErrRequirementsNotMet {
-			respondError(w, http.StatusBadRequest, "Combo requirements not met")
-			return
+			return &api.ActivateComboBadRequest{}, nil
 		}
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Combo not found")
-			return
+			return &api.ActivateComboNotFound{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.ActivateComboInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// ApplySynergy applies synergy to activated combo
-func (h *Handlers) ApplySynergy(w http.ResponseWriter, r *http.Request) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// ApplySynergy - TYPED response!
+func (h *Handlers) ApplySynergy(ctx context.Context, req *api.ApplySynergyRequest) (api.ApplySynergyRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	var req api.ApplySynergyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	response, err := h.service.ApplySynergy(ctx, &req)
+	response, err := h.service.ApplySynergy(ctx, req)
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Activation or synergy not found")
-			return
+			return &api.ApplySynergyNotFound{}, nil
 		}
 		if err == ErrSynergyUnavailable {
-			respondError(w, http.StatusBadRequest, "Synergy unavailable")
-			return
+			return &api.ApplySynergyBadRequest{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.ApplySynergyInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// GetComboLoadout returns character's combo loadout
-func (h *Handlers) GetComboLoadout(w http.ResponseWriter, r *http.Request, params api.GetComboLoadoutParams) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetComboLoadout - TYPED response!
+func (h *Handlers) GetComboLoadout(ctx context.Context, params api.GetComboLoadoutParams) (api.GetComboLoadoutRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	loadout, err := h.service.GetComboLoadout(ctx, params.CharacterId.String())
+	loadout, err := h.service.GetComboLoadout(ctx, params.CharacterID.String())
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Loadout not found")
-			return
+			return &api.GetComboLoadoutNotFound{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.GetComboLoadoutInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, loadout)
+	return loadout, nil
 }
 
-// UpdateComboLoadout updates character's combo loadout
-func (h *Handlers) UpdateComboLoadout(w http.ResponseWriter, r *http.Request) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// UpdateComboLoadout - TYPED response!
+func (h *Handlers) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoadoutRequest) (api.UpdateComboLoadoutRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	var req api.UpdateLoadoutRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	loadout, err := h.service.UpdateComboLoadout(ctx, &req)
+	loadout, err := h.service.UpdateComboLoadout(ctx, req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.UpdateComboLoadoutInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, loadout)
+	return loadout, nil
 }
 
-// SubmitComboScore submits combo scoring results
-func (h *Handlers) SubmitComboScore(w http.ResponseWriter, r *http.Request) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// SubmitComboScore - TYPED response!
+func (h *Handlers) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequest) (api.SubmitComboScoreRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	var req api.SubmitScoreRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	response, err := h.service.SubmitComboScore(ctx, &req)
+	response, err := h.service.SubmitComboScore(ctx, req)
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Activation not found")
-			return
+			return &api.SubmitComboScoreNotFound{}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.SubmitComboScoreInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// GetComboAnalytics returns combo effectiveness analytics
-func (h *Handlers) GetComboAnalytics(w http.ResponseWriter, r *http.Request, params api.GetComboAnalyticsParams) {
-	// OPTIMIZATION: Context timeout (Issue #1578)
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetComboAnalytics - TYPED response!
+func (h *Handlers) GetComboAnalytics(ctx context.Context, params api.GetComboAnalyticsParams) (api.GetComboAnalyticsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	analytics, err := h.service.GetComboAnalytics(ctx, params)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.GetComboAnalyticsInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, analytics)
-}
-
-// Helper functions
-
-// respondJSON encodes data to JSON with memory pooling (OPTIMIZATION: Issue #1578)
-// Gains: Allocations ↓80-90%, Latency ↓20-30%, GC pause ↓60-70%
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	// Get buffer from pool
-	buf := responsePool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()           // Clear buffer
-		responsePool.Put(buf) // Return to pool
-	}()
-
-	// Encode to buffer first
-	if err := json.NewEncoder(buf).Encode(data); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Write buffered response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(buf.Bytes())
-}
-
-// respondError sends error response with memory pooling (OPTIMIZATION: Issue #1578)
-func respondError(w http.ResponseWriter, status int, message string) {
-	// Pre-allocated error struct (fewer allocations than map)
-	type ErrorResponse struct {
-		Error   string `json:"error"`
-		Message string `json:"message"`
-	}
-
-	errorResp := ErrorResponse{
-		Error:   http.StatusText(status),
-		Message: message,
-	}
-
-	// Use json.Marshal (fewer allocations)
-	jsonData, err := json.Marshal(errorResp)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(jsonData)
+	return analytics, nil
 }

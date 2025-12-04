@@ -45,8 +45,13 @@ func main() {
 		http.ListenAndServe(":9097", mux)
 	}()
 
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
-		http.ListenAndServe("localhost:6097", nil)
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6118")
+		log.Printf("pprof server starting on %s", pprofAddr)
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
 	}()
 
 	log.Printf("OK Achievement Service on %s", addr)

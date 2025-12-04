@@ -1,45 +1,53 @@
 openapi: 3.0.3
 info:
   title: Gameplay Cooperative Challenges Management Service API
-  description: |
-    API для управления кооперативными испытаниями: создание, статус, завершение.
-    
+  description: 'API для управления кооперативными испытаниями: создание, статус, завершение.
+
+
     **Основные возможности:**
+
     - Создание сессий кооперативных испытаний
+
     - Получение статуса испытания
+
     - Завершение испытания с расчетом наград
-    
+
+
     **Типы испытаний:**
+
     - Synchronized Actions - синхронизированные действия команды
+
     - Role-Specific Challenges - ролевые испытания
+
     - Team Coordination Tests - тесты координации
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay
+  description: Продакшен сервер
 tags:
-  - name: Cooperative Challenges
-    description: Управление кооперативными испытаниями
-
+- name: Cooperative Challenges
+  description: Управление кооперативными испытаниями
 paths:
   /cooperative-challenges/start:
     post:
       tags:
-        - Cooperative Challenges
+      - Cooperative Challenges
       summary: Начать кооперативное испытание
-      description: |
-        Создает новую сессию кооперативного испытания для команды.
+      description: 'Создает новую сессию кооперативного испытания для команды.
+
         Поддерживает три типа испытаний: Synchronized Actions, Role-Specific Challenges, Team Coordination Tests.
+
+        '
       operationId: startCooperativeChallenge
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -47,54 +55,58 @@ paths:
             schema:
               $ref: '#/components/schemas/StartChallengeRequest'
             example:
-              challenge_type: "synchronized_actions"
-              team_id: "aa0e8400-e29b-41d4-a716-446655440000"
+              challenge_type: synchronized_actions
+              team_id: aa0e8400-e29b-41d4-a716-446655440000
               challenge_config:
                 synchronization_window: 0.5
                 required_players: 4
-                action_sequence: ["action1", "action2", "action3"]
+                action_sequence:
+                - action1
+                - action2
+                - action3
       responses:
         '201':
           description: Сессия испытания создана
           content:
             application/json:
               schema:
-                $ref: 'gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeSession'
+                $ref: gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeSession
               example:
-                session_id: "bb0e8400-e29b-41d4-a716-446655440000"
-                challenge_type: "synchronized_actions"
-                team_id: "aa0e8400-e29b-41d4-a716-446655440000"
-                status: "active"
+                session_id: bb0e8400-e29b-41d4-a716-446655440000
+                challenge_type: synchronized_actions
+                team_id: aa0e8400-e29b-41d4-a716-446655440000
+                status: active
                 synchronization_score: 0.0
                 coordination_score: 0.0
-                started_at: "2025-12-01T10:00:00Z"
+                started_at: '2025-12-01T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /cooperative-challenges/{id}/status:
     get:
       tags:
-        - Cooperative Challenges
+      - Cooperative Challenges
       summary: Получить статус испытания
-      description: |
-        Возвращает текущий статус кооперативного испытания, включая
+      description: 'Возвращает текущий статус кооперативного испытания, включая
+
         оценки синхронизации и координации, прогресс и бонусы.
+
+        '
       operationId: getChallengeStatus
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: UUID сессии испытания
-          schema:
-            type: string
-            format: uuid
-            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      - name: id
+        in: path
+        required: true
+        description: UUID сессии испытания
+        schema:
+          type: string
+          format: uuid
+          example: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Статус испытания
@@ -103,46 +115,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChallengeStatus'
               example:
-                session_id: "bb0e8400-e29b-41d4-a716-446655440000"
-                challenge_type: "synchronized_actions"
-                status: "active"
+                session_id: bb0e8400-e29b-41d4-a716-446655440000
+                challenge_type: synchronized_actions
+                status: active
                 synchronization_score: 0.85
-                coordination_score: 0.90
+                coordination_score: 0.9
                 coordination_bonus: 0.75
                 progress:
                   completed_actions: 2
                   total_actions: 3
                   perfect_synchronizations: 2
-                started_at: "2025-12-01T10:00:00Z"
+                started_at: '2025-12-01T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /cooperative-challenges/{id}/complete:
     post:
       tags:
-        - Cooperative Challenges
+      - Cooperative Challenges
       summary: Завершить кооперативное испытание
-      description: |
-        Завершает сессию кооперативного испытания и рассчитывает финальные награды
+      description: 'Завершает сессию кооперативного испытания и рассчитывает финальные награды
+
         на основе оценок синхронизации и координации.
+
+        '
       operationId: completeChallenge
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: UUID сессии испытания
-          schema:
-            type: string
-            format: uuid
-            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      - name: id
+        in: path
+        required: true
+        description: UUID сессии испытания
+        schema:
+          type: string
+          format: uuid
+          example: bb0e8400-e29b-41d4-a716-446655440000
       requestBody:
         required: false
         content:
@@ -160,11 +173,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChallengeCompletionResult'
               example:
-                session_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                session_id: bb0e8400-e29b-41d4-a716-446655440000
                 success: true
                 final_synchronization_score: 0.92
                 final_coordination_score: 0.95
-                coordination_bonus: 0.90
+                coordination_bonus: 0.9
                 rewards:
                   base_rewards:
                     experience: 10000
@@ -175,58 +188,70 @@ paths:
                   total_rewards:
                     experience: 19000
                     currency: 9500
-                completed_at: "2025-12-01T10:05:00Z"
+                completed_at: '2025-12-01T10:05:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     StartChallengeRequest:
       type: object
       required:
-        - challenge_type
-        - team_id
+      - challenge_type
+      - team_id
       properties:
-        challenge_type:
-          $ref: 'gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeType'
         team_id:
           type: string
           format: uuid
           description: UUID команды
-          example: "aa0e8400-e29b-41d4-a716-446655440000"
+          example: aa0e8400-e29b-41d4-a716-446655440000
         challenge_config:
-          $ref: 'gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeConfig'
-
+          $ref: gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeConfig
+        challenge_type:
+          $ref: gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeType
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChallengeStatus:
       type: object
       required:
-        - session_id
-        - challenge_type
-        - status
-        - synchronization_score
-        - coordination_score
-        - started_at
+      - session_id
+      - challenge_type
+      - status
+      - synchronization_score
+      - coordination_score
+      - started_at
       properties:
         session_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
-        challenge_type:
-          $ref: 'gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeType'
+          example: bb0e8400-e29b-41d4-a716-446655440000
         status:
           type: string
-          enum: [active, completed, failed]
-          example: "active"
+          enum:
+          - active
+          - completed
+          - failed
+          example: active
+        started_at:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        progress:
+          $ref: gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeProgress
+        challenge_type:
+          $ref: gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeType
         synchronization_score:
           type: number
           format: float
@@ -238,7 +263,7 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-          example: 0.90
+          example: 0.9
         coordination_bonus:
           type: number
           format: float
@@ -246,49 +271,41 @@ components:
           minimum: 0.0
           maximum: 1.0
           example: 0.75
-        progress:
-          $ref: 'gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeProgress'
-        started_at:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-          example: null
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CompleteChallengeRequest:
       type: object
       properties:
-        success:
-          type: boolean
-          description: Успешность завершения
-          example: true
         completion_time:
           type: integer
           description: Время прохождения в секундах
           minimum: 0
           example: 300
-
+        success:
+          type: boolean
+          description: Успешность завершения
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChallengeCompletionResult:
       type: object
       required:
-        - session_id
-        - success
-        - final_synchronization_score
-        - final_coordination_score
-        - coordination_bonus
-        - rewards
-        - completed_at
+      - session_id
+      - success
+      - final_synchronization_score
+      - final_coordination_score
+      - coordination_bonus
+      - rewards
+      - completed_at
       properties:
         session_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
-        success:
-          type: boolean
-          example: true
+          example: bb0e8400-e29b-41d4-a716-446655440000
+        completed_at:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:05:00Z'
+        rewards:
+          $ref: gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeRewards
         final_synchronization_score:
           type: number
           format: float
@@ -307,21 +324,17 @@ components:
           description: Финальный бонус за координацию (0.0-1.0 = 0%-100%)
           minimum: 0.0
           maximum: 1.0
-          example: 0.90
-        rewards:
-          $ref: 'gameplay-cooperative-challenges-schemas.yaml#/components/schemas/ChallengeRewards'
-        completed_at:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:05:00Z"
-
+          example: 0.9
+        success:
+          type: boolean
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

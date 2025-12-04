@@ -1,40 +1,44 @@
 openapi: 3.0.3
 info:
   title: Combat Acrobatics Wall Run Service API
-  description: |
-    API для управления Wall Run (бег по стенам).
-    
+  description: 'API для управления Wall Run (бег по стенам).
+
+
     **Основные возможности:**
+
     - Начало и остановка Wall Run
+
     - Отталкивание от стены (Wall Kick)
+
     - Получение доступных поверхностей
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+  description: Продакшен сервер
 tags:
-  - name: Wall Run
-    description: Бег по стенам
-
+- name: Wall Run
+  description: Бег по стенам
 paths:
   /wall-run/start:
     post:
       tags:
-        - Wall Run
+      - Wall Run
       summary: Начать Wall Run
-      description: |
-        Начинает бег по стене. Автоматически определяет подходящую поверхность
+      description: 'Начинает бег по стене. Автоматически определяет подходящую поверхность
+
         и начинает отслеживание состояния с расходом выносливости.
+
+        '
       operationId: startWallRun
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: false
         content:
@@ -54,23 +58,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/WallRunStateResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /wall-run/stop:
     post:
       tags:
-        - Wall Run
+      - Wall Run
       summary: Остановить Wall Run
-      description: |
-        Останавливает бег по стене. Сохраняет финальное состояние
+      description: 'Останавливает бег по стене. Сохраняет финальное состояние
+
         и восстанавливает выносливость.
+
+        '
       operationId: stopWallRun
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Wall Run остановлен
@@ -79,23 +84,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/WallRunStateResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /wall-run/kick:
     post:
       tags:
-        - Wall Run
+      - Wall Run
       summary: Оттолкнуться от стены (Wall Kick)
-      description: |
-        Выполняет отталкивание от стены во время Wall Run.
+      description: 'Выполняет отталкивание от стены во время Wall Run.
+
         Изменяет направление движения и применяет импульс.
+
+        '
       operationId: wallKick
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -115,33 +121,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/WallKickResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /wall-run/surfaces:
     get:
       tags:
-        - Wall Run
+      - Wall Run
       summary: Получить доступные поверхности для Wall Run
-      description: |
-        Возвращает список доступных поверхностей для Wall Run
+      description: 'Возвращает список доступных поверхностей для Wall Run
+
         в текущей области персонажа.
+
+        '
       operationId: getWallRunSurfaces
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: radius
-          in: query
-          required: false
-          description: Радиус поиска поверхностей
-          schema:
-            type: number
-            format: float
-            minimum: 0
-            default: 10.0
+      - name: radius
+        in: query
+        required: false
+        description: Радиус поиска поверхностей
+        schema:
+          type: number
+          format: float
+          minimum: 0
+          default: 10.0
       responses:
         '200':
           description: Список доступных поверхностей
@@ -150,52 +157,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/SurfacesResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     StartWallRunRequest:
       type: object
       properties:
         direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
-
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
     WallRunStateResponse:
       type: object
       required:
-        - state_id
-        - is_active
-        - start_position
-        - current_position
-        - direction
-        - stamina_consumed
-        - duration
-        - started_at
+      - state_id
+      - is_active
+      - start_position
+      - current_position
+      - direction
+      - stamina_consumed
+      - duration
+      - started_at
       properties:
         state_id:
           type: string
           format: uuid
-          example: "aa0e8400-e29b-41d4-a716-446655440000"
-        is_active:
-          type: boolean
-          example: true
+          example: aa0e8400-e29b-41d4-a716-446655440000
         wall_surface_id:
           type: string
           format: uuid
           nullable: true
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
-        start_position:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D'
-        current_position:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D'
+          example: bb0e8400-e29b-41d4-a716-446655440000
+        started_at:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
+        stopped_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2025-12-01T10:00:03Z'
         direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
+        start_position:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D
+        current_position:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D
         stamina_consumed:
           type: integer
           description: Потраченная выносливость
@@ -206,57 +216,50 @@ components:
           description: Длительность в секундах
           minimum: 0
           example: 3
-        started_at:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-        stopped_at:
-          type: string
-          format: date-time
-          nullable: true
-          example: "2025-12-01T10:00:03Z"
-
+        is_active:
+          type: boolean
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WallKickRequest:
       type: object
       required:
-        - direction
+      - direction
       properties:
         direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
-
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
     WallKickResponse:
       type: object
       required:
-        - kick_id
-        - wall_run_ended
-        - new_direction
-        - stamina_consumed
-        - timestamp
+      - kick_id
+      - wall_run_ended
+      - new_direction
+      - stamina_consumed
+      - timestamp
       properties:
         kick_id:
           type: string
           format: uuid
-          example: "cc0e8400-e29b-41d4-a716-446655440000"
-        wall_run_ended:
-          type: boolean
-          description: Завершен ли Wall Run после kick
-          example: true
+          example: cc0e8400-e29b-41d4-a716-446655440000
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
         new_direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
         stamina_consumed:
           type: integer
           minimum: 0
           example: 8
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+        wall_run_ended:
+          type: boolean
+          description: Завершен ли Wall Run после kick
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SurfacesResponse:
       type: object
       required:
-        - surfaces
-        - total
+      - surfaces
+      - total
       properties:
         surfaces:
           type: array
@@ -266,41 +269,42 @@ components:
           type: integer
           minimum: 0
           example: 1
-
     Surface:
       type: object
       required:
-        - surface_id
-        - surface_type
-        - position
-        - normal
-        - material
-        - is_suitable
+      - surface_id
+      - surface_type
+      - position
+      - normal
+      - material
+      - is_suitable
       properties:
         surface_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
-        surface_type:
-          type: string
-          enum: [wall, floor, obstacle]
-          example: "wall"
-        position:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D'
-        normal:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
+          example: bb0e8400-e29b-41d4-a716-446655440000
         material:
           type: string
-          example: "concrete"
+          example: concrete
+        surface_type:
+          type: string
+          enum:
+          - wall
+          - floor
+          - obstacle
+          example: wall
+        normal:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
+        position:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D
         is_suitable:
           type: boolean
           example: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

@@ -1,11 +1,18 @@
-// Issue: #1442
+// Issue: #1442, #1604
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
+)
+
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond
 )
 
 type Handlers struct {
@@ -18,13 +25,16 @@ func NewHandlers(service *Service) *Handlers {
 
 // CreateFaction implements POST /api/v1/factions/create
 func (h *Handlers) CreateFaction(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
 	var req api.CreateFactionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	faction, err := h.service.CreateFaction(r.Context(), req)
+	faction, err := h.service.CreateFaction(ctx, req)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -35,7 +45,10 @@ func (h *Handlers) CreateFaction(w http.ResponseWriter, r *http.Request) {
 
 // GetFaction implements GET /api/v1/factions/{factionId}
 func (h *Handlers) GetFaction(w http.ResponseWriter, r *http.Request, factionId string) {
-	faction, err := h.service.GetFaction(r.Context(), factionId)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	faction, err := h.service.GetFaction(ctx, factionId)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Faction not found")
@@ -50,13 +63,16 @@ func (h *Handlers) GetFaction(w http.ResponseWriter, r *http.Request, factionId 
 
 // UpdateFaction implements PUT /api/v1/factions/{factionId}
 func (h *Handlers) UpdateFaction(w http.ResponseWriter, r *http.Request, factionId string) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
 	var req api.UpdateFactionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	faction, err := h.service.UpdateFaction(r.Context(), factionId, req)
+	faction, err := h.service.UpdateFaction(ctx, factionId, req)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Faction not found")
@@ -71,7 +87,10 @@ func (h *Handlers) UpdateFaction(w http.ResponseWriter, r *http.Request, faction
 
 // DeleteFaction implements DELETE /api/v1/factions/{factionId}
 func (h *Handlers) DeleteFaction(w http.ResponseWriter, r *http.Request, factionId string) {
-	if err := h.service.DeleteFaction(r.Context(), factionId); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	if err := h.service.DeleteFaction(ctx, factionId); err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Faction not found")
 			return
@@ -85,7 +104,10 @@ func (h *Handlers) DeleteFaction(w http.ResponseWriter, r *http.Request, faction
 
 // ListFactions implements GET /api/v1/factions/list
 func (h *Handlers) ListFactions(w http.ResponseWriter, r *http.Request, params api.ListFactionsParams) {
-	factions, pagination, err := h.service.ListFactions(r.Context(), params)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	factions, pagination, err := h.service.ListFactions(ctx, params)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -101,13 +123,16 @@ func (h *Handlers) ListFactions(w http.ResponseWriter, r *http.Request, params a
 
 // UpdateHierarchy implements POST /api/v1/factions/{factionId}/hierarchy/update
 func (h *Handlers) UpdateHierarchy(w http.ResponseWriter, r *http.Request, factionId string) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
 	var req api.UpdateHierarchyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	hierarchy, err := h.service.UpdateHierarchy(r.Context(), factionId, req)
+	hierarchy, err := h.service.UpdateHierarchy(ctx, factionId, req)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Faction not found")
@@ -122,7 +147,10 @@ func (h *Handlers) UpdateHierarchy(w http.ResponseWriter, r *http.Request, facti
 
 // GetHierarchy implements GET /api/v1/factions/{factionId}/hierarchy
 func (h *Handlers) GetHierarchy(w http.ResponseWriter, r *http.Request, factionId string) {
-	hierarchy, err := h.service.GetHierarchy(r.Context(), factionId)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	hierarchy, err := h.service.GetHierarchy(ctx, factionId)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Faction not found")
@@ -145,6 +173,7 @@ func respondJSON(w http.ResponseWriter, code int, payload interface{}) {
 func respondError(w http.ResponseWriter, code int, message string) {
 	respondJSON(w, code, map[string]string{"error": message})
 }
+
 
 
 

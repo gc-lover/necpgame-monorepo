@@ -3,15 +3,12 @@ package server
 
 import (
 	"context"
-	"errors"
+	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/social reputation core/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/social-reputation-core-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
-var (
-	// ErrNotFound is returned when entity is not found
-	ErrNotFound = errors.New("not found")
-)
 
 // Service contains business logic
 type Service struct {
@@ -23,65 +20,96 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-// ApplyEffects applies combat effects
-func (s *Service) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (*api.EffectsResult, error) {
+// GetReputation returns overall reputation
+func (s *Service) GetReputation(ctx context.Context, characterID uuid.UUID) (api.GetReputationRes, error) {
 	// TODO: Implement business logic
 	// For now, return stub response
 	
-	result := &api.EffectsResult{
-		TargetID:       api.OptUUID{},
-		EffectsApplied: []api.EffectsResultEffectsAppliedItem{},
-		EffectsRemoved: []api.EffectsResultEffectsRemovedItem{},
+	result := &api.PlayerReputation{
+		PlayerID: api.NewOptUUID(characterID),
+		OverallReputation: api.NewOptInt(100),
+		LastUpdate: api.NewOptDateTime(time.Now()),
 	}
 	
 	return result, nil
 }
 
-// CalculateDamage calculates combat damage
-func (s *Service) CalculateDamage(ctx context.Context, req *api.CalculateDamageRequest) (*api.DamageCalculationResult, error) {
-	// TODO: Implement damage calculation logic
+// GetFactionReputation returns faction reputation
+func (s *Service) GetFactionReputation(ctx context.Context, characterID uuid.UUID, factionID uuid.UUID) (api.GetFactionReputationRes, error) {
+	// TODO: Implement business logic
+	// For now, return stub response
 	
-	result := &api.DamageCalculationResult{}
+	result := &api.FactionReputation{
+		PlayerID: api.NewOptUUID(characterID),
+		FactionID: api.NewOptUUID(factionID),
+		ReputationValue: api.NewOptInt(50),
+		Tier: api.NewOptFactionReputationTier(api.FactionReputationTierNeutral),
+	}
 	
 	return result, nil
 }
 
-// DefendInCombat processes defense action
-func (s *Service) DefendInCombat(ctx context.Context, sessionID string, req *api.DefendRequest) (*api.CombatActionResult, error) {
-	// TODO: Implement defense logic
+// GetFactionRelations returns all faction relations
+func (s *Service) GetFactionRelations(ctx context.Context, characterID uuid.UUID) (api.GetFactionRelationsRes, error) {
+	// TODO: Implement business logic
+	// For now, return stub response
 	
-	response := &api.CombatActionResult{}
-	
-	return response, nil
-}
-
-// ProcessAttack processes attack action
-func (s *Service) ProcessAttack(ctx context.Context, sessionID string, req *api.AttackRequest) (*api.AttackResult, error) {
-	// TODO: Implement attack processing logic
-	
-	response := &api.AttackResult{
-		Damage:   api.OptInt{},
-		Critical: api.OptBool{},
+	result := &api.FactionRelationsResponse{
+		PlayerID: api.NewOptUUID(characterID),
+		Relations: []api.FactionReputation{},
+		Total: api.NewOptInt(0),
 	}
 	
-	return response, nil
+	return result, nil
 }
 
-// UseCombatAbility uses combat ability
-func (s *Service) UseCombatAbility(ctx context.Context, sessionID string, req *api.UseAbilityRequest) (*api.CombatActionResult, error) {
-	// TODO: Implement ability usage logic
+// GetReputationTier returns reputation tier
+func (s *Service) GetReputationTier(ctx context.Context, characterID uuid.UUID) (api.GetReputationTierRes, error) {
+	// TODO: Implement business logic
+	// For now, return stub response
 	
-	response := &api.CombatActionResult{}
+	result := &api.ReputationTier{
+		PlayerID: api.NewOptUUID(characterID),
+		Tier: api.NewOptReputationTierTier(api.ReputationTierTierNeutral),
+	}
 	
-	return response, nil
+	return result, nil
 }
 
-// UseCombatItem uses combat item
-func (s *Service) UseCombatItem(ctx context.Context, sessionID string, req *api.UseItemRequest) (*api.CombatActionResult, error) {
-	// TODO: Implement item usage logic
+// GetReputationEffects returns reputation effects
+func (s *Service) GetReputationEffects(ctx context.Context, characterID uuid.UUID) (api.GetReputationEffectsRes, error) {
+	// TODO: Implement business logic
+	// For now, return stub response
 	
-	response := &api.CombatActionResult{}
+	result := &api.ReputationEffects{
+		PlayerID: api.NewOptUUID(characterID),
+		TerritoryAccess: api.OptReputationEffectsTerritoryAccess{},
+		TradeAccess: api.OptReputationEffectsTradeAccess{},
+		NpcAggression: api.OptReputationEffectsNpcAggression{},
+		QuestAccess: api.OptReputationEffectsQuestAccess{},
+		DecayModifier: api.NewOptFloat32(1.0),
+		FactionBonuses: []string{},
+	}
 	
-	return response, nil
+	return result, nil
 }
 
+// ChangeReputation changes reputation
+func (s *Service) ChangeReputation(ctx context.Context, characterID uuid.UUID, req *api.ChangeReputationRequest) (api.ChangeReputationRes, error) {
+	// TODO: Implement business logic
+	// For now, return stub response
+	
+	result := &api.ReputationChangeResponse{
+		PlayerID: api.NewOptUUID(characterID),
+		FactionID: api.NewOptUUID(req.FactionID),
+		OldReputation: api.NewOptInt(50),
+		NewReputation: api.NewOptInt(60),
+		OldTier: api.OptReputationChangeResponseOldTier{},
+		NewTier: api.OptReputationChangeResponseNewTier{},
+		TierChanged: api.NewOptBool(false),
+		HeatChange: api.NewOptInt(10),
+		NewHeat: api.NewOptInt(10),
+	}
+	
+	return result, nil
+}

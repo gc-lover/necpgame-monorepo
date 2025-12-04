@@ -1,7 +1,9 @@
+// Issue: #1596 - ogen migration + performance optimizations
 package server
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -18,18 +20,24 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewServiceHandlers(logger)
+	// Create ogen handlers
+	handlers := NewHandlers(logger)
 
+	// Create Chi router
 	router := chi.NewRouter()
 
 	router.Use(loggingMiddleware(logger))
 	router.Use(recoveryMiddleware(logger))
 	router.Use(corsMiddleware)
 
-	// Generated API handlers with Chi
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseRouter: router,
-	})
+	// Create ogen server (CRITICAL: pass handlers as both Handler and SecurityHandler)
+	ogenServer, err := api.NewServer(handlers, handlers)
+	if err != nil {
+		log.Fatalf("Failed to create ogen server: %v", err)
+	}
+
+	// Mount ogen server under /world
+	router.Mount("/world", ogenServer)
 
 	router.Handle("/metrics", promhttp.Handler())
 	router.Get("/health", healthCheckHandler)

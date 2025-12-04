@@ -151,6 +151,79 @@ else
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "OK All files are within the $MAX_LINES line limit"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  exit 0
 fi
+
+# Issue: #1606 - Struct alignment check
+echo ""
+echo "🔍 Checking struct field alignment..."
+
+if command -v fieldalignment >/dev/null 2>&1; then
+  # Get staged Go files
+  STAGED_GO_FILES=$(git diff --cached --name-only --diff-filter=ACMRT | grep '\.go$' || true)
+  
+  if [ -n "$STAGED_GO_FILES" ]; then
+    # Check each staged Go file's directory
+    for file in $STAGED_GO_FILES; do
+      if [ -f "$file" ]; then
+        DIR=$(dirname "$file")
+        if [ -f "$DIR/go.mod" ] || [ -f "$PROJECT_ROOT/go.mod" ]; then
+          # Run fieldalignment on the package
+          if ! fieldalignment "$DIR/..." 2>/dev/null | grep -q "struct"; then
+            # No alignment issues found
+            :
+          else
+            echo "WARNING  Struct alignment issues found in $DIR"
+            echo "   Run: fieldalignment -fix $DIR/..."
+          fi
+        fi
+      fi
+    done
+  fi
+else
+  echo "WARNING  fieldalignment not installed. Run: go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest"
+fi
+
+# Issue: Automatic benchmarks for changed services (optional, non-blocking)
+if [ "$SKIP_BENCHMARKS" != "1" ]; then
+  echo ""
+  echo "📊 Running quick benchmarks for changed services..."
+  
+  # Get changed services from staged files
+  CHANGED_SERVICES=$(git diff --cached --name-only --diff-filter=ACMRT | \
+    grep -E '^services/([^/]+)/server/.*\.go$' | \
+    sed 's|^services/\([^/]*\)/.*|\1|' | \
+    sort -u || true)
+  
+  if [ -n "$CHANGED_SERVICES" ]; then
+    for service in $CHANGED_SERVICES; do
+      SERVICE_DIR="services/$service"
+      BENCH_FILE="$SERVICE_DIR/server/handlers_bench_test.go"
+      
+      if [ -f "$BENCH_FILE" ]; then
+        echo "  🏃 $service" | tr -d '\n'
+        cd "$SERVICE_DIR" || continue
+        
+        if [ -f "Makefile" ] && grep -q "bench-quick:" Makefile 2>/dev/null; then
+          if make bench-quick >/dev/null 2>&1; then
+            echo " OK"
+          else
+            echo " WARNING  (failed, but continuing)"
+          fi
+        else
+          if go test -run=^$$ -bench=. -benchmem -benchtime=100ms ./server >/dev/null 2>&1; then
+            echo " OK"
+          else
+            echo " WARNING  (failed, but continuing)"
+          fi
+        fi
+        
+        cd - >/dev/null || continue
+      fi
+    done
+  else
+    echo "  ⏭️  No changed services with benchmarks"
+  fi
+fi
+
+exit 0
 

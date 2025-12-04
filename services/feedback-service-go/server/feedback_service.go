@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/feedback-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -174,6 +174,7 @@ func (s *FeedbackService) Unvote(ctx context.Context, feedbackID, playerID uuid.
 func (s *FeedbackService) GetStats(ctx context.Context) (*models.FeedbackStats, error) {
 	return s.repo.GetStats(ctx)
 }
+
 
 
 

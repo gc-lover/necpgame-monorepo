@@ -4,53 +4,53 @@
 CREATE SCHEMA IF NOT EXISTS pvp;
 
 CREATE TABLE IF NOT EXISTS pvp.clan_wars (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    attacker_guild_id UUID NOT NULL,
-    defender_guild_id UUID NOT NULL,
-    allies JSONB DEFAULT '[]'::jsonb,
-    status VARCHAR(50) NOT NULL DEFAULT 'declared',
-    phase VARCHAR(50) NOT NULL DEFAULT 'preparation',
-    territory_id UUID,
-    attacker_score INTEGER NOT NULL DEFAULT 0,
-    defender_score INTEGER NOT NULL DEFAULT 0,
-    winner_guild_id UUID,
-    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    end_time TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_status CHECK (status IN ('declared', 'ongoing', 'completed', 'cancelled')),
-    CONSTRAINT chk_phase CHECK (phase IN ('preparation', 'active', 'completed', 'cancelled')),
-    CONSTRAINT chk_different_guilds CHECK (attacker_guild_id != defender_guild_id)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  attacker_guild_id UUID NOT NULL,
+  defender_guild_id UUID NOT NULL,
+  territory_id UUID,
+  winner_guild_id UUID,
+  status VARCHAR(50) NOT NULL DEFAULT 'declared',
+  phase VARCHAR(50) NOT NULL DEFAULT 'preparation',
+  allies JSONB DEFAULT '[]'::jsonb,
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  attacker_score INTEGER NOT NULL DEFAULT 0,
+  defender_score INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT chk_status CHECK (status IN ('declared', 'ongoing', 'completed', 'cancelled')),
+  CONSTRAINT chk_phase CHECK (phase IN ('preparation', 'active', 'completed', 'cancelled')),
+  CONSTRAINT chk_different_guilds CHECK (attacker_guild_id != defender_guild_id)
 );
 
 CREATE TABLE IF NOT EXISTS pvp.war_battles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    war_id UUID NOT NULL REFERENCES pvp.clan_wars(id) ON DELETE CASCADE,
-    type VARCHAR(50) NOT NULL,
-    territory_id UUID,
-    status VARCHAR(50) NOT NULL DEFAULT 'scheduled',
-    attacker_score INTEGER NOT NULL DEFAULT 0,
-    defender_score INTEGER NOT NULL DEFAULT 0,
-    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    end_time TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_battle_type CHECK (type IN ('territory', 'siege', 'open_world')),
-    CONSTRAINT chk_battle_status CHECK (status IN ('scheduled', 'active', 'completed', 'cancelled'))
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  war_id UUID NOT NULL REFERENCES pvp.clan_wars(id) ON DELETE CASCADE,
+  territory_id UUID,
+  type VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'scheduled',
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  attacker_score INTEGER NOT NULL DEFAULT 0,
+  defender_score INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT chk_battle_type CHECK (type IN ('territory', 'siege', 'open_world')),
+  CONSTRAINT chk_battle_status CHECK (status IN ('scheduled', 'active', 'completed', 'cancelled'))
 );
 
 CREATE TABLE IF NOT EXISTS pvp.territories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    region VARCHAR(255) NOT NULL,
-    owner_guild_id UUID,
-    resources JSONB DEFAULT '{}'::jsonb,
-    defense_level INTEGER NOT NULL DEFAULT 1,
-    siege_difficulty INTEGER NOT NULL DEFAULT 1,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_defense_level CHECK (defense_level >= 1 AND defense_level <= 10),
-    CONSTRAINT chk_siege_difficulty CHECK (siege_difficulty >= 1 AND siege_difficulty <= 10)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_guild_id UUID,
+  name VARCHAR(255) NOT NULL,
+  region VARCHAR(255) NOT NULL,
+  resources JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  defense_level INTEGER NOT NULL DEFAULT 1,
+  siege_difficulty INTEGER NOT NULL DEFAULT 1,
+  CONSTRAINT chk_defense_level CHECK (defense_level >= 1 AND defense_level <= 10),
+  CONSTRAINT chk_siege_difficulty CHECK (siege_difficulty >= 1 AND siege_difficulty <= 10)
 );
 
 CREATE INDEX IF NOT EXISTS idx_clan_wars_attacker ON pvp.clan_wars(attacker_guild_id);

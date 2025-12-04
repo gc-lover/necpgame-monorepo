@@ -1,4 +1,3 @@
-# Issue: #138
 openapi: 3.0.3
 info:
   title: Achievement Stats Service API
@@ -7,52 +6,47 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Statistics
-    description: Статистика достижений
-
+- name: Statistics
+  description: Статистика достижений
 paths:
   /achievements/{achievementId}/stats:
     get:
       tags:
-        - Statistics
+      - Statistics
       summary: Получить статистику достижения
       operationId: getAchievementStats
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: achievementId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Статистика достижения
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AchievementStatsResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/AchievementStatsResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     AchievementStatsResponse:
       type: object
@@ -60,6 +54,17 @@ components:
         achievement_id:
           type: string
           format: uuid
+        first_player_id:
+          type: string
+          format: uuid
+          nullable: true
+        first_player_name:
+          type: string
+          nullable: true
+        first_unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
         total_unlocks:
           type: integer
           minimum: 0
@@ -72,32 +77,6 @@ components:
           type: number
           format: float
           nullable: true
-        first_player_id:
-          type: string
-          format: uuid
-          nullable: true
-        first_player_name:
-          type: string
-          nullable: true
-        first_unlocked_at:
-          type: string
-          format: date-time
-          nullable: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

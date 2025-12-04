@@ -95,7 +95,7 @@ func (pm *PartitionManager) ensureTablePartitions(ctx context.Context, schema, t
 }
 
 // createPartition создает партицию для даты (если не существует)
-func (pm *PartitionManager) createPartition(ctx context.Context, schema, table string, date time.Date) error {
+func (pm *PartitionManager) createPartition(ctx context.Context, schema, table string, date time.Time) error {
 	partitionName := fmt.Sprintf("%s_%s", table, date.Format("2006_01_02"))
 	fullPartitionName := fmt.Sprintf("%s.%s", schema, partitionName)
 	

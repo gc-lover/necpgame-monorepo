@@ -33,16 +33,16 @@ END $$;
 
 -- Таблица боевых сессий
 CREATE TABLE IF NOT EXISTS mvp_core.combat_sessions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_type combat_session_type NOT NULL,
-    status combat_session_status NOT NULL DEFAULT 'created',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    started_at TIMESTAMP,
-    ended_at TIMESTAMP,
-    current_turn INTEGER DEFAULT 0 CHECK (current_turn >= 0),
-    turn_order JSONB DEFAULT '[]'::jsonb,
-    settings JSONB DEFAULT '{}'::jsonb,
-    CONSTRAINT chk_combat_sessions_dates CHECK (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  turn_order JSONB DEFAULT '[]'::jsonb,
+  settings JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  started_at TIMESTAMP,
+  ended_at TIMESTAMP,
+  current_turn INTEGER DEFAULT 0 CHECK (current_turn >= 0),
+  session_type combat_session_type NOT NULL,
+  status combat_session_status NOT NULL DEFAULT 'created',
+  CONSTRAINT chk_combat_sessions_dates CHECK (
         (started_at IS NULL AND ended_at IS NULL) OR
         (started_at IS NOT NULL AND (ended_at IS NULL OR ended_at >= started_at))
     )
@@ -56,19 +56,19 @@ CREATE INDEX IF NOT EXISTS idx_combat_sessions_active ON mvp_core.combat_session
 
 -- Таблица участников боевых сессий
 CREATE TABLE IF NOT EXISTS mvp_core.combat_participants (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id UUID NOT NULL,
-    participant_type combat_participant_type NOT NULL,
-    participant_id UUID NOT NULL,
-    team INTEGER DEFAULT 0 CHECK (team >= 0),
-    initiative INTEGER DEFAULT 0 CHECK (initiative >= 0),
-    health INTEGER NOT NULL DEFAULT 100 CHECK (health >= 0),
-    max_health INTEGER NOT NULL DEFAULT 100 CHECK (max_health > 0),
-    status combat_participant_status NOT NULL DEFAULT 'alive',
-    position JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_combat_participants_session FOREIGN KEY (session_id) REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
-    CONSTRAINT chk_combat_participants_health CHECK (health <= max_health)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID NOT NULL,
+  participant_id UUID NOT NULL,
+  position JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  team INTEGER DEFAULT 0 CHECK (team >= 0),
+  initiative INTEGER DEFAULT 0 CHECK (initiative >= 0),
+  health INTEGER NOT NULL DEFAULT 100 CHECK (health >= 0),
+  max_health INTEGER NOT NULL DEFAULT 100 CHECK (max_health > 0),
+  participant_type combat_participant_type NOT NULL,
+  status combat_participant_status NOT NULL DEFAULT 'alive',
+  CONSTRAINT fk_combat_participants_session FOREIGN KEY (session_id) REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
+  CONSTRAINT chk_combat_participants_health CHECK (health <= max_health)
 );
 
 -- Индексы для combat_participants
@@ -80,20 +80,20 @@ CREATE INDEX IF NOT EXISTS idx_combat_participants_status ON mvp_core.combat_par
 
 -- Таблица логов действий в бою
 CREATE TABLE IF NOT EXISTS mvp_core.combat_logs (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id UUID NOT NULL,
-    turn_number INTEGER NOT NULL DEFAULT 0 CHECK (turn_number >= 0),
-    actor_id UUID NOT NULL,
-    action_type combat_action_type NOT NULL,
-    target_id UUID,
-    damage_dealt INTEGER DEFAULT 0 CHECK (damage_dealt >= 0),
-    damage_type VARCHAR(50),
-    effects_applied JSONB DEFAULT '[]'::jsonb,
-    result JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_combat_logs_session FOREIGN KEY (session_id) REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
-    CONSTRAINT fk_combat_logs_actor FOREIGN KEY (actor_id) REFERENCES mvp_core.combat_participants(id) ON DELETE CASCADE,
-    CONSTRAINT fk_combat_logs_target FOREIGN KEY (target_id) REFERENCES mvp_core.combat_participants(id) ON DELETE SET NULL
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID NOT NULL,
+  actor_id UUID NOT NULL,
+  target_id UUID,
+  damage_type VARCHAR(50),
+  effects_applied JSONB DEFAULT '[]'::jsonb,
+  result JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  turn_number INTEGER NOT NULL DEFAULT 0 CHECK (turn_number >= 0),
+  damage_dealt INTEGER DEFAULT 0 CHECK (damage_dealt >= 0),
+  action_type combat_action_type NOT NULL,
+  CONSTRAINT fk_combat_logs_session FOREIGN KEY (session_id) REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
+  CONSTRAINT fk_combat_logs_actor FOREIGN KEY (actor_id) REFERENCES mvp_core.combat_participants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_combat_logs_target FOREIGN KEY (target_id) REFERENCES mvp_core.combat_participants(id) ON DELETE SET NULL
 );
 
 -- Индексы для combat_logs
@@ -105,15 +105,15 @@ CREATE INDEX IF NOT EXISTS idx_combat_logs_turn_number ON mvp_core.combat_logs(s
 
 -- Таблица наград за боевые сессии
 CREATE TABLE IF NOT EXISTS mvp_core.combat_rewards (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id UUID NOT NULL,
-    participant_id UUID NOT NULL,
-    reward_type combat_reward_type NOT NULL,
-    reward_data JSONB DEFAULT '{}'::jsonb,
-    distributed BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_combat_rewards_session FOREIGN KEY (session_id) REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
-    CONSTRAINT fk_combat_rewards_participant FOREIGN KEY (participant_id) REFERENCES mvp_core.combat_participants(id) ON DELETE CASCADE
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID NOT NULL,
+  participant_id UUID NOT NULL,
+  reward_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  distributed BOOLEAN NOT NULL DEFAULT false,
+  reward_type combat_reward_type NOT NULL,
+  CONSTRAINT fk_combat_rewards_session FOREIGN KEY (session_id) REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
+  CONSTRAINT fk_combat_rewards_participant FOREIGN KEY (participant_id) REFERENCES mvp_core.combat_participants(id) ON DELETE CASCADE
 );
 
 -- Индексы для combat_rewards

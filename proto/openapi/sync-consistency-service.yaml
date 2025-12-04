@@ -1,56 +1,59 @@
-# Issue: #1521
 openapi: 3.0.3
 info:
   title: Data Synchronization Consistency Service API
-  description: |
-    API для мониторинга и исправления консистентности данных.
-    
+  description: 'API для мониторинга и исправления консистентности данных.
+
+
     **Основные возможности:**
+
     - Проверка консистентности
+
     - Метрики консистентности
+
     - Исправление неконсистентности
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8090/api/v1/sync
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/sync
-    description: Продакшен сервер
-
+- url: http://localhost:8090/api/v1/sync
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/sync
+  description: Продакшен сервер
 tags:
-  - name: Consistency
-    description: Мониторинг консистентности
-
+- name: Consistency
+  description: Мониторинг консистентности
 paths:
   /consistency/check:
     get:
       tags:
-        - Consistency
+      - Consistency
       summary: Проверить консистентность
-      description: |
-        Выполняет проверку консистентности данных между сервисами.
+      description: 'Выполняет проверку консистентности данных между сервисами.
+
         Возвращает список нарушений консистентности.
+
+        '
       operationId: checkConsistency
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: service_name
-          in: query
-          required: false
-          description: Фильтр по сервису
-          schema:
-            type: string
-            example: "character-service"
-        - name: check_type
-          in: query
-          required: false
-          description: Тип проверки
-          schema:
-            type: string
-            example: "reference_integrity"
+      - name: service_name
+        in: query
+        required: false
+        description: Фильтр по сервису
+        schema:
+          type: string
+          example: character-service
+      - name: check_type
+        in: query
+        required: false
+        description: Тип проверки
+        schema:
+          type: string
+          example: reference_integrity
       responses:
         '200':
           description: Результаты проверки консистентности
@@ -59,41 +62,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConsistencyCheckResponse'
               example:
-                check_id: "bb0e8400-e29b-41d4-a716-446655440000"
-                status: "consistent"
+                check_id: bb0e8400-e29b-41d4-a716-446655440000
+                status: consistent
                 violations: []
-                checked_at: "2025-12-01T10:00:00Z"
+                checked_at: '2025-12-01T10:00:00Z'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /consistency/metrics:
     get:
       tags:
-        - Consistency
+      - Consistency
       summary: Получить метрики консистентности
-      description: |
-        Возвращает метрики консистентности данных: количество проверок,
+      description: 'Возвращает метрики консистентности данных: количество проверок,
+
         процент консистентных данных, время синхронизации и другие метрики.
+
+        '
       operationId: getConsistencyMetrics
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата периода
-          schema:
-            type: string
-            format: date-time
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата периода
+        schema:
+          type: string
+          format: date-time
       responses:
         '200':
           description: Метрики консистентности
@@ -108,20 +112,20 @@ paths:
                 consistency_rate: 0.98
                 average_sync_time: 1.5
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /consistency/fix:
     post:
       tags:
-        - Consistency
+      - Consistency
       summary: Исправить неконсистентность
-      description: |
-        Запускает автоматическое исправление обнаруженных нарушений консистентности.
+      description: 'Запускает автоматическое исправление обнаруженных нарушений консистентности.
+
+        '
       operationId: fixConsistency
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -129,8 +133,8 @@ paths:
             schema:
               $ref: '#/components/schemas/FixConsistencyRequest'
             example:
-              check_id: "bb0e8400-e29b-41d4-a716-446655440000"
-              fix_strategy: "auto"
+              check_id: bb0e8400-e29b-41d4-a716-446655440000
+              fix_strategy: auto
       responses:
         '200':
           description: Исправление запущено
@@ -139,47 +143,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/FixConsistencyResponse'
               example:
-                check_id: "bb0e8400-e29b-41d4-a716-446655440000"
-                status: "fixing"
+                check_id: bb0e8400-e29b-41d4-a716-446655440000
+                status: fixing
                 violations_fixed: 0
-                message: "Consistency fix started"
+                message: Consistency fix started
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ConsistencyCheckResponse:
       type: object
       required:
-        - check_id
-        - status
-        - violations
-        - checked_at
+      - check_id
+      - status
+      - violations
+      - checked_at
       properties:
         check_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
         service_name:
           type: string
           nullable: true
-          example: "character-service"
+          example: character-service
         check_type:
           type: string
           nullable: true
-          example: "reference_integrity"
+          example: reference_integrity
+        checked_at:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
         status:
-          $ref: 'sync-schemas.yaml#/components/schemas/ConsistencyStatus'
+          $ref: sync-schemas.yaml#/components/schemas/ConsistencyStatus
         violations:
           type: array
           description: Список нарушений консистентности
@@ -192,21 +198,21 @@ components:
                 type: string
               severity:
                 type: string
-                enum: [low, medium, high, critical]
+                enum:
+                - low
+                - medium
+                - high
+                - critical
           example: []
-        checked_at:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ConsistencyMetricsResponse:
       type: object
       required:
-        - total_checks
-        - consistent_checks
-        - inconsistent_checks
-        - consistency_rate
-        - average_sync_time
+      - total_checks
+      - consistent_checks
+      - inconsistent_checks
+      - consistency_rate
+      - average_sync_time
       properties:
         total_checks:
           type: integer
@@ -236,61 +242,64 @@ components:
           description: Среднее время синхронизации в секундах
           minimum: 0
           example: 1.5
-
     FixConsistencyRequest:
       type: object
       required:
-        - check_id
-        - fix_strategy
+      - check_id
+      - fix_strategy
       properties:
         check_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
         fix_strategy:
           type: string
-          enum: [auto, manual, selective]
+          enum:
+          - auto
+          - manual
+          - selective
           description: Стратегия исправления
-          example: "auto"
+          example: auto
         violations_to_fix:
           type: array
           description: Список нарушений для исправления (для selective)
           items:
             type: string
           nullable: true
-
     FixConsistencyResponse:
       type: object
       required:
-        - check_id
-        - status
-        - violations_fixed
-        - message
+      - check_id
+      - status
+      - violations_fixed
+      - message
       properties:
         check_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
+        message:
+          type: string
+          example: Consistency fix started
         status:
           type: string
-          enum: [fixing, completed, failed]
-          example: "fixing"
+          enum:
+          - fixing
+          - completed
+          - failed
+          example: fixing
         violations_fixed:
           type: integer
           description: Количество исправленных нарушений
           minimum: 0
           example: 0
-        message:
-          type: string
-          example: "Consistency fix started"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

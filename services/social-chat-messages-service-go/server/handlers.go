@@ -1,6 +1,8 @@
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -10,6 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// Context timeout constants (Issue #1604)
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
+
 type ChatMessagesHandlers struct{}
 
 func NewChatMessagesHandlers() *ChatMessagesHandlers {
@@ -17,12 +25,16 @@ func NewChatMessagesHandlers() *ChatMessagesHandlers {
 }
 
 func (h *ChatMessagesHandlers) GetMessages(w http.ResponseWriter, r *http.Request, params api.GetMessagesParams) {
-	messageId1 := openapi_types.UUID(uuid.New())
-	messageId2 := openapi_types.UUID(uuid.New())
-	senderId1 := openapi_types.UUID(uuid.New())
-	senderId2 := openapi_types.UUID(uuid.New())
-	channelId1 := openapi_types.UUID(uuid.New())
-	channelId2 := openapi_types.UUID(uuid.New())
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
+	messageId1 := uuid.New()
+	messageId2 := uuid.New()
+	senderId1 := uuid.New()
+	senderId2 := uuid.New()
+	channelId1 := uuid.New()
+	channelId2 := uuid.New()
 	channelType := api.ChatMessageChannelTypeGLOBAL
 	messageType := api.Text
 	content1 := "Hello, world!"
@@ -90,6 +102,10 @@ func (h *ChatMessagesHandlers) GetMessages(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ChatMessagesHandlers) GetChannelMessages(w http.ResponseWriter, r *http.Request, channelId openapi_types.UUID, params api.GetChannelMessagesParams) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	messageId1 := openapi_types.UUID(uuid.New())
 	messageId2 := openapi_types.UUID(uuid.New())
 	senderId1 := openapi_types.UUID(uuid.New())
@@ -161,6 +177,10 @@ func (h *ChatMessagesHandlers) GetChannelMessages(w http.ResponseWriter, r *http
 }
 
 func (h *ChatMessagesHandlers) SendChatMessage(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.SendMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err, "Invalid request body")
@@ -196,6 +216,10 @@ func (h *ChatMessagesHandlers) SendChatMessage(w http.ResponseWriter, r *http.Re
 }
 
 func (h *ChatMessagesHandlers) ProcessChatMessage(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.ProcessMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err, "Invalid request body")
@@ -239,6 +263,7 @@ func (h *ChatMessagesHandlers) ProcessChatMessage(w http.ResponseWriter, r *http
 
 	respondJSON(w, http.StatusOK, response)
 }
+
 
 
 

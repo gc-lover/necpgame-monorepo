@@ -1,18 +1,50 @@
-// Issue: #150 - Matchmaking Service Main Entry Point (ogen-based)
+// Issue: #150, #1584 - Matchmaking Service Main Entry Point (ogen-based)
 package main
 
 import (
 	"context"
 	"log"
+	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/server"
+	"github.com/pyroscope-io/client/pyroscope" // Issue: #1611 - Continuous Profiling
 )
 
 func main() {
+	// Issue: #1611 - Continuous Profiling (Pyroscope)
+	pyroscope.Start(pyroscope.Config{
+		ApplicationName: "necpgame.matchmaking",
+		ServerAddress:   getEnv("PYROSCOPE_SERVER", "http://pyroscope:4040"),
+		ProfileTypes: []pyroscope.ProfileType{
+			pyroscope.ProfileCPU,
+			pyroscope.ProfileAllocObjects,
+			pyroscope.ProfileAllocSpace,
+			pyroscope.ProfileInuseObjects,
+			pyroscope.ProfileInuseSpace,
+		},
+		Tags: map[string]string{
+			"environment": getEnv("ENV", "development"),
+			"version":     getEnv("VERSION", "unknown"),
+		},
+		SampleRate: 100, // 100 Hz
+	})
+	log.Println("OK Pyroscope continuous profiling started")
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6060")
+		log.Printf("Starting pprof server on %s", pprofAddr)
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
+	}()
+
 	// Configuration from environment
 	addr := getEnv("SERVER_ADDR", ":8090")
 	dbConnStr := getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
@@ -40,6 +72,11 @@ func main() {
 	service := server.NewService(repo, cache)
 	log.Println("OK Service initialized")
 
+	// OPTIMIZATION: Issue #1585 - Runtime goroutine leak monitoring
+	goroutineMonitor := server.NewGoroutineMonitor(500) // Max 500 goroutines for matchmaking service
+	go goroutineMonitor.Start()
+	defer goroutineMonitor.Stop()
+
 	// Create HTTP server (ogen-based)
 	httpServer := server.NewHTTPServer(addr, service)
 	log.Println("OK HTTP server created")
@@ -59,7 +96,7 @@ func main() {
 		log.Println("  - GET    /api/v1/matchmaking/leaderboard/{activityType}")
 		log.Println("  - GET    /health")
 		log.Println("  - GET    /metrics")
-		
+
 		if err := httpServer.Start(); err != nil {
 			log.Fatalf("Server failed: %v", err)
 		}

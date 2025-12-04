@@ -1,114 +1,90 @@
-// Issue: #1560
-
+// Issue: #1595
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/projectile-core-service-go/pkg/api"
 )
 
-// ProjectileHandlers implements api.ServerInterface
-type ProjectileHandlers struct {
+const DBTimeout = 50 * time.Millisecond
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+type Handlers struct {
 	service *ProjectileService
 }
 
-// NewProjectileHandlers creates new handlers
-func NewProjectileHandlers(service *ProjectileService) *ProjectileHandlers {
-	return &ProjectileHandlers{
-		service: service,
-	}
+// NewHandlers creates new handlers
+func NewHandlers(service *ProjectileService) *Handlers {
+	return &Handlers{service: service}
 }
 
-// GetProjectileForms implements GET /api/v1/projectile/forms
-func (h *ProjectileHandlers) GetProjectileForms(w http.ResponseWriter, r *http.Request, params api.GetProjectileFormsParams) {
-	forms, err := h.service.GetForms(r.Context(), params)
+// GetProjectileForms - TYPED response!
+func (h *Handlers) GetProjectileForms(ctx context.Context, params api.GetProjectileFormsParams) (api.GetProjectileFormsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	forms, err := h.service.GetForms(ctx, params)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to get forms", err)
-		return
+		return &api.GetProjectileFormsInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, forms)
+	return forms, nil
 }
 
-// GetProjectileForm implements GET /api/v1/projectile/forms/{form_id}
-func (h *ProjectileHandlers) GetProjectileForm(w http.ResponseWriter, r *http.Request, formId string) {
-	form, err := h.service.GetForm(r.Context(), formId)
+// GetProjectileForm - TYPED response!
+func (h *Handlers) GetProjectileForm(ctx context.Context, params api.GetProjectileFormParams) (api.GetProjectileFormRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	form, err := h.service.GetForm(ctx, params.FormID)
 	if err != nil {
-		respondError(w, http.StatusNotFound, "Form not found", err)
-		return
+		return &api.GetProjectileFormNotFound{}, nil
 	}
 
-	respondJSON(w, http.StatusOK, form)
+	return form, nil
 }
 
-// SpawnProjectile implements POST /api/v1/projectile/spawn
-func (h *ProjectileHandlers) SpawnProjectile(w http.ResponseWriter, r *http.Request) {
-	var req api.SpawnProjectileRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body", err)
-		return
-	}
+// SpawnProjectile - TYPED response!
+func (h *Handlers) SpawnProjectile(ctx context.Context, req *api.SpawnProjectileRequest) (api.SpawnProjectileRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	resp, err := h.service.SpawnProjectile(r.Context(), &req)
+	resp, err := h.service.SpawnProjectile(ctx, req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to spawn projectile", err)
-		return
+		return &api.SpawnProjectileInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusCreated, resp)
+	return resp, nil
 }
 
-// ValidateCompatibility implements POST /api/v1/projectile/validate-compatibility
-func (h *ProjectileHandlers) ValidateCompatibility(w http.ResponseWriter, r *http.Request) {
-	var req api.ValidateCompatibilityRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body", err)
-		return
-	}
+// ValidateCompatibility - TYPED response!
+func (h *Handlers) ValidateCompatibility(ctx context.Context, req *api.ValidateCompatibilityRequest) (api.ValidateCompatibilityRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	resp, err := h.service.ValidateCompatibility(r.Context(), &req)
+	resp, err := h.service.ValidateCompatibility(ctx, req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to validate", err)
-		return
+		return &api.ValidateCompatibilityInternalServerError{}, err
 	}
 
-	respondJSON(w, http.StatusOK, resp)
+	return resp, nil
 }
 
-// GetCompatibilityMatrix implements GET /api/v1/projectile/compatibility-matrix
-func (h *ProjectileHandlers) GetCompatibilityMatrix(w http.ResponseWriter, r *http.Request) {
-	matrix, err := h.service.GetCompatibilityMatrix(r.Context())
+// GetCompatibilityMatrix - TYPED response!
+func (h *Handlers) GetCompatibilityMatrix(ctx context.Context) (api.GetCompatibilityMatrixRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	matrix, err := h.service.GetCompatibilityMatrix(ctx)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to get matrix", err)
-		return
+		return &api.Error{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, matrix)
+	return matrix, nil
 }
-
-// Helper functions
-
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string, err error) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error":   message,
-		"details": err.Error(),
-	})
-}
-
-
-
-
-
-
-
-

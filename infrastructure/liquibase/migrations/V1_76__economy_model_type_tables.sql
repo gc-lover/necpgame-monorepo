@@ -25,19 +25,19 @@ END $$;
 
 -- Таблица конфигурации экономической модели
 CREATE TABLE IF NOT EXISTS economy.economy_model_config (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    model_type economy_model_type NOT NULL DEFAULT 'hybrid',
-    name VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT,
-    base_supply_npc_controlled BOOLEAN NOT NULL DEFAULT true,
-    strategic_markets_player_controlled BOOLEAN NOT NULL DEFAULT true,
-    regional_modifiers_faction_controlled BOOLEAN NOT NULL DEFAULT true,
-    price_volatility_factor DECIMAL(5,2) NOT NULL DEFAULT 1.00 CHECK (price_volatility_factor >= 0.00 AND price_volatility_factor <= 10.00),
-    demand_supply_impact DECIMAL(5,2) NOT NULL DEFAULT 0.50 CHECK (demand_supply_impact >= 0.00 AND demand_supply_impact <= 1.00),
-    rare_items_player_only BOOLEAN NOT NULL DEFAULT true,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  price_volatility_factor DECIMAL(5,2) NOT NULL DEFAULT 1.00 CHECK (price_volatility_factor >= 0.00 AND price_volatility_factor <= 10.00),
+  demand_supply_impact DECIMAL(5,2) NOT NULL DEFAULT 0.50 CHECK (demand_supply_impact >= 0.00 AND demand_supply_impact <= 1.00),
+  base_supply_npc_controlled BOOLEAN NOT NULL DEFAULT true,
+  strategic_markets_player_controlled BOOLEAN NOT NULL DEFAULT true,
+  regional_modifiers_faction_controlled BOOLEAN NOT NULL DEFAULT true,
+  rare_items_player_only BOOLEAN NOT NULL DEFAULT true,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  model_type economy_model_type NOT NULL DEFAULT 'hybrid'
 );
 
 -- Индексы для economy_model_config
@@ -48,22 +48,24 @@ CREATE INDEX IF NOT EXISTS idx_economy_model_config_is_active
 
 -- Таблица типов рынков
 CREATE TABLE IF NOT EXISTS economy.market_types (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    market_type market_type NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    region_id UUID, -- FK regions (nullable, для региональных рынков)
-    faction_id UUID, -- FK factions (nullable, для фракционных рынков)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  region_id UUID,
+  -- FK regions (nullable, для региональных рынков)
+    faction_id UUID,
+  description TEXT,
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  base_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (base_tax_rate >= 0.00 AND base_tax_rate <= 100.00),
+  player_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (player_tax_rate >= 0.00 AND player_tax_rate <= 100.00),
+  npc_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (npc_tax_rate >= 0.00 AND npc_tax_rate <= 100.00),
+  min_reputation_level INTEGER DEFAULT 0 CHECK (min_reputation_level >= 0),
+  -- FK factions (nullable, для фракционных рынков)
     is_global BOOLEAN NOT NULL DEFAULT false,
-    base_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (base_tax_rate >= 0.00 AND base_tax_rate <= 100.00),
-    player_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (player_tax_rate >= 0.00 AND player_tax_rate <= 100.00),
-    npc_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (npc_tax_rate >= 0.00 AND npc_tax_rate <= 100.00),
-    min_reputation_level INTEGER DEFAULT 0 CHECK (min_reputation_level >= 0),
-    requires_alliance BOOLEAN NOT NULL DEFAULT false,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(market_type, region_id, faction_id)
+  requires_alliance BOOLEAN NOT NULL DEFAULT false,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  market_type market_type NOT NULL,
+  UNIQUE(market_type, region_id, faction_id)
 );
 
 -- Индексы для market_types
@@ -80,15 +82,26 @@ CREATE INDEX IF NOT EXISTS idx_market_types_is_global
 
 -- Таблица правил доступа к рынкам
 CREATE TABLE IF NOT EXISTS economy.market_access_rules (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    market_type_id UUID NOT NULL REFERENCES economy.market_types(id) ON DELETE CASCADE,
-    access_type VARCHAR(50) NOT NULL, -- 'reputation', 'alliance', 'guild', 'level', 'quest'
-    requirement_value INTEGER, -- nullable, значение требования (уровень репутации, уровень игрока, etc.)
-    requirement_item_id UUID, -- nullable, FK items (для требований по предметам)
-    requirement_quest_id UUID, -- nullable, FK quests (для требований по квестам)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  market_type_id UUID NOT NULL REFERENCES economy.market_types(id) ON DELETE CASCADE,
+  значение требования (уровень репутации, уровень игрока, etc.)
+    requirement_item_id UUID,
+  FK items (для требований по предметам)
+    requirement_quest_id UUID,
+  FK quests (для требований по квестам)
     description TEXT,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  access_type VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  'quest'
+    requirement_value INTEGER,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  -- 'reputation',
+  'alliance',
+  'guild',
+  'level',
+  -- nullable,
+  -- nullable,
+  -- nullable
 );
 
 -- Индексы для market_access_rules
@@ -101,22 +114,28 @@ CREATE INDEX IF NOT EXISTS idx_market_access_rules_is_active
 
 -- Таблица конфигурации модели ценообразования
 CREATE TABLE IF NOT EXISTS economy.pricing_model_config (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    market_type_id UUID REFERENCES economy.market_types(id) ON DELETE SET NULL, -- nullable, для глобальных настроек
-    item_category VARCHAR(50), -- nullable, категория предметов
-    item_tier INTEGER, -- nullable, тиер предметов (1-5)
-    pricing_control_type pricing_control_type NOT NULL DEFAULT 'hybrid',
-    base_price_multiplier DECIMAL(5,2) NOT NULL DEFAULT 1.00 CHECK (base_price_multiplier >= 0.00 AND base_price_multiplier <= 10.00),
-    demand_impact_factor DECIMAL(5,2) NOT NULL DEFAULT 0.30 CHECK (demand_impact_factor >= 0.00 AND demand_impact_factor <= 1.00),
-    supply_impact_factor DECIMAL(5,2) NOT NULL DEFAULT 0.30 CHECK (supply_impact_factor >= 0.00 AND supply_impact_factor <= 1.00),
-    event_impact_factor DECIMAL(5,2) NOT NULL DEFAULT 0.20 CHECK (event_impact_factor >= 0.00 AND event_impact_factor <= 1.00),
-    min_price_modifier DECIMAL(5,2) NOT NULL DEFAULT 0.50 CHECK (min_price_modifier >= 0.00 AND min_price_modifier <= 1.00),
-    max_price_modifier DECIMAL(5,2) NOT NULL DEFAULT 2.00 CHECK (max_price_modifier >= 1.00 AND max_price_modifier <= 10.00),
-    player_control_percentage DECIMAL(5,2) NOT NULL DEFAULT 50.00 CHECK (player_control_percentage >= 0.00 AND player_control_percentage <= 100.00),
-    npc_control_percentage DECIMAL(5,2) NOT NULL DEFAULT 50.00 CHECK (npc_control_percentage >= 0.00 AND npc_control_percentage <= 100.00),
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  market_type_id UUID REFERENCES economy.market_types(id) ON DELETE SET NULL,
+  для глобальных настроек
+    item_category VARCHAR(50),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  base_price_multiplier DECIMAL(5,2) NOT NULL DEFAULT 1.00 CHECK (base_price_multiplier >= 0.00 AND base_price_multiplier <= 10.00),
+  demand_impact_factor DECIMAL(5,2) NOT NULL DEFAULT 0.30 CHECK (demand_impact_factor >= 0.00 AND demand_impact_factor <= 1.00),
+  supply_impact_factor DECIMAL(5,2) NOT NULL DEFAULT 0.30 CHECK (supply_impact_factor >= 0.00 AND supply_impact_factor <= 1.00),
+  event_impact_factor DECIMAL(5,2) NOT NULL DEFAULT 0.20 CHECK (event_impact_factor >= 0.00 AND event_impact_factor <= 1.00),
+  min_price_modifier DECIMAL(5,2) NOT NULL DEFAULT 0.50 CHECK (min_price_modifier >= 0.00 AND min_price_modifier <= 1.00),
+  max_price_modifier DECIMAL(5,2) NOT NULL DEFAULT 2.00 CHECK (max_price_modifier >= 1.00 AND max_price_modifier <= 10.00),
+  player_control_percentage DECIMAL(5,2) NOT NULL DEFAULT 50.00 CHECK (player_control_percentage >= 0.00 AND player_control_percentage <= 100.00),
+  npc_control_percentage DECIMAL(5,2) NOT NULL DEFAULT 50.00 CHECK (npc_control_percentage >= 0.00 AND npc_control_percentage <= 100.00),
+  категория предметов
+    item_tier INTEGER,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  -- nullable,
+  -- nullable,
+  -- nullable,
+  тиер предметов (1-5)
+    pricing_control_type pricing_control_type NOT NULL DEFAULT 'hybrid'
 );
 
 -- Индексы для pricing_model_config
@@ -132,19 +151,34 @@ CREATE INDEX IF NOT EXISTS idx_pricing_model_config_is_active
 
 -- Таблица правил управления экономикой
 CREATE TABLE IF NOT EXISTS economy.economy_governance_rules (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    governance_entity_type governance_entity_type NOT NULL,
-    entity_id UUID, -- nullable, ID сущности (player_id, faction_id, etc.)
-    rule_type VARCHAR(50) NOT NULL, -- 'price_control', 'supply_control', 'tax_control', 'access_control'
-    rule_scope VARCHAR(50) NOT NULL, -- 'global', 'regional', 'faction', 'market', 'item'
-    scope_id UUID, -- nullable, ID области действия (region_id, market_type_id, item_id, etc.)
-    rule_config JSONB NOT NULL DEFAULT '{}', -- конфигурация правила
-    priority INTEGER NOT NULL DEFAULT 0 CHECK (priority >= 0),
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    effective_from TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    effective_until TIMESTAMP, -- nullable
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  entity_id UUID,
+  'item'
+    scope_id UUID,
+  ID сущности (player_id, faction_id, etc.)
+    rule_type VARCHAR(50) NOT NULL,
+  'access_control'
+    rule_scope VARCHAR(50) NOT NULL,
+  ID области действия (region_id, market_type_id, item_id, etc.)
+    rule_config JSONB NOT NULL DEFAULT '{}',
+  effective_from TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  effective_until TIMESTAMP,
+  -- nullable
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- конфигурация правила
+    priority INTEGER NOT NULL DEFAULT 0 CHECK (priority >= 0),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  governance_entity_type governance_entity_type NOT NULL,
+  -- nullable,
+  -- 'price_control',
+  'supply_control',
+  'tax_control',
+  -- 'global',
+  'regional',
+  'faction',
+  'market',
+  -- nullable
 );
 
 -- Индексы для economy_governance_rules

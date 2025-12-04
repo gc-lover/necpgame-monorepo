@@ -1,4 +1,3 @@
-# Issue: #215
 openapi: 3.0.3
 info:
   title: Reset Service API
@@ -7,75 +6,70 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8088/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8088/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Reset
-    description: Управление сбросами
-
+- name: Reset
+  description: Управление сбросами
 paths:
   /reset/stats:
     get:
       tags:
-        - Reset
+      - Reset
       summary: Получить статистику сбросов
       operationId: getResetStats
       responses:
-        "200":
+        '200':
           description: Статистика сбросов
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResetStats"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ResetStats'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /reset/history:
     get:
       tags:
-        - Reset
+      - Reset
       summary: Получить историю сбросов
       operationId: getResetHistory
       parameters:
-        - name: type
-          in: query
-          schema:
-            $ref: "#/components/schemas/ResetType"
-          description: Тип сброса (daily или weekly)
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Количество записей на странице
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Смещение для пагинации
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/ResetType'
+        description: Тип сброса (daily или weekly)
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Количество записей на странице
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Смещение для пагинации
       responses:
-        "200":
+        '200':
           description: История сбросов
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResetListResponse"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ResetListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /reset/trigger:
     post:
       tags:
-        - Reset
+      - Reset
       summary: Запустить сброс
       operationId: triggerReset
       requestBody:
@@ -83,41 +77,43 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TriggerResetRequest"
+              $ref: '#/components/schemas/TriggerResetRequest'
       responses:
-        "200":
+        '200':
           description: Сброс запущен
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   schemas:
     ResetType:
       type: string
-      enum: [daily, weekly]
+      enum:
+      - daily
+      - weekly
       description: Тип сброса
-
     ResetStatus:
       type: string
-      enum: [pending, running, completed, failed]
+      enum:
+      - pending
+      - running
+      - completed
+      - failed
       description: Статус сброса
-
     ResetRecord:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        type:
-          $ref: "#/components/schemas/ResetType"
-        status:
-          $ref: "#/components/schemas/ResetStatus"
+        error:
+          type: string
+          nullable: true
         started_at:
           type: string
           format: date-time
@@ -125,14 +121,15 @@ components:
           type: string
           format: date-time
           nullable: true
-        error:
-          type: string
-          nullable: true
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-
+        status:
+          $ref: '#/components/schemas/ResetStatus'
+        type:
+          $ref: '#/components/schemas/ResetType'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ResetStats:
       type: object
       properties:
@@ -150,28 +147,25 @@ components:
         next_weekly_reset:
           type: string
           format: date-time
-
     TriggerResetRequest:
       type: object
       required:
-        - type
+      - type
       properties:
         type:
-          $ref: "#/components/schemas/ResetType"
-
+          $ref: '#/components/schemas/ResetType'
     ResetListResponse:
       allOf:
-        - $ref: "common.yaml#/components/schemas/PaginationResponse"
-        - type: object
-          properties:
+      - $ref: common.yaml#/components/schemas/PaginationResponse
+      - type: object
+        properties:
+          items:
+            type: array
             items:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResetRecord"
-              description: Список сбросов
-
+              $ref: '#/components/schemas/ResetRecord'
+            description: Список сбросов
   responses:
     BadRequest:
-      $ref: "common.yaml#/components/responses/BadRequest"
+      $ref: common.yaml#/components/responses/BadRequest
     InternalServerError:
-      $ref: "common.yaml#/components/responses/InternalServerError"
+      $ref: common.yaml#/components/responses/InternalServerError

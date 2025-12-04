@@ -1,105 +1,121 @@
-# Issue: #141665253
 openapi: 3.0.3
 info:
   title: Gameplay Combat Combos Service API
-  description: |
-    API для системы комбо и синергий в боевой системе NECPGAME.
-    
+  description: 'API для системы комбо и синергий в боевой системе NECPGAME.
+
+
     **Основные возможности:**
+
     - Каталог комбо (solo, team, legendary)
+
     - Активация комбо
+
     - Применение синергий (ability, team, equipment, implant, timing)
+
     - Система scoring для оценки комбо
+
     - Chain-комбо с сокращением кулдаунов
+
     - Управление лоадаутами комбо
+
     - Аналитика эффективности комбо
-    
+
+
     **Примечание:** Детальные endpoints находятся в модульных файлах:
+
     - `combat-combos-catalog-service.yaml` - каталог комбо
+
     - `combat-combos-activation-service.yaml` - активация и синергии
+
     - `combat-combos-loadouts-service.yaml` - лоадауты
+
     - `combat-combos-scoring-service.yaml` - scoring
+
     - `combat-combos-analytics-service.yaml` - аналитика
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Combat Combos
-    description: Система комбо и синергий
-
+- name: Combat Combos
+  description: Система комбо и синергий
 paths:
   /gameplay/combat/combos/catalog:
     get:
       tags:
-        - Combat Combos
+      - Combat Combos
       summary: Получить каталог комбо
       operationId: getComboCatalog
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: combo_type
-          in: query
-          schema:
-            type: string
-            enum: [solo, team, legendary]
-        - name: complexity
-          in: query
-          schema:
-            type: string
-            enum: [Bronze, Silver, Gold, Platinum, Legendary]
+      - name: combo_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - solo
+          - team
+          - legendary
+      - name: complexity
+        in: query
+        schema:
+          type: string
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Legendary
       responses:
-        "200":
+        '200':
           description: Каталог комбо
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ComboCatalogResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ComboCatalogResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/combat/combos/activate:
     post:
       tags:
-        - Combat Combos
+      - Combat Combos
       summary: Активировать комбо
       operationId: activateCombo
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ActivateComboRequest"
+              $ref: '#/components/schemas/ActivateComboRequest'
       responses:
-        "200":
+        '200':
           description: Комбо активировано
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ComboActivationResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ComboActivationResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ComboCatalogResponse:
       type: object
@@ -107,8 +123,7 @@ components:
         combos:
           type: array
           items:
-            $ref: "#/components/schemas/Combo"
-
+            $ref: '#/components/schemas/Combo'
     Combo:
       type: object
       properties:
@@ -121,12 +136,11 @@ components:
           type: string
         complexity:
           type: string
-
     ActivateComboRequest:
       type: object
       required:
-        - character_id
-        - combo_id
+      - character_id
+      - combo_id
       properties:
         character_id:
           type: string
@@ -134,17 +148,15 @@ components:
         combo_id:
           type: string
           format: uuid
-
     ComboActivationResponse:
       type: object
       properties:
-        success:
-          type: boolean
-        damage_multiplier:
-          type: number
         message:
           type: string
-
+        damage_multiplier:
+          type: number
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

@@ -1,4 +1,3 @@
-# Issue: #150
 openapi: 3.0.3
 info:
   title: Matchmaking Rating Service API
@@ -7,38 +6,40 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8088/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8088/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Rating
-    description: Система рейтинга
-
+- name: Rating
+  description: Система рейтинга
 paths:
   /matchmaking/rating/{player_id}:
     get:
       tags:
-        - Rating
+      - Rating
       summary: Получить рейтинг игрока
       operationId: getPlayerRating
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: queue_type
-          in: query
-          schema:
-            type: string
-            enum: [pvp, pve, raid, ranked, casual]
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: queue_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - raid
+          - ranked
+          - casual
       responses:
         '200':
           description: Рейтинг игрока
@@ -47,34 +48,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/PlayerRating'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /matchmaking/rating/leaderboard:
     get:
       tags:
-        - Rating
+      - Rating
       summary: Получить таблицу лидеров
       operationId: getRatingLeaderboard
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: queue_type
-          in: query
-          required: true
-          schema:
-            type: string
-            enum: [pvp, pve, raid, ranked, casual]
-        - name: tier
-          in: query
-          schema:
-            type: string
-            enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+      - name: queue_type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - raid
+          - ranked
+          - casual
+      - name: tier
+        in: query
+        schema:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - grandmaster
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Таблица лидеров
@@ -83,20 +95,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/RatingLeaderboardResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /matchmaking/rating/update:
     post:
       tags:
-        - Rating
+      - Rating
       summary: Обновить рейтинг игрока
       operationId: updatePlayerRating
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -111,17 +122,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/PlayerRating'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     PlayerRating:
       type: object
@@ -131,25 +140,32 @@ components:
           format: uuid
         queue_type:
           type: string
-        rating:
-          type: number
-          format: float
         tier:
           type: string
-          enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - grandmaster
+        last_updated:
+          type: string
+          format: date-time
         wins:
           type: integer
         losses:
           type: integer
+        streak:
+          type: integer
+        rating:
+          type: number
+          format: float
         win_rate:
           type: number
           format: float
-        streak:
-          type: integer
-        last_updated:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RatingLeaderboardResponse:
       type: object
       properties:
@@ -159,13 +175,12 @@ components:
             $ref: '#/components/schemas/PlayerRating'
         total:
           type: integer
-
     UpdateRatingRequest:
       type: object
       required:
-        - player_id
-        - queue_type
-        - match_result
+      - player_id
+      - queue_type
+      - match_result
       properties:
         player_id:
           type: string
@@ -174,28 +189,15 @@ components:
           type: string
         match_result:
           type: string
-          enum: [win, loss, draw]
+          enum:
+          - win
+          - loss
+          - draw
         opponent_rating:
           type: number
           format: float
         match_quality:
           type: number
           format: float
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

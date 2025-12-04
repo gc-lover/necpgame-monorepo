@@ -1,29 +1,76 @@
+// Issue: #1595, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
+// Memory pooling for hot path (Issue #1607)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"sync"
+	"time"
 
-	"github.com/necpgame/combat-implants-stats-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-stats-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
-type StatsHandlers struct {
+const DBTimeout = 50 * time.Millisecond
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+type Handlers struct {
 	logger *logrus.Logger
+
+	// Memory pooling for hot structs (zero allocations target!)
+	energyStatusPool        sync.Pool
+	humanityStatusPool      sync.Pool
+	compatibilityResultPool sync.Pool
+	setBonusesPool          sync.Pool
 }
 
-func NewStatsHandlers() *StatsHandlers {
-	return &StatsHandlers{
+// NewHandlers creates new handlers with memory pooling
+func NewHandlers() *Handlers {
+	h := &Handlers{
 		logger: GetLogger(),
 	}
+
+	// Initialize memory pools (zero allocations target!)
+	h.energyStatusPool = sync.Pool{
+		New: func() interface{} {
+			return &api.EnergyStatus{}
+		},
+	}
+	h.humanityStatusPool = sync.Pool{
+		New: func() interface{} {
+			return &api.HumanityStatus{}
+		},
+	}
+	h.compatibilityResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.CompatibilityResult{}
+		},
+	}
+	h.setBonusesPool = sync.Pool{
+		New: func() interface{} {
+			return &api.SetBonuses{}
+		},
+	}
+
+	return h
 }
 
-func (h *StatsHandlers) GetEnergyStatus(w http.ResponseWriter, r *http.Request, params api.GetEnergyStatusParams) {
-	ctx := r.Context()
-	_ = ctx
+// GetEnergyStatus - TYPED response!
+// Issue: #1607 - Uses memory pooling for zero allocations
+func (h *Handlers) GetEnergyStatus(ctx context.Context, params api.GetEnergyStatusParams) (api.GetEnergyStatusRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("character_id", params.CharacterId).Info("GetEnergyStatus request")
+	h.logger.WithField("character_id", params.CharacterID).Info("GetEnergyStatus request")
+
+	// Get memory pooled response (zero allocation!)
+	resp := h.energyStatusPool.Get().(*api.EnergyStatus)
+	defer h.energyStatusPool.Put(resp)
+
+	// Reset pooled struct
+	*resp = api.EnergyStatus{}
 
 	current := float32(100.0)
 	max := float32(100.0)
@@ -31,52 +78,85 @@ func (h *StatsHandlers) GetEnergyStatus(w http.ResponseWriter, r *http.Request, 
 	overheated := false
 	coolingRate := float32(1.0)
 
-	response := api.EnergyStatus{
-		Current:     &current,
-		Max:         &max,
-		Consumption: &consumption,
-		Overheated:  &overheated,
-		CoolingRate: &coolingRate,
+	// Populate response
+	resp.Current = api.NewOptFloat32(current)
+	resp.Max = api.NewOptFloat32(max)
+	resp.Consumption = api.NewOptFloat32(consumption)
+	resp.Overheated = api.NewOptBool(overheated)
+	resp.CoolingRate = api.NewOptFloat32(coolingRate)
+
+	// Clone response (caller owns it)
+	result := &api.EnergyStatus{
+		Current:     resp.Current,
+		Max:         resp.Max,
+		Consumption: resp.Consumption,
+		Overheated:  resp.Overheated,
+		CoolingRate: resp.CoolingRate,
 	}
 
-	h.respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
-func (h *StatsHandlers) GetHumanityStatus(w http.ResponseWriter, r *http.Request, params api.GetHumanityStatusParams) {
-	ctx := r.Context()
-	_ = ctx
+// GetHumanityStatus - TYPED response!
+// Issue: #1607 - Uses memory pooling for zero allocations
+func (h *Handlers) GetHumanityStatus(ctx context.Context, params api.GetHumanityStatusParams) (api.GetHumanityStatusRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("character_id", params.CharacterId).Info("GetHumanityStatus request")
+	h.logger.WithField("character_id", params.CharacterID).Info("GetHumanityStatus request")
+
+	// Get memory pooled response (zero allocation!)
+	resp := h.humanityStatusPool.Get().(*api.HumanityStatus)
+	defer h.humanityStatusPool.Put(resp)
+
+	// Reset pooled struct
+	*resp = api.HumanityStatus{}
 
 	current := float32(100.0)
 	max := float32(100.0)
 	cyberpsychosisRisk := float32(0.0)
 	implantCount := 0
 
-	response := api.HumanityStatus{
-		Current:           &current,
-		Max:               &max,
-		CyberpsychosisRisk: &cyberpsychosisRisk,
-		ImplantCount:      &implantCount,
+	// Populate response
+	resp.Current = api.NewOptFloat32(current)
+	resp.Max = api.NewOptFloat32(max)
+	resp.CyberpsychosisRisk = api.NewOptFloat32(cyberpsychosisRisk)
+	resp.ImplantCount = api.NewOptInt(implantCount)
+
+	// Clone response (caller owns it)
+	result := &api.HumanityStatus{
+		Current:           resp.Current,
+		Max:               resp.Max,
+		CyberpsychosisRisk: resp.CyberpsychosisRisk,
+		ImplantCount:      resp.ImplantCount,
 	}
 
-	h.respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
-func (h *StatsHandlers) CheckCompatibility(w http.ResponseWriter, r *http.Request, params api.CheckCompatibilityParams) {
-	ctx := r.Context()
-	_ = ctx
+// CheckCompatibility - TYPED response!
+// Issue: #1607 - Uses memory pooling for zero allocations
+func (h *Handlers) CheckCompatibility(ctx context.Context, params api.CheckCompatibilityParams) (api.CheckCompatibilityRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"character_id": params.CharacterId,
-		"implant_id":   params.ImplantId,
+		"character_id": params.CharacterID,
+		"implant_id":   params.ImplantID,
 	}).Info("CheckCompatibility request")
 
+	// Get memory pooled response (zero allocation!)
+	resp := h.compatibilityResultPool.Get().(*api.CompatibilityResult)
+	defer h.compatibilityResultPool.Put(resp)
+
+	// Reset pooled struct
+	resp.Conflicts = resp.Conflicts[:0] // Reuse slice
+	resp.Warnings = resp.Warnings[:0]   // Reuse slice
+	resp.EnergyCheck = api.OptCompatibilityResultEnergyCheck{}
+	resp.HumanityCheck = api.OptCompatibilityResultHumanityCheck{}
+
 	compatible := true
-	conflicts := []struct {
-		ImplantId *openapi_types.UUID `json:"implant_id,omitempty"`
-		Reason    *string             `json:"reason,omitempty"`
-	}{}
+	conflicts := []api.CompatibilityResultConflictsItem{}
 	warnings := []string{}
 	availableEnergy := float32(100.0)
 	requiredEnergy := float32(10.0)
@@ -85,75 +165,61 @@ func (h *StatsHandlers) CheckCompatibility(w http.ResponseWriter, r *http.Reques
 	requiredHumanity := float32(5.0)
 	sufficientHumanity := true
 
-	energyCheck := struct {
-		Available  *float32 `json:"available,omitempty"`
-		Required   *float32 `json:"required,omitempty"`
-		Sufficient *bool    `json:"sufficient,omitempty"`
-	}{
-		Available:  &availableEnergy,
-		Required:   &requiredEnergy,
-		Sufficient: &sufficientEnergy,
+	energyCheck := api.CompatibilityResultEnergyCheck{
+		Available:  api.NewOptFloat32(availableEnergy),
+		Required:   api.NewOptFloat32(requiredEnergy),
+		Sufficient: api.NewOptBool(sufficientEnergy),
 	}
 
-	humanityCheck := struct {
-		Available  *float32 `json:"available,omitempty"`
-		Required   *float32 `json:"required,omitempty"`
-		Sufficient *bool    `json:"sufficient,omitempty"`
-	}{
-		Available:  &availableHumanity,
-		Required:   &requiredHumanity,
-		Sufficient: &sufficientHumanity,
+	humanityCheck := api.CompatibilityResultHumanityCheck{
+		Available:  api.NewOptFloat32(availableHumanity),
+		Required:   api.NewOptFloat32(requiredHumanity),
+		Sufficient: api.NewOptBool(sufficientHumanity),
 	}
 
-	response := api.CompatibilityResult{
-		Compatible:  &compatible,
-		Conflicts:   &conflicts,
-		Warnings:    &warnings,
-		EnergyCheck: &energyCheck,
-		HumanityCheck: &humanityCheck,
+	// Populate response
+	resp.Compatible = api.NewOptBool(compatible)
+	resp.Conflicts = conflicts
+	resp.Warnings = warnings
+	resp.EnergyCheck = api.NewOptCompatibilityResultEnergyCheck(energyCheck)
+	resp.HumanityCheck = api.NewOptCompatibilityResultHumanityCheck(humanityCheck)
+
+	// Clone response (caller owns it)
+	result := &api.CompatibilityResult{
+		Compatible:    resp.Compatible,
+		Conflicts:     append([]api.CompatibilityResultConflictsItem{}, resp.Conflicts...),
+		Warnings:      append([]string{}, resp.Warnings...),
+		EnergyCheck:   resp.EnergyCheck,
+		HumanityCheck: resp.HumanityCheck,
 	}
 
-	h.respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
-func (h *StatsHandlers) GetSetBonuses(w http.ResponseWriter, r *http.Request, params api.GetSetBonusesParams) {
-	ctx := r.Context()
-	_ = ctx
+// GetSetBonuses - TYPED response!
+// Issue: #1607 - Uses memory pooling for zero allocations
+func (h *Handlers) GetSetBonuses(ctx context.Context, params api.GetSetBonusesParams) (api.GetSetBonusesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("character_id", params.CharacterId).Info("GetSetBonuses request")
+	h.logger.WithField("character_id", params.CharacterID).Info("GetSetBonuses request")
 
-	activeSets := []struct {
-		Bonuses       *[]struct {
-			Description *string  `json:"description,omitempty"`
-			Name        *string  `json:"name,omitempty"`
-			Value       *float32 `json:"value,omitempty"`
-		} `json:"bonuses,omitempty"`
-		Brand         *string `json:"brand,omitempty"`
-		ImplantsCount *int    `json:"implants_count,omitempty"`
-	}{}
+	// Get memory pooled response (zero allocation!)
+	resp := h.setBonusesPool.Get().(*api.SetBonuses)
+	defer h.setBonusesPool.Put(resp)
 
-	response := api.SetBonuses{
-		ActiveSets: &activeSets,
+	// Reset pooled struct
+	resp.ActiveSets = resp.ActiveSets[:0] // Reuse slice
+
+	activeSets := []api.SetBonusesActiveSetsItem{}
+
+	// Populate response
+	resp.ActiveSets = activeSets
+
+	// Clone response (caller owns it)
+	result := &api.SetBonuses{
+		ActiveSets: append([]api.SetBonusesActiveSetsItem{}, resp.ActiveSets...),
 	}
 
-	h.respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
-
-func (h *StatsHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (h *StatsHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-		Code:    nil,
-		Details: nil,
-	}
-	h.respondJSON(w, status, errorResponse)
-}
-

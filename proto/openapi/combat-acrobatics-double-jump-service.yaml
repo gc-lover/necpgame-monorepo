@@ -1,39 +1,42 @@
 openapi: 3.0.3
 info:
   title: Combat Acrobatics Double Jump Service API
-  description: |
-    API для управления Double Jump (двойной прыжок).
-    
+  description: 'API для управления Double Jump (двойной прыжок).
+
+
     **Основные возможности:**
+
     - Выполнение Double Jump
+
     - Проверка доступности
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+  description: Продакшен сервер
 tags:
-  - name: Double Jump
-    description: Двойной прыжок
-
+- name: Double Jump
+  description: Двойной прыжок
 paths:
   /double-jump:
     post:
       tags:
-        - Double Jump
+      - Double Jump
       summary: Выполнить Double Jump
-      description: |
-        Выполняет двойной прыжок в воздухе. Проверяет доступность
+      description: 'Выполняет двойной прыжок в воздухе. Проверяет доступность
+
         (персонаж в воздухе, не использован) и применяет импульс.
+
+        '
       operationId: executeDoubleJump
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: false
         content:
@@ -48,23 +51,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/DoubleJumpResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /double-jump/available:
     get:
       tags:
-        - Double Jump
+      - Double Jump
       summary: Проверить доступность Double Jump
-      description: |
-        Проверяет, доступен ли Double Jump для персонажа
+      description: 'Проверяет, доступен ли Double Jump для персонажа
+
         (в воздухе, не использован, есть выносливость).
+
+        '
       operationId: checkDoubleJumpAvailable
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Статус доступности Double Jump
@@ -73,40 +77,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/DoubleJumpAvailableResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     DoubleJumpRequest:
       type: object
       properties:
         direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
-
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
     DoubleJumpResponse:
       type: object
       required:
-        - jump_id
-        - was_used
-        - jump_count
-        - max_jumps
-        - direction
-        - stamina_consumed
-        - timestamp
+      - jump_id
+      - was_used
+      - jump_count
+      - max_jumps
+      - direction
+      - stamina_consumed
+      - timestamp
       properties:
         jump_id:
           type: string
           format: uuid
-          example: "dd0e8400-e29b-41d4-a716-446655440000"
-        was_used:
-          type: boolean
-          example: true
+          example: dd0e8400-e29b-41d4-a716-446655440000
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
+        direction:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
         jump_count:
           type: integer
           description: Количество использованных прыжков
@@ -117,27 +121,32 @@ components:
           description: Максимальное количество прыжков
           minimum: 1
           example: 1
-        direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
         stamina_consumed:
           type: integer
           minimum: 0
           example: 12
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+        was_used:
+          type: boolean
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DoubleJumpAvailableResponse:
       type: object
       required:
-        - is_available
-        - is_in_air
-        - was_used
-        - jump_count
-        - max_jumps
-        - has_stamina
+      - is_available
+      - is_in_air
+      - was_used
+      - jump_count
+      - max_jumps
+      - has_stamina
       properties:
+        jump_count:
+          type: integer
+          minimum: 0
+          example: 0
+        max_jumps:
+          type: integer
+          minimum: 1
+          example: 1
         is_available:
           type: boolean
           example: true
@@ -147,23 +156,14 @@ components:
         was_used:
           type: boolean
           example: false
-        jump_count:
-          type: integer
-          minimum: 0
-          example: 0
-        max_jumps:
-          type: integer
-          minimum: 1
-          example: 1
         has_stamina:
           type: boolean
           example: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

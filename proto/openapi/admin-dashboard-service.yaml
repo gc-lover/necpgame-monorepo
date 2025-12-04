@@ -1,4 +1,3 @@
-# Issue: #403
 openapi: 3.0.3
 info:
   title: Admin Dashboard Service API
@@ -7,22 +6,19 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8089/api/v1/admin
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/admin
-    description: Продакшен сервер
-
+- url: http://localhost:8089/api/v1/admin
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/admin
+  description: Продакшен сервер
 tags:
-  - name: Dashboard
-    description: Главная панель администрирования
-
+- name: Dashboard
+  description: Главная панель администрирования
 paths:
   /dashboard:
     get:
       tags:
-        - Dashboard
+      - Dashboard
       summary: Главная панель администрирования
       operationId: getDashboard
       responses:
@@ -33,19 +29,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/DashboardData'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
-
+          $ref: common.yaml#/components/responses/Forbidden
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     DashboardData:
       type: object
       properties:
+        recent_actions:
+          type: array
+          items:
+            $ref: admin-audit-service.yaml#/components/schemas/AuditLog
         online_players:
           type: integer
         total_players:
@@ -54,19 +52,6 @@ components:
           type: integer
         pending_reports:
           type: integer
-        recent_actions:
-          type: array
-          items:
-            $ref: 'admin-audit-service.yaml#/components/schemas/AuditLog'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

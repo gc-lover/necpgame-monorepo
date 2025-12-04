@@ -27,19 +27,19 @@ END $$;
 
 -- Таблица каталога имплантов
 CREATE TABLE IF NOT EXISTS implant.implants_catalog (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    type implant_type NOT NULL,
-    category VARCHAR(100),
-    rarity implant_rarity NOT NULL DEFAULT 'common',
-    effects JSONB NOT NULL DEFAULT '{}'::jsonb,
-    energy_cost INTEGER NOT NULL DEFAULT 0 CHECK (energy_cost >= 0),
-    humanity_cost INTEGER NOT NULL DEFAULT 0 CHECK (humanity_cost >= 0),
-    slot_type VARCHAR(100) NOT NULL,
-    compatibility JSONB DEFAULT '{}'::jsonb,
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  category VARCHAR(100),
+  slot_type VARCHAR(100) NOT NULL,
+  effects JSONB NOT NULL DEFAULT '{}'::jsonb,
+  compatibility JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  energy_cost INTEGER NOT NULL DEFAULT 0 CHECK (energy_cost >= 0),
+  humanity_cost INTEGER NOT NULL DEFAULT 0 CHECK (humanity_cost >= 0),
+  type implant_type NOT NULL,
+  rarity implant_rarity NOT NULL DEFAULT 'common'
 );
 
 -- Индексы для implants_catalog
@@ -51,16 +51,16 @@ CREATE INDEX IF NOT EXISTS idx_implants_catalog_humanity_cost ON implant.implant
 
 -- Таблица установленных имплантов персонажей
 CREATE TABLE IF NOT EXISTS implant.character_implants (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    implant_id UUID NOT NULL REFERENCES implant.implants_catalog(id) ON DELETE CASCADE,
-    installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    upgrade_level INTEGER NOT NULL DEFAULT 1 CHECK (upgrade_level >= 1),
-    slot VARCHAR(100) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, slot)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  implant_id UUID NOT NULL REFERENCES implant.implants_catalog(id) ON DELETE CASCADE,
+  slot VARCHAR(100) NOT NULL,
+  installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  upgrade_level INTEGER NOT NULL DEFAULT 1 CHECK (upgrade_level >= 1),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  UNIQUE(character_id, slot)
 );
 
 -- Индексы для character_implants
@@ -71,12 +71,12 @@ CREATE INDEX IF NOT EXISTS idx_character_implants_upgrade_level ON implant.chara
 
 -- Таблица истории приобретений имплантов
 CREATE TABLE IF NOT EXISTS implant.implant_acquisitions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    implant_id UUID NOT NULL REFERENCES implant.implants_catalog(id) ON DELETE CASCADE,
-    acquisition_type implant_acquisition_type NOT NULL,
-    cost JSONB DEFAULT '{}'::jsonb,
-    acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  implant_id UUID NOT NULL REFERENCES implant.implants_catalog(id) ON DELETE CASCADE,
+  cost JSONB DEFAULT '{}'::jsonb,
+  acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  acquisition_type implant_acquisition_type NOT NULL
 );
 
 -- Индексы для implant_acquisitions
@@ -86,16 +86,16 @@ CREATE INDEX IF NOT EXISTS idx_implant_acquisitions_acquisition_type ON implant.
 
 -- Таблица состояния лимитов имплантов
 CREATE TABLE IF NOT EXISTS implant.implant_limits_state (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    total_energy_used INTEGER NOT NULL DEFAULT 0 CHECK (total_energy_used >= 0),
-    max_energy INTEGER NOT NULL DEFAULT 100 CHECK (max_energy > 0),
-    total_humanity_lost INTEGER NOT NULL DEFAULT 0 CHECK (total_humanity_lost >= 0),
-    max_humanity INTEGER NOT NULL DEFAULT 100 CHECK (max_humanity > 0),
-    slots_used JSONB DEFAULT '{}'::jsonb,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  slots_used JSONB DEFAULT '{}'::jsonb,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  total_energy_used INTEGER NOT NULL DEFAULT 0 CHECK (total_energy_used >= 0),
+  max_energy INTEGER NOT NULL DEFAULT 100 CHECK (max_energy > 0),
+  total_humanity_lost INTEGER NOT NULL DEFAULT 0 CHECK (total_humanity_lost >= 0),
+  max_humanity INTEGER NOT NULL DEFAULT 100 CHECK (max_humanity > 0),
+  UNIQUE(character_id)
 );
 
 -- Индексы для implant_limits_state
@@ -105,14 +105,14 @@ CREATE INDEX IF NOT EXISTS idx_implant_limits_state_humanity ON implant.implant_
 
 -- Таблица состояния киберпсихоза
 CREATE TABLE IF NOT EXISTS implant.cyberpsychosis_state (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    current_level INTEGER NOT NULL DEFAULT 0 CHECK (current_level >= 0 AND current_level <= 100),
-    threshold_level INTEGER NOT NULL DEFAULT 50 CHECK (threshold_level >= 0 AND threshold_level <= 100),
-    effects_active JSONB DEFAULT '{}'::jsonb,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  effects_active JSONB DEFAULT '{}'::jsonb,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  current_level INTEGER NOT NULL DEFAULT 0 CHECK (current_level >= 0 AND current_level <= 100),
+  threshold_level INTEGER NOT NULL DEFAULT 50 CHECK (threshold_level >= 0 AND threshold_level <= 100),
+  UNIQUE(character_id)
 );
 
 -- Индексы для cyberpsychosis_state
@@ -122,15 +122,15 @@ CREATE INDEX IF NOT EXISTS idx_cyberpsychosis_state_threshold ON implant.cyberps
 
 -- Таблица синергий имплантов
 CREATE TABLE IF NOT EXISTS implant.implant_synergies (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    synergy_id UUID NOT NULL,
-    active_implants JSONB NOT NULL DEFAULT '[]'::jsonb,
-    bonus_effects JSONB NOT NULL DEFAULT '{}'::jsonb,
-    activated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  synergy_id UUID NOT NULL,
+  active_implants JSONB NOT NULL DEFAULT '[]'::jsonb,
+  bonus_effects JSONB NOT NULL DEFAULT '{}'::jsonb,
+  activated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN NOT NULL DEFAULT true
 );
 
 -- Индексы для implant_synergies

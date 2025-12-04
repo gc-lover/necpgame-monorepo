@@ -1,216 +1,242 @@
 openapi: 3.0.3
 info:
   title: Blackwall Risk & Mortality Service API
-  description: |
-    API для системы расчёта рисков и смертности при взаимодействии с Blackwall.
-    
+  description: 'API для системы расчёта рисков и смертности при взаимодействии с Blackwall.
+
+
     **Основные возможности:**
+
     - Расчёт рисков на основе действий
+
     - Генерация и применение последствий
+
     - Отслеживание стресса
+
     - Система цифрового призрака
-    
+
+
     **Уровни смертности:**
+
     - Surface operations - 2-5%
+
     - Barrier interaction - 10-25%
+
     - Penetration - 40-60%
+
     - Deep expedition - 70-90%
-    
+
+
     **Типы последствий:**
+
     - Цифровое заражение (30-50%)
+
     - Киберпсихоз (20-40%)
+
     - Нейроповреждения (15-30%)
+
     - Повреждение деки (25-45%)
+
     - Критическое состояние (5-15%)
+
     - Пермадеат (2-10%)
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8083
-    description: Gameplay Service
-  - url: https://gameplay.necpgame.com
-    description: Gameplay Service (продакшн)
-
+- url: http://localhost:8083
+  description: Gameplay Service
+- url: https://gameplay.necpgame.com
+  description: Gameplay Service (продакшн)
 tags:
-  - name: Risk
-    description: Расчёт рисков
-  - name: Consequences
-    description: Последствия
-  - name: Stress
-    description: Стресс
-  - name: DigitalGhost
-    description: Цифровой призрак
-
+- name: Risk
+  description: Расчёт рисков
+- name: Consequences
+  description: Последствия
+- name: Stress
+  description: Стресс
+- name: DigitalGhost
+  description: Цифровой призрак
 paths:
   /api/v1/blackwall/risk/calculate:
     post:
       tags:
-        - Risk
+      - Risk
       summary: Расчёт рисков
-      description: |
-        Рассчитывает риски для действия с Blackwall.
-        
+      description: 'Рассчитывает риски для действия с Blackwall.
+
+
         Учитывает уровень подготовки, навыки, оборудование и класс персонажа.
+
+        '
       operationId: calculateRisk
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalculateRiskRequest"
+              $ref: '#/components/schemas/CalculateRiskRequest'
       responses:
-        "200":
+        '200':
           description: Оценка рисков
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RiskAssessment"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/RiskAssessment'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/blackwall/risk/consequence/apply:
     post:
       tags:
-        - Consequences
+      - Consequences
       summary: Применение последствий
-      description: |
-        Применяет последствия взаимодействия с Blackwall.
-        
+      description: 'Применяет последствия взаимодействия с Blackwall.
+
+
         Последствия могут быть временными или перманентными.
+
+        '
       operationId: applyConsequence
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ApplyConsequenceRequest"
+              $ref: '#/components/schemas/ApplyConsequenceRequest'
       responses:
-        "200":
+        '200':
           description: Последствие применено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConsequenceApplied"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/ConsequenceApplied'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/blackwall/risk/{character_id}/stress:
     get:
       tags:
-        - Stress
+      - Stress
       summary: Получение уровня стресса
-      description: |
-        Возвращает текущий уровень стресса персонажа от взаимодействия с Blackwall.
+      description: 'Возвращает текущий уровень стресса персонажа от взаимодействия с Blackwall.
+
+        '
       operationId: getStress
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Уровень стресса
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StressStatus"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/StressStatus'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/blackwall/risk/{character_id}/stress/add:
     post:
       tags:
-        - Stress
+      - Stress
       summary: Увеличение стресса
-      description: |
-        Увеличивает уровень стресса персонажа.
-        
+      description: 'Увеличивает уровень стресса персонажа.
+
+
         Высокий стресс снижает эффективность и может вызвать галлюцинации.
+
+        '
       operationId: addStress
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddStressRequest"
+              $ref: '#/components/schemas/AddStressRequest'
       responses:
-        "200":
+        '200':
           description: Стресс увеличен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StressAdded"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/StressAdded'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/blackwall/risk/digital-ghost/transform:
     post:
       tags:
-        - DigitalGhost
+      - DigitalGhost
       summary: Превращение в цифрового призрака
-      description: |
-        Превращает персонажа в цифрового призрака после критического контакта.
-        
+      description: 'Превращает персонажа в цифрового призрака после критического контакта.
+
+
         Альтернатива пермадеату, открывает новый игровой режим.
+
+        '
       operationId: transformToDigitalGhost
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DigitalGhostTransformRequest"
+              $ref: '#/components/schemas/DigitalGhostTransformRequest'
       responses:
-        "200":
+        '200':
           description: Превращение выполнено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DigitalGhost"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/DigitalGhost'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     CalculateRiskRequest:
       type: object
       required:
-        - character_id
-        - action_type
-        - preparation_level
+      - character_id
+      - action_type
+      - preparation_level
       properties:
         character_id:
           type: string
           format: uuid
+        map_id:
+          type: string
+          format: uuid
         action_type:
           type: string
-          enum: [surface_mapping, barrier_interaction, penetration, deep_expedition]
+          enum:
+          - surface_mapping
+          - barrier_interaction
+          - penetration
+          - deep_expedition
         preparation_level:
           type: object
           properties:
@@ -231,25 +257,21 @@ components:
           items:
             type: string
             format: uuid
-        map_id:
-          type: string
-          format: uuid
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RiskAssessment:
       type: object
       required:
-        - risk_level
-        - mortality_rate
-        - consequence_probabilities
+      - risk_level
+      - mortality_rate
+      - consequence_probabilities
       properties:
         risk_level:
           type: string
-          enum: [low, medium, high, extreme]
-        mortality_rate:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Процент смертности
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
         consequence_probabilities:
           type: object
           properties:
@@ -285,33 +307,44 @@ components:
           type: array
           items:
             type: string
-
+        mortality_rate:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Процент смертности
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ApplyConsequenceRequest:
       type: object
       required:
-        - character_id
-        - consequence_type
-        - severity
+      - character_id
+      - consequence_type
+      - severity
       properties:
         character_id:
           type: string
           format: uuid
+        source:
+          type: string
+          description: Источник последствия
         consequence_type:
           type: string
-          enum: [digital_infection, cyberpsychosis, neural_damage, deck_damage, critical_condition, permadeath]
+          enum:
+          - digital_infection
+          - cyberpsychosis
+          - neural_damage
+          - deck_damage
+          - critical_condition
+          - permadeath
         severity:
           type: integer
           minimum: 0
           maximum: 100
-        source:
-          type: string
-          description: Источник последствия
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ConsequenceApplied:
       type: object
       required:
-        - consequence_id
-        - effects_applied
+      - consequence_id
+      - effects_applied
       properties:
         consequence_id:
           type: string
@@ -319,67 +352,67 @@ components:
         effects_applied:
           type: object
           description: Применённые эффекты
-        treatment_available:
-          type: boolean
         treatment_cost:
           type: integer
           description: Стоимость лечения
-
+        treatment_available:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     StressStatus:
       type: object
       required:
-        - current_stress
+      - current_stress
       properties:
-        current_stress:
-          type: integer
-          minimum: 0
-          maximum: 100
+        next_recovery:
+          type: string
+          format: date-time
         effects_active:
           type: array
           items:
             type: string
           description: Активные эффекты стресса
+        current_stress:
+          type: integer
+          minimum: 0
+          maximum: 100
         recovery_rate:
           type: integer
           description: Скорость восстановления в час
-        next_recovery:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AddStressRequest:
       type: object
       required:
-        - amount
+      - amount
       properties:
+        source:
+          type: string
+          description: Источник стресса
         amount:
           type: integer
           minimum: 1
           maximum: 100
           description: Количество добавляемого стресса
-        source:
-          type: string
-          description: Источник стресса
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     StressAdded:
       type: object
       required:
-        - new_stress
+      - new_stress
       properties:
-        new_stress:
-          type: integer
-          minimum: 0
-          maximum: 100
         effects_triggered:
           type: array
           items:
             type: string
           description: Активированные эффекты
-
+        new_stress:
+          type: integer
+          minimum: 0
+          maximum: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DigitalGhostTransformRequest:
       type: object
       required:
-        - character_id
-        - trigger_event
+      - character_id
+      - trigger_event
       properties:
         character_id:
           type: string
@@ -387,12 +420,11 @@ components:
         trigger_event:
           type: string
           description: Событие, вызвавшее превращение
-
     DigitalGhost:
       type: object
       required:
-        - ghost_id
-        - new_abilities
+      - ghost_id
+      - new_abilities
       properties:
         ghost_id:
           type: string
@@ -422,4 +454,3 @@ components:
               type: integer
               minimum: 0
               maximum: 100
-

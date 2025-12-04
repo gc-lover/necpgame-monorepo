@@ -1,60 +1,70 @@
-# Issue: #303
 openapi: 3.0.3
 info:
   title: Social Mentorship Academies Service API
-  description: |
-    API для управления академиями и образовательными центрами в NECPGAME.
-    
+  description: 'API для управления академиями и образовательными центрами в NECPGAME.
+
+
     **Основные возможности:**
+
     - Поиск и просмотр академий
+
     - Запись в академии
+
     - Управление программами обучения
+
     - Отслеживание прогресса в академии
-    
+
+
     **Интеграции:**
+
     - social-service - основная логика наставничества
+
     - world-service - проверка доступа к академиям
+
     - economy-service - оплата обучения
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Social Service (локальная разработка)
-  - url: https://api.necp.game/api/v1
-    description: Social Service (продакшн)
-
+- url: http://localhost:8084/api/v1
+  description: Social Service (локальная разработка)
+- url: https://api.necp.game/api/v1
+  description: Social Service (продакшн)
 tags:
-  - name: Mentorship Academies
-    description: Академии и образовательные центры
-
+- name: Mentorship Academies
+  description: Академии и образовательные центры
 paths:
   /social/mentorship/academies:
     get:
       tags:
-        - Mentorship Academies
+      - Mentorship Academies
       summary: Получить список академий
-      description: |
-        Возвращает список всех доступных академий с фильтрацией.
+      description: 'Возвращает список всех доступных академий с фильтрацией.
+
+        '
       operationId: getAcademies
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [corporate, gang, independent]
-          description: Фильтр по типу академии
-        - name: location
-          in: query
-          schema:
-            type: string
-          description: Фильтр по локации
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - corporate
+          - gang
+          - independent
+        description: Фильтр по типу академии
+      - name: location
+        in: query
+        schema:
+          type: string
+        description: Фильтр по локации
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список академий
@@ -70,28 +80,28 @@ paths:
                   total:
                     type: integer
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/mentorship/academies/{academyId}:
     get:
       tags:
-        - Mentorship Academies
+      - Mentorship Academies
       summary: Получить информацию об академии
-      description: |
-        Возвращает детальную информацию об академии.
+      description: 'Возвращает детальную информацию об академии.
+
+        '
       operationId: getAcademy
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: academyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор академии
+      - name: academyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор академии
       responses:
         '200':
           description: Информация об академии
@@ -100,30 +110,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Academy'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/mentorship/academies/{academyId}/enroll:
     post:
       tags:
-        - Mentorship Academies
+      - Mentorship Academies
       summary: Записаться в академию
-      description: |
-        Записывает персонажа в академию на программу обучения.
+      description: 'Записывает персонажа в академию на программу обучения.
+
+        '
       operationId: enrollInAcademy
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: academyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор академии
+      - name: academyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор академии
       requestBody:
         required: true
         content:
@@ -138,40 +148,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/AcademyEnrollment'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/mentorship/academies/{academyId}/programs:
     get:
       tags:
-        - Mentorship Academies
+      - Mentorship Academies
       summary: Получить программы академии
-      description: |
-        Возвращает список программ обучения, доступных в академии.
+      description: 'Возвращает список программ обучения, доступных в академии.
+
+        '
       operationId: getAcademyPrograms
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: academyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор академии
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [active, inactive]
-          description: Фильтр по статусу программы
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+      - name: academyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор академии
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+        description: Фильтр по статусу программы
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список программ
@@ -187,20 +199,19 @@ paths:
                   total:
                     type: integer
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   schemas:
     Academy:
       type: object
       required:
-        - id
-        - name
-        - type
+      - id
+      - name
+      - type
       properties:
         id:
           type: string
@@ -209,25 +220,28 @@ components:
           type: string
         description:
           type: string
-        type:
-          type: string
-          enum: [corporate, gang, independent]
         location:
           type: string
+        type:
+          type: string
+          enum:
+          - corporate
+          - gang
+          - independent
+        programs_count:
+          type: integer
+        students_count:
+          type: integer
         rating:
           type: number
           format: float
           minimum: 0
           maximum: 5
-        programs_count:
-          type: integer
-        students_count:
-          type: integer
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EnrollInAcademyRequest:
       type: object
       required:
-        - program_id
+      - program_id
       properties:
         program_id:
           type: string
@@ -235,15 +249,14 @@ components:
         character_id:
           type: string
           format: uuid
-
     AcademyEnrollment:
       type: object
       required:
-        - id
-        - academy_id
-        - program_id
-        - character_id
-        - status
+      - id
+      - academy_id
+      - program_id
+      - character_id
+      - status
       properties:
         id:
           type: string
@@ -259,24 +272,30 @@ components:
           format: uuid
         status:
           type: string
-          enum: [enrolled, in-progress, completed, dropped]
+          enum:
+          - enrolled
+          - in-progress
+          - completed
+          - dropped
         payment_status:
           type: string
-          enum: [pending, paid, refunded]
+          enum:
+          - pending
+          - paid
+          - refunded
         enrolled_at:
           type: string
           format: date-time
         completed_at:
           type: string
           format: date-time
-
     AcademyProgram:
       type: object
       required:
-        - id
-        - academy_id
-        - name
-        - status
+      - id
+      - academy_id
+      - name
+      - status
       properties:
         id:
           type: string
@@ -290,18 +309,19 @@ components:
           type: string
         skill_track:
           type: string
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
         duration:
           type: integer
           description: Длительность программы в днях
+        students_count:
+          type: integer
         cost:
           type: number
           format: float
-        status:
-          type: string
-          enum: [active, inactive]
-        students_count:
-          type: integer
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

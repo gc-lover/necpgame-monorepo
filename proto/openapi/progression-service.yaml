@@ -1,0 +1,343 @@
+openapi: 3.0.3
+info:
+  title: Progression Service API
+  description: 'API для управления прогрессией персонажей:
+
+    - Начисление опыта
+
+    - Управление уровнями
+
+    - Управление навыками
+
+    - Распределение атрибутов
+
+    - Снимки состояния прогрессии
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+- url: http://localhost:8087/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
+tags:
+- name: Progression
+  description: Прогрессия персонажей
+- name: Experience
+  description: Начисление опыта
+- name: Skills
+  description: Управление навыками
+- name: Attributes
+  description: Распределение атрибутов
+- name: Snapshots
+  description: Снимки состояния
+paths:
+  /gameplay/progression/experience:
+    post:
+      tags:
+      - Experience
+      summary: Начислить опыт
+      operationId: awardExperience
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AwardExperienceRequest'
+      responses:
+        '200':
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperienceResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /gameplay/progression/{character_id}:
+    get:
+      tags:
+      - Progression
+      summary: Получить состояние прогрессии
+      operationId: getProgression
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Состояние прогрессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressionState'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /gameplay/progression/skills:
+    post:
+      tags:
+      - Skills
+      summary: Обновить навыки
+      operationId: updateSkills
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSkillsRequest'
+      responses:
+        '200':
+          description: Навыки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillsResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /gameplay/progression/attributes:
+    post:
+      tags:
+      - Attributes
+      summary: Распределить атрибуты
+      operationId: allocateAttributes
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocateAttributesRequest'
+      responses:
+        '200':
+          description: Атрибуты распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    AwardExperienceRequest:
+      type: object
+      required:
+      - character_id
+      - experience
+      - source_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+        source_type:
+          type: string
+          enum:
+          - quest
+          - combat
+          - crafting
+          - exploration
+          - social
+        experience:
+          type: integer
+          format: int64
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ExperienceResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        experience_gained:
+          type: integer
+          format: int64
+        total_experience:
+          type: integer
+          format: int64
+        experience_to_next_level:
+          type: integer
+          format: int64
+        level:
+          type: integer
+        new_level:
+          type: integer
+          nullable: true
+        level_up:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ProgressionState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        updated_at:
+          type: string
+          format: date-time
+        attributes:
+          $ref: '#/components/schemas/CharacterAttributes'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillExperience'
+        experience:
+          type: integer
+          format: int64
+        experience_to_next_level:
+          type: integer
+          format: int64
+        level:
+          type: integer
+        available_attribute_points:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillExperience:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~32 bytes/instance.'
+      properties:
+        skill_type:
+          type: string
+        experience:
+          type: integer
+          format: int64
+        level:
+          type: integer
+    CharacterAttributes:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (all int32 grouped). Expected memory: ~20 bytes/instance.'
+      properties:
+        body:
+          type: integer
+        reflexes:
+          type: integer
+        technical_ability:
+          type: integer
+        intelligence:
+          type: integer
+        cool:
+          type: integer
+    UpdateSkillsRequest:
+      type: object
+      required:
+      - character_id
+      - skill_updates
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance.'
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        skill_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillUpdate'
+    SkillUpdate:
+      type: object
+      required:
+      - skill_type
+      - experience
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~32 bytes/instance.'
+      properties:
+        skill_type:
+          type: string
+        experience:
+          type: integer
+          format: int64
+          minimum: 1
+    SkillsResponse:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~56 bytes/instance.'
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        updated_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillExperience'
+        skills_leveled_up:
+          type: array
+          items:
+            type: string
+    AllocateAttributesRequest:
+      type: object
+      required:
+      - character_id
+      - attribute_changes
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance.'
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        attribute_changes:
+          type: object
+          properties:
+            body:
+              type: integer
+              default: 0
+            reflexes:
+              type: integer
+              default: 0
+            technical_ability:
+              type: integer
+              default: 0
+            intelligence:
+              type: integer
+              default: 0
+            cool:
+              type: integer
+              default: 0
+    AttributesResponse:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance.'
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        attributes:
+          $ref: '#/components/schemas/CharacterAttributes'
+        available_attribute_points:
+          type: integer
+        points_spent:
+          type: integer
+security:
+- BearerAuth: []

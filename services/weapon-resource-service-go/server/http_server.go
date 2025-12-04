@@ -33,11 +33,15 @@ func NewHTTPServer(addr string, db *sql.DB) *HTTPServer {
 	router.Use(RecoveryMiddleware)
 	router.Use(CORSMiddleware)
 
-	// Register API handlers
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	// Integration with ogen
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	// Mount ogen server under /api/v1
+	router.Mount("/api/v1", ogenServer)
 
 	// Health and metrics
 	router.Get("/health", healthCheck)
@@ -66,6 +70,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
+
 
 
 

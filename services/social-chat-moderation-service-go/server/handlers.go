@@ -1,6 +1,8 @@
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -10,6 +12,11 @@ import (
 	"github.com/google/uuid"
 )
 
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond
+)
+
 type ChatModerationHandlers struct{}
 
 func NewChatModerationHandlers() *ChatModerationHandlers {
@@ -17,6 +24,10 @@ func NewChatModerationHandlers() *ChatModerationHandlers {
 }
 
 func (h *ChatModerationHandlers) ReportChatMessage(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.ReportMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err, "Invalid request body")
@@ -35,6 +46,10 @@ func (h *ChatModerationHandlers) ReportChatMessage(w http.ResponseWriter, r *htt
 }
 
 func (h *ChatModerationHandlers) BanChatUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.BanUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err, "Invalid request body")
@@ -59,6 +74,10 @@ func (h *ChatModerationHandlers) BanChatUser(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ChatModerationHandlers) GetChatBans(w http.ResponseWriter, r *http.Request, params api.GetChatBansParams) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	banId1 := openapi_types.UUID(uuid.New())
 	banId2 := openapi_types.UUID(uuid.New())
 	playerId1 := openapi_types.UUID(uuid.New())
@@ -114,6 +133,10 @@ func (h *ChatModerationHandlers) GetChatBans(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ChatModerationHandlers) RevokeChatBan(w http.ResponseWriter, r *http.Request, banId api.BanId) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	success := true
 
 	response := api.RevokeBanResponse{

@@ -5,16 +5,16 @@
 -- comment: Создание таблиц для системы модификаторов оружия
 
 CREATE TABLE IF NOT EXISTS weapon_modifiers (
-    id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('attachment', 'chip', 'firmware')),
-    category VARCHAR(50) NOT NULL,
-    slot_type VARCHAR(50) NOT NULL,
-    rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'uncommon', 'rare', 'epic', 'legendary')),
-    effects JSONB NOT NULL DEFAULT '[]',
-    compatible_weapons JSONB DEFAULT '[]',
-    period_available VARCHAR(20),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  type VARCHAR(20) NOT NULL CHECK (type IN ('attachment', 'chip', 'firmware')),
+  category VARCHAR(50) NOT NULL,
+  slot_type VARCHAR(50) NOT NULL,
+  rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'uncommon', 'rare', 'epic', 'legendary')),
+  period_available VARCHAR(20),
+  effects JSONB NOT NULL DEFAULT '[]',
+  compatible_weapons JSONB DEFAULT '[]',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_weapon_modifiers_type ON weapon_modifiers(type);
@@ -43,6 +43,7 @@ CREATE INDEX idx_weapon_modifier_slots_owner ON weapon_modifier_slots(owner_id);
 
 -- rollback DROP TABLE IF EXISTS weapon_modifier_slots;
 -- rollback DROP TABLE IF EXISTS weapon_modifiers;
+
 
 
 

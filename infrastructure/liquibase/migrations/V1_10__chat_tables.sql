@@ -2,16 +2,16 @@ CREATE SCHEMA IF NOT EXISTS social;
 
 CREATE TABLE IF NOT EXISTS social.chat_channels (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  type VARCHAR(50) NOT NULL,
   owner_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-  name VARCHAR(200) NOT NULL,
   description TEXT,
-  cooldown_seconds INT NOT NULL DEFAULT 0,
-  max_length INT NOT NULL DEFAULT 500,
-  is_active BOOLEAN NOT NULL DEFAULT true,
+  type VARCHAR(50) NOT NULL,
+  name VARCHAR(200) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP
+  deleted_at TIMESTAMP,
+  cooldown_seconds INT NOT NULL DEFAULT 0,
+  max_length INT NOT NULL DEFAULT 500,
+  is_active BOOLEAN NOT NULL DEFAULT true
 );
 
 CREATE INDEX IF NOT EXISTS idx_chat_channels_type 
@@ -26,11 +26,11 @@ CREATE INDEX IF NOT EXISTS idx_chat_channels_active
 CREATE TABLE IF NOT EXISTS social.chat_messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   channel_id UUID NOT NULL REFERENCES social.chat_channels(id) ON DELETE CASCADE,
-  channel_type VARCHAR(50) NOT NULL,
   sender_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-  sender_name VARCHAR(200) NOT NULL,
   content TEXT NOT NULL,
   formatted TEXT,
+  channel_type VARCHAR(50) NOT NULL,
+  sender_name VARCHAR(200) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP
 );
@@ -48,9 +48,9 @@ CREATE TABLE IF NOT EXISTS social.chat_bans (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
   channel_id UUID REFERENCES social.chat_channels(id) ON DELETE CASCADE,
-  channel_type VARCHAR(50),
-  reason TEXT NOT NULL,
   admin_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  reason TEXT NOT NULL,
+  channel_type VARCHAR(50),
   expires_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   is_active BOOLEAN NOT NULL DEFAULT true

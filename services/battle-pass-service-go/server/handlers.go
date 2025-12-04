@@ -1,11 +1,19 @@
-// Issue: #227
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/pkg/api"
+)
+
+// Context timeout constants
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
 )
 
 type Handlers struct {
@@ -18,7 +26,9 @@ func NewHandlers(service *Service) *Handlers {
 
 // GetCurrentSeason implements GET /api/v1/economy/battle-pass/current
 func (h *Handlers) GetCurrentSeason(w http.ResponseWriter, r *http.Request) {
-	season, err := h.service.GetCurrentSeason(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	season, err := h.service.GetCurrentSeason(ctx)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "No active season")
@@ -33,7 +43,9 @@ func (h *Handlers) GetCurrentSeason(w http.ResponseWriter, r *http.Request) {
 
 // GetPlayerProgress implements GET /api/v1/economy/battle-pass/progress
 func (h *Handlers) GetPlayerProgress(w http.ResponseWriter, r *http.Request, params api.GetPlayerProgressParams) {
-	progress, err := h.service.GetPlayerProgress(r.Context(), *params.PlayerId)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	progress, err := h.service.GetPlayerProgress(ctx, *params.PlayerId)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Player progress not found")
@@ -58,7 +70,9 @@ func (h *Handlers) ClaimReward(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.service.ClaimReward(r.Context(), req.PlayerID, req.Level, api.RewardTrack(req.Track))
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	result, err := h.service.ClaimReward(ctx, req.PlayerID, req.Level, api.RewardTrack(req.Track))
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Reward not found")
@@ -89,7 +103,9 @@ func (h *Handlers) PurchasePremium(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.service.PurchasePremium(r.Context(), req.PlayerID)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	result, err := h.service.PurchasePremium(ctx, req.PlayerID)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Player not found")
@@ -108,7 +124,9 @@ func (h *Handlers) PurchasePremium(w http.ResponseWriter, r *http.Request) {
 
 // GetWeeklyChallenges implements GET /api/v1/economy/battle-pass/challenges/weekly
 func (h *Handlers) GetWeeklyChallenges(w http.ResponseWriter, r *http.Request, params api.GetWeeklyChallengesParams) {
-	challenges, err := h.service.GetWeeklyChallenges(r.Context(), *params.PlayerId)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	challenges, err := h.service.GetWeeklyChallenges(ctx, *params.PlayerId)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -127,7 +145,9 @@ func (h *Handlers) CompleteChallenge(w http.ResponseWriter, r *http.Request, cha
 		return
 	}
 
-	result, err := h.service.CompleteChallenge(r.Context(), req.PlayerID, challengeId)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	result, err := h.service.CompleteChallenge(ctx, req.PlayerID, challengeId)
 	if err != nil {
 		if err == ErrNotFound {
 			respondError(w, http.StatusNotFound, "Challenge not found")
@@ -156,7 +176,9 @@ func (h *Handlers) AddXP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.service.AddXP(r.Context(), req.PlayerID, req.XPAmount, req.Source)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	result, err := h.service.AddXP(ctx, req.PlayerID, req.XPAmount, req.Source)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return

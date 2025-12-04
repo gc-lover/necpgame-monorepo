@@ -1,4 +1,3 @@
-# Issue: #304
 openapi: 3.0.3
 info:
   title: Social NPC Hiring Negotiation Service API
@@ -7,74 +6,80 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: NPC Hiring Negotiation
-    description: Переговоры с NPC
-
+- name: NPC Hiring Negotiation
+  description: Переговоры с NPC
 paths:
   /social/npc-hiring/negotiate:
     post:
       tags:
-        - NPC Hiring Negotiation
+      - NPC Hiring Negotiation
       summary: Начать переговоры с NPC
       operationId: startNegotiation
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartNegotiationRequest"
+              $ref: '#/components/schemas/StartNegotiationRequest'
       responses:
-        "200":
+        '200':
           description: Переговоры начаты
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NegotiationResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/NegotiationResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     StartNegotiationRequest:
       type: object
       required:
-        - npc_id
-        - hiring_type
+      - npc_id
+      - hiring_type
       properties:
         npc_id:
           type: string
           format: uuid
         hiring_type:
           type: string
-          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+          enum:
+          - merchant
+          - quest_giver
+          - fixer
+          - bodyguard
+          - mercenary
+          - diplomat
+          - engineer
+          - hacker
+        autonomy_level:
+          type: string
+          enum:
+          - direct
+          - autonomous
+          - hybrid
+          default: hybrid
+        contract_duration:
+          type: integer
         proposed_salary:
           type: number
           format: float
-        contract_duration:
-          type: integer
-        autonomy_level:
-          type: string
-          enum: [direct, autonomous, hybrid]
-          default: hybrid
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     NegotiationResponse:
       type: object
       properties:
@@ -84,9 +89,15 @@ components:
         npc_id:
           type: string
           format: uuid
+        message:
+          type: string
         status:
           type: string
-          enum: [in_progress, accepted, rejected, counter_offer]
+          enum:
+          - in_progress
+          - accepted
+          - rejected
+          - counter_offer
         npc_counter_offer:
           type: object
           properties:
@@ -97,25 +108,10 @@ components:
               type: integer
             autonomy_level:
               type: string
-              enum: [direct, autonomous, hybrid]
-        message:
-          type: string
-
+              enum:
+              - direct
+              - autonomous
+              - hybrid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

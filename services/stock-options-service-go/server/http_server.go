@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/stock-options-service-go/pkg/api"
+	api "github.com/necpgame/stock-options-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,11 +39,15 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.corsMiddleware)
 
 	handlers := NewOptionsHandlers()
+	secHandler := &SecurityHandler{}
 
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	// ogen server integration
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create ogen server")
+	}
+
+	router.Mount("/api/v1", ogenServer)
 
 	router.Get("/health", server.healthCheck)
 
@@ -147,6 +151,7 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
+
 
 
 

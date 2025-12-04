@@ -1,3 +1,4 @@
+// Issue: ogen migration
 package server
 
 import (
@@ -38,12 +39,14 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewMarginHandlers()
+	handlers := NewHandlers()
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
+	}
 
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	router.Mount("/api/v1", ogenServer)
 
 	router.Get("/health", server.healthCheck)
 
@@ -147,22 +150,3 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

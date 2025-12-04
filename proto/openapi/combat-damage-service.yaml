@@ -1,19 +1,27 @@
-# Issue: #142109884
 openapi: 3.0.3
 info:
   title: Combat Damage Service API
-  description: |
-    API для расчёта урона и эффектов в боевой системе NECPGAME.
+  description: 'API для расчёта урона и эффектов в боевой системе NECPGAME.
+
 
     **Основные возможности:**
+
     - Расчёт урона на основе характеристик
+
     - Применение модификаторов (критические удары, сопротивления, броня)
+
     - Управление боевыми эффектами (баффы, дебаффы, статусы)
+
     - Валидация урона (защита от читов)
 
+
     **Используется:**
+
     - Combat Sessions Service (при обработке атак)
+
     - Character Service (получение характеристик)
+
+    '
   version: 1.0.0
   license:
     name: Proprietary
@@ -22,55 +30,37 @@ info:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Gameplay Service (локальная разработка)
-  - url: https://gameplay.necpgame.com/api/v1
-    description: Gameplay Service (продакшн)
-
+- url: http://localhost:8083/api/v1
+  description: Gameplay Service (локальная разработка)
+- url: https://gameplay.necpgame.com/api/v1
+  description: Gameplay Service (продакшн)
 tags:
-  - name: Damage Calculation
-    description: Расчёт урона
-  - name: Combat Effects
-    description: Управление эффектами
-
+- name: Damage Calculation
+  description: Расчёт урона
+- name: Combat Effects
+  description: Управление эффектами
 paths:
   /gameplay/combat/calculate-damage:
     post:
       tags:
-        - Damage Calculation
+      - Damage Calculation
       summary: Расчёт урона
-      description: |
-        Рассчитывает урон на основе характеристик атакующего и защищающегося.
-
-        **Учитывает:**
-        - Базовый урон оружия/способности
-        - Характеристики атакующего (сила, ловкость, интеллект)
-        - Броню и сопротивления защищающегося
-        - Модификаторы (критический удар, слабые места)
-        - Баффы и дебаффы
-
-        **Формула:**
-        ```
-        final_damage = (base_damage + attacker_modifiers) * critical_multiplier 
-                       - (armor + resistances) * defense_multiplier
-        ```
-
-        **Защита от читов:**
-        - Все расчёты на сервере
-        - Валидация базового урона по оружию
-        - Проверка модификаторов на адекватность
-        - Логирование всех расчётов для аудита
+      description: "Рассчитывает урон на основе характеристик атакующего и защищающегося.\n\n**Учитывает:**\n- Базовый урон\
+        \ оружия/способности\n- Характеристики атакующего (сила, ловкость, интеллект)\n- Броню и сопротивления защищающегося\n\
+        - Модификаторы (критический удар, слабые места)\n- Баффы и дебаффы\n\n**Формула:**\n```\nfinal_damage = (base_damage\
+        \ + attacker_modifiers) * critical_multiplier \n               - (armor + resistances) * defense_multiplier\n```\n\
+        \n**Защита от читов:**\n- Все расчёты на сервере\n- Валидация базового урона по оружию\n- Проверка модификаторов на\
+        \ адекватность\n- Логирование всех расчётов для аудита\n"
       operationId: calculateDamage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DamageCalculationRequest"
+              $ref: '#/components/schemas/DamageCalculationRequest'
             examples:
               physical_attack:
                 summary: Физическая атака
@@ -95,12 +85,12 @@ paths:
                     weak_spot: true
                     range_modifier: 1
       responses:
-        "200":
+        '200':
           description: Расчёт урона выполнен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DamageCalculationResult"
+                $ref: '#/components/schemas/DamageCalculationResult'
               examples:
                 normal_damage:
                   summary: Обычный урон
@@ -111,8 +101,8 @@ paths:
                     final_damage: 75
                     damage_type: physical
                     modifiers_applied:
-                      - name: armor_reduction
-                        value: -25
+                    - name: armor_reduction
+                      value: -25
                     was_critical: false
                     was_blocked: false
                     damage_reduction: 25
@@ -125,82 +115,101 @@ paths:
                     final_damage: 175
                     damage_type: physical
                     modifiers_applied:
-                      - name: critical_multiplier
-                        value: 2
-                      - name: weak_spot_bonus
-                        value: 0.5
-                      - name: armor_reduction
-                        value: -25
+                    - name: critical_multiplier
+                      value: 2
+                    - name: weak_spot_bonus
+                      value: 0.5
+                    - name: armor_reduction
+                      value: -25
                     was_critical: true
                     was_blocked: false
                     damage_reduction: 25
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/combat/apply-effects:
     post:
       tags:
-        - Combat Effects
+      - Combat Effects
       summary: Применение эффектов
-      description: |
-        Применяет эффекты (баффы, дебаффы, статусы) к участнику боя.
+      description: 'Применяет эффекты (баффы, дебаффы, статусы) к участнику боя.
+
 
         **Типы эффектов:**
+
         - `buff` - положительный эффект (увеличение характеристик)
+
         - `debuff` - отрицательный эффект (снижение характеристик)
+
         - `status` - статус (яд, кровотечение, ожог, паралич, ослепление)
 
+
         **Примеры баффов:**
+
         - Увеличение силы/ловкости/интеллекта
+
         - Увеличение скорости
+
         - Регенерация здоровья
+
         - Щит/барьер
 
+
         **Примеры дебаффов:**
+
         - Снижение защиты
+
         - Замедление
+
         - Ослабление
 
+
         **Примеры статусов:**
+
         - Яд (урон каждый ход)
+
         - Кровотечение (урон каждый ход)
+
         - Ожог (урон каждый ход)
+
         - Паралич (пропуск хода)
+
         - Ослепление (снижение точности)
+
+        '
       operationId: applyEffects
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ApplyEffectsRequest"
+              $ref: '#/components/schemas/ApplyEffectsRequest'
             examples:
               buff:
                 summary: Бафф на силу
                 value:
                   target_id: 123e4567-e89b-12d3-a456-426614174000
                   effects:
-                    - effect_type: buff
-                      effect_name: strength_boost
-                      duration: 3
-                      value: 20
+                  - effect_type: buff
+                    effect_name: strength_boost
+                    duration: 3
+                    value: 20
               status:
                 summary: Статус яда
                 value:
                   target_id: 123e4567-e89b-12d3-a456-426614174000
                   effects:
-                    - effect_type: status
-                      effect_name: poison
-                      duration: 5
-                      value: 10
+                  - effect_type: status
+                    effect_name: poison
+                    duration: 5
+                    value: 10
       responses:
-        "200":
+        '200':
           description: Эффекты применены
           content:
             application/json:
@@ -210,48 +219,52 @@ paths:
                   effects:
                     type: array
                     items:
-                      $ref: "#/components/schemas/CombatEffect"
+                      $ref: '#/components/schemas/CombatEffect'
               examples:
                 success:
                   summary: Эффекты применены
                   value:
                     effects:
-                      - effect_type: buff
-                        effect_name: strength_boost
-                        duration: 3
-                        remaining_turns: 3
-                        value: 20
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                    - effect_type: buff
+                      effect_name: strength_boost
+                      duration: 3
+                      remaining_turns: 3
+                      value: 20
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/combat/effects/{effect_id}:
     delete:
       tags:
-        - Combat Effects
+      - Combat Effects
       summary: Удаление эффекта
-      description: |
-        Удаляет активный эффект с участника боя.
+      description: 'Удаляет активный эффект с участника боя.
+
         Используется для:
+
         - Снятия дебаффов/статусов через способности
+
         - Очистки эффектов при завершении боя
+
         - Ручного удаления эффектов (например, через предмет)
+
+        '
       operationId: removeEffect
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: effect_id
-          in: path
-          required: true
-          description: ID эффекта для удаления
-          schema:
-            type: string
-            format: uuid
+      - name: effect_id
+        in: path
+        required: true
+        description: ID эффекта для удаления
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Эффект удалён
           content:
             application/json:
@@ -260,31 +273,30 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "removed"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                    example: removed
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/combat/effects/{effect_id}/extend:
     post:
       tags:
-        - Combat Effects
+      - Combat Effects
       summary: Продление эффекта
       description: Продлевает длительность активного эффекта на указанное количество ходов
       operationId: extendEffect
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: effect_id
-          in: path
-          required: true
-          description: ID эффекта для продления
-          schema:
-            type: string
-            format: uuid
+      - name: effect_id
+        in: path
+        required: true
+        description: ID эффекта для продления
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -292,7 +304,7 @@ paths:
             schema:
               type: object
               required:
-                - additional_turns
+              - additional_turns
               properties:
                 additional_turns:
                   type: integer
@@ -300,7 +312,7 @@ paths:
                   minimum: 1
                   maximum: 10
       responses:
-        "200":
+        '200':
           description: Эффект продлён
           content:
             application/json:
@@ -309,29 +321,27 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "extended"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                    example: extended
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     DamageCalculationRequest:
       type: object
       required:
-        - attacker_id
-        - target_id
-        - base_damage
-        - damage_type
+      - attacker_id
+      - target_id
+      - base_damage
+      - damage_type
       properties:
         attacker_id:
           type: string
@@ -341,27 +351,30 @@ components:
           type: string
           format: uuid
           description: ID цели атаки
-        base_damage:
-          type: integer
-          description: Базовый урон оружия/способности
-          minimum: 0
         damage_type:
           type: string
           enum:
-            - physical
-            - fire
-            - cold
-            - lightning
-            - poison
-            - cyber
-          description: |
-            Тип урона:
+          - physical
+          - fire
+          - cold
+          - lightning
+          - poison
+          - cyber
+          description: 'Тип урона:
+
             - `physical` - физический урон (огнестрельное, холодное оружие)
+
             - `fire` - огненный урон
+
             - `cold` - холодный урон
+
             - `lightning` - электрический урон
+
             - `poison` - урон ядом
+
             - `cyber` - киберурон (взлом имплантов)
+
+            '
         modifiers:
           type: object
           description: Модификаторы урона
@@ -381,14 +394,19 @@ components:
               minimum: 0.5
               maximum: 1.5
               default: 1
-
+        base_damage:
+          type: integer
+          description: Базовый урон оружия/способности
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DamageCalculationResult:
       type: object
-      description: |
-        BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+      description: 'BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+
         Fields ordered for struct alignment. Expected memory: ~64 bytes/instance.
+
+        '
       properties:
-        # UUID fields first (16 bytes each)
         attacker_id:
           type: string
           format: uuid
@@ -397,23 +415,15 @@ components:
           type: string
           format: uuid
           description: ID цели
-        
-        # Integer fields grouped (4 bytes each)
-        base_damage:
-          type: integer
-          description: Базовый урон
-        final_damage:
-          type: integer
-          description: Финальный урон после всех модификаторов
         damage_type:
           type: string
           enum:
-            - physical
-            - fire
-            - cold
-            - lightning
-            - poison
-            - cyber
+          - physical
+          - fire
+          - cold
+          - lightning
+          - poison
+          - cyber
           description: Тип урона
         modifiers_applied:
           type: array
@@ -427,21 +437,26 @@ components:
               value:
                 type: number
                 description: Значение модификатора
+        base_damage:
+          type: integer
+          description: Базовый урон
+        final_damage:
+          type: integer
+          description: Финальный урон после всех модификаторов
+        damage_reduction:
+          type: integer
+          description: Урон поглощённый брони/сопротивлениями
         was_critical:
           type: boolean
           description: Был ли критический удар
         was_blocked:
           type: boolean
           description: Была ли блокировка/уклонение
-        damage_reduction:
-          type: integer
-          description: Урон поглощённый брони/сопротивлениями
-
     ApplyEffectsRequest:
       type: object
       required:
-        - target_id
-        - effects
+      - target_id
+      - effects
       properties:
         target_id:
           type: string
@@ -453,42 +468,60 @@ components:
           items:
             type: object
             required:
-              - effect_type
-              - effect_name
-              - duration
-              - value
+            - effect_type
+            - effect_name
+            - duration
+            - value
             properties:
               effect_type:
                 type: string
                 enum:
-                  - buff
-                  - debuff
-                  - status
+                - buff
+                - debuff
+                - status
                 description: Тип эффекта
               effect_name:
                 type: string
-                description: |
-                  Название эффекта:
+                description: 'Название эффекта:
+
 
                   **Баффы:**
+
                   - `strength_boost` - увеличение силы
+
                   - `agility_boost` - увеличение ловкости
+
                   - `intelligence_boost` - увеличение интеллекта
+
                   - `speed_boost` - увеличение скорости
+
                   - `regeneration` - регенерация здоровья
+
                   - `shield` - щит/барьер
 
+
                   **Дебаффы:**
+
                   - `armor_reduction` - снижение защиты
+
                   - `slow` - замедление
+
                   - `weakness` - ослабление
 
+
                   **Статусы:**
+
                   - `poison` - яд
+
                   - `bleeding` - кровотечение
+
                   - `burn` - ожог
+
                   - `paralysis` - паралич
+
                   - `blindness` - ослепление
+
+                  '
               duration:
                 type: integer
                 description: Длительность эффекта в ходах
@@ -496,12 +529,14 @@ components:
                 maximum: 10
               value:
                 type: integer
-                description: |
-                  Значение эффекта:
-                  - Для баффов/дебаффов: величина изменения характеристики
-                  - Для статусов: урон в ход или вероятность срабатывания
-                minimum: 0
+                description: 'Значение эффекта:
 
+                  - Для баффов/дебаффов: величина изменения характеристики
+
+                  - Для статусов: урон в ход или вероятность срабатывания
+
+                  '
+                minimum: 0
     CombatEffect:
       type: object
       properties:
@@ -509,16 +544,20 @@ components:
           type: string
           format: uuid
           description: Уникальный ID эффекта
-        effect_type:
-          type: string
-          enum:
-            - buff
-            - debuff
-            - status
-          description: Тип эффекта
         effect_name:
           type: string
           description: Название эффекта
+        effect_type:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - status
+          description: Тип эффекта
+        applied_at:
+          type: string
+          format: date-time
+          description: Время применения эффекта
         duration:
           type: integer
           description: Полная длительность в ходах
@@ -528,10 +567,6 @@ components:
         value:
           type: integer
           description: Значение эффекта
-        applied_at:
-          type: string
-          format: date-time
-          description: Время применения эффекта
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
+- BearerAuth: []

@@ -29,17 +29,19 @@ END $$;
 
 -- Таблица репутации персонажей с фракциями
 CREATE TABLE IF NOT EXISTS social.character_reputation (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL, -- FK characters
-    faction_id UUID NOT NULL, -- FK factions
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  -- FK characters
+    faction_id UUID NOT NULL,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  discount_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (discount_percentage >= 0.00 AND discount_percentage <= 100.00),
+  -- FK factions
     reputation_value INTEGER NOT NULL DEFAULT 0 CHECK (reputation_value >= -100 AND reputation_value <= 100),
-    current_tier reputation_tier NOT NULL DEFAULT 'neutral',
-    heat INTEGER NOT NULL DEFAULT 0 CHECK (heat >= 0),
-    access_level INTEGER NOT NULL DEFAULT 0 CHECK (access_level >= 0),
-    discount_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (discount_percentage >= 0.00 AND discount_percentage <= 100.00),
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, faction_id)
+  heat INTEGER NOT NULL DEFAULT 0 CHECK (heat >= 0),
+  access_level INTEGER NOT NULL DEFAULT 0 CHECK (access_level >= 0),
+  current_tier reputation_tier NOT NULL DEFAULT 'neutral',
+  UNIQUE(character_id, faction_id)
 );
 
 -- Индексы для character_reputation
@@ -56,18 +58,20 @@ CREATE INDEX IF NOT EXISTS idx_character_reputation_heat
 
 -- Таблица истории изменений репутации
 CREATE TABLE IF NOT EXISTS social.reputation_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL, -- FK characters
-    faction_id UUID NOT NULL, -- FK factions
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  -- FK characters
+    faction_id UUID NOT NULL,
+  change_reason VARCHAR(255),
+  source_event VARCHAR(100),
+  old_tier VARCHAR(50),
+  new_tier VARCHAR(50),
+  modifiers_applied JSONB DEFAULT '{}',
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- FK factions
     change_amount INTEGER NOT NULL CHECK (change_amount >= -100 AND change_amount <= 100),
-    change_reason VARCHAR(255),
-    source_event VARCHAR(100),
-    modifiers_applied JSONB DEFAULT '{}',
-    old_value INTEGER NOT NULL CHECK (old_value >= -100 AND old_value <= 100),
-    new_value INTEGER NOT NULL CHECK (new_value >= -100 AND new_value <= 100),
-    old_tier VARCHAR(50),
-    new_tier VARCHAR(50),
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  old_value INTEGER NOT NULL CHECK (old_value >= -100 AND old_value <= 100),
+  new_value INTEGER NOT NULL CHECK (new_value >= -100 AND new_value <= 100)
 );
 
 -- Индексы для reputation_history
@@ -80,17 +84,19 @@ CREATE INDEX IF NOT EXISTS idx_reputation_history_source_event
 
 -- Таблица задач восстановления репутации
 CREATE TABLE IF NOT EXISTS social.reputation_recovery_tasks (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL, -- FK characters
-    faction_id UUID NOT NULL, -- FK factions
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  -- FK characters
+    faction_id UUID NOT NULL,
+  started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- FK factions
     target_reputation INTEGER NOT NULL CHECK (target_reputation >= -100 AND target_reputation <= 100),
-    current_progress INTEGER NOT NULL DEFAULT 0 CHECK (current_progress >= 0),
-    recovery_type reputation_recovery_type NOT NULL,
-    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP,
-    status reputation_recovery_status NOT NULL DEFAULT 'active',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  current_progress INTEGER NOT NULL DEFAULT 0 CHECK (current_progress >= 0),
+  recovery_type reputation_recovery_type NOT NULL,
+  status reputation_recovery_status NOT NULL DEFAULT 'active'
 );
 
 -- Индексы для reputation_recovery_tasks
@@ -103,14 +109,15 @@ CREATE INDEX IF NOT EXISTS idx_reputation_recovery_tasks_type
 
 -- Таблица истории изменений Heat
 CREATE TABLE IF NOT EXISTS social.heat_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL, -- FK characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  change_reason VARCHAR(255),
+  source_event VARCHAR(100),
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- FK characters
     heat_change INTEGER NOT NULL CHECK (heat_change >= -1000 AND heat_change <= 1000),
-    change_reason VARCHAR(255),
-    source_event VARCHAR(100),
-    old_heat INTEGER NOT NULL DEFAULT 0 CHECK (old_heat >= 0),
-    new_heat INTEGER NOT NULL DEFAULT 0 CHECK (new_heat >= 0),
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  old_heat INTEGER NOT NULL DEFAULT 0 CHECK (old_heat >= 0),
+  new_heat INTEGER NOT NULL DEFAULT 0 CHECK (new_heat >= 0)
 );
 
 -- Индексы для heat_history
@@ -123,15 +130,17 @@ CREATE INDEX IF NOT EXISTS idx_heat_history_source_event
 
 -- Таблица матрицы отношений между фракциями
 CREATE TABLE IF NOT EXISTS social.faction_relations_matrix (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    faction_a_id UUID NOT NULL, -- FK factions
-    faction_b_id UUID NOT NULL, -- FK factions
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  faction_a_id UUID NOT NULL,
+  -- FK factions
+    faction_b_id UUID NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modifier DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (modifier >= -100.00 AND modifier <= 100.00),
+  -- FK factions
     relation_type faction_relation_type NOT NULL DEFAULT 'neutral',
-    modifier DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (modifier >= -100.00 AND modifier <= 100.00),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_faction_order CHECK (faction_a_id < faction_b_id),
-    UNIQUE(faction_a_id, faction_b_id)
+  CONSTRAINT chk_faction_order CHECK (faction_a_id < faction_b_id),
+  UNIQUE(faction_a_id, faction_b_id)
 );
 
 -- Индексы для faction_relations_matrix

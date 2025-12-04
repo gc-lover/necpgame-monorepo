@@ -3,6 +3,8 @@ package server
 
 import (
 	"database/sql"
+	"time"
+
 	_ "github.com/lib/pq"
 )
 
@@ -18,9 +20,11 @@ func NewRepository(connStr string) (*Repository, error) {
 		return nil, err
 	}
 
-	// Configure connection pool
+	// Connection pool settings for performance (Issue #1605)
 	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
 
 	if err := db.Ping(); err != nil {
 		return nil, err
@@ -35,6 +39,7 @@ func (r *Repository) Close() error {
 }
 
 // TODO: Add database methods as needed
+
 
 
 

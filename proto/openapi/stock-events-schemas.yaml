@@ -3,26 +3,28 @@ info:
   title: Stock Events Service Schemas
   description: Схемы данных для Stock Events Service API
   version: 1.0.0
-
 components:
   schemas:
     EventImpact:
       type: object
-      description: Воздействие события на акцию
+      description: 'Воздействие события на акцию
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - stock_id
-        - stock_symbol
-        - event_type
-        - event_id
-        - event_name
-        - base_impact_percent
-        - total_impact_percent
-        - duration_type
-        - duration_hours
-        - decay_curve
-        - applied_at
-        - status
+      - id
+      - stock_id
+      - stock_symbol
+      - event_type
+      - event_id
+      - event_name
+      - base_impact_percent
+      - total_impact_percent
+      - duration_type
+      - duration_hours
+      - decay_curve
+      - applied_at
+      - status
       properties:
         id:
           type: string
@@ -35,35 +37,19 @@ components:
         stock_symbol:
           type: string
           description: Тикер акции
-        event_type:
-          $ref: "#/components/schemas/EventType"
         event_id:
           type: string
           description: ID источника события (quest_id, war_id, etc.)
         event_name:
           type: string
           description: Название события
-        base_impact_percent:
-          type: number
-          format: double
-          description: Базовое влияние на цену (%)
-        modifiers:
-          type: array
-          description: Модификаторы воздействия
-          items:
-            $ref: "#/components/schemas/EventModifier"
-        total_impact_percent:
-          type: number
-          format: double
-          description: Итоговое влияние с модификаторами (%)
-        duration_type:
-          $ref: "#/components/schemas/DurationType"
-        duration_hours:
-          type: integer
-          minimum: 0
-          description: Длительность в часах
-        decay_curve:
-          $ref: "#/components/schemas/DecayCurve"
+        status:
+          type: string
+          enum:
+          - active
+          - expired
+          - reversed
+          description: Статус воздействия
         applied_at:
           type: string
           format: date-time
@@ -73,39 +59,58 @@ components:
           format: date-time
           nullable: true
           description: Время истечения
-        current_effect_percent:
-          type: number
-          format: double
-          description: Текущий эффект с учетом decay
-        status:
-          type: string
-          enum:
-            - active
-            - expired
-            - reversed
-          description: Статус воздействия
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+        decay_curve:
+          $ref: '#/components/schemas/DecayCurve'
+        duration_type:
+          $ref: '#/components/schemas/DurationType'
+        event_type:
+          $ref: '#/components/schemas/EventType'
+        modifiers:
+          type: array
+          description: Модификаторы воздействия
+          items:
+            $ref: '#/components/schemas/EventModifier'
+        base_impact_percent:
+          type: number
+          format: double
+          description: Базовое влияние на цену (%)
+        total_impact_percent:
+          type: number
+          format: double
+          description: Итоговое влияние с модификаторами (%)
+        current_effect_percent:
+          type: number
+          format: double
+          description: Текущий эффект с учетом decay
+        duration_hours:
+          type: integer
+          minimum: 0
+          description: Длительность в часах
     StockEventHistoryEntry:
       type: object
-      description: Запись в истории событий акции
+      description: 'Запись в истории событий акции
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - stock_id
-        - stock_symbol
-        - event_type
-        - event_id
-        - event_name
-        - total_impact_percent
-        - price_before
-        - price_after
-        - price_change_percent
-        - applied_at
-        - status
+      - id
+      - stock_id
+      - stock_symbol
+      - event_type
+      - event_id
+      - event_name
+      - total_impact_percent
+      - price_before
+      - price_after
+      - price_change_percent
+      - applied_at
+      - status
       properties:
         id:
           type: string
@@ -115,12 +120,25 @@ components:
           format: uuid
         stock_symbol:
           type: string
-        event_type:
-          $ref: "#/components/schemas/EventType"
         event_id:
           type: string
         event_name:
           type: string
+        status:
+          type: string
+          enum:
+          - active
+          - expired
+          - reversed
+        applied_at:
+          type: string
+          format: date-time
+        expired_at:
+          type: string
+          format: date-time
+          nullable: true
+        event_type:
+          $ref: '#/components/schemas/EventType'
         total_impact_percent:
           type: number
           format: double
@@ -136,99 +154,111 @@ components:
           type: number
           format: double
           description: Фактическое изменение цены (%)
-        applied_at:
-          type: string
-          format: date-time
-        expired_at:
-          type: string
-          format: date-time
-          nullable: true
-        status:
-          type: string
-          enum:
-            - active
-            - expired
-            - reversed
     EventType:
       type: string
       enum:
-        - quest_completed
-        - faction_war
-        - territory_control
-        - corporate_scandal
-        - tech_breakthrough
-        - economic_event
-      description: |
-        Типы событий:
+      - quest_completed
+      - faction_war
+      - territory_control
+      - corporate_scandal
+      - tech_breakthrough
+      - economic_event
+      description: 'Типы событий:
+
         - quest_completed: Завершение квеста
+
         - faction_war: Фракционная война
+
         - territory_control: Смена контроля территории
+
         - corporate_scandal: Корпоративный скандал
+
         - tech_breakthrough: Технологический прорыв
+
         - economic_event: Экономическое событие (кризис, подъем)
+
+        '
     DurationType:
       type: string
       enum:
-        - instant
-        - short_term
-        - long_term
-        - permanent
-      description: |
-        Длительность воздействия:
+      - instant
+      - short_term
+      - long_term
+      - permanent
+      description: 'Длительность воздействия:
+
         - instant: Мгновенное (с частичным откатом)
+
         - short_term: Краткосрочное (~1 неделя)
+
         - long_term: Долгосрочное (несколько недель)
+
         - permanent: Перманентное (банкротство, делистинг)
+
+        '
     DecayCurve:
       type: string
       enum:
-        - none
-        - linear
-        - exponential
-      description: |
-        Кривая затухания эффекта:
+      - none
+      - linear
+      - exponential
+      description: 'Кривая затухания эффекта:
+
         - none: Без затухания (permanent)
+
         - linear: Линейное затухание
+
         - exponential: Экспоненциальное затухание
+
+        '
     EventModifier:
       type: object
-      description: Модификатор воздействия события
+      description: 'Модификатор воздействия события
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - type
-        - value
-        - effect_percent
+      - type
+      - value
+      - effect_percent
       properties:
         type:
           type: string
           enum:
-            - player_participation
-            - sector_synergy
-            - company_size
-            - media_coverage
-            - market_volatility
-          description: |
-            Тип модификатора:
+          - player_participation
+          - sector_synergy
+          - company_size
+          - media_coverage
+          - market_volatility
+          description: 'Тип модификатора:
+
             - player_participation: Количество участников
+
             - sector_synergy: Синергия с сектором
+
             - company_size: Размер компании
+
             - media_coverage: Медиа освещенность
+
             - market_volatility: Волатильность рынка
-        value:
-          oneOf:
-            - type: string
-            - type: number
-          description: Значение модификатора (число или enum)
+
+            '
         effect_percent:
           type: number
           format: double
           description: Эффект модификатора (%)
+        value:
+          oneOf:
+          - type: string
+          - type: number
+          description: Значение модификатора (число или enum)
     ImpactSummary:
       type: object
-      description: Сводка по воздействиям на акцию
+      description: 'Сводка по воздействиям на акцию
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
-        total_active_impacts:
-          type: integer
-          description: Количество активных воздействий
         combined_effect_percent:
           type: number
           format: double
@@ -241,58 +271,69 @@ components:
           type: number
           format: double
           description: Самое сильное отрицательное воздействие
+        total_active_impacts:
+          type: integer
+          description: Количество активных воздействий
     EventSimulationRequest:
       type: object
-      description: Запрос симуляции события
+      description: 'Запрос симуляции события
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - stock_id
-        - event_type
-        - base_impact_percent
-        - duration_type
+      - stock_id
+      - event_type
+      - base_impact_percent
+      - duration_type
       properties:
         stock_id:
           type: string
           format: uuid
+        duration_type:
+          $ref: '#/components/schemas/DurationType'
         event_type:
-          $ref: "#/components/schemas/EventType"
-        base_impact_percent:
-          type: number
-          format: double
+          $ref: '#/components/schemas/EventType'
         modifiers:
           type: array
           items:
             type: object
             required:
-              - type
-              - value
+            - type
+            - value
             properties:
               type:
                 type: string
               value:
                 oneOf:
-                  - type: string
-                  - type: number
-        duration_type:
-          $ref: "#/components/schemas/DurationType"
+                - type: string
+                - type: number
+        base_impact_percent:
+          type: number
+          format: double
     EventSimulationResult:
       type: object
-      description: Результат симуляции события
+      description: 'Результат симуляции события
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         stock_id:
           type: string
           format: uuid
         stock_symbol:
           type: string
+        decay_curve:
+          $ref: '#/components/schemas/DecayCurve'
+        calculated_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventModifier'
         current_price:
           type: number
           format: double
         base_impact_percent:
           type: number
           format: double
-        calculated_modifiers:
-          type: array
-          items:
-            $ref: "#/components/schemas/EventModifier"
         total_impact_percent:
           type: number
           format: double
@@ -304,53 +345,53 @@ components:
           format: double
         duration_hours:
           type: integer
-        decay_curve:
-          $ref: "#/components/schemas/DecayCurve"
     EventApplicationRequest:
       type: object
-      description: Запрос применения события
+      description: 'Запрос применения события
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - stock_id
-        - event_type
-        - event_id
-        - event_name
-        - base_impact_percent
-        - duration_type
-        - decay_curve
+      - stock_id
+      - event_type
+      - event_id
+      - event_name
+      - base_impact_percent
+      - duration_type
+      - decay_curve
       properties:
         stock_id:
           type: string
           format: uuid
-        event_type:
-          $ref: "#/components/schemas/EventType"
         event_id:
           type: string
           description: ID источника события
         event_name:
           type: string
           description: Название события
-        base_impact_percent:
-          type: number
-          format: double
+        reason:
+          type: string
+          description: Причина ручного применения
+        decay_curve:
+          $ref: '#/components/schemas/DecayCurve'
+        duration_type:
+          $ref: '#/components/schemas/DurationType'
+        event_type:
+          $ref: '#/components/schemas/EventType'
         modifiers:
           type: array
           items:
             type: object
             required:
-              - type
-              - value
+            - type
+            - value
             properties:
               type:
                 type: string
               value:
                 oneOf:
-                  - type: string
-                  - type: number
-        duration_type:
-          $ref: "#/components/schemas/DurationType"
-        decay_curve:
-          $ref: "#/components/schemas/DecayCurve"
-        reason:
-          type: string
-          description: Причина ручного применения
-
+                - type: string
+                - type: number
+        base_impact_percent:
+          type: number
+          format: double

@@ -1,11 +1,13 @@
-// Issue: #1574
+// Issue: #1595
 package server
 
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/weapon-resource-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // Repository handles database operations
@@ -21,34 +23,49 @@ func NewRepository(db *sql.DB) *Repository {
 // GetWeaponResources gets all resources from database
 func (r *Repository) GetWeaponResources(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
 	// TODO: implement database query
-	// SELECT * FROM weapon_resources WHERE weapon_id = $1
-	return &api.WeaponResources{}, nil
+	weaponIDUUID, err := uuid.Parse(weaponID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.WeaponResources{
+		WeaponInstanceId: weaponIDUUID,
+		Ammunition: api.AmmunitionState{
+			Current: 0,
+			Max:     0,
+		},
+		Heat: api.HeatState{
+			Current:      0,
+			CoolingRate:  1.0,
+			Overheated:   false,
+		},
+		Energy: api.EnergyState{
+			Current:    0,
+			RegenRate:  1.0,
+		},
+		Cooldowns: make(api.WeaponResourcesCooldowns),
+		UpdatedAt: api.NewOptDateTime(time.Now()),
+	}, nil
 }
 
-// UpdateAmmo updates ammo in database
-func (r *Repository) UpdateAmmo(ctx context.Context, weaponID string, req api.UpdateAmmoJSONRequestBody) (*api.WeaponResources, error) {
+// ConsumeResource consumes resource (ammo/heat/energy)
+func (r *Repository) ConsumeResource(ctx context.Context, weaponID string, req *api.ConsumeResourceRequest) (*api.WeaponResources, error) {
 	// TODO: implement database update
-	// UPDATE weapon_resources SET ammo_count = $1 WHERE weapon_id = $2
-	return &api.WeaponResources{}, nil
+	return r.GetWeaponResources(ctx, weaponID)
 }
 
-// UpdateHeat updates heat level in database
-func (r *Repository) UpdateHeat(ctx context.Context, weaponID string, req api.UpdateHeatJSONRequestBody) (*api.WeaponResources, error) {
+// ApplyCooldown applies cooldown to weapon/ability
+func (r *Repository) ApplyCooldown(ctx context.Context, weaponID string, req *api.ApplyCooldownRequest) (*api.WeaponResources, error) {
 	// TODO: implement database update
-	return &api.WeaponResources{}, nil
+	return r.GetWeaponResources(ctx, weaponID)
 }
 
-// UpdateEnergy updates energy level in database
-func (r *Repository) UpdateEnergy(ctx context.Context, weaponID string, req api.UpdateEnergyJSONRequestBody) (*api.WeaponResources, error) {
+// ReloadWeapon reloads weapon ammunition
+func (r *Repository) ReloadWeapon(ctx context.Context, weaponID string, req *api.ReloadWeaponRequest) (*api.WeaponResources, error) {
 	// TODO: implement database update
-	return &api.WeaponResources{}, nil
+	return r.GetWeaponResources(ctx, weaponID)
 }
 
-// UpdateCooldown updates cooldown status in database
-func (r *Repository) UpdateCooldown(ctx context.Context, weaponID string, req api.UpdateCooldownJSONRequestBody) (*api.WeaponResources, error) {
-	// TODO: implement database update
-	return &api.WeaponResources{}, nil
-}
 
 
 

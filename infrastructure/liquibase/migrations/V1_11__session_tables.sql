@@ -1,18 +1,18 @@
 CREATE TABLE IF NOT EXISTS mvp_core.player_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  user_agent TEXT,
   player_id VARCHAR(100) NOT NULL,
   token VARCHAR(255) NOT NULL UNIQUE,
   reconnect_token VARCHAR(255) NOT NULL UNIQUE,
   status VARCHAR(20) NOT NULL DEFAULT 'created',
   server_id VARCHAR(100) NOT NULL,
   ip_address VARCHAR(45),
-  user_agent TEXT,
-  character_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
   last_heartbeat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  disconnect_count INT NOT NULL DEFAULT 0,
-  deleted_at TIMESTAMP
+  deleted_at TIMESTAMP,
+  disconnect_count INT NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_player_sessions_player_id 

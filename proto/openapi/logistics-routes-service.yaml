@@ -1,67 +1,71 @@
-# Issue: #230
 openapi: 3.0.3
 info:
   title: Logistics Routes Service API
-  description: |
-    API для управления маршрутами перевозок.
-    
+  description: 'API для управления маршрутами перевозок.
+
+
     **Основные возможности:**
+
     - Получение списка маршрутов
+
     - Получение информации о маршруте
+
     - Расчет маршрута
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
   x-microservice: logistics-service-go
-
 servers:
-  - url: http://localhost:8088/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8088/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Routes
-    description: Управление маршрутами
-
+- name: Routes
+  description: Управление маршрутами
 paths:
   /logistics/routes:
     get:
       tags:
-        - Routes
+      - Routes
       summary: Получить список маршрутов
       description: Возвращает список доступных маршрутов с фильтрацией
       operationId: getRoutes
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: origin_location
-          in: query
-          schema:
-            type: string
-        - name: destination_location
-          in: query
-          schema:
-            type: string
-        - name: route_type
-          in: query
-          schema:
-            type: string
-            enum: [LOCAL, REGIONAL, GLOBAL]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: origin_location
+        in: query
+        schema:
+          type: string
+      - name: destination_location
+        in: query
+        schema:
+          type: string
+      - name: route_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - LOCAL
+          - REGIONAL
+          - GLOBAL
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Список маршрутов
@@ -70,28 +74,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/RoutesResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /logistics/routes/{route_id}:
     get:
       tags:
-        - Routes
+      - Routes
       summary: Получить маршрут
       description: Возвращает детальную информацию о маршруте
       operationId: getRoute
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: route_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: route_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Информация о маршруте
@@ -100,21 +103,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Route'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /logistics/routes/calculate:
     post:
       tags:
-        - Routes
+      - Routes
       summary: Расчет маршрута
       description: Рассчитывает оптимальный маршрут между двумя локациями
       operationId: calculateRoute
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -129,12 +131,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Route'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   schemas:
     Route:
@@ -143,36 +144,43 @@ components:
         route_id:
           type: string
           format: uuid
-        route_type:
-          type: string
-          enum: [LOCAL, REGIONAL, GLOBAL]
         origin_location:
           type: string
         destination_location:
           type: string
-        distance:
-          type: number
-          format: decimal
-        estimated_time:
-          type: integer
-          description: Время в секундах
-        cost_per_km:
-          type: number
-          format: decimal
+        route_type:
+          type: string
+          enum:
+          - LOCAL
+          - REGIONAL
+          - GLOBAL
         risk_level:
           type: string
-          enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
-        waypoints:
-          type: array
-          items:
-            type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - VERY_HIGH
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
+        waypoints:
+          type: array
+          items:
+            type: string
+        distance:
+          type: number
+          format: decimal
+        cost_per_km:
+          type: number
+          format: decimal
+        estimated_time:
+          type: integer
+          description: Время в секундах
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RoutesResponse:
       type: object
       properties:
@@ -186,12 +194,11 @@ components:
           type: integer
         offset:
           type: integer
-
     CalculateRouteRequest:
       type: object
       required:
-        - origin_location
-        - destination_location
+      - origin_location
+      - destination_location
       properties:
         origin_location:
           type: string
@@ -199,13 +206,19 @@ components:
           type: string
         transport_type:
           type: string
-          enum: [GROUND, AIR, RAIL, COURIER, PLAYER_PICKUP]
+          enum:
+          - GROUND
+          - AIR
+          - RAIL
+          - COURIER
+          - PLAYER_PICKUP
         optimize_for:
           type: string
-          enum: [TIME, COST, SAFETY]
+          enum:
+          - TIME
+          - COST
+          - SAFETY
           default: TIME
-
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth

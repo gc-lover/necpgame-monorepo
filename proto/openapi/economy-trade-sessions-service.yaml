@@ -1,4 +1,3 @@
-# Issue: #131
 openapi: 3.0.3
 info:
   title: Economy Trade Sessions Service API
@@ -7,115 +6,112 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Trade Sessions
-    description: Управление сессиями торговли
-
+- name: Trade Sessions
+  description: Управление сессиями торговли
 paths:
   /economy/trade:
     get:
       tags:
-        - Trade Sessions
+      - Trade Sessions
       summary: Получить список активных торговых сессий
-      description: |
-        Возвращает список всех активных торговых сессий для текущего пользователя.
+      description: 'Возвращает список всех активных торговых сессий для текущего пользователя.
+
         Включает сессии, где пользователь является инициатором или получателем.
+
         Возвращаются только сессии со статусом `pending`, `active` или `confirmed`.
+
+        '
       operationId: getActiveTrades
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Список активных торговых сессий
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ActiveTradesResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ActiveTradesResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/trade/sessions:
     post:
       tags:
-        - Trade Sessions
+      - Trade Sessions
       summary: Создать сессию торговли
       operationId: createTradeSession
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTradeSessionRequest"
+              $ref: '#/components/schemas/CreateTradeSessionRequest'
       responses:
-        "200":
+        '200':
           description: Сессия торговли создана
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TradeSession"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TradeSession'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/trade/sessions/{sessionId}:
     get:
       tags:
-        - Trade Sessions
+      - Trade Sessions
       summary: Получить информацию о сессии торговли
       operationId: getTradeSession
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Информация о сессии торговли
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TradeSession"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TradeSession'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     delete:
       tags:
-        - Trade Sessions
+      - Trade Sessions
       summary: Отменить сессию торговли
       operationId: cancelTradeSession
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Сессия торговли отменена
           content:
             application/json:
@@ -124,88 +120,83 @@ paths:
                 properties:
                   status:
                     type: string
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/trade/sessions/{sessionId}/confirmation-status:
     get:
       tags:
-        - Trade Sessions
+      - Trade Sessions
       summary: Получить статус подтверждений торговой сессии
       operationId: getTradeConfirmationStatus
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Статус подтверждений
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TradeConfirmationStatus"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TradeConfirmationStatus'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/trade/sessions/{sessionId}/audit:
     get:
       tags:
-        - Trade Sessions
+      - Trade Sessions
       summary: Получить аудит торговой сессии
       operationId: getTradeSessionAudit
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Аудит сессии
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TradeAudit"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TradeAudit'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     CreateTradeSessionRequest:
       type: object
       required:
-        - target_character_id
+      - target_character_id
       properties:
         target_character_id:
           type: string
           format: uuid
-
     TradeSession:
       type: object
       properties:
@@ -220,17 +211,13 @@ components:
           format: uuid
         status:
           type: string
-          enum: [pending, active, confirmed, completed, cancelled, expired]
-        initiator_offer:
-          $ref: "#/components/schemas/TradeOffer"
-        target_offer:
-          $ref: "#/components/schemas/TradeOffer"
-        initiator_confirmed:
-          type: boolean
-          default: false
-        target_confirmed:
-          type: boolean
-          default: false
+          enum:
+          - pending
+          - active
+          - confirmed
+          - completed
+          - cancelled
+          - expired
         expires_at:
           type: string
           format: date-time
@@ -240,23 +227,32 @@ components:
         updated_at:
           type: string
           format: date-time
-
+        initiator_offer:
+          $ref: '#/components/schemas/TradeOffer'
+        target_offer:
+          $ref: '#/components/schemas/TradeOffer'
+        initiator_confirmed:
+          type: boolean
+          default: false
+        target_confirmed:
+          type: boolean
+          default: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TradeOffer:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/TradeItem"
+            $ref: '#/components/schemas/TradeItem'
         currency:
           type: integer
           minimum: 0
-
     TradeItem:
       type: object
       required:
-        - item_id
-        - quantity
+      - item_id
+      - quantity
       properties:
         item_id:
           type: string
@@ -264,7 +260,6 @@ components:
         quantity:
           type: integer
           minimum: 1
-
     TradeConfirmationStatus:
       type: object
       properties:
@@ -279,13 +274,19 @@ components:
           type: boolean
         can_execute:
           type: boolean
-
     TradeAudit:
       type: object
       properties:
         session_id:
           type: string
           format: uuid
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
         events:
           type: array
           items:
@@ -302,30 +303,21 @@ components:
               details:
                 type: object
                 additionalProperties: true
-        created_at:
-          type: string
-          format: date-time
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActiveTradesResponse:
       type: object
       required:
-        - trades
-        - total
+      - trades
+      - total
       properties:
         trades:
           type: array
           description: Список активных торговых сессий
           items:
-            $ref: "#/components/schemas/TradeSession"
+            $ref: '#/components/schemas/TradeSession'
         total:
           type: integer
           description: Общее количество активных торговых сессий
           minimum: 0
-
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

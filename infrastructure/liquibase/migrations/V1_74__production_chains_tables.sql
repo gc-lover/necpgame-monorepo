@@ -34,18 +34,20 @@ END $$;
 
 -- Таблица производственных цепочек
 CREATE TABLE IF NOT EXISTS production.production_chains (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    item_tier INTEGER NOT NULL CHECK (item_tier >= 1 AND item_tier <= 5),
-    item_type VARCHAR(50) NOT NULL,
-    stages JSONB NOT NULL DEFAULT '[]', -- массив этапов цепочки
-    base_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    base_time_minutes INTEGER NOT NULL DEFAULT 0,
-    base_success_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (base_success_rate >= 0.00 AND base_success_rate <= 100.00),
-    required_licenses UUID[], -- FK production_licenses (массив UUID)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  required_licenses UUID[],
+  description TEXT,
+  name VARCHAR(255) NOT NULL,
+  item_type VARCHAR(50) NOT NULL,
+  stages JSONB NOT NULL DEFAULT '[]',
+  -- FK production_licenses (массив UUID)
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- массив этапов цепочки
+    base_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  base_success_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (base_success_rate >= 0.00 AND base_success_rate <= 100.00),
+  item_tier INTEGER NOT NULL CHECK (item_tier >= 1 AND item_tier <= 5),
+  base_time_minutes INTEGER NOT NULL DEFAULT 0
 );
 
 -- Индексы для production_chains
@@ -56,28 +58,36 @@ CREATE INDEX IF NOT EXISTS idx_production_chains_name
 
 -- Таблица заказов на производство
 CREATE TABLE IF NOT EXISTS production.production_orders (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL, -- FK accounts
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL,
+  -- FK accounts
     chain_id UUID NOT NULL REFERENCES production.production_chains(id) ON DELETE RESTRICT,
-    guild_id UUID, -- FK guilds (nullable)
-    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    status production_order_status NOT NULL DEFAULT 'pending',
-    current_stage INTEGER NOT NULL DEFAULT 0,
-    total_stages INTEGER NOT NULL DEFAULT 0,
-    total_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    actual_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    estimated_time_minutes INTEGER NOT NULL DEFAULT 0,
-    actual_time_minutes INTEGER, -- nullable
-    success_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (success_rate >= 0.00 AND success_rate <= 100.00),
-    is_rush BOOLEAN NOT NULL DEFAULT false,
-    rush_cost_multiplier DECIMAL(3,2), -- nullable
-    is_bulk BOOLEAN NOT NULL DEFAULT false,
-    bulk_efficiency DECIMAL(5,2), -- nullable
-    station_id UUID REFERENCES production.production_stations(id) ON DELETE SET NULL, -- nullable
-    started_at TIMESTAMP, -- nullable
-    completed_at TIMESTAMP, -- nullable
+  guild_id UUID,
+  -- nullable
+    station_id UUID REFERENCES production.production_stations(id) ON DELETE SET NULL,
+  -- nullable
+    started_at TIMESTAMP,
+  -- nullable
+    completed_at TIMESTAMP,
+  -- nullable
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  total_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  actual_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  -- nullable
+    success_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (success_rate >= 0.00 AND success_rate <= 100.00),
+  rush_cost_multiplier DECIMAL(3,2),
+  bulk_efficiency DECIMAL(5,2),
+  -- FK guilds (nullable)
+    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  current_stage INTEGER NOT NULL DEFAULT 0,
+  total_stages INTEGER NOT NULL DEFAULT 0,
+  estimated_time_minutes INTEGER NOT NULL DEFAULT 0,
+  actual_time_minutes INTEGER,
+  is_rush BOOLEAN NOT NULL DEFAULT false,
+  -- nullable
+    is_bulk BOOLEAN NOT NULL DEFAULT false,
+  status production_order_status NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для production_orders
@@ -92,18 +102,23 @@ CREATE INDEX IF NOT EXISTS idx_production_orders_status_started
 
 -- Таблица этапов производства
 CREATE TABLE IF NOT EXISTS production.production_stages (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES production.production_orders(id) ON DELETE CASCADE,
-    stage_number INTEGER NOT NULL,
-    stage_type production_stage_type NOT NULL,
-    status production_stage_status NOT NULL DEFAULT 'pending',
-    required_resources JSONB NOT NULL DEFAULT '{}',
-    consumed_resources JSONB, -- nullable
-    result JSONB, -- nullable
-    success BOOLEAN, -- nullable
-    started_at TIMESTAMP, -- nullable
-    completed_at TIMESTAMP, -- nullable
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES production.production_orders(id) ON DELETE CASCADE,
+  required_resources JSONB NOT NULL DEFAULT '{}',
+  consumed_resources JSONB,
+  -- nullable
+    result JSONB,
+  -- nullable
+    started_at TIMESTAMP,
+  -- nullable
+    completed_at TIMESTAMP,
+  -- nullable
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  stage_number INTEGER NOT NULL,
+  -- nullable
+    success BOOLEAN,
+  stage_type production_stage_type NOT NULL,
+  status production_stage_status NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для production_stages
@@ -114,16 +129,17 @@ CREATE INDEX IF NOT EXISTS idx_production_stages_status
 
 -- Таблица производственных станций игроков
 CREATE TABLE IF NOT EXISTS production.production_stations (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL, -- FK accounts
-    station_type production_station_type NOT NULL,
-    level INTEGER NOT NULL DEFAULT 1 CHECK (level >= 1),
-    efficiency_bonus DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    capacity INTEGER NOT NULL DEFAULT 1 CHECK (capacity > 0),
-    current_orders INTEGER NOT NULL DEFAULT 0 CHECK (current_orders >= 0),
-    location VARCHAR(255),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL,
+  location VARCHAR(255),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  efficiency_bonus DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  level INTEGER NOT NULL DEFAULT 1 CHECK (level >= 1),
+  capacity INTEGER NOT NULL DEFAULT 1 CHECK (capacity > 0),
+  current_orders INTEGER NOT NULL DEFAULT 0 CHECK (current_orders >= 0),
+  -- FK accounts
+    station_type production_station_type NOT NULL
 );
 
 -- Индексы для production_stations
@@ -134,14 +150,16 @@ CREATE INDEX IF NOT EXISTS idx_production_stations_type_level
 
 -- Таблица лицензий на производство
 CREATE TABLE IF NOT EXISTS production.production_licenses (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    item_tier INTEGER NOT NULL CHECK (item_tier >= 1 AND item_tier <= 5),
-    item_type VARCHAR(50) NOT NULL,
-    cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    duration_days INTEGER, -- nullable, для временных лицензий
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  name VARCHAR(255) NOT NULL,
+  item_type VARCHAR(50) NOT NULL,
+  для временных лицензий
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  item_tier INTEGER NOT NULL CHECK (item_tier >= 1 AND item_tier <= 5),
+  duration_days INTEGER,
+  -- nullable
 );
 
 -- Индексы для production_licenses
@@ -168,12 +186,13 @@ CREATE INDEX IF NOT EXISTS idx_player_production_licenses_expires_at
 
 -- Таблица ускорителей производства
 CREATE TABLE IF NOT EXISTS production.production_accelerators (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES production.production_orders(id) ON DELETE CASCADE,
-    accelerator_type production_accelerator_type NOT NULL,
-    effect JSONB NOT NULL DEFAULT '{}', -- описание эффекта
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES production.production_orders(id) ON DELETE CASCADE,
+  effect JSONB NOT NULL DEFAULT '{}',
+  -- описание эффекта
     applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL
+  expires_at TIMESTAMP NOT NULL,
+  accelerator_type production_accelerator_type NOT NULL
 );
 
 -- Индексы для production_accelerators
@@ -184,17 +203,19 @@ CREATE INDEX IF NOT EXISTS idx_production_accelerators_expires_at
 
 -- Таблица квестовых цепочек для легендарного крафта
 CREATE TABLE IF NOT EXISTS production.production_legendary_quests (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    item_id UUID, -- FK items (nullable)
-    quest_chain JSONB NOT NULL DEFAULT '[]', -- массив квестов
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  item_id UUID,
+  description TEXT,
+  name VARCHAR(255) NOT NULL,
+  -- FK items (nullable)
+    quest_chain JSONB NOT NULL DEFAULT '[]',
+  required_components JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  base_success_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (base_success_rate >= 0.00 AND base_success_rate <= 100.00),
+  required_mastery INTEGER NOT NULL DEFAULT 0 CHECK (required_mastery >= 0),
+  -- массив квестов
     required_blueprint BOOLEAN NOT NULL DEFAULT false,
-    required_mastery INTEGER NOT NULL DEFAULT 0 CHECK (required_mastery >= 0),
-    required_components JSONB NOT NULL DEFAULT '{}',
-    legendary_forge_required BOOLEAN NOT NULL DEFAULT false,
-    base_success_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (base_success_rate >= 0.00 AND base_success_rate <= 100.00),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  legendary_forge_required BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Индексы для production_legendary_quests

@@ -1,4 +1,4 @@
-// Issue: #44
+// Issue: #44, #1584
 package main
 
 import (
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -44,6 +45,12 @@ func main() {
 	}
 	defer db.Close()
 
+	// Connection pool settings for performance (Issue #1605)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -71,17 +78,26 @@ func main() {
 	cronScheduler := cron.New()
 	defer cronScheduler.Stop()
 
-	// Initialize repository, service, and handlers
+	// Initialize repository, service
 	repo := server.NewRepository(db, logger)
 	svc := server.NewService(repo, redisClient, kafkaWriter, cronScheduler, logger)
-	handlers := server.NewHandlers(svc, logger)
 
 	// Start cron scheduler
 	cronScheduler.Start()
 
 	// Create HTTP server
 	serverPort := getEnv("SERVER_PORT", "8090")
-	httpServer := server.NewHTTPServer(":"+serverPort, handlers, logger)
+	httpServer := server.NewHTTPServer(":"+serverPort, svc, logger)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6117")
+		logger.Info("pprof server starting", zap.String("addr", pprofAddr))
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.Error("pprof server failed", zap.Error(err))
+		}
+	}()
 
 	// Start server
 	go func() {
@@ -114,6 +130,7 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
 
 
 

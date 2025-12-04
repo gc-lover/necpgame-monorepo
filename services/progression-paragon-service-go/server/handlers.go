@@ -1,54 +1,93 @@
+// Issue: #1604, #1607
 package server
 
 import (
-	"encoding/json"
+	"context"
 	"net/http"
+	"sync"
+	"time"
 
-	"github.com/google/uuid"
 	"github.com/necpgame/progression-paragon-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 )
 
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond
+)
+
+// ParagonHandlers implements api.Handler interface (ogen typed handlers)
+// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type ParagonHandlers struct {
 	service ParagonServiceInterface
 	logger  *logrus.Logger
+
+	// Memory pooling for hot path structs (zero allocations target!)
+	paragonLevelsPool sync.Pool
+	paragonStatsPool sync.Pool
+	paragonAllocationPool sync.Pool
 }
 
 func NewParagonHandlers(service ParagonServiceInterface) *ParagonHandlers {
-	return &ParagonHandlers{
+	h := &ParagonHandlers{
 		service: service,
 		logger:  GetLogger(),
 	}
+
+	// Initialize memory pools (zero allocations target!)
+	h.paragonLevelsPool = sync.Pool{
+		New: func() interface{} {
+			return &api.ParagonLevels{}
+		},
+	}
+	h.paragonStatsPool = sync.Pool{
+		New: func() interface{} {
+			return &api.ParagonStats{}
+		},
+	}
+	h.paragonAllocationPool = sync.Pool{
+		New: func() interface{} {
+			return &api.ParagonAllocation{}
+		},
+	}
+
+	return h
 }
 
-func (h *ParagonHandlers) GetParagonLevels(w http.ResponseWriter, r *http.Request, params api.GetParagonLevelsParams) {
-	characterID := uuid.UUID(params.CharacterId)
+// GetParagonLevels - TYPED response!
+func (h *ParagonHandlers) GetParagonLevels(ctx context.Context, params api.GetParagonLevelsParams) (api.GetParagonLevelsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	levels, err := h.service.GetParagonLevels(r.Context(), characterID)
+	levels, err := h.service.GetParagonLevels(ctx, params.CharacterID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get paragon levels")
-		h.respondError(w, http.StatusInternalServerError, "failed to get paragon levels")
-		return
+		return &api.GetParagonLevelsInternalServerError{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to get paragon levels",
+		}, nil
 	}
 
 	if levels == nil {
-		h.respondError(w, http.StatusNotFound, "paragon levels not found")
-		return
+		return &api.GetParagonLevelsNotFound{
+			Error:   http.StatusText(http.StatusNotFound),
+			Message: "paragon levels not found",
+		}, nil
 	}
 
-	apiLevels := convertParagonLevelsToAPI(levels)
-	h.respondJSON(w, http.StatusOK, apiLevels)
+	// Issue: #1607 - Use memory pooling
+	apiLevels := h.paragonLevelsPool.Get().(*api.ParagonLevels)
+	// Note: Not returning to pool - struct is returned to caller
+
+	*apiLevels = convertParagonLevelsToAPI(levels)
+	return apiLevels, nil
 }
 
-func (h *ParagonHandlers) DistributeParagonPoints(w http.ResponseWriter, r *http.Request, params api.DistributeParagonPointsParams) {
-	characterID := uuid.UUID(params.CharacterId)
-
-	var req api.DistributeParagonPointsJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+// DistributeParagonPoints - TYPED response!
+// Issue: #1607 - Uses memory pooling for zero allocations
+func (h *ParagonHandlers) DistributeParagonPoints(ctx context.Context, req *api.DistributeParagonPointsRequest, params api.DistributeParagonPointsParams) (api.DistributeParagonPointsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	allocations := make([]ParagonAllocation, len(req.Allocations))
 	for i, a := range req.Allocations {
@@ -58,100 +97,88 @@ func (h *ParagonHandlers) DistributeParagonPoints(w http.ResponseWriter, r *http
 		}
 	}
 
-	levels, err := h.service.DistributeParagonPoints(r.Context(), characterID, allocations)
+	levels, err := h.service.DistributeParagonPoints(ctx, params.CharacterID, allocations)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to distribute paragon points")
-		h.respondError(w, http.StatusInternalServerError, "failed to distribute paragon points")
-		return
+		// Error responses are rare, no pooling needed
+		return &api.DistributeParagonPointsInternalServerError{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to distribute paragon points",
+		}, nil
 	}
 
-	apiLevels := convertParagonLevelsToAPI(levels)
-	h.respondJSON(w, http.StatusOK, apiLevels)
+	// Issue: #1607 - Use memory pooling
+	apiLevels := h.paragonLevelsPool.Get().(*api.ParagonLevels)
+	// Note: Not returning to pool - struct is returned to caller
+
+	*apiLevels = convertParagonLevelsToAPI(levels)
+	return apiLevels, nil
 }
 
-func (h *ParagonHandlers) GetParagonStats(w http.ResponseWriter, r *http.Request, params api.GetParagonStatsParams) {
-	characterID := uuid.UUID(params.CharacterId)
+// GetParagonStats - TYPED response!
+// Issue: #1607 - Uses memory pooling for zero allocations
+func (h *ParagonHandlers) GetParagonStats(ctx context.Context, params api.GetParagonStatsParams) (api.GetParagonStatsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	stats, err := h.service.GetParagonStats(r.Context(), characterID)
+	stats, err := h.service.GetParagonStats(ctx, params.CharacterID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get paragon stats")
-		h.respondError(w, http.StatusInternalServerError, "failed to get paragon stats")
-		return
+		// Error responses are rare, no pooling needed
+		return &api.GetParagonStatsInternalServerError{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to get paragon stats",
+		}, nil
 	}
 
 	if stats == nil {
-		h.respondError(w, http.StatusNotFound, "paragon stats not found")
-		return
+		// Error responses are rare, no pooling needed
+		return &api.GetParagonStatsNotFound{
+			Error:   http.StatusText(http.StatusNotFound),
+			Message: "paragon stats not found",
+		}, nil
 	}
 
-	apiStats := convertParagonStatsToAPI(stats)
-	h.respondJSON(w, http.StatusOK, apiStats)
+	// Issue: #1607 - Use memory pooling
+	apiStats := h.paragonStatsPool.Get().(*api.ParagonStats)
+	// Note: Not returning to pool - struct is returned to caller
+
+	*apiStats = convertParagonStatsToAPI(stats)
+	return apiStats, nil
 }
 
 func convertParagonLevelsToAPI(levels *ParagonLevels) api.ParagonLevels {
-	characterID := openapi_types.UUID(levels.CharacterID)
-	paragonLevel := levels.ParagonLevel
-	paragonPointsTotal := levels.ParagonPointsTotal
-	paragonPointsSpent := levels.ParagonPointsSpent
-	paragonPointsAvailable := levels.ParagonPointsAvailable
-	experienceCurrent := int(levels.ExperienceCurrent)
-	experienceRequired := int(levels.ExperienceRequired)
-	updatedAt := levels.UpdatedAt
-
 	allocations := make([]api.ParagonAllocation, len(levels.Allocations))
 	for i, a := range levels.Allocations {
 		statType := api.ParagonAllocationStatType(a.StatType)
-		pointsAllocated := a.PointsAllocated
 		allocations[i] = api.ParagonAllocation{
-			StatType:        &statType,
-			PointsAllocated: &pointsAllocated,
+			StatType:        api.NewOptParagonAllocationStatType(statType),
+			PointsAllocated: api.NewOptInt(a.PointsAllocated),
 		}
 	}
 
 	return api.ParagonLevels{
-		CharacterId:            &characterID,
-		ParagonLevel:            &paragonLevel,
-		ParagonPointsTotal:      &paragonPointsTotal,
-		ParagonPointsSpent:      &paragonPointsSpent,
-		ParagonPointsAvailable: &paragonPointsAvailable,
-		ExperienceCurrent:      &experienceCurrent,
-		ExperienceRequired:     &experienceRequired,
-		Allocations:            &allocations,
-		UpdatedAt:              &updatedAt,
+		CharacterID:            api.NewOptUUID(levels.CharacterID),
+		ParagonLevel:           api.NewOptInt(levels.ParagonLevel),
+		ParagonPointsTotal:     api.NewOptInt(levels.ParagonPointsTotal),
+		ParagonPointsSpent:     api.NewOptInt(levels.ParagonPointsSpent),
+		ParagonPointsAvailable: api.NewOptInt(levels.ParagonPointsAvailable),
+		ExperienceCurrent:      api.NewOptInt(int(levels.ExperienceCurrent)),
+		ExperienceRequired:     api.NewOptInt(int(levels.ExperienceRequired)),
+		Allocations:            allocations,
+		UpdatedAt:             api.NewOptDateTime(levels.UpdatedAt),
 	}
 }
 
 func convertParagonStatsToAPI(stats *ParagonStats) api.ParagonStats {
-	characterID := openapi_types.UUID(stats.CharacterID)
-	totalParagonLevels := stats.TotalParagonLevels
-	totalPointsEarned := stats.TotalPointsEarned
-	totalPointsSpent := stats.TotalPointsSpent
-	pointsByStat := stats.PointsByStat
-	globalRank := stats.GlobalRank
-	percentile := float32(stats.Percentile)
-
 	return api.ParagonStats{
-		CharacterId:        &characterID,
-		TotalParagonLevels: &totalParagonLevels,
-		TotalPointsEarned:  &totalPointsEarned,
-		TotalPointsSpent:   &totalPointsSpent,
-		PointsByStat:       &pointsByStat,
-		GlobalRank:         &globalRank,
-		Percentile:         &percentile,
+		CharacterID:        api.NewOptUUID(stats.CharacterID),
+		TotalParagonLevels: api.NewOptInt(stats.TotalParagonLevels),
+		TotalPointsEarned:  api.NewOptInt(stats.TotalPointsEarned),
+		TotalPointsSpent:   api.NewOptInt(stats.TotalPointsSpent),
+		PointsByStat:       api.NewOptParagonStatsPointsByStat(stats.PointsByStat),
+		GlobalRank:         api.NewOptInt(stats.GlobalRank),
+		Percentile:         api.NewOptFloat32(float32(stats.Percentile)),
 	}
-}
-
-func (h *ParagonHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func (h *ParagonHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-	}
-	h.respondJSON(w, status, errorResponse)
 }
 

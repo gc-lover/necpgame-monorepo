@@ -4,9 +4,9 @@ CREATE TABLE IF NOT EXISTS social.chat_reports (
   reported_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
   message_id UUID REFERENCES social.chat_messages(id) ON DELETE SET NULL,
   channel_id UUID REFERENCES social.chat_channels(id) ON DELETE SET NULL,
+  admin_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
   reason TEXT NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
-  admin_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   resolved_at TIMESTAMP
 );

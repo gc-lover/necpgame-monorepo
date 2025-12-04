@@ -1,115 +1,102 @@
-// Issue: #1574
+// Issue: #1595
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/weapon-resource-service-go/pkg/api"
 )
 
-// Handlers implements api.ServerInterface
+const DBTimeout = 50 * time.Millisecond
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
 	service *Service
 }
 
-// NewHandlers creates handlers with DI
+// NewHandlers creates new handlers
 func NewHandlers(service *Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-// GetWeaponResources implements GET /api/v1/weapons/{weapon_id}/resources
-func (h *Handlers) GetWeaponResources(w http.ResponseWriter, r *http.Request, weaponId string) {
-	resources, err := h.service.GetWeaponResources(r.Context(), weaponId)
+// APIV1WeaponsResourcesWeaponIdGet - TYPED response!
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdGet(ctx context.Context, params api.APIV1WeaponsResourcesWeaponIdGetParams) (api.APIV1WeaponsResourcesWeaponIdGetRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	resources, err := h.service.GetWeaponResources(ctx, params.WeaponId.String())
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.APIV1WeaponsResourcesWeaponIdGetInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, resources)
+
+	return resources, nil
 }
 
-// UpdateAmmo implements PUT /api/v1/weapons/{weapon_id}/ammo
-func (h *Handlers) UpdateAmmo(w http.ResponseWriter, r *http.Request, weaponId string) {
-	var req api.UpdateAmmoJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
+// APIV1WeaponsResourcesWeaponIdConsumePost - TYPED response!
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdConsumePost(ctx context.Context, req *api.ConsumeResourceRequest, params api.APIV1WeaponsResourcesWeaponIdConsumePostParams) (api.APIV1WeaponsResourcesWeaponIdConsumePostRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	result, err := h.service.UpdateAmmo(r.Context(), weaponId, req)
+	result, err := h.service.ConsumeResource(ctx, params.WeaponId.String(), req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.APIV1WeaponsResourcesWeaponIdConsumePostInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, result)
+
+	return result, nil
 }
 
-// UpdateHeat implements PUT /api/v1/weapons/{weapon_id}/heat
-func (h *Handlers) UpdateHeat(w http.ResponseWriter, r *http.Request, weaponId string) {
-	var req api.UpdateHeatJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
+// APIV1WeaponsResourcesWeaponIdCooldownPost - TYPED response!
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdCooldownPost(ctx context.Context, req *api.ApplyCooldownRequest, params api.APIV1WeaponsResourcesWeaponIdCooldownPostParams) (api.APIV1WeaponsResourcesWeaponIdCooldownPostRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	result, err := h.service.UpdateHeat(r.Context(), weaponId, req)
+	result, err := h.service.ApplyCooldown(ctx, params.WeaponId.String(), req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.APIV1WeaponsResourcesWeaponIdCooldownPostInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, result)
+
+	return result, nil
 }
 
-// UpdateEnergy implements PUT /api/v1/weapons/{weapon_id}/energy
-func (h *Handlers) UpdateEnergy(w http.ResponseWriter, r *http.Request, weaponId string) {
-	var req api.UpdateEnergyJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
+// APIV1WeaponsResourcesWeaponIdReloadPost - TYPED response!
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdReloadPost(ctx context.Context, req *api.ReloadWeaponRequest, params api.APIV1WeaponsResourcesWeaponIdReloadPostParams) (api.APIV1WeaponsResourcesWeaponIdReloadPostRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	result, err := h.service.UpdateEnergy(r.Context(), weaponId, req)
+	result, err := h.service.ReloadWeapon(ctx, params.WeaponId.String(), req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.APIV1WeaponsResourcesWeaponIdReloadPostInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, result)
+
+	return result, nil
 }
 
-// UpdateCooldown implements PUT /api/v1/weapons/{weapon_id}/cooldown
-func (h *Handlers) UpdateCooldown(w http.ResponseWriter, r *http.Request, weaponId string) {
-	var req api.UpdateCooldownJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
+// APIV1WeaponsResourcesWeaponIdStatusGet - TYPED response!
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdStatusGet(ctx context.Context, params api.APIV1WeaponsResourcesWeaponIdStatusGetParams) (api.APIV1WeaponsResourcesWeaponIdStatusGetRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	result, err := h.service.UpdateCooldown(r.Context(), weaponId, req)
+	status, err := h.service.GetWeaponStatus(ctx, params.WeaponId.String())
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.APIV1WeaponsResourcesWeaponIdStatusGetInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, result)
+
+	return status, nil
 }
-
-// Helper functions
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string) {
-	respondJSON(w, status, api.Error{
-		Code:    int32(status),
-		Message: message,
-	})
-}
-
-
-
-
-
-
-
-

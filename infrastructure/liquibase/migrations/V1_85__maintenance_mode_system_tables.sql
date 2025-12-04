@@ -27,23 +27,23 @@ END $$;
 
 -- Таблица окон обслуживания
 CREATE TABLE IF NOT EXISTS admin.maintenance_windows (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    type maintenance_window_type NOT NULL,
-    status maintenance_window_status NOT NULL DEFAULT 'planned',
-    scheduled_start TIMESTAMP NOT NULL,
-    scheduled_end TIMESTAMP NOT NULL,
-    actual_start TIMESTAMP,
-    actual_end TIMESTAMP,
-    estimated_duration INTEGER CHECK (estimated_duration IS NULL OR estimated_duration > 0),
-    reason TEXT NOT NULL,
-    impact TEXT,
-    affected_services JSONB DEFAULT '[]'::jsonb,
-    created_by UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_maintenance_windows_created_by FOREIGN KEY (created_by) REFERENCES admin.admin_users(id) ON DELETE SET NULL,
-    CONSTRAINT chk_maintenance_windows_scheduled_dates CHECK (scheduled_end > scheduled_start),
-    CONSTRAINT chk_maintenance_windows_actual_dates CHECK (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_by UUID,
+  reason TEXT NOT NULL,
+  impact TEXT,
+  affected_services JSONB DEFAULT '[]'::jsonb,
+  scheduled_start TIMESTAMP NOT NULL,
+  scheduled_end TIMESTAMP NOT NULL,
+  actual_start TIMESTAMP,
+  actual_end TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  estimated_duration INTEGER CHECK (estimated_duration IS NULL OR estimated_duration > 0),
+  type maintenance_window_type NOT NULL,
+  status maintenance_window_status NOT NULL DEFAULT 'planned',
+  CONSTRAINT fk_maintenance_windows_created_by FOREIGN KEY (created_by) REFERENCES admin.admin_users(id) ON DELETE SET NULL,
+  CONSTRAINT chk_maintenance_windows_scheduled_dates CHECK (scheduled_end > scheduled_start),
+  CONSTRAINT chk_maintenance_windows_actual_dates CHECK (
         (actual_start IS NULL AND actual_end IS NULL) OR
         (actual_start IS NOT NULL AND (actual_end IS NULL OR actual_end >= actual_start))
     )
@@ -59,14 +59,14 @@ CREATE INDEX IF NOT EXISTS idx_maintenance_windows_created_by ON admin.maintenan
 
 -- Таблица текущего статуса обслуживания
 CREATE TABLE IF NOT EXISTS admin.maintenance_status (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    is_maintenance_mode BOOLEAN NOT NULL DEFAULT false,
-    current_window_id UUID,
-    connection_blocking_enabled BOOLEAN NOT NULL DEFAULT false,
-    graceful_shutdown_in_progress BOOLEAN NOT NULL DEFAULT false,
-    last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_maintenance_status_window FOREIGN KEY (current_window_id) REFERENCES admin.maintenance_windows(id) ON DELETE SET NULL,
-    CONSTRAINT chk_maintenance_status_single_row CHECK (id = '00000000-0000-0000-0000-000000000001'::uuid)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  current_window_id UUID,
+  last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_maintenance_mode BOOLEAN NOT NULL DEFAULT false,
+  connection_blocking_enabled BOOLEAN NOT NULL DEFAULT false,
+  graceful_shutdown_in_progress BOOLEAN NOT NULL DEFAULT false,
+  CONSTRAINT fk_maintenance_status_window FOREIGN KEY (current_window_id) REFERENCES admin.maintenance_windows(id) ON DELETE SET NULL,
+  CONSTRAINT chk_maintenance_status_single_row CHECK (id = '00000000-0000-0000-0000-000000000001'::uuid)
 );
 
 -- Установка единственной строки в maintenance_status
@@ -80,14 +80,14 @@ CREATE INDEX IF NOT EXISTS idx_maintenance_status_current_window_id ON admin.mai
 
 -- Таблица уведомлений об обслуживании
 CREATE TABLE IF NOT EXISTS admin.maintenance_notifications (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    window_id UUID NOT NULL,
-    notification_type maintenance_notification_type NOT NULL,
-    channel maintenance_notification_channel NOT NULL,
-    content JSONB DEFAULT '{}'::jsonb,
-    sent_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_maintenance_notifications_window FOREIGN KEY (window_id) REFERENCES admin.maintenance_windows(id) ON DELETE CASCADE
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  window_id UUID NOT NULL,
+  content JSONB DEFAULT '{}'::jsonb,
+  sent_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  notification_type maintenance_notification_type NOT NULL,
+  channel maintenance_notification_channel NOT NULL,
+  CONSTRAINT fk_maintenance_notifications_window FOREIGN KEY (window_id) REFERENCES admin.maintenance_windows(id) ON DELETE CASCADE
 );
 
 -- Индексы для maintenance_notifications
@@ -98,12 +98,12 @@ CREATE INDEX IF NOT EXISTS idx_maintenance_notifications_sent_at ON admin.mainte
 
 -- Таблица телеметрии обслуживания
 CREATE TABLE IF NOT EXISTS admin.maintenance_telemetry (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_type VARCHAR(50) NOT NULL,
-    window_id UUID NOT NULL,
-    event_data JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_maintenance_telemetry_window FOREIGN KEY (window_id) REFERENCES admin.maintenance_windows(id) ON DELETE CASCADE
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  window_id UUID NOT NULL,
+  event_type VARCHAR(50) NOT NULL,
+  event_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_maintenance_telemetry_window FOREIGN KEY (window_id) REFERENCES admin.maintenance_windows(id) ON DELETE CASCADE
 );
 
 -- Индексы для maintenance_telemetry

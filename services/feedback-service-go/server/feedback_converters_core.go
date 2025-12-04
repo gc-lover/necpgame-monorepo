@@ -1,9 +1,11 @@
+// Issue: ogen migration
 package server
 
 import (
-	feedbackapi "github.com/necpgame/feedback-service-go/pkg/api"
-	"github.com/necpgame/feedback-service-go/models"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"net/url"
+
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 )
 
 func convertSubmitFeedbackRequestFromAPI(req *feedbackapi.SubmitFeedbackRequest) *models.SubmitFeedbackRequest {
@@ -14,17 +16,21 @@ func convertSubmitFeedbackRequestFromAPI(req *feedbackapi.SubmitFeedbackRequest)
 		Description: req.Description,
 	}
 
-	if req.Priority != nil {
-		p := convertFeedbackPriorityFromAPI(*req.Priority)
+	if req.Priority.Set {
+		p := convertFeedbackPriorityFromAPI(req.Priority.Value)
 		result.Priority = &p
 	}
 
-	if req.GameContext != nil {
-		result.GameContext = convertGameContextFromAPI(req.GameContext)
+	if req.GameContext.Set {
+		result.GameContext = convertGameContextFromAPI(&req.GameContext.Value)
 	}
 
-	if req.Screenshots != nil {
-		result.Screenshots = *req.Screenshots
+	if len(req.Screenshots) > 0 {
+		screenshots := make([]string, len(req.Screenshots))
+		for i, url := range req.Screenshots {
+			screenshots[i] = url.String()
+		}
+		result.Screenshots = screenshots
 	}
 
 	return result
@@ -33,17 +39,20 @@ func convertSubmitFeedbackRequestFromAPI(req *feedbackapi.SubmitFeedbackRequest)
 func convertSubmitFeedbackResponseToAPI(resp *models.SubmitFeedbackResponse) feedbackapi.SubmitFeedbackResponse {
 	status := convertFeedbackStatusToSubmitFeedbackResponseStatus(resp.Status)
 	result := feedbackapi.SubmitFeedbackResponse{
-		Id:                (*openapi_types.UUID)(&resp.ID),
-		Status:            &status,
-		CreatedAt:         &resp.CreatedAt,
+		ID:        feedbackapi.NewOptUUID(resp.ID),
+		Status:    feedbackapi.NewOptSubmitFeedbackResponseStatus(status),
+		CreatedAt: feedbackapi.NewOptDateTime(resp.CreatedAt),
 	}
 
 	if resp.GithubIssueNumber != nil {
-		result.GithubIssueNumber = resp.GithubIssueNumber
+		result.GithubIssueNumber = feedbackapi.NewOptNilInt(*resp.GithubIssueNumber)
 	}
 
 	if resp.GithubIssueURL != nil {
-		result.GithubIssueUrl = resp.GithubIssueURL
+		url, _ := url.Parse(*resp.GithubIssueURL)
+		if url != nil {
+			result.GithubIssueURL = feedbackapi.NewOptNilURI(*url)
+		}
 	}
 
 	return result
@@ -51,67 +60,41 @@ func convertSubmitFeedbackResponseToAPI(resp *models.SubmitFeedbackResponse) fee
 
 func convertFeedbackToAPI(feedback *models.Feedback) feedbackapi.Feedback {
 	result := feedbackapi.Feedback{
-		Id:                (*openapi_types.UUID)(&feedback.ID),
-		PlayerId:          (*openapi_types.UUID)(&feedback.PlayerID),
-		Type:              convertFeedbackTypeToAPI(feedback.Type),
-		Category:          convertFeedbackCategoryToAPI(feedback.Category),
-		Title:             &feedback.Title,
-		Description:      &feedback.Description,
-		Status:            convertFeedbackStatusToAPI(feedback.Status),
-		CreatedAt:         &feedback.CreatedAt,
-		UpdatedAt:         &feedback.UpdatedAt,
-		VotesCount:        &feedback.VotesCount,
-	}
-
-	if feedback.Priority != nil {
-		p := convertFeedbackPriorityToAPI(*feedback.Priority)
-		result.Priority = &p
-	}
-
-	if feedback.GameContext != nil {
-		result.GameContext = convertGameContextToAPI(feedback.GameContext)
-	}
-
-	if len(feedback.Screenshots) > 0 {
-		result.Screenshots = &feedback.Screenshots
+		ID:          feedbackapi.NewOptUUID(feedback.ID),
+		PlayerID:    feedbackapi.NewOptUUID(feedback.PlayerID),
+		Type:        feedbackapi.NewOptFeedbackType(convertFeedbackTypeToAPIValue(feedback.Type)),
+		Category:    feedbackapi.NewOptFeedbackCategory(convertFeedbackCategoryToAPIValue(feedback.Category)),
+		Title:       feedbackapi.NewOptString(feedback.Title),
+		Description: feedbackapi.NewOptString(feedback.Description),
+		Status:      feedbackapi.NewOptFeedbackStatus(convertFeedbackStatusToAPIValue(feedback.Status)),
+		CreatedAt:   feedbackapi.NewOptDateTime(feedback.CreatedAt),
+		UpdatedAt:   feedbackapi.NewOptDateTime(feedback.UpdatedAt),
 	}
 
 	if feedback.GithubIssueNumber != nil {
-		result.GithubIssueNumber = feedback.GithubIssueNumber
+		result.GithubIssueNumber = feedbackapi.NewOptNilInt(*feedback.GithubIssueNumber)
 	}
 
 	if feedback.GithubIssueURL != nil {
-		result.GithubIssueUrl = feedback.GithubIssueURL
-	}
-
-	if feedback.MergedInto != nil {
-		result.MergedInto = (*openapi_types.UUID)(feedback.MergedInto)
-	}
-
-	if feedback.ModerationStatus != nil {
-		ms := convertModerationStatusToAPI(*feedback.ModerationStatus)
-		result.ModerationStatus = &ms
-	}
-
-	if feedback.ModerationReason != nil {
-		result.ModerationReason = feedback.ModerationReason
+		u, _ := url.Parse(*feedback.GithubIssueURL)
+		if u != nil {
+			result.GithubIssueURL = feedbackapi.NewOptNilURI(*u)
+		}
 	}
 
 	return result
 }
 
-func convertFeedbackListToAPI(list *models.FeedbackList) feedbackapi.FeedbackList {
-	result := feedbackapi.FeedbackList{
-		Total:  &list.Total,
-		Limit:  &list.Limit,
-		Offset: &list.Offset,
-	}
-
+func convertFeedbackListToAPI(list *models.FeedbackList) feedbackapi.FeedbackListResponse {
 	items := make([]feedbackapi.Feedback, len(list.Items))
 	for i, item := range list.Items {
 		items[i] = convertFeedbackToAPI(&item)
 	}
-	result.Items = &items
+
+	result := feedbackapi.FeedbackListResponse{
+		Items: items,
+		Total: feedbackapi.NewOptInt(list.Total),
+	}
 
 	return result
 }
@@ -121,12 +104,8 @@ func convertUpdateStatusRequestFromAPI(req *feedbackapi.UpdateStatusRequest) *mo
 		Status: convertUpdateStatusRequestStatusFromAPI(req.Status),
 	}
 
-	if req.GithubIssueNumber != nil {
-		result.GithubIssueNumber = req.GithubIssueNumber
-	}
-
-	if req.GithubIssueUrl != nil {
-		result.GithubIssueURL = req.GithubIssueUrl
+	if req.Comment.Set {
+		result.Comment = &req.Comment.Value
 	}
 
 	return result
@@ -134,24 +113,21 @@ func convertUpdateStatusRequestFromAPI(req *feedbackapi.UpdateStatusRequest) *mo
 
 func convertGameContextToAPI(ctx *models.GameContext) *feedbackapi.GameContext {
 	result := &feedbackapi.GameContext{
-		Version: &ctx.Version,
+		GameVersion: feedbackapi.NewOptString(ctx.Version),
+		ActiveQuests: ctx.ActiveQuests,
 	}
 
 	if ctx.Location != "" {
-		result.Location = &ctx.Location
+		result.Location = feedbackapi.NewOptString(ctx.Location)
 	}
 
 	if ctx.CharacterLevel != nil {
-		result.CharacterLevel = ctx.CharacterLevel
-	}
-
-	if len(ctx.ActiveQuests) > 0 {
-		result.ActiveQuests = &ctx.ActiveQuests
+		result.Level = feedbackapi.NewOptInt(*ctx.CharacterLevel)
 	}
 
 	if ctx.PlaytimeHours != nil {
-		hours := float32(*ctx.PlaytimeHours)
-		result.PlaytimeHours = &hours
+		seconds := int(*ctx.PlaytimeHours * 3600)
+		result.Playtime = feedbackapi.NewOptInt(seconds)
 	}
 
 	return result
@@ -160,24 +136,24 @@ func convertGameContextToAPI(ctx *models.GameContext) *feedbackapi.GameContext {
 func convertGameContextFromAPI(ctx *feedbackapi.GameContext) *models.GameContext {
 	result := &models.GameContext{}
 
-	if ctx.Version != nil {
-		result.Version = *ctx.Version
+	if ctx.GameVersion.Set {
+		result.Version = ctx.GameVersion.Value
 	}
 
-	if ctx.Location != nil {
-		result.Location = *ctx.Location
+	if ctx.Location.Set {
+		result.Location = ctx.Location.Value
 	}
 
-	if ctx.CharacterLevel != nil {
-		result.CharacterLevel = ctx.CharacterLevel
+	if ctx.Level.Set {
+		result.CharacterLevel = &ctx.Level.Value
 	}
 
-	if ctx.ActiveQuests != nil {
-		result.ActiveQuests = *ctx.ActiveQuests
+	if len(ctx.ActiveQuests) > 0 {
+		result.ActiveQuests = ctx.ActiveQuests
 	}
 
-	if ctx.PlaytimeHours != nil {
-		hours := float64(*ctx.PlaytimeHours)
+	if ctx.Playtime.Set {
+		hours := float64(ctx.Playtime.Value) / 3600.0
 		result.PlaytimeHours = &hours
 	}
 

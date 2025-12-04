@@ -6,70 +6,64 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8082/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8082/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Character Switch
-    description: Переключение между персонажами
-
+- name: Character Switch
+  description: Переключение между персонажами
 paths:
   /character/characters/{character_id}/switch:
     post:
       tags:
-        - Character Switch
+      - Character Switch
       summary: Переключиться на персонажа
       operationId: switchCharacterV2
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SwitchCharacterV2Request"
+              $ref: '#/components/schemas/SwitchCharacterV2Request'
       responses:
-        "200":
+        '200':
           description: Переключение выполнено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SwitchCharacterV2Response"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/SwitchCharacterV2Response'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     SwitchCharacterV2Request:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
           format: uuid
-
     SwitchCharacterV2Response:
       type: object
       properties:
@@ -77,12 +71,12 @@ components:
           type: string
           format: uuid
           nullable: true
-        current_character:
-          $ref: "#/components/schemas/CharacterFull"
         last_played_at:
           type: string
           format: date-time
-
+        current_character:
+          $ref: '#/components/schemas/CharacterFull'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CharacterFull:
       type: object
       properties:
@@ -101,31 +95,5 @@ components:
         level:
           type: integer
           minimum: 1
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

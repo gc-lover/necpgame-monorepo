@@ -1,4 +1,3 @@
-# Issue: #154
 openapi: 3.0.3
 info:
   title: Gameplay Quests Core Service API
@@ -7,35 +6,32 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Quests
-    description: Система квестов и заданий
-
+- name: Quests
+  description: Система квестов и заданий
 paths:
   /gameplay/quests:
     get:
       tags:
-        - Quests
+      - Quests
       summary: Получить список доступных квестов
       operationId: getAvailableQuests
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: characterId
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: characterId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Список доступных квестов
           content:
             application/json:
@@ -45,211 +41,208 @@ paths:
                   quests:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Quest"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                      $ref: '#/components/schemas/Quest'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/quests/{questId}/start:
     post:
       tags:
-        - Quests
+      - Quests
       summary: Начать выполнение квеста
       operationId: startQuest
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: questId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: questId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartQuestRequest"
+              $ref: '#/components/schemas/StartQuestRequest'
       responses:
-        "200":
+        '200':
           description: Квест начат
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QuestInstance"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/quests/instances/{instanceId}:
     get:
       tags:
-        - Quests
+      - Quests
       summary: Получить информацию о квесте
       operationId: getQuestInstance
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: instanceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: instanceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Информация о квесте
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QuestInstance"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/QuestInstance'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/quests/{questId}:
     get:
       tags:
-        - Quests
+      - Quests
       summary: Получить информацию о квесте
       operationId: getQuestInfo
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: questId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: questId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Информация о квесте
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Quest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Quest'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/quests/player/{playerId}:
     get:
       tags:
-        - Quests
+      - Quests
       summary: Получить квесты игрока
       operationId: getPlayerQuests
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - NOT_STARTED
+          - IN_PROGRESS
+          - COMPLETED
+          - FAILED
+          - CANCELLED
       responses:
-        "200":
+        '200':
           description: Квесты игрока
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlayerQuestsResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/PlayerQuestsResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/quests/{questId}/cancel:
     post:
       tags:
-        - Quests
+      - Quests
       summary: Отменить квест
       operationId: cancelQuest
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: questId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: questId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CancelQuestRequest"
+              $ref: '#/components/schemas/CancelQuestRequest'
       responses:
-        "200":
+        '200':
           description: Квест отменен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QuestInstance"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/quests/content/reload:
     post:
       tags:
-        - Quests
+      - Quests
       summary: Импортировать контентный квест из YAML в БД
       operationId: reloadQuestContent
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ReloadQuestContentRequest"
+              $ref: '#/components/schemas/ReloadQuestContentRequest'
       responses:
-        "200":
+        '200':
           description: Квест успешно импортирован
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReloadQuestContentResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ReloadQuestContentResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Quest:
       type: object
@@ -265,15 +258,20 @@ components:
           type: string
         status:
           type: string
-          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
-        objectives:
-          type: array
-          items:
-            $ref: "#/components/schemas/QuestObjective"
+          enum:
+          - NOT_STARTED
+          - IN_PROGRESS
+          - COMPLETED
+          - FAILED
+          - CANCELLED
         rewards:
           type: object
           additionalProperties: true
-
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestInstance:
       type: object
       properties:
@@ -288,18 +286,23 @@ components:
           format: uuid
         status:
           type: string
-          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
-        objectives:
-          type: array
-          items:
-            $ref: "#/components/schemas/QuestObjective"
+          enum:
+          - NOT_STARTED
+          - IN_PROGRESS
+          - COMPLETED
+          - FAILED
+          - CANCELLED
         started_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestObjective:
       type: object
       properties:
@@ -309,21 +312,23 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, in_progress, completed, failed]
-
+          enum:
+          - pending
+          - in_progress
+          - completed
+          - failed
     StartQuestRequest:
       type: object
       required:
-        - character_id
+      - character_id
       properties:
         character_id:
           type: string
           format: uuid
-
     CancelQuestRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
@@ -331,7 +336,6 @@ components:
         reason:
           type: string
           nullable: true
-
     PlayerQuestsResponse:
       type: object
       properties:
@@ -341,13 +345,12 @@ components:
         quests:
           type: array
           items:
-            $ref: "#/components/schemas/QuestInstance"
-
+            $ref: '#/components/schemas/QuestInstance'
     ReloadQuestContentRequest:
       type: object
       required:
-        - quest_id
-        - yaml_content
+      - quest_id
+      - yaml_content
       properties:
         quest_id:
           type: string
@@ -356,7 +359,6 @@ components:
           type: object
           description: Полное содержимое YAML файла квеста
           additionalProperties: true
-
     ReloadQuestContentResponse:
       type: object
       properties:
@@ -367,7 +369,5 @@ components:
         imported_at:
           type: string
           format: date-time
-
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

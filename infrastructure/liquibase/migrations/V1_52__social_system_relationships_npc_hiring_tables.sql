@@ -11,18 +11,18 @@ CREATE SCHEMA IF NOT EXISTS social;
 
 -- Таблица отношений с NPC
 CREATE TABLE IF NOT EXISTS social.npc_relationships (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    npc_id UUID NOT NULL,
-    relationship_type VARCHAR(100),
-    reputation_value INTEGER NOT NULL DEFAULT 0 CHECK (reputation_value >= -100 AND reputation_value <= 100),
-    trust_level INTEGER NOT NULL DEFAULT 0 CHECK (trust_level >= 0 AND trust_level <= 100),
-    interaction_count INTEGER NOT NULL DEFAULT 0,
-    last_interaction TIMESTAMP,
-    relationship_data JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, npc_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  npc_id UUID NOT NULL,
+  relationship_type VARCHAR(100),
+  relationship_data JSONB,
+  last_interaction TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reputation_value INTEGER NOT NULL DEFAULT 0 CHECK (reputation_value >= -100 AND reputation_value <= 100),
+  trust_level INTEGER NOT NULL DEFAULT 0 CHECK (trust_level >= 0 AND trust_level <= 100),
+  interaction_count INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(character_id, npc_id)
 );
 
 -- Индексы для npc_relationships
@@ -32,19 +32,19 @@ CREATE INDEX IF NOT EXISTS idx_npc_relationships_reputation ON social.npc_relati
 
 -- Таблица контрактов найма NPC
 CREATE TABLE IF NOT EXISTS social.npc_hiring_contracts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    npc_id UUID NOT NULL,
-    hiring_type VARCHAR(50) NOT NULL,
-    contract_type VARCHAR(20) NOT NULL CHECK (contract_type IN ('salary', 'one-time', 'profit-share', 'combined')),
-    salary_amount DECIMAL(10, 2) NOT NULL DEFAULT 0 CHECK (salary_amount >= 0),
-    start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    end_date TIMESTAMP,
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'terminated', 'completed')),
-    autonomy_level VARCHAR(20) NOT NULL DEFAULT 'direct' CHECK (autonomy_level IN ('direct', 'autonomous', 'hybrid')),
-    terms JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  npc_id UUID NOT NULL,
+  hiring_type VARCHAR(50) NOT NULL,
+  contract_type VARCHAR(20) NOT NULL CHECK (contract_type IN ('salary', 'one-time', 'profit-share', 'combined')),
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'terminated', 'completed')),
+  autonomy_level VARCHAR(20) NOT NULL DEFAULT 'direct' CHECK (autonomy_level IN ('direct', 'autonomous', 'hybrid')),
+  terms JSONB,
+  start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  end_date TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  salary_amount DECIMAL(10, 2) NOT NULL DEFAULT 0 CHECK (salary_amount >= 0)
 );
 
 -- Индексы для npc_hiring_contracts
@@ -54,18 +54,18 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_contracts_status ON social.npc_hiring_
 
 -- Таблица задач нанятых NPC
 CREATE TABLE IF NOT EXISTS social.npc_hiring_tasks (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.npc_hiring_contracts(id) ON DELETE CASCADE,
-    npc_id UUID NOT NULL,
-    task_type VARCHAR(50) NOT NULL,
-    task_description TEXT,
-    priority INTEGER NOT NULL DEFAULT 0,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in-progress', 'completed', 'failed')),
-    assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    started_at TIMESTAMP,
-    completed_at TIMESTAMP,
-    resources JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.npc_hiring_contracts(id) ON DELETE CASCADE,
+  npc_id UUID NOT NULL,
+  task_description TEXT,
+  task_type VARCHAR(50) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in-progress', 'completed', 'failed')),
+  resources JSONB,
+  assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  started_at TIMESTAMP,
+  completed_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  priority INTEGER NOT NULL DEFAULT 0
 );
 
 -- Индексы для npc_hiring_tasks
@@ -75,17 +75,17 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_tasks_status ON social.npc_hiring_task
 
 -- Таблица эффективности нанятых NPC
 CREATE TABLE IF NOT EXISTS social.npc_hiring_performance (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.npc_hiring_contracts(id) ON DELETE CASCADE,
-    npc_id UUID NOT NULL,
-    skill_level INTEGER NOT NULL DEFAULT 0 CHECK (skill_level >= 0 AND skill_level <= 100),
-    relationship_level INTEGER NOT NULL DEFAULT 0 CHECK (relationship_level >= 0 AND relationship_level <= 100),
-    efficiency_score DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (efficiency_score >= 0 AND efficiency_score <= 100),
-    tasks_completed INTEGER NOT NULL DEFAULT 0,
-    tasks_failed INTEGER NOT NULL DEFAULT 0,
-    loyalty_score DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (loyalty_score >= 0 AND loyalty_score <= 100),
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(contract_id, npc_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.npc_hiring_contracts(id) ON DELETE CASCADE,
+  npc_id UUID NOT NULL,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  efficiency_score DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (efficiency_score >= 0 AND efficiency_score <= 100),
+  loyalty_score DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (loyalty_score >= 0 AND loyalty_score <= 100),
+  skill_level INTEGER NOT NULL DEFAULT 0 CHECK (skill_level >= 0 AND skill_level <= 100),
+  relationship_level INTEGER NOT NULL DEFAULT 0 CHECK (relationship_level >= 0 AND relationship_level <= 100),
+  tasks_completed INTEGER NOT NULL DEFAULT 0,
+  tasks_failed INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(contract_id, npc_id)
 );
 
 -- Индексы для npc_hiring_performance
@@ -95,15 +95,15 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_performance_efficiency ON social.npc_h
 
 -- Таблица экономики найма NPC
 CREATE TABLE IF NOT EXISTS social.npc_hiring_economy (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES social.npc_hiring_contracts(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    payment_type VARCHAR(20) NOT NULL CHECK (payment_type IN ('salary', 'one-time', 'profit-share')),
-    amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0),
-    payment_date TIMESTAMP NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed')),
-    transaction_id UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES social.npc_hiring_contracts(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  transaction_id UUID,
+  payment_type VARCHAR(20) NOT NULL CHECK (payment_type IN ('salary', 'one-time', 'profit-share')),
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed')),
+  payment_date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0)
 );
 
 -- Индексы для npc_hiring_economy
@@ -113,14 +113,14 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_economy_payment_date ON social.npc_hir
 
 -- Таблица лимитов найма для персонажей
 CREATE TABLE IF NOT EXISTS social.npc_hiring_limits (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    hiring_type VARCHAR(50) NOT NULL,
-    current_count INTEGER NOT NULL DEFAULT 0 CHECK (current_count >= 0),
-    max_count INTEGER NOT NULL DEFAULT 0 CHECK (max_count >= 0),
-    scaling_factors JSONB,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, hiring_type)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  hiring_type VARCHAR(50) NOT NULL,
+  scaling_factors JSONB,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  current_count INTEGER NOT NULL DEFAULT 0 CHECK (current_count >= 0),
+  max_count INTEGER NOT NULL DEFAULT 0 CHECK (max_count >= 0),
+  UNIQUE(character_id, hiring_type)
 );
 
 -- Индексы для npc_hiring_limits
@@ -129,13 +129,13 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_limits_hiring_type ON social.npc_hirin
 
 -- Таблица цепочек найма
 CREATE TABLE IF NOT EXISTS social.npc_hiring_chains (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    chain_name VARCHAR(100) NOT NULL,
-    npc_ids UUID[] NOT NULL,
-    chain_type VARCHAR(50) NOT NULL,
-    efficiency_bonus DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (efficiency_bonus >= 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  npc_ids UUID[] NOT NULL,
+  chain_name VARCHAR(100) NOT NULL,
+  chain_type VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  efficiency_bonus DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (efficiency_bonus >= 0)
 );
 
 -- Индексы для npc_hiring_chains
@@ -144,12 +144,12 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_chains_chain_type ON social.npc_hiring
 
 -- Таблица групповых контрактов
 CREATE TABLE IF NOT EXISTS social.npc_hiring_groups (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    group_name VARCHAR(100) NOT NULL,
-    contract_ids UUID[] NOT NULL,
-    shared_bonuses JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  contract_ids UUID[] NOT NULL,
+  group_name VARCHAR(100) NOT NULL,
+  shared_bonuses JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для npc_hiring_groups
@@ -157,14 +157,14 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_groups_character_id ON social.npc_hiri
 
 -- Таблица настроек автоматизации найма
 CREATE TABLE IF NOT EXISTS social.npc_hiring_automation (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    automation_type VARCHAR(50) NOT NULL,
-    configuration JSONB NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, automation_type)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  automation_type VARCHAR(50) NOT NULL,
+  configuration JSONB NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  enabled BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(character_id, automation_type)
 );
 
 -- Индексы для npc_hiring_automation
@@ -173,15 +173,15 @@ CREATE INDEX IF NOT EXISTS idx_npc_hiring_automation_type ON social.npc_hiring_a
 
 -- Таблица отношений между игроками
 CREATE TABLE IF NOT EXISTS social.player_relationships (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id_1 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    character_id_2 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    relationship_type VARCHAR(20) NOT NULL CHECK (relationship_type IN ('friends', 'close_allies', 'pact', 'neutral', 'enemies', 'nemesis')),
-    reputation_value INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_character_order CHECK (character_id_1 < character_id_2),
-    UNIQUE(character_id_1, character_id_2)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id_1 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  character_id_2 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  relationship_type VARCHAR(20) NOT NULL CHECK (relationship_type IN ('friends', 'close_allies', 'pact', 'neutral', 'enemies', 'nemesis')),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reputation_value INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT chk_character_order CHECK (character_id_1 < character_id_2),
+  UNIQUE(character_id_1, character_id_2)
 );
 
 -- Индексы для player_relationships
@@ -191,14 +191,14 @@ CREATE INDEX IF NOT EXISTS idx_player_relationships_type ON social.player_relati
 
 -- Таблица уровней доверия между игроками
 CREATE TABLE IF NOT EXISTS social.trust_levels (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id_1 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    character_id_2 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    trust_level INTEGER NOT NULL DEFAULT 0 CHECK (trust_level >= 0 AND trust_level <= 100),
-    trust_value INTEGER NOT NULL DEFAULT 0,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_trust_character_order CHECK (character_id_1 < character_id_2),
-    UNIQUE(character_id_1, character_id_2)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id_1 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  character_id_2 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  trust_level INTEGER NOT NULL DEFAULT 0 CHECK (trust_level >= 0 AND trust_level <= 100),
+  trust_value INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT chk_trust_character_order CHECK (character_id_1 < character_id_2),
+  UNIQUE(character_id_1, character_id_2)
 );
 
 -- Индексы для trust_levels
@@ -208,16 +208,16 @@ CREATE INDEX IF NOT EXISTS idx_trust_levels_trust_level ON social.trust_levels(t
 
 -- Таблица договоров доверия
 CREATE TABLE IF NOT EXISTS social.trust_contracts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id_1 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    character_id_2 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    contract_type VARCHAR(30) NOT NULL CHECK (contract_type IN ('resource_sharing', 'profit_sharing', 'base_access')),
-    parameters JSONB,
-    start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    end_date TIMESTAMP,
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'terminated', 'expired')),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id_1 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  character_id_2 UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  contract_type VARCHAR(30) NOT NULL CHECK (contract_type IN ('resource_sharing', 'profit_sharing', 'base_access')),
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'terminated', 'expired')),
+  parameters JSONB,
+  start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  end_date TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для trust_contracts
@@ -227,18 +227,18 @@ CREATE INDEX IF NOT EXISTS idx_trust_contracts_status ON social.trust_contracts(
 
 -- Таблица союзов
 CREATE TABLE IF NOT EXISTS social.alliances (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    alliance_type VARCHAR(20) NOT NULL CHECK (alliance_type IN ('combat', 'trade', 'clan', 'faction')),
-    creator_id UUID NOT NULL,
-    creator_type VARCHAR(20) NOT NULL CHECK (creator_type IN ('player', 'clan', 'faction')),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    member_ids UUID[],
-    member_types JSONB,
-    parameters JSONB,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'terminated')),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  creator_id UUID NOT NULL,
+  member_ids UUID[],
+  description TEXT,
+  alliance_type VARCHAR(20) NOT NULL CHECK (alliance_type IN ('combat', 'trade', 'clan', 'faction')),
+  creator_type VARCHAR(20) NOT NULL CHECK (creator_type IN ('player', 'clan', 'faction')),
+  name VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'terminated')),
+  member_types JSONB,
+  parameters JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для alliances
@@ -264,13 +264,13 @@ CREATE INDEX IF NOT EXISTS idx_alliance_members_active ON social.alliance_member
 
 -- Таблица рейтингов персонажей
 CREATE TABLE IF NOT EXISTS social.character_ratings (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    rating_type VARCHAR(30) NOT NULL CHECK (rating_type IN ('overall', 'combat', 'trade', 'reliability', 'social_influence')),
-    rating_value DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (rating_value >= 0 AND rating_value <= 100),
-    factors JSONB,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, rating_type)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  rating_type VARCHAR(30) NOT NULL CHECK (rating_type IN ('overall', 'combat', 'trade', 'reliability', 'social_influence')),
+  factors JSONB,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rating_value DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (rating_value >= 0 AND rating_value <= 100),
+  UNIQUE(character_id, rating_type)
 );
 
 -- Индексы для character_ratings
@@ -279,15 +279,15 @@ CREATE INDEX IF NOT EXISTS idx_character_ratings_type ON social.character_rating
 
 -- Таблица социального капитала
 CREATE TABLE IF NOT EXISTS social.social_capital (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    relationship_count INTEGER NOT NULL DEFAULT 0 CHECK (relationship_count >= 0),
-    trust_level_average DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (trust_level_average >= 0 AND trust_level_average <= 100),
-    alliance_count INTEGER NOT NULL DEFAULT 0 CHECK (alliance_count >= 0),
-    rating_average DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (rating_average >= 0 AND rating_average <= 100),
-    social_capital_score DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  trust_level_average DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (trust_level_average >= 0 AND trust_level_average <= 100),
+  rating_average DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (rating_average >= 0 AND rating_average <= 100),
+  social_capital_score DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  relationship_count INTEGER NOT NULL DEFAULT 0 CHECK (relationship_count >= 0),
+  alliance_count INTEGER NOT NULL DEFAULT 0 CHECK (alliance_count >= 0),
+  UNIQUE(character_id)
 );
 
 -- Индексы для social_capital
@@ -313,15 +313,15 @@ CREATE INDEX IF NOT EXISTS idx_interaction_history_event_type ON social.interact
 
 -- Таблица арбитража отношений
 CREATE TABLE IF NOT EXISTS social.relationship_arbitration (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    complainant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    defendant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    reason TEXT NOT NULL,
-    evidence JSONB,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in-review', 'resolved', 'dismissed')),
-    decision JSONB,
-    resolved_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  complainant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  defendant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in-review', 'resolved', 'dismissed')),
+  evidence JSONB,
+  decision JSONB,
+  resolved_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для relationship_arbitration

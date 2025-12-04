@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	api "github.com/necpgame/client-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,13 +39,20 @@ func NewHTTPServer(addr string, weaponEffectsService WeaponEffectsServiceInterfa
 	router.Use(server.corsMiddleware)
 
 	if weaponEffectsService != nil {
-		// TODO: After running `make generate-weapon-effects-api`, uncomment these lines:
-		// weaponEffectsHandlers := NewWeaponEffectsHandlers(weaponEffectsService)
-		// weaponeffectsapi.HandlerWithOptions(weaponEffectsHandlers, weaponeffectsapi.ChiServerOptions{
-		// 	BaseURL:    "/api/v1",
-		// 	BaseRouter: router,
-		// })
-		_ = weaponEffectsService
+		// Handlers (реализация api.Handler из handlers.go)
+		handlers := NewHandlers(weaponEffectsService)
+
+		// Security handler
+		secHandler := NewSecurityHandler()
+
+		// Integration with ogen
+		ogenServer, err := api.NewServer(handlers, secHandler)
+		if err != nil {
+			panic(err)
+		}
+
+		// Mount ogen server under /api/v1
+		router.Mount("/api/v1", ogenServer)
 	}
 
 	router.Get("/health", server.healthCheck)

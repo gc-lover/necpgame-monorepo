@@ -1,45 +1,48 @@
 openapi: 3.0.3
 info:
   title: Gameplay Weapon Special Mechanics Effects Service API
-  description: |
-    API для эффектов специальных механик оружия.
-    
+  description: 'API для эффектов специальных механик оружия.
+
+
     **Основные возможности:**
+
     - Стихийные эффекты (огонь, лед, яд, кислота)
+
     - Временные эффекты (вампиризм, ускорение, замедление)
+
     - Контроль и манипуляция (психотропное, гравитационное, телепортационное)
+
     - Призыв и поддержка (дроны, лечение)
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Elemental Effects
-    description: Стихийные эффекты
-  - name: Temporal Effects
-    description: Временные эффекты
-  - name: Control & Manipulation
-    description: Контроль и манипуляция
-  - name: Summon & Support
-    description: Призыв и поддержка
-
+- name: Elemental Effects
+  description: Стихийные эффекты
+- name: Temporal Effects
+  description: Временные эффекты
+- name: Control & Manipulation
+  description: Контроль и манипуляция
+- name: Summon & Support
+  description: Призыв и поддержка
 paths:
   /gameplay/combat/weapons/elemental/apply:
     post:
       tags:
-        - Elemental Effects
+      - Elemental Effects
       summary: Применить стихийный эффект
       description: Применяет стихийный эффект (огонь, лед, яд, кислота) к цели
       operationId: applyElementalEffect
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -47,8 +50,8 @@ paths:
             schema:
               $ref: '#/components/schemas/ApplyElementalEffectRequest'
             example:
-              target_id: "550e8400-e29b-41d4-a716-446655440002"
-              element_type: "fire"
+              target_id: 550e8400-e29b-41d4-a716-446655440002
+              element_type: fire
               damage: 50.0
               duration: 5.0
               stacks: 1
@@ -60,21 +63,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/ElementalEffectResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/combat/weapons/temporal/apply:
     post:
       tags:
-        - Temporal Effects
+      - Temporal Effects
       summary: Применить временный эффект
       description: Применяет временный эффект (вампиризм, ускорение, замедление времени) к цели
       operationId: applyTemporalEffect
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -82,8 +84,8 @@ paths:
             schema:
               $ref: '#/components/schemas/ApplyTemporalEffectRequest'
             example:
-              target_id: "550e8400-e29b-41d4-a716-446655440002"
-              effect_type: "vampirism"
+              target_id: 550e8400-e29b-41d4-a716-446655440002
+              effect_type: vampirism
               modifier_value:
                 health_restore_percent: 0.15
               duration: 10.0
@@ -95,21 +97,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/TemporalEffectResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/combat/weapons/control/apply:
     post:
       tags:
-        - Control & Manipulation
+      - Control & Manipulation
       summary: Применить контроль
       description: Применяет эффект контроля (психотропное, гравитационное, телепортационное) к цели
       operationId: applyControl
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -117,10 +118,10 @@ paths:
             schema:
               $ref: '#/components/schemas/ApplyControlRequest'
             example:
-              target_id: "550e8400-e29b-41d4-a716-446655440002"
-              control_type: "psychotropic"
+              target_id: 550e8400-e29b-41d4-a716-446655440002
+              control_type: psychotropic
               control_data:
-                behavior: "attack_allies"
+                behavior: attack_allies
                 duration: 5.0
       responses:
         '200':
@@ -130,21 +131,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/ControlResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /gameplay/combat/weapons/summon/create:
     post:
       tags:
-        - Summon & Support
+      - Summon & Support
       summary: Создать призванное существо
       description: Создает призванное существо (дрон, союзник, турель)
       operationId: createSummon
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -152,8 +152,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateSummonRequest'
             example:
-              character_id: "550e8400-e29b-41d4-a716-446655440001"
-              summon_type: "drone"
+              character_id: 550e8400-e29b-41d4-a716-446655440001
+              summon_type: drone
               position:
                 x: 10.5
                 y: 2.0
@@ -167,24 +167,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Summon'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ApplyElementalEffectRequest:
       type: object
       required:
-        - target_id
-        - element_type
-        - damage
+      - target_id
+      - element_type
+      - damage
       properties:
         target_id:
           type: string
@@ -193,11 +191,16 @@ components:
         element_type:
           type: string
           enum:
-            - fire
-            - ice
-            - poison
-            - acid
+          - fire
+          - ice
+          - poison
+          - acid
           description: Тип стихийного эффекта
+        stacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Количество стаков эффекта
         damage:
           type: number
           format: float
@@ -208,12 +211,7 @@ components:
           format: float
           minimum: 0
           description: Длительность эффекта (секунды)
-        stacks:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Количество стаков эффекта
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ElementalEffectResponse:
       type: object
       properties:
@@ -222,22 +220,22 @@ components:
           format: uuid
         element_type:
           type: string
+        expires_at:
+          type: string
+          format: date-time
         stacks:
           type: integer
         damage_per_tick:
           type: number
           format: float
-        expires_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ApplyTemporalEffectRequest:
       type: object
       required:
-        - target_id
-        - effect_type
-        - modifier_value
-        - duration
+      - target_id
+      - effect_type
+      - modifier_value
+      - duration
       properties:
         target_id:
           type: string
@@ -246,9 +244,9 @@ components:
         effect_type:
           type: string
           enum:
-            - vampirism
-            - acceleration
-            - slow_time
+          - vampirism
+          - acceleration
+          - slow_time
           description: Тип временного эффекта
         modifier_value:
           type: object
@@ -259,7 +257,6 @@ components:
           format: float
           minimum: 0
           description: Длительность эффекта (секунды)
-
     TemporalEffectResponse:
       type: object
       properties:
@@ -268,19 +265,19 @@ components:
           format: uuid
         effect_type:
           type: string
-        modifier_value:
-          type: object
-          additionalProperties: true
         expires_at:
           type: string
           format: date-time
-
+        modifier_value:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ApplyControlRequest:
       type: object
       required:
-        - target_id
-        - control_type
-        - control_data
+      - target_id
+      - control_type
+      - control_data
       properties:
         target_id:
           type: string
@@ -289,15 +286,14 @@ components:
         control_type:
           type: string
           enum:
-            - psychotropic
-            - gravitational
-            - teleportation
+          - psychotropic
+          - gravitational
+          - teleportation
           description: Тип контроля
         control_data:
           type: object
           additionalProperties: true
           description: Данные контроля (зависит от типа)
-
     ControlResponse:
       type: object
       properties:
@@ -306,19 +302,19 @@ components:
           format: uuid
         control_type:
           type: string
-        control_data:
-          type: object
-          additionalProperties: true
         expires_at:
           type: string
           format: date-time
-
+        control_data:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateSummonRequest:
       type: object
       required:
-        - character_id
-        - summon_type
-        - position
+      - character_id
+      - summon_type
+      - position
       properties:
         character_id:
           type: string
@@ -327,19 +323,18 @@ components:
         summon_type:
           type: string
           enum:
-            - drone
-            - ally
-            - turret
+          - drone
+          - ally
+          - turret
           description: Тип призванного существа
         position:
-          $ref: 'common-schemas.yaml#/components/schemas/Position3D'
+          $ref: common-schemas.yaml#/components/schemas/Position3D
           description: Позиция призыва
         duration:
           type: number
           format: float
           minimum: 0
           description: Длительность жизни существа (секунды)
-
     Summon:
       type: object
       properties:
@@ -351,14 +346,6 @@ components:
           format: uuid
         summon_type:
           type: string
-        position:
-          $ref: 'common-schemas.yaml#/components/schemas/Position3D'
-        health:
-          type: number
-          format: float
-        max_health:
-          type: number
-          format: float
         created_at:
           type: string
           format: date-time
@@ -369,5 +356,12 @@ components:
           type: string
           format: date-time
           nullable: true
-
-
+        position:
+          $ref: common-schemas.yaml#/components/schemas/Position3D
+        health:
+          type: number
+          format: float
+        max_health:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

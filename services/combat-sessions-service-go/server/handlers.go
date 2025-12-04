@@ -1,64 +1,84 @@
-// Handlers for combat-sessions-service - implements api.ServerInterface
+// Issue: #1595
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
-	"github.com/combat-sessions-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/sirupsen/logrus"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sessions-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
-// ServiceHandlers implements api.ServerInterface
-type ServiceHandlers struct {
-	logger *logrus.Logger
+const DBTimeout = 50 * time.Millisecond
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+type Handlers struct{}
+
+// NewHandlers creates new handlers
+func NewHandlers() *Handlers {
+	return &Handlers{}
 }
 
-// NewServiceHandlers creates new handlers
-func NewServiceHandlers(logger *logrus.Logger) *ServiceHandlers {
-	return &ServiceHandlers{logger: logger}
+// ListCombatSessions - TYPED response!
+func (h *Handlers) ListCombatSessions(ctx context.Context, params api.ListCombatSessionsParams) ([]api.CombatSession, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	sessions := []api.CombatSession{}
+
+	return sessions, nil
 }
 
-// Helper
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+// CreateCombatSession - TYPED response!
+func (h *Handlers) CreateCombatSession(ctx context.Context, req *api.CreateSessionRequest) (*api.CombatSession, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	sessionID := uuid.New()
+	status := api.CombatSessionStatusActive
+
+	result := &api.CombatSession{
+		ID:          sessionID,
+		PlayerID:    req.PlayerID,
+		SessionType: string(req.SessionType),
+		Status:      status,
+		CreatedAt:   time.Now(),
+	}
+
+	return result, nil
 }
 
-// ListCombatSessions implements GET /gameplay/combat/sessions
-func (h *ServiceHandlers) ListCombatSessions(w http.ResponseWriter, r *http.Request, params api.ListCombatSessionsParams) {
-	// TODO: Implement logic
-	respondJSON(w, http.StatusOK, []interface{}{})
+// GetCombatSession - TYPED response!
+func (h *Handlers) GetCombatSession(ctx context.Context, params api.GetCombatSessionParams) (api.GetCombatSessionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	playerID := uuid.New()
+	status := api.CombatSessionStatusActive
+
+	result := &api.CombatSession{
+		ID:          params.SessionID,
+		PlayerID:    playerID,
+		SessionType: "pvp",
+		Status:      status,
+		CreatedAt:   time.Now(),
+		EndedAt:     api.OptDateTime{},
+	}
+
+	return result, nil
 }
 
-// CreateCombatSession implements POST /gameplay/combat/sessions
-func (h *ServiceHandlers) CreateCombatSession(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement logic
-	respondJSON(w, http.StatusCreated, map[string]interface{}{
-		"id":           "00000000-0000-0000-0000-000000000000",
-		"player_id":    "00000000-0000-0000-0000-000000000000",
-		"session_type": "pvp",
-		"status":       "active",
-		"created_at":   "2025-12-02T00:00:00Z",
-	})
-}
+// EndCombatSession - TYPED response!
+func (h *Handlers) EndCombatSession(ctx context.Context, params api.EndCombatSessionParams) (api.EndCombatSessionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-// EndCombatSession implements DELETE /gameplay/combat/sessions/{session_id}
-func (h *ServiceHandlers) EndCombatSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	// TODO: Implement logic
-	w.WriteHeader(http.StatusOK)
-}
+	// TODO: Implement business logic
+	result := &api.EndCombatSessionOK{}
 
-// GetCombatSession implements GET /gameplay/combat/sessions/{session_id}
-func (h *ServiceHandlers) GetCombatSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	// TODO: Implement logic
-	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"id":           sessionId.String(),
-		"player_id":    "00000000-0000-0000-0000-000000000000",
-		"session_type": "pvp",
-		"status":       "active",
-		"created_at":   "2025-12-02T00:00:00Z",
-	})
+	return result, nil
 }

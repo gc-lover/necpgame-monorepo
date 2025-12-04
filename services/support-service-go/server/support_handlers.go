@@ -1,197 +1,248 @@
-// Issue: #141886730, #141886751
+// Issue: #141886730, #141886751, #1607, ogen migration
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
-	supportapi "github.com/necpgame/support-service-go/pkg/api"
-	"github.com/necpgame/support-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
+	supportapi "github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
-type SupportHandlers struct {
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
+
+// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+type Handlers struct {
 	ticketService TicketServiceInterface
 	logger        *logrus.Logger
+
+	// Memory pooling for hot path structs (zero allocations target!)
+	supportTicketPool  sync.Pool
+	ticketsResponsePool sync.Pool
 }
 
-func NewSupportHandlers(ticketService TicketServiceInterface) *SupportHandlers {
-	return &SupportHandlers{
+func NewHandlers(ticketService TicketServiceInterface) *Handlers {
+	h := &Handlers{
 		ticketService: ticketService,
 		logger:        GetLogger(),
 	}
+
+	// Initialize memory pools (zero allocations target!)
+	h.supportTicketPool = sync.Pool{
+		New: func() interface{} {
+			return &supportapi.SupportTicket{}
+		},
+	}
+	h.ticketsResponsePool = sync.Pool{
+		New: func() interface{} {
+			return &supportapi.TicketsResponse{}
+		},
+	}
+
+	return h
 }
 
-func (h *SupportHandlers) CreateTicket(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
+func (h *Handlers) CreateTicket(ctx context.Context, req *supportapi.CreateTicketRequest) (supportapi.CreateTicketRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	userID := ctx.Value("user_id")
 	if userID == nil {
-		h.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
+		return &supportapi.CreateTicketUnauthorized{
+			Error:   "Unauthorized",
+			Message: "user not authenticated",
+		}, nil
 	}
 
 	playerID, err := uuid.Parse(userID.(string))
 	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	var req supportapi.CreateTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
+		return &supportapi.CreateTicketBadRequest{
+			Error:   "Bad Request",
+			Message: "invalid user id",
+		}, nil
 	}
 
 	if req.Subject == "" || req.Description == "" {
-		h.respondError(w, http.StatusBadRequest, "subject and description are required")
-		return
+		return &supportapi.CreateTicketBadRequest{
+			Error:   "Bad Request",
+			Message: "subject and description are required",
+		}, nil
 	}
 
-	internalReq := convertCreateTicketRequestFromAPI(&req, playerID)
-	ticket, err := h.ticketService.CreateTicket(r.Context(), playerID, internalReq)
+	internalReq := convertCreateTicketRequestFromAPI(req, playerID)
+	ticket, err := h.ticketService.CreateTicket(ctx, playerID, internalReq)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to create ticket")
-		h.respondError(w, http.StatusInternalServerError, "failed to create ticket")
-		return
+		return &supportapi.CreateTicketInternalServerError{
+			Error:   "Internal Server Error",
+			Message: "failed to create ticket",
+		}, nil
 	}
 
-	apiTicket := convertSupportTicketToAPI(ticket)
-	h.respondJSON(w, http.StatusCreated, apiTicket)
+	// Issue: #1607 - Use memory pooling
+	apiTicket := h.supportTicketPool.Get().(*supportapi.SupportTicket)
+	// Note: Not returning to pool - struct is returned to caller
+	*apiTicket = convertSupportTicketToAPI(ticket)
+	return apiTicket, nil
 }
 
-func (h *SupportHandlers) GetTickets(w http.ResponseWriter, r *http.Request, params supportapi.GetTicketsParams) {
-	userID := r.Context().Value("user_id")
+func (h *Handlers) GetTickets(ctx context.Context, params supportapi.GetTicketsParams) (supportapi.GetTicketsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	userID := ctx.Value("user_id")
 	if userID == nil {
-		h.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
+		return &supportapi.GetTicketsUnauthorized{
+			Error:   "Unauthorized",
+			Message: "user not authenticated",
+		}, nil
 	}
 
 	playerID, err := uuid.Parse(userID.(string))
 	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
+		return &supportapi.GetTicketsUnauthorized{
+			Error:   "Unauthorized",
+			Message: "invalid user id",
+		}, nil
 	}
 
 	limit := 50
 	offset := 0
-	if params.Limit != nil && *params.Limit > 0 {
-		if *params.Limit > 100 {
+	if params.Limit.Set {
+		if params.Limit.Value > 100 {
 			limit = 100
-		} else {
-			limit = *params.Limit
+		} else if params.Limit.Value > 0 {
+			limit = params.Limit.Value
 		}
 	}
-	if params.Offset != nil {
-		offset = *params.Offset
+	if params.Offset.Set {
+		offset = params.Offset.Value
 	}
 
-	if params.Status != nil {
-		status := convertGetTicketsParamsStatusFromAPI(*params.Status)
-		response, err := h.ticketService.GetTicketsByStatus(r.Context(), status, limit, offset)
+	if params.Status.Set {
+		status := convertGetTicketsStatusFromAPI(params.Status.Value)
+		response, err := h.ticketService.GetTicketsByStatus(ctx, status, limit, offset)
 		if err != nil {
 			h.logger.WithError(err).Error("Failed to get tickets by status")
-			h.respondError(w, http.StatusInternalServerError, "failed to get tickets")
-			return
+			return &supportapi.GetTicketsInternalServerError{
+				Error:   "Internal Server Error",
+				Message: "failed to get tickets",
+			}, nil
 		}
-		apiResponse := convertTicketListResponseToTicketsResponse(response)
-		h.respondJSON(w, http.StatusOK, apiResponse)
-		return
+		apiResponse := convertTicketListResponseToTicketsResponse(response, limit, offset)
+		return &apiResponse, nil
 	}
 
-	response, err := h.ticketService.GetTicketsByPlayerID(r.Context(), playerID, limit, offset)
+	response, err := h.ticketService.GetTicketsByPlayerID(ctx, playerID, limit, offset)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get tickets")
-		h.respondError(w, http.StatusInternalServerError, "failed to get tickets")
-		return
+		return &supportapi.GetTicketsInternalServerError{
+			Error:   "Internal Server Error",
+			Message: "failed to get tickets",
+		}, nil
 	}
 
-	apiResponse := convertTicketListResponseToTicketsResponse(response)
-	h.respondJSON(w, http.StatusOK, apiResponse)
+	// Issue: #1607 - Use memory pooling
+	apiResponse := h.ticketsResponsePool.Get().(*supportapi.TicketsResponse)
+	// Note: Not returning to pool - struct is returned to caller
+	*apiResponse = convertTicketListResponseToTicketsResponse(response, limit, offset)
+	return apiResponse, nil
 }
 
-func (h *SupportHandlers) GetTicket(w http.ResponseWriter, r *http.Request, ticketId supportapi.TicketId) {
-	id := uuid.UUID(ticketId)
-	ticket, err := h.ticketService.GetTicket(r.Context(), id)
+func (h *Handlers) GetTicket(ctx context.Context, params supportapi.GetTicketParams) (supportapi.GetTicketRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	id := params.TicketID
+	ticket, err := h.ticketService.GetTicket(ctx, id)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get ticket")
-		h.respondError(w, http.StatusInternalServerError, "failed to get ticket")
-		return
+		return &supportapi.GetTicketInternalServerError{
+			Error:   "Internal Server Error",
+			Message: "failed to get ticket",
+		}, nil
 	}
 
 	if ticket == nil {
-		h.respondError(w, http.StatusNotFound, "ticket not found")
-		return
+		return &supportapi.GetTicketNotFound{
+			Error:   "Not Found",
+			Message: "ticket not found",
+		}, nil
 	}
 
-	apiTicket := convertSupportTicketToAPI(ticket)
-	h.respondJSON(w, http.StatusOK, apiTicket)
+	// Issue: #1607 - Use memory pooling
+	apiTicket := h.supportTicketPool.Get().(*supportapi.SupportTicket)
+	// Note: Not returning to pool - struct is returned to caller
+	*apiTicket = convertSupportTicketToAPI(ticket)
+	return apiTicket, nil
 }
 
-func (h *SupportHandlers) UpdateTicket(w http.ResponseWriter, r *http.Request, ticketId supportapi.TicketId) {
-	id := uuid.UUID(ticketId)
+func (h *Handlers) UpdateTicket(ctx context.Context, req *supportapi.UpdateTicketRequest, params supportapi.UpdateTicketParams) (supportapi.UpdateTicketRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req supportapi.UpdateTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+	id := params.TicketID
 
-	internalReq := convertUpdateTicketRequestFromAPI(&req)
-	ticket, err := h.ticketService.UpdateTicket(r.Context(), id, internalReq)
+	internalReq := convertUpdateTicketRequestFromAPI(req)
+	ticket, err := h.ticketService.UpdateTicket(ctx, id, internalReq)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to update ticket")
-		h.respondError(w, http.StatusInternalServerError, "failed to update ticket")
-		return
+		return &supportapi.UpdateTicketInternalServerError{
+			Error:   "Internal Server Error",
+			Message: "failed to update ticket",
+		}, nil
 	}
 
 	if ticket == nil {
-		h.respondError(w, http.StatusNotFound, "ticket not found")
-		return
+		return &supportapi.UpdateTicketNotFound{
+			Error:   "Not Found",
+			Message: "ticket not found",
+		}, nil
 	}
 
-	apiTicket := convertSupportTicketToAPI(ticket)
-	h.respondJSON(w, http.StatusOK, apiTicket)
+	// Issue: #1607 - Use memory pooling
+	apiTicket := h.supportTicketPool.Get().(*supportapi.SupportTicket)
+	// Note: Not returning to pool - struct is returned to caller
+	*apiTicket = convertSupportTicketToAPI(ticket)
+	return apiTicket, nil
 }
 
-func (h *SupportHandlers) CloseTicket(w http.ResponseWriter, r *http.Request, ticketId supportapi.TicketId) {
-	id := uuid.UUID(ticketId)
+func (h *Handlers) CloseTicket(ctx context.Context, req *supportapi.CloseTicketRequest, params supportapi.CloseTicketParams) (supportapi.CloseTicketRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req supportapi.CloseTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+	id := params.TicketID
 
 	status := models.TicketStatusClosed
 	updateReq := &models.UpdateTicketRequest{
 		Status: &status,
 	}
 
-	ticket, err := h.ticketService.UpdateTicket(r.Context(), id, updateReq)
+	ticket, err := h.ticketService.UpdateTicket(ctx, id, updateReq)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to close ticket")
-		h.respondError(w, http.StatusInternalServerError, "failed to close ticket")
-		return
+		return &supportapi.CloseTicketInternalServerError{
+			Error:   "Internal Server Error",
+			Message: "failed to close ticket",
+		}, nil
 	}
 
 	if ticket == nil {
-		h.respondError(w, http.StatusNotFound, "ticket not found")
-		return
+		return &supportapi.CloseTicketNotFound{
+			Error:   "Not Found",
+			Message: "ticket not found",
+		}, nil
 	}
 
-	apiTicket := convertSupportTicketToAPI(ticket)
-	h.respondJSON(w, http.StatusOK, apiTicket)
+	// Issue: #1607 - Use memory pooling
+	apiTicket := h.supportTicketPool.Get().(*supportapi.SupportTicket)
+	// Note: Not returning to pool - struct is returned to caller
+	*apiTicket = convertSupportTicketToAPI(ticket)
+	return apiTicket, nil
 }
-
-func (h *SupportHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (h *SupportHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	h.respondJSON(w, status, map[string]string{"error": message})
-}
-

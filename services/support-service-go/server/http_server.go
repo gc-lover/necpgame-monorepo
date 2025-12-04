@@ -1,4 +1,4 @@
-// Issue: #141886730
+// Issue: #141886730, ogen migration
 package server
 
 import (
@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/necpgame/support-service-go/models"
-	supportapi "github.com/necpgame/support-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
+	supportapi "github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -30,7 +31,7 @@ type TicketServiceInterface interface {
 
 type HTTPServer struct {
 	addr          string
-	router        *mux.Router
+	router        *chi.Mux
 	ticketService TicketServiceInterface
 	slaService    SLAServiceInterface
 	logger        *logrus.Logger
@@ -40,7 +41,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService SLAServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:          addr,
 		router:        router,
@@ -54,22 +55,28 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService
 	router.Use(server.loggingMiddleware)
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
+	router.Use(middleware.Recoverer)
 
-	api := router.PathPrefix("/api/v1").Subrouter()
+	// Initialize ogen handlers and security handler
+	ogenHandlers := NewHandlers(ticketService)
+	ogenSecurity := NewSecurityHandler(jwtValidator, authEnabled)
 
-	if authEnabled {
-		api.Use(server.authMiddleware)
+	// Create ogen server
+	ogenServer, err := supportapi.NewServer(ogenHandlers, ogenSecurity)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	supportHandlers := NewSupportHandlers(ticketService)
-	support := api.PathPrefix("/support").Subrouter()
-	supportapi.HandlerFromMux(supportHandlers, support)
+	router.Mount("/api/v1/support", ogenServer)
 
+	// SLA handlers (still using direct handlers for now)
 	slaHandlers := NewSLAHandlers(slaService)
-	support.HandleFunc("/tickets/{ticket_id}/sla", slaHandlers.getTicketSLA).Methods("GET")
-	support.HandleFunc("/sla/violations", slaHandlers.getSLAViolations).Methods("GET")
+	router.Route("/api/v1/support", func(r chi.Router) {
+		r.Get("/tickets/{ticket_id}/sla", slaHandlers.getTicketSLA)
+		r.Get("/sla/violations", slaHandlers.getSLAViolations)
+	})
 
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.HandleFunc("/health", server.healthCheck)
 
 	return server
 }
@@ -160,42 +167,6 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !s.authEnabled || s.jwtValidator == nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			s.respondErrorJSON(w, http.StatusUnauthorized, "authorization header required")
-			return
-		}
-
-		claims, err := s.jwtValidator.Verify(r.Context(), authHeader)
-		if err != nil {
-			s.logger.WithError(err).Warn("JWT validation failed")
-			s.respondErrorJSON(w, http.StatusUnauthorized, "invalid or expired token")
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "claims", claims)
-		userID := claims.Subject
-		if userID == "" {
-			userID = claims.RegisteredClaims.Subject
-		}
-		ctx = context.WithValue(ctx, "user_id", userID)
-		ctx = context.WithValue(ctx, "username", claims.PreferredUsername)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func (s *HTTPServer) respondErrorJSON(w http.ResponseWriter, status int, message string) {
-	s.respondJSON(w, status, map[string]string{"error": message})
 }
 
 type statusRecorder struct {

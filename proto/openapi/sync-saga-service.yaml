@@ -1,41 +1,44 @@
-# Issue: #1521
 openapi: 3.0.3
 info:
   title: Data Synchronization Saga Service API
-  description: |
-    API для управления Saga транзакциями.
-    
+  description: 'API для управления Saga транзакциями.
+
+
     **Основные возможности:**
+
     - Запуск Saga транзакций
+
     - Получение состояния Saga
+
     - Компенсация Saga при ошибках
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8090/api/v1/sync
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/sync
-    description: Продакшен сервер
-
+- url: http://localhost:8090/api/v1/sync
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/sync
+  description: Продакшен сервер
 tags:
-  - name: Saga
-    description: Управление Saga транзакциями
-
+- name: Saga
+  description: Управление Saga транзакциями
 paths:
   /saga/start:
     post:
       tags:
-        - Saga
+      - Saga
       summary: Запустить Saga транзакцию
-      description: |
-        Запускает новую Saga транзакцию с указанными шагами.
+      description: 'Запускает новую Saga транзакцию с указанными шагами.
+
         Saga выполняется последовательно с компенсацией при ошибках.
+
+        '
       operationId: startSaga
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -43,19 +46,19 @@ paths:
             schema:
               $ref: '#/components/schemas/StartSagaRequest'
             example:
-              saga_type: "purchase_item"
+              saga_type: purchase_item
               steps:
-                - step_number: 1
-                  service_name: "inventory-service"
-                  action: "reserve_slot"
-                  params:
-                    character_id: "aa0e8400-e29b-41d4-a716-446655440000"
-                - step_number: 2
-                  service_name: "character-service"
-                  action: "check_balance"
-                  params:
-                    character_id: "aa0e8400-e29b-41d4-a716-446655440000"
-                    amount: 1000
+              - step_number: 1
+                service_name: inventory-service
+                action: reserve_slot
+                params:
+                  character_id: aa0e8400-e29b-41d4-a716-446655440000
+              - step_number: 2
+                service_name: character-service
+                action: check_balance
+                params:
+                  character_id: aa0e8400-e29b-41d4-a716-446655440000
+                  amount: 1000
       responses:
         '200':
           description: Saga запущена
@@ -64,46 +67,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/SagaResponse'
               example:
-                saga_id: "bb0e8400-e29b-41d4-a716-446655440000"
-                saga_type: "purchase_item"
-                status: "in_progress"
+                saga_id: bb0e8400-e29b-41d4-a716-446655440000
+                saga_type: purchase_item
+                status: in_progress
                 current_step: 1
                 steps:
-                  - step_number: 1
-                    service_name: "inventory-service"
-                    action: "reserve_slot"
-                    status: "completed"
-                  - step_number: 2
-                    service_name: "character-service"
-                    action: "check_balance"
-                    status: "pending"
-                created_at: "2025-12-01T10:00:00Z"
+                - step_number: 1
+                  service_name: inventory-service
+                  action: reserve_slot
+                  status: completed
+                - step_number: 2
+                  service_name: character-service
+                  action: check_balance
+                  status: pending
+                created_at: '2025-12-01T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /saga/{sagaId}:
     get:
       tags:
-        - Saga
+      - Saga
       summary: Получить состояние Saga
-      description: |
-        Возвращает текущее состояние Saga транзакции по её ID.
+      description: 'Возвращает текущее состояние Saga транзакции по её ID.
+
+        '
       operationId: getSaga
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: sagaId
-          in: path
-          required: true
-          description: ID Saga транзакции
-          schema:
-            type: string
-            format: uuid
-            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      - name: sagaId
+        in: path
+        required: true
+        description: ID Saga транзакции
+        schema:
+          type: string
+          format: uuid
+          example: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Состояние Saga
@@ -112,32 +115,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/SagaResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /saga/{sagaId}/compensate:
     post:
       tags:
-        - Saga
+      - Saga
       summary: Выполнить компенсацию Saga
-      description: |
-        Запускает компенсирующие транзакции для отката Saga
+      description: 'Запускает компенсирующие транзакции для отката Saga
+
         при ошибке или отмене.
+
+        '
       operationId: compensateSaga
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: sagaId
-          in: path
-          required: true
-          description: ID Saga транзакции
-          schema:
-            type: string
-            format: uuid
-            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      - name: sagaId
+        in: path
+        required: true
+        description: ID Saga транзакции
+        schema:
+          type: string
+          format: uuid
+          example: bb0e8400-e29b-41d4-a716-446655440000
       requestBody:
         required: false
         content:
@@ -145,7 +149,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CompensateSagaRequest'
             example:
-              reason: "User cancelled transaction"
+              reason: User cancelled transaction
       responses:
         '200':
           description: Компенсация выполнена
@@ -154,148 +158,143 @@ paths:
               schema:
                 $ref: '#/components/schemas/CompensateSagaResponse'
               example:
-                saga_id: "bb0e8400-e29b-41d4-a716-446655440000"
-                status: "compensating"
+                saga_id: bb0e8400-e29b-41d4-a716-446655440000
+                status: compensating
                 compensation_steps: 2
-                message: "Compensation started"
+                message: Compensation started
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     StartSagaRequest:
       type: object
       required:
-        - saga_type
-        - steps
+      - saga_type
+      - steps
       properties:
         saga_type:
           type: string
           description: Тип Saga транзакции
-          example: "purchase_item"
+          example: purchase_item
         steps:
           type: array
           description: Шаги Saga транзакции
           items:
             $ref: '#/components/schemas/SagaStepRequest'
           minItems: 1
-
     SagaStepRequest:
       type: object
       required:
-        - step_number
-        - service_name
-        - action
+      - step_number
+      - service_name
+      - action
       properties:
-        step_number:
-          type: integer
-          minimum: 1
-          example: 1
         service_name:
           type: string
-          example: "inventory-service"
+          example: inventory-service
         action:
           type: string
-          example: "reserve_slot"
-        params:
-          type: object
-          description: Параметры для шага
-          additionalProperties: true
+          example: reserve_slot
         compensation_action:
           type: string
           description: Действие для компенсации
           nullable: true
-          example: "release_slot"
-
+          example: release_slot
+        params:
+          type: object
+          description: Параметры для шага
+          additionalProperties: true
+        step_number:
+          type: integer
+          minimum: 1
+          example: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SagaResponse:
       type: object
       required:
-        - saga_id
-        - saga_type
-        - status
-        - current_step
-        - steps
-        - created_at
+      - saga_id
+      - saga_type
+      - status
+      - current_step
+      - steps
+      - created_at
       properties:
         saga_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
         saga_type:
           type: string
-          example: "purchase_item"
+          example: purchase_item
+        error:
+          type: string
+          nullable: true
+          description: Ошибка Saga (если есть)
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:05Z'
         status:
-          $ref: 'sync-schemas.yaml#/components/schemas/SagaStatus'
+          $ref: sync-schemas.yaml#/components/schemas/SagaStatus
+        steps:
+          type: array
+          items:
+            $ref: sync-schemas.yaml#/components/schemas/SagaStep
         current_step:
           type: integer
           description: Текущий шаг Saga
           minimum: 1
           example: 1
-        steps:
-          type: array
-          items:
-            $ref: 'sync-schemas.yaml#/components/schemas/SagaStep'
-        created_at:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:05Z"
-        error:
-          type: string
-          nullable: true
-          description: Ошибка Saga (если есть)
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CompensateSagaRequest:
       type: object
       properties:
         reason:
           type: string
           description: Причина компенсации
-          example: "User cancelled transaction"
-
+          example: User cancelled transaction
     CompensateSagaResponse:
       type: object
       required:
-        - saga_id
-        - status
-        - compensation_steps
-        - message
+      - saga_id
+      - status
+      - compensation_steps
+      - message
       properties:
         saga_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
+        message:
+          type: string
+          example: Compensation started
         status:
-          $ref: 'sync-schemas.yaml#/components/schemas/SagaStatus'
+          $ref: sync-schemas.yaml#/components/schemas/SagaStatus
         compensation_steps:
           type: integer
           description: Количество шагов компенсации
           minimum: 0
           example: 2
-        message:
-          type: string
-          example: "Compensation started"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

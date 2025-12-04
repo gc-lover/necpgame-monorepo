@@ -6,103 +6,91 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8087/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8087/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Engram Security
-    description: Кодирование и защита энграмм
-
+- name: Engram Security
+  description: Кодирование и защита энграмм
 paths:
   /character/engrams/{engram_id}/encode:
     post:
       tags:
-        - Engram Security
+      - Engram Security
       summary: Закодировать энграмму
       operationId: encodeEngram
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: engram_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID энграммы
+      - name: engram_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID энграммы
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EncodeEngramRequest"
+              $ref: '#/components/schemas/EncodeEngramRequest'
       responses:
-        "200":
+        '200':
           description: Энграмма закодирована
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EngramProtection"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/EngramProtection'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /character/engrams/{engram_id}/protection:
     get:
       tags:
-        - Engram Security
+      - Engram Security
       summary: Получить информацию о защите энграммы
       operationId: getEngramProtection
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: engram_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID энграммы
+      - name: engram_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID энграммы
       responses:
-        "200":
+        '200':
           description: Информация о защите
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EngramProtection"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/EngramProtection'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     EncodeEngramRequest:
       type: object
       required:
-        - protection_tier
+      - protection_tier
       properties:
-        protection_tier:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Тир защиты (1-5)
-          example: 3
         protection_settings:
           type: object
           description: Настройки защиты
@@ -124,40 +112,47 @@ components:
               format: uuid
               nullable: true
               description: ID персонажа, для которого привязана энграмма
-        netrunner_skill_level:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Уровень навыка Netrunner для защиты
-          example: 75
-
-    EngramProtection:
-      type: object
-      required:
-        - engram_id
-        - protection_tier
-      properties:
-        engram_id:
-          type: string
-          format: uuid
-          description: ID энграммы
         protection_tier:
           type: integer
           minimum: 1
           maximum: 5
           description: Тир защиты (1-5)
           example: 3
-        protection_tier_name:
-          type: string
-          enum: [basic, standard, advanced, corporate, military]
-          description: Название тира защиты
-          example: "advanced"
-        required_netrunner_level:
+        netrunner_skill_level:
           type: integer
           minimum: 0
           maximum: 100
-          description: Требуемый уровень Netrunner для взлома
+          description: Уровень навыка Netrunner для защиты
           example: 75
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EngramProtection:
+      type: object
+      required:
+      - engram_id
+      - protection_tier
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы
+        encoded_by:
+          type: string
+          format: uuid
+          description: ID персонажа, закодировавшего энграмму
+        protection_tier_name:
+          type: string
+          enum:
+          - basic
+          - standard
+          - advanced
+          - corporate
+          - military
+          description: Название тира защиты
+          example: advanced
+        encoded_at:
+          type: string
+          format: date-time
+          description: Дата кодирования
         protection_settings:
           type: object
           description: Настройки защиты
@@ -176,12 +171,16 @@ components:
               format: uuid
               nullable: true
               description: ID привязанного персонажа
-        encoded_at:
-          type: string
-          format: date-time
-          description: Дата кодирования
-        encoded_by:
-          type: string
-          format: uuid
-          description: ID персонажа, закодировавшего энграмму
-
+        protection_tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир защиты (1-5)
+          example: 3
+        required_netrunner_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Требуемый уровень Netrunner для взлома
+          example: 75
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

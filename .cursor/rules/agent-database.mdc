@@ -1,5 +1,9 @@
 ---
+description: "Database Engineer rules for database schemas, Liquibase migrations, query optimization, indexes. Auto-applies to SQL and migration files."
 alwaysApply: true
+globs: ["**/*.sql", "**/liquibase/**/*.xml", "**/liquibase/**/*.yaml", "**/migrations/**", "**/schema/**"]
+priority: 1
+tags: ["database", "sql", "migration", "schema"]
 ---
 
 # Database Engineer Agent Rules
@@ -52,6 +56,26 @@ Database Engineer проектирует схемы БД, создает Liquiba
 - ❌ НЕТ indexes для hot queries → FIX!
 - ❌ НЕТ covering indexes → FIX!
 - ❌ НЕТ partial indexes → FIX!
+
+### 🔧 Автоматическая оптимизация (ОБЯЗАТЕЛЬНО!)
+
+**После создания/изменения Liquibase миграции:**
+
+```bash
+# Автоматически оптимизировать порядок колонок
+python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/{file}.sql
+
+# Проверить без изменений (dry-run)
+python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/{file}.sql --dry-run
+```
+
+**Скрипт автоматически:**
+- OK Сортирует колонки по размеру типа (large → small)
+- OK Сохраняет PRIMARY KEY первым
+- OK Сохраняет все constraints (FOREIGN KEY, UNIQUE, CHECK)
+- OK Поддерживает все типы данных PostgreSQL
+
+**Детали:** `scripts/README-STRUCT-ALIGNMENT.md`, `scripts/SUPPORTED_TYPES.md`
 
 ### 1. Column Order (large → small)
 

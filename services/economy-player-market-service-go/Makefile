@@ -1,4 +1,4 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
+﻿.PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
 
 SERVICE_NAME := economy-player-market-service
 OGEN := ogen
@@ -11,23 +11,23 @@ BUNDLED_SPEC := openapi-bundled.yaml
 
 check-deps:
 	@echo "Checking dependencies..."
-	@command -v $(OGEN) >/dev/null 2>&1 || { echo "❌ ogen not found. Install: go install github.com/ogen-go/ogen/cmd/ogen@latest"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
-	@echo "OK Dependencies installed"
+	@command -v $(OGEN) >/dev/null 2>&1 || { echo "вќЊ ogen not found. Install: go install github.com/ogen-go/ogen/cmd/ogen@latest"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "вќЊ node not found"; exit 1; }
+	@echo "вњ… Dependencies installed"
 
 install-deps:
 	@go install github.com/ogen-go/ogen/cmd/ogen@latest
 
 bundle-api: check-deps
 	@echo "Bundling: $(SERVICE_SPEC)"
-	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "❌ Spec not found: $(SERVICE_SPEC)"; exit 1; fi
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "вќЊ Spec not found: $(SERVICE_SPEC)"; exit 1; fi
 	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
-	@echo "OK Bundled: $(BUNDLED_SPEC)"
+	@echo "вњ… Bundled: $(BUNDLED_SPEC)"
 
 generate-api: bundle-api
 	@echo "Generating ogen code..."
 	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
-	@echo "OK ogen generation complete!"
+	@echo "вњ… ogen generation complete!"
 	@$(MAKE) check-file-sizes
 
 check-file-sizes:
@@ -36,18 +36,34 @@ check-file-sizes:
 	@find $(API_DIR) -name "*.go" -type f | while read file; do \
 		lines=$$(wc -l < "$$file" | tr -d ' '); \
 		if [ $$lines -gt 500 ]; then \
-			echo "WARNING  $$file: $$lines lines (EXCEEDS 500)"; \
+			echo "вљ пёЏ  $$file: $$lines lines (EXCEEDS 500)"; \
 		else \
-			echo "OK $$file: $$lines lines"; \
+			echo "вњ… $$file: $$lines lines"; \
 		fi; \
 	done
 
 verify-api: check-deps
 	@echo "Verifying: $(SERVICE_SPEC)"
-	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "❌ Spec not found"; exit 1; fi
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "вќЊ Spec not found"; exit 1; fi
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
-	@echo "OK OpenAPI spec is valid"
+	@echo "вњ… OpenAPI spec is valid"
 
 clean:
 	@rm -rf $(API_DIR) $(BUNDLED_SPEC)
-	@echo "OK Cleaned generated files"
+	@echo "вњ… Cleaned generated files"
+
+
+.PHONY: bench bench-json bench-quick
+
+# Run benchmarks (human-readable)
+bench:
+	go test -run=^ -bench=. -benchmem ./server
+
+# Run benchmarks (JSON output for CI)
+bench-json:
+	@mkdir -p ../../.benchmarks/results
+	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/economy-player-market-service_bench.json
+
+# Quick benchmark (short duration)
+bench-quick:
+	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server

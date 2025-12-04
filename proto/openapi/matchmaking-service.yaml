@@ -1,4 +1,3 @@
-# Issue: #150
 openapi: 3.0.3
 info:
   title: Matchmaking Service API
@@ -7,236 +6,247 @@ info:
   contact:
     name: Matchmaking Team
     email: matchmaking@necp.game
-
 servers:
-  - url: http://localhost:8090/api/v1
-    description: Local development
-  - url: https://api.necp.game/api/v1
-    description: Production
-
+- url: http://localhost:8090/api/v1
+  description: Local development
+- url: https://api.necp.game/api/v1
+  description: Production
 tags:
-  - name: Queue
-    description: Управление очередями матчмейкинга
-  - name: Rating
-    description: Рейтинговая система (MMR/ELO)
-  - name: Match
-    description: Управление матчами
-
+- name: Queue
+  description: Управление очередями матчмейкинга
+- name: Rating
+  description: Рейтинговая система (MMR/ELO)
+- name: Match
+  description: Управление матчами
 paths:
   /matchmaking/queue:
     post:
-      tags: [Queue]
+      tags:
+      - Queue
       summary: Войти в очередь
       operationId: enterQueue
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EnterQueueRequest"
+              $ref: '#/components/schemas/EnterQueueRequest'
       responses:
-        "200":
+        '200':
           description: Успешно добавлен в очередь
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QueueResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "409":
+                $ref: '#/components/schemas/QueueResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '409':
           description: Игрок уже в очереди
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/Error"
-        "429":
-          $ref: "common.yaml#/components/responses/TooManyRequests"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: common.yaml#/components/schemas/Error
+        '429':
+          $ref: common.yaml#/components/responses/TooManyRequests
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /matchmaking/queue/{queueId}:
     parameters:
-      - name: queueId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: queueId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
-      tags: [Queue]
+      tags:
+      - Queue
       summary: Получить статус очереди
       operationId: getQueueStatus
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Статус очереди
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QueueStatusResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
+                $ref: '#/components/schemas/QueueStatusResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
     delete:
-      tags: [Queue]
+      tags:
+      - Queue
       summary: Выйти из очереди
       operationId: leaveQueue
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Успешно вышел из очереди
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LeaveQueueResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/LeaveQueueResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /matchmaking/rating/{player_id}:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PlayerId"
+    - $ref: common.yaml#/components/parameters/PlayerId
     get:
-      tags: [Rating]
+      tags:
+      - Rating
       summary: Получить рейтинг игрока
       operationId: getPlayerRating
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Рейтинг игрока
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlayerRatingResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/PlayerRatingResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /matchmaking/leaderboard/{activityType}:
     parameters:
-      - name: activityType
-        in: path
-        required: true
-        schema:
-          type: string
-          enum: [pvp_5v5, pvp_10v10, pve_dungeon, raid_10man, raid_25man]
+    - name: activityType
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+        - pvp_5v5
+        - pvp_10v10
+        - pve_dungeon
+        - raid_10man
+        - raid_25man
     get:
-      tags: [Rating]
+      tags:
+      - Rating
       summary: Таблица лидеров
       operationId: getLeaderboard
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - name: seasonId
-          in: query
-          schema:
-            type: string
+      - $ref: common.yaml#/components/parameters/Limit
+      - name: seasonId
+        in: query
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Таблица лидеров
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LeaderboardResponse"
-
+                $ref: '#/components/schemas/LeaderboardResponse'
   /matchmaking/match/{matchId}/accept:
     parameters:
-      - name: matchId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: matchId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Match]
+      tags:
+      - Match
       summary: Принять найденный матч
       operationId: acceptMatch
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Матч принят
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "409":
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '409':
           description: Матч уже отменён или начат
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/Error"
-
+                $ref: common.yaml#/components/schemas/Error
   /matchmaking/match/{matchId}/decline:
     parameters:
-      - name: matchId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: matchId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Match]
+      tags:
+      - Match
       summary: Отклонить матч
       operationId: declineMatch
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Матч отклонён (вернётесь в очередь)
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     EnterQueueRequest:
       type: object
       required:
-        - activityType
+      - activityType
       properties:
+        partyId:
+          type: string
+          format: uuid
+          description: ID группы (для группового матчмейкинга)
         activityType:
           type: string
-          enum: [pvp_5v5, pvp_10v10, pve_dungeon, raid_10man, raid_25man]
+          enum:
+          - pvp_5v5
+          - pvp_10v10
+          - pve_dungeon
+          - raid_10man
+          - raid_25man
           description: Тип активности
         preferredRoles:
           type: array
           items:
             type: string
-            enum: [tank, healer, dps, support]
+            enum:
+            - tank
+            - healer
+            - dps
+            - support
           description: Предпочитаемые роли
-        partyId:
-          type: string
-          format: uuid
-          description: ID группы (для группового матчмейкинга)
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QueueResponse:
       type: object
       required:
-        - queueId
-        - estimatedWaitTime
-        - currentQueueSize
-      description: |
-        BACKEND NOTE: Hot endpoint (2000+ RPS). Use memory pooling.
+      - queueId
+      - estimatedWaitTime
+      - currentQueueSize
+      description: 'BACKEND NOTE: Hot endpoint (2000+ RPS). Use memory pooling.
+
         Expected memory: ~24 bytes/instance.
+
+        '
       properties:
-        # UUID first (large: 16 bytes)
         queueId:
           type: string
           format: uuid
-        # Integers together (small: 4 bytes each)
         estimatedWaitTime:
           type: integer
           format: int32
@@ -247,25 +257,27 @@ components:
           format: int32
           description: Текущий размер очереди
           example: 45
-
     QueueStatusResponse:
       type: object
       required:
-        - queueId
-        - status
-        - timeInQueue
-      description: |
-        BACKEND NOTE: Polling endpoint (100+ RPS). Cache 5s.
+      - queueId
+      - status
+      - timeInQueue
+      description: 'BACKEND NOTE: Polling endpoint (100+ RPS). Cache 5s.
+
         Expected memory: ~48 bytes/instance.
+
+        '
       properties:
-        # Strings first (large: 16 bytes)
         queueId:
           type: string
           format: uuid
         status:
           type: string
-          enum: [waiting, matched, cancelled]
-        # Array (24 bytes: pointer + len + cap)
+          enum:
+          - waiting
+          - matched
+          - cancelled
         ratingRange:
           type: array
           items:
@@ -274,8 +286,9 @@ components:
           minItems: 2
           maxItems: 2
           description: Текущий диапазон поиска [min, max]
-          example: [1450, 1550]
-        # Integers together (small: 4 bytes each)
+          example:
+          - 1450
+          - 1550
         timeInQueue:
           type: integer
           format: int32
@@ -284,28 +297,25 @@ components:
           type: integer
           format: int32
           description: Оставшееся ожидаемое время
-
     LeaveQueueResponse:
       type: object
       required:
-        - status
-        - waitTimeSeconds
+      - status
+      - waitTimeSeconds
       properties:
-        # String first (large: 16 bytes)
         status:
           type: string
-          enum: [cancelled]
-        # Integer (small: 4 bytes)
+          enum:
+          - cancelled
         waitTimeSeconds:
           type: integer
           format: int32
           description: Время проведённое в очереди
-
     PlayerRatingResponse:
       type: object
       required:
-        - playerId
-        - ratings
+      - playerId
+      - ratings
       properties:
         playerId:
           type: string
@@ -313,28 +323,35 @@ components:
         ratings:
           type: array
           items:
-            $ref: "#/components/schemas/ActivityRating"
-
+            $ref: '#/components/schemas/ActivityRating'
     ActivityRating:
       type: object
       required:
-        - activityType
-        - currentRating
-        - tier
-        - wins
-        - losses
-      description: |
-        BACKEND NOTE: Fields ordered large→small for struct alignment.
+      - activityType
+      - currentRating
+      - tier
+      - wins
+      - losses
+      description: 'BACKEND NOTE: Fields ordered large→small for struct alignment.
+
         Expected memory: ~60 bytes/instance (vs 72 bytes unoptimized).
+
         Hot endpoint: use pooling.
+
+        '
       properties:
-        # Strings first (large: ~16 bytes each)
         activityType:
           type: string
         tier:
           type: string
-          enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
-        # Integers together (small: 4 bytes each, no padding!)
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - grandmaster
         currentRating:
           type: integer
           format: int32
@@ -361,42 +378,41 @@ components:
           type: integer
           format: int32
           description: Текущая серия (положительная = победы, отрицательная = поражения)
-
     LeaderboardResponse:
       type: object
       required:
-        - activityType
-        - seasonId
-        - leaderboard
-      description: |
-        BACKEND NOTE: Heavy endpoint. Cache 5min. Use materialized view.
+      - activityType
+      - seasonId
+      - leaderboard
+      description: 'BACKEND NOTE: Heavy endpoint. Cache 5min. Use materialized view.
+
         Limit: 100 entries default.
+
+        '
       properties:
-        # Strings first (large: 16 bytes each)
         activityType:
           type: string
         seasonId:
           type: string
-        # Array (heavy: use pagination!)
         leaderboard:
           type: array
           items:
-            $ref: "#/components/schemas/LeaderboardEntry"
+            $ref: '#/components/schemas/LeaderboardEntry'
           maxItems: 100
-
     LeaderboardEntry:
       type: object
       required:
-        - rank
-        - playerId
-        - playerName
-        - rating
-        - tier
-      description: |
-        BACKEND NOTE: Fields ordered large→small for struct alignment.
+      - rank
+      - playerId
+      - playerName
+      - rating
+      - tier
+      description: 'BACKEND NOTE: Fields ordered large→small for struct alignment.
+
         Expected memory: ~60 bytes/instance (vs 68 bytes unoptimized).
+
+        '
       properties:
-        # Strings first (large: 16 bytes each)
         playerId:
           type: string
           format: uuid
@@ -404,8 +420,14 @@ components:
           type: string
         tier:
           type: string
-          enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
-        # Integers together (small: 4 bytes each, no padding!)
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - grandmaster
         rank:
           type: integer
           format: int32
@@ -419,6 +441,5 @@ components:
         losses:
           type: integer
           format: int32
-
 security:
-  - BearerAuth: []
+- BearerAuth: []

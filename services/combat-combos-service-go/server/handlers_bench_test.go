@@ -1,64 +1,61 @@
-// Issue: #1578
+﻿// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
-// BenchmarkRespondJSONWithoutPooling benchmarks response without pooling (baseline)
-func BenchmarkRespondJSONWithoutPooling(b *testing.B) {
-	data := map[string]string{
-		"status":  "success",
-		"message": "test message for benchmarking",
-		"id":      "12345678-1234-1234-1234-123456789abc",
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		w := httptest.NewRecorder()
-		// Baseline: no pool, no buffer, direct encode
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		// This is how oapi-codegen does it WITHOUT optimization
-		respondJSON(w, 200, data)  // Now uses REAL production code!
-	}
-}
-
-// BenchmarkOapiHandlerReal benchmarks REAL oapi-codegen handler with pooling
-func BenchmarkOapiHandlerReal(b *testing.B) {
-	// Setup real service
-	repo, _ := NewRepository("postgres://test")
-	service := NewService(repo)
+// BenchmarkGetComboCatalog benchmarks GetComboCatalog handler
+// Target: <100Ојs per operation, minimal allocs
+func BenchmarkGetComboCatalog(b *testing.B) {
+	service := NewService(nil)
 	handlers := NewHandlers(service)
 
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		// Real HTTP handler call with REAL respondJSON!
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest("GET", "/api/v1/gameplay/combat/combos/catalog", nil)
-		
-		handlers.GetComboCatalog(w, r, api.GetComboCatalogParams{})
+	ctx := context.Background()
+	params := api.GetComboCatalogParams{
 	}
-}
-
-// BenchmarkContextTimeout benchmarks context timeout overhead
-func BenchmarkContextTimeout(b *testing.B) {
-	parentCtx := context.Background()
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		ctx, cancel := context.WithTimeout(parentCtx, DBTimeout)
-		_ = ctx
-		cancel()
+		_, _ = handlers.GetComboCatalog(ctx, params)
 	}
 }
+
+// BenchmarkGetComboDetails benchmarks GetComboDetails handler
+// Target: <100Ојs per operation, minimal allocs
+func BenchmarkGetComboDetails(b *testing.B) {
+	service := NewService(nil)
+	handlers := NewHandlers(service)
+
+	ctx := context.Background()
+	params := api.GetComboDetailsParams{
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = handlers.GetComboDetails(ctx, params)
+	}
+}
+
+// BenchmarkActivateCombo benchmarks ActivateCombo handler
+// Target: <100Ојs per operation, minimal allocs
+func BenchmarkActivateCombo(b *testing.B) {
+	service := NewService(nil)
+	handlers := NewHandlers(service)
+
+	ctx := context.Background()
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = handlers.ActivateCombo(ctx)
+	}
+}
+

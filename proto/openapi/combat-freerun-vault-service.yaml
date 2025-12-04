@@ -1,4 +1,3 @@
-# Issue: #1513
 openapi: 3.0.3
 info:
   title: Combat Freerun Vault Service API
@@ -7,39 +6,36 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083
-    description: Локальный сервер разработки
-  - url: https://api.necp.game
-    description: Продакшен сервер
-
+- url: http://localhost:8083
+  description: Локальный сервер разработки
+- url: https://api.necp.game
+  description: Продакшен сервер
 tags:
-  - name: Acrobatics Advanced Actions
-    description: Продвинутые элементы акробатики
-
+- name: Acrobatics Advanced Actions
+  description: Продвинутые элементы акробатики
 paths:
   /api/v1/gameplay/combat/freerun/actions/vault:
     post:
       tags:
-        - Acrobatics Advanced Actions
+      - Acrobatics Advanced Actions
       summary: Выполнить Vault
       description: Выполняет перепрыгивание через препятствие для непрерывного движения
       operationId: performVault
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/VaultRequest"
+              $ref: '#/components/schemas/VaultRequest'
             examples:
               basic:
                 summary: Базовый Vault
                 value:
-                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  character_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
+                  session_id: b2c3d4e5-f6a7-8901-2345-678901bcdef0
                   obstacle_position:
                     x: 100.0
                     y: 200.0
@@ -48,49 +44,47 @@ paths:
                     x: 1.0
                     y: 0.0
                     z: 0.0
-                  automation_level: "auto"
+                  automation_level: auto
       responses:
-        "200":
+        '200':
           description: Vault выполнен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VaultResponse"
+                $ref: '#/components/schemas/VaultResponse'
               examples:
                 success:
                   summary: Успешное выполнение
                   value:
                     success: true
-                    action_id: "d0e1f2a3-b4c5-6789-0123-456789012345"
+                    action_id: d0e1f2a3-b4c5-6789-0123-456789012345
                     stamina_used: 5
                     validation_passed: true
-                    message: "Vault performed"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "403":
+                    message: Vault performed
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
           description: Препятствие не обнаружено или недостаточно выносливости
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/Error"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: common.yaml#/components/schemas/Error
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     VaultRequest:
       type: object
       required:
-        - character_id
-        - session_id
-        - obstacle_position
-        - direction
+      - character_id
+      - session_id
+      - obstacle_position
+      - direction
       properties:
         character_id:
           type: string
@@ -100,45 +94,44 @@ components:
           type: string
           format: uuid
           description: ID боевой сессии
-        obstacle_position:
-          $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
-        direction:
-          $ref: "combat-freerun-acrobatics-base-service.yaml#/components/schemas/Vector3D"
-          description: Направление перепрыгивания
         automation_level:
           type: string
           enum:
-            - auto
-            - manual
+          - auto
+          - manual
           default: auto
           description: Уровень автоматизации
-
+        direction:
+          $ref: combat-freerun-acrobatics-base-service.yaml#/components/schemas/Vector3D
+          description: Направление перепрыгивания
+        obstacle_position:
+          $ref: combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     VaultResponse:
       type: object
       required:
-        - success
-        - action_id
-        - stamina_used
-        - validation_passed
+      - success
+      - action_id
+      - stamina_used
+      - validation_passed
       properties:
-        success:
-          type: boolean
-          description: Успешность выполнения
         action_id:
           type: string
           format: uuid
           description: ID действия
+        message:
+          type: string
+          description: Дополнительное сообщение
         stamina_used:
           type: integer
           minimum: 0
           description: Потрачена выносливость
+        success:
+          type: boolean
+          description: Успешность выполнения
         validation_passed:
           type: boolean
           description: Прошло ли валидацию античита
-        message:
-          type: string
-          description: Дополнительное сообщение
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

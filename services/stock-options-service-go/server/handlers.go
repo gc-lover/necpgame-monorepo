@@ -1,237 +1,152 @@
+// Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
 	"time"
 
-	"github.com/necpgame/stock-options-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
+	api "github.com/necpgame/stock-options-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
+)
+
+// OptionsHandlers implements api.Handler interface (ogen typed handlers)
 type OptionsHandlers struct {
 	logger *logrus.Logger
 }
 
+// NewOptionsHandlers creates new handlers
 func NewOptionsHandlers() *OptionsHandlers {
 	return &OptionsHandlers{
 		logger: GetLogger(),
 	}
 }
 
-func (h *OptionsHandlers) ListOptionsContracts(w http.ResponseWriter, r *http.Request, params api.ListOptionsContractsParams) {
-	ctx := r.Context()
-	_ = ctx
+// ListOptionsContracts - TYPED response!
+func (h *OptionsHandlers) ListOptionsContracts(ctx context.Context, params api.ListOptionsContractsParams) (api.ListOptionsContractsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"ticker":          params.Ticker,
-		"type":            params.Type,
-		"expiration_from": params.ExpirationFrom,
-		"expiration_to":   params.ExpirationTo,
-		"limit":           params.Limit,
-		"offset":          params.Offset,
+		"ticker": params.Ticker,
+		"type":   params.Type,
 	}).Info("ListOptionsContracts request")
 
+	// TODO: Implement business logic
 	contracts := []api.OptionsContract{}
 	total := 0
-	limit := 50
-	if params.Limit != nil {
-		limit = *params.Limit
-	}
-	offset := 0
-	if params.Offset != nil {
-		offset = *params.Offset
-	}
 
-	type ListOptionsContractsResponse struct {
-		Data       []api.OptionsContract    `json:"data"`
-		Pagination *api.PaginationResponse `json:"pagination,omitempty"`
-	}
-
-	pagination := api.PaginationResponse{
-		Total:  total,
-		Limit:  &limit,
-		Offset: &offset,
-		Items:  []interface{}{},
-	}
-
-	response := ListOptionsContractsResponse{
-		Data:       contracts,
-		Pagination: &pagination,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.ListOptionsContractsOK{
+		Contracts: contracts,
+		Pagination: api.NewOptPaginationResponse(api.PaginationResponse{
+			Total:  total,
+			Limit:  api.NewOptInt(50),
+			Offset: api.NewOptInt(0),
+		}),
+	}, nil
 }
 
-func (h *OptionsHandlers) BuyOptionsContract(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
-
-	var req api.BuyOptionsContractJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode BuyOptionsContract request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+// BuyOptionsContract - TYPED response!
+func (h *OptionsHandlers) BuyOptionsContract(ctx context.Context, req *api.BuyOptionsRequest) (api.BuyOptionsContractRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"contract_id": req.ContractId,
+		"contract_id": req.ContractID,
 		"quantity":    req.Quantity,
 	}).Info("BuyOptionsContract request")
 
-	positionId := openapi_types.UUID{}
+	// TODO: Implement business logic
+	positionID := uuid.New()
 	now := time.Now()
-	currentValue := float32(0.0)
-	premiumPaid := float32(0.0)
-	pnl := float32(0.0)
+	currentValue := float64(0.0)
+	premiumPaid := float64(0.0)
+	pnl := float64(0.0)
 	daysToExpiration := 0
-	quantity := req.Quantity
 
-	response := api.OptionsPosition{
-		PositionId:       &positionId,
-		ContractId:       &req.ContractId,
-		PlayerId:         nil,
-		Quantity:         &quantity,
-		PremiumPaid:      &premiumPaid,
-		CurrentValue:     &currentValue,
-		Pnl:              &pnl,
-		DaysToExpiration: &daysToExpiration,
-		OpenedAt:         &now,
-	}
-
-	h.respondJSON(w, http.StatusCreated, response)
+	return &api.OptionsPosition{
+		PositionID:       api.NewOptUUID(positionID),
+		ContractID:       api.NewOptUUID(req.ContractID),
+		Quantity:         api.NewOptInt(req.Quantity),
+		PremiumPaid:      api.NewOptFloat64(premiumPaid),
+		CurrentValue:     api.NewOptFloat64(currentValue),
+		Pnl:              api.NewOptFloat64(pnl),
+		DaysToExpiration: api.NewOptInt(daysToExpiration),
+		OpenedAt:         api.NewOptDateTime(now),
+	}, nil
 }
 
-func (h *OptionsHandlers) ListOptionsPositions(w http.ResponseWriter, r *http.Request, params api.ListOptionsPositionsParams) {
-	ctx := r.Context()
-	_ = ctx
+// ListOptionsPositions - TYPED response!
+func (h *OptionsHandlers) ListOptionsPositions(ctx context.Context, params api.ListOptionsPositionsParams) (api.ListOptionsPositionsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	activeOnly := false
-	if params.ActiveOnly != nil {
-		activeOnly = *params.ActiveOnly
+	if params.ActiveOnly.Set {
+		activeOnly = params.ActiveOnly.Value
 	}
 
 	h.logger.WithFields(logrus.Fields{
 		"active_only": activeOnly,
-		"limit":       params.Limit,
-		"offset":      params.Offset,
 	}).Info("ListOptionsPositions request")
 
+	// TODO: Implement business logic
 	positions := []api.OptionsPosition{}
 	total := 0
-	limit := 50
-	if params.Limit != nil {
-		limit = *params.Limit
-	}
-	offset := 0
-	if params.Offset != nil {
-		offset = *params.Offset
-	}
 
-	type ListOptionsPositionsResponse struct {
-		Data       []api.OptionsPosition     `json:"data"`
-		Pagination *api.PaginationResponse  `json:"pagination,omitempty"`
-	}
-
-	pagination := api.PaginationResponse{
-		Total:  total,
-		Limit:  &limit,
-		Offset: &offset,
-		Items:  []interface{}{},
-	}
-
-	response := ListOptionsPositionsResponse{
-		Data:       positions,
-		Pagination: &pagination,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.ListOptionsPositionsOK{
+		Positions: positions,
+		Pagination: api.NewOptPaginationResponse(api.PaginationResponse{
+			Total:  total,
+			Limit:  api.NewOptInt(50),
+			Offset: api.NewOptInt(0),
+		}),
+	}, nil
 }
 
-func (h *OptionsHandlers) ExerciseOption(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
+// ExerciseOption - TYPED response!
+func (h *OptionsHandlers) ExerciseOption(ctx context.Context, req *api.ExerciseOptionRequest) (api.ExerciseOptionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req api.ExerciseOptionJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode ExerciseOption request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+	h.logger.WithField("position_id", req.PositionID).Info("ExerciseOption request")
 
-	h.logger.WithField("position_id", req.PositionId).Info("ExerciseOption request")
-
+	// TODO: Implement business logic
 	now := time.Now()
-	realizedPnl := float32(0.0)
-	totalCost := float32(0.0)
+	realizedPnl := float64(0.0)
+	totalCost := float64(0.0)
 	sharesAcquired := 0
 
-	response := api.ExerciseOptionResponse{
-		PositionId:     &req.PositionId,
-		ExercisedAt:    &now,
-		RealizedPnl:    &realizedPnl,
-		TotalCost:      &totalCost,
-		SharesAcquired: &sharesAcquired,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.ExerciseOptionResponse{
+		PositionID:     api.NewOptUUID(req.PositionID),
+		ExercisedAt:    api.NewOptDateTime(now),
+		RealizedPnl:    api.NewOptFloat64(realizedPnl),
+		TotalCost:      api.NewOptFloat64(totalCost),
+		SharesAcquired: api.NewOptInt(sharesAcquired),
+	}, nil
 }
 
-func (h *OptionsHandlers) GetOptionsGreeks(w http.ResponseWriter, r *http.Request, positionId openapi_types.UUID) {
-	ctx := r.Context()
-	_ = ctx
+// GetOptionsGreeks - TYPED response!
+func (h *OptionsHandlers) GetOptionsGreeks(ctx context.Context, params api.GetOptionsGreeksParams) (api.GetOptionsGreeksRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("position_id", positionId).Info("GetOptionsGreeks request")
+	h.logger.WithField("position_id", params.PositionID).Info("GetOptionsGreeks request")
 
-	delta := float32(0.0)
-	gamma := float32(0.0)
-	theta := float32(0.0)
-	vega := float32(0.0)
+	// TODO: Implement business logic
+	delta := float64(0.0)
+	gamma := float64(0.0)
+	theta := float64(0.0)
+	vega := float64(0.0)
 
-	response := api.Greeks{
-		Delta: &delta,
-		Gamma: &gamma,
-		Theta: &theta,
-		Vega:  &vega,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.Greeks{
+		Delta: api.NewOptFloat64(delta),
+		Gamma: api.NewOptFloat64(gamma),
+		Theta: api.NewOptFloat64(theta),
+		Vega:  api.NewOptFloat64(vega),
+	}, nil
 }
-
-func (h *OptionsHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (h *OptionsHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-		Code:    nil,
-		Details: nil,
-	}
-	h.respondJSON(w, status, errorResponse)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

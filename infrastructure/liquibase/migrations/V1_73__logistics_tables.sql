@@ -40,30 +40,51 @@ END $$;
 
 -- Таблица перевозок
 CREATE TABLE IF NOT EXISTS logistics.transport_shipments (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL, -- FK accounts
-    origin_region_id UUID, -- FK regions (nullable)
-    destination_region_id UUID, -- FK regions (nullable)
-    transport_type transport_type NOT NULL,
-    cargo_data JSONB NOT NULL DEFAULT '{}', -- список предметов, вес, объём, стоимость
-    route_data JSONB NOT NULL DEFAULT '{}', -- маршрут, расстояние, время доставки
-    status transport_shipment_status NOT NULL DEFAULT 'DRAFT',
-    scheduled_departure TIMESTAMP, -- nullable
-    actual_departure TIMESTAMP, -- nullable
-    estimated_arrival TIMESTAMP, -- nullable
-    actual_arrival TIMESTAMP, -- nullable
-    current_position GEOMETRY(POINT, 4326), -- nullable, для отслеживания (WGS84)
-    insurance_plan insurance_plan, -- nullable
-    insurance_policy_id UUID, -- FK insurance_policies (nullable)
-    escort_type escort_type, -- nullable
-    escort_id UUID, -- nullable
-    base_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    insurance_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    escort_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    total_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
-    sla_target_hours INTEGER, -- nullable
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL,
+  -- FK accounts
+    origin_region_id UUID,
+  -- FK regions (nullable)
+    destination_region_id UUID,
+  -- nullable
+    insurance_policy_id UUID,
+  -- nullable
+    escort_id UUID,
+  cargo_data JSONB NOT NULL DEFAULT '{}',
+  стоимость
+    route_data JSONB NOT NULL DEFAULT '{}',
+  scheduled_departure TIMESTAMP,
+  -- nullable
+    actual_departure TIMESTAMP,
+  -- nullable
+    estimated_arrival TIMESTAMP,
+  -- nullable
+    actual_arrival TIMESTAMP,
+  -- nullable
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- nullable
+    base_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  insurance_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  escort_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  total_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+  sla_target_hours INTEGER,
+  -- FK regions (nullable)
+    transport_type transport_type NOT NULL,
+  -- список предметов,
+  вес,
+  объём,
+  -- маршрут,
+  расстояние,
+  время доставки
+    status transport_shipment_status NOT NULL DEFAULT 'DRAFT',
+  -- nullable
+    current_position GEOMETRY(POINT, 4326),
+  -- nullable,
+  для отслеживания (WGS84)
+    insurance_plan insurance_plan,
+  -- FK insurance_policies (nullable)
+    escort_type escort_type
 );
 
 -- Индексы для transport_shipments
@@ -79,14 +100,15 @@ CREATE INDEX IF NOT EXISTS idx_transport_shipments_current_position
 
 -- Таблица маршрутов перевозок
 CREATE TABLE IF NOT EXISTS logistics.transport_routes (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
-    route_type transport_route_type NOT NULL,
-    waypoints GEOMETRY(POINT, 4326)[], -- массив точек маршрута (WGS84)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
+  waypoints GEOMETRY(POINT, 4326)[],
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- массив точек маршрута (WGS84)
     distance_km DECIMAL(10,2) NOT NULL,
-    estimated_hours DECIMAL(10,2) NOT NULL,
-    base_risk_level DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (base_risk_level >= 0.00 AND base_risk_level <= 1.00),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  estimated_hours DECIMAL(10,2) NOT NULL,
+  base_risk_level DECIMAL(3,2) NOT NULL DEFAULT 0.00 CHECK (base_risk_level >= 0.00 AND base_risk_level <= 1.00),
+  route_type transport_route_type NOT NULL
 );
 
 -- Индексы для transport_routes
@@ -95,17 +117,19 @@ CREATE INDEX IF NOT EXISTS idx_transport_routes_shipment_id
 
 -- Таблица инцидентов перевозок
 CREATE TABLE IF NOT EXISTS logistics.transport_incidents (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
-    incident_type transport_incident_type NOT NULL,
-    severity transport_incident_severity NOT NULL,
-    description TEXT,
-    position GEOMETRY(POINT, 4326), -- nullable (WGS84)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
+  description TEXT,
+  -- nullable (WGS84)
     occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP, -- nullable
+  resolved_at TIMESTAMP,
+  -- nullable
     cargo_loss_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (cargo_loss_percentage >= 0.00 AND cargo_loss_percentage <= 100.00),
-    delay_hours INTEGER NOT NULL DEFAULT 0,
-    resolved BOOLEAN NOT NULL DEFAULT false
+  delay_hours INTEGER NOT NULL DEFAULT 0,
+  resolved BOOLEAN NOT NULL DEFAULT false,
+  incident_type transport_incident_type NOT NULL,
+  severity transport_incident_severity NOT NULL,
+  position GEOMETRY(POINT, 4326)
 );
 
 -- Индексы для transport_incidents
@@ -118,12 +142,14 @@ CREATE INDEX IF NOT EXISTS idx_transport_incidents_position
 
 -- Таблица отслеживания позиций перевозок
 CREATE TABLE IF NOT EXISTS logistics.transport_tracking (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
-    position GEOMETRY(POINT, 4326) NOT NULL, -- (WGS84)
-    speed_kmh DECIMAL(10,2), -- nullable
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
+  recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- (WGS84)
+    speed_kmh DECIMAL(10,2),
+  -- nullable
     progress_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (progress_percentage >= 0.00 AND progress_percentage <= 100.00),
-    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  position GEOMETRY(POINT, 4326) NOT NULL
 );
 
 -- Индексы для transport_tracking
@@ -134,14 +160,17 @@ CREATE INDEX IF NOT EXISTS idx_transport_tracking_position
 
 -- Таблица метрик SLA перевозок
 CREATE TABLE IF NOT EXISTS logistics.transport_sla_metrics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
-    target_hours INTEGER NOT NULL,
-    actual_hours INTEGER, -- nullable
-    on_time BOOLEAN, -- nullable
-    sla_violated BOOLEAN NOT NULL DEFAULT false,
-    violation_reason TEXT, -- nullable
-    measured_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  shipment_id UUID NOT NULL REFERENCES logistics.transport_shipments(id) ON DELETE CASCADE,
+  violation_reason TEXT,
+  -- nullable
+    measured_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  target_hours INTEGER NOT NULL,
+  actual_hours INTEGER,
+  -- nullable
+    on_time BOOLEAN,
+  -- nullable
+    sla_violated BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Индексы для transport_sla_metrics

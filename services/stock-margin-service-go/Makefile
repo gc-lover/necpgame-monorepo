@@ -1,4 +1,4 @@
-# Issue: #1600-#1602
+﻿# Issue: #1600-#1602
 # Makefile for ogen code generation
 
 .PHONY: generate-api clean
@@ -15,3 +15,19 @@ generate-api:
 clean:
 	rm -f $(BUNDLED_SPEC)
 	rm -rf $(API_DIR)/oas_*_gen.go
+
+
+.PHONY: bench bench-json bench-quick
+
+# Run benchmarks (human-readable)
+bench:
+	go test -run=^ -bench=. -benchmem ./server
+
+# Run benchmarks (JSON output for CI)
+bench-json:
+	@mkdir -p ../../.benchmarks/results
+	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/stock-margin-service_bench.json
+
+# Quick benchmark (short duration)
+bench-quick:
+	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server

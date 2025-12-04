@@ -9,22 +9,22 @@
 
 -- Table: battle_pass_seasons
 CREATE TABLE IF NOT EXISTS battle_pass_seasons (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    season_number INTEGER NOT NULL UNIQUE,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    max_level INTEGER NOT NULL DEFAULT 100,
-    theme VARCHAR(100),
-    status VARCHAR(20) NOT NULL DEFAULT 'scheduled' CHECK (status IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  description TEXT,
+  name VARCHAR(100) NOT NULL,
+  theme VARCHAR(100),
+  status VARCHAR(20) NOT NULL DEFAULT 'scheduled' CHECK (status IN (
         'scheduled',
         'active',
         'ended'
     )),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT battle_pass_seasons_dates_check CHECK (end_date > start_date)
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  season_number INTEGER NOT NULL UNIQUE,
+  max_level INTEGER NOT NULL DEFAULT 100,
+  CONSTRAINT battle_pass_seasons_dates_check CHECK (end_date > start_date)
 );
 
 CREATE INDEX idx_battle_pass_seasons_status ON battle_pass_seasons(status);
@@ -32,11 +32,10 @@ CREATE INDEX idx_battle_pass_seasons_dates ON battle_pass_seasons(start_date, en
 
 -- Table: battle_pass_rewards
 CREATE TABLE IF NOT EXISTS battle_pass_rewards (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    season_id UUID NOT NULL REFERENCES battle_pass_seasons(id) ON DELETE CASCADE,
-    level INTEGER NOT NULL,
-    track VARCHAR(20) NOT NULL CHECK (track IN ('free', 'premium')),
-    reward_type VARCHAR(50) NOT NULL CHECK (reward_type IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  season_id UUID NOT NULL REFERENCES battle_pass_seasons(id) ON DELETE CASCADE,
+  track VARCHAR(20) NOT NULL CHECK (track IN ('free', 'premium')),
+  reward_type VARCHAR(50) NOT NULL CHECK (reward_type IN (
         'currency',
         'item',
         'cosmetic',
@@ -44,10 +43,11 @@ CREATE TABLE IF NOT EXISTS battle_pass_rewards (
         'emote',
         'xp_boost'
     )),
-    reward_data JSONB NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT battle_pass_rewards_unique UNIQUE (season_id, level, track),
-    CONSTRAINT battle_pass_rewards_level_check CHECK (level >= 1 AND level <= 100)
+  reward_data JSONB NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  level INTEGER NOT NULL,
+  CONSTRAINT battle_pass_rewards_unique UNIQUE (season_id, level, track),
+  CONSTRAINT battle_pass_rewards_level_check CHECK (level >= 1 AND level <= 100)
 );
 
 CREATE INDEX idx_battle_pass_rewards_season ON battle_pass_rewards(season_id);
@@ -56,19 +56,19 @@ CREATE INDEX idx_battle_pass_rewards_track ON battle_pass_rewards(track);
 
 -- Table: player_battle_pass_progress
 CREATE TABLE IF NOT EXISTS player_battle_pass_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID NOT NULL,
-    season_id UUID NOT NULL REFERENCES battle_pass_seasons(id) ON DELETE CASCADE,
-    current_level INTEGER DEFAULT 1,
-    current_xp INTEGER DEFAULT 0,
-    has_premium BOOLEAN DEFAULT false,
-    premium_purchased_at TIMESTAMP,
-    claimed_levels_free INTEGER[] DEFAULT '{}',
-    claimed_levels_premium INTEGER[] DEFAULT '{}',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT player_battle_pass_progress_unique UNIQUE (player_id, season_id),
-    CONSTRAINT player_battle_pass_progress_level_check CHECK (current_level >= 1 AND current_level <= 100)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_id UUID NOT NULL,
+  season_id UUID NOT NULL REFERENCES battle_pass_seasons(id) ON DELETE CASCADE,
+  premium_purchased_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  current_level INTEGER DEFAULT 1,
+  current_xp INTEGER DEFAULT 0,
+  claimed_levels_free INTEGER[] DEFAULT '{}',
+  claimed_levels_premium INTEGER[] DEFAULT '{}',
+  has_premium BOOLEAN DEFAULT false,
+  CONSTRAINT player_battle_pass_progress_unique UNIQUE (player_id, season_id),
+  CONSTRAINT player_battle_pass_progress_level_check CHECK (current_level >= 1 AND current_level <= 100)
 );
 
 CREATE INDEX idx_player_battle_pass_progress_player ON player_battle_pass_progress(player_id);
@@ -78,12 +78,11 @@ CREATE INDEX idx_player_battle_pass_progress_premium ON player_battle_pass_progr
 
 -- Table: weekly_challenges
 CREATE TABLE IF NOT EXISTS weekly_challenges (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    season_id UUID NOT NULL REFERENCES battle_pass_seasons(id) ON DELETE CASCADE,
-    week_number INTEGER NOT NULL,
-    title VARCHAR(200) NOT NULL,
-    description TEXT NOT NULL,
-    objective_type VARCHAR(50) NOT NULL CHECK (objective_type IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  season_id UUID NOT NULL REFERENCES battle_pass_seasons(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  objective_type VARCHAR(50) NOT NULL CHECK (objective_type IN (
         'kill_enemies',
         'complete_quests',
         'earn_currency',
@@ -92,13 +91,14 @@ CREATE TABLE IF NOT EXISTS weekly_challenges (
         'collect_items',
         'win_matches'
     )),
-    objective_count INTEGER NOT NULL,
-    xp_reward INTEGER NOT NULL,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT weekly_challenges_dates_check CHECK (end_date > start_date),
-    CONSTRAINT weekly_challenges_week_check CHECK (week_number >= 1 AND week_number <= 12)
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  week_number INTEGER NOT NULL,
+  objective_count INTEGER NOT NULL,
+  xp_reward INTEGER NOT NULL,
+  CONSTRAINT weekly_challenges_dates_check CHECK (end_date > start_date),
+  CONSTRAINT weekly_challenges_week_check CHECK (week_number >= 1 AND week_number <= 12)
 );
 
 CREATE INDEX idx_weekly_challenges_season ON weekly_challenges(season_id);
@@ -107,15 +107,15 @@ CREATE INDEX idx_weekly_challenges_dates ON weekly_challenges(start_date, end_da
 
 -- Table: player_weekly_challenges
 CREATE TABLE IF NOT EXISTS player_weekly_challenges (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID NOT NULL,
-    challenge_id UUID NOT NULL REFERENCES weekly_challenges(id) ON DELETE CASCADE,
-    current_progress INTEGER DEFAULT 0,
-    completed_at TIMESTAMP,
-    claimed_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT player_weekly_challenges_unique UNIQUE (player_id, challenge_id)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_id UUID NOT NULL,
+  challenge_id UUID NOT NULL REFERENCES weekly_challenges(id) ON DELETE CASCADE,
+  completed_at TIMESTAMP,
+  claimed_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  current_progress INTEGER DEFAULT 0,
+  CONSTRAINT player_weekly_challenges_unique UNIQUE (player_id, challenge_id)
 );
 
 CREATE INDEX idx_player_weekly_challenges_player ON player_weekly_challenges(player_id);
@@ -182,6 +182,7 @@ VALUES
     ('660e8400-e29b-41d4-a716-446655440001', 1, 'Money Maker', 'Earn 10,000 credits', 'earn_currency', 10000, 600, NOW(), NOW() + INTERVAL '7 days'),
     ('660e8400-e29b-41d4-a716-446655440001', 1, 'Active Player', 'Play 10 matches', 'play_matches', 10, 500, NOW(), NOW() + INTERVAL '7 days'),
     ('660e8400-e29b-41d4-a716-446655440001', 1, 'Damage Dealer', 'Deal 100,000 damage', 'deal_damage', 100000, 1200, NOW(), NOW() + INTERVAL '7 days');
+
 
 
 

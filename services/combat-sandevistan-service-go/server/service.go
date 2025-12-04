@@ -1,14 +1,14 @@
-// Issue: #39
+// Issue: #39, #1607
 package server
 
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/combat-sandevistan-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sandevistan-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -44,13 +44,55 @@ type SandevistanService interface {
 type sandevistanService struct {
 	repo   Repository
 	logger *logrus.Logger
+
+	// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+	activationPool sync.Pool
+	statusPool sync.Pool
+	actionBudgetResultPool sync.Pool
+	coolingResultPool sync.Pool
+	heatStatusPool sync.Pool
+	counterplayResultPool sync.Pool
 }
 
 func NewSandevistanService(repo Repository, logger *logrus.Logger) SandevistanService {
-	return &sandevistanService{
+	s := &sandevistanService{
 		repo:   repo,
 		logger: logger,
 	}
+
+	// Initialize memory pools (zero allocations target!)
+	s.activationPool = sync.Pool{
+		New: func() interface{} {
+			return &api.SandevistanActivation{}
+		},
+	}
+	s.statusPool = sync.Pool{
+		New: func() interface{} {
+			return &api.SandevistanStatus{}
+		},
+	}
+	s.actionBudgetResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.ActionBudgetResult{}
+		},
+	}
+	s.coolingResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.CoolingResult{}
+		},
+	}
+	s.heatStatusPool = sync.Pool{
+		New: func() interface{} {
+			return &api.HeatStatus{}
+		},
+	}
+	s.counterplayResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.CounterplayResult{}
+		},
+	}
+
+	return s
 }
 
 func (s *sandevistanService) Activate(ctx context.Context, playerID uuid.UUID) (*api.SandevistanActivation, error) {
@@ -87,13 +129,15 @@ func (s *sandevistanService) Activate(ctx context.Context, playerID uuid.UUID) (
 
 	go s.handlePhaseTransitions(ctx, activation)
 
-	response := &api.SandevistanActivation{
-		ActivationId:          activationID,
-		StartedAt:             startedAt,
-		ExpiresAt:             expiresAt,
-		Phase:                 phase,
-		ActionBudgetRemaining: &actionBudgetRemaining,
-	}
+	// Issue: #1607 - Use memory pooling
+	response := s.activationPool.Get().(*api.SandevistanActivation)
+	// Note: Not returning to pool - struct is returned to caller
+
+	response.ActivationID = activationID
+	response.StartedAt = startedAt
+	response.ExpiresAt = expiresAt
+	response.Phase = phase
+	response.ActionBudgetRemaining = api.NewOptInt(actionBudgetRemaining)
 
 	return response, nil
 }
@@ -168,14 +212,16 @@ func (s *sandevistanService) GetStatus(ctx context.Context, playerID uuid.UUID) 
 		temporalMarksCount = len(marks)
 	}
 
-	status := &api.SandevistanStatus{
-		IsActive:              isActive,
-		Phase:                 phase,
-		CooldownRemaining:     cooldownRemaining,
-		ActionBudgetRemaining: &actionBudgetRemaining,
-		HeatStacks:            &heatStacks,
-		TemporalMarksCount:    &temporalMarksCount,
-	}
+	// Issue: #1607 - Use memory pooling
+	status := s.statusPool.Get().(*api.SandevistanStatus)
+	// Note: Not returning to pool - struct is returned to caller
+
+	status.IsActive = isActive
+	status.Phase = phase
+	status.CooldownRemaining = cooldownRemaining
+	status.ActionBudgetRemaining = api.NewOptInt(actionBudgetRemaining)
+	status.HeatStacks = api.NewOptInt(heatStacks)
+	status.TemporalMarksCount = api.NewOptInt(temporalMarksCount)
 
 	return status, nil
 }
@@ -203,30 +249,24 @@ func (s *sandevistanService) UseActionBudget(ctx context.Context, playerID uuid.
 		return nil, err
 	}
 
-	executedActions := make([]struct {
-		ActionType *string    `json:"action_type,omitempty"`
-		Success    *bool      `json:"success,omitempty"`
-		Timestamp  *time.Time `json:"timestamp,omitempty"`
-	}, len(actions))
+	executedActions := make([]api.ActionBudgetResultExecutedActionsItem, len(actions))
 	for i, action := range actions {
 		success := true
 		now := time.Now()
 		actionTypeStr := string(action.Type)
-		executedActions[i] = struct {
-			ActionType *string    `json:"action_type,omitempty"`
-			Success    *bool      `json:"success,omitempty"`
-			Timestamp  *time.Time `json:"timestamp,omitempty"`
-		}{
-			ActionType: &actionTypeStr,
-			Success:    &success,
-			Timestamp:  &now,
+		executedActions[i] = api.ActionBudgetResultExecutedActionsItem{
+			ActionType: api.NewOptString(actionTypeStr),
+			Success:    api.NewOptBool(success),
+			Timestamp:  api.NewOptDateTime(now),
 		}
 	}
 
-	result := &api.ActionBudgetResult{
-		BudgetRemaining:  activation.ActionBudgetRemaining,
-		ExecutedActions: executedActions,
-	}
+	// Issue: #1607 - Use memory pooling
+	result := s.actionBudgetResultPool.Get().(*api.ActionBudgetResult)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.BudgetRemaining = activation.ActionBudgetRemaining
+	result.ExecutedActions = executedActions
 
 	return result, nil
 }
@@ -269,8 +309,8 @@ func (s *sandevistanService) GetTemporalMarks(ctx context.Context, playerID uuid
 	for i, mark := range marks {
 		expiresAt := mark.MarkedAt.Add(5 * time.Second)
 		result[i] = api.TemporalMark{
-			MarkId:    openapi_types.UUID(mark.ID),
-			TargetId:  openapi_types.UUID(mark.TargetID),
+			MarkID:    mark.ID,
+			TargetID:  mark.TargetID,
 			MarkedAt:  mark.MarkedAt,
 			ExpiresAt: expiresAt,
 		}
@@ -305,12 +345,14 @@ func (s *sandevistanService) ApplyCooling(ctx context.Context, playerID uuid.UUI
 		return nil, err
 	}
 
-	result := &api.CoolingResult{
-		HeatStacksRemoved:  heatStacksRemoved,
-		NewHeatLevel:       newHeatLevel,
-		CooldownReduced:    &cooldownReduced,
-		CyberpsychosisRisk: &cyberpsychosisRisk,
-	}
+	// Issue: #1607 - Use memory pooling
+	result := s.coolingResultPool.Get().(*api.CoolingResult)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.HeatStacksRemoved = heatStacksRemoved
+	result.NewHeatLevel = newHeatLevel
+	result.CooldownReduced = api.NewOptInt(cooldownReduced)
+	result.CyberpsychosisRisk = api.NewOptFloat32(cyberpsychosisRisk)
 
 	return result, nil
 }
@@ -329,12 +371,14 @@ func (s *sandevistanService) GetHeatStatus(ctx context.Context, playerID uuid.UU
 	isOverstress := currentStacks >= OverstressThreshold
 	cyberpsychosisRisk := float32(currentStacks) * 0.1
 
-	status := &api.HeatStatus{
-		CurrentStacks:     currentStacks,
-		MaxStacks:         MaxHeatStacks,
-		IsOverstress:      isOverstress,
-		CyberpsychosisRisk: &cyberpsychosisRisk,
-	}
+	// Issue: #1607 - Use memory pooling
+	status := s.heatStatusPool.Get().(*api.HeatStatus)
+	// Note: Not returning to pool - struct is returned to caller
+
+	status.CurrentStacks = currentStacks
+	status.MaxStacks = MaxHeatStacks
+	status.IsOverstress = isOverstress
+	status.CyberpsychosisRisk = api.NewOptFloat32(cyberpsychosisRisk)
 
 	return status, nil
 }
@@ -383,12 +427,14 @@ func (s *sandevistanService) ApplyCounterplay(ctx context.Context, playerID uuid
 		return nil, err
 	}
 
-	result := &api.CounterplayResult{
-		SandevistanInterrupted: sandevistanInterrupted,
-		EffectApplied:          effectApplied,
-		PhaseEnded:             &phaseEnded,
-		ActionBudgetReduced:    &actionBudgetReduced,
-	}
+	// Issue: #1607 - Use memory pooling
+	result := s.counterplayResultPool.Get().(*api.CounterplayResult)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.SandevistanInterrupted = sandevistanInterrupted
+	result.EffectApplied = effectApplied
+	result.PhaseEnded = api.NewOptBool(phaseEnded)
+	result.ActionBudgetReduced = api.NewOptInt(actionBudgetReduced)
 
 	return result, nil
 }

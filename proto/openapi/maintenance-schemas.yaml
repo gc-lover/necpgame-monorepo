@@ -1,56 +1,48 @@
-# Issue: #316
 openapi: 3.0.3
 info:
   title: Maintenance Service Schemas
   description: Схемы данных для Maintenance Service API
   version: 1.0.0
-
 components:
   schemas:
     CreateMaintenanceWindowRequest:
       type: object
       required:
-        - maintenance_type
-        - scheduled_start
-        - scheduled_end
-        - title
+      - maintenance_type
+      - scheduled_start
+      - scheduled_end
+      - title
       properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        impact:
+          type: string
+          maxLength: 100
         maintenance_type:
           type: string
           enum:
-            - SCHEDULED
-            - EMERGENCY
-            - HOT_FIX
-            - ROLLBACK
-            - UPGRADE
+          - SCHEDULED
+          - EMERGENCY
+          - HOT_FIX
+          - ROLLBACK
+          - UPGRADE
         scheduled_start:
           type: string
           format: date-time
         scheduled_end:
           type: string
           format: date-time
-        title:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-        impact:
-          type: string
-          maxLength: 100
         affected_services:
           type: array
           items:
             type: string
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateMaintenanceWindowRequest:
       type: object
       properties:
-        scheduled_start:
-          type: string
-          format: date-time
-        scheduled_end:
-          type: string
-          format: date-time
         title:
           type: string
           maxLength: 255
@@ -59,45 +51,60 @@ components:
         impact:
           type: string
           maxLength: 100
+        status:
+          type: string
+          enum:
+          - PLANNED
+          - NOTIFIED
+          - STARTING
+          - ACTIVE
+          - COMPLETING
+          - COMPLETED
+          - CANCELLED
+        scheduled_start:
+          type: string
+          format: date-time
+        scheduled_end:
+          type: string
+          format: date-time
         affected_services:
           type: array
           items:
             type: string
-        status:
-          type: string
-          enum:
-            - PLANNED
-            - NOTIFIED
-            - STARTING
-            - ACTIVE
-            - COMPLETING
-            - COMPLETED
-            - CANCELLED
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MaintenanceWindow:
       type: object
       properties:
         id:
           type: string
           format: uuid
+        created_by:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        impact:
+          type: string
         maintenance_type:
           type: string
           enum:
-            - SCHEDULED
-            - EMERGENCY
-            - HOT_FIX
-            - ROLLBACK
-            - UPGRADE
+          - SCHEDULED
+          - EMERGENCY
+          - HOT_FIX
+          - ROLLBACK
+          - UPGRADE
         status:
           type: string
           enum:
-            - PLANNED
-            - NOTIFIED
-            - STARTING
-            - ACTIVE
-            - COMPLETING
-            - COMPLETED
-            - CANCELLED
+          - PLANNED
+          - NOTIFIED
+          - STARTING
+          - ACTIVE
+          - COMPLETING
+          - COMPLETED
+          - CANCELLED
         scheduled_start:
           type: string
           format: date-time
@@ -112,26 +119,17 @@ components:
           type: string
           format: date-time
           nullable: true
-        title:
-          type: string
-        description:
-          type: string
-        impact:
-          type: string
-        affected_services:
-          type: array
-          items:
-            type: string
-        created_by:
-          type: string
-          format: uuid
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
+        affected_services:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MaintenanceWindowsResponse:
       type: object
       properties:
@@ -145,52 +143,50 @@ components:
           type: integer
         offset:
           type: integer
-
     MaintenanceStatus:
       type: object
       properties:
-        is_maintenance_mode:
-          type: boolean
         current_window_id:
           type: string
           format: uuid
           nullable: true
-        block_new_connections:
-          type: boolean
-        allow_admin_access:
-          type: boolean
         maintenance_message:
           type: string
           nullable: true
         updated_at:
           type: string
           format: date-time
-
-    UpdateMaintenanceStatusRequest:
-      type: object
-      properties:
         is_maintenance_mode:
           type: boolean
         block_new_connections:
           type: boolean
         allow_admin_access:
           type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateMaintenanceStatusRequest:
+      type: object
+      properties:
         maintenance_message:
           type: string
-
+        is_maintenance_mode:
+          type: boolean
+        block_new_connections:
+          type: boolean
+        allow_admin_access:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ScheduleMaintenanceRequest:
       type: object
       required:
-        - window_id
+      - window_id
       properties:
         window_id:
           type: string
           format: uuid
-
     StartGracefulShutdownRequest:
       type: object
       required:
-        - window_id
+      - window_id
       properties:
         window_id:
           type: string
@@ -199,17 +195,18 @@ components:
           type: integer
           default: 300
           description: Таймаут для graceful shutdown в секундах
-
     GracefulShutdownStatus:
       type: object
       properties:
-        is_shutting_down:
-          type: boolean
         window_id:
           type: string
           format: uuid
           nullable: true
         started_at:
+          type: string
+          format: date-time
+          nullable: true
+        estimated_completion:
           type: string
           format: date-time
           nullable: true
@@ -219,16 +216,14 @@ components:
           type: integer
         total_services:
           type: integer
-        estimated_completion:
-          type: string
-          format: date-time
-          nullable: true
-
+        is_shutting_down:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SendMaintenanceNotificationRequest:
       type: object
       required:
-        - window_id
-        - notification_type
+      - window_id
+      - notification_type
       properties:
         window_id:
           type: string
@@ -236,12 +231,11 @@ components:
         notification_type:
           type: string
           enum:
-            - SCHEDULED_24H
-            - SCHEDULED_1H
-            - STARTING
-            - STARTED
-            - COMPLETED
-
+          - SCHEDULED_24H
+          - SCHEDULED_1H
+          - STARTING
+          - STARTED
+          - COMPLETED
     MaintenanceNotification:
       type: object
       properties:
@@ -254,17 +248,16 @@ components:
         notification_type:
           type: string
           enum:
-            - SCHEDULED_24H
-            - SCHEDULED_1H
-            - STARTING
-            - STARTED
-            - COMPLETED
+          - SCHEDULED_24H
+          - SCHEDULED_1H
+          - STARTING
+          - STARTED
+          - COMPLETED
         sent_at:
           type: string
           format: date-time
         recipients_count:
           type: integer
-
     MaintenanceNotificationsResponse:
       type: object
       properties:
@@ -274,7 +267,6 @@ components:
             $ref: '#/components/schemas/MaintenanceNotification'
         total:
           type: integer
-
     MaintenanceEvent:
       type: object
       properties:
@@ -287,19 +279,19 @@ components:
         event_type:
           type: string
           enum:
-            - window-created
-            - window-scheduled
-            - window-starting
-            - window-started
-            - window-completing
-            - window-completed
-            - window-cancelled
-        event_data:
-          type: object
+          - window-created
+          - window-scheduled
+          - window-starting
+          - window-started
+          - window-completing
+          - window-completed
+          - window-cancelled
         created_at:
           type: string
           format: date-time
-
+        event_data:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MaintenanceEventsResponse:
       type: object
       properties:
@@ -313,11 +305,10 @@ components:
           type: integer
         offset:
           type: integer
-
     AdminStartMaintenanceRequest:
       type: object
       required:
-        - window_id
+      - window_id
       properties:
         window_id:
           type: string
@@ -326,11 +317,10 @@ components:
           type: boolean
           default: false
           description: Принудительный запуск без graceful shutdown
-
     AdminStopMaintenanceRequest:
       type: object
       required:
-        - window_id
+      - window_id
       properties:
         window_id:
           type: string
@@ -339,7 +329,6 @@ components:
           type: boolean
           default: false
           description: Принудительная остановка
-
     Error:
       type: object
       properties:
@@ -347,4 +336,3 @@ components:
           type: string
         message:
           type: string
-

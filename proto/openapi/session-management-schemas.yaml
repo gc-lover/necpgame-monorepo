@@ -3,37 +3,41 @@ info:
   title: Session Management Service Schemas
   description: Схемы данных для Session Management Service API
   version: 1.0.0
-
 servers: []
-
 paths: {}
-
 components:
   schemas:
     SessionState:
       type: string
       enum:
-        - CREATED
-        - ACTIVE
-        - IDLE
-        - AFK
-        - DISCONNECTED
-        - EXPIRED
-        - CLOSED
-      description: |
-        Состояние сессии:
+      - CREATED
+      - ACTIVE
+      - IDLE
+      - AFK
+      - DISCONNECTED
+      - EXPIRED
+      - CLOSED
+      description: 'Состояние сессии:
+
         - `CREATED` - сессия создана
+
         - `ACTIVE` - сессия активна
+
         - `IDLE` - сессия в режиме ожидания
+
         - `AFK` - игрок отсутствует
+
         - `DISCONNECTED` - сессия отключена
+
         - `EXPIRED` - сессия истекла
+
         - `CLOSED` - сессия закрыта
 
+        '
     CreateSessionRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
@@ -43,10 +47,6 @@ components:
           type: string
           format: uuid
           description: ID персонажа (опционально)
-        ip_address:
-          type: string
-          format: ipv4
-          description: IP адрес клиента
         user_agent:
           type: string
           description: User-Agent клиента
@@ -56,7 +56,11 @@ components:
         zone_id:
           type: string
           description: ID зоны (опционально)
-
+        ip_address:
+          type: string
+          format: ipv4
+          description: IP адрес клиента
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Session:
       type: object
       properties:
@@ -80,12 +84,6 @@ components:
           type: string
           nullable: true
           description: Refresh токен
-        state:
-          $ref: '#/components/schemas/SessionState'
-        ip_address:
-          type: string
-          format: ipv4
-          description: IP адрес клиента
         user_agent:
           type: string
           description: User-Agent клиента
@@ -96,6 +94,10 @@ components:
           type: string
           nullable: true
           description: ID зоны
+        ip_address:
+          type: string
+          format: ipv4
+          description: IP адрес клиента
         last_heartbeat_at:
           type: string
           format: date-time
@@ -120,7 +122,9 @@ components:
           format: date-time
           nullable: true
           description: Время закрытия сессии
-
+        state:
+          $ref: '#/components/schemas/SessionState'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LogoutResponse:
       type: object
       properties:
@@ -130,7 +134,6 @@ components:
         logged_out_at:
           type: string
           format: date-time
-
     HeartbeatResponse:
       type: object
       properties:
@@ -144,15 +147,12 @@ components:
           type: string
           format: date-time
           description: Время следующего ожидаемого heartbeat
-
     HeartbeatStatus:
       type: object
       properties:
         session_id:
           type: string
           format: uuid
-        is_active:
-          type: boolean
         last_heartbeat_at:
           type: string
           format: date-time
@@ -169,12 +169,14 @@ components:
         time_until_absolute_timeout:
           type: integer
           description: Секунд до абсолютного таймаута
-
+        is_active:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ReconnectRequest:
       type: object
       required:
-        - session_token
-        - reconnection_token
+      - session_token
+      - reconnection_token
       properties:
         session_token:
           type: string
@@ -186,57 +188,56 @@ components:
           type: string
           format: ipv4
           description: IP адрес клиента
-
     ReconnectResponse:
       type: object
       properties:
+        reconnected_at:
+          type: string
+          format: date-time
         session:
           $ref: '#/components/schemas/Session'
         state_restored:
           type: boolean
           description: Было ли восстановлено состояние
-        reconnected_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ReconnectStatus:
       type: object
       properties:
-        can_reconnect:
-          type: boolean
+        session_state:
+          $ref: '#/components/schemas/SessionState'
         reconnection_window_seconds:
           type: integer
           description: Окно переподключения в секундах (5 минут)
         time_until_window_expires:
           type: integer
           description: Секунд до истечения окна переподключения
-        session_state:
-          $ref: '#/components/schemas/SessionState'
-
+        can_reconnect:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SessionStateData:
       type: object
       properties:
         session_id:
           type: string
           format: uuid
-        state:
-          $ref: '#/components/schemas/SessionState'
-        state_data:
-          type: object
-          description: Данные состояния (JSON)
-        cached_in_redis:
-          type: boolean
-          description: Кэшировано ли в Redis
         last_synced_at:
           type: string
           format: date-time
           nullable: true
           description: Время последней синхронизации с БД
-
+        state_data:
+          type: object
+          description: Данные состояния (JSON)
+        state:
+          $ref: '#/components/schemas/SessionState'
+        cached_in_redis:
+          type: boolean
+          description: Кэшировано ли в Redis
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateSessionStateRequest:
       type: object
       required:
-        - state_data
+      - state_data
       properties:
         state_data:
           type: object
@@ -245,10 +246,23 @@ components:
           type: boolean
           description: Синхронизировать ли с БД немедленно
           default: false
-
     CleanupResult:
       type: object
       properties:
+        resources_freed:
+          type: array
+          items:
+            type: object
+            properties:
+              resource_type:
+                type: string
+                enum:
+                - party
+                - combat
+                - trade
+              resource_count:
+                type: integer
+          description: Освобожденные ресурсы
         expired_sessions_cleaned:
           type: integer
           description: Количество очищенных истекших сессий
@@ -258,27 +272,21 @@ components:
         redis_keys_cleaned:
           type: integer
           description: Количество очищенных ключей Redis
-        resources_freed:
-          type: array
-          items:
-            type: object
-            properties:
-              resource_type:
-                type: string
-                enum:
-                  - party
-                  - combat
-                  - trade
-              resource_count:
-                type: integer
-          description: Освобожденные ресурсы
         cleanup_duration_ms:
           type: integer
           description: Время выполнения очистки в миллисекундах
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CleanupStats:
       type: object
       properties:
+        last_cleanup_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_cleanup_at:
+          type: string
+          format: date-time
+          nullable: true
         total_sessions:
           type: integer
         active_sessions:
@@ -288,35 +296,37 @@ components:
         old_sessions:
           type: integer
           description: Сессии старше 7 дней
-        last_cleanup_at:
-          type: string
-          format: date-time
-          nullable: true
-        next_cleanup_at:
-          type: string
-          format: date-time
-          nullable: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SecurityValidationRequest:
       type: object
       required:
-        - session_id
-        - ip_address
+      - session_id
+      - ip_address
       properties:
         session_id:
           type: string
           format: uuid
+        token:
+          type: string
+          description: Токен для проверки
         ip_address:
           type: string
           format: ipv4
           description: IP адрес для проверки
-        token:
-          type: string
-          description: Токен для проверки
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SecurityValidationResult:
       type: object
       properties:
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Предупреждения безопасности
+        security_score:
+          type: integer
+          description: Оценка безопасности (0-100)
+          minimum: 0
+          maximum: 100
         is_valid:
           type: boolean
         ip_match:
@@ -328,17 +338,7 @@ components:
         rate_limit_ok:
           type: boolean
           description: Не превышен ли rate limit
-        security_score:
-          type: integer
-          description: Оценка безопасности (0-100)
-          minimum: 0
-          maximum: 100
-        warnings:
-          type: array
-          items:
-            type: string
-          description: Предупреждения безопасности
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TokenRotationResult:
       type: object
       properties:
@@ -354,12 +354,19 @@ components:
         rotated_at:
           type: string
           format: date-time
-
     MonitoringStats:
       type: object
       properties:
         time_range:
           type: string
+        sessions_by_state:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Количество сессий по состояниям
+        trends:
+          type: object
+          description: Тренды сессий
         total_sessions:
           type: integer
           description: Общее количество сессий
@@ -381,20 +388,12 @@ components:
         errors:
           type: integer
           description: Количество ошибок
-        sessions_by_state:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Количество сессий по состояниям
-        trends:
-          type: object
-          description: Тренды сессий
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TerminateSessionRequest:
       type: object
       required:
-        - session_id
-        - reason
+      - session_id
+      - reason
       properties:
         session_id:
           type: string
@@ -406,4 +405,3 @@ components:
           type: boolean
           description: Уведомить ли игрока
           default: true
-

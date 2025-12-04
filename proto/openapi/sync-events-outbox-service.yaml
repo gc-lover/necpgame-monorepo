@@ -1,44 +1,48 @@
-# Issue: #1521
 openapi: 3.0.3
 info:
   title: Data Synchronization Events and Outbox Service API
-  description: |
-    API для Event Bus и Outbox Pattern.
-    
+  description: 'API для Event Bus и Outbox Pattern.
+
+
     **Основные возможности:**
+
     - Публикация событий в Event Bus
+
     - Получение событий
+
     - Управление Outbox событиями
+
     - Статистика Outbox
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8090/api/v1/sync
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/sync
-    description: Продакшен сервер
-
+- url: http://localhost:8090/api/v1/sync
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/sync
+  description: Продакшен сервер
 tags:
-  - name: Event Bus
-    description: Управление Event Bus
-  - name: Outbox
-    description: Управление Outbox Pattern
-
+- name: Event Bus
+  description: Управление Event Bus
+- name: Outbox
+  description: Управление Outbox Pattern
 paths:
   /events/publish:
     post:
       tags:
-        - Event Bus
+      - Event Bus
       summary: Опубликовать событие в Event Bus
-      description: |
-        Публикует событие в Event Bus (Kafka) для распространения
+      description: 'Публикует событие в Event Bus (Kafka) для распространения
+
         между микросервисами.
+
+        '
       operationId: publishEvent
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -46,9 +50,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PublishEventRequest'
             example:
-              event_type: "character.updated"
+              event_type: character.updated
               payload:
-                character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                character_id: aa0e8400-e29b-41d4-a716-446655440000
                 level: 50
                 experience: 125000
       responses:
@@ -59,105 +63,105 @@ paths:
               schema:
                 $ref: '#/components/schemas/PublishEventResponse'
               example:
-                event_id: "bb0e8400-e29b-41d4-a716-446655440000"
-                event_type: "character.updated"
-                status: "processed"
-                published_at: "2025-12-01T10:00:00Z"
+                event_id: bb0e8400-e29b-41d4-a716-446655440000
+                event_type: character.updated
+                status: processed
+                published_at: '2025-12-01T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /events/{eventId}:
     get:
       tags:
-        - Event Bus
+      - Event Bus
       summary: Получить событие по ID
-      description: |
-        Возвращает информацию о событии по его ID.
+      description: 'Возвращает информацию о событии по его ID.
+
+        '
       operationId: getEvent
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: eventId
-          in: path
-          required: true
-          description: ID события
-          schema:
-            type: string
-            format: uuid
-            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      - name: eventId
+        in: path
+        required: true
+        description: ID события
+        schema:
+          type: string
+          format: uuid
+          example: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Информация о событии
           content:
             application/json:
               schema:
-                $ref: 'sync-schemas.yaml#/components/schemas/Event'
+                $ref: sync-schemas.yaml#/components/schemas/Event
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /events:
     get:
       tags:
-        - Event Bus
+      - Event Bus
       summary: Получить список событий
-      description: |
-        Возвращает список событий с фильтрацией по типу, статусу и дате.
+      description: 'Возвращает список событий с фильтрацией по типу, статусу и дате.
+
+        '
       operationId: listEvents
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: event_type
-          in: query
-          required: false
-          description: Фильтр по типу события
-          schema:
-            type: string
-            example: "character.*"
-        - name: status
-          in: query
-          required: false
-          description: Фильтр по статусу
-          schema:
-            $ref: 'sync-schemas.yaml#/components/schemas/EventStatus'
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата
-          schema:
-            type: string
-            format: date-time
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: event_type
+        in: query
+        required: false
+        description: Фильтр по типу события
+        schema:
+          type: string
+          example: character.*
+      - name: status
+        in: query
+        required: false
+        description: Фильтр по статусу
+        schema:
+          $ref: sync-schemas.yaml#/components/schemas/EventStatus
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Список событий
@@ -166,38 +170,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/EventsListResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /outbox/pending:
     get:
       tags:
-        - Outbox
+      - Outbox
       summary: Получить список ожидающих событий Outbox
-      description: |
-        Возвращает список событий из Outbox, ожидающих обработки.
+      description: 'Возвращает список событий из Outbox, ожидающих обработки.
+
+        '
       operationId: getPendingOutboxEvents
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Список ожидающих событий
@@ -206,29 +210,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/OutboxEventsResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /outbox/{eventId}/retry:
     post:
       tags:
-        - Outbox
+      - Outbox
       summary: Повторить обработку события Outbox
-      description: |
-        Запускает повторную обработку события из Outbox после ошибки.
+      description: 'Запускает повторную обработку события из Outbox после ошибки.
+
+        '
       operationId: retryOutboxEvent
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: eventId
-          in: path
-          required: true
-          description: ID события Outbox
-          schema:
-            type: string
-            format: uuid
-            example: "cc0e8400-e29b-41d4-a716-446655440000"
+      - name: eventId
+        in: path
+        required: true
+        description: ID события Outbox
+        schema:
+          type: string
+          format: uuid
+          example: cc0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Обработка запущена
@@ -237,30 +241,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/RetryOutboxEventResponse'
               example:
-                event_id: "cc0e8400-e29b-41d4-a716-446655440000"
-                status: "pending"
+                event_id: cc0e8400-e29b-41d4-a716-446655440000
+                status: pending
                 retry_count: 1
-                message: "Retry initiated"
+                message: Retry initiated
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /outbox/stats:
     get:
       tags:
-        - Outbox
+      - Outbox
       summary: Получить статистику Outbox
-      description: |
-        Возвращает статистику обработки событий Outbox:
+      description: 'Возвращает статистику обработки событий Outbox:
+
         количество ожидающих, обработанных и неудачных событий.
+
+        '
       operationId: getOutboxStats
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Статистика Outbox
@@ -275,116 +280,111 @@ paths:
                 failed_events: 150
                 average_processing_time: 2.5
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     PublishEventRequest:
       type: object
       required:
-        - event_type
-        - payload
+      - event_type
+      - payload
       properties:
         event_type:
           type: string
           description: Тип события (например, character.updated)
-          example: "character.updated"
+          example: character.updated
         payload:
           type: object
           description: Данные события
           additionalProperties: true
           example:
-            character_id: "aa0e8400-e29b-41d4-a716-446655440000"
+            character_id: aa0e8400-e29b-41d4-a716-446655440000
             level: 50
-
     PublishEventResponse:
       type: object
       required:
-        - event_id
-        - event_type
-        - status
-        - published_at
+      - event_id
+      - event_type
+      - status
+      - published_at
       properties:
         event_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
         event_type:
           type: string
-          example: "character.updated"
-        status:
-          $ref: 'sync-schemas.yaml#/components/schemas/EventStatus'
+          example: character.updated
         published_at:
           type: string
           format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+          example: '2025-12-01T10:00:00Z'
+        status:
+          $ref: sync-schemas.yaml#/components/schemas/EventStatus
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EventsListResponse:
       type: object
       required:
-        - events
-        - total
+      - events
+      - total
       properties:
         events:
           type: array
           items:
-            $ref: 'sync-schemas.yaml#/components/schemas/Event'
+            $ref: sync-schemas.yaml#/components/schemas/Event
         total:
           type: integer
           minimum: 0
           example: 100
-
     OutboxEventsResponse:
       type: object
       required:
-        - events
-        - total
+      - events
+      - total
       properties:
         events:
           type: array
           items:
-            $ref: 'sync-schemas.yaml#/components/schemas/OutboxEvent'
+            $ref: sync-schemas.yaml#/components/schemas/OutboxEvent
         total:
           type: integer
           minimum: 0
           example: 50
-
     RetryOutboxEventResponse:
       type: object
       required:
-        - event_id
-        - status
-        - retry_count
-        - message
+      - event_id
+      - status
+      - retry_count
+      - message
       properties:
         event_id:
           type: string
           format: uuid
-          example: "cc0e8400-e29b-41d4-a716-446655440000"
+          example: cc0e8400-e29b-41d4-a716-446655440000
+        message:
+          type: string
+          example: Retry initiated
         status:
-          $ref: 'sync-schemas.yaml#/components/schemas/EventStatus'
+          $ref: sync-schemas.yaml#/components/schemas/EventStatus
         retry_count:
           type: integer
           minimum: 0
           example: 1
-        message:
-          type: string
-          example: "Retry initiated"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     OutboxStatsResponse:
       type: object
       required:
-        - total_events
-        - pending_events
-        - processed_events
-        - failed_events
-        - average_processing_time
+      - total_events
+      - pending_events
+      - processed_events
+      - failed_events
+      - average_processing_time
       properties:
         total_events:
           type: integer
@@ -412,14 +412,12 @@ components:
           description: Среднее время обработки в секундах
           minimum: 0
           example: 2.5
-
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

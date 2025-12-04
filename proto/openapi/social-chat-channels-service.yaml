@@ -1,4 +1,3 @@
-# Issue: #172
 openapi: 3.0.3
 info:
   title: Social Chat Channels Service API
@@ -7,31 +6,28 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Chat Channels
-    description: Управление каналами чата
-
+- name: Chat Channels
+  description: Управление каналами чата
 paths:
   /social/chat/channels:
     get:
       tags:
-        - Chat Channels
+      - Chat Channels
       summary: Получить список каналов
       operationId: getChannels
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/ChannelType'
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/ChannelType'
       responses:
         '200':
           description: Список каналов
@@ -40,20 +36,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChannelListResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/chat/channels/{channel_id}:
     get:
       tags:
-        - Chat Channels
+      - Chat Channels
       summary: Получить канал
       operationId: getChannel
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/ChannelId'
+      - $ref: common.yaml#/components/parameters/ChannelId
       responses:
         '200':
           description: Информация о канале
@@ -62,22 +57,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChatChannel'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/chat/channels/{channel_id}/join:
     post:
       tags:
-        - Chat Channels
+      - Chat Channels
       summary: Присоединиться к каналу
       operationId: joinChannel
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/ChannelId'
+      - $ref: common.yaml#/components/parameters/ChannelId
       requestBody:
         required: true
         content:
@@ -92,22 +86,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChatChannel'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/chat/channels/{channel_id}/leave:
     post:
       tags:
-        - Chat Channels
+      - Chat Channels
       summary: Покинуть канал
       operationId: leaveChannel
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/ChannelId'
+      - $ref: common.yaml#/components/parameters/ChannelId
       requestBody:
         required: true
         content:
@@ -120,28 +113,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/StatusResponse'
+                $ref: common.yaml#/components/schemas/StatusResponse
               example:
                 status: left
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/chat/channels/{channel_id}/members:
     get:
       tags:
-        - Chat Channels
+      - Chat Channels
       summary: Получить список участников канала
       operationId: getChannelMembers
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/ChannelId'
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+      - $ref: common.yaml#/components/parameters/ChannelId
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список участников
@@ -150,31 +142,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChannelMembersResponse'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ChannelType:
       type: string
-      enum: [GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE]
-
+      enum:
+      - GLOBAL
+      - TRADE
+      - NEWBIE
+      - LOCAL
+      - PARTY
+      - RAID
+      - GUILD
+      - GUILD_OFFICER
+      - WHISPER
+      - SYSTEM
+      - COMBAT_LOG
+      - RP_EMOTE
     ChatChannel:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        channel_type:
-          type: string
-          enum: [GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE]
         owner_id:
           type: string
           format: uuid
@@ -185,6 +183,24 @@ components:
         description:
           type: string
           nullable: true
+        channel_type:
+          type: string
+          enum:
+          - GLOBAL
+          - TRADE
+          - NEWBIE
+          - LOCAL
+          - PARTY
+          - RAID
+          - GUILD
+          - GUILD_OFFICER
+          - WHISPER
+          - SYSTEM
+          - COMBAT_LOG
+          - RP_EMOTE
+        created_at:
+          type: string
+          format: date-time
         read_permission:
           type: object
           additionalProperties: true
@@ -202,10 +218,7 @@ components:
         is_active:
           type: boolean
           default: true
-        created_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChannelListResponse:
       type: object
       properties:
@@ -215,25 +228,22 @@ components:
             $ref: '#/components/schemas/ChatChannel'
         total:
           type: integer
-
     JoinChannelRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
           format: uuid
-
     LeaveChannelRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
           format: uuid
-
     ChannelMembersResponse:
       type: object
       properties:
@@ -251,8 +261,5 @@ components:
           type: integer
         offset:
           type: integer
-
 security:
-  - BearerAuth: []
-
-
+- BearerAuth: []

@@ -1,61 +1,75 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps generate-types generate-server generate-spec check-file-sizes
+﻿# Issue: #1595 - ogen migration
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
 
 SERVICE_NAME := gameplay-weapon-special-mechanics-core-service
-OAPI_CODEGEN := oapi-codegen
+OGEN := ogen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := chi-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
 SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-
-# Split output files (SOLID compliance)
-TYPES_FILE := $(API_DIR)/types.gen.go
-SERVER_FILE := $(API_DIR)/server.gen.go
-SPEC_FILE := $(API_DIR)/spec.gen.go
+BUNDLED_SPEC := openapi-bundled.yaml
 
 check-deps:
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
+	@echo "Checking dependencies..."
+	@command -v $(OGEN) >/dev/null 2>&1 || { echo "вќЊ ogen not found. Installing..."; $(MAKE) install-deps; }
+	@command -v node >/dev/null 2>&1 || { echo "вќЊ node not found"; exit 1; }
+	@echo "вњ… Dependencies installed"
+
+install-deps:
+	@echo "Installing ogen..."
+	@go install github.com/ogen-go/ogen/cmd/ogen@latest
+	@echo "вњ… ogen installed"
 
 bundle-api: check-deps
-	@mkdir -p $(API_DIR)
+	@echo "Bundling: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "вќЊ Spec not found: $(SERVICE_SPEC)"; exit 1; fi
 	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
+	@echo "вњ… Bundled to $(BUNDLED_SPEC)"
 
-generate-types: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(TYPES_FILE) | awk '{print "OK types.gen.go: " $$1 " lines"}'
-
-generate-server: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(SERVER_FILE) | awk '{print "OK server.gen.go: " $$1 " lines"}'
-
-generate-spec: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
-	@wc -l $(SPEC_FILE) | awk '{print "OK spec.gen.go: " $$1 " lines"}'
+generate-api: bundle-api
+	@echo "Generating ogen code..."
+	@mkdir -p $(API_DIR)
+	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
+	@echo "вњ… ogen generation complete!"
+	@$(MAKE) check-file-sizes
 
 check-file-sizes:
-	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
-		if [ -f "$$file" ]; then \
-			lines=$$(wc -l < "$$file"); \
-			if [ $$lines -gt 500 ]; then echo "WARNING  $$file: $$lines lines"; \
-			else echo "OK $$file: $$lines lines"; fi; \
+	@echo ""
+	@echo "File size check (max 500 lines per file):"
+	@find $(API_DIR) -name "*.go" -type f 2>/dev/null | while read file; do \
+		lines=$$(wc -l < "$$file" 2>/dev/null | tr -d ' '); \
+		if [ $$lines -gt 500 ]; then \
+			echo "вљ пёЏ  $$file: $$lines lines (EXCEEDS)"; \
+		else \
+			echo "вњ… $$file: $$lines lines"; \
 		fi; \
-	done
-
-generate-api: generate-types generate-server generate-spec check-file-sizes
+	done || true
+	@echo ""
 
 verify-api: check-deps
+	@echo "Verifying: $(SERVICE_SPEC)"
+	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "вќЊ Spec not found"; exit 1; fi
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
+	@echo "вњ… Valid OpenAPI spec"
 
 clean:
-	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+	@rm -rf $(API_DIR)/oas_*_gen.go
+	@rm -f $(BUNDLED_SPEC)
+	@echo "вњ… Cleaned generated files"
 
 
+.PHONY: bench bench-json bench-quick
 
+# Run benchmarks (human-readable)
+bench:
+	go test -run=^ -bench=. -benchmem ./server
 
+# Run benchmarks (JSON output for CI)
+bench-json:
+	@mkdir -p ../../.benchmarks/results
+	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/gameplay-weapon-special-mechanics-core-service_bench.json
 
-
-
-
+# Quick benchmark (short duration)
+bench-quick:
+	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server

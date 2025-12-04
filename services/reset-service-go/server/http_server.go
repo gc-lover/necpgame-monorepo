@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/pkg/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/reset-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,12 +40,14 @@ func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer 
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewResetHandlers(resetService)
-	
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	handlers := NewHandlers(resetService)
+
+	ogenServer, err := api.NewServer(handlers)
+	if err != nil {
+		panic(err)
+	}
+
+	router.Mount("/api/v1", ogenServer)
 
 	router.Get("/health", server.healthCheck)
 
@@ -90,7 +92,7 @@ func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 // Issue: #1364
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to marshal JSON response")
@@ -104,7 +106,7 @@ func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interfa
 		}
 		return
 	}
-	
+
 	w.WriteHeader(status)
 	if _, err := w.Write(jsonData); err != nil {
 		s.logger.WithError(err).Error("Failed to write JSON response")

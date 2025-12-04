@@ -1,8 +1,8 @@
 package server
 
 import (
-	feedbackapi "github.com/necpgame/feedback-service-go/pkg/api"
-	"github.com/necpgame/feedback-service-go/models"
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 )
 
 func convertFeedbackTypeFromAPI(t feedbackapi.SubmitFeedbackRequestType) models.FeedbackType {
@@ -37,35 +37,22 @@ func convertFeedbackTypeToAPI(t models.FeedbackType) *feedbackapi.FeedbackType {
 	return &result
 }
 
-func convertGetPlayerFeedbackParamsTypeFromAPI(t feedbackapi.GetPlayerFeedbackParamsType) models.FeedbackType {
+func convertFeedbackTypeToAPIValue(t models.FeedbackType) feedbackapi.FeedbackType {
 	switch t {
-	case feedbackapi.GetPlayerFeedbackParamsTypeFeatureRequest:
-		return models.FeedbackTypeFeatureRequest
-	case feedbackapi.GetPlayerFeedbackParamsTypeBugReport:
-		return models.FeedbackTypeBugReport
-	case feedbackapi.GetPlayerFeedbackParamsTypeWishlist:
-		return models.FeedbackTypeWishlist
-	case feedbackapi.GetPlayerFeedbackParamsTypeFeedback:
-		return models.FeedbackTypeFeedback
+	case models.FeedbackTypeFeatureRequest:
+		return feedbackapi.FeedbackTypeFeatureRequest
+	case models.FeedbackTypeBugReport:
+		return feedbackapi.FeedbackTypeBugReport
+	case models.FeedbackTypeWishlist:
+		return feedbackapi.FeedbackTypeWishlist
+	case models.FeedbackTypeFeedback:
+		return feedbackapi.FeedbackTypeFeedback
 	default:
-		return models.FeedbackTypeFeedback
+		return feedbackapi.FeedbackTypeFeedback
 	}
 }
 
-func convertFeedbackTypeToFeedbackBoardItemType(t models.FeedbackType) feedbackapi.FeedbackBoardItemType {
-	switch t {
-	case models.FeedbackTypeFeatureRequest:
-		return feedbackapi.FeedbackBoardItemTypeFeatureRequest
-	case models.FeedbackTypeBugReport:
-		return feedbackapi.FeedbackBoardItemTypeBugReport
-	case models.FeedbackTypeWishlist:
-		return feedbackapi.FeedbackBoardItemTypeWishlist
-	case models.FeedbackTypeFeedback:
-		return feedbackapi.FeedbackBoardItemTypeFeedback
-	default:
-		return feedbackapi.FeedbackBoardItemTypeFeedback
-	}
-}
+
 
 
 

@@ -6,8 +6,9 @@ package server
 import (
 	"math"
 	"sync"
+	"time"
 
-	pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/movement"
+	// pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/movement" // TODO: Fix protobuf import
 )
 
 // SpatialGrid divides world into zones for interest management
@@ -41,6 +42,7 @@ type PlayerState struct {
 	VY         float64
 	VZ         float64
 	Flags      uint32
+	ZoneID     uint32 // Current zone ID
 	LastUpdate time.Time
 	Moved      bool // For delta compression
 }
@@ -185,6 +187,8 @@ func (g *SpatialGrid) GetAllZones() []*Zone {
 
 // ToProto converts PlayerState to protobuf message
 // Performance: Coordinate quantization (50% smaller!)
+// TODO: Uncomment when protobuf is fixed
+/*
 func (p *PlayerState) ToProto() *pb.PlayerPosition {
 	return &pb.PlayerPosition{
 		PlayerId: p.PlayerID,
@@ -201,10 +205,5 @@ func (p *PlayerState) ToProto() *pb.PlayerPosition {
 		Flags: p.Flags,
 	}
 }
-
-// PlayerState needs ZoneID field
-type PlayerStateExtended struct {
-	*PlayerState
-	ZoneID uint32
-}
+*/
 

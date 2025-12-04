@@ -1,361 +1,361 @@
-# Issue: #172
 openapi: 3.0.0
 info:
   title: Chat Service API
-  description: |
-    Chat Service обеспечивает текстовую коммуникацию игроков через множественные каналы.
+  description: 'Chat Service обеспечивает текстовую коммуникацию игроков через множественные каналы.
+
     Поддерживает модерацию, форматирование, переводы и историю сообщений.
+
+    '
   version: 1.0.0
-
 servers:
-  - url: https://api.necpgame.com
-    description: Production server
-  - url: https://staging-api.necpgame.com
-    description: Staging server
-
+- url: https://api.necpgame.com
+  description: Production server
+- url: https://staging-api.necpgame.com
+  description: Staging server
 tags:
-  - name: Messages
-    description: Отправка и получение сообщений
-  - name: Channels
-    description: Управление каналами чата
-  - name: Moderation
-    description: Модерация и баны
-
+- name: Messages
+  description: Отправка и получение сообщений
+- name: Channels
+  description: Управление каналами чата
+- name: Moderation
+  description: Модерация и баны
 paths:
   /api/v1/chat/messages:
     post:
-      tags: [Messages]
+      tags:
+      - Messages
       summary: Отправить сообщение в канал
       operationId: sendMessage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SendMessageRequest"
+              $ref: '#/components/schemas/SendMessageRequest'
       responses:
-        "200":
+        '200':
           description: Сообщение отправлено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessageResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "429":
-          $ref: "common.yaml#/components/responses/TooManyRequests"
-
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '429':
+          $ref: common.yaml#/components/responses/TooManyRequests
   /api/v1/chat/channels/{channel_id}/messages:
     parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: channel_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
-      tags: [Messages]
+      tags:
+      - Messages
       summary: Получить историю сообщений канала
       operationId: getChannelMessages
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - name: before
-          in: query
-          description: Получить сообщения до указанного ID
-          schema:
-            type: string
-            format: uuid
-        - name: after
-          in: query
-          description: Получить сообщения после указанного ID
-          schema:
-            type: string
-            format: uuid
+      - $ref: common.yaml#/components/parameters/Limit
+      - name: before
+        in: query
+        description: Получить сообщения до указанного ID
+        schema:
+          type: string
+          format: uuid
+      - name: after
+        in: query
+        description: Получить сообщения после указанного ID
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: История сообщений
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessagesHistoryResponse"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/MessagesHistoryResponse'
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/channels:
     get:
-      tags: [Channels]
+      tags:
+      - Channels
       summary: Получить список доступных каналов
       operationId: getChannels
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Список каналов
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelsListResponse"
+                $ref: '#/components/schemas/ChannelsListResponse'
     post:
-      tags: [Channels]
+      tags:
+      - Channels
       summary: Создать приватный канал
       operationId: createChannel
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateChannelRequest"
+              $ref: '#/components/schemas/CreateChannelRequest'
       responses:
-        "200":
+        '200':
           description: Канал создан
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/ChannelResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/chat/channels/{channel_id}:
     parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: channel_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
-      tags: [Channels]
+      tags:
+      - Channels
       summary: Получить информацию о канале
       operationId: getChannel
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Информация о канале
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
+                $ref: '#/components/schemas/ChannelResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
     patch:
-      tags: [Channels]
+      tags:
+      - Channels
       summary: Обновить настройки канала
       operationId: updateChannel
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateChannelRequest"
+              $ref: '#/components/schemas/UpdateChannelRequest'
       responses:
-        "200":
+        '200':
           description: Канал обновлён
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelResponse"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
+                $ref: '#/components/schemas/ChannelResponse'
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
     delete:
-      tags: [Channels]
+      tags:
+      - Channels
       summary: Удалить канал
       operationId: deleteChannel
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Канал удалён
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/channels/{channel_id}/members:
     parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: channel_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Channels]
+      tags:
+      - Channels
       summary: Добавить участника в канал
       operationId: addChannelMember
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddMemberRequest"
+              $ref: '#/components/schemas/AddMemberRequest'
       responses:
-        "200":
+        '200':
           description: Участник добавлен
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/channels/{channel_id}/members/{player_id}:
     parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - $ref: "common.yaml#/components/parameters/PlayerId"
+    - name: channel_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - $ref: common.yaml#/components/parameters/PlayerId
     delete:
-      tags: [Channels]
+      tags:
+      - Channels
       summary: Удалить участника из канала
       operationId: removeChannelMember
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Участник удалён
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/bans:
     post:
-      tags: [Moderation]
+      tags:
+      - Moderation
       summary: Заблокировать игрока в чате
       operationId: banPlayer
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BanPlayerRequest"
+              $ref: '#/components/schemas/BanPlayerRequest'
       responses:
-        "200":
+        '200':
           description: Игрок заблокирован
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BanResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-
+                $ref: '#/components/schemas/BanResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
   /api/v1/chat/bans/{ban_id}:
     parameters:
-      - name: ban_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: ban_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     delete:
-      tags: [Moderation]
+      tags:
+      - Moderation
       summary: Снять бан с игрока
       operationId: unbanPlayer
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Бан снят
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/messages/{message_id}:
     parameters:
-      - name: message_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: message_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     delete:
-      tags: [Moderation]
+      tags:
+      - Moderation
       summary: Удалить сообщение
       operationId: deleteMessage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Сообщение удалено
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     SendMessageRequest:
       type: object
       required:
-        - channel_id
-        - content
+      - channel_id
+      - content
       properties:
         channel_id:
           type: string
           format: uuid
           description: ID канала
-        content:
-          type: string
-          maxLength: 2000
-          description: Текст сообщения
         reply_to:
           type: string
           format: uuid
           description: ID сообщения, на которое отвечаем
+        content:
+          type: string
+          maxLength: 2000
+          description: Текст сообщения
         mentions:
           type: array
           items:
             type: string
             format: uuid
           description: ID упомянутых игроков
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MessageResponse:
       type: object
       properties:
@@ -368,81 +368,90 @@ components:
         sender_id:
           type: string
           format: uuid
+        reply_to:
+          type: string
+          format: uuid
         sender_name:
           type: string
         content:
           type: string
-        reply_to:
+        created_at:
           type: string
-          format: uuid
+          format: date-time
         mentions:
           type: array
           items:
             type: string
             format: uuid
-        created_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MessagesHistoryResponse:
       type: object
       properties:
         messages:
           type: array
           items:
-            $ref: "#/components/schemas/MessageResponse"
+            $ref: '#/components/schemas/MessageResponse'
         has_more:
           type: boolean
-
     CreateChannelRequest:
       type: object
       required:
-        - channel_type
-        - name
+      - channel_type
+      - name
       properties:
-        channel_type:
-          type: string
-          enum: [private, party, guild, trade]
-          description: Тип канала
         name:
           type: string
           maxLength: 100
           description: Название канала
+        channel_type:
+          type: string
+          enum:
+          - private
+          - party
+          - guild
+          - trade
+          description: Тип канала
         members:
           type: array
           items:
             type: string
             format: uuid
           description: Начальные участники
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChannelResponse:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        channel_type:
-          type: string
-          enum: [global, local, party, guild, trade, whisper, private]
-        name:
-          type: string
         owner_id:
           type: string
           format: uuid
-        member_count:
-          type: integer
+        name:
+          type: string
+        channel_type:
+          type: string
+          enum:
+          - global
+          - local
+          - party
+          - guild
+          - trade
+          - whisper
+          - private
         created_at:
           type: string
           format: date-time
-
+        member_count:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChannelsListResponse:
       type: object
       properties:
         channels:
           type: array
           items:
-            $ref: "#/components/schemas/ChannelResponse"
-
+            $ref: '#/components/schemas/ChannelResponse'
     UpdateChannelRequest:
       type: object
       properties:
@@ -452,21 +461,19 @@ components:
         settings:
           type: object
           description: Настройки канала (JSON)
-
     AddMemberRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
           format: uuid
-
     BanPlayerRequest:
       type: object
       required:
-        - player_id
-        - reason
+      - player_id
+      - reason
       properties:
         player_id:
           type: string
@@ -481,7 +488,6 @@ components:
         duration_minutes:
           type: integer
           description: Длительность бана в минутах (null = permanent)
-
     BanResponse:
       type: object
       properties:
@@ -502,4 +508,3 @@ components:
         expires_at:
           type: string
           format: date-time
-

@@ -18,20 +18,21 @@
 ALTER TABLE mvp_core.combat_logs RENAME TO combat_logs_old;
 
 -- Step 2: Create partitioned table
-CREATE TABLE mvp_core.combat_logs (
-    id UUID DEFAULT gen_random_uuid() NOT NULL,
-    session_id UUID NOT NULL,
-    turn_number INTEGER NOT NULL DEFAULT 0 CHECK (turn_number >= 0),
-    actor_id UUID NOT NULL,
-    action_type combat_action_type NOT NULL,
-    target_id UUID,
-    damage_dealt INTEGER DEFAULT 0 CHECK (damage_dealt >= 0),
-    damage_type VARCHAR(50),
-    effects_applied JSONB DEFAULT '[]'::jsonb,
-    result JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, created_at) -- IMPORTANT: Include partition key in PK!
-) PARTITION BY RANGE (created_at);
+CREATE TABLE IF NOT EXISTS mvp_core.combat_logs (
+  id UUID DEFAULT gen_random_uuid() NOT NULL,
+  session_id UUID NOT NULL,
+  actor_id UUID NOT NULL,
+  target_id UUID,
+  damage_type VARCHAR(50),
+  effects_applied JSONB DEFAULT '[]'::jsonb,
+  result JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  turn_number INTEGER NOT NULL DEFAULT 0 CHECK (turn_number >= 0),
+  damage_dealt INTEGER DEFAULT 0 CHECK (damage_dealt >= 0),
+  action_type combat_action_type NOT NULL,
+  PRIMARY KEY (id, created_at) -- IMPORTANT: Include partition key in PK!
+) PARTITION BY RANGE (created_at
+);
 
 -- Step 3: Create initial partitions (30 days history)
 -- OPTIMIZATION: Query only scans relevant partition(s)
@@ -85,14 +86,15 @@ END $$;
 
 -- Create partitioned event_history
 CREATE TABLE IF NOT EXISTS world_events.event_history (
-    id UUID DEFAULT gen_random_uuid() NOT NULL,
-    event_id UUID NOT NULL,
-    player_id UUID,
-    action_type VARCHAR(100) NOT NULL,
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    data JSONB DEFAULT '{}'::jsonb,
-    PRIMARY KEY (id, timestamp) -- Include partition key!
-) PARTITION BY RANGE (timestamp);
+  id UUID DEFAULT gen_random_uuid() NOT NULL,
+  event_id UUID NOT NULL,
+  player_id UUID,
+  action_type VARCHAR(100) NOT NULL,
+  data JSONB DEFAULT '{}'::jsonb,
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id, timestamp) -- Include partition key!
+) PARTITION BY RANGE (timestamp
+);
 
 -- Create partitions
 CREATE TABLE world_events.event_history_2025_12_01 PARTITION OF world_events.event_history
@@ -127,14 +129,15 @@ END $$;
 
 -- Create partitioned match_history
 CREATE TABLE IF NOT EXISTS matchmaking.match_history (
-    id UUID DEFAULT gen_random_uuid() NOT NULL,
-    match_id VARCHAR(255) NOT NULL,
-    player_id VARCHAR(255) NOT NULL,
-    activity_type VARCHAR(100) NOT NULL,
-    rating_change INTEGER,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, created_at)
-) PARTITION BY RANGE (created_at);
+  id UUID DEFAULT gen_random_uuid() NOT NULL,
+  match_id VARCHAR(255) NOT NULL,
+  player_id VARCHAR(255) NOT NULL,
+  activity_type VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rating_change INTEGER,
+  PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE (created_at
+);
 
 -- Create partitions
 CREATE TABLE matchmaking.match_history_2025_12_01 PARTITION OF matchmaking.match_history
@@ -159,13 +162,14 @@ CREATE SCHEMA IF NOT EXISTS game_events;
 
 -- Create partitioned game_events table
 CREATE TABLE IF NOT EXISTS game_events.game_events (
-    id BIGSERIAL NOT NULL,
-    player_id BIGINT NOT NULL,
-    event_type VARCHAR(100) NOT NULL,
-    event_data JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, created_at)
-) PARTITION BY RANGE (created_at);
+  event_type VARCHAR(100) NOT NULL,
+  event_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  player_id BIGINT NOT NULL,
+  id BIGSERIAL NOT NULL,
+  PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE (created_at
+);
 
 -- Create partitions
 CREATE TABLE game_events.game_events_2025_12_01 PARTITION OF game_events.game_events

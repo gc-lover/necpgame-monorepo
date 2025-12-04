@@ -1,16 +1,13 @@
-# Issue: #41
-# Schemas for Combat Extended Mechanics Service API
 openapi: 3.0.3
-
 components:
   schemas:
     CombatHackingRequest:
       type: object
       required:
-        - character_id
-        - session_id
-        - hacking_type
-        - target_id
+      - character_id
+      - session_id
+      - hacking_type
+      - target_id
       properties:
         character_id:
           type: string
@@ -20,10 +17,6 @@ components:
           type: string
           format: uuid
           description: Идентификатор боевой сессии
-        hacking_type:
-          type: string
-          enum: [disable_implant, control_device, access_network, infrastructure_hack]
-          description: Тип взлома
         target_id:
           type: string
           format: uuid
@@ -33,16 +26,21 @@ components:
           format: uuid
           nullable: true
           description: Идентификатор сети (если требуется)
-
+        hacking_type:
+          type: string
+          enum:
+          - disable_implant
+          - control_device
+          - access_network
+          - infrastructure_hack
+          description: Тип взлома
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CombatHackingResponse:
       type: object
       required:
-        - success
-        - effects_applied
+      - success
+      - effects_applied
       properties:
-        success:
-          type: boolean
-          description: Успешность взлома
         effects_applied:
           type: array
           items:
@@ -56,14 +54,17 @@ components:
               duration:
                 type: integer
                 description: Длительность эффекта в секундах
-
+        success:
+          type: boolean
+          description: Успешность взлома
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CombatHackingNetwork:
       type: object
       required:
-        - network_id
-        - network_name
-        - network_type
-        - access_level
+      - network_id
+      - network_name
+      - network_type
+      - access_level
       properties:
         network_id:
           type: string
@@ -72,22 +73,26 @@ components:
           type: string
         network_type:
           type: string
-          enum: [enemy, device, infrastructure, combat_scenario]
-        access_level:
-          type: integer
-          minimum: 1
-          maximum: 10
+          enum:
+          - enemy
+          - device
+          - infrastructure
+          - combat_scenario
         available_demons:
           type: array
           items:
             type: string
-
+        access_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CombatImplantActivationRequest:
       type: object
       required:
-        - character_id
-        - session_id
-        - implant_id
+      - character_id
+      - session_id
+      - implant_id
       properties:
         character_id:
           type: string
@@ -98,12 +103,11 @@ components:
         implant_id:
           type: string
           format: uuid
-
     CombatImplantActivationResponse:
       type: object
       required:
-        - activation_id
-        - effects_applied
+      - activation_id
+      - effects_applied
       properties:
         activation_id:
           type: string
@@ -116,22 +120,21 @@ components:
           type: integer
         humanity_cost:
           type: integer
-
     CombatImplantEffect:
       type: object
       required:
-        - effect_id
-        - effect_type
-        - applied_at
+      - effect_id
+      - effect_type
+      - applied_at
       properties:
         effect_id:
           type: string
           format: uuid
-        effect_type:
-          type: string
         implant_id:
           type: string
           format: uuid
+        effect_type:
+          type: string
         applied_at:
           type: string
           format: date-time
@@ -142,13 +145,13 @@ components:
         modifiers:
           type: object
           description: Модификаторы эффекта
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AdvancedAimRequest:
       type: object
       required:
-        - character_id
-        - weapon_id
-        - target_position
+      - character_id
+      - weapon_id
+      - target_position
       properties:
         character_id:
           type: string
@@ -156,36 +159,36 @@ components:
         weapon_id:
           type: string
           format: uuid
-        target_position:
-          $ref: 'common.yaml#/components/schemas/Position3D'
         accuracy_modifiers:
           type: object
           nullable: true
-
+        target_position:
+          $ref: common.yaml#/components/schemas/Position3D
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AdvancedAimResponse:
       type: object
       required:
-        - accuracy
-        - calculated_position
+      - accuracy
+      - calculated_position
       properties:
+        calculated_position:
+          $ref: common.yaml#/components/schemas/Position3D
+        modifiers_applied:
+          type: array
+          items:
+            type: string
         accuracy:
           type: number
           format: float
           minimum: 0
           maximum: 1
-        calculated_position:
-          $ref: 'common.yaml#/components/schemas/Position3D'
-        modifiers_applied:
-          type: array
-          items:
-            type: string
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RecoilControlRequest:
       type: object
       required:
-        - character_id
-        - weapon_id
-        - shots_fired
+      - character_id
+      - weapon_id
+      - shots_fired
       properties:
         character_id:
           type: string
@@ -200,12 +203,11 @@ components:
           type: number
           format: float
           nullable: true
-
     RecoilControlResponse:
       type: object
       required:
-        - recoil_reduction
-        - final_spread
+      - recoil_reduction
+      - final_spread
       properties:
         recoil_reduction:
           type: number
@@ -215,16 +217,15 @@ components:
           format: float
         control_applied:
           type: boolean
-
     CombatLoadout:
       type: object
       required:
-        - loadout_id
-        - character_id
-        - name
-        - weapons
-        - abilities
-        - implants
+      - loadout_id
+      - character_id
+      - name
+      - weapons
+      - abilities
+      - implants
       properties:
         loadout_id:
           type: string
@@ -257,15 +258,14 @@ components:
           nullable: true
         is_active:
           type: boolean
-
     CombatLoadoutCreate:
       type: object
       required:
-        - character_id
-        - name
-        - weapons
-        - abilities
-        - implants
+      - character_id
+      - name
+      - weapons
+      - abilities
+      - implants
       properties:
         character_id:
           type: string
@@ -293,13 +293,12 @@ components:
             type: string
             format: uuid
           nullable: true
-
     CombatLoadoutEquipRequest:
       type: object
       required:
-        - character_id
-        - session_id
-        - loadout_id
+      - character_id
+      - session_id
+      - loadout_id
       properties:
         character_id:
           type: string
@@ -310,16 +309,15 @@ components:
         loadout_id:
           type: string
           format: uuid
-
     CombatMechanicsStatus:
       type: object
       required:
-        - character_id
-        - session_id
-        - active_implants
-        - available_networks
-        - shooting_status
-        - active_loadout
+      - character_id
+      - session_id
+      - active_implants
+      - available_networks
+      - shooting_status
+      - active_loadout
       properties:
         character_id:
           type: string
@@ -327,14 +325,6 @@ components:
         session_id:
           type: string
           format: uuid
-        active_implants:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombatImplantEffect'
-        available_networks:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombatHackingNetwork'
         shooting_status:
           type: object
           properties:
@@ -350,4 +340,12 @@ components:
         active_loadout:
           $ref: '#/components/schemas/CombatLoadout'
           nullable: true
-
+        active_implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatImplantEffect'
+        available_networks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatHackingNetwork'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

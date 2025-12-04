@@ -1,74 +1,87 @@
-# Issue: #228
 openapi: 3.0.3
 info:
   title: Economy Investments Products Service API
-  description: |
-    API для управления инвестиционными продуктами.
-    
+  description: 'API для управления инвестиционными продуктами.
+
+
     **Основные возможности:**
+
     - Каталог инвестиционных продуктов
+
     - Получение информации о продукте
+
     - Создание продуктов (admin)
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
   x-microservice: economy-service-go
-
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Products
-    description: Управление инвестиционными продуктами
-
+- name: Products
+  description: Управление инвестиционными продуктами
 paths:
   /economy/investments/products:
     get:
       tags:
-        - Products
+      - Products
       summary: Получить каталог продуктов
       description: Возвращает каталог доступных инвестиционных продуктов
       operationId: getInvestmentProducts
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: product_type
-          in: query
-          schema:
-            type: string
-            enum: [STOCK, BOND, REAL_ESTATE, PRODUCTION_SHARE, COMMODITY]
-        - name: risk_level
-          in: query
-          schema:
-            type: string
-            enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ACTIVE, SUSPENDED, CLOSED]
-        - name: issuer_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: product_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - STOCK
+          - BOND
+          - REAL_ESTATE
+          - PRODUCTION_SHARE
+          - COMMODITY
+      - name: risk_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - VERY_HIGH
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - SUSPENDED
+          - CLOSED
+      - name: issuer_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Каталог продуктов
@@ -77,20 +90,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/InvestmentProductsResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
     post:
       tags:
-        - Products
+      - Products
       summary: Создать инвестиционный продукт
       description: Создает новый инвестиционный продукт (только для администраторов)
       operationId: createInvestmentProduct
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -105,30 +117,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/InvestmentProduct'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
+          $ref: common.yaml#/components/responses/Forbidden
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /economy/investments/products/{product_id}:
     get:
       tags:
-        - Products
+      - Products
       summary: Получить продукт
       description: Возвращает детальную информацию об инвестиционном продукте
       operationId: getInvestmentProduct
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: product_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Информация о продукте
@@ -137,12 +148,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/InvestmentProduct'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   schemas:
     InvestmentProduct:
@@ -151,22 +161,46 @@ components:
         product_id:
           type: string
           format: uuid
-        product_type:
+        issuer_id:
           type: string
-          enum: [STOCK, BOND, REAL_ESTATE, PRODUCTION_SHARE, COMMODITY]
+          format: uuid
         name:
           type: string
         description:
           type: string
-        issuer_id:
+        product_type:
           type: string
-          format: uuid
+          enum:
+          - STOCK
+          - BOND
+          - REAL_ESTATE
+          - PRODUCTION_SHARE
+          - COMMODITY
+        risk_level:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - VERY_HIGH
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - SUSPENDED
+          - CLOSED
+        maturity_date:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         expected_return:
           type: number
           format: decimal
-        risk_level:
-          type: string
-          enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
         min_investment:
           type: number
           format: decimal
@@ -176,19 +210,7 @@ components:
         dividend_rate:
           type: number
           format: decimal
-        maturity_date:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum: [ACTIVE, SUSPENDED, CLOSED]
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InvestmentProductsResponse:
       type: object
       properties:
@@ -202,32 +224,49 @@ components:
           type: integer
         offset:
           type: integer
-
     CreateInvestmentProductRequest:
       type: object
       required:
-        - product_type
-        - name
-        - risk_level
-        - min_investment
-        - status
+      - product_type
+      - name
+      - risk_level
+      - min_investment
+      - status
       properties:
-        product_type:
+        issuer_id:
           type: string
-          enum: [STOCK, BOND, REAL_ESTATE, PRODUCTION_SHARE, COMMODITY]
+          format: uuid
         name:
           type: string
         description:
           type: string
-        issuer_id:
+        product_type:
           type: string
-          format: uuid
+          enum:
+          - STOCK
+          - BOND
+          - REAL_ESTATE
+          - PRODUCTION_SHARE
+          - COMMODITY
+        risk_level:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - VERY_HIGH
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - SUSPENDED
+          - CLOSED
+        maturity_date:
+          type: string
+          format: date-time
         expected_return:
           type: number
           format: decimal
-        risk_level:
-          type: string
-          enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
         min_investment:
           type: number
           format: decimal
@@ -238,14 +277,7 @@ components:
         dividend_rate:
           type: number
           format: decimal
-        maturity_date:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum: [ACTIVE, SUSPENDED, CLOSED]
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth

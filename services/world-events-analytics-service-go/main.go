@@ -1,4 +1,4 @@
-// Issue: #44
+// Issue: #44, #1584
 package main
 
 import (
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,6 +43,12 @@ func main() {
 	}
 	defer db.Close()
 
+	// Connection pool settings for performance (Issue #1605)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -64,6 +71,16 @@ func main() {
 	// Create HTTP server
 	serverPort := getEnv("SERVER_PORT", "8091")
 	httpServer := server.NewHTTPServer(":"+serverPort, handlers, logger)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6091")
+		logger.Info("pprof server starting", zap.String("addr", pprofAddr))
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.Error("pprof server failed", zap.Error(err))
+		}
+	}()
 
 	// Start server
 	go func() {
@@ -96,6 +113,7 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
 
 
 

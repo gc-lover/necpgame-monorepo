@@ -9,16 +9,15 @@
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS projectile_forms (
-    id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    type VARCHAR(50) NOT NULL,
-    description TEXT,
-    parameters JSONB NOT NULL DEFAULT '{}',
-    visual_effect VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Constraints
+  id VARCHAR(50) PRIMARY KEY,
+  description TEXT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  type VARCHAR(50) NOT NULL,
+  visual_effect VARCHAR(100),
+  parameters JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  -- Constraints
     CONSTRAINT chk_projectile_form_type CHECK (
         type IN (
             'point', 'line', 'fan', 'spiral', 'wave', 
@@ -42,28 +41,25 @@ COMMENT ON COLUMN projectile_forms.parameters IS 'JSON параметры фор
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS projectile_compatibility (
-    id SERIAL PRIMARY KEY,
-    weapon_type VARCHAR(50) NOT NULL,
-    projectile_form_id VARCHAR(50) NOT NULL,
-    is_compatible BOOLEAN NOT NULL DEFAULT true,
-    restrictions JSONB DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign Keys
+  id SERIAL PRIMARY KEY,
+  weapon_type VARCHAR(50) NOT NULL,
+  projectile_form_id VARCHAR(50) NOT NULL,
+  restrictions JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  is_compatible BOOLEAN NOT NULL DEFAULT true,
+  -- Foreign Keys
     CONSTRAINT fk_projectile_compatibility_form 
         FOREIGN KEY (projectile_form_id) 
         REFERENCES projectile_forms(id) 
         ON DELETE CASCADE,
-    
-    -- Constraints
+  -- Constraints
     CONSTRAINT chk_weapon_type CHECK (
         weapon_type IN (
             'pistols', 'rifles', 'shotguns', 'smg', 'sniper_rifles',
             'launchers', 'melee', 'laser_weapons', 'energy_weapons', 'throwable'
         )
     ),
-    
-    -- Unique constraint
+  -- Unique constraint
     CONSTRAINT uq_projectile_compatibility_weapon_form 
         UNIQUE (weapon_type, projectile_form_id)
 );
@@ -81,22 +77,20 @@ COMMENT ON TABLE projectile_compatibility IS 'Совместимость фор�
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS trajectory_algorithms (
-    id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    projectile_form_id VARCHAR(50) NOT NULL,
-    algorithm_type VARCHAR(50) NOT NULL,
-    parameters JSONB NOT NULL DEFAULT '{}',
-    performance_cost INT NOT NULL DEFAULT 1,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign Keys
+  id VARCHAR(50) PRIMARY KEY,
+  description TEXT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  projectile_form_id VARCHAR(50) NOT NULL,
+  algorithm_type VARCHAR(50) NOT NULL,
+  parameters JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  performance_cost INT NOT NULL DEFAULT 1,
+  -- Foreign Keys
     CONSTRAINT fk_trajectory_algorithm_form 
         FOREIGN KEY (projectile_form_id) 
         REFERENCES projectile_forms(id) 
         ON DELETE CASCADE,
-    
-    -- Constraints
+  -- Constraints
     CONSTRAINT chk_trajectory_algorithm_type CHECK (
         algorithm_type IN (
             'linear_trajectory', 'parallel_lines', 'cone_spread',
@@ -105,7 +99,7 @@ CREATE TABLE IF NOT EXISTS trajectory_algorithms (
             'bounce_trajectory', 'penetration_trajectory'
         )
     ),
-    CONSTRAINT chk_performance_cost CHECK (performance_cost BETWEEN 1 AND 10)
+  CONSTRAINT chk_performance_cost CHECK (performance_cost BETWEEN 1 AND 10)
 );
 
 -- Indexes
@@ -287,6 +281,7 @@ ON trajectory_algorithms(performance_cost, algorithm_type);
 -- rollback DROP TABLE IF EXISTS trajectory_algorithms;
 -- rollback DROP TABLE IF EXISTS projectile_compatibility;
 -- rollback DROP TABLE IF EXISTS projectile_forms;
+
 
 
 

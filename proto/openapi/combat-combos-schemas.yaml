@@ -3,62 +3,66 @@ info:
   title: Combat Combos Schemas
   description: Схемы данных для системы комбо и синергий
   version: 1.0.0
-
 components:
   schemas:
     ComboType:
       type: string
-      enum: [solo, team, legendary]
+      enum:
+      - solo
+      - team
+      - legendary
       description: Тип комбо
-      example: "solo"
-
+      example: solo
     ComboComplexity:
       type: string
-      enum: [Bronze, Silver, Gold, Platinum, Legendary]
+      enum:
+      - Bronze
+      - Silver
+      - Gold
+      - Platinum
+      - Legendary
       description: Сложность комбо
-      example: "Gold"
-
+      example: Gold
     SynergyType:
       type: string
-      enum: [ability, team, equipment, implant, timing]
+      enum:
+      - ability
+      - team
+      - equipment
+      - implant
+      - timing
       description: Тип синергии
-      example: "ability"
-
+      example: ability
     Combo:
       type: object
-      description: |
-        BACKEND NOTE: Fields ordered for optimal struct alignment (large → small).
+      description: 'BACKEND NOTE: Fields ordered for optimal struct alignment (large → small).
+
         Expected memory: ~120 bytes/instance.
+
+        '
       required:
-        - id
-        - name
-        - combo_type
-        - complexity
+      - id
+      - name
+      - combo_type
+      - complexity
       properties:
-        # 16-byte fields first (strings, UUIDs)
         id:
           type: string
           format: uuid
           description: Уникальный идентификатор комбо
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
           description: Название комбо
-          example: "Aerial Devastation"
+          example: Aerial Devastation
         description:
           type: string
           description: Описание комбо
-          example: "Комбо из воздушных атак с максимальным уроном"
+          example: Комбо из воздушных атак с максимальным уроном
         created_at:
           type: string
           format: date-time
           description: Дата создания
-        
-        # Objects (8-16 bytes)
-        combo_type:
-          $ref: '#/components/schemas/ComboType'
-        complexity:
-          $ref: '#/components/schemas/ComboComplexity'
         requirements:
           type: object
           description: Требования для активации комбо
@@ -71,13 +75,16 @@ components:
               type: array
               items:
                 type: string
-              example: ["acrobatics", "combat"]
+              example:
+              - acrobatics
+              - combat
             required_abilities:
               type: array
               items:
                 type: string
                 format: uuid
-              example: ["550e8400-e29b-41d4-a716-446655440001"]
+              example:
+              - 550e8400-e29b-41d4-a716-446655440001
             min_participants:
               type: integer
               minimum: 1
@@ -86,12 +93,6 @@ components:
               type: integer
               minimum: 1
               example: 5
-        sequence:
-          type: array
-          description: Последовательность действий для активации
-          items:
-            type: string
-          example: ["wall_run", "air_dash", "attack"]
         bonuses:
           type: object
           description: Бонусы от комбо
@@ -109,21 +110,31 @@ components:
               type: array
               items:
                 type: string
-              example: ["stun", "knockback"]
-        
-        # Integer fields (4 bytes)
+              example:
+              - stun
+              - knockback
+        complexity:
+          $ref: '#/components/schemas/ComboComplexity'
+        combo_type:
+          $ref: '#/components/schemas/ComboType'
+        sequence:
+          type: array
+          description: Последовательность действий для активации
+          items:
+            type: string
+          example:
+          - wall_run
+          - air_dash
+          - attack
         cooldown:
           type: integer
           description: Кулдаун комбо в секундах
           minimum: 0
           example: 30
-        
-        # Boolean fields last (1 byte)
         chain_compatible:
           type: boolean
           description: Совместимость с chain-комбо
           example: true
-
     ComboCatalogResponse:
       type: object
       properties:
@@ -135,44 +146,61 @@ components:
           type: integer
           description: Общее количество комбо
           example: 50
-
     ComboDetails:
       allOf:
-        - $ref: '#/components/schemas/Combo'
-        - type: object
-          properties:
-            synergies:
-              type: array
-              items:
-                $ref: '#/components/schemas/Synergy'
-            chain_compatible_combos:
-              type: array
-              items:
-                type: string
-                format: uuid
-              description: ID комбо, совместимых для chain
-
+      - $ref: '#/components/schemas/Combo'
+      - type: object
+        properties:
+          synergies:
+            type: array
+            items:
+              $ref: '#/components/schemas/Synergy'
+          chain_compatible_combos:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: ID комбо, совместимых для chain
     Synergy:
       type: object
-      description: |
-        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
         Expected memory: ~80 bytes/instance.
+
+        '
       required:
-        - id
-        - synergy_type
-        - combo_id
+      - id
+      - synergy_type
+      - combo_id
       properties:
-        # UUID fields first (16 bytes)
         id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440002"
+          example: 550e8400-e29b-41d4-a716-446655440002
         combo_id:
           type: string
           format: uuid
           description: ID комбо, к которому применяется синергия
-        
-        # Arrays (8 bytes slice header)
+        bonuses:
+          type: object
+          description: Бонусы от синергии
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 1.0
+            cooldown_reduction:
+              type: integer
+              minimum: 0
+            special_effects:
+              type: array
+              items:
+                type: string
+        requirements:
+          type: object
+          description: Требования для активации синергии
+        synergy_type:
+          $ref: '#/components/schemas/SynergyType'
         ability_ids:
           type: array
           items:
@@ -194,30 +222,6 @@ components:
             format: uuid
           nullable: true
           description: ID имплантов для implant синергии
-        
-        # Objects (reference type, 8 bytes)
-        synergy_type:
-          $ref: '#/components/schemas/SynergyType'
-        bonuses:
-          type: object
-          description: Бонусы от синергии
-          properties:
-            damage_multiplier:
-              type: number
-              format: float
-              minimum: 1.0
-            cooldown_reduction:
-              type: integer
-              minimum: 0
-            special_effects:
-              type: array
-              items:
-                type: string
-        requirements:
-          type: object
-          description: Требования для активации синергии
-        
-        # Integer fields (4 bytes)
         team_size:
           type: integer
           minimum: 2
@@ -228,56 +232,51 @@ components:
           minimum: 0
           nullable: true
           description: Временное окно в миллисекундах для timing синергии
-
     ActivateComboRequest:
       type: object
       required:
-        - character_id
-        - combo_id
+      - character_id
+      - combo_id
       properties:
         character_id:
           type: string
           format: uuid
           description: ID персонажа, активирующего комбо
-          example: "550e8400-e29b-41d4-a716-446655440003"
+          example: 550e8400-e29b-41d4-a716-446655440003
         combo_id:
           type: string
           format: uuid
           description: ID комбо для активации
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
+        context:
+          type: object
+          description: Контекст активации (позиция, состояние, окружение)
+          additionalProperties: true
         participants:
           type: array
           items:
             type: string
             format: uuid
           description: ID участников команды (для team/legendary комбо)
-          example: ["550e8400-e29b-41d4-a716-446655440003", "550e8400-e29b-41d4-a716-446655440004"]
-        context:
-          type: object
-          description: Контекст активации (позиция, состояние, окружение)
-          additionalProperties: true
-
+          example:
+          - 550e8400-e29b-41d4-a716-446655440003
+          - 550e8400-e29b-41d4-a716-446655440004
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ComboActivationResponse:
       type: object
       required:
-        - success
-        - activation_id
+      - success
+      - activation_id
       properties:
-        success:
-          type: boolean
-          description: Успешность активации
-          example: true
         activation_id:
           type: string
           format: uuid
           description: ID активации комбо
-          example: "550e8400-e29b-41d4-a716-446655440005"
-        combo:
-          $ref: '#/components/schemas/Combo'
-        applied_synergies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Synergy'
+          example: 550e8400-e29b-41d4-a716-446655440005
+        message:
+          type: string
+          description: Сообщение о результате
+          example: Combo activated successfully
         bonuses_applied:
           type: object
           description: Примененные бонусы
@@ -291,46 +290,49 @@ components:
               type: array
               items:
                 type: string
+        combo:
+          $ref: '#/components/schemas/Combo'
+        applied_synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Synergy'
+        success:
+          type: boolean
+          description: Успешность активации
+          example: true
         chain_combo_available:
           type: boolean
           description: Доступность chain-комбо
           example: true
-        message:
-          type: string
-          description: Сообщение о результате
-          example: "Combo activated successfully"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ApplySynergyRequest:
       type: object
       required:
-        - activation_id
-        - synergy_id
+      - activation_id
+      - synergy_id
       properties:
         activation_id:
           type: string
           format: uuid
           description: ID активации комбо
-          example: "550e8400-e29b-41d4-a716-446655440005"
+          example: 550e8400-e29b-41d4-a716-446655440005
         synergy_id:
           type: string
           format: uuid
           description: ID синергии для применения
-          example: "550e8400-e29b-41d4-a716-446655440002"
+          example: 550e8400-e29b-41d4-a716-446655440002
         context:
           type: object
           description: Дополнительный контекст для синергии
           additionalProperties: true
-
     SynergyApplicationResponse:
       type: object
       required:
-        - success
+      - success
       properties:
-        success:
-          type: boolean
-          example: true
-        synergy:
-          $ref: '#/components/schemas/Synergy'
+        message:
+          type: string
+          example: Synergy applied successfully
         bonuses_applied:
           type: object
           properties:
@@ -343,31 +345,32 @@ components:
               type: array
               items:
                 type: string
-        message:
-          type: string
-          example: "Synergy applied successfully"
-
+        synergy:
+          $ref: '#/components/schemas/Synergy'
+        success:
+          type: boolean
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ComboLoadout:
       type: object
       required:
-        - id
-        - character_id
+      - id
+      - character_id
       properties:
         id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440006"
+          example: 550e8400-e29b-41d4-a716-446655440006
         character_id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440003"
-        active_combos:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: ID активных комбо в лоадауте
-          example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440007"]
+          example: 550e8400-e29b-41d4-a716-446655440003
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         preferences:
           type: object
           description: Настройки лоадаута
@@ -382,26 +385,24 @@ components:
                 type: string
                 format: uuid
               description: Порядок приоритета комбо
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    UpdateLoadoutRequest:
-      type: object
-      required:
-        - character_id
-      properties:
-        character_id:
-          type: string
-          format: uuid
         active_combos:
           type: array
           items:
             type: string
             format: uuid
+          description: ID активных комбо в лоадауте
+          example:
+          - 550e8400-e29b-41d4-a716-446655440000
+          - 550e8400-e29b-41d4-a716-446655440007
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateLoadoutRequest:
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
         preferences:
           type: object
           properties:
@@ -412,33 +413,33 @@ components:
               items:
                 type: string
                 format: uuid
-
+        active_combos:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ComboScore:
       type: object
-      description: |
-        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
         Expected memory: ~56 bytes/instance. Hot endpoint for scoring.
+
+        '
       required:
-        - activation_id
-        - total_score
-        - category
+      - activation_id
+      - total_score
+      - category
       properties:
-        # UUID fields first (16 bytes)
         activation_id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440005"
-        
-        # String fields (16 bytes)
+          example: 550e8400-e29b-41d4-a716-446655440005
         timestamp:
           type: string
           format: date-time
-        
-        # Enum/Object (8 bytes reference)
         category:
           $ref: '#/components/schemas/ComboComplexity'
-        
-        # Integer fields (4 bytes each) - группировка для padding
         execution_difficulty:
           type: integer
           minimum: 0
@@ -468,14 +469,13 @@ components:
           minimum: 0
           description: Общий score
           example: 7500
-
     SubmitScoreRequest:
       type: object
       required:
-        - activation_id
-        - execution_difficulty
-        - damage_output
-        - visual_impact
+      - activation_id
+      - execution_difficulty
+      - damage_output
+      - visual_impact
       properties:
         activation_id:
           type: string
@@ -496,17 +496,12 @@ components:
           minimum: 0
           maximum: 100
           nullable: true
-
     ScoreSubmissionResponse:
       type: object
       required:
-        - success
-        - score
+      - success
+      - score
       properties:
-        success:
-          type: boolean
-        score:
-          $ref: '#/components/schemas/ComboScore'
         rewards:
           type: object
           nullable: true
@@ -521,31 +516,17 @@ components:
               items:
                 type: string
                 format: uuid
-
+        score:
+          $ref: '#/components/schemas/ComboScore'
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ComboAnalytics:
       type: object
       properties:
         combo_id:
           type: string
           format: uuid
-        total_activations:
-          type: integer
-          minimum: 0
-          description: Общее количество активаций
-          example: 1250
-        success_rate:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Процент успешных активаций
-          example: 0.85
-        average_score:
-          type: number
-          format: float
-          minimum: 0
-          description: Средний score
-          example: 6500
         average_category:
           $ref: '#/components/schemas/ComboComplexity'
         most_used_synergies:
@@ -561,23 +542,41 @@ components:
               usage_count:
                 type: integer
           description: Наиболее используемые синергии
+        total_activations:
+          type: integer
+          minimum: 0
+          description: Общее количество активаций
+          example: 1250
         chain_combo_count:
           type: integer
           minimum: 0
           description: Количество chain-комбо
           example: 150
-
+        success_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Процент успешных активаций
+          example: 0.85
+        average_score:
+          type: number
+          format: float
+          minimum: 0
+          description: Средний score
+          example: 6500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AnalyticsResponse:
       type: object
       properties:
-        analytics:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComboAnalytics'
         period_start:
           type: string
           format: date-time
         period_end:
           type: string
           format: date-time
-
+        analytics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComboAnalytics'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

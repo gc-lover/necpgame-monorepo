@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/economy-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 )
@@ -33,7 +33,17 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize trade service")
 	}
 
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Connection pool settings for performance (Issue #1605)
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to parse database URL")
+	}
+	config.MaxConns = 25
+	config.MinConns = 5
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 10 * time.Minute
+
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize database pool")
 	}
