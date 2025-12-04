@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkEnterQueue benchmarks EnterQueue handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkEnterQueue(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -25,7 +25,7 @@ func BenchmarkEnterQueue(b *testing.B) {
 }
 
 // BenchmarkGetQueueStatus benchmarks GetQueueStatus handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetQueueStatus(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -43,7 +43,7 @@ func BenchmarkGetQueueStatus(b *testing.B) {
 }
 
 // BenchmarkLeaveQueue benchmarks LeaveQueue handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkLeaveQueue(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

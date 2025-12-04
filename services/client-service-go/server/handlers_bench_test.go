@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkTriggerVisualEffect benchmarks TriggerVisualEffect handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkTriggerVisualEffect(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -25,7 +25,7 @@ func BenchmarkTriggerVisualEffect(b *testing.B) {
 }
 
 // BenchmarkTriggerAudioEffect benchmarks TriggerAudioEffect handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkTriggerAudioEffect(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -40,7 +40,7 @@ func BenchmarkTriggerAudioEffect(b *testing.B) {
 }
 
 // BenchmarkGetEffect benchmarks GetEffect handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetEffect(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

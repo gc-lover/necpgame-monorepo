@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"// Issue: #1595/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkGetAIProfile benchmarks GetAIProfile handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetAIProfile(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +28,7 @@ func BenchmarkGetAIProfile(b *testing.B) {
 }
 
 // BenchmarkGetAIProfileTelemetry benchmarks GetAIProfileTelemetry handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetAIProfileTelemetry(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -45,7 +46,7 @@ func BenchmarkGetAIProfileTelemetry(b *testing.B) {
 }
 
 // BenchmarkListAIProfiles benchmarks ListAIProfiles handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkListAIProfiles(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

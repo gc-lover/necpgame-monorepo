@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkGetPosition benchmarks GetPosition handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetPosition(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +27,7 @@ func BenchmarkGetPosition(b *testing.B) {
 }
 
 // BenchmarkSavePosition benchmarks SavePosition handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkSavePosition(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -42,7 +42,7 @@ func BenchmarkSavePosition(b *testing.B) {
 }
 
 // BenchmarkGetPositionHistory benchmarks GetPositionHistory handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetPositionHistory(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

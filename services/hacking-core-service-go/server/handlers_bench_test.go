@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkInitiateHack benchmarks InitiateHack handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkInitiateHack(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -23,7 +23,7 @@ func BenchmarkInitiateHack(b *testing.B) {
 }
 
 // BenchmarkCancelHack benchmarks CancelHack handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCancelHack(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -37,7 +37,7 @@ func BenchmarkCancelHack(b *testing.B) {
 }
 
 // BenchmarkExecuteHack benchmarks ExecuteHack handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkExecuteHack(b *testing.B) {
 	handlers := NewHandlers()
 

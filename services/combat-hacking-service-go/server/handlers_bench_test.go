@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-hacking-service-go/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkHackTarget benchmarks HackTarget handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkHackTarget(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -26,7 +27,7 @@ func BenchmarkHackTarget(b *testing.B) {
 }
 
 // BenchmarkActivateCountermeasures benchmarks ActivateCountermeasures handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkActivateCountermeasures(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -40,7 +41,7 @@ func BenchmarkActivateCountermeasures(b *testing.B) {
 }
 
 // BenchmarkGetDemons benchmarks GetDemons handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetDemons(b *testing.B) {
 	handlers := NewHandlers()
 

@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"// Issue: #1595/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkGetCurrentTurn benchmarks GetCurrentTurn handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetCurrentTurn(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +28,7 @@ func BenchmarkGetCurrentTurn(b *testing.B) {
 }
 
 // BenchmarkGetTurnOrder benchmarks GetTurnOrder handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetTurnOrder(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -45,7 +46,7 @@ func BenchmarkGetTurnOrder(b *testing.B) {
 }
 
 // BenchmarkNextTurn benchmarks NextTurn handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkNextTurn(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkDeclareWar benchmarks DeclareWar handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkDeclareWar(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -25,7 +25,7 @@ func BenchmarkDeclareWar(b *testing.B) {
 }
 
 // BenchmarkGetWar benchmarks GetWar handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetWar(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -43,7 +43,7 @@ func BenchmarkGetWar(b *testing.B) {
 }
 
 // BenchmarkGetActiveWars benchmarks GetActiveWars handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetActiveWars(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

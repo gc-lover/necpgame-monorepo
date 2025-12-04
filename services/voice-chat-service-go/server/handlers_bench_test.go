@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkCreateChannel benchmarks CreateChannel handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateChannel(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -28,7 +28,7 @@ func BenchmarkCreateChannel(b *testing.B) {
 }
 
 // BenchmarkGetChannel benchmarks GetChannel handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetChannel(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -46,7 +46,7 @@ func BenchmarkGetChannel(b *testing.B) {
 }
 
 // BenchmarkListChannels benchmarks ListChannels handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkListChannels(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

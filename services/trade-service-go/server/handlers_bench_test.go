@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkCreateTradeSession benchmarks CreateTradeSession handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateTradeSession(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -28,7 +28,7 @@ func BenchmarkCreateTradeSession(b *testing.B) {
 }
 
 // BenchmarkGetTradeSession benchmarks GetTradeSession handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetTradeSession(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -46,7 +46,7 @@ func BenchmarkGetTradeSession(b *testing.B) {
 }
 
 // BenchmarkCancelTradeSession benchmarks CancelTradeSession handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCancelTradeSession(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

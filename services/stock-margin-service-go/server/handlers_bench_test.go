@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkGetMarginAccount benchmarks GetMarginAccount handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetMarginAccount(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -27,7 +27,7 @@ func BenchmarkGetMarginAccount(b *testing.B) {
 }
 
 // BenchmarkBorrowMargin benchmarks BorrowMargin handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkBorrowMargin(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -41,7 +41,7 @@ func BenchmarkBorrowMargin(b *testing.B) {
 }
 
 // BenchmarkRepayMargin benchmarks RepayMargin handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkRepayMargin(b *testing.B) {
 	handlers := NewHandlers()
 

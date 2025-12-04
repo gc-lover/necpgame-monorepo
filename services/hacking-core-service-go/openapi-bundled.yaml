@@ -1,0 +1,623 @@
+openapi: 3.0.3
+info:
+  title: Hacking Core Service API
+  description: |
+    API для управления основными операциями системы взлома в NECPGAME.
+
+    **Основные возможности:**
+    - Инициализация и управление процессом взлома
+    - Управление процессом взлома
+    - Обработка результатов взлома
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Hacking
+    description: Управление процессом взлома
+  - name: Process
+    description: Управление процессом взлома
+  - name: Results
+    description: Результаты взлома
+paths:
+  /gameplay/hacking/initiate:
+    post:
+      tags:
+        - Hacking
+      summary: Инициализация взлома
+      description: |
+        Инициализирует процесс взлома устройства или сети.
+        Проверяет требования (интеллект, импланты, гаджеты) и создаёт сессию взлома.
+      operationId: initiateHack
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateHackRequest'
+      responses:
+        '201':
+          description: Взлом инициализирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/status:
+    get:
+      tags:
+        - Hacking
+      summary: Статус взлома
+      description: |
+        Возвращает текущий статус сессии взлома.
+      operationId: getHackStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Статус взлома
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/execute:
+    post:
+      tags:
+        - Hacking
+      summary: Выполнение взлома
+      description: |
+        Выполняет шаг взлома или завершает процесс взлома.
+      operationId: executeHack
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteHackRequest'
+      responses:
+        '200':
+          description: Взлом выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/cancel:
+    post:
+      tags:
+        - Hacking
+      summary: Отмена взлома
+      description: |
+        Отменяет активную сессию взлома.
+      operationId: cancelHack
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Взлом отменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/process/step:
+    post:
+      tags:
+        - Process
+      summary: Выполнение шага взлома
+      description: |
+        Выполняет один шаг в процессе взлома.
+      operationId: executeHackStep
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HackStepRequest'
+      responses:
+        '200':
+          description: Шаг выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackStepResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/process/status:
+    get:
+      tags:
+        - Process
+      summary: Статус процесса взлома
+      description: |
+        Возвращает текущий статус процесса взлома.
+      operationId: getHackProcessStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Статус процесса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackProcessStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/process/retry:
+    post:
+      tags:
+        - Process
+      summary: Повторная попытка взлома
+      description: |
+        Повторяет неудачный шаг взлома.
+      operationId: retryHackStep
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Попытка повторена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackStepResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/result:
+    get:
+      tags:
+        - Results
+      summary: Результат взлома
+      description: |
+        Возвращает результат завершённого взлома.
+      operationId: getHackResult
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Результат взлома
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/hacking/{hackId}/result/apply:
+    post:
+      tags:
+        - Results
+      summary: Применение результата взлома
+      description: |
+        Применяет результат взлома (доступ к устройству, данные, контроль).
+      operationId: applyHackResult
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Результат применён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Доступ запрещен
+            code: ACCESS_DENIED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+  schemas:
+    InitiateHackRequest:
+      type: object
+      required:
+        - character_id
+        - target_type
+        - target_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа, выполняющего взлом
+        target_type:
+          type: string
+          enum:
+            - device
+            - network
+            - cyberspace
+          description: |
+            Тип цели взлома:
+            - `device` - устройство
+            - `network` - сеть
+            - `cyberspace` - киберпространство
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели взлома
+        difficulty:
+          type: integer
+          description: Сложность взлома (1-10)
+          minimum: 1
+          maximum: 10
+          default: 5
+    HackSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сессии взлома
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        target_type:
+          type: string
+          enum:
+            - device
+            - network
+            - cyberspace
+          description: Тип цели взлома
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели взлома
+        status:
+          type: string
+          enum:
+            - initiated
+            - in_progress
+            - completed
+            - failed
+            - cancelled
+          description: Статус сессии взлома
+        difficulty:
+          type: integer
+          description: Сложность взлома
+          minimum: 1
+          maximum: 10
+        progress:
+          type: integer
+          description: Прогресс взлома (0-100)
+          minimum: 0
+          maximum: 100
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания сессии
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    ExecuteHackRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum:
+            - step
+            - complete
+          description: |
+            Действие:
+            - `step` - выполнить шаг взлома
+            - `complete` - завершить взлом
+        step_data:
+          type: object
+          description: Данные шага взлома (опционально)
+    HackResult:
+      type: object
+      properties:
+        hack_id:
+          type: string
+          format: uuid
+          description: ID сессии взлома
+        success:
+          type: boolean
+          description: Успешность взлома
+        result_type:
+          type: string
+          enum:
+            - access
+            - data
+            - control
+            - backdoor
+          description: |
+            Тип результата:
+            - `access` - получен доступ
+            - `data` - извлечены данные
+            - `control` - получен контроль
+            - `backdoor` - установлен бекдор
+        data:
+          type: object
+          description: Данные, полученные в результате взлома
+        effects:
+          type: array
+          description: Эффекты взлома
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: Тип эффекта
+              value:
+                type: string
+                description: Значение эффекта
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          description: Статус операции
+    HackStepRequest:
+      type: object
+      required:
+        - step_type
+      properties:
+        step_type:
+          type: string
+          enum:
+            - scan
+            - breach
+            - exploit
+            - backdoor
+          description: |
+            Тип шага:
+            - `scan` - сканирование
+            - `breach` - взлом барьера
+            - `exploit` - использование уязвимости
+            - `backdoor` - установка бекдора
+        step_data:
+          type: object
+          description: Данные шага
+    HackStepResult:
+      type: object
+      properties:
+        step_type:
+          type: string
+          description: Тип выполненного шага
+        success:
+          type: boolean
+          description: Успешность шага
+        progress:
+          type: integer
+          description: Прогресс взлома после шага (0-100)
+          minimum: 0
+          maximum: 100
+        message:
+          type: string
+          description: Сообщение о результате шага
+    HackProcessStatus:
+      type: object
+      properties:
+        hack_id:
+          type: string
+          format: uuid
+          description: ID сессии взлома
+        status:
+          type: string
+          enum:
+            - initiated
+            - in_progress
+            - completed
+            - failed
+            - cancelled
+          description: Статус процесса взлома
+        progress:
+          type: integer
+          description: Прогресс взлома (0-100)
+          minimum: 0
+          maximum: 100
+        current_step:
+          type: string
+          description: Текущий шаг взлома
+        steps_completed:
+          type: integer
+          description: Количество выполненных шагов
+          minimum: 0
+        total_steps:
+          type: integer
+          description: Общее количество шагов
+          minimum: 1

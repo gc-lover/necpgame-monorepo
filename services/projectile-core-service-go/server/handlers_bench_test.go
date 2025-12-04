@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkGetProjectileForms benchmarks GetProjectileForms handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetProjectileForms(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +27,7 @@ func BenchmarkGetProjectileForms(b *testing.B) {
 }
 
 // BenchmarkGetProjectileForm benchmarks GetProjectileForm handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetProjectileForm(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -45,7 +45,7 @@ func BenchmarkGetProjectileForm(b *testing.B) {
 }
 
 // BenchmarkSpawnProjectile benchmarks SpawnProjectile handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkSpawnProjectile(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

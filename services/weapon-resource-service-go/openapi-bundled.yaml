@@ -1,0 +1,404 @@
+openapi: 3.0.0
+info:
+  title: Weapon Resource Service API
+  description: Service for managing weapon resources (ammunition, heat, energy, cooldowns)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8091
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+tags:
+  - name: resources
+    description: Weapon resource management
+paths:
+  /api/v1/weapons/resources/{weaponId}:
+    get:
+      summary: Get weapon resources
+      description: Retrieve current resource state for a weapon instance
+      tags:
+        - resources
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Weapon instance ID
+      responses:
+        '200':
+          description: Weapon resource state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponResources'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/resources/{weaponId}/consume:
+    post:
+      summary: Consume weapon resources
+      description: Consume ammunition, energy, or apply heat when weapon is used
+      tags:
+        - resources
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumeResourceRequest'
+      responses:
+        '200':
+          description: Resource consumed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponResources'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/resources/{weaponId}/reload:
+    post:
+      summary: Reload weapon
+      description: Reload ammunition for a weapon
+      tags:
+        - resources
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReloadWeaponRequest'
+      responses:
+        '200':
+          description: Weapon reloaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponResources'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/resources/{weaponId}/status:
+    get:
+      summary: Get weapon status
+      description: Get current status including overheated state and active cooldowns
+      tags:
+        - resources
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Weapon status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/resources/{weaponId}/cooldown:
+    post:
+      summary: Apply cooldown
+      description: Apply cooldown to weapon or ability
+      tags:
+        - resources
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyCooldownRequest'
+      responses:
+        '200':
+          description: Cooldown applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponResources'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+components:
+  schemas:
+    WeaponResources:
+      type: object
+      properties:
+        weaponInstanceId:
+          type: string
+          format: uuid
+        ammunition:
+          $ref: '#/components/schemas/AmmunitionState'
+        heat:
+          $ref: '#/components/schemas/HeatState'
+        energy:
+          $ref: '#/components/schemas/EnergyState'
+        cooldowns:
+          type: object
+          additionalProperties:
+            type: string
+            format: date-time
+          description: Active cooldowns with expiration times
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - weaponInstanceId
+        - ammunition
+        - heat
+        - energy
+        - cooldowns
+    AmmunitionState:
+      type: object
+      properties:
+        current:
+          type: integer
+          minimum: 0
+          description: Current ammunition count
+        max:
+          type: integer
+          minimum: 0
+          description: Maximum ammunition capacity
+        type:
+          type: string
+          enum:
+            - standard
+            - fire
+            - ice
+            - poison
+            - electric
+            - explosive
+          description: Ammunition type
+      required:
+        - current
+        - max
+    HeatState:
+      type: object
+      properties:
+        current:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Current heat level
+        coolingRate:
+          type: number
+          format: float
+          description: Cooling rate per second
+        overheated:
+          type: boolean
+          description: Whether weapon is currently overheated
+        overheatExpiresAt:
+          type: string
+          format: date-time
+          description: When overheat ends (if overheated)
+      required:
+        - current
+        - coolingRate
+        - overheated
+    EnergyState:
+      type: object
+      properties:
+        current:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Current energy level
+        regenRate:
+          type: number
+          format: float
+          description: Regeneration rate per second
+        costPerShot:
+          type: number
+          format: float
+          description: Energy cost per shot
+      required:
+        - current
+        - regenRate
+    ConsumeResourceRequest:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          enum:
+            - ammunition
+            - heat
+            - energy
+        amount:
+          type: number
+          format: float
+          minimum: 0
+      required:
+        - resourceType
+        - amount
+    ReloadWeaponRequest:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        ammoSource:
+          type: string
+          enum:
+            - inventory
+            - pickup
+          description: Source of ammunition for reload
+      required:
+        - playerId
+    WeaponStatus:
+      type: object
+      properties:
+        weaponInstanceId:
+          type: string
+          format: uuid
+        canFire:
+          type: boolean
+          description: Whether weapon can currently fire
+        overheated:
+          type: boolean
+        activeCooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CooldownInfo'
+        blockedReason:
+          type: string
+          description: Reason why weapon is blocked (if canFire is false)
+      required:
+        - weaponInstanceId
+        - canFire
+    CooldownInfo:
+      type: object
+      properties:
+        abilityId:
+          type: string
+          description: Ability or weapon ID on cooldown
+        expiresAt:
+          type: string
+          format: date-time
+        remainingSeconds:
+          type: number
+          format: float
+      required:
+        - abilityId
+        - expiresAt
+        - remainingSeconds
+    ApplyCooldownRequest:
+      type: object
+      properties:
+        abilityId:
+          type: string
+          description: Ability or weapon ID to apply cooldown to
+        durationSeconds:
+          type: integer
+          minimum: 1
+          description: Cooldown duration in seconds
+      required:
+        - abilityId
+        - durationSeconds
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  responses:
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS

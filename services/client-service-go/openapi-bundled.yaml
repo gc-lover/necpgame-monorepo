@@ -1,0 +1,358 @@
+openapi: 3.0.3
+info:
+  title: Client Weapon Effects Service API
+  description: |
+    API для управления визуальными и звуковыми эффектами специальных механик оружия.
+
+    **Основные возможности:**
+    - Триггер визуальных эффектов (частицы, анимации, эффекты)
+    - Триггер звуковых эффектов
+    - Получение информации об эффектах
+    - Синхронизация эффектов с клиентом (UE5)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8089/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+tags:
+  - name: Visual Effects
+    description: Визуальные эффекты для специальных механик оружия
+  - name: Audio Effects
+    description: Звуковые эффекты для специальных механик оружия
+  - name: Effects
+    description: Общие операции с эффектами
+paths:
+  /client/effects/visual/trigger:
+    post:
+      tags:
+        - Visual Effects
+      summary: Триггер визуального эффекта
+      description: |
+        Триггерит визуальный эффект для специальной механики оружия.
+        Эффект отправляется клиенту (UE5) для отображения.
+      operationId: triggerVisualEffect
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerVisualEffectRequest'
+            example:
+              effect_type: persistent_effect
+              mechanic_type: bolt_stuck
+              position:
+                x: 10.5
+                'y': 2.3
+                z: 15.7
+              target_id: 550e8400-e29b-41d4-a716-446655440002
+              effect_data:
+                projectile_type: bolt
+                color: '#FF0000'
+      responses:
+        '200':
+          description: Визуальный эффект успешно триггерен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualEffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /client/effects/audio/trigger:
+    post:
+      tags:
+        - Audio Effects
+      summary: Триггер звукового эффекта
+      description: |
+        Триггерит звуковой эффект для специальной механики оружия.
+        Эффект отправляется клиенту (UE5) для воспроизведения.
+      operationId: triggerAudioEffect
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerAudioEffectRequest'
+            example:
+              effect_type: chain_damage
+              mechanic_type: lightning
+              position:
+                x: 10.5
+                'y': 2.3
+                z: 15.7
+              sound_id: lightning_chain_01
+              volume: 0.8
+      responses:
+        '200':
+          description: Звуковой эффект успешно триггерен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioEffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /client/effects/{effectId}:
+    get:
+      tags:
+        - Effects
+      summary: Получить информацию об эффекте
+      description: Возвращает информацию о визуальном или звуковом эффекте
+      operationId: getEffect
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: effectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID эффекта
+      responses:
+        '200':
+          description: Информация об эффекте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    TriggerVisualEffectRequest:
+      type: object
+      required:
+        - effect_type
+        - mechanic_type
+        - position
+      properties:
+        effect_type:
+          type: string
+          enum:
+            - persistent_effect
+            - chain_damage
+            - environment_destruction
+            - deployable
+            - laser
+            - melee
+            - elemental
+            - temporal
+            - control
+            - summon
+            - projectile_form
+          description: Тип эффекта специальной механики
+        mechanic_type:
+          type: string
+          description: Тип механики (например, "bolt_stuck", "lightning", "explosion")
+        position:
+          $ref: '#/components/schemas/Position3D'
+          description: Позиция эффекта
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели (если применимо)
+        effect_data:
+          type: object
+          additionalProperties: true
+          description: Дополнительные данные эффекта
+    VisualEffectResponse:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        effect_type:
+          type: string
+        triggered_at:
+          type: string
+          format: date-time
+        client_notified:
+          type: boolean
+          description: Уведомлен ли клиент об эффекте
+    TriggerAudioEffectRequest:
+      type: object
+      required:
+        - effect_type
+        - mechanic_type
+        - position
+        - sound_id
+      properties:
+        effect_type:
+          type: string
+          enum:
+            - persistent_effect
+            - chain_damage
+            - environment_destruction
+            - deployable
+            - laser
+            - melee
+            - elemental
+            - temporal
+            - control
+            - summon
+            - projectile_form
+          description: Тип эффекта специальной механики
+        mechanic_type:
+          type: string
+          description: Тип механики
+        position:
+          $ref: '#/components/schemas/Position3D'
+          description: Позиция эффекта
+        sound_id:
+          type: string
+          description: ID звукового файла
+        volume:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 1
+          description: Громкость звука
+        pitch:
+          type: number
+          format: float
+          minimum: 0
+          default: 1
+          description: Высота тона звука
+    AudioEffectResponse:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        effect_type:
+          type: string
+        triggered_at:
+          type: string
+          format: date-time
+        client_notified:
+          type: boolean
+          description: Уведомлен ли клиент об эффекте
+    EffectInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        effect_type:
+          type: string
+        mechanic_type:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position3D'
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+        effect_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+    Position3D:
+      type: object
+      required:
+        - x
+        - 'y'
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: Координата X
+        'y':
+          type: number
+          format: float
+          description: Координата Y
+        z:
+          type: number
+          format: float
+          description: Координата Z
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND

@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkGetQuestState benchmarks GetQuestState handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetQuestState(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -27,7 +27,7 @@ func BenchmarkGetQuestState(b *testing.B) {
 }
 
 // BenchmarkUpdateQuestState benchmarks UpdateQuestState handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkUpdateQuestState(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -45,7 +45,7 @@ func BenchmarkUpdateQuestState(b *testing.B) {
 }
 
 // BenchmarkGetQuestDialogue benchmarks GetQuestDialogue handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetQuestDialogue(b *testing.B) {
 	handlers := NewHandlers()
 

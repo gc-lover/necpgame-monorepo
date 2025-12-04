@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkListContinents benchmarks ListContinents handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkListContinents(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)
@@ -27,7 +27,7 @@ func BenchmarkListContinents(b *testing.B) {
 }
 
 // BenchmarkCreateContinent benchmarks CreateContinent handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateContinent(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)

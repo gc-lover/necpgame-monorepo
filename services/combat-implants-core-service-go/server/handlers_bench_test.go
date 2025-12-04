@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-core-service-go/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkGetImplantCatalog benchmarks GetImplantCatalog handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetImplantCatalog(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -26,7 +27,7 @@ func BenchmarkGetImplantCatalog(b *testing.B) {
 }
 
 // BenchmarkGetImplantById benchmarks GetImplantById handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetImplantById(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -44,7 +45,7 @@ func BenchmarkGetImplantById(b *testing.B) {
 }
 
 // BenchmarkGetCharacterImplants benchmarks GetCharacterImplants handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetCharacterImplants(b *testing.B) {
 	handlers := NewHandlers()
 

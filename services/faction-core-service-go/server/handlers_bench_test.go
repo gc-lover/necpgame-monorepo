@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"// Issue: #1602/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkCreateFaction benchmarks CreateFaction handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateFaction(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -28,7 +29,7 @@ func BenchmarkCreateFaction(b *testing.B) {
 }
 
 // BenchmarkGetFaction benchmarks GetFaction handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetFaction(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -46,7 +47,7 @@ func BenchmarkGetFaction(b *testing.B) {
 }
 
 // BenchmarkUpdateFaction benchmarks UpdateFaction handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkUpdateFaction(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkCreateWorldEvent benchmarks CreateWorldEvent handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateWorldEvent(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)
@@ -29,7 +29,7 @@ func BenchmarkCreateWorldEvent(b *testing.B) {
 }
 
 // BenchmarkGetWorldEvent benchmarks GetWorldEvent handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEvent(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)
@@ -47,7 +47,7 @@ func BenchmarkGetWorldEvent(b *testing.B) {
 }
 
 // BenchmarkUpdateWorldEvent benchmarks UpdateWorldEvent handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkUpdateWorldEvent(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)

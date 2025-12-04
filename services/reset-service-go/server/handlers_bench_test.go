@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkGetResetStats benchmarks GetResetStats handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetResetStats(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +27,7 @@ func BenchmarkGetResetStats(b *testing.B) {
 }
 
 // BenchmarkGetResetHistory benchmarks GetResetHistory handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetResetHistory(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -45,7 +45,7 @@ func BenchmarkGetResetHistory(b *testing.B) {
 }
 
 // BenchmarkTriggerReset benchmarks TriggerReset handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkTriggerReset(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Progression Core Service API
+  description: API для основных операций прогрессии персонажей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Progression
+    description: Система прогрессии персонажей
+paths:
+  /gameplay/progression/{characterId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить информацию о прогрессе персонажа
+      operationId: getCharacterProgression
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о прогрессе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/progression/{characterId}/experience:
+    post:
+      tags:
+        - Progression
+      summary: Начислить опыт персонажу
+      operationId: addExperience
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddExperienceRequest'
+      responses:
+        '200':
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/progression/{characterId}/attributes:
+    post:
+      tags:
+        - Progression
+      summary: Распределить очки атрибутов
+      operationId: distributeAttributePoints
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeAttributePointsRequest'
+      responses:
+        '200':
+          description: Очки распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/progression/{characterId}/skills:
+    post:
+      tags:
+        - Progression
+      summary: Распределить очки навыков
+      operationId: distributeSkillPoints
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeSkillPointsRequest'
+      responses:
+        '200':
+          description: Очки распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/progression/validate:
+    post:
+      tags:
+        - Progression
+      summary: Валидировать прогрессию
+      operationId: validateProgression
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateProgressionRequest'
+      responses:
+        '200':
+          description: Результат валидации прогрессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressionValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    CharacterProgression:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        available_attribute_points:
+          type: integer
+          minimum: 0
+        available_skill_points:
+          type: integer
+          minimum: 0
+        attributes:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillProgress'
+    SkillProgress:
+      type: object
+      properties:
+        skill_id:
+          type: string
+        skill_name:
+          type: string
+        level:
+          type: integer
+          minimum: 0
+        experience:
+          type: integer
+          minimum: 0
+    AddExperienceRequest:
+      type: object
+      required:
+        - amount
+        - source
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum:
+            - combat
+            - quest
+            - skill_use
+            - exploration
+    DistributeAttributePointsRequest:
+      type: object
+      required:
+        - attribute
+        - points
+      properties:
+        attribute:
+          type: string
+        points:
+          type: integer
+          minimum: 1
+    DistributeSkillPointsRequest:
+      type: object
+      required:
+        - skill_id
+        - points
+      properties:
+        skill_id:
+          type: string
+        points:
+          type: integer
+          minimum: 1
+    ValidateProgressionRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+    ProgressionValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        issues:
+          type: array
+          items:
+            type: string
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS

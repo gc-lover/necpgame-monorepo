@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkModifyImplant benchmarks ModifyImplant handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkModifyImplant(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -23,7 +23,7 @@ func BenchmarkModifyImplant(b *testing.B) {
 }
 
 // BenchmarkRepairImplant benchmarks RepairImplant handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkRepairImplant(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -37,7 +37,7 @@ func BenchmarkRepairImplant(b *testing.B) {
 }
 
 // BenchmarkUpgradeImplant benchmarks UpgradeImplant handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkUpgradeImplant(b *testing.B) {
 	handlers := NewHandlers()
 

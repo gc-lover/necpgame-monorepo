@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: Character Engram Security Service API
+  description: API для кодирования и защиты энграмм
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+tags:
+  - name: Engram Security
+    description: Кодирование и защита энграмм
+paths:
+  /character/engrams/{engram_id}/encode:
+    post:
+      tags:
+        - Engram Security
+      summary: Закодировать энграмму
+      operationId: encodeEngram
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: engram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID энграммы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EncodeEngramRequest'
+      responses:
+        '200':
+          description: Энграмма закодирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngramProtection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /character/engrams/{engram_id}/protection:
+    get:
+      tags:
+        - Engram Security
+      summary: Получить информацию о защите энграммы
+      operationId: getEngramProtection
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: engram_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID энграммы
+      responses:
+        '200':
+          description: Информация о защите
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngramProtection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    EncodeEngramRequest:
+      type: object
+      required:
+        - protection_tier
+      properties:
+        protection_tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир защиты (1-5)
+          example: 3
+        protection_settings:
+          type: object
+          description: Настройки защиты
+          properties:
+            copy_protection:
+              type: boolean
+              description: Защита от копирования
+              example: true
+            hack_protection:
+              type: boolean
+              description: Защита от взлома (самоуничтожение)
+              example: true
+            install_protection:
+              type: boolean
+              description: Защита от установки (привязка к персонажу)
+              example: false
+            bound_character_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: ID персонажа, для которого привязана энграмма
+        netrunner_skill_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Уровень навыка Netrunner для защиты
+          example: 75
+    EngramProtection:
+      type: object
+      required:
+        - engram_id
+        - protection_tier
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID энграммы
+        protection_tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир защиты (1-5)
+          example: 3
+        protection_tier_name:
+          type: string
+          enum:
+            - basic
+            - standard
+            - advanced
+            - corporate
+            - military
+          description: Название тира защиты
+          example: advanced
+        required_netrunner_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Требуемый уровень Netrunner для взлома
+          example: 75
+        protection_settings:
+          type: object
+          description: Настройки защиты
+          properties:
+            copy_protection:
+              type: boolean
+              description: Защита от копирования
+            hack_protection:
+              type: boolean
+              description: Защита от взлома (самоуничтожение)
+            install_protection:
+              type: boolean
+              description: Защита от установки
+            bound_character_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: ID привязанного персонажа
+        encoded_at:
+          type: string
+          format: date-time
+          description: Дата кодирования
+        encoded_by:
+          type: string
+          format: uuid
+          description: ID персонажа, закодировавшего энграмму
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
