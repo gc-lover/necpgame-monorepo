@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkEnterQueue benchmarks EnterQueue handler

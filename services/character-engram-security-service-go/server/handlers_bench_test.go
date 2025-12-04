@@ -5,8 +5,6 @@ package server
 import (
 	"context"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkHandler benchmarks handler performance

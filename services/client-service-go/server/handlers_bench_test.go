@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/necpgame/client-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkTriggerVisualEffect benchmarks TriggerVisualEffect handler

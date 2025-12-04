@@ -5,8 +5,6 @@ import (
 	"context"
 	"// Issue: #1602/pkg/api"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkCreateFaction benchmarks CreateFaction handler

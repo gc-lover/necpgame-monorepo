@@ -5,8 +5,6 @@ import (
 	"context"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-stats-service-go/pkg/api"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkGetEnergyStatus benchmarks GetEnergyStatus handler
