@@ -53,8 +53,10 @@ func BenchmarkActivateCombo(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.ActivateComboRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ActivateCombo(ctx)
+		_, _ = handlers.ActivateCombo(ctx, req)
 	}
 }
 

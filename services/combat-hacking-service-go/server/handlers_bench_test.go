@@ -13,14 +13,13 @@ func BenchmarkHackTarget(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.HackTargetParams{
-	}
+	req := &api.HackTargetRequest{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.HackTarget(ctx, params)
+		_, _ = handlers.HackTarget(ctx, req)
 	}
 }
 
@@ -30,11 +29,13 @@ func BenchmarkActivateCountermeasures(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
+	req := &api.CountermeasureRequest{}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ActivateCountermeasures(ctx)
+		_, _ = handlers.ActivateCountermeasures(ctx, req)
 	}
 }
 
@@ -44,14 +45,12 @@ func BenchmarkGetDemons(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetDemonsParams{
-	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetDemons(ctx, params)
+		_, _ = handlers.GetDemons(ctx)
 	}
 }
 

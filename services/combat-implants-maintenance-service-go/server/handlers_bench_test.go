@@ -4,6 +4,8 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-maintenance-service-go/pkg/api"
 )
 
 // BenchmarkModifyImplant benchmarks ModifyImplant handler
@@ -15,8 +17,10 @@ func BenchmarkModifyImplant(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.ModifyRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ModifyImplant(ctx)
+		_, _ = handlers.ModifyImplant(ctx, req)
 	}
 }
 
@@ -29,8 +33,10 @@ func BenchmarkRepairImplant(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.RepairRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.RepairImplant(ctx)
+		_, _ = handlers.RepairImplant(ctx, req)
 	}
 }
 
@@ -43,8 +49,10 @@ func BenchmarkUpgradeImplant(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.UpgradeRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.UpgradeImplant(ctx)
+		_, _ = handlers.UpgradeImplant(ctx, req)
 	}
 }
 

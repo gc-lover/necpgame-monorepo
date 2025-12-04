@@ -4,6 +4,8 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/hacking-core-service-go/pkg/api"
 )
 
 // BenchmarkInitiateHack benchmarks InitiateHack handler
@@ -15,8 +17,10 @@ func BenchmarkInitiateHack(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.InitiateHackRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.InitiateHack(ctx)
+		_, _ = handlers.InitiateHack(ctx, req)
 	}
 }
 
@@ -29,8 +33,10 @@ func BenchmarkCancelHack(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	params := api.CancelHackParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.CancelHack(ctx)
+		_, _ = handlers.CancelHack(ctx, params)
 	}
 }
 
@@ -43,8 +49,11 @@ func BenchmarkExecuteHack(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.ExecuteHackRequest{}
+	params := api.ExecuteHackParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ExecuteHack(ctx)
+		_, _ = handlers.ExecuteHack(ctx, req, params)
 	}
 }
 

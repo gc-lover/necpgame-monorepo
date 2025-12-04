@@ -5,44 +5,81 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/necpgame/client-service-go/pkg/api"
 )
+
+// mockWeaponEffectsService implements WeaponEffectsServiceInterface for benchmarks
+type mockWeaponEffectsService struct{}
+
+func (m *mockWeaponEffectsService) TriggerVisualEffect(ctx context.Context, effectType string, mechanicType string, position map[string]float64, targetID *uuid.UUID, effectData map[string]interface{}) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponEffectsService) TriggerAudioEffect(ctx context.Context, effectType string, mechanicType string, soundID string, position map[string]float64, volume *float64, pitch *float64) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (m *mockWeaponEffectsService) GetEffect(ctx context.Context, effectID uuid.UUID) (map[string]interface{}, error) {
+	return nil, nil
+}
 
 // BenchmarkTriggerVisualEffect benchmarks TriggerVisualEffect handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkTriggerVisualEffect(b *testing.B) {
-	service := NewService(nil)
-	handlers := NewHandlers(service)
+	mockService := &mockWeaponEffectsService{}
+	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
+	req := &api.TriggerVisualEffectRequest{
+		EffectType:   api.TriggerVisualEffectRequestEffectTypeEnvironmentDestruction,
+		MechanicType: "weapon",
+		Position: api.Position3D{
+			X: 0.0,
+			Y: 0.0,
+			Z: 0.0,
+		},
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.TriggerVisualEffect(ctx)
+		_, _ = handlers.TriggerVisualEffect(ctx, req)
 	}
 }
 
 // BenchmarkTriggerAudioEffect benchmarks TriggerAudioEffect handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkTriggerAudioEffect(b *testing.B) {
-	service := NewService(nil)
-	handlers := NewHandlers(service)
+	mockService := &mockWeaponEffectsService{}
+	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
+	req := &api.TriggerAudioEffectRequest{
+		EffectType:   api.TriggerAudioEffectRequestEffectTypeLaser,
+		MechanicType: "weapon",
+		SoundID:      "sound123",
+		Position: api.Position3D{
+			X: 0.0,
+			Y: 0.0,
+			Z: 0.0,
+		},
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.TriggerAudioEffect(ctx)
+		_, _ = handlers.TriggerAudioEffect(ctx, req)
 	}
 }
 
 // BenchmarkGetEffect benchmarks GetEffect handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetEffect(b *testing.B) {
-	service := NewService(nil)
-	handlers := NewHandlers(service)
+	mockService := &mockWeaponEffectsService{}
+	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
 	params := api.GetEffectParams{

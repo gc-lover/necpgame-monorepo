@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
 )
 
 type mockInventoryService struct {
@@ -22,7 +23,8 @@ type mockInventoryService struct {
 	getErr      error
 }
 
-func (m *mockInventoryService) GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
+func (m *mockInventoryService) GetInventory(ctx context.Context, playerID string) (*api.InventoryResponse, error) {
+	characterID, _ := uuid.Parse(playerID)
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
@@ -43,20 +45,30 @@ func (m *mockInventoryService) GetInventory(ctx context.Context, characterID uui
 	}
 
 	items := m.items[inv.ID]
-	return &models.InventoryResponse{
-		Inventory: *inv,
-		Items:     items,
+	// Convert to api types
+	apiItems := make([]api.InventoryItemResponse, len(items))
+	for i, item := range items {
+		itemID, _ := uuid.Parse(item.ItemID)
+		apiItems[i] = api.InventoryItemResponse{
+			ItemID:   api.NewOptUUID(itemID),
+			Quantity: api.NewOptInt(item.StackCount),
+		}
+	}
+	return &api.InventoryResponse{
+		Items: apiItems,
 	}, nil
 }
 
-func (m *mockInventoryService) AddItem(ctx context.Context, characterID uuid.UUID, req *models.AddItemRequest) error {
+func (m *mockInventoryService) AddItem(ctx context.Context, playerID string, req *api.AddItemRequest) (*api.InventoryItemResponse, error) {
+	characterID, _ := uuid.Parse(playerID)
 	if m.createErr != nil {
-		return m.createErr
+		return nil, m.createErr
 	}
 
-	template := m.templates[req.ItemID]
+	itemID := req.ItemID.String()
+	template := m.templates[itemID]
 	if template == nil {
-		return errors.New("item template not found")
+		return nil, errors.New("item template not found")
 	}
 
 	inv := m.inventories[characterID]
@@ -75,20 +87,25 @@ func (m *mockInventoryService) AddItem(ctx context.Context, characterID uuid.UUI
 	}
 
 	if inv.UsedSlots >= inv.Capacity {
-		return errors.New("inventory is full")
+		return nil, errors.New("inventory is full")
 	}
 
 	items := m.items[inv.ID]
 	var existingItem *models.InventoryItem
 	for i := range items {
-		if items[i].ItemID == req.ItemID && !items[i].IsEquipped {
+		if items[i].ItemID == itemID && !items[i].IsEquipped {
 			existingItem = &items[i]
 			break
 		}
 	}
 
+	quantity := 1
+	if req.Quantity.IsSet() {
+		quantity = req.Quantity.Value
+	}
+
 	if existingItem != nil && template.MaxStackSize > 1 {
-		newCount := existingItem.StackCount + req.StackCount
+		newCount := existingItem.StackCount + quantity
 		if newCount <= template.MaxStackSize {
 			existingItem.StackCount = newCount
 			existingItem.UpdatedAt = time.Now()
@@ -96,20 +113,24 @@ func (m *mockInventoryService) AddItem(ctx context.Context, characterID uuid.UUI
 			existingItem.StackCount = template.MaxStackSize
 			existingItem.UpdatedAt = time.Now()
 			remaining := newCount - template.MaxStackSize
-			return m.AddItem(ctx, characterID, &models.AddItemRequest{ItemID: req.ItemID, StackCount: remaining})
+			remainingReq := &api.AddItemRequest{
+				ItemID:   req.ItemID,
+				Quantity: api.NewOptInt(remaining),
+			}
+			return m.AddItem(ctx, playerID, remainingReq)
 		}
 	} else {
 		freeSlot := len(items)
 		if freeSlot >= inv.Capacity {
-			return errors.New("no free slots available")
+			return nil, errors.New("no free slots available")
 		}
 
 		item := &models.InventoryItem{
 			ID:           uuid.New(),
 			InventoryID:  inv.ID,
-			ItemID:       req.ItemID,
+			ItemID:       itemID,
 			SlotIndex:    freeSlot,
-			StackCount:   req.StackCount,
+			StackCount:   quantity,
 			MaxStackSize: template.MaxStackSize,
 			IsEquipped:   false,
 			CreatedAt:    time.Now(),
@@ -118,13 +139,18 @@ func (m *mockInventoryService) AddItem(ctx context.Context, characterID uuid.UUI
 
 		m.items[inv.ID] = append(m.items[inv.ID], *item)
 		inv.UsedSlots++
-		inv.Weight += template.Weight * float64(req.StackCount)
+		inv.Weight += template.Weight * float64(quantity)
 	}
 
-	return nil
+	return &api.InventoryItemResponse{
+		ItemID:   api.NewOptUUID(req.ItemID),
+		Quantity: req.Quantity,
+	}, nil
 }
 
-func (m *mockInventoryService) RemoveItem(ctx context.Context, characterID uuid.UUID, itemID uuid.UUID) error {
+func (m *mockInventoryService) RemoveItem(ctx context.Context, playerID, itemID string) error {
+	characterID, _ := uuid.Parse(playerID)
+	itemUUID, _ := uuid.Parse(itemID)
 	inv := m.inventories[characterID]
 	if inv == nil {
 		return errors.New("inventory not found")
@@ -132,7 +158,7 @@ func (m *mockInventoryService) RemoveItem(ctx context.Context, characterID uuid.
 
 	items := m.items[inv.ID]
 	for i, item := range items {
-		if item.ID == itemID {
+		if item.ID == itemUUID {
 			template := m.templates[item.ItemID]
 			if template != nil {
 				inv.Weight -= template.Weight * float64(item.StackCount)
@@ -146,32 +172,34 @@ func (m *mockInventoryService) RemoveItem(ctx context.Context, characterID uuid.
 	return errors.New("item not found")
 }
 
-func (m *mockInventoryService) EquipItem(ctx context.Context, characterID uuid.UUID, req *models.EquipItemRequest) error {
+func (m *mockInventoryService) EquipItem(ctx context.Context, playerID, itemID string, req *api.EquipItemRequest) (*api.EquipmentResponse, error) {
+	characterID, _ := uuid.Parse(playerID)
 	inv := m.inventories[characterID]
 	if inv == nil {
-		return errors.New("inventory not found")
+		return nil, errors.New("inventory not found")
 	}
 
 	items := m.items[inv.ID]
 	var item *models.InventoryItem
 	for i := range items {
-		if items[i].ItemID == req.ItemID {
+		if items[i].ItemID == itemID {
 			item = &items[i]
 			break
 		}
 	}
 
 	if item == nil {
-		return errors.New("item not found")
+		return nil, errors.New("item not found")
 	}
 
 	template := m.templates[item.ItemID]
 	if template == nil || !template.CanEquip {
-		return errors.New("item cannot be equipped")
+		return nil, errors.New("item cannot be equipped")
 	}
 
+	equipSlot := string(req.EquipmentSlot)
 	for i := range items {
-		if items[i].IsEquipped && items[i].EquipSlot == req.EquipSlot {
+		if items[i].IsEquipped && items[i].EquipSlot == equipSlot {
 			items[i].IsEquipped = false
 			items[i].EquipSlot = ""
 			items[i].UpdatedAt = time.Now()
@@ -179,28 +207,38 @@ func (m *mockInventoryService) EquipItem(ctx context.Context, characterID uuid.U
 	}
 
 	item.IsEquipped = true
-	item.EquipSlot = req.EquipSlot
+	item.EquipSlot = equipSlot
 	item.UpdatedAt = time.Now()
-	return nil
+	return &api.EquipmentResponse{}, nil
 }
 
-func (m *mockInventoryService) UnequipItem(ctx context.Context, characterID uuid.UUID, itemID uuid.UUID) error {
+func (m *mockInventoryService) UnequipItem(ctx context.Context, playerID, itemID string) (*api.EquipmentResponse, error) {
+	characterID, _ := uuid.Parse(playerID)
+	itemUUID, _ := uuid.Parse(itemID)
 	inv := m.inventories[characterID]
 	if inv == nil {
-		return errors.New("inventory not found")
+		return nil, errors.New("inventory not found")
 	}
 
 	items := m.items[inv.ID]
 	for i := range items {
-		if items[i].ID == itemID {
+		if items[i].ID == itemUUID {
 			items[i].IsEquipped = false
 			items[i].EquipSlot = ""
 			items[i].UpdatedAt = time.Now()
-			return nil
+			return &api.EquipmentResponse{}, nil
 		}
 	}
 
-	return errors.New("item not found")
+	return nil, errors.New("item not found")
+}
+
+func (m *mockInventoryService) UpdateItem(ctx context.Context, playerID, itemID string, req *api.UpdateItemRequest) (*api.InventoryItemResponse, error) {
+	return nil, nil
+}
+
+func (m *mockInventoryService) GetEquipment(ctx context.Context, playerID string) (*api.EquipmentResponse, error) {
+	return nil, nil
 }
 
 func TestHTTPServer_GetInventory(t *testing.T) {
@@ -235,7 +273,7 @@ func TestHTTPServer_GetInventory(t *testing.T) {
 		},
 	}
 
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	req := httptest.NewRequest("GET", "/api/v1/inventory/"+characterID.String(), nil)
 	w := httptest.NewRecorder()
@@ -292,7 +330,7 @@ func TestHTTPServer_AddItem(t *testing.T) {
 	mockService.items[inventory.ID] = []models.InventoryItem{}
 	mockService.templates["item1"] = template
 
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	reqBody := models.AddItemRequest{
 		ItemID:     "item1",
@@ -348,7 +386,7 @@ func TestHTTPServer_RemoveItem(t *testing.T) {
 		Weight: 5.0,
 	}
 
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	req := httptest.NewRequest("DELETE", "/api/v1/inventory/"+characterID.String()+"/items/"+itemID.String(), nil)
 	w := httptest.NewRecorder()
@@ -401,7 +439,7 @@ func TestHTTPServer_EquipItem(t *testing.T) {
 	mockService.items[inventoryID] = []models.InventoryItem{item}
 	mockService.templates["item1"] = template
 
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	reqBody := models.EquipItemRequest{
 		ItemID:    "item1",
@@ -455,7 +493,7 @@ func TestHTTPServer_UnequipItem(t *testing.T) {
 	mockService.inventories[characterID] = inventory
 	mockService.items[inventoryID] = []models.InventoryItem{item}
 
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	req := httptest.NewRequest("POST", "/api/v1/inventory/"+characterID.String()+"/unequip/"+itemID.String(), nil)
 	w := httptest.NewRecorder()
@@ -475,7 +513,7 @@ func TestHTTPServer_AddItemInvalidRequest(t *testing.T) {
 	}
 
 	characterID := uuid.New()
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	reqBody := models.AddItemRequest{
 		ItemID:     "",
@@ -523,7 +561,7 @@ func TestHTTPServer_AddItemInventoryFull(t *testing.T) {
 	mockService.items[inventoryID] = make([]models.InventoryItem, 50)
 	mockService.templates["item1"] = template
 
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	reqBody := models.AddItemRequest{
 		ItemID:     "item1",
@@ -547,7 +585,7 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		items:       make(map[uuid.UUID][]models.InventoryItem),
 		templates:   make(map[string]*models.ItemTemplate),
 	}
-	server := NewHTTPServer(":8080", mockService)
+	server := NewHTTPServerOgen(":8080", mockService)
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()
@@ -567,6 +605,7 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		t.Errorf("Expected status 'healthy', got %s", response["status"])
 	}
 }
+
 
 
 

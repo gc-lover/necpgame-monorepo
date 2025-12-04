@@ -16,8 +16,10 @@ func BenchmarkActivateSandevistan(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	params := api.ActivateSandevistanParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ActivateSandevistan(ctx)
+		_, _ = handlers.ActivateSandevistan(ctx, params)
 	}
 }
 
@@ -30,8 +32,10 @@ func BenchmarkDeactivateSandevistan(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	params := api.DeactivateSandevistanParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.DeactivateSandevistan(ctx)
+		_, _ = handlers.DeactivateSandevistan(ctx, params)
 	}
 }
 
