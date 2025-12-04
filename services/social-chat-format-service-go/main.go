@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/necpgame/social-chat-format-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-format-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -25,7 +25,7 @@ func main() {
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6080")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6848")
 		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {

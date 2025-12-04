@@ -47,7 +47,7 @@ func main() {
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6118")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6520")
 		log.Printf("pprof server starting on %s", pprofAddr)
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 			log.Printf("pprof server error: %v", err)

@@ -24,7 +24,7 @@ func main() {
 
 	addr := getEnv("SERVER_ADDR", ":8084")
 	metricsAddr := getEnv("METRICS_ADDR", ":9094")
-	pprofAddr := getEnv("PPROF_ADDR", "localhost:6124")
+	pprofAddr := getEnv("PPROF_ADDR", "localhost:6308")
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 
 	// Database connection

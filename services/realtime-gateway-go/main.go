@@ -32,7 +32,7 @@ func main() {
 	
 	// OPTIMIZATION: Issue #1584 - pprof for real-time performance monitoring
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6122")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6856")
 		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// CRITICAL for real-time: monitor CPU, goroutines, allocations
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {

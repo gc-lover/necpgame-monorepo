@@ -8,14 +8,14 @@ param(
 
 $ErrorActionPreference = "Continue"
 
-Write-Host "📊 Benchmark Metrics Server" -ForegroundColor Cyan
+Write-Host "Benchmark Metrics Server" -ForegroundColor Cyan
 Write-Host "   File: $MetricsFile" -ForegroundColor Gray
 Write-Host "   Port: $Port" -ForegroundColor Gray
 Write-Host "   URL: http://localhost:$Port/metrics" -ForegroundColor Gray
 Write-Host ""
 
 if (-not (Test-Path $MetricsFile)) {
-    Write-Host "WARNING  Metrics file not found: $MetricsFile" -ForegroundColor Yellow
+    Write-Host "Metrics file not found: $MetricsFile" -ForegroundColor Yellow
     Write-Host "   Run: .\scripts\export-benchmarks-to-prometheus.ps1 -UseFile" -ForegroundColor Yellow
 }
 
@@ -24,7 +24,7 @@ $Listener = New-Object System.Net.HttpListener
 $Listener.Prefixes.Add("http://localhost:$Port/")
 $Listener.Start()
 
-Write-Host "OK Server started. Press Ctrl+C to stop." -ForegroundColor Green
+Write-Host "Server started. Press Ctrl+C to stop." -ForegroundColor Green
 Write-Host ""
 
 try {
@@ -65,6 +65,6 @@ try {
     }
 } finally {
     $Listener.Stop()
-    Write-Host "`nOK Server stopped" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Server stopped" -ForegroundColor Green
 }
-

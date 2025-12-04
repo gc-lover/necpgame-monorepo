@@ -58,13 +58,18 @@ func main() {
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6072")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6783")
 		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(700) // Max 700 goroutines for movement
+	go monitor.Start()
+	logger.Info("OK Goroutine monitor started")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

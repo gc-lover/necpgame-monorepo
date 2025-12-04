@@ -1,14 +1,13 @@
-// Issue: #1604
+// Issue: #1597, #1604
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/quest-skill-checks-conditions-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-skill-checks-conditions-service-go/pkg/api"
 )
 
 // Context timeout constants (Issue #1604)
@@ -17,118 +16,110 @@ const (
 	CacheTimeout = 10 * time.Millisecond
 )
 
+// Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct{}
 
-type CheckQuestConditionsResponse struct {
-	AllConditionsMet bool                          `json:"all_conditions_met"`
-	Conditions       []QuestConditionCheckResult `json:"conditions"`
-}
-
-type QuestConditionCheckResult struct {
-	ConditionType  string `json:"condition_type"`
-	ConditionTarget string `json:"condition_target"`
-	RequiredValue  int    `json:"required_value"`
-	ActualValue    int    `json:"actual_value"`
-	Met            bool   `json:"met"`
-}
-
-func (h *Handlers) CheckQuestConditions(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// CheckQuestConditions - TYPED response!
+func (h *Handlers) CheckQuestConditions(ctx context.Context, params api.CheckQuestConditionsParams) (api.CheckQuestConditionsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	response := CheckQuestConditionsResponse{
+	conditions := []api.CheckQuestConditionsOKConditionsItem{
+		{
+			ConditionType:  api.NewOptString("level"),
+			ConditionTarget: api.NewOptString("character"),
+			RequiredValue:   api.NewOptInt(10),
+			ActualValue:     api.NewOptInt(15),
+			Met:             api.NewOptBool(true),
+		},
+	}
+
+	response := &api.CheckQuestConditionsOK{
 		AllConditionsMet: true,
-		Conditions: []QuestConditionCheckResult{
-			{
-				ConditionType:  "level",
-				ConditionTarget: "character",
-				RequiredValue:  10,
-				ActualValue:    15,
-				Met:            true,
-			},
-		},
+		Conditions:       conditions,
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) GetQuestRequirements(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetQuestRequirements - TYPED response!
+func (h *Handlers) GetQuestRequirements(ctx context.Context, params api.GetQuestRequirementsParams) (api.GetQuestRequirementsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	response := api.QuestRequirements{
-		Level: func() *int { v := 10; return &v }(),
-		Items: &[]struct {
-			ItemId   *openapi_types.UUID `json:"item_id,omitempty"`
-			Quantity *int                `json:"quantity,omitempty"`
-		}{
-			{
-				ItemId:   func() *openapi_types.UUID { id := openapi_types.UUID(uuid.New()); return &id }(),
-				Quantity: func() *int { v := 5; return &v }(),
-			},
+	itemID := uuid.New()
+	items := []api.QuestRequirementsItemsItem{
+		{
+			ItemID:   api.NewOptUUID(itemID),
+			Quantity: api.NewOptInt(5),
 		},
-		QuestPrerequisites: &[]openapi_types.UUID{},
-		Reputation:         &map[string]interface{}{},
-		Location:           &map[string]interface{}{},
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	response := &api.QuestRequirements{
+		Level:             api.NewOptInt(10),
+		Items:             items,
+		QuestPrerequisites: []uuid.UUID{},
+		Reputation:        api.OptQuestRequirementsReputation{},
+		Location:          api.OptQuestRequirementsLocation{},
+	}
+
+	return response, nil
 }
 
-func (h *Handlers) PerformSkillCheck(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
-	defer cancel()
-	_ = ctx // Will be used when DB operations are implemented
-
-	var req api.SkillCheckRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	now := time.Now()
-	resultId := openapi_types.UUID(uuid.New())
-	questInstanceId := questId
-
-	response := api.SkillCheckResult{
-		Id:              &resultId,
-		QuestInstanceId:  &questInstanceId,
-		CheckTarget:      req.CheckTarget,
-		CheckType:        api.SkillCheckResultCheckType(req.CheckType),
-		RequiredValue:    15,
-		ActualValue:      20,
-		Passed:           true,
-		CheckedAt:        &now,
-	}
-	respondJSON(w, http.StatusOK, response)
-}
-
-func (h *Handlers) GetSkillCheckHistory(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID, params api.GetSkillCheckHistoryParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// PerformSkillCheck - TYPED response!
+func (h *Handlers) PerformSkillCheck(ctx context.Context, req *api.SkillCheckRequest, params api.PerformSkillCheckParams) (api.PerformSkillCheckRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
 	now := time.Now()
-	resultId := openapi_types.UUID(uuid.New())
-	questInstanceId := questId
+	resultID := uuid.New()
+	questInstanceID := params.QuestID
+
+	response := &api.SkillCheckResult{
+		ID:              api.NewOptUUID(resultID),
+		QuestInstanceID: api.NewOptUUID(questInstanceID),
+		CheckTarget:     req.CheckTarget,
+		CheckType:       api.SkillCheckResultCheckType(req.CheckType),
+		RequiredValue:   api.NewOptInt(15),
+		ActualValue:     api.NewOptInt(20),
+		Passed:          api.NewOptBool(true),
+		CheckedAt:       api.NewOptDateTime(now),
+	}
+
+	return response, nil
+}
+
+// GetSkillCheckHistory - TYPED response!
+func (h *Handlers) GetSkillCheckHistory(ctx context.Context, params api.GetSkillCheckHistoryParams) (api.GetSkillCheckHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
+	now := time.Now()
+	resultID := uuid.New()
+	questInstanceID := params.QuestID
 
 	skillChecks := []api.SkillCheckResult{
 		{
-			Id:             &resultId,
-			QuestInstanceId: &questInstanceId,
-			CheckTarget:     "hacking",
+			ID:              api.NewOptUUID(resultID),
+			QuestInstanceID: api.NewOptUUID(questInstanceID),
+			CheckTarget:     api.NewOptString("hacking"),
 			CheckType:       api.SkillCheckResultCheckTypeSkill,
-			RequiredValue:   15,
-			ActualValue:     20,
-			Passed:          true,
-			CheckedAt:       &now,
+			RequiredValue:   api.NewOptInt(15),
+			ActualValue:     api.NewOptInt(20),
+			Passed:          api.NewOptBool(true),
+			CheckedAt:       api.NewOptDateTime(now),
 		},
 	}
 
-	response := api.SkillChecksResponse{
+	response := &api.SkillChecksResponse{
 		SkillChecks: skillChecks,
 		Total:       len(skillChecks),
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 

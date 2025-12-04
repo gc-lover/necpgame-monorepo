@@ -49,7 +49,7 @@ func main() {
 
 	// pprof profiling endpoint
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6094")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6513")
 		log.Printf("🔧 pprof profiling on http://%s/debug/pprof", pprofAddr)
 		http.ListenAndServe(pprofAddr, nil)
 	}()

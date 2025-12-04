@@ -132,7 +132,7 @@ func (s *Service) ClaimReward(ctx context.Context, playerId string, level int, t
 	}
 
 	// Get reward
-	reward, err := s.repo.GetReward(ctx, progress.SeasonId, level, track)
+	reward, err := s.repo.GetReward(ctx, progress.SeasonID.String(), level, track)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (s *Service) PurchasePremium(ctx context.Context, playerId string) (map[str
 	}
 
 	// Get retroactive rewards
-	retroRewards, err := s.repo.GetRetroactiveRewards(ctx, progress.SeasonId, progress.CurrentLevel)
+	retroRewards, err := s.repo.GetRetroactiveRewards(ctx, progress.SeasonID.String(), progress.CurrentLevel)
 	if err != nil {
 		return nil, err
 	}
@@ -198,27 +198,12 @@ func (s *Service) PurchasePremium(ctx context.Context, playerId string) (map[str
 }
 
 // GetWeeklyChallenges returns weekly challenges
-// Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetWeeklyChallenges(ctx context.Context, playerId string) (map[string]interface{}, error) {
+func (s *Service) GetWeeklyChallenges(ctx context.Context, playerId string) ([]api.WeeklyChallenge, error) {
 	challenges, err := s.repo.GetWeeklyChallenges(ctx, playerId)
 	if err != nil {
 		return nil, err
 	}
-
-	weekNumber := 1 // TODO: Calculate current week based on season start date
-
-	// Issue: #1607 - Use memory pooling
-	result := s.claimRewardResponsePool.Get().(map[string]interface{})
-	// Reset map
-	for k := range result {
-		delete(result, k)
-	}
-	// Note: Not returning to pool - map is returned to caller
-
-	result["week_number"] = weekNumber
-	result["challenges"] = challenges
-
-	return result, nil
+	return challenges, nil
 }
 
 // CompleteChallenge completes a challenge
@@ -230,7 +215,7 @@ func (s *Service) CompleteChallenge(ctx context.Context, playerId, challengeId s
 		return nil, err
 	}
 
-	if challenge.CompletedAt != nil {
+	if challenge.CompletedAt.IsSet() {
 		return nil, ErrAlreadyCompleted
 	}
 
@@ -286,14 +271,14 @@ func (s *Service) AddXP(ctx context.Context, playerId string, xpAmount int, sour
 		// Get unclaimed rewards for new levels
 		for level := progress.CurrentLevel + 1; level <= newLevel; level++ {
 			// Free track
-			reward, err := s.repo.GetReward(ctx, progress.SeasonId, level, "free")
+			reward, err := s.repo.GetReward(ctx, progress.SeasonID.String(), level, "free")
 			if err == nil {
 				rewardsUnlocked = append(rewardsUnlocked, *reward)
 			}
 
 			// Premium track (if has premium)
 			if progress.HasPremium {
-				reward, err := s.repo.GetReward(ctx, progress.SeasonId, level, "premium")
+				reward, err := s.repo.GetReward(ctx, progress.SeasonID.String(), level, "premium")
 				if err == nil {
 					rewardsUnlocked = append(rewardsUnlocked, *reward)
 				}
@@ -336,15 +321,6 @@ func (s *Service) addXPInternal(ctx context.Context, playerId string, xpAmount i
 	return newLevel, nil
 }
 
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string) {
-	respondJSON(w, status, map[string]string{"error": message})
-}
 
 
 

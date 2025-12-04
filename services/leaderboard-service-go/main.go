@@ -25,7 +25,7 @@ func main() {
 
 	// OPTIMIZATION: Issue #1584 - pprof for performance monitoring
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6066")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6196")
 		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 			logger.WithError(err).Error("pprof server failed")

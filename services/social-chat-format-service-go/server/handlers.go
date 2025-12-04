@@ -1,85 +1,88 @@
-// Issue: #1604
+// Issue: #1598, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/necpgame/social-chat-format-service-go/pkg/api"
+	"github.com/go-faster/jx"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-format-service-go/pkg/api"
 	"github.com/google/uuid"
 )
 
-// Context timeout constants
+// Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
 
+// ChatFormatHandlers implements api.Handler interface (ogen typed handlers!)
 type ChatFormatHandlers struct{}
 
 func NewChatFormatHandlers() *ChatFormatHandlers {
 	return &ChatFormatHandlers{}
 }
 
-func (h *ChatFormatHandlers) FormatChatMessage(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// FormatChatMessage - TYPED response!
+func (h *ChatFormatHandlers) FormatChatMessage(ctx context.Context, req *api.FormatMessageRequest) (api.FormatChatMessageRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
-
-	var req api.FormatMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
 
 	original := req.Content
 	formatted := req.Content
 	mentions := []uuid.UUID{}
 
-	response := api.FormattedMessageResponse{
-		Original:  &original,
-		Formatted: &formatted,
-		Mentions:  &mentions,
+	response := &api.FormattedMessageResponse{
+		Original:  api.NewOptString(original),
+		Formatted: api.NewOptString(formatted),
+		Mentions:  mentions,
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *ChatFormatHandlers) GetChatEvents(w http.ResponseWriter, r *http.Request, params api.GetChatEventsParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetChatEvents - TYPED response!
+func (h *ChatFormatHandlers) GetChatEvents(ctx context.Context, params api.GetChatEventsParams) (api.GetChatEventsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	eventId1 := uuid.UUID(uuid.New())
-	eventId2 := uuid.UUID(uuid.New())
-	channelId := uuid.UUID(uuid.New())
-	eventType1 := api.ChatEventEventTypeChatMessageSent
-	eventType2 := api.ChatEventEventTypeChatMessageReceived
+	eventId1 := uuid.New()
+	eventId2 := uuid.New()
+	channelId := uuid.New()
 	now := time.Now()
-	eventData1 := map[string]interface{}{
-		"message_id": uuid.New().String(),
-		"player_id":  uuid.New().String(),
+
+	// Event data as jx.Raw maps
+	messageId1JSON := jx.Raw(`"` + uuid.New().String() + `"`)
+	playerId1JSON := jx.Raw(`"` + uuid.New().String() + `"`)
+	messageId2JSON := jx.Raw(`"` + uuid.New().String() + `"`)
+	playerId2JSON := jx.Raw(`"` + uuid.New().String() + `"`)
+
+	eventData1 := api.ChatEventEventData{
+		"message_id": messageId1JSON,
+		"player_id":  playerId1JSON,
 	}
-	eventData2 := map[string]interface{}{
-		"message_id": uuid.New().String(),
-		"player_id":  uuid.New().String(),
+	eventData2 := api.ChatEventEventData{
+		"message_id": messageId2JSON,
+		"player_id":  playerId2JSON,
 	}
 
 	events := []api.ChatEvent{
 		{
-			Id:        &eventId1,
-			EventType: &eventType1,
-			ChannelId: &channelId,
-			EventData: &eventData1,
-			CreatedAt: &now,
+			ID:        api.NewOptUUID(eventId1),
+			EventType: api.NewOptChatEventEventType(api.ChatEventEventTypeChatMessageSent),
+			ChannelID: api.NewOptNilUUID(channelId),
+			EventData: api.NewOptChatEventEventData(eventData1),
+			CreatedAt: api.NewOptDateTime(now),
 		},
 		{
-			Id:        &eventId2,
-			EventType: &eventType2,
-			ChannelId: &channelId,
-			EventData: &eventData2,
-			CreatedAt: &now,
+			ID:        api.NewOptUUID(eventId2),
+			EventType: api.NewOptChatEventEventType(api.ChatEventEventTypeChatMessageReceived),
+			ChannelID: api.NewOptNilUUID(channelId),
+			EventData: api.NewOptChatEventEventData(eventData2),
+			CreatedAt: api.NewOptDateTime(now),
 		},
 	}
 
@@ -87,39 +90,19 @@ func (h *ChatFormatHandlers) GetChatEvents(w http.ResponseWriter, r *http.Reques
 	limit := 50
 	offset := 0
 
-	if params.Limit != nil {
-		limit = int(*params.Limit)
+	if params.Limit.Set {
+		limit = params.Limit.Value
 	}
-	if params.Offset != nil {
-		offset = int(*params.Offset)
-	}
-
-	response := api.ChatEventsResponse{
-		Events: &events,
-		Total:  &total,
-		Limit:  &limit,
-		Offset: &offset,
+	if params.Offset.Set {
+		offset = params.Offset.Value
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	response := &api.ChatEventsResponse{
+		Events: events,
+		Total:  api.NewOptInt(total),
+		Limit:  api.NewOptInt(limit),
+		Offset: api.NewOptInt(offset),
+	}
+
+	return response, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

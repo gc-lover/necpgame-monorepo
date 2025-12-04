@@ -8,6 +8,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.3
+	go.uber.org/goleak v1.3.0
 )
 
 require (

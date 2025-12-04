@@ -78,16 +78,24 @@ components:
   schemas:
     CharacterStats:
       type: object
+      description: |
+        BACKEND NOTE: Hot path (character stats queries, 1.5k+ RPS).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~120 bytes/instance.
       properties:
+        # UUID fields first (16 bytes)
         character_id:
           type: string
           format: uuid
+        # String fields (16 bytes each)
         recalculated_at:
           type: string
           format: date-time
+        # Objects/pointers (8 bytes each)
         base_stats:
           type: object
           properties:
+            # int32 fields (4 bytes each)
             health:
               type: integer
             max_health:
@@ -96,10 +104,13 @@ components:
               type: integer
             damage:
               type: integer
+            # float32 fields (4 bytes each)
             attack_speed:
               type: number
+              format: float
             movement_speed:
               type: number
+              format: float
         equipment_bonuses:
           type: object
           additionalProperties: true
@@ -109,6 +120,7 @@ components:
         total_stats:
           type: object
           properties:
+            # int32 fields (4 bytes each)
             health:
               type: integer
             max_health:
@@ -117,10 +129,12 @@ components:
               type: integer
             damage:
               type: integer
+            # float32 fields (4 bytes each)
             attack_speed:
               type: number
+              format: float
             movement_speed:
               type: number
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+              format: float
 security:
 - BearerAuth: []

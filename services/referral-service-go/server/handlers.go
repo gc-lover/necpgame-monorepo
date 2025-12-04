@@ -1,13 +1,11 @@
-// Issue: #1604
-// Handlers for referral-service - implements api.ServerInterface
+// Issue: #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/necpgame/referral-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
@@ -18,7 +16,7 @@ const (
 	CacheTimeout = 10 * time.Millisecond
 )
 
-// ServiceHandlers implements api.ServerInterface
+// ServiceHandlers implements api.Handler interface (ogen typed handlers!)
 type ServiceHandlers struct {
 	logger *logrus.Logger
 }
@@ -28,22 +26,21 @@ func NewServiceHandlers(logger *logrus.Logger) *ServiceHandlers {
 	return &ServiceHandlers{logger: logger}
 }
 
-// Helper
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-// GetReferralCode implements GET /growth/referral/code
-func (h *ServiceHandlers) GetReferralCode(w http.ResponseWriter, r *http.Request, params api.GetReferralCodeParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetReferralCode implements getReferralCode operation.
+func (h *ServiceHandlers) GetReferralCode(ctx context.Context, params api.GetReferralCodeParams) (api.GetReferralCodeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	// TODO: Implement logic
-	_ = ctx // Use context when implementing
-	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"code": "REF123",
-		"id":   "00000000-0000-0000-0000-000000000000",
-	})
+	codeID := uuid.New()
+	playerID := uuid.New()
+	code := "REF123"
+
+	return &api.SchemasReferralCode{
+		ID:        api.NewOptUUID(codeID),
+		PlayerID:  api.NewOptUUID(playerID),
+		Code:      api.NewOptString(code),
+		IsActive:  api.NewOptBool(true),
+		CreatedAt: api.NewOptDateTime(time.Now()),
+	}, nil
 }
