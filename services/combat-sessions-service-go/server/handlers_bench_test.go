@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"// Issue: #130/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sessions-service-go/pkg/api"
 )
 
 // BenchmarkListCombatSessions benchmarks ListCombatSessions handler
@@ -30,7 +31,7 @@ func BenchmarkCreateCombatSession(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	req := &api.CreateCombatSessionRequest{
+	req := &api.CreateSessionRequest{
 		// TODO: Fill request fields based on API spec
 	}
 

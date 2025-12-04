@@ -7,24 +7,23 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-rewards-events-service-go/pkg/api"
 )
 
-// BenchmarkHandler benchmarks handler performance
+// BenchmarkGetQuestRewards benchmarks GetQuestRewards handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkHandler(b *testing.B) {
-	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+func BenchmarkGetQuestRewards(b *testing.B) {
+	handlers := NewQuestRewardsEventsHandlers()
 
 	ctx := context.Background()
+	params := api.GetQuestRewardsParams{
+		QuestID: uuid.New(),
+	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// TODO: Add actual handler call based on service API
-		// Example:
-		// _, _ = handlers.Get(ctx, api.GetParams{ID: uuid.New()})
-		_ = handlers
-		_ = ctx
+		_, _ = handlers.GetQuestRewards(ctx, params)
 	}
 }

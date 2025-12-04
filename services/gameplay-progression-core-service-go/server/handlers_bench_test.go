@@ -3,10 +3,10 @@ package server
 
 import (
 	"context"
-	"// Issue: #164/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/necpgame/gameplay-progression-core-service-go/pkg/api"
 )
 
 // BenchmarkValidateProgression benchmarks ValidateProgression handler
@@ -15,11 +15,12 @@ func BenchmarkValidateProgression(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
+	req := &api.ValidateProgressionRequest{}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ValidateProgression(ctx)
+		_, _ = handlers.ValidateProgression(ctx, req)
 	}
 }
 
@@ -30,7 +31,7 @@ func BenchmarkGetCharacterProgression(b *testing.B) {
 
 	ctx := context.Background()
 	params := api.GetCharacterProgressionParams{
-		CharacterID: uuid.New(),
+		CharacterId: uuid.New(),
 	}
 
 	b.ReportAllocs()
@@ -47,11 +48,15 @@ func BenchmarkDistributeAttributePoints(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
+	req := &api.DistributeAttributePointsRequest{}
+	params := api.DistributeAttributePointsParams{
+		CharacterId: uuid.New(),
+	}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.DistributeAttributePoints(ctx)
+		_, _ = handlers.DistributeAttributePoints(ctx, req, params)
 	}
 }
 
