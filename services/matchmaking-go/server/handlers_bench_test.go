@@ -11,22 +11,28 @@ import (
 // BenchmarkEnterQueue benchmarks EnterQueue handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkEnterQueue(b *testing.B) {
-	service := NewService(nil)
+	repo, _ := NewRepository("")
+	cache := NewCacheManager("")
+	service := NewService(repo, cache)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.EnterQueueRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.EnterQueue(ctx)
+		_, _ = handlers.EnterQueue(ctx, req)
 	}
 }
 
 // BenchmarkGetQueueStatus benchmarks GetQueueStatus handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetQueueStatus(b *testing.B) {
-	service := NewService(nil)
+	repo, _ := NewRepository("")
+	cache := NewCacheManager("")
+	service := NewService(repo, cache)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -44,15 +50,19 @@ func BenchmarkGetQueueStatus(b *testing.B) {
 // BenchmarkLeaveQueue benchmarks LeaveQueue handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkLeaveQueue(b *testing.B) {
-	service := NewService(nil)
+	repo, _ := NewRepository("")
+	cache := NewCacheManager("")
+	service := NewService(repo, cache)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	params := api.LeaveQueueParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.LeaveQueue(ctx)
+		_, _ = handlers.LeaveQueue(ctx, params)
 	}
 }
 

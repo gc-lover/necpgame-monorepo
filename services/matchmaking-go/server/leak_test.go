@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/goleak"
 	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
@@ -63,7 +62,6 @@ func TestHandlersNoLeaks(t *testing.T) {
 	// Call handlers (will error due to no DB, but tests goroutine cleanup)
 	_, _ = handlers.EnterQueue(ctx, &api.EnterQueueRequest{
 		ActivityType: api.EnterQueueRequestActivityTypePvp5v5,
-		PartySize: api.NewOptInt(1),
 	})
 	
 	time.Sleep(50 * time.Millisecond)

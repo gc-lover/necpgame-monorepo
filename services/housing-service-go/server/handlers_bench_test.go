@@ -6,14 +6,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // BenchmarkHandler benchmarks handler performance
 // Target: <100μs per operation, minimal allocs
 func BenchmarkHandler(b *testing.B) {
 	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+	logger := logrus.New()
+	handlers := NewHandlers(logger)
 
 	ctx := context.Background()
 

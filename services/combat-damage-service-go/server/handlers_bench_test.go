@@ -4,6 +4,8 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
 )
 
 // BenchmarkCalculateDamage benchmarks CalculateDamage handler
@@ -15,8 +17,10 @@ func BenchmarkCalculateDamage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.DamageCalculationRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.CalculateDamage(ctx)
+		_, _ = handlers.CalculateDamage(ctx, req)
 	}
 }
 
@@ -29,8 +33,10 @@ func BenchmarkApplyEffects(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.ApplyEffectsRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ApplyEffects(ctx)
+		_, _ = handlers.ApplyEffects(ctx, req)
 	}
 }
 
@@ -43,8 +49,9 @@ func BenchmarkRemoveEffect(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	params := api.RemoveEffectParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.RemoveEffect(ctx)
+		_, _ = handlers.RemoveEffect(ctx, params)
 	}
 }
-

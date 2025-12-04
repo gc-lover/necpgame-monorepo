@@ -6,51 +6,59 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/necpgame/progression-experience-service-go/pkg/api"
 )
 
-// BenchmarkValidateProgression benchmarks ValidateProgression handler
+// BenchmarkAddExperience benchmarks AddExperience handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkValidateProgression(b *testing.B) {
+func BenchmarkAddExperience(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
+	req := &api.AddExperienceRequest{
+		PlayerID:         uuid.New(),
+		ExperienceAmount: 100,
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ValidateProgression(ctx)
+		_, _ = handlers.AddExperience(ctx, req)
 	}
 }
 
-// BenchmarkGetCharacterProgression benchmarks GetCharacterProgression handler
+// BenchmarkGetPlayerLevel benchmarks GetPlayerLevel handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkGetCharacterProgression(b *testing.B) {
+func BenchmarkGetPlayerLevel(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetCharacterProgressionParams{
-		CharacterID: uuid.New(),
+	params := api.GetPlayerLevelParams{
+		PlayerID: uuid.New(),
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetCharacterProgression(ctx, params)
+		_, _ = handlers.GetPlayerLevel(ctx, params)
 	}
 }
 
-// BenchmarkDistributeAttributePoints benchmarks DistributeAttributePoints handler
+// BenchmarkCalculateExperience benchmarks CalculateExperience handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkDistributeAttributePoints(b *testing.B) {
+func BenchmarkCalculateExperience(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
+	req := &api.CalculateExperienceRequest{}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.DistributeAttributePoints(ctx)
+		_, _ = handlers.CalculateExperience(ctx, req)
 	}
 }
 

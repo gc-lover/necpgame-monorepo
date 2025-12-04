@@ -7,30 +7,50 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 )
 
-// Mock Redis client for benchmarks
-type MockRedis struct{}
+// Mock Repository for benchmarks
+type MockRepository struct{}
 
-func (m *MockRedis) Get(ctx context.Context, key string) *redis.StringCmd {
-	return redis.NewStringResult("", redis.Nil)
+func (m *MockRepository) GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
+	return &models.InventoryResponse{
+		Inventory: models.Inventory{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			Capacity:    50,
+			UsedSlots:   0,
+			Weight:      0,
+			MaxWeight:   100.0,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+		Items: []models.InventoryItem{},
+	}, nil
 }
 
-func (m *MockRedis) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) *redis.StatusCmd {
-	return redis.NewStatusResult("OK", nil)
+func (m *MockRepository) AddItem(ctx context.Context, characterID uuid.UUID, item *models.AddItemRequest) error {
+	return nil
 }
 
-func (m *MockRedis) Del(ctx context.Context, keys ...string) *redis.IntCmd {
-	return redis.NewIntResult(1, nil)
+func (m *MockRepository) RemoveItem(ctx context.Context, characterID, itemID uuid.UUID) error {
+	return nil
+}
+
+func (m *MockRepository) UpdateItem(ctx context.Context, characterID, itemID uuid.UUID, updateFn func() error) error {
+	return updateFn()
 }
 
 // Benchmark: Old service (no cache, direct DB)
 func BenchmarkInventory_NoCaching(b *testing.B) {
-	service := NewInventoryService(&MockRepository{})
+	service, _ := NewInventoryService("", "")
+	if service == nil {
+		b.Skip("Service initialization failed")
+	}
 	ctx := context.Background()
-	playerID := uuid.New().String()
+	playerID := uuid.New()
 	
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -94,8 +114,8 @@ func BenchmarkInventory_BatchVsSingle(b *testing.B) {
 	items := make([]api.AddItemRequest, 10)
 	for i := range items {
 		items[i] = api.AddItemRequest{
-			ItemId:     uuid.New(),
-			StackCount: 1,
+			ItemID:   uuid.New(),
+			Quantity: api.NewOptInt(1),
 		}
 	}
 	

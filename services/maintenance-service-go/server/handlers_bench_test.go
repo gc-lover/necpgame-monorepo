@@ -4,12 +4,14 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 )
 
 // BenchmarkHealthCheck benchmarks HealthCheck handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkHealthCheck(b *testing.B) {
-	logger := GetLogger()
+	logger := logrus.New()
 	handlers := NewHandlers(logger)
 
 	ctx := context.Background()

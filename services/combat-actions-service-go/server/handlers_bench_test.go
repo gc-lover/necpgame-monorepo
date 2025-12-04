@@ -4,6 +4,8 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-actions-service-go/pkg/api"
 )
 
 // BenchmarkApplyEffects benchmarks ApplyEffects handler
@@ -16,8 +18,10 @@ func BenchmarkApplyEffects(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.ApplyEffectsRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ApplyEffects(ctx)
+		_, _ = handlers.ApplyEffects(ctx, req)
 	}
 }
 
@@ -31,8 +35,10 @@ func BenchmarkCalculateDamage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.CalculateDamageRequest{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.CalculateDamage(ctx)
+		_, _ = handlers.CalculateDamage(ctx, req)
 	}
 }
 
@@ -46,8 +52,11 @@ func BenchmarkDefendInCombat(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	req := &api.DefendRequest{}
+	params := api.DefendInCombatParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.DefendInCombat(ctx)
+		_, _ = handlers.DefendInCombat(ctx, req, params)
 	}
 }
 

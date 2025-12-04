@@ -12,6 +12,37 @@ import (
 	"go.uber.org/goleak"
 )
 
+// mockRepository implements Repository interface for tests
+type mockRepository struct{}
+
+func (m *mockRepository) CreateQueueEntry(ctx context.Context, playerID, activityType string, rating int) (string, error) {
+	return "", nil
+}
+
+func (m *mockRepository) GetQueueEntry(ctx context.Context, queueID string) (interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockRepository) DeleteQueueEntry(ctx context.Context, queueID string) error {
+	return nil
+}
+
+func (m *mockRepository) GetPlayerRating(ctx context.Context, playerID string, activityType string) (int, error) {
+	return 1500, nil
+}
+
+func (m *mockRepository) UpdatePlayerRating(ctx context.Context, playerID string, activityType string, newRating int) error {
+	return nil
+}
+
+func (m *mockRepository) CreateMatch(ctx context.Context, players []string, activityType string) (string, error) {
+	return "", nil
+}
+
+func (m *mockRepository) UpdateMatchStatus(ctx context.Context, matchID string, status string) error {
+	return nil
+}
+
 // TestMain verifies no goroutine leaks across ALL tests
 // CRITICAL for hot path service - 5k+ RPS, queue workers, skill buckets
 func TestMain(m *testing.M) {
@@ -29,8 +60,8 @@ func TestMatchmakingServiceNoLeaks(t *testing.T) {
 	)
 
 	// Create mock repository
-	repo := &MockRepository{}
-	service := NewMatchmakingService(repo)
+	mockRepo := &mockRepository{}
+	service := NewMatchmakingService(mockRepo)
 
 	// Test queue operations
 	queue := NewMatchmakingQueue()
@@ -83,7 +114,7 @@ func TestConcurrentQueueOperationsNoLeaks(t *testing.T) {
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
 
-	repo := &MockRepository{}
+	repo := &mockRepository{}
 	service := NewMatchmakingService(repo)
 	ctx := context.Background()
 

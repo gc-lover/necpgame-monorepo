@@ -50,8 +50,10 @@ func BenchmarkCheckCompatibility(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	params := api.CheckCompatibilityParams{}
+
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.CheckCompatibility(ctx)
+		_, _ = handlers.CheckCompatibility(ctx, params)
 	}
 }
 
