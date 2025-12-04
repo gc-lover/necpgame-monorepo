@@ -16,3 +16,5 @@ clean:
 	rm -f $(BUNDLED_SPEC)
 	rm -rf $(API_DIR)/oas_*_gen.go
 
+
+

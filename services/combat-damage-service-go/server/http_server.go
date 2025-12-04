@@ -1,149 +1,80 @@
+// Issue: #1595
 package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/necpgame/combat-damage-service-go/pkg/api"
-	"github.com/sirupsen/logrus"
 )
 
+// HTTPServer represents HTTP server
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
-	logger *logrus.Logger
 	server *http.Server
+	router chi.Router
 }
 
+// NewHTTPServer creates new HTTP server
 func NewHTTPServer(addr string) *HTTPServer {
 	router := chi.NewRouter()
 
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
+	// Built-in middleware
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router.Use(middleware.RequestID)
 
-	server := &HTTPServer{
+	// Custom middleware
+	router.Use(LoggingMiddleware)
+	router.Use(MetricsMiddleware)
+
+	// Handlers (реализация api.Handler из handlers.go)
+	handlers := NewHandlers()
+
+	// Integration with ogen (creates its own Chi router)
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	// Mount ogen server under /api/v1
+	router.Mount("/api/v1", ogenServer)
+
+	// Health check
+	router.Get("/health", healthCheck)
+	router.Get("/metrics", metricsHandler)
+
+	return &HTTPServer{
 		addr:   addr,
 		router: router,
-		logger: GetLogger(),
-	}
-
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-
-	handlers := NewDamageHandlers()
-
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
-
-	router.Get("/health", server.healthCheck)
-
-	return server
-}
-
-func (s *HTTPServer) Start(ctx context.Context) error {
-	s.server = &http.Server{
-		Addr:         s.addr,
-		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
-	errChan := make(chan error, 1)
-	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			errChan <- err
-		}
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return s.Shutdown(context.Background())
+		server: &http.Server{
+			Addr:    addr,
+			Handler: router,
+		},
 	}
 }
 
+// Start starts HTTP server
+func (s *HTTPServer) Start() error {
+	return s.server.ListenAndServe()
+}
+
+// Shutdown gracefully shuts down HTTP server
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	if s.server != nil {
-		return s.server.Shutdown(ctx)
-	}
-	return nil
+	return s.server.Shutdown(ctx)
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
+// Health check handler
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
-func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		s.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(recorder, r)
-
-		duration := time.Since(start)
-		s.logger.WithFields(logrus.Fields{
-			"method":      r.Method,
-			"path":        r.URL.Path,
-			"duration_ms": duration.Milliseconds(),
-			"status":      recorder.statusCode,
-		}).Info("HTTP request")
-	})
-}
-
-func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(recorder, r)
-
-		duration := time.Since(start).Seconds()
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(recorder.statusCode))
-		RecordRequestDuration(r.Method, r.URL.Path, duration)
-	})
-}
-
-func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (sr *statusRecorder) WriteHeader(code int) {
-	sr.statusCode = code
-	sr.ResponseWriter.WriteHeader(code)
+// Metrics handler (stub)
+func metricsHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("# HELP combat_damage_service metrics\n"))
 }

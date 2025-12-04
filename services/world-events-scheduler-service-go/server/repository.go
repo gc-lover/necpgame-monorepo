@@ -107,3 +107,5 @@ func (r *repository) DeleteScheduledEvent(ctx context.Context, id uuid.UUID) err
 
 
 
+
+

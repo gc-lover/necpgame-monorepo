@@ -1,156 +1,117 @@
+// Issue: #1595
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
 	"github.com/necpgame/combat-damage-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/sirupsen/logrus"
 )
 
-type DamageHandlers struct {
-	logger *logrus.Logger
+const DBTimeout = 50 * time.Millisecond
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+type Handlers struct{}
+
+// NewHandlers creates new handlers
+func NewHandlers() *Handlers {
+	return &Handlers{}
 }
 
-func NewDamageHandlers() *DamageHandlers {
-	return &DamageHandlers{
-		logger: GetLogger(),
-	}
-}
-
-func (h *DamageHandlers) CalculateDamage(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
-
-	var req api.DamageCalculationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode CalculateDamage request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	h.logger.WithFields(logrus.Fields{
-		"attacker_id": req.AttackerId,
-		"target_id":   req.TargetId,
-		"base_damage": req.BaseDamage,
-		"damage_type": req.DamageType,
-	}).Info("CalculateDamage request")
+// CalculateDamage - TYPED response!
+func (h *Handlers) CalculateDamage(ctx context.Context, req *api.DamageCalculationRequest) (api.CalculateDamageRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	finalDamage := req.BaseDamage
-	if req.Modifiers != nil {
-		if req.Modifiers.IsCritical != nil && *req.Modifiers.IsCritical {
+	wasCritical := false
+
+	// Handle modifiers using ogen optional types
+	if req.Modifiers.IsSet() {
+		mods := req.Modifiers.Value
+
+		// Check critical hit
+		if mods.IsCritical.IsSet() && mods.IsCritical.Value {
 			finalDamage = finalDamage * 2
+			wasCritical = true
 		}
-		if req.Modifiers.WeakSpot != nil && *req.Modifiers.WeakSpot {
+
+		// Check weak spot
+		if mods.WeakSpot.IsSet() && mods.WeakSpot.Value {
 			finalDamage = int(float32(finalDamage) * 1.5)
 		}
-		if req.Modifiers.RangeModifier != nil {
-			finalDamage = int(float32(finalDamage) * *req.Modifiers.RangeModifier)
+
+		// Check range modifier
+		if mods.RangeModifier.IsSet() {
+			finalDamage = int(float32(finalDamage) * mods.RangeModifier.Value)
 		}
 	}
 
 	damageType := api.DamageCalculationResultDamageType(req.DamageType)
-	wasCritical := false
-	if req.Modifiers != nil && req.Modifiers.IsCritical != nil {
-		wasCritical = *req.Modifiers.IsCritical
+
+	result := &api.DamageCalculationResult{
+		AttackerID:      api.NewOptUUID(req.AttackerID),
+		TargetID:        api.NewOptUUID(req.TargetID),
+		BaseDamage:      api.NewOptInt(req.BaseDamage),
+		FinalDamage:     api.NewOptInt(finalDamage),
+		DamageType:      api.NewOptDamageCalculationResultDamageType(damageType),
+		WasCritical:     api.NewOptBool(wasCritical),
+		WasBlocked:      api.NewOptBool(false),
+		DamageReduction: api.NewOptInt(0),
+		ModifiersApplied: []api.DamageCalculationResultModifiersAppliedItem{},
 	}
 
-	response := api.DamageCalculationResult{
-		AttackerId:      &req.AttackerId,
-		TargetId:        &req.TargetId,
-		BaseDamage:      &req.BaseDamage,
-		FinalDamage:     &finalDamage,
-		DamageType:      &damageType,
-		WasCritical:     &wasCritical,
-		WasBlocked:      new(bool),
-		DamageReduction: new(int),
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
-func (h *DamageHandlers) ApplyEffects(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
-
-	var req api.ApplyEffectsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode ApplyEffects request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	h.logger.WithFields(logrus.Fields{
-		"target_id": req.TargetId,
-		"effects":   len(req.Effects),
-	}).Info("ApplyEffects request")
+// ApplyEffects - TYPED response!
+func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (api.ApplyEffectsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	effects := make([]api.CombatEffect, 0, len(req.Effects))
 	for _, effectReq := range req.Effects {
 		effectType := api.CombatEffectEffectType(effectReq.EffectType)
 		effect := api.CombatEffect{
-			EffectName:     &effectReq.EffectName,
-			EffectType:     &effectType,
-			Value:          &effectReq.Value,
-			Duration:       &effectReq.Duration,
-			RemainingTurns: &effectReq.Duration,
+			EffectName:     api.NewOptString(effectReq.EffectName),
+			EffectType:     api.NewOptCombatEffectEffectType(effectType),
+			Value:          api.NewOptInt(effectReq.Value),
+			Duration:       api.NewOptInt(effectReq.Duration),
+			RemainingTurns: api.NewOptInt(effectReq.Duration),
 		}
 		effects = append(effects, effect)
 	}
 
-	type ApplyEffectsResponse struct {
-		Effects []api.CombatEffect `json:"effects"`
-	}
-
-	response := ApplyEffectsResponse{
+	result := &api.ApplyEffectsOK{
 		Effects: effects,
 	}
 
-	h.respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
-func (h *DamageHandlers) RemoveEffect(w http.ResponseWriter, r *http.Request, effectId openapi_types.UUID) {
-	ctx := r.Context()
-	_ = ctx
+// RemoveEffect - TYPED response!
+func (h *Handlers) RemoveEffect(ctx context.Context, params api.RemoveEffectParams) (api.RemoveEffectRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("effect_id", effectId).Info("RemoveEffect request")
-
-	h.respondJSON(w, http.StatusOK, map[string]string{"status": "removed"})
-}
-
-func (h *DamageHandlers) ExtendEffect(w http.ResponseWriter, r *http.Request, effectId openapi_types.UUID) {
-	ctx := r.Context()
-	_ = ctx
-
-	var req api.ExtendEffectJSONBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode ExtendEffect request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
+	// TODO: Implement business logic
+	result := &api.RemoveEffectOK{
+		Status: api.NewOptString("removed"),
 	}
 
-	h.logger.WithFields(logrus.Fields{
-		"effect_id":         effectId,
-		"additional_turns":  req.AdditionalTurns,
-	}).Info("ExtendEffect request")
-
-	h.respondJSON(w, http.StatusOK, map[string]string{"status": "extended"})
+	return result, nil
 }
 
-func (h *DamageHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
+// ExtendEffect - TYPED response!
+func (h *Handlers) ExtendEffect(ctx context.Context, req *api.ExtendEffectReq, params api.ExtendEffectParams) (api.ExtendEffectRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	result := &api.ExtendEffectOK{
+		Status: api.NewOptString("extended"),
 	}
-}
 
-func (h *DamageHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-	}
-	h.respondJSON(w, status, errorResponse)
+	return result, nil
 }
-
