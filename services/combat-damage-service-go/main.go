@@ -48,16 +48,12 @@ func main() {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-sigChan
 		logger.Info("Shutting down server...")
-		cancel()
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
@@ -66,7 +62,7 @@ func main() {
 	}()
 
 	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
+	if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
 		logger.WithError(err).Fatal("Server error")
 	}
 
