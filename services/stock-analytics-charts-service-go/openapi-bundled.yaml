@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: Stock Analytics Charts Service API
+  description: |
+    API для графиков и технических индикаторов фондовой биржи NECPGAME.
+
+    **Основные возможности:**
+    - Графики (линейные, свечные, объёмные)
+    - Технические индикаторы (MA, RSI, MACD, Bollinger Bands)
+    - Исторические данные OHLC
+    - WebSocket стриминг котировок
+
+    **Источники данных:**
+    - Хранилище OHLC (Open, High, Low, Close)
+    - Кеш индикаторов
+    - Агрегация по интервалам (1m, 5m, 1h, 1d)
+
+    **Интеграция:**
+    - analytics-service для расчёта индикаторов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8080
+    description: Analytics Service (локальная разработка)
+  - url: https://analytics.necpgame.com
+    description: Analytics Service (продакшн)
+tags:
+  - name: Charts
+    description: Графики
+  - name: Indicators
+    description: Технические индикаторы
+paths:
+  /api/v1/analytics/charts/{ticker}:
+    get:
+      tags:
+        - Charts
+      summary: Получить график
+      description: |
+        Возвращает исторические данные для построения графика.
+
+        **Типы графиков:**
+        - line - линейный график (быстрый обзор цены)
+        - candlestick - свечной график (технический анализ)
+        - volume - объёмный график (активность торгов)
+
+        **Интервалы:**
+        - 1m, 5m, 15m - краткосрочные
+        - 1h, 4h - среднесрочные
+        - 1d - долгосрочные
+      operationId: getChart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Тикер акции (например, ARASAKA)
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - line
+              - candlestick
+              - volume
+        - name: interval
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - 1m
+              - 5m
+              - 15m
+              - 1h
+              - 4h
+              - 1d
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода
+      responses:
+        '200':
+          description: График
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/analytics/indicators/{ticker}:
+    get:
+      tags:
+        - Indicators
+      summary: Получить индикаторы
+      description: |
+        Возвращает технические индикаторы для тикера.
+
+        **Индикаторы:**
+        - MA7, MA30 - скользящие средние (сигналы пересечения)
+        - RSI - индекс относительной силы (перекупленность/перепроданность)
+        - MACD - схождение/расхождение скользящих средних (анализ трендов)
+        - BOLLINGER - полосы Боллинджера (волатильность)
+
+        **Пороги:**
+        - RSI: 70 (перекупленность), 30 (перепроданность)
+      operationId: getIndicators
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: indicators
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MA7
+                - MA30
+                - RSI
+                - MACD
+                - BOLLINGER
+        - name: interval
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - 1m
+              - 5m
+              - 15m
+              - 1h
+              - 4h
+              - 1d
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Индикаторы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Indicators'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/analytics/compare:
+    get:
+      tags:
+        - Charts
+      summary: Сравнительный график
+      description: |
+        Возвращает данные для сравнения до 4 тикеров или индексов.
+
+        **Использование:**
+        - Наложение графиков
+        - Сравнение производительности
+        - Корреляционный анализ
+      operationId: compareCharts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tickers
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: Список тикеров (до 4)
+        - name: interval
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - 1m
+              - 5m
+              - 15m
+              - 1h
+              - 4h
+              - 1d
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Сравнительные данные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  charts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Chart'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    Chart:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: Тикер акции
+        type:
+          type: string
+          enum:
+            - line
+            - candlestick
+            - volume
+          description: Тип графика
+        interval:
+          type: string
+          description: Интервал
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OHLC'
+          description: Исторические данные
+    OHLC:
+      type: object
+      description: Open, High, Low, Close данные свечи
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка
+        open:
+          type: number
+          description: Цена открытия
+        high:
+          type: number
+          description: Максимальная цена
+        low:
+          type: number
+          description: Минимальная цена
+        close:
+          type: number
+          description: Цена закрытия
+        volume:
+          type: integer
+          description: Объём торгов
+    Indicators:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: Тикер акции
+        interval:
+          type: string
+          description: Интервал
+        data:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/IndicatorValue'
+          description: Данные индикаторов по типам
+    IndicatorValue:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка
+        value:
+          type: number
+          description: Значение индикатора
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS

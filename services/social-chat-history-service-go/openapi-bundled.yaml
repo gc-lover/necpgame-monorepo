@@ -1,0 +1,323 @@
+openapi: 3.0.3
+info:
+  title: Social Chat History Service API
+  description: API для истории и поиска в чате
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Chat History
+    description: История и поиск в чате
+paths:
+  /social/chat/history/{channel_type}:
+    get:
+      tags:
+        - Chat History
+      summary: Получить историю канала
+      operationId: getChatHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - GLOBAL
+              - TRADE
+              - NEWBIE
+              - LOCAL
+              - PARTY
+              - RAID
+              - GUILD
+              - GUILD_OFFICER
+              - WHISPER
+              - SYSTEM
+              - COMBAT_LOG
+              - RP_EMOTE
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История канала
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /social/chat/history/search:
+    get:
+      tags:
+        - Chat History
+      summary: Поиск в истории чата
+      operationId: searchChatHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: channel_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - GLOBAL
+              - TRADE
+              - NEWBIE
+              - LOCAL
+              - PARTY
+              - RAID
+              - GUILD
+              - GUILD_OFFICER
+              - WHISPER
+              - SYSTEM
+              - COMBAT_LOG
+              - RP_EMOTE
+        - name: sender_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    ChatHistoryResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            channel_type:
+              type: string
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatMessage'
+              description: Список сообщений
+    ChatSearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            query:
+              type: string
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatMessage'
+              description: Результаты поиска
+    ChatMessage:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntityWithTimestamps'
+        - type: object
+          properties:
+            channel_id:
+              type: string
+              format: uuid
+            channel_type:
+              type: string
+              enum:
+                - GLOBAL
+                - TRADE
+                - NEWBIE
+                - LOCAL
+                - PARTY
+                - RAID
+                - GUILD
+                - GUILD_OFFICER
+                - WHISPER
+                - SYSTEM
+                - COMBAT_LOG
+                - RP_EMOTE
+            sender_id:
+              type: string
+              format: uuid
+            sender_name:
+              type: string
+            content:
+              type: string
+            formatted_text:
+              type: string
+            message_type:
+              type: string
+              enum:
+                - text
+                - system
+                - emote
+                - command
+            is_edited:
+              type: boolean
+              default: false
+            is_deleted:
+              type: boolean
+              default: false
+    PaginationResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          description: Список элементов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество элементов
+        limit:
+          type: integer
+          minimum: 1
+          description: Количество элементов на странице
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение для пагинации
+        has_more:
+          type: boolean
+          description: Есть ли еще элементы
+    BaseEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор
+    TimestampFields:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          description: Дата истечения
+          nullable: true
+    BaseEntityWithTimestamps:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/TimestampFields'
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
