@@ -23,65 +23,77 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-// ApplyEffects applies combat effects
-func (s *Service) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (*api.EffectsResult, error) {
-	// TODO: Implement business logic
-	// For now, return stub response
-	
-	result := &api.EffectsResult{
-		TargetID:       api.OptUUID{},
-		EffectsApplied: []api.EffectsResultEffectsAppliedItem{},
-		EffectsRemoved: []api.EffectsResultEffectsRemovedItem{},
-	}
-	
-	return result, nil
+// SendMessage sends a message to a channel
+func (s *Service) SendMessage(ctx context.Context, req *api.SendMessageRequest) (*api.MessageResponse, error) {
+	// TODO: Implement message sending logic
+	return &api.MessageResponse{}, nil
 }
 
-// CalculateDamage calculates combat damage
-func (s *Service) CalculateDamage(ctx context.Context, req *api.CalculateDamageRequest) (*api.DamageCalculationResult, error) {
-	// TODO: Implement damage calculation logic
-	
-	result := &api.DamageCalculationResult{}
-	
-	return result, nil
+// GetChannelMessages retrieves channel message history
+func (s *Service) GetChannelMessages(ctx context.Context, params api.GetChannelMessagesParams) (*api.MessagesHistoryResponse, error) {
+	// TODO: Implement message history retrieval
+	return &api.MessagesHistoryResponse{}, nil
 }
 
-// DefendInCombat processes defense action
-func (s *Service) DefendInCombat(ctx context.Context, sessionID string, req *api.DefendRequest) (*api.CombatActionResult, error) {
-	// TODO: Implement defense logic
-	
-	response := &api.CombatActionResult{}
-	
-	return response, nil
+// GetChannels retrieves list of available channels
+func (s *Service) GetChannels(ctx context.Context) (*api.ChannelsListResponse, error) {
+	// TODO: Implement channel list retrieval
+	return &api.ChannelsListResponse{}, nil
 }
 
-// ProcessAttack processes attack action
-func (s *Service) ProcessAttack(ctx context.Context, sessionID string, req *api.AttackRequest) (*api.AttackResult, error) {
-	// TODO: Implement attack processing logic
-	
-	response := &api.AttackResult{
-		Damage:   api.OptInt{},
-		Critical: api.OptBool{},
-	}
-	
-	return response, nil
+// CreateChannel creates a new private channel
+func (s *Service) CreateChannel(ctx context.Context, req *api.CreateChannelRequest) (*api.ChannelResponse, error) {
+	// TODO: Implement channel creation
+	return &api.ChannelResponse{}, nil
 }
 
-// UseCombatAbility uses combat ability
-func (s *Service) UseCombatAbility(ctx context.Context, sessionID string, req *api.UseAbilityRequest) (*api.CombatActionResult, error) {
-	// TODO: Implement ability usage logic
-	
-	response := &api.CombatActionResult{}
-	
-	return response, nil
+// GetChannel retrieves channel information
+func (s *Service) GetChannel(ctx context.Context, params api.GetChannelParams) (*api.ChannelResponse, error) {
+	// TODO: Implement channel retrieval
+	return &api.ChannelResponse{}, nil
 }
 
-// UseCombatItem uses combat item
-func (s *Service) UseCombatItem(ctx context.Context, sessionID string, req *api.UseItemRequest) (*api.CombatActionResult, error) {
-	// TODO: Implement item usage logic
-	
-	response := &api.CombatActionResult{}
-	
-	return response, nil
+// UpdateChannel updates channel settings
+func (s *Service) UpdateChannel(ctx context.Context, params api.UpdateChannelParams, req *api.UpdateChannelRequest) (*api.ChannelResponse, error) {
+	// TODO: Implement channel update
+	return &api.ChannelResponse{}, nil
+}
+
+// DeleteChannel deletes a channel
+func (s *Service) DeleteChannel(ctx context.Context, params api.DeleteChannelParams) error {
+	// TODO: Implement channel deletion
+	return nil
+}
+
+// AddChannelMember adds a member to a channel
+func (s *Service) AddChannelMember(ctx context.Context, params api.AddChannelMemberParams, req *api.AddMemberRequest) (*api.SuccessResponse, error) {
+	// TODO: Implement member addition
+	return &api.SuccessResponse{
+		Status: api.NewOptString("success"),
+	}, nil
+}
+
+// RemoveChannelMember removes a member from a channel
+func (s *Service) RemoveChannelMember(ctx context.Context, params api.RemoveChannelMemberParams) error {
+	// TODO: Implement member removal
+	return nil
+}
+
+// BanPlayer bans a player from chat
+func (s *Service) BanPlayer(ctx context.Context, req *api.BanPlayerRequest) (*api.BanResponse, error) {
+	// TODO: Implement player ban
+	return &api.BanResponse{}, nil
+}
+
+// UnbanPlayer removes a ban from a player
+func (s *Service) UnbanPlayer(ctx context.Context, params api.UnbanPlayerParams) error {
+	// TODO: Implement unban
+	return nil
+}
+
+// DeleteMessage deletes a message
+func (s *Service) DeleteMessage(ctx context.Context, params api.DeleteMessageParams) error {
+	// TODO: Implement message deletion
+	return nil
 }
 

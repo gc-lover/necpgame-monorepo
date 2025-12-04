@@ -83,9 +83,9 @@ func (h *Handlers) PerformSkillCheck(ctx context.Context, req *api.SkillCheckReq
 		QuestInstanceID: api.NewOptUUID(questInstanceID),
 		CheckTarget:     req.CheckTarget,
 		CheckType:       api.SkillCheckResultCheckType(req.CheckType),
-		RequiredValue:   api.NewOptInt(15),
-		ActualValue:     api.NewOptInt(20),
-		Passed:          api.NewOptBool(true),
+		RequiredValue:   15,
+		ActualValue:     20,
+		Passed:          true,
 		CheckedAt:       api.NewOptDateTime(now),
 	}
 
@@ -106,11 +106,11 @@ func (h *Handlers) GetSkillCheckHistory(ctx context.Context, params api.GetSkill
 		{
 			ID:              api.NewOptUUID(resultID),
 			QuestInstanceID: api.NewOptUUID(questInstanceID),
-			CheckTarget:     api.NewOptString("hacking"),
+			CheckTarget:     "hacking",
 			CheckType:       api.SkillCheckResultCheckTypeSkill,
-			RequiredValue:   api.NewOptInt(15),
-			ActualValue:     api.NewOptInt(20),
-			Passed:          api.NewOptBool(true),
+			RequiredValue:   15,
+			ActualValue:     20,
+			Passed:          true,
 			CheckedAt:       api.NewOptDateTime(now),
 		},
 	}

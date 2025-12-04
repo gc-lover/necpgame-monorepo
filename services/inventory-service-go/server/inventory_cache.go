@@ -115,10 +115,12 @@ func (c *InventoryCache) loadFromDB(ctx context.Context, characterID uuid.UUID) 
 	// TODO: Implement actual DB query
 	// For now, return empty inventory
 	return &models.InventoryResponse{
-		CharacterId: characterID,
-		Items:       []models.InventoryItem{},
-		MaxSlots:    100,
-		UsedSlots:   0,
+		Inventory: models.Inventory{
+			CharacterID: characterID,
+			Capacity:    100,
+			UsedSlots:   0,
+		},
+		Items: []models.InventoryItem{},
 	}, nil
 }
 
@@ -172,7 +174,7 @@ func (c *InventoryCache) UpdateItem(ctx context.Context, characterID uuid.UUID, 
 // GAINS: Bandwidth ↓70-90% (send only changes, not full inventory)
 func GetInventoryDiff(old, new *models.InventoryResponse) *InventoryDiff {
 	diff := &InventoryDiff{
-		CharacterId: new.CharacterId,
+		CharacterId: new.Inventory.CharacterID,
 		Added:       []models.InventoryItem{},
 		Removed:     []uuid.UUID{},
 		Updated:     []models.InventoryItem{},
@@ -181,12 +183,14 @@ func GetInventoryDiff(old, new *models.InventoryResponse) *InventoryDiff {
 	// Create maps for quick lookup
 	oldItems := make(map[uuid.UUID]*models.InventoryItem)
 	for _, item := range old.Items {
-		oldItems[item.ItemId] = &item
+		itemID, _ := uuid.Parse(item.ItemID)
+		oldItems[itemID] = &item
 	}
 	
 	newItems := make(map[uuid.UUID]*models.InventoryItem)
 	for _, item := range new.Items {
-		newItems[item.ItemId] = &item
+		itemID, _ := uuid.Parse(item.ItemID)
+		newItems[itemID] = &item
 	}
 	
 	// Find added and updated
@@ -220,7 +224,7 @@ type InventoryDiff struct {
 
 // itemsEqual checks if two items are equal
 func itemsEqual(a, b *models.InventoryItem) bool {
-	return a.ItemId == b.ItemId &&
+	return a.ItemID == b.ItemID &&
 		a.StackCount == b.StackCount &&
 		a.SlotIndex == b.SlotIndex &&
 		a.IsEquipped == b.IsEquipped
@@ -240,7 +244,7 @@ type Repository interface {
 	GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error)
 	AddItem(ctx context.Context, characterID uuid.UUID, item *models.AddItemRequest) error
 	RemoveItem(ctx context.Context, characterID, itemID uuid.UUID) error
-	UpdateItem(ctx context.Context, characterID, itemID uuid.UUID, update *models.UpdateItemRequest) error
+	UpdateItem(ctx context.Context, characterID, itemID uuid.UUID, updateFn func() error) error
 }
 
 

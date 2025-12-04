@@ -12,9 +12,10 @@ import (
 
 // HTTPServer represents HTTP server
 type HTTPServer struct {
-	addr   string
-	server *http.Server
-	router chi.Router
+	addr        string
+	server      *http.Server
+	router      chi.Router
+	loadShedder *LoadShedder // Issue: #1588 - Resilience patterns
 }
 
 // NewHTTPServer creates new HTTP server
@@ -25,6 +26,10 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RequestID)
+
+	// Issue: #1588 - Load shedding middleware (prevent overload)
+	loadShedder := NewLoadShedder(1500) // Max 1500 concurrent (3k RPS service)
+	router.Use(loadSheddingMiddleware(loadShedder))
 
 	// Custom middleware
 	router.Use(LoggingMiddleware)
@@ -48,8 +53,9 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Get("/metrics", metricsHandler)
 
 	return &HTTPServer{
-		addr:   addr,
-		router: router,
+		addr:        addr,
+		router:      router,
+		loadShedder: loadShedder,
 		server: &http.Server{
 			Addr:    addr,
 			Handler: router,
@@ -77,4 +83,20 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_damage_service metrics\n"))
+}
+
+// loadSheddingMiddleware prevents overload by limiting concurrent requests
+// Issue: #1588 - Resilience patterns
+func loadSheddingMiddleware(ls *LoadShedder) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !ls.Allow() {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				w.Write([]byte(`{"error":"service overloaded, please try again later"}`))
+				return
+			}
+			defer ls.Done()
+			next.ServeHTTP(w, r)
+		})
+	}
 }

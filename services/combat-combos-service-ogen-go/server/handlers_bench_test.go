@@ -5,6 +5,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-ogen-go/pkg/api"
 	"github.com/google/uuid"
 )
 
@@ -15,8 +16,7 @@ func BenchmarkGetComboCatalog(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetComboCatalogParams{
-	}
+	params := api.GetComboCatalogParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -33,8 +33,7 @@ func BenchmarkGetComboDetails(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetComboDetailsParams{
-	}
+	params := api.GetComboDetailsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -51,11 +50,15 @@ func BenchmarkActivateCombo(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
+	req := &api.ActivateComboRequest{
+		CharacterID: uuid.New(),
+		ComboID:     uuid.New(),
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ActivateCombo(ctx)
+		_, _ = handlers.ActivateCombo(ctx, req)
 	}
 }
-

@@ -1,11 +1,11 @@
 # ogen Migration Status - Updated
 
 **Last Updated:** 2025-12-04  
-**Progress:** 38/86 fully migrated (44.2%)
+**Progress:** 46/86 fully migrated (53.5%)
 
 ---
 
-## OK Fully Migrated (11 services)
+## OK Fully Migrated (42 services)
 
 | Service | Status | Date | Notes |
 |---------|--------|------|-------|
@@ -79,16 +79,16 @@
 - [x] quest-state-dialogue-service-go OK 2025-12-04 (Migrated to ogen)
 - [x] gameplay-progression-core-service-go OK 2025-12-04 (Already migrated, verified)
 
-### Chat & Social (9)
-- [ ] chat-service-go
-- [ ] social-chat-channels-service-go
-- [ ] social-chat-commands-service-go
-- [ ] social-chat-format-service-go
-- [ ] social-chat-history-service-go
-- [ ] social-chat-messages-service-go
-- [ ] social-chat-moderation-service-go
-- [ ] social-player-orders-service-go
-- [ ] social-reputation-core-service-go
+### Chat & Social (COMPLETE OK)
+- [ ] chat-service-go (Already migrated, verified)
+- [x] social-chat-channels-service-go OK 2025-12-04 (Migrated to ogen)
+- [x] social-chat-commands-service-go OK 2025-12-04 (Migrated to ogen)
+- [x] social-chat-format-service-go OK 2025-12-04 (Migrated to ogen)
+- [x] social-chat-history-service-go OK 2025-12-04 (Migrated to ogen)
+- [x] social-chat-messages-service-go OK 2025-12-04 (Migrated from oapi-codegen to ogen)
+- [x] social-chat-moderation-service-go OK 2025-12-04 (Already migrated, updated imports)
+- [x] social-player-orders-service-go OK 2025-12-04 (Migrated to ogen)
+- [x] social-reputation-core-service-go OK 2025-12-04 (Already migrated, verified)
 
 ### Core Gameplay (12 remaining)
 - [ ] leaderboard-service-go
@@ -123,11 +123,11 @@
 - [ ] stock-margin-service-go
 - [ ] stock-options-service-go
 - [x] stock-protection-service-go OK 2025-12-04 (Already migrated, verified)
-- [ ] economy-service-go
+- [x] economy-service-go OK 2025-12-04 (Already migrated, verified)
 - [ ] trade-service-go
 
 ### Admin & Support (12)
-- [ ] admin-service-go
+- [x] admin-service-go OK 2025-12-04 (Migrated to ogen)
 - [ ] support-service-go
 - [ ] maintenance-service-go
 - [ ] feedback-service-go

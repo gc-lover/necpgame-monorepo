@@ -1,0 +1,84 @@
+# Issue: Benchmark dashboard
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benchmark-dashboard
+  namespace: monitoring
+  labels:
+    app: benchmark-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: benchmark-dashboard
+  template:
+    metadata:
+      labels:
+        app: benchmark-dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: ghcr.io/necpgame/benchmark-dashboard:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: PORT
+          value: "8080"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: benchmark-results
+          mountPath: /app/.benchmarks
+          readOnly: true
+      volumes:
+      - name: benchmark-results
+        persistentVolumeClaim:
+          claimName: benchmark-results-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: benchmark-dashboard
+  namespace: monitoring
+  labels:
+    app: benchmark-dashboard
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: benchmark-dashboard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: benchmark-results-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+  - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+

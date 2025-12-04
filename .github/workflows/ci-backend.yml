@@ -100,13 +100,21 @@ jobs:
         with:
           go-version: '1.24'
       
-      - name: Run tests
+      - name: Build (runs tests and benchmarks)
         working-directory: services/${{ matrix.service }}
-        run: go test ./...
-      
-      - name: Build
-        working-directory: services/${{ matrix.service }}
-        run: go build -o /tmp/${{ matrix.service }} ./...
+        run: |
+          if [ -f "Makefile" ] && grep -q "^build:" Makefile; then
+            make build
+          else
+            echo "Running tests..."
+            go test ./... || (echo "ERROR: Tests failed" && exit 1)
+            echo "Running benchmarks..."
+            if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then
+              go test -run=^$$ -bench=. -benchmem -benchtime=100ms ./server || echo "WARNING: Benchmarks failed, continuing..."
+            fi
+            echo "Building..."
+            go build -o /tmp/${{ matrix.service }} ./...
+          fi
 
   lint:
     needs: discover-services

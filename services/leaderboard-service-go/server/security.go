@@ -4,7 +4,7 @@ package server
 import (
 	"context"
 
-	api "github.com/necpgame/leaderboard-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go/pkg/api"
 )
 
 type SecurityHandler struct{}

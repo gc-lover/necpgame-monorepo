@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 var (
@@ -55,17 +56,17 @@ func (s *Service) GetFaction(ctx context.Context, factionId string) (*api.Factio
 	}
 
 	details := &api.FactionDetails{
-		Id:          faction.Id,
+		ID:          faction.ID,
 		Name:        faction.Name,
 		Type:        faction.Type,
 		Ideology:    faction.Ideology,
 		Description: faction.Description,
-		LeaderClanId: faction.LeaderClanId,
+		LeaderClanID: faction.LeaderClanID,
 		Status:      faction.Status,
 		CreatedAt:   faction.CreatedAt,
 		UpdatedAt:   faction.UpdatedAt,
-		MemberCount: &memberCount,
-		ClanCount:   &clanCount,
+		MemberCount: api.NewOptInt(memberCount),
+		ClanCount:   api.NewOptInt(clanCount),
 	}
 
 	return details, nil
@@ -105,13 +106,13 @@ func (s *Service) ListFactions(ctx context.Context, params api.ListFactionsParam
 	}
 
 	page := 1
-	if params.Page != nil {
-		page = *params.Page
+	if params.Page.Set {
+		page = params.Page.Value
 	}
 
 	limit := 10
-	if params.Limit != nil {
-		limit = *params.Limit
+	if params.Limit.Set {
+		limit = params.Limit.Value
 	}
 
 	pagination := map[string]interface{}{
@@ -147,10 +148,15 @@ func (s *Service) GetHierarchy(ctx context.Context, factionId string) (*api.Fact
 
 	totalMembers := len(members)
 
+	factionUUID, err := uuid.Parse(factionId)
+	if err != nil {
+		return nil, err
+	}
+
 	hierarchy := &api.FactionHierarchy{
-		FactionId:    &factionId,
-		Members:      &members,
-		TotalMembers: &totalMembers,
+		FactionID:    api.NewOptUUID(factionUUID),
+		Members:      members,
+		TotalMembers: api.NewOptInt(totalMembers),
 	}
 
 	return hierarchy, nil

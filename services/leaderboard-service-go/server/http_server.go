@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/necpgame/leaderboard-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -21,8 +21,12 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	handlers := NewHandlers(logger)
 	secHandler := &SecurityHandler{}
 
+	// Issue: #1588 - Load shedding for high RPS (leaderboard is hot path)
+	loadShedder := NewLoadShedder(1000) // Max 1000 concurrent requests
+
 	router := chi.NewRouter()
 
+	router.Use(loadShedder.Middleware()) // Issue: #1588 - Load shedding first
 	router.Use(loggingMiddleware(logger))
 	router.Use(recoveryMiddleware(logger))
 	router.Use(corsMiddleware)

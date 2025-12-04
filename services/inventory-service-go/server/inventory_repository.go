@@ -220,10 +220,9 @@ func (r *InventoryRepository) GetItemTemplatesBatch(ctx context.Context, itemIDs
 		var equipSlot sql.NullString
 
 		err := rows.Scan(
-			&template.ID, &template.Name, &template.Description, &template.ItemType,
+			&template.ID, &template.Name, &template.Type,
 			&template.Rarity, &template.Weight, &template.MaxStackSize, &template.CanEquip,
 			&equipSlot, &requirementsJSON, &statsJSON, &metadataJSON,
-			&template.CreatedAt, &template.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.WithError(err).Error("Failed to scan item template")
@@ -231,7 +230,7 @@ func (r *InventoryRepository) GetItemTemplatesBatch(ctx context.Context, itemIDs
 		}
 
 		if equipSlot.Valid {
-			template.EquipSlot = &equipSlot.String
+			template.EquipSlot = equipSlot.String
 		}
 
 		if requirementsJSON.Valid && requirementsJSON.String != "" {

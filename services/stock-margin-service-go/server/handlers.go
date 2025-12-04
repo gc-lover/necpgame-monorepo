@@ -46,9 +46,11 @@ func (h *Handlers) BorrowMargin(ctx context.Context, req *api.BorrowMarginReques
 	defer cancel()
 
 	// TODO: Implement business logic
-	return &api.BorrowMarginOK{
-		BorrowedAmount: api.NewOptFloat64(0.0),
-		NewBalance:     api.NewOptFloat64(0.0),
+	return &api.BorrowMarginResponse{
+		BorrowedAmount:      api.NewOptFloat64(0.0),
+		CollateralRequired:  api.NewOptFloat64(0.0),
+		InterestRate:        api.NewOptFloat64(0.0),
+		Leverage:            api.NewOptFloat64(0.0),
 	}, nil
 }
 
@@ -58,10 +60,7 @@ func (h *Handlers) RepayMargin(ctx context.Context, req *api.RepayMarginRequest)
 	defer cancel()
 
 	// TODO: Implement business logic
-	return &api.RepayMarginOK{
-		RepaidAmount: api.NewOptFloat64(0.0),
-		NewBalance:   api.NewOptFloat64(0.0),
-	}, nil
+	return &api.RepayMarginOK{}, nil
 }
 
 // OpenMarginAccount - TYPED response!
@@ -84,8 +83,9 @@ func (h *Handlers) GetMarginCallHistory(ctx context.Context, params api.GetMargi
 	defer cancel()
 
 	// TODO: Implement business logic
-	return &api.MarginCallHistoryOK{
-		History: []api.MarginCall{},
+	return &api.GetMarginCallHistoryOK{
+		MarginCalls: []api.MarginCall{},
+		Pagination:  api.OptPaginationResponse{},
 	}, nil
 }
 
@@ -95,10 +95,10 @@ func (h *Handlers) GetRiskHealth(ctx context.Context) (api.GetRiskHealthRes, err
 	defer cancel()
 
 	// TODO: Implement business logic
-	return &api.RiskHealthOK{
-		MarginHealth:    api.NewOptFloat64(1.0),
-		LiquidationPrice: api.NewOptFloat64(0.0),
-		Warnings:        []string{},
+	return &api.RiskHealth{
+		MarginHealth:      api.NewOptFloat64(1.0),
+		MaintenanceMargin: api.NewOptFloat64(0.0),
+		LiquidationPrice:  api.NewOptFloat64(0.0),
 	}, nil
 }
 
@@ -110,8 +110,8 @@ func (h *Handlers) OpenShortPosition(ctx context.Context, req *api.ShortPosition
 	// TODO: Implement business logic
 	return &api.ShortPosition{
 		PositionID: api.NewOptUUID(uuid.New()),
-		Ticker:     req.Ticker,
-		Quantity:   req.Quantity,
+		Ticker:     api.NewOptString(req.Ticker),
+		Quantity:   api.NewOptInt(req.Quantity),
 		EntryPrice: api.NewOptFloat64(0.0),
 	}, nil
 }
@@ -122,8 +122,9 @@ func (h *Handlers) ListShortPositions(ctx context.Context, params api.ListShortP
 	defer cancel()
 
 	// TODO: Implement business logic
-	return &api.ShortPositionsListOK{
-		Positions: []api.ShortPosition{},
+	return &api.ListShortPositionsOK{
+		Positions:  []api.ShortPosition{},
+		Pagination: api.OptPaginationResponse{},
 	}, nil
 }
 
@@ -144,8 +145,9 @@ func (h *Handlers) CloseShortPosition(ctx context.Context, params api.CloseShort
 	defer cancel()
 
 	// TODO: Implement business logic
-	return &api.CloseShortPositionOK{
-		PositionID:  api.NewOptUUID(params.PositionID),
+	return &api.ClosePositionResponse{
+		PositionID: api.NewOptUUID(params.PositionID),
 		RealizedPnl: api.NewOptFloat64(0.0),
+		ClosedAt:    api.OptDateTime{},
 	}, nil
 }

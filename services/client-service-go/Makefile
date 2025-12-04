@@ -58,7 +58,7 @@ clean:
 	@rm -f $(BUNDLED_SPEC)
 	@echo "OK Cleaned generated files"
 
-build: generate-api
+build: test bench-quick generate-api
 	@go build -o client-service .
 
 test:
@@ -75,3 +75,12 @@ benchmark:
 
 
 
+
+.PHONY: test
+test:
+	@go test -v ./...
+
+
+.PHONY: bench-quick
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \	fi

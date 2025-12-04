@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/voice-chat-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
 )
 
 type mockVoiceService struct {

@@ -16,13 +16,29 @@ const (
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
+// Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
 type Handlers struct {
 	service *Service
+	// Issue: #1587 - Anti-cheat validation
+	actionValidator *ActionValidator
+	anomalyDetector *AnomalyDetector
+	// Issue: #1588 - Resilience patterns
+	loadShedder *LoadShedder
 }
 
 // NewHandlers creates new handlers
 func NewHandlers(service *Service) *Handlers {
-	return &Handlers{service: service}
+	// Issue: #1588 - Resilience patterns for hot path service (1.5k+ RPS)
+	loadShedder := NewLoadShedder(750) // Max 750 concurrent requests
+	
+	return &Handlers{
+		service: service,
+		// Issue: #1587 - Anti-cheat validation
+		actionValidator: NewActionValidator(),
+		anomalyDetector: NewAnomalyDetector(),
+		loadShedder:     loadShedder,
+	}
 }
 
 // ApplyEffects - TYPED response!
@@ -54,6 +70,17 @@ func (h *Handlers) CalculateDamage(ctx context.Context, req *api.CalculateDamage
 
 // DefendInCombat - TYPED response!
 func (h *Handlers) DefendInCombat(ctx context.Context, req *api.DefendRequest, params api.DefendInCombatParams) (api.DefendInCombatRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.DefendInCombatInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -69,9 +96,39 @@ func (h *Handlers) DefendInCombat(ctx context.Context, req *api.DefendRequest, p
 }
 
 // ProcessAttack - TYPED response!
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, params api.ProcessAttackParams) (api.ProcessAttackRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.ProcessAttackInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
+
+	// Issue: #1587 - Validate attack before processing (anti-cheat)
+	playerID := req.AttackerID.String()
+	attack := &AttackAction{
+		From:       Vec3{X: 0, Y: 0, Z: 0}, // TODO: Get from request or session
+		To:         Vec3{X: 0, Y: 0, Z: 0}, // TODO: Get from request or session
+		Distance:   0,                       // TODO: Calculate from From/To
+		AttackType: "melee",                // TODO: Get from request
+	}
+
+	if err := h.actionValidator.ValidateAttack(playerID, attack); err != nil {
+		// Return validation error
+		return &api.ProcessAttackBadRequest{
+			Error:   "BadRequest",
+			Message: "Invalid attack: " + err.Error(),
+			Code:    api.NewOptNilString("400"),
+		}, nil
+	}
 
 	result, err := h.service.ProcessAttack(ctx, params.SessionId.String(), req)
 	if err != nil {
@@ -80,6 +137,9 @@ func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, pa
 		}
 		return &api.ProcessAttackInternalServerError{}, err
 	}
+
+	// Issue: #1587 - Record attack for anomaly detection
+	h.anomalyDetector.RecordAttack(playerID, false, 0) // TODO: Get critical and reaction time from result
 
 	return result, nil
 }

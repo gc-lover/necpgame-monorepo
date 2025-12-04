@@ -67,26 +67,53 @@ func (q *MatchmakingQueue) AddPlayer(entry PlayerQueueEntry) {
 type MatchmakingService struct {
 	repository Repository
 	queue      *MatchmakingQueue // Skill buckets
+	// Issue: #1588 - Resilience patterns
+	dbCircuitBreaker *CircuitBreaker
+	loadShedder      *LoadShedder
 }
 
 // NewMatchmakingService создает новый сервис с skill buckets
 func NewMatchmakingService(repository Repository) Service {
+	// Issue: #1588 - Resilience patterns for hot path service (5k+ RPS)
+	dbCB := NewCircuitBreaker("matchmaking-db")
+	loadShedder := NewLoadShedder(2000) // Max 2000 concurrent requests (hot path)
+	
 	return &MatchmakingService{
 		repository: repository,
 		queue:      NewMatchmakingQueue(),
+		dbCircuitBreaker: dbCB,
+		loadShedder:      loadShedder,
 	}
 }
 
 // EnterQueue добавляет игрока в очередь (с skill buckets)
 func (s *MatchmakingService) EnterQueue(ctx context.Context, req *api.EnterQueueRequest) (*api.QueueResponse, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !s.loadShedder.Allow() {
+		return nil, errors.New("service overloaded, please try again later")
+	}
+	defer s.loadShedder.Done()
+	
 	// Note: EnterQueueRequest doesn't have PlayerID in spec
 	// In production, get playerID from JWT context
 	
-	// Get player rating (default 1500 if not found)
+	// Get player rating with circuit breaker (Fallback: default 1500)
 	// TODO: Get playerID from context.Context
 	playerID := "temp-player-id"
-	rating, err := s.repository.GetPlayerRating(ctx, playerID, string(req.ActivityType))
-	if err != nil {
+	var rating int
+	result, cbErr := s.dbCircuitBreaker.Execute(func() (interface{}, error) {
+		return s.repository.GetPlayerRating(ctx, playerID, string(req.ActivityType))
+	})
+	
+	if cbErr != nil {
+		// Circuit breaker rejected or DB error - use default MMR (graceful degradation)
+		rating = 1500 // Default MMR
+	} else if result != nil {
+		rating = result.(int)
+		if rating == 0 {
+			rating = 1500 // Default MMR if rating is 0
+		}
+	} else {
 		rating = 1500 // Default MMR
 	}
 	

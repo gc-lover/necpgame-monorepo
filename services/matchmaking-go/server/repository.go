@@ -50,7 +50,8 @@ type LeaderboardEntry struct {
 
 // Repository handles database operations with performance optimizations
 type Repository struct {
-	db *sql.DB
+	db  *sql.DB
+	cb  *DBCircuitBreaker // Issue: #1588 - Circuit breaker for DB
 }
 
 // NewRepository creates new repository with optimized DB pool
@@ -74,7 +75,10 @@ func NewRepository(connStr string) (*Repository, error) {
 		return nil, fmt.Errorf("failed to ping DB: %w", err)
 	}
 
-	return &Repository{db: db}, nil
+	return &Repository{
+		db: db,
+		cb: NewDBCircuitBreaker("matchmaking-db"), // Issue: #1588
+	}, nil
 }
 
 // Close closes database connection
@@ -84,6 +88,7 @@ func (r *Repository) Close() error {
 
 // InsertQueueEntry inserts queue entry
 // Performance: Prepared statement, covering index insertion
+// Issue: #1588 - Circuit breaker protection
 func (r *Repository) InsertQueueEntry(ctx context.Context, entry *QueueEntry) error {
 	query := `
 		INSERT INTO matchmaking_queues 
@@ -91,19 +96,26 @@ func (r *Repository) InsertQueueEntry(ctx context.Context, entry *QueueEntry) er
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
-		entry.ID,
-		entry.PlayerID,
-		entry.PartyID,
-		entry.ActivityType,
-		entry.Status,
-		entry.EnteredAt,
-		entry.Rating,
-		entry.Rating-50,  // Initial range
-		entry.Rating+50,
-	)
+	result, err := r.cb.Execute(func() (interface{}, error) {
+		return r.db.ExecContext(ctx, query,
+			entry.ID,
+			entry.PlayerID,
+			entry.PartyID,
+			entry.ActivityType,
+			entry.Status,
+			entry.EnteredAt,
+			entry.Rating,
+			entry.Rating-50,  // Initial range
+			entry.Rating+50,
+		)
+	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	_ = result // Result is sql.Result, not needed here
+	return nil
 }
 
 // GetQueueEntry retrieves queue entry by ID

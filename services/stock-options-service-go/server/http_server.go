@@ -44,7 +44,7 @@ func NewHTTPServer(addr string) *HTTPServer {
 	// ogen server integration
 	ogenServer, err := api.NewServer(handlers, secHandler)
 	if err != nil {
-		logger.WithError(err).Fatal("Failed to create ogen server")
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
 	router.Mount("/api/v1", ogenServer)

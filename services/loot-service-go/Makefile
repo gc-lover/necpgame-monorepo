@@ -16,7 +16,11 @@ clean:
 	rm -f $(BUNDLED_SPEC)
 	rm -rf $(API_DIR)/oas_*_gen.go
 
-.PHONY: bench bench-json bench-quick
+.PHONY: test bench bench-json bench-quick build
+
+# Run tests
+test:
+	@go test -v ./...
 
 # Run benchmarks (human-readable)
 bench:
@@ -29,20 +33,10 @@ bench-json:
 
 # Quick benchmark (short duration)
 bench-quick:
-	go test -run=^$$ -bench=. -benchmem -benchtime=100ms ./server
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
+		go test -run=^$$ -bench=. -benchmem -benchtime=100ms ./server; \
+	fi
 
-
-.PHONY: bench bench-json bench-quick
-
-# Run benchmarks (human-readable)
-bench:
-	go test -run=^ -bench=. -benchmem ./server
-
-# Run benchmarks (JSON output for CI)
-bench-json:
-	@mkdir -p ../../.benchmarks/results
-	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/loot-service_bench.json
-
-# Quick benchmark (short duration)
-bench-quick:
-	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server
+# Build (runs tests and benchmarks first)
+build: test bench-quick
+	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/$(SERVICE_NAME) .

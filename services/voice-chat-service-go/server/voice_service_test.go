@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/voice-chat-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

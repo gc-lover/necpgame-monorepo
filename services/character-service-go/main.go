@@ -11,31 +11,34 @@ import (
 
 	"github.com/necpgame/character-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/pyroscope-io/client/pyroscope" // Issue: #1611 - Continuous Profiling
+	// TODO: Issue #1611 - Continuous Profiling (Pyroscope)
+	// pyroscope package path needs to be verified
+	// _ "github.com/pyroscope-io/client/pyroscope"
 )
 
 func main() {
-	// Issue: #1611 - Continuous Profiling (Pyroscope)
-	pyroscope.Start(pyroscope.Config{
-		ApplicationName: "necpgame.character",
-		ServerAddress:   getEnv("PYROSCOPE_SERVER", "http://pyroscope:4040"),
-		ProfileTypes: []pyroscope.ProfileType{
-			pyroscope.ProfileCPU,
-			pyroscope.ProfileAllocObjects,
-			pyroscope.ProfileAllocSpace,
-			pyroscope.ProfileInuseObjects,
-			pyroscope.ProfileInuseSpace,
-		},
-		Tags: map[string]string{
-			"environment": getEnv("ENV", "development"),
-			"version":     getEnv("VERSION", "unknown"),
-		},
-		SampleRate: 100, // 100 Hz
-	})
+	// TODO: Issue #1611 - Continuous Profiling (Pyroscope)
+	// Uncomment when pyroscope package is available
+	// pyroscope.Start(pyroscope.Config{
+	// 	ApplicationName: "necpgame.character",
+	// 	ServerAddress:   getEnv("PYROSCOPE_SERVER", "http://pyroscope:4040"),
+	// 	ProfileTypes: []pyroscope.ProfileType{
+	// 		pyroscope.ProfileCPU,
+	// 		pyroscope.ProfileAllocObjects,
+	// 		pyroscope.ProfileAllocSpace,
+	// 		pyroscope.ProfileInuseObjects,
+	// 		pyroscope.ProfileInuseSpace,
+	// 	},
+	// 	Tags: map[string]string{
+	// 		"environment": getEnv("ENV", "development"),
+	// 		"version":     getEnv("VERSION", "unknown"),
+	// 	},
+	// 	SampleRate: 100, // 100 Hz
+	// })
 
 	logger := server.GetLogger()
 	logger.Info("Character Service (Go) starting...")
-	logger.Info("OK Pyroscope continuous profiling started")
+	// logger.Info("OK Pyroscope continuous profiling started")
 
 	addr := getEnv("ADDR", "0.0.0.0:8087")
 	metricsAddr := getEnv("METRICS_ADDR", ":9092")

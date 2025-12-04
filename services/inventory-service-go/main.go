@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
@@ -12,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/go-redis/redis/v8"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/pyroscope-io/client/pyroscope" // Issue: #1611 - Continuous Profiling
+	"github.com/grafana/pyroscope-go" // Issue: #1611 - Continuous Profiling
 )
 
 func main() {
@@ -35,7 +34,7 @@ func main() {
 			"environment": getEnv("ENV", "development"),
 			"version":     getEnv("VERSION", "unknown"),
 		},
-		SampleRate: 100, // 100 Hz
+		UploadRate: 10 * time.Second, // 10 seconds
 	})
 
 	logger := server.GetLogger()
@@ -48,18 +47,22 @@ func main() {
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
 
-	// Database connection
-	db, err := sql.Open("postgres", dbURL)
+	// Database connection with pgxpool
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		log.Fatalf("Failed to parse database URL: %v", err)
+	}
+	// CRITICAL: Configure DB pool (hot path - 10k RPS)
+	config.MaxConns = 50
+	config.MinConns = 10
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 10 * time.Minute
+	
+	db, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
-
-	// CRITICAL: Configure DB pool (hot path - 10k RPS)
-	db.SetMaxOpenConns(50)
-	db.SetMaxIdleConns(50)
-	db.SetConnMaxLifetime(5 * time.Minute)
-	db.SetConnMaxIdleTime(10 * time.Minute)
 
 	// Redis client for caching
 	redisClient := redis.NewClient(&redis.Options{
@@ -67,14 +70,12 @@ func main() {
 	})
 
 	// Create optimized service with 3-tier caching
-	repo := server.NewRepository(db)
-	optimizedService := server.NewOptimizedInventoryService(redisClient, repo)
+	repo := server.NewInventoryRepository(db)
+	repoAdapter := server.NewRepositoryAdapter(repo)
+	optimizedService := server.NewOptimizedInventoryService(redisClient, repoAdapter)
 
 	// Create ogen server
-	httpServer := server.NewOgenHTTPServer(addr, optimizedService)
-	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
-	}
+	httpServer := server.NewHTTPServerOgen(addr, optimizedService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
@@ -102,6 +103,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring (CRITICAL - 10k+ RPS!)
+	monitor := server.NewGoroutineMonitor(1200) // Max 1200 goroutines for inventory (high concurrency)
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

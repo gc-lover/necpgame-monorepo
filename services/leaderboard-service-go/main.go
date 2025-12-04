@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/necpgame/leaderboard-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go/server"
 	"github.com/sirupsen/logrus"
 )
 

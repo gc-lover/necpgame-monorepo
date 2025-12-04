@@ -6,8 +6,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
@@ -20,12 +18,12 @@ const (
 
 // InventoryHandlersOgen implements api.Handler interface (ogen typed handlers!)
 type InventoryHandlersOgen struct {
-	service *InventoryService
+	service InventoryServiceInterface
 	logger  *logrus.Logger
 }
 
 // NewInventoryHandlersOgen creates ogen handlers
-func NewInventoryHandlersOgen(service *InventoryService) *InventoryHandlersOgen {
+func NewInventoryHandlersOgen(service InventoryServiceInterface) *InventoryHandlersOgen {
 	return &InventoryHandlersOgen{
 		service: service,
 		logger:  GetLogger(),
@@ -39,17 +37,16 @@ func (h *InventoryHandlersOgen) GetInventory(ctx context.Context, params api.Get
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout) // 10ms - should hit cache
 	defer cancel()
 
-	characterID := uuid.UUID(params.PlayerID)
+	playerID := params.PlayerID.String()
 
-	response, err := h.service.GetInventory(ctx, characterID)
+	response, err := h.service.GetInventory(ctx, playerID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get inventory")
 		return nil, err
 	}
 
-	// Convert to ogen API type
-	apiResponse := toOgenInventoryResponse(response)
-	return apiResponse, nil
+	// Response is already *api.InventoryResponse
+	return response, nil
 }
 
 // AddItem - TYPED ogen response
@@ -58,28 +55,30 @@ func (h *InventoryHandlersOgen) AddItem(ctx context.Context, req *api.AddItemReq
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout) // 50ms DB operation
 	defer cancel()
 
-	characterID := uuid.UUID(params.PlayerID)
+	playerID := params.PlayerID.String()
 
-	// Convert ogen types to models
+	// Convert ogen types to API request
 	quantity := 1
 	if req.Quantity.Set {
 		quantity = req.Quantity.Value
 	}
 
-	modelReq := &models.AddItemRequest{
-		ItemID:     req.ItemID.String(),
-		StackCount: quantity,
+	apiReq := &api.AddItemRequest{
+		ItemID:   req.ItemID,
+		Quantity: api.NewOptInt(quantity),
 	}
 
-	err := h.service.AddItem(ctx, characterID, modelReq)
+	response, err := h.service.AddItem(ctx, playerID, apiReq)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to add item")
-		return &api.AddItemInternalServerError{}, err
+		return &api.Error{
+			Error:   "INTERNAL_SERVER_ERROR",
+			Message: err.Error(),
+		}, nil
 	}
 
-	return &api.SuccessResponse{
-		Status: api.NewOptString("success"),
-	}, nil
+	// Return the added item response
+	return response, nil
 }
 
 // RemoveItem - TYPED ogen response
@@ -87,13 +86,16 @@ func (h *InventoryHandlersOgen) RemoveItem(ctx context.Context, params api.Remov
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	characterID := uuid.UUID(params.PlayerID)
-	itemID := uuid.UUID(params.ItemID)
+	playerID := params.PlayerID.String()
+	itemID := params.ItemID.String()
 
-	err := h.service.RemoveItem(ctx, characterID, itemID)
+	err := h.service.RemoveItem(ctx, playerID, itemID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to remove item")
-		return &api.RemoveItemInternalServerError{}, err
+		return &api.Error{
+			Error:   "INTERNAL_SERVER_ERROR",
+			Message: err.Error(),
+		}, nil
 	}
 
 	return &api.SuccessResponse{
@@ -102,27 +104,31 @@ func (h *InventoryHandlersOgen) RemoveItem(ctx context.Context, params api.Remov
 }
 
 // EquipItem - TYPED ogen response
-func (h *InventoryHandlersOgen) EquipItem(ctx context.Context, req *api.EquipItemRequest, params api.EquipItemParams) (*api.EquipmentResponse, error) {
+func (h *InventoryHandlersOgen) EquipItem(ctx context.Context, req *api.EquipItemRequest, params api.EquipItemParams) (api.EquipItemRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	characterID := uuid.UUID(params.PlayerID)
-	itemID := uuid.UUID(params.ItemID)
-	
-	modelReq := &models.EquipItemRequest{
-		ItemID:    itemID.String(),
-		EquipSlot: string(req.EquipmentSlot),
-	}
+	playerID := params.PlayerID.String()
+	itemID := params.ItemID.String()
 
-	err := h.service.EquipItem(ctx, characterID, modelReq)
+	response, err := h.service.EquipItem(ctx, playerID, itemID, req)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to equip item")
-		return nil, err
+		return &api.Error{
+			Error:   "INTERNAL_SERVER_ERROR",
+			Message: err.Error(),
+		}, nil
 	}
 
-	return &api.EquipmentResponse{
-		Equipment: api.OptEquipmentResponseEquipment{},
-	}, nil
+	if response == nil {
+		// Return empty response if service returns nil
+		return &api.EquipmentResponse{
+			PlayerID:  api.NewOptUUID(params.PlayerID),
+			Equipment: api.OptEquipmentResponseEquipment{},
+		}, nil
+	}
+
+	return response, nil
 }
 
 // UnequipItem - TYPED ogen response
@@ -130,18 +136,24 @@ func (h *InventoryHandlersOgen) UnequipItem(ctx context.Context, params api.Uneq
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	characterID := uuid.UUID(params.PlayerID)
-	itemID := uuid.UUID(params.ItemID)
+	playerID := params.PlayerID.String()
+	itemID := params.ItemID.String()
 
-	err := h.service.UnequipItem(ctx, characterID, itemID)
+	response, err := h.service.UnequipItem(ctx, playerID, itemID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to unequip item")
 		return nil, err
 	}
 
-	return &api.EquipmentResponse{
-		Items: []api.EquippedItem{},
-	}, nil
+	if response == nil {
+		// Return empty response if service returns nil
+		return &api.EquipmentResponse{
+			PlayerID:  api.NewOptUUID(params.PlayerID),
+			Equipment: api.OptEquipmentResponseEquipment{},
+		}, nil
+	}
+
+	return response, nil
 }
 
 // GetEquipment - TYPED ogen response
@@ -149,10 +161,15 @@ func (h *InventoryHandlersOgen) GetEquipment(ctx context.Context, params api.Get
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout) // Should be cached
 	defer cancel()
 
-	// TODO: Implement GetEquipment in service
-	return &api.EquipmentResponse{
-		Items: []api.EquippedItem{},
-	}, nil
+	playerID := params.PlayerID.String()
+
+	response, err := h.service.GetEquipment(ctx, playerID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get equipment")
+		return nil, err
+	}
+
+	return response, nil
 }
 
 // UpdateItem - TYPED ogen response
@@ -160,8 +177,16 @@ func (h *InventoryHandlersOgen) UpdateItem(ctx context.Context, req *api.UpdateI
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement UpdateItem in service
-	return &api.InventoryItemResponse{}, nil
+	playerID := params.PlayerID.String()
+	itemID := params.ItemID.String()
+
+	response, err := h.service.UpdateItem(ctx, playerID, itemID, req)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to update item")
+		return nil, err
+	}
+
+	return response, nil
 }
 
 // GetItem - TYPED ogen response
@@ -191,7 +216,7 @@ func (h *InventoryHandlersOgen) GetVaults(ctx context.Context, params api.GetVau
 
 	// TODO: Implement GetVaults in service
 	return &api.VaultsListResponse{
-		Vaults: []api.Vault{},
+		Vaults: []api.VaultResponse{},
 	}, nil
 }
 
@@ -226,33 +251,6 @@ func (h *InventoryHandlersOgen) StoreItem(ctx context.Context, req *api.StoreIte
 	}, nil
 }
 
-// Converter helpers
-
-func toOgenInventoryResponse(resp *models.InventoryResponse) *api.InventoryResponse {
-	// Convert models.InventoryResponse to api.InventoryResponse
-	items := make([]api.InventoryItemResponse, 0, len(resp.Items))
-	for _, item := range resp.Items {
-		items = append(items, api.InventoryItemResponse{
-			ID:           item.ID,
-			InventoryID:  item.InventoryID,
-			ItemID:       item.ItemID,
-			SlotIndex:    item.SlotIndex,
-			StackCount:   item.StackCount,
-			MaxStackSize: item.MaxStackSize,
-			IsEquipped:   item.IsEquipped,
-			EquipSlot:    api.NewOptString(item.EquipSlot),
-		})
-	}
-
-	return &api.InventoryResponse{
-		ID:            resp.Inventory.ID,
-		PlayerID:      resp.Inventory.CharacterID,
-		Items:         items,
-		MaxWeight:     resp.Inventory.MaxWeight,
-		CurrentWeight: resp.Inventory.Weight,
-		MaxSlots:      int32(resp.Inventory.Capacity),
-		UsedSlots:     int32(resp.Inventory.UsedSlots),
-	}
-}
+// Converter helpers removed - service returns *api.InventoryResponse directly
 
 

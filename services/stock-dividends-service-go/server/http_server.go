@@ -49,9 +49,22 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	}
 }
 
-func (s *HTTPServer) Start() error {
+func (s *HTTPServer) Start(ctx context.Context) error {
 	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
-	return s.server.ListenAndServe()
+
+	errChan := make(chan error, 1)
+	go func() {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		return s.Shutdown(context.Background())
+	}
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {

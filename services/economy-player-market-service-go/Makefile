@@ -1,4 +1,4 @@
-﻿.PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
+.PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
 
 SERVICE_NAME := economy-player-market-service
 OGEN := ogen
@@ -49,6 +49,22 @@ verify-api: check-deps
 	@echo "вњ… OpenAPI spec is valid"
 
 clean:
+
+.PHONY: test bench-quick build
+
+# Run tests
+test:
+	@go test -v ./...
+
+# Quick benchmark (short duration)
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
+		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \
+	fi
+
+# Build (runs tests and benchmarks first)
+build: test bench-quick
+	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/economy-player-market-service .
 	@rm -rf $(API_DIR) $(BUNDLED_SPEC)
 	@echo "вњ… Cleaned generated files"
 

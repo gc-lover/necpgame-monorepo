@@ -117,6 +117,22 @@ func (c *CacheManager) CacheLeaderboard(ctx context.Context, cacheKey string, re
 	return c.client.Set(ctx, cacheKey, data, ttl).Err()
 }
 
+// GetCachedPlayerRating retrieves cached player rating (for fallback)
+func (c *CacheManager) GetCachedPlayerRating(ctx context.Context, playerID uuid.UUID, activityType string) (int, error) {
+	key := fmt.Sprintf("rating:%s:%s", playerID, activityType)
+	val, err := c.client.Get(ctx, key).Int()
+	if err == redis.Nil {
+		return 0, nil // Cache miss
+	}
+	return val, err
+}
+
+// CachePlayerRating caches player rating
+func (c *CacheManager) CachePlayerRating(ctx context.Context, playerID uuid.UUID, activityType string, rating int, ttl time.Duration) error {
+	key := fmt.Sprintf("rating:%s:%s", playerID, activityType)
+	return c.client.Set(ctx, key, rating, ttl).Err()
+}
+
 // Close closes Redis connection
 func (c *CacheManager) Close() error {
 	return c.client.Close()

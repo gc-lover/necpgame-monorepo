@@ -10,15 +10,34 @@ import (
 
 const DBTimeout = 50 * time.Millisecond
 
+// Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
 type Handlers struct {
-	service *Service
+	service     *Service
+	loadShedder *LoadShedder
 }
 
 func NewHandlers(service *Service) *Handlers {
-	return &Handlers{service: service}
+	// Issue: #1588 - Resilience patterns for hot path service
+	loadShedder := NewLoadShedder(500) // Max 500 concurrent requests
+	
+	return &Handlers{
+		service:     service,
+		loadShedder: loadShedder,
+	}
 }
 
 func (h *Handlers) GetAIProfile(ctx context.Context, params api.GetAIProfileParams) (api.GetAIProfileRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.GetAIProfileInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -34,6 +53,17 @@ func (h *Handlers) GetAIProfile(ctx context.Context, params api.GetAIProfilePara
 }
 
 func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, params api.GetAIProfileTelemetryParams) (api.GetAIProfileTelemetryRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.GetAIProfileTelemetryInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

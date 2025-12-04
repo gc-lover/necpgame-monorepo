@@ -32,9 +32,9 @@ func (h *ToolsHandlers) CreateAlert(ctx context.Context, req *api.CreateAlertReq
 	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"ticker":          req.Ticker.Value,
-		"condition_type": req.ConditionType.Value,
-		"threshold":       req.Threshold.Value,
+		"ticker":          req.Ticker,
+		"condition_type":  req.ConditionType,
+		"threshold":       req.Threshold,
 	}).Info("CreateAlert request")
 
 	// TODO: Implement business logic
@@ -44,9 +44,9 @@ func (h *ToolsHandlers) CreateAlert(ctx context.Context, req *api.CreateAlertReq
 	return &api.Alert{
 		ID:            api.NewOptUUID(alertID),
 		PlayerID:      api.NewOptUUID(uuid.New()), // Mock player ID
-		Ticker:        req.Ticker,
-		ConditionType: req.ConditionType,
-		Threshold:     req.Threshold,
+		Ticker:        api.NewOptString(req.Ticker),
+		ConditionType: api.NewOptString(string(req.ConditionType)),
+		Threshold:     api.NewOptFloat64(req.Threshold),
 		IsActive:      api.NewOptBool(true),
 		TriggeredAt:   api.OptDateTime{},
 		CreatedAt:     api.NewOptDateTime(now),
@@ -70,12 +70,11 @@ func (h *ToolsHandlers) GetHeatmap(ctx context.Context, params api.GetHeatmapPar
 	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"sector": params.Sector.Value,
-		"period": params.Period.Value,
+		"period": params.Period,
 	}).Info("GetHeatmap request")
 
 	// TODO: Implement business logic
-	return &api.GetHeatmapInternalServerError{}, nil
+	return &api.Heatmap{}, nil
 }
 
 // GetMarketDashboard implements getMarketDashboard operation.
@@ -86,7 +85,7 @@ func (h *ToolsHandlers) GetMarketDashboard(ctx context.Context) (api.GetMarketDa
 	h.logger.Info("GetMarketDashboard request")
 
 	// TODO: Implement business logic
-	return &api.GetMarketDashboardInternalServerError{}, nil
+	return &api.MarketDashboard{}, nil
 }
 
 // GetOrderBook implements getOrderBook operation.
@@ -97,12 +96,7 @@ func (h *ToolsHandlers) GetOrderBook(ctx context.Context, params api.GetOrderBoo
 	h.logger.WithField("ticker", params.Ticker).Info("GetOrderBook request")
 
 	// TODO: Implement business logic
-	return &api.GetOrderBookNotFound{
-		Error: api.Error{
-			Code:    api.NewOptString("NotFound"),
-			Message: "Order book not found",
-		},
-	}, nil
+	return &api.OrderBook{}, nil
 }
 
 // GetPortfolioDashboard implements getPortfolioDashboard operation.
@@ -113,7 +107,7 @@ func (h *ToolsHandlers) GetPortfolioDashboard(ctx context.Context) (api.GetPortf
 	h.logger.Info("GetPortfolioDashboard request")
 
 	// TODO: Implement business logic
-	return &api.GetPortfolioDashboardInternalServerError{}, nil
+	return &api.PortfolioDashboard{}, nil
 }
 
 // ListAlerts implements listAlerts operation.

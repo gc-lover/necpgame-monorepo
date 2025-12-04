@@ -41,7 +41,7 @@ test:
 bench:
 	@go test -bench=. -benchmem ./server
 
-build:
+build: test bench-quick
 	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/$(SERVICE_NAME) .
 
 # Issue: #1610 - PGO (Profile-Guided Optimization)

@@ -59,7 +59,7 @@ clean:
 	@echo "OK Cleaned generated files"
 
 # Build
-build: generate-api
+build: test bench-quick generate-api
 	@go build -o matchmaking-service .
 
 # Issue: #1610 - PGO (Profile-Guided Optimization)
@@ -86,6 +86,12 @@ test:
 # Benchmark
 benchmark:
 	@go test -bench=. -benchmem -run=^$$ ./server
+
+# Quick benchmark (for build)
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
+		go test -run=^$$ -bench=. -benchmem -benchtime=100ms ./server; \
+	fi
 
 # Run locally
 run: generate-api

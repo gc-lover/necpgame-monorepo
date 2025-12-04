@@ -38,6 +38,9 @@ type UDPServer struct {
 	// Issue: #1612 - Adaptive compression
 	compressor *AdaptiveCompressor
 	
+	// Issue: #1587 - Anti-cheat validation
+	movementValidator *MovementValidator
+	
 	// Metrics
 	packetsReceived uint64
 	packetsSent     uint64
@@ -70,12 +73,13 @@ func NewUDPServer(addr string, service *MovementService) (*UDPServer, error) {
 	conn.SetWriteBuffer(4 * 1024 * 1024) // 4 MB
 
 	s := &UDPServer{
-		addr:        udpAddr,
-		conn:        conn,
-		service:     service,
-		spatialGrid: NewSpatialGrid(100.0), // 100m zones
-		tickRate:    7812500 * time.Nanosecond, // 128 Hz (default for FPS)
-		compressor:  compressor, // Issue: #1612
+		addr:             udpAddr,
+		conn:             conn,
+		service:          service,
+		spatialGrid:      NewSpatialGrid(100.0), // 100m zones
+		tickRate:         7812500 * time.Nanosecond, // 128 Hz (default for FPS)
+		compressor:       compressor, // Issue: #1612
+		movementValidator: NewMovementValidator(), // Issue: #1587
 	}
 
 	return s, nil
@@ -144,11 +148,24 @@ func (s *UDPServer) receiveLoop(ctx context.Context) {
 
 // handleMovementUpdate processes player movement input
 // Performance: Server-side validation, spatial grid update
+// Issue: #1587 - Anti-cheat validation (speed checks)
 // TODO: Uncomment when protobuf is fixed
 /*
 func (s *UDPServer) handleMovementUpdate(ctx context.Context, msg *pb.PlayerMovementUpdate, clientAddr *net.UDPAddr) {
 	// Extract player_id from validated input
 	// (In production, validate token/session first)
+	
+	// Issue: #1587 - Validate movement before processing (anti-cheat)
+	newPos := Vec3{
+		X: float64(msg.Position.X),
+		Y: float64(msg.Position.Y),
+		Z: float64(msg.Position.Z),
+	}
+	
+	if err := s.movementValidator.ValidateMovement(msg.ClientTick, newPos); err != nil {
+		log.Printf("Movement validation failed for player %d: %v", msg.ClientTick, err)
+		return // Reject invalid movement
+	}
 	
 	// Update player state in spatial grid
 	position := s.service.ProcessMovementInput(ctx, msg)
@@ -249,6 +266,7 @@ func (s *UDPServer) broadcastMovementState(ctx context.Context, serverTick uint3
 			s.packetsSent++
 			s.bytesSent += uint64(len(data))
 		}
+		*/
 	}
 }
 

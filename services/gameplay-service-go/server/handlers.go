@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
-	api "github.com/necpgame/gameplay-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 

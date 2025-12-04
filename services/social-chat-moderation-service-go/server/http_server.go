@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/social-chat-moderation-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-moderation-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,7 +39,12 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.corsMiddleware)
 
 	handlers := NewChatModerationHandlers()
-	api.HandlerFromMux(handlers, router)
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		GetLogger().WithError(err).Fatal("Failed to create ogen server")
+	}
+	router.Mount("/api/v1", ogenServer)
 
 	server.server = &http.Server{
 		Addr:         addr,
@@ -109,11 +114,9 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 	GetLogger().WithError(err).Error(details)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	code := http.StatusText(statusCode)
 	errorResponse := api.Error{
-		Code:    &code,
+		Error:   http.StatusText(statusCode),
 		Message: details,
-		Error:   "error",
 	}
 	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
 		GetLogger().WithError(err).Error("Failed to encode JSON error response")

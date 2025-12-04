@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/necpgame/world-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/world-service-go/server"
 	"github.com/sirupsen/logrus"
 )
 

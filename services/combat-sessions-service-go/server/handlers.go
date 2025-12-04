@@ -13,15 +13,30 @@ import (
 const DBTimeout = 50 * time.Millisecond
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
-type Handlers struct{}
+// Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
+type Handlers struct {
+	loadShedder *LoadShedder
+}
 
 // NewHandlers creates new handlers
 func NewHandlers() *Handlers {
-	return &Handlers{}
+	// Issue: #1588 - Resilience patterns for hot path service
+	loadShedder := NewLoadShedder(500) // Max 500 concurrent requests
+	
+	return &Handlers{
+		loadShedder: loadShedder,
+	}
 }
 
 // ListCombatSessions - TYPED response!
 func (h *Handlers) ListCombatSessions(ctx context.Context, params api.ListCombatSessionsParams) ([]api.CombatSession, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		// Return empty list on overload (graceful degradation)
+		return []api.CombatSession{}, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

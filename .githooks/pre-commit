@@ -188,6 +188,12 @@ if [ "$SKIP_BENCHMARKS" != "1" ]; then
   echo ""
   echo "📊 Running quick benchmarks for changed services..."
   
+  # Create results directory
+  RESULTS_DIR=".benchmarks/results"
+  mkdir -p "$RESULTS_DIR"
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  PRE_COMMIT_FILE="${RESULTS_DIR}/pre-commit_${TIMESTAMP}.json"
+  
   # Get changed services from staged files
   CHANGED_SERVICES=$(git diff --cached --name-only --diff-filter=ACMRT | \
     grep -E '^services/([^/]+)/server/.*\.go$' | \
@@ -195,6 +201,12 @@ if [ "$SKIP_BENCHMARKS" != "1" ]; then
     sort -u || true)
   
   if [ -n "$CHANGED_SERVICES" ]; then
+    # Start JSON output
+    echo "{\"timestamp\":\"$TIMESTAMP\",\"source\":\"pre-commit\",\"services\":[" > "$PRE_COMMIT_FILE"
+    
+    FIRST=true
+    BENCH_COUNT=0
+    
     for service in $CHANGED_SERVICES; do
       SERVICE_DIR="services/$service"
       BENCH_FILE="$SERVICE_DIR/server/handlers_bench_test.go"
@@ -203,23 +215,64 @@ if [ "$SKIP_BENCHMARKS" != "1" ]; then
         echo "  🏃 $service" | tr -d '\n'
         cd "$SERVICE_DIR" || continue
         
-        if [ -f "Makefile" ] && grep -q "bench-quick:" Makefile 2>/dev/null; then
-          if make bench-quick >/dev/null 2>&1; then
+        # Run benchmarks with JSON output
+        BENCH_OUTPUT=$(go test -run=^$$ -bench=. -benchmem -benchtime=100ms -json ./server 2>&1 || echo "")
+        
+        if [ -n "$BENCH_OUTPUT" ] && ! echo "$BENCH_OUTPUT" | grep -q "no test files"; then
+          # Check if jq is available
+          if ! command -v jq >/dev/null 2>&1; then
+            echo " WARNING  (jq not found, skipping JSON save)"
+            # Still run quick check
+            if echo "$BENCH_OUTPUT" | grep -q '"Action":"bench"'; then
             echo " OK"
           else
-            echo " WARNING  (failed, but continuing)"
+              echo " WARNING  (failed)"
           fi
         else
-          if go test -run=^$$ -bench=. -benchmem -benchtime=100ms ./server >/dev/null 2>&1; then
+            # Parse JSON and add to results
+            if [ "$FIRST" = false ]; then
+              echo "," >> "$PRE_COMMIT_FILE"
+            fi
+            FIRST=false
+            
+            echo -n "{\"service\":\"$service\",\"benchmarks\":[" >> "$PRE_COMMIT_FILE"
+            
+            # Extract benchmark lines and format JSON
+            BENCH_JSON=$(echo "$BENCH_OUTPUT" | jq -r 'select(.Action=="bench") | "{\"name\":\"\(.Package)/\(.Test)\",\"ns_per_op\":\(.NsPerOp // 0),\"allocs_per_op\":\(.AllocsPerOp // 0),\"bytes_per_op\":\(.BytesPerOp // 0)}"' | tr '\n' ',' | sed 's/,$//')
+            
+            if [ -n "$BENCH_JSON" ]; then
+              echo -n "$BENCH_JSON" >> "$PRE_COMMIT_FILE"
+            fi
+            
+            echo "]}" >> "$PRE_COMMIT_FILE"
+            
+            # Count benchmarks from file
+            if [ -f "$PRE_COMMIT_FILE" ]; then
+              BENCH_COUNT=$(jq '[.services[].benchmarks | length] | add' "$PRE_COMMIT_FILE" 2>/dev/null || echo "0")
+            fi
+            
             echo " OK"
-          else
-            echo " WARNING  (failed, but continuing)"
           fi
+        else
+          echo " WARNING  (no benchmarks)"
         fi
         
         cd - >/dev/null || continue
       fi
     done
+    
+    echo "]}" >> "$PRE_COMMIT_FILE"
+    
+    # Check if file has valid data
+    if [ -f "$PRE_COMMIT_FILE" ] && [ -s "$PRE_COMMIT_FILE" ]; then
+      FILE_BENCH_COUNT=$(jq '[.services[].benchmarks | length] | add' "$PRE_COMMIT_FILE" 2>/dev/null || echo "0")
+      if [ "$FILE_BENCH_COUNT" != "0" ] && [ "$FILE_BENCH_COUNT" != "null" ]; then
+        echo "  💾 Results saved to: $PRE_COMMIT_FILE ($FILE_BENCH_COUNT benchmarks)"
+      else
+        # Remove empty file
+        rm -f "$PRE_COMMIT_FILE"
+      fi
+    fi
   else
     echo "  ⏭️  No changed services with benchmarks"
   fi

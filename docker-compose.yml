@@ -52,8 +52,24 @@
       - ./infrastructure/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
       - ./infrastructure/envoy/certs:/etc/envoy/certs:ro
 
+  benchmark-metrics-server:
+    build:
+      context: ./infrastructure/docker/benchmark-metrics-server
+    volumes:
+      - ./.benchmarks:/benchmarks:ro
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   prometheus:
     image: prom/prometheus:v2.53.0
+    depends_on:
+      - benchmark-metrics-server
     volumes:
       - ./infrastructure/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus

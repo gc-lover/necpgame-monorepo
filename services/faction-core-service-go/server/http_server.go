@@ -22,11 +22,17 @@ func NewHTTPServer(addr string, handlers *Handlers, service *Service) *HTTPServe
 	router.Use(RecoveryMiddleware)
 	router.Use(CORSMiddleware)
 
-	// Register API handlers
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	// Create ogen security handler (placeholder for now)
+	secHandler := &SecurityHandler{}
+
+	// Create ogen server
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	// Mount ogen server at /api/v1
+	router.Mount("/api/v1", ogenServer)
 
 	// Health check
 	router.Get("/health", healthCheck)

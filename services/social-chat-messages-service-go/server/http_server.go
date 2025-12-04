@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/social-chat-messages-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-messages-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,8 +38,18 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
+	// ogen handlers
 	handlers := NewChatMessagesHandlers()
-	api.HandlerFromMux(handlers, router)
+	secHandler := &SecurityHandler{}
+
+	// Integration with ogen
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		GetLogger().WithError(err).Fatal("Failed to create ogen server")
+	}
+
+	// Mount ogen server under /api/v1
+	router.Mount("/api/v1", ogenServer)
 
 	server.server = &http.Server{
 		Addr:         addr,
@@ -111,7 +121,7 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 	w.WriteHeader(statusCode)
 	code := http.StatusText(statusCode)
 	errorResponse := api.Error{
-		Code:    &code,
+		Code:    api.NewOptNilString(code),
 		Message: details,
 		Error:   "error",
 	}

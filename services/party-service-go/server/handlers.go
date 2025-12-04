@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/party-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // Context timeout constants (CRITICAL!)
@@ -27,15 +28,15 @@ func NewHandlers(service *PartyService) *Handlers {
 }
 
 // CreateParty - typed ogen
-func (h *Handlers) CreateParty(ctx context.Context, req *api.CreatePartyRequest) (api.CreatePartyRes, error) {
+func (h *Handlers) CreateParty(ctx context.Context, req api.OptCreatePartyRequest) (api.CreatePartyRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	leaderID := "player-001" // TODO: JWT
 
 	lootMode := "need_greed"
-	if req.LootMode.IsSet() {
-		lootMode = string(req.LootMode.Value)
+	if req.IsSet() && req.Value.LootMode.IsSet() {
+		lootMode = string(req.Value.LootMode.Value)
 	}
 
 	party, err := h.service.CreateParty(ctx, leaderID, "", lootMode)
@@ -53,7 +54,10 @@ func (h *Handlers) GetParty(ctx context.Context, params api.GetPartyParams) (api
 
 	party, err := h.service.GetParty(ctx, params.PartyId.String())
 	if err != nil {
-		return &api.GetPartyNotFound{}, err
+		return &api.Error{
+			Error:   "Party not found",
+			Message: err.Error(),
+		}, nil
 	}
 
 	return toOgenPartyResponse(party), nil
@@ -81,11 +85,14 @@ func (h *Handlers) InvitePlayer(ctx context.Context, req *api.InviteRequest, par
 
 	invite, err := h.service.InvitePlayer(ctx, params.PartyId.String(), req.PlayerId.String())
 	if err != nil {
-		return &api.InvitePlayerBadRequest{}, err
+		return &api.Error{
+			Error:   "Bad request",
+			Message: err.Error(),
+		}, nil
 	}
 
 	return &api.InviteResponse{
-		InviteId:  invite.InviteID,
+		InviteId:  invite.InviteId,
 		ExpiresAt: invite.ExpiresAt,
 	}, nil
 }
@@ -144,7 +151,10 @@ func (h *Handlers) KickMember(ctx context.Context, req *api.KickMemberReq, param
 
 	err := h.service.KickMember(ctx, params.PartyId.String(), req.PlayerId.String())
 	if err != nil {
-		return &api.KickMemberForbidden{}, err
+		return &api.Error{
+			Error:   "Forbidden",
+			Message: err.Error(),
+		}, nil
 	}
 
 	return &api.SuccessResponse{
@@ -182,11 +192,7 @@ func (h *Handlers) RollForLoot(ctx context.Context, req *api.LootRollRequest, pa
 		return nil, err
 	}
 
-	return &api.LootRollResponse{
-		Winner:   api.NewOptUUID(result.Winner),
-		Roll:     api.NewOptInt(result.Roll),
-		RollType: api.OptLootRollResponseRollType{},
-	}, nil
+	return result, nil
 }
 
 // Security handler
@@ -197,9 +203,10 @@ func (h *Handlers) HandleBearerAuth(ctx context.Context, operationName string, t
 
 // NewError implements ogen error handler
 func (h *Handlers) NewError(ctx context.Context, err error) *api.Error {
+	errStr := err.Error()
 	return &api.Error{
-		Error:   err.Error(),
-		Message: api.NewOptString(err.Error()),
+		Error:   errStr,
+		Message: errStr,
 	}
 }
 
@@ -207,22 +214,28 @@ func (h *Handlers) NewError(ctx context.Context, err error) *api.Error {
 
 func toOgenPartyResponse(party *Party) *api.PartyResponse {
 	members := make([]api.PartyMember, 0, len(party.Members))
-	for _, m := range party.Members {
+	for _, memberID := range party.Members {
+		playerID, _ := uuid.Parse(memberID)
+		role := api.PartyMemberRoleMember
+		if memberID == party.LeaderID {
+			role = api.PartyMemberRoleLeader
+		}
 		members = append(members, api.PartyMember{
-			PlayerId:   m.PlayerID,
-			PlayerName: api.NewOptString(m.PlayerName),
-			Role:       api.PartyMemberRole(m.Role),
-			JoinedAt:   api.NewOptDateTime(m.JoinedAt),
+			PlayerId:   playerID,
+			PlayerName: api.OptString{}, // TODO: Get from player service
+			Role:       role,
+			JoinedAt:   api.OptDateTime{}, // TODO: Get from party member data
 		})
 	}
 
+	partyID, _ := uuid.Parse(party.ID)
+	leaderID, _ := uuid.Parse(party.LeaderID)
+
 	return &api.PartyResponse{
-		PartyId:      party.PartyID,
-		LeaderId:     party.LeaderID,
-		Members:      members,
-		MaxMembers:   api.NewOptInt(party.MaxMembers),
-		LootMode:     api.PartyResponseLootMode(party.LootMode),
-		QuestSharing: api.NewOptBool(party.QuestSharing),
-		CreatedAt:    api.NewOptDateTime(party.CreatedAt),
+		PartyId:    partyID,
+		LeaderId:   leaderID,
+		Members:    members,
+		MaxMembers: api.NewOptInt(party.MaxMembers),
+		LootMode:   api.PartyResponseLootMode(party.LootMode),
 	}
 }

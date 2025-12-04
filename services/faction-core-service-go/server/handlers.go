@@ -1,183 +1,189 @@
-// Issue: #1442, #1604
+// Issue: #1442
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
 )
 
-// Context timeout constants
+// Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
 
+// Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
 	service *Service
 }
 
+// NewHandlers creates new handlers
 func NewHandlers(service *Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-// CreateFaction implements POST /api/v1/factions/create
-func (h *Handlers) CreateFaction(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// CreateFaction implements createFaction operation
+func (h *Handlers) CreateFaction(ctx context.Context, req *api.CreateFactionRequest) (api.CreateFactionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	var req api.CreateFactionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	faction, err := h.service.CreateFaction(ctx, req)
+	faction, err := h.service.CreateFaction(ctx, *req)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.CreateFactionBadRequest{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusCreated, faction)
+	return faction, nil
 }
 
-// GetFaction implements GET /api/v1/factions/{factionId}
-func (h *Handlers) GetFaction(w http.ResponseWriter, r *http.Request, factionId string) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetFaction implements getFaction operation
+func (h *Handlers) GetFaction(ctx context.Context, params api.GetFactionParams) (api.GetFactionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	faction, err := h.service.GetFaction(ctx, factionId)
+	details, err := h.service.GetFaction(ctx, params.FactionId.String())
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Faction not found")
-			return
+			return &api.Error{
+				Error:   "NOT_FOUND",
+				Message: "Faction not found",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.Error{
+			Error:   "INTERNAL_SERVER_ERROR",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, faction)
+	return details, nil
 }
 
-// UpdateFaction implements PUT /api/v1/factions/{factionId}
-func (h *Handlers) UpdateFaction(w http.ResponseWriter, r *http.Request, factionId string) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// UpdateFaction implements updateFaction operation
+func (h *Handlers) UpdateFaction(ctx context.Context, req *api.UpdateFactionRequest, params api.UpdateFactionParams) (api.UpdateFactionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	var req api.UpdateFactionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	faction, err := h.service.UpdateFaction(ctx, factionId, req)
+	faction, err := h.service.UpdateFaction(ctx, params.FactionId.String(), *req)
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Faction not found")
-			return
+			return &api.UpdateFactionNotFound{
+				Error:   "NOT_FOUND",
+				Message: "Faction not found",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.UpdateFactionBadRequest{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, faction)
+	return faction, nil
 }
 
-// DeleteFaction implements DELETE /api/v1/factions/{factionId}
-func (h *Handlers) DeleteFaction(w http.ResponseWriter, r *http.Request, factionId string) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// DeleteFaction implements deleteFaction operation
+func (h *Handlers) DeleteFaction(ctx context.Context, params api.DeleteFactionParams) (api.DeleteFactionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	if err := h.service.DeleteFaction(ctx, factionId); err != nil {
+	err := h.service.DeleteFaction(ctx, params.FactionId.String())
+	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Faction not found")
-			return
+			return &api.Error{
+				Error:   "NOT_FOUND",
+				Message: "Faction not found",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.Error{
+			Error:   "INTERNAL_SERVER_ERROR",
+			Message: err.Error(),
+		}, nil
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	return &api.DeleteFactionNoContent{}, nil
 }
 
-// ListFactions implements GET /api/v1/factions/list
-func (h *Handlers) ListFactions(w http.ResponseWriter, r *http.Request, params api.ListFactionsParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// ListFactions implements listFactions operation
+func (h *Handlers) ListFactions(ctx context.Context, params api.ListFactionsParams) (*api.ListFactionsOK, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	factions, pagination, err := h.service.ListFactions(ctx, params)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 
-	response := map[string]interface{}{
-		"factions":   factions,
-		"pagination": pagination,
+	var paginationResp api.OptPaginationResponse
+	if pagination != nil {
+		page := 1
+		if params.Page.Set {
+			page = params.Page.Value
+		}
+		limit := 10
+		if params.Limit.Set {
+			limit = params.Limit.Value
+		}
+		total := 0
+		if totalVal, ok := pagination["total"].(int); ok {
+			total = totalVal
+		}
+		paginationResp = api.NewOptPaginationResponse(api.PaginationResponse{
+			Total:   total,
+			Limit:   api.NewOptInt(limit),
+			Offset:  api.NewOptInt((page - 1) * limit),
+			HasMore: api.NewOptBool(total > page*limit),
+		})
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return &api.ListFactionsOK{
+		Factions:   factions,
+		Pagination: paginationResp,
+	}, nil
 }
 
-// UpdateHierarchy implements POST /api/v1/factions/{factionId}/hierarchy/update
-func (h *Handlers) UpdateHierarchy(w http.ResponseWriter, r *http.Request, factionId string) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetHierarchy implements getHierarchy operation
+func (h *Handlers) GetHierarchy(ctx context.Context, params api.GetHierarchyParams) (api.GetHierarchyRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	var req api.UpdateHierarchyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	hierarchy, err := h.service.UpdateHierarchy(ctx, factionId, req)
+	hierarchy, err := h.service.GetHierarchy(ctx, params.FactionId.String())
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Faction not found")
-			return
+			return &api.Error{
+				Error:   "NOT_FOUND",
+				Message: "Faction not found",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.Error{
+			Error:   "INTERNAL_SERVER_ERROR",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, hierarchy)
+	return hierarchy, nil
 }
 
-// GetHierarchy implements GET /api/v1/factions/{factionId}/hierarchy
-func (h *Handlers) GetHierarchy(w http.ResponseWriter, r *http.Request, factionId string) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// UpdateHierarchy implements updateHierarchy operation
+func (h *Handlers) UpdateHierarchy(ctx context.Context, req *api.UpdateHierarchyRequest, params api.UpdateHierarchyParams) (api.UpdateHierarchyRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	hierarchy, err := h.service.GetHierarchy(ctx, factionId)
+	hierarchy, err := h.service.UpdateHierarchy(ctx, params.FactionId.String(), *req)
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Faction not found")
-			return
+			return &api.UpdateHierarchyNotFound{
+				Error:   "NOT_FOUND",
+				Message: "Faction not found",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.UpdateHierarchyBadRequest{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, hierarchy)
+	return hierarchy, nil
 }
-
-// Helper functions
-func respondJSON(w http.ResponseWriter, code int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(payload)
-}
-
-func respondError(w http.ResponseWriter, code int, message string) {
-	respondJSON(w, code, map[string]string{"error": message})
-}
-
-
-
-
-
-
-
-

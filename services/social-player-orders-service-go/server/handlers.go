@@ -1,12 +1,12 @@
-// Issue: #1604
-// Handlers for social-player-orders-service-go - implements api.ServerInterface
+// Issue: #1598, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"net/http"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,7 +16,7 @@ const (
 	CacheTimeout = 10 * time.Millisecond
 )
 
-// ServiceHandlers implements api.ServerInterface
+// ServiceHandlers implements api.Handler interface (ogen typed handlers!)
 type ServiceHandlers struct {
 	logger *logrus.Logger
 }
@@ -26,13 +26,15 @@ func NewServiceHandlers(logger *logrus.Logger) *ServiceHandlers {
 	return &ServiceHandlers{logger: logger}
 }
 
-// HealthCheck implements GET /health
-func (h *ServiceHandlers) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), CacheTimeout)
+// HealthCheck - TYPED response!
+func (h *ServiceHandlers) HealthCheck(ctx context.Context) (*api.HealthCheckOK, error) {
+	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 	_ = ctx
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok"}`))
+	response := &api.HealthCheckOK{
+		Status: api.NewOptString("ok"),
+	}
+
+	return response, nil
 }

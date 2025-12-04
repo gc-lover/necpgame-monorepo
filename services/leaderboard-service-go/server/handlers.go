@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	api "github.com/necpgame/leaderboard-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 

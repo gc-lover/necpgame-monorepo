@@ -3,9 +3,12 @@
 package server
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-service-go/pkg/api"
+	"github.com/google/uuid"
 	"go.uber.org/goleak"
 )
 
@@ -25,15 +28,29 @@ func TestMatchmakingServiceNoLeaks(t *testing.T) {
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
 
-	// TODO: Test matchmaking queue lifecycle
-	// queue := NewMatchmakingQueue()
-	// queue.AddPlayer(entry)
-	// queue.FindMatch(skill, activityType, teamSize)
-	// time.Sleep(100 * time.Millisecond)
+	// Create mock repository
+	repo := &MockRepository{}
+	service := NewMatchmakingService(repo)
+
+	// Test queue operations
+	queue := NewMatchmakingQueue()
+	entry := PlayerQueueEntry{
+		PlayerID:     uuid.New(),
+		Skill:        1500,
+		JoinedAt:     time.Now(),
+		ActivityType: "pvp_5v5",
+	}
+	queue.AddPlayer(entry)
+
+	// Test service operations (no DB connection, so no leaks)
+	ctx := context.Background()
+	_, _ = service.EnterQueue(ctx, &api.EnterQueueRequest{
+		ActivityType: api.EnterQueueRequestActivityTypePvp5v5,
+	})
 
 	time.Sleep(100 * time.Millisecond)
 
-	// If goroutines leaked from queue workers, test FAILS
+	// If goroutines leaked from queue operations, test FAILS
 }
 
 // TestSkillBucketsNoLeaks verifies skill buckets don't leak goroutines
@@ -42,16 +59,53 @@ func TestSkillBucketsNoLeaks(t *testing.T) {
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
 
-	// TODO: Test skill bucket operations
-	// queue := NewMatchmakingQueue()
-	// for i := 0; i < 100; i++ {
-	//     queue.AddPlayer(PlayerQueueEntry{Skill: i * 10})
-	// }
-	// time.Sleep(200 * time.Millisecond)
+	queue := NewMatchmakingQueue()
+	
+	// Add 100 players to different skill buckets
+	for i := 0; i < 100; i++ {
+		entry := PlayerQueueEntry{
+			PlayerID:     uuid.New(),
+			Skill:        i * 10,
+			JoinedAt:     time.Now(),
+			ActivityType: "pvp_5v5",
+		}
+		queue.AddPlayer(entry)
+	}
 
 	time.Sleep(200 * time.Millisecond)
 
 	// Skill bucket operations should not leak goroutines
+}
+
+// TestConcurrentQueueOperationsNoLeaks verifies concurrent operations don't leak
+func TestConcurrentQueueOperationsNoLeaks(t *testing.T) {
+	defer goleak.VerifyNone(t,
+		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
+	)
+
+	repo := &MockRepository{}
+	service := NewMatchmakingService(repo)
+	ctx := context.Background()
+
+	// Simulate concurrent queue operations (100 goroutines)
+	done := make(chan struct{}, 100)
+	for i := 0; i < 100; i++ {
+		go func() {
+			_, _ = service.EnterQueue(ctx, &api.EnterQueueRequest{
+				ActivityType: api.EnterQueueRequestActivityTypePvp5v5,
+			})
+			done <- struct{}{}
+		}()
+	}
+
+	// Wait for all
+	for i := 0; i < 100; i++ {
+		<-done
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	// No leaked goroutines from concurrent operations
 }
 
 // NOTE: matchmaking-service is HIGH RISK for leaks:

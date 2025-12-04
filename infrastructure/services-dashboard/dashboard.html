@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services Dashboard - NECPGAME</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: #1a1f3a;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-card h3 {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .summary-card.healthy { border-left-color: #10b981; }
+        .summary-card.unhealthy { border-left-color: #ef4444; }
+        .summary-card.improving { border-left-color: #10b981; }
+        .summary-card.degrading { border-left-color: #ef4444; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #1a1f3a;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .service-card {
+            background: #1a1f3a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #2a2f4a;
+        }
+
+        .service-card h3 {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .health-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .health-badge.healthy {
+            background: #10b981;
+            color: white;
+        }
+
+        .health-badge.unhealthy {
+            background: #ef4444;
+            color: white;
+        }
+
+        .health-badge.unknown {
+            background: #6b7280;
+            color: white;
+        }
+
+        .trend-badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            margin-left: 10px;
+        }
+
+        .trend-badge.improving {
+            background: #10b981;
+            color: white;
+        }
+
+        .trend-badge.degrading {
+            background: #ef4444;
+            color: white;
+        }
+
+        .trend-badge.stable {
+            background: #6b7280;
+            color: white;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .metric {
+            font-size: 0.9em;
+        }
+
+        .metric-label {
+            opacity: 0.7;
+            font-size: 0.8em;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .chart-container {
+            background: #1a1f3a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container h3 {
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            background: #1a1f3a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        select, input {
+            background: #2a2f4a;
+            border: 1px solid #3a3f5a;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Services Dashboard</h1>
+        <p>Comprehensive monitoring of microservices performance and health</p>
+    </div>
+
+    <div class="summary-cards" id="summaryCards">
+        <div class="summary-card">
+            <h3>Total Services</h3>
+            <div class="value" id="totalServices">-</div>
+        </div>
+        <div class="summary-card healthy">
+            <h3>Healthy</h3>
+            <div class="value" id="healthyServices">-</div>
+        </div>
+        <div class="summary-card unhealthy">
+            <h3>Unhealthy</h3>
+            <div class="value" id="unhealthyServices">-</div>
+        </div>
+        <div class="summary-card improving">
+            <h3>Improving</h3>
+            <div class="value" id="improvingServices">-</div>
+        </div>
+        <div class="summary-card degrading">
+            <h3>Degrading</h3>
+            <div class="value" id="degradingServices">-</div>
+        </div>
+        <div class="summary-card">
+            <h3>Avg Latency (P95)</h3>
+            <div class="value" id="avgLatency">-</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('overview')">Overview</button>
+        <button class="tab" onclick="showTab('benchmarks')">Benchmarks</button>
+        <button class="tab" onclick="showTab('trends')">Trends</button>
+        <button class="tab" onclick="showTab('metrics')">Metrics</button>
+    </div>
+
+    <div id="overview" class="tab-content active">
+        <div class="controls">
+            <select id="serviceFilter" onchange="loadServices()">
+                <option value="">All Services</option>
+            </select>
+            <select id="healthFilter" onchange="loadServices()">
+                <option value="">All Health Status</option>
+                <option value="healthy">Healthy</option>
+                <option value="unhealthy">Unhealthy</option>
+                <option value="unknown">Unknown</option>
+            </select>
+        </div>
+        <div class="services-grid" id="servicesGrid">
+            <div class="loading">Loading services...</div>
+        </div>
+    </div>
+
+    <div id="benchmarks" class="tab-content">
+        <div class="controls">
+            <select id="benchmarkService" onchange="loadBenchmarkHistory()">
+                <option value="">All Services</option>
+            </select>
+            <select id="benchmarkName" onchange="loadBenchmarkHistory()">
+                <option value="">All Benchmarks</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <h3>Benchmark History</h3>
+            <canvas id="benchmarkChart"></canvas>
+        </div>
+    </div>
+
+    <div id="trends" class="tab-content">
+        <div class="controls">
+            <select id="trendService" onchange="loadTrends()">
+                <option value="">All Services</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <h3>Performance Trends</h3>
+            <canvas id="trendsChart"></canvas>
+        </div>
+    </div>
+
+    <div id="metrics" class="tab-content">
+        <div class="controls">
+            <select id="metricsService" onchange="loadServiceMetrics()">
+                <option value="">Select Service</option>
+            </select>
+        </div>
+        <div id="metricsContent">
+            <div class="loading">Select a service to view metrics</div>
+        </div>
+    </div>
+
+    <script>
+        let benchmarkChart = null;
+        let trendsChart = null;
+
+        async function loadSummary() {
+            try {
+                const response = await fetch('/api/summary');
+                const data = await response.json();
+                
+                document.getElementById('totalServices').textContent = data.total_services || 0;
+                document.getElementById('healthyServices').textContent = data.healthy_services || 0;
+                document.getElementById('unhealthyServices').textContent = data.unhealthy_services || 0;
+                document.getElementById('improvingServices').textContent = data.services_improving || 0;
+                document.getElementById('degradingServices').textContent = data.services_degrading || 0;
+                document.getElementById('avgLatency').textContent = data.avg_latency ? data.avg_latency.toFixed(2) + 'ms' : '-';
+            } catch (error) {
+                console.error('Failed to load summary:', error);
+            }
+        }
+
+        async function loadServices() {
+            try {
+                const response = await fetch('/api/services');
+                const services = await response.json();
+                
+                const serviceFilter = document.getElementById('serviceFilter');
+                const healthFilter = document.getElementById('healthFilter').value;
+                
+                // Populate service filter
+                serviceFilter.innerHTML = '<option value="">All Services</option>';
+                services.forEach(svc => {
+                    const option = document.createElement('option');
+                    option.value = svc.name;
+                    option.textContent = svc.name;
+                    serviceFilter.appendChild(option);
+                });
+                
+                // Filter services
+                let filtered = services;
+                if (healthFilter) {
+                    filtered = filtered.filter(s => s.health === healthFilter);
+                }
+                const selectedService = serviceFilter.value;
+                if (selectedService) {
+                    filtered = filtered.filter(s => s.name === selectedService);
+                }
+                
+                // Render services
+                const grid = document.getElementById('servicesGrid');
+                grid.innerHTML = filtered.map(svc => `
+                    <div class="service-card">
+                        <h3>
+                            ${svc.name}
+                            <span class="health-badge ${svc.health}">${svc.health}</span>
+                            ${svc.benchmark_trend ? `<span class="trend-badge ${svc.benchmark_trend}">${svc.benchmark_trend}</span>` : ''}
+                        </h3>
+                        <div class="metrics">
+                            <div class="metric">
+                                <div class="metric-label">Request Rate</div>
+                                <div class="metric-value">${svc.request_rate ? svc.request_rate.toFixed(2) : '-'} req/s</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Error Rate</div>
+                                <div class="metric-value">${svc.error_rate ? svc.error_rate.toFixed(2) : '-'} err/s</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Latency P95</div>
+                                <div class="metric-value">${svc.latency_p95 ? svc.latency_p95.toFixed(2) : '-'} ms</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">CPU Usage</div>
+                                <div class="metric-value">${svc.cpu_usage ? svc.cpu_usage.toFixed(1) : '-'}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load services:', error);
+                document.getElementById('servicesGrid').innerHTML = '<div class="loading">Error loading services</div>';
+            }
+        }
+
+        async function loadBenchmarkHistory() {
+            const service = document.getElementById('benchmarkService').value;
+            const benchmark = document.getElementById('benchmarkName').value;
+            
+            try {
+                const url = `/api/benchmarks/history?service=${service}&benchmark=${benchmark}`;
+                const response = await fetch(url);
+                const history = await response.json();
+                
+                if (benchmarkChart) {
+                    benchmarkChart.destroy();
+                }
+                
+                const ctx = document.getElementById('benchmarkChart').getContext('2d');
+                const datasets = history.map(h => ({
+                    label: `${h.service} - ${h.benchmark}`,
+                    data: h.points.map(p => ({ x: p.timestamp, y: p.value })),
+                    borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                    tension: 0.1
+                }));
+                
+                benchmarkChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { type: 'time' },
+                            y: { title: { display: true, text: 'ns/op' } }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to load benchmark history:', error);
+            }
+        }
+
+        async function loadTrends() {
+            const service = document.getElementById('trendService').value;
+            
+            try {
+                const response = await fetch('/api/trends');
+                const trends = await response.json();
+                
+                let filtered = Object.values(trends);
+                if (service) {
+                    filtered = filtered.filter(t => t.service === service);
+                }
+                
+                if (trendsChart) {
+                    trendsChart.destroy();
+                }
+                
+                const ctx = document.getElementById('trendsChart').getContext('2d');
+                const datasets = filtered.map(t => ({
+                    label: `${t.service} - ${t.metric} (${t.direction})`,
+                    data: t.points.map(p => ({ x: p.timestamp, y: p.value })),
+                    borderColor: t.direction === 'improving' ? '#10b981' : t.direction === 'degrading' ? '#ef4444' : '#6b7280',
+                    tension: 0.1
+                }));
+                
+                trendsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { type: 'time' },
+                            y: { title: { display: true, text: 'Value' } }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to load trends:', error);
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Initialize
+        loadSummary();
+        loadServices();
+        setInterval(() => {
+            loadSummary();
+            loadServices();
+        }, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>
+

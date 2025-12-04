@@ -23,8 +23,13 @@ type HTTPServer struct {
 
 // NewHTTPServer creates new HTTP server with ogen integration
 // SOLID: ТОЛЬКО настройка сервера и роутера
+// Issue: #1588 - Load shedding for overload protection
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	router := chi.NewRouter()
+
+	// Issue: #1588 - Load shedding (max 5000 concurrent for hot path)
+	loadShedder := NewLoadShedder(5000)
+	router.Use(loadShedder.Middleware)
 
 	// Built-in middleware
 	router.Use(middleware.Logger)

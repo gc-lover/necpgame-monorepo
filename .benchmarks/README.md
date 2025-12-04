@@ -27,10 +27,10 @@
       "service": "matchmaking-go",
       "benchmarks": [
         {
-          "name": "server/TestEnterQueue",
-          "ns_per_op": 45000,
-          "allocs_per_op": 2,
-          "bytes_per_op": 128
+          "name": "server/BenchmarkGetPlayerLootHistory",
+          "ns_per_op": 200.2,
+          "allocs_per_op": 5,
+          "bytes_per_op": 320
         }
       ]
     }
@@ -45,6 +45,13 @@
 ### Локальный запуск:
 ```bash
 ./scripts/run-all-benchmarks.sh
+```
+
+### Веб-дашборд:
+```bash
+cd infrastructure/benchmark-dashboard
+make dev
+# Открыть http://localhost:8080
 ```
 
 ### Сравнение результатов:
@@ -70,9 +77,10 @@ benchstat .benchmarks/results/benchmarks_20250115_020000.json \
 **Результаты:**
 - Коммитятся в репозиторий
 - Сохраняются как artifacts (90 дней)
-- Доступны в Grafana (если настроен Prometheus)
+- Доступны через веб-дашборд на `http://localhost:8080` (локально) или через K8s deployment
 
 ---
 
-**См. также:** `.cursor/BENCHMARK_DASHBOARD_SOLUTION.md`
-
+**См. также:** 
+- `.cursor/BENCHMARK_DASHBOARD_SOLUTION.md` - архитектура
+- `infrastructure/benchmark-dashboard/README.md` - дашборд

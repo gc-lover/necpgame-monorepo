@@ -96,7 +96,7 @@ func (c *CharacterCache) GetByAccountID(ctx context.Context, accountID uuid.UUID
 	if data, err := c.redis.Get(ctx, cacheKey).Bytes(); err == nil {
 		var chars []models.Character
 		if err := json.Unmarshal(data, &chars); err == nil {
-			c.storeInMemory(cacheKey, &CachedCharacters{
+			c.storeInMemoryList(cacheKey, &CachedCharacters{
 				Characters: chars,
 				LoadedAt:  time.Now(),
 			})
@@ -114,7 +114,7 @@ func (c *CharacterCache) GetByAccountID(ctx context.Context, accountID uuid.UUID
 	if data, err := json.Marshal(characters); err == nil {
 		c.redis.Set(ctx, cacheKey, data, c.redisTTL)
 	}
-	c.storeInMemory(cacheKey, &CachedCharacters{
+	c.storeInMemoryList(cacheKey, &CachedCharacters{
 		Characters: characters,
 		LoadedAt:  time.Now(),
 	})
@@ -180,8 +180,8 @@ func (c *CharacterCache) storeInMemory(characterID uuid.UUID, char *models.Chara
 	})
 }
 
-// storeInMemory stores characters list in L1 cache (for account lookup)
-func (c *CharacterCache) storeInMemory(key string, chars *CachedCharacters) {
+// storeInMemoryList stores characters list in L1 cache (for account lookup)
+func (c *CharacterCache) storeInMemoryList(key string, chars *CachedCharacters) {
 	c.memoryCache.Store(key, chars)
 }
 

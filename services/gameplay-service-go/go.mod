@@ -1,5 +1,5 @@
 // Issue: #1599
-module github.com/necpgame/gameplay-service-go
+module github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go
 
 go 1.24.0
 

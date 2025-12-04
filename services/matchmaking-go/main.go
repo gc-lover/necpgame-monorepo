@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/server"
-	"github.com/pyroscope-io/client/pyroscope" // Issue: #1611 - Continuous Profiling
+	"github.com/grafana/pyroscope-go" // Issue: #1611 - Continuous Profiling
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 			"environment": getEnv("ENV", "development"),
 			"version":     getEnv("VERSION", "unknown"),
 		},
-		SampleRate: 100, // 100 Hz
+		UploadRate: 10 * time.Second, // 10 seconds
 	})
 	log.Println("OK Pyroscope continuous profiling started")
 

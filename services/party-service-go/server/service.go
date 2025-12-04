@@ -4,9 +4,11 @@ package server
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/party-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 type Party struct {
@@ -74,11 +76,10 @@ func (s *PartyService) DisbandParty(ctx context.Context, partyID string) error {
 
 // InvitePlayer invites a player to the party
 func (s *PartyService) InvitePlayer(ctx context.Context, partyID, playerID string) (*api.InviteResponse, error) {
-	inviteID := fmt.Sprintf("invite-%d", time.Now().Unix())
+	inviteID := uuid.New()
 
 	invite := &api.InviteResponse{
 		InviteId:  inviteID,
-		PartyId:   partyID,
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	}
 
@@ -149,8 +150,8 @@ func (s *PartyService) UpdateSettings(ctx context.Context, partyID string, setti
 		return fmt.Errorf("party not found: %w", err)
 	}
 
-	if settings.LootMode != nil {
-		party.LootMode = string(*settings.LootMode)
+	if settings.LootMode.IsSet() {
+		party.LootMode = string(settings.LootMode.Value)
 	}
 
 	party.UpdatedAt = time.Now()
@@ -166,10 +167,12 @@ func (s *PartyService) UpdateSettings(ctx context.Context, partyID string, setti
 // RollForLoot handles loot roll
 func (s *PartyService) RollForLoot(ctx context.Context, partyID, playerID, itemID, rollType string) (*api.LootRollResponse, error) {
 	// TODO: Implement loot roll logic
+	playerUUID, _ := uuid.Parse(playerID)
+	rollValue := rand.Intn(100) + 1 // 1-100
+	
 	return &api.LootRollResponse{
-		PlayerId: playerID,
-		ItemId:   itemID,
-		RollType: rollType,
-		Winner:   playerID,
+		RollValue: rollValue,
+		PlayerId:  playerUUID,
+		RollType:  api.LootRollResponseRollType(rollType),
 	}, nil
 }
