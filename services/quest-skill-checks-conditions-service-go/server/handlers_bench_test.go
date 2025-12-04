@@ -6,26 +6,30 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-skill-checks-conditions-service-go/pkg/api"
 )
 
 // BenchmarkCheckQuestConditions benchmarks CheckQuestConditions handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCheckQuestConditions(b *testing.B) {
-	handlers := NewHandlers()
+	handlers := &Handlers{}
 
 	ctx := context.Background()
+	params := api.CheckQuestConditionsParams{
+		QuestID: uuid.New(),
+	}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.CheckQuestConditions(ctx)
+		_, _ = handlers.CheckQuestConditions(ctx, params)
 	}
 }
 
 // BenchmarkGetQuestRequirements benchmarks GetQuestRequirements handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetQuestRequirements(b *testing.B) {
-	handlers := NewHandlers()
+	handlers := &Handlers{}
 
 	ctx := context.Background()
 	params := api.GetQuestRequirementsParams{
@@ -43,14 +47,18 @@ func BenchmarkGetQuestRequirements(b *testing.B) {
 // BenchmarkPerformSkillCheck benchmarks PerformSkillCheck handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkPerformSkillCheck(b *testing.B) {
-	handlers := NewHandlers()
+	handlers := &Handlers{}
 
 	ctx := context.Background()
+	req := &api.SkillCheckRequest{}
+	params := api.PerformSkillCheckParams{
+		QuestID: uuid.New(),
+	}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.PerformSkillCheck(ctx)
+		_, _ = handlers.PerformSkillCheck(ctx, req, params)
 	}
 }
 

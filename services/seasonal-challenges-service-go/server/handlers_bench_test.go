@@ -14,14 +14,12 @@ func BenchmarkGetCurrentSeason(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetCurrentSeasonParams{
-	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetCurrentSeason(ctx, params)
+		_, _ = handlers.GetCurrentSeason(ctx)
 	}
 }
 

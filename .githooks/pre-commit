@@ -55,10 +55,7 @@ if ! source "$PROJECT_ROOT/.github/file-size-config.sh" 2>/dev/null; then
   exit 0
 fi
 
-echo "🔍 Checking file sizes before commit..."
-echo "Max lines per file: $MAX_LINES"
-echo ""
-
+# Get staged files list once (used by both tests and file size check)
 FAILED_FILES=()
 CHECKED_COUNT=0
 
@@ -80,6 +77,217 @@ if ! git diff --cached --name-only --diff-filter=ACMRT > "$TEMP_FILE" 2>/dev/nul
   rm -f "$TEMP_FILE"
   exit 0
 fi
+
+# Issue: Run tests FIRST (before file size check) so error title is correct
+# Tests are more critical and should be checked first
+if [ "$SKIP_TESTS" != "1" ]; then
+  echo "🧪 Running tests for changed services..."
+  
+  # Get changed services from staged files
+  CHANGED_SERVICES=$(cat "$TEMP_FILE" | \
+    grep -E '^services/([^/]+)/.*\.go$' | \
+    sed 's|^services/\([^/]*\)/.*|\1|' | \
+    sort -u || true)
+  
+  FAILED_SERVICES=()
+  FAILED_TESTS=()
+  TESTED_COUNT=0
+  
+  if [ -n "$CHANGED_SERVICES" ]; then
+    for service in $CHANGED_SERVICES; do
+      SERVICE_DIR="services/$service"
+      
+      if [ ! -d "$SERVICE_DIR" ]; then
+        continue
+      fi
+      
+      # Check if service has Go files
+      if ! find "$SERVICE_DIR" -name "*.go" -type f | grep -q .; then
+        continue
+      fi
+      
+      echo "  🏃 Testing $service..." | tr -d '\n'
+      TESTED_COUNT=$((TESTED_COUNT + 1))
+      
+      cd "$SERVICE_DIR" || continue
+      
+      # Try Makefile test first, then fallback to go test
+      # On Windows, make might not be available, so check first
+      if [ -f "Makefile" ] && grep -q "^test:" Makefile && command -v make >/dev/null 2>&1; then
+        TEST_OUTPUT=$(make test 2>&1)
+        TEST_EXIT=$?
+      else
+        # Check if there are any test files
+        if find . -name "*_test.go" -type f | grep -q .; then
+          TEST_OUTPUT=$(go test -v ./... 2>&1)
+          TEST_EXIT=$?
+        else
+          echo " WARNING  (no tests)"
+          cd - >/dev/null || continue
+          continue
+        fi
+      fi
+      
+      if [ $TEST_EXIT -ne 0 ]; then
+        echo " ❌"
+        FAILED_SERVICES+=("$service")
+        
+        # Extract failed test names from output
+        FAILED_TEST_NAMES=""
+        
+        # Try different patterns for failed tests (use -- to prevent option parsing)
+        # Pattern 1: --- FAIL: TestName (0.00s) - most common format
+        # Extract everything between "FAIL: " and " (" or end of line
+        if echo "$TEST_OUTPUT" | grep -qE -- "^[[:space:]]*--- FAIL:"; then
+          FAILED_TEST_NAMES=$(echo "$TEST_OUTPUT" | \
+            grep -- "^[[:space:]]*--- FAIL:" | \
+            sed -E 's/^[[:space:]]*--- FAIL:\s+([A-Za-z0-9_]+[A-Za-z0-9_]*)\s*(\(|$).*/\1/' | \
+            grep -v "^$" | \
+            head -10 | \
+            tr '\n' ',' | \
+            sed 's/,$//')
+        # Pattern 2: FAIL    package/path    TestName    0.00s - summary format
+        # Look for word starting with capital letter after package path
+        elif echo "$TEST_OUTPUT" | grep -qE -- "^FAIL[[:space:]]+[^[:space:]]+[[:space:]]+[A-Z]"; then
+          FAILED_TEST_NAMES=$(echo "$TEST_OUTPUT" | \
+            grep -- "^FAIL[[:space:]]" | \
+            awk '{for(i=3; i<=NF; i++) {if ($i ~ /^[A-Z][A-Za-z0-9_]*$/ && $i !~ /^[0-9]/) {print $i; break}}}' | \
+            head -10 | \
+            tr '\n' ',' | \
+            sed 's/,$//')
+        elif echo "$TEST_OUTPUT" | grep -qiE "no test files|no tests to run"; then
+          FAILED_TEST_NAMES="no test files"
+        elif echo "$TEST_OUTPUT" | grep -qiE "build.*failed|compilation.*error|undefined|cannot find|command not found"; then
+          FAILED_TEST_NAMES="compilation/command error"
+        else
+          FAILED_TEST_NAMES="unknown"
+        fi
+        
+        # Get error summary
+        ERROR_SUMMARY=""
+        if echo "$TEST_OUTPUT" | grep -qE "panic:"; then
+          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
+            grep -A 2 "panic:" | \
+            head -3 | \
+            sed 's/^[[:space:]]*//' | \
+            sed 's/[[:space:]]\+/ /g' | \
+            tr '\n' '|' | \
+            cut -c1-150 | \
+            sed 's/|$//')
+        elif echo "$TEST_OUTPUT" | grep -qE "error:|Error:"; then
+          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
+            grep -E "error:|Error:" | \
+            head -3 | \
+            sed 's/^[[:space:]]*//' | \
+            sed 's/[[:space:]]\+/ /g' | \
+            tr '\n' '|' | \
+            cut -c1-150 | \
+            sed 's/|$//')
+        elif echo "$TEST_OUTPUT" | grep -qE "undefined|cannot find|missing"; then
+          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
+            grep -E "undefined|cannot find|missing" | \
+            head -2 | \
+            sed 's/^[[:space:]]*//' | \
+            sed 's/[[:space:]]\+/ /g' | \
+            tr '\n' '|' | \
+            cut -c1-150 | \
+            sed 's/|$//')
+        elif echo "$TEST_OUTPUT" | grep -qE -- "FAIL|assertion"; then
+          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
+            grep -E -- "FAIL|assertion" | \
+            head -3 | \
+            sed 's/^[[:space:]]*//' | \
+            sed 's/[[:space:]]\+/ /g' | \
+            tr '\n' '|' | \
+            cut -c1-150 | \
+            sed 's/|$//')
+        else
+          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
+            grep -v "^$" | \
+            head -5 | \
+            sed 's/^[[:space:]]*//' | \
+            sed 's/[[:space:]]\+/ /g' | \
+            tr '\n' '|' | \
+            cut -c1-150 | \
+            sed 's/|$//')
+        fi
+        
+        if [ -z "$ERROR_SUMMARY" ]; then
+          ERROR_SUMMARY="test failure (see output above)"
+        fi
+        
+        FAILED_TESTS+=("$service:$FAILED_TEST_NAMES:$ERROR_SUMMARY")
+      else
+        echo " OK"
+      fi
+      
+      cd - >/dev/null || continue
+    done
+    
+    echo ""
+    echo "Services tested: $TESTED_COUNT"
+    
+    if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
+      echo ""
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "[GIT_HOOK_ERROR] COMMIT_REJECTED_TESTS_FAILED"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo ""
+      echo "ERROR_TYPE: tests_failed"
+      echo "POLICY: All tests must pass before commit"
+      echo ""
+      echo "FAILED_SERVICES:"
+      for entry in "${FAILED_TESTS[@]}"; do
+        IFS=':' read -r service tests error <<< "$entry"
+        echo "  - Service: $service"
+        if [ -n "$tests" ] && [ "$tests" != "unknown" ]; then
+          echo "    Failed tests: $tests"
+        fi
+        if [ -n "$error" ]; then
+          echo "    Error: $error"
+        fi
+        echo ""
+      done
+      echo "REQUIRED_ACTION: Fix failing tests before committing"
+      echo "RECOMMENDATION: Run 'make test' or 'go test ./...' in each failed service directory"
+      echo ""
+      echo "NOTE: To skip tests (emergency only): SKIP_TESTS=1 git commit"
+      echo ""
+      echo "FOR_AI_AGENTS:"
+      echo "  This repository enforces that all tests must pass before committing."
+      echo "  The following services have failing tests:"
+      for service in "${FAILED_SERVICES[@]}"; do
+        echo "    - $service"
+      done
+      echo "  You must fix all failing tests before you can commit."
+      echo "  Steps to fix:"
+      echo "    1. Navigate to each failed service directory: cd services/<service-name>"
+      echo "    2. Run tests: make test (or go test ./...)"
+      echo "    3. Fix the failing tests"
+      echo "    4. Verify tests pass: make test"
+      echo "    5. Stage fixes: git add ."
+      echo "    6. Try committing again"
+      echo ""
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      rm -f "$TEMP_FILE"
+      exit 1
+    else
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "OK All tests passed ($TESTED_COUNT services)"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    fi
+  else
+    echo "  ⏭️  No changed services with Go files"
+  fi
+else
+  echo ""
+  echo "⏭️  Skipping tests (SKIP_TESTS=1)"
+fi
+
+echo ""
+echo "🔍 Checking file sizes before commit..."
+echo "Max lines per file: $MAX_LINES"
+echo ""
 
 while IFS= read -r file || [ -n "$file" ]; do
   if [ -z "$file" ] || [ ! -f "$file" ]; then
@@ -181,151 +389,6 @@ if command -v fieldalignment >/dev/null 2>&1; then
   fi
 else
   echo "WARNING  fieldalignment not installed. Run: go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest"
-fi
-
-# Issue: Run tests for all changed services (blocking)
-# This hook runs tests for all services with changed Go files.
-# Tests must pass before commit is allowed.
-# Format: Same as file size check - clear error messages for AI agents.
-# Skip: Set SKIP_TESTS=1 to bypass (emergency only).
-if [ "$SKIP_TESTS" != "1" ]; then
-  echo ""
-  echo "🧪 Running tests for changed services..."
-
-# Get changed services from staged files
-CHANGED_SERVICES=$(git diff --cached --name-only --diff-filter=ACMRT | \
-  grep -E '^services/([^/]+)/.*\.go$' | \
-  sed 's|^services/\([^/]*\)/.*|\1|' | \
-  sort -u || true)
-
-FAILED_SERVICES=()
-FAILED_TESTS=()
-TESTED_COUNT=0
-
-if [ -n "$CHANGED_SERVICES" ]; then
-  for service in $CHANGED_SERVICES; do
-    SERVICE_DIR="services/$service"
-    
-    if [ ! -d "$SERVICE_DIR" ]; then
-      continue
-    fi
-    
-    # Check if service has Go files
-    if ! find "$SERVICE_DIR" -name "*.go" -type f | grep -q .; then
-      continue
-    fi
-    
-    echo "  🏃 Testing $service..." | tr -d '\n'
-    TESTED_COUNT=$((TESTED_COUNT + 1))
-    
-    cd "$SERVICE_DIR" || continue
-    
-    # Try Makefile test first, then fallback to go test
-    if [ -f "Makefile" ] && grep -q "^test:" Makefile; then
-      TEST_OUTPUT=$(make test 2>&1)
-      TEST_EXIT=$?
-    else
-      # Check if there are any test files
-      if find . -name "*_test.go" -type f | grep -q .; then
-        TEST_OUTPUT=$(go test -v ./... 2>&1)
-        TEST_EXIT=$?
-      else
-        echo " WARNING  (no tests)"
-        cd - >/dev/null || continue
-        continue
-      fi
-    fi
-    
-    if [ $TEST_EXIT -ne 0 ]; then
-      echo " ❌"
-      FAILED_SERVICES+=("$service")
-      
-      # Extract failed test names from output
-      # Pattern: --- FAIL: TestName (0.00s)
-      # Pattern: FAIL    package/path    TestName    0.00s
-      FAILED_TEST_NAMES=$(echo "$TEST_OUTPUT" | \
-        grep -E "(--- FAIL:|FAIL\s+[^\s]+\s+[^\s]+)" | \
-        sed -E 's/.*(FAIL|FAIL:)\s+([^\s\(]+).*/\2/' | \
-        sed 's/://g' | \
-        head -10 | \
-        tr '\n' ',' | \
-        sed 's/,$//' || echo "unknown")
-      
-      # Get error summary (first meaningful error line)
-      ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
-        grep -E "(FAIL|panic|error|Error|assertion)" | \
-        head -3 | \
-        sed 's/^[[:space:]]*//' | \
-        sed 's/[[:space:]]\+/ /g' | \
-        tr '\n' '|' | \
-        cut -c1-150 | \
-        sed 's/|$//' || echo "test failure")
-      
-      FAILED_TESTS+=("$service:$FAILED_TEST_NAMES:$ERROR_SUMMARY")
-    else
-      echo " OK"
-    fi
-    
-    cd - >/dev/null || continue
-  done
-  
-  echo ""
-  echo "Services tested: $TESTED_COUNT"
-  
-  if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "[GIT_HOOK_ERROR] COMMIT_REJECTED_TESTS_FAILED"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-    echo "ERROR_TYPE: tests_failed"
-    echo "POLICY: All tests must pass before commit"
-    echo ""
-    echo "FAILED_SERVICES:"
-    for entry in "${FAILED_TESTS[@]}"; do
-      IFS=':' read -r service tests error <<< "$entry"
-      echo "  - Service: $service"
-      if [ -n "$tests" ] && [ "$tests" != "unknown" ]; then
-        echo "    Failed tests: $tests"
-      fi
-      if [ -n "$error" ]; then
-        echo "    Error: $error"
-      fi
-      echo ""
-    done
-    echo "REQUIRED_ACTION: Fix failing tests before committing"
-    echo "RECOMMENDATION: Run 'make test' or 'go test ./...' in each failed service directory"
-    echo ""
-    echo "NOTE: To skip tests (emergency only): SKIP_TESTS=1 git commit"
-    echo ""
-    echo "FOR_AI_AGENTS:"
-    echo "  This repository enforces that all tests must pass before committing."
-    echo "  The following services have failing tests:"
-    for service in "${FAILED_SERVICES[@]}"; do
-      echo "    - $service"
-    done
-    echo "  You must fix all failing tests before you can commit."
-    echo "  Steps to fix:"
-    echo "    1. Navigate to each failed service directory: cd services/<service-name>"
-    echo "    2. Run tests: make test (or go test ./...)"
-    echo "    3. Fix the failing tests"
-    echo "    4. Verify tests pass: make test"
-    echo "    5. Stage fixes: git add ."
-    echo "    6. Try committing again"
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    exit 1
-  else
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "OK All tests passed ($TESTED_COUNT services)"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  fi
-else
-  echo "  ⏭️  No changed services with Go files"
-fi
-else
-  echo ""
-  echo "⏭️  Skipping tests (SKIP_TESTS=1)"
 fi
 
 # Issue: Automatic benchmarks for changed services (optional, non-blocking)

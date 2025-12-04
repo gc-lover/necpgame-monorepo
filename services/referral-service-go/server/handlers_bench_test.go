@@ -7,24 +7,24 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/necpgame/referral-service-go/pkg/api"
+	"github.com/sirupsen/logrus"
 )
 
-// BenchmarkHandler benchmarks handler performance
+// BenchmarkGetReferralCode benchmarks GetReferralCode handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkHandler(b *testing.B) {
-	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+func BenchmarkGetReferralCode(b *testing.B) {
+	handlers := NewServiceHandlers(logrus.New())
 
 	ctx := context.Background()
+	params := api.GetReferralCodeParams{
+		PlayerID: uuid.New(),
+	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// TODO: Add actual handler call based on service API
-		// Example:
-		// _, _ = handlers.Get(ctx, api.GetParams{ID: uuid.New()})
-		_ = handlers
-		_ = ctx
+		_, _ = handlers.GetReferralCode(ctx, params)
 	}
 }
