@@ -1,248 +1,177 @@
-// Issue: #57
+// Issue: #1595
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
+	"errors"
+	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/combat-hacking-service-go/pkg/api"
 	"github.com/google/uuid"
-	"github.com/necpgame/combat-hacking-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/sirupsen/logrus"
 )
 
-type HackingHandlers struct {
+const DBTimeout = 50 * time.Millisecond
+
+var (
+	ErrSystemOverheated = errors.New("system overheated, cannot hack")
+	ErrDemonOverheated  = errors.New("system overheated, cannot activate demon")
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+type Handlers struct {
 	service HackingService
-	logger  *logrus.Logger
 }
 
-func NewHackingHandlers() *HackingHandlers {
+// NewHandlers creates new handlers
+func NewHandlers() *Handlers {
 	repo := NewInMemoryRepository()
 	logger := GetLogger()
 	service := NewHackingService(repo, logger)
-
-	return &HackingHandlers{
-		service: service,
-		logger:  logger,
-	}
+	return &Handlers{service: service}
 }
 
-func (h *HackingHandlers) HackTarget(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var req api.HackTargetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+// HackTarget - TYPED response!
+func (h *Handlers) HackTarget(ctx context.Context, req *api.HackTargetRequest) (api.HackTargetRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	playerID, err := h.getPlayerIDFromContext(ctx)
 	if err != nil {
-		h.respondError(w, http.StatusUnauthorized, "player ID not found")
-		return
+		return &api.HackTargetUnauthorized{}, nil
 	}
 
 	result, err := h.service.HackTarget(ctx, playerID, req)
 	if err != nil {
-		if err.Error() == "system overheated, cannot hack" {
-			h.respondError(w, http.StatusConflict, err.Error())
-			return
+		if err == ErrSystemOverheated {
+			return &api.HackTargetBadRequest{}, nil
 		}
-		h.respondError(w, http.StatusInternalServerError, "failed to hack target")
-		return
+		return &api.HackTargetInternalServerError{}, err
 	}
 
-	h.respondJSON(w, http.StatusOK, result)
+	return result, nil
 }
 
-func (h *HackingHandlers) ActivateCountermeasures(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var req api.CountermeasureRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+// ActivateCountermeasures - TYPED response!
+func (h *Handlers) ActivateCountermeasures(ctx context.Context, req *api.CountermeasureRequest) (api.ActivateCountermeasuresRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	playerID, err := h.getPlayerIDFromContext(ctx)
 	if err != nil {
-		h.respondError(w, http.StatusUnauthorized, "player ID not found")
-		return
+		return &api.ActivateCountermeasuresUnauthorized{}, nil
 	}
 
 	result, err := h.service.ActivateCountermeasures(ctx, playerID, req)
 	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "failed to activate countermeasures")
-		return
+		return &api.ActivateCountermeasuresInternalServerError{}, err
 	}
 
-	h.respondJSON(w, http.StatusOK, result)
+	return result, nil
 }
 
-func (h *HackingHandlers) GetDemons(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+// GetDemons - TYPED response!
+func (h *Handlers) GetDemons(ctx context.Context) (api.GetDemonsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	playerID, err := h.getPlayerIDFromContext(ctx)
 	if err != nil {
-		h.respondError(w, http.StatusUnauthorized, "player ID not found")
-		return
+		return &api.GetDemonsUnauthorized{}, nil
 	}
 
 	demons, err := h.service.GetDemons(ctx, playerID)
 	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "failed to get demons")
-		return
+		return &api.GetDemonsInternalServerError{}, err
 	}
 
-	response := map[string]interface{}{
-		"demons": demons,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.GetDemonsOK{Demons: demons}, nil
 }
 
-func (h *HackingHandlers) ActivateDemon(w http.ResponseWriter, r *http.Request, demonId openapi_types.UUID) {
-	ctx := r.Context()
-
-	var req api.ActivateDemonRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+// ActivateDemon - TYPED response!
+func (h *Handlers) ActivateDemon(ctx context.Context, req *api.ActivateDemonRequest, params api.ActivateDemonParams) (api.ActivateDemonRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	playerID, err := h.getPlayerIDFromContext(ctx)
 	if err != nil {
-		h.respondError(w, http.StatusUnauthorized, "player ID not found")
-		return
+		return &api.ActivateDemonUnauthorized{}, nil
 	}
 
-	demonUUID, err := uuid.Parse(demonId.String())
+	result, err := h.service.ActivateDemon(ctx, playerID, params.DemonID, req)
 	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid demon ID")
-		return
-	}
-
-	result, err := h.service.ActivateDemon(ctx, playerID, demonUUID, req)
-	if err != nil {
-		if err.Error() == "system overheated, cannot activate demon" {
-			h.respondError(w, http.StatusConflict, err.Error())
-			return
+		if err == ErrDemonOverheated {
+			return &api.ActivateDemonBadRequest{}, nil
 		}
-		h.respondError(w, http.StatusInternalServerError, "failed to activate demon")
-		return
+		return &api.ActivateDemonInternalServerError{}, err
 	}
 
-	h.respondJSON(w, http.StatusOK, result)
+	return result, nil
 }
 
-func (h *HackingHandlers) GetICELevel(w http.ResponseWriter, r *http.Request, targetId openapi_types.UUID) {
-	ctx := r.Context()
+// GetICELevel - TYPED response!
+func (h *Handlers) GetICELevel(ctx context.Context, params api.GetICELevelParams) (api.GetICELevelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	targetUUID, err := uuid.Parse(targetId.String())
+	info, err := h.service.GetICELevel(ctx, params.TargetID)
 	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid target ID")
-		return
+		return &api.GetICELevelInternalServerError{}, err
 	}
 
-	info, err := h.service.GetICELevel(ctx, targetUUID)
-	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "failed to get ICE level")
-		return
-	}
-
-	h.respondJSON(w, http.StatusOK, info)
+	return info, nil
 }
 
-func (h *HackingHandlers) GetNetworkInfo(w http.ResponseWriter, r *http.Request, networkId openapi_types.UUID) {
-	ctx := r.Context()
+// GetNetworkInfo - TYPED response!
+func (h *Handlers) GetNetworkInfo(ctx context.Context, params api.GetNetworkInfoParams) (api.GetNetworkInfoRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	networkUUID, err := uuid.Parse(networkId.String())
+	info, err := h.service.GetNetworkInfo(ctx, params.NetworkID)
 	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid network ID")
-		return
+		return &api.GetNetworkInfoInternalServerError{}, err
 	}
 
-	info, err := h.service.GetNetworkInfo(ctx, networkUUID)
-	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "failed to get network info")
-		return
-	}
-
-	h.respondJSON(w, http.StatusOK, info)
+	return info, nil
 }
 
-func (h *HackingHandlers) AccessNetwork(w http.ResponseWriter, r *http.Request, networkId openapi_types.UUID) {
-	ctx := r.Context()
-
-	var req api.NetworkAccessRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+// AccessNetwork - TYPED response!
+func (h *Handlers) AccessNetwork(ctx context.Context, req *api.NetworkAccessRequest, params api.AccessNetworkParams) (api.AccessNetworkRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	playerID, err := h.getPlayerIDFromContext(ctx)
 	if err != nil {
-		h.respondError(w, http.StatusUnauthorized, "player ID not found")
-		return
+		return &api.AccessNetworkUnauthorized{}, nil
 	}
 
-	networkUUID, err := uuid.Parse(networkId.String())
+	result, err := h.service.AccessNetwork(ctx, playerID, params.NetworkID, req)
 	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid network ID")
-		return
+		return &api.AccessNetworkInternalServerError{}, err
 	}
 
-	result, err := h.service.AccessNetwork(ctx, playerID, networkUUID, req)
-	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "failed to access network")
-		return
-	}
-
-	h.respondJSON(w, http.StatusOK, result)
+	return result, nil
 }
 
-func (h *HackingHandlers) GetOverheatStatus(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+// GetOverheatStatus - TYPED response!
+func (h *Handlers) GetOverheatStatus(ctx context.Context) (api.GetOverheatStatusRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	playerID, err := h.getPlayerIDFromContext(ctx)
 	if err != nil {
-		h.respondError(w, http.StatusUnauthorized, "player ID not found")
-		return
+		return &api.GetOverheatStatusUnauthorized{}, nil
 	}
 
 	status, err := h.service.GetOverheatStatus(ctx, playerID)
 	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "failed to get overheat status")
-		return
+		return &api.GetOverheatStatusInternalServerError{}, err
 	}
 
-	h.respondJSON(w, http.StatusOK, status)
+	return status, nil
 }
 
-func (h *HackingHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (h *HackingHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-		Code:    nil,
-		Details: nil,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON error response")
-	}
-}
-
-func (h *HackingHandlers) getPlayerIDFromContext(ctx context.Context) (uuid.UUID, error) {
+func (h *Handlers) getPlayerIDFromContext(ctx context.Context) (uuid.UUID, error) {
+	// TODO: Extract from JWT token in context
 	return uuid.New(), nil
 }
-

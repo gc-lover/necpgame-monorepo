@@ -1,3 +1,4 @@
+// Issue: #1595
 package server
 
 import (
@@ -6,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/necpgame/maintenance-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -18,21 +20,24 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewMaintenanceHandlers(logger)
-
 	router := chi.NewRouter()
 
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.RequestID)
 	router.Use(loggingMiddleware(logger))
 	router.Use(recoveryMiddleware(logger))
 	router.Use(corsMiddleware)
 
-	// Generated API handlers with Chi
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseRouter: router,
-	})
+	handlers := NewHandlers(logger)
 
+	ogenServer, err := api.NewServer(handlers)
+	if err != nil {
+		panic(err)
+	}
+
+	router.Mount("/", ogenServer)
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,
@@ -99,11 +104,3 @@ func corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"healthy"}`))
-}
-
-

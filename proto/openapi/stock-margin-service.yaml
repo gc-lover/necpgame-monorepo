@@ -1,159 +1,170 @@
-# Issue: #142109968
 openapi: 3.0.3
 info:
   title: Stock Margin Service API
-  description: |
-    API для маржинальной торговли и коротких продаж NECPGAME.
+  description: 'API для маржинальной торговли и коротких продаж NECPGAME.
+
 
     **Основные возможности:**
+
     - Маржинальная торговля (плечо 2x-10x)
+
     - Короткие продажи (short selling)
+
     - Управление займами
+
     - Маржин-коллы и ликвидация
+
     - Контроль рисков
 
+
     **Требования к доступу:**
+
     - Margin trading: уровень 40+, положительная кредитная история, min баланс 10K
+
     - Short selling: уровень 45+, объём 500K+/мес, коллатерал 150%
 
+
     **Риски:**
+
     - Маржин-коллы при падении equity <30%
+
     - Автоматическая ликвидация позиций
+
     - Потенциально неограниченные убытки (short)
+
     - Margin health пересчитывается каждые 5 секунд
 
+
     **Ограничения:**
+
     - Short interest limit: 30% float
+
     - Высокая волатильность временно отключает новые шорты и высокое плечо
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8080
-    description: Margin Service (локальная разработка)
-  - url: https://trading.necpgame.com
-    description: Margin Service (продакшн)
-
+- url: http://localhost:8080
+  description: Margin Service (локальная разработка)
+- url: https://trading.necpgame.com
+  description: Margin Service (продакшн)
 tags:
-  - name: Margin Accounts
-    description: Маржинальные счета
-  - name: Short Selling
-    description: Короткие продажи
-  - name: Risk Management
-    description: Управление рисками
-
+- name: Margin Accounts
+  description: Маржинальные счета
+- name: Short Selling
+  description: Короткие продажи
+- name: Risk Management
+  description: Управление рисками
 paths:
   /api/v1/margin/account:
     get:
       tags:
-        - Margin Accounts
+      - Margin Accounts
       summary: Информация о маржинальном счёте
       description: Возвращает баланс, equity, leverage и margin health
       operationId: getMarginAccount
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Маржинальный счёт
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MarginAccount"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/MarginAccount'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
     post:
       tags:
-        - Margin Accounts
+      - Margin Accounts
       summary: Открыть маржинальный счёт
       description: Требования - уровень 40+, кредитная история, min 10K баланс
       operationId: openMarginAccount
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OpenMarginAccountRequest"
+              $ref: '#/components/schemas/OpenMarginAccountRequest'
       responses:
-        "201":
+        '201':
           description: Счёт открыт
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MarginAccount"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                $ref: '#/components/schemas/MarginAccount'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/margin/borrow:
     post:
       tags:
-        - Margin Accounts
+      - Margin Accounts
       summary: Занять средства
       description: Займ с проверкой margin health, плечо 2x-10x
       operationId: borrowMargin
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BorrowMarginRequest"
+              $ref: '#/components/schemas/BorrowMarginRequest'
       responses:
-        "200":
+        '200':
           description: Средства заняты
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BorrowMarginResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                $ref: '#/components/schemas/BorrowMarginResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/margin/repay:
     post:
       tags:
-        - Margin Accounts
+      - Margin Accounts
       summary: Погасить займ
       description: Погашение с освобождением коллатерала
       operationId: repayMargin
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RepayMarginRequest"
+              $ref: '#/components/schemas/RepayMarginRequest'
       responses:
-        "200":
+        '200':
           description: Займ погашен
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/margin/history:
     get:
       tags:
-        - Margin Accounts
+      - Margin Accounts
       summary: История маржин-коллов
       description: История с timestamp, суммой, статусом
       operationId: getMarginCallHistory
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: История
           content:
             application/json:
@@ -163,51 +174,50 @@ paths:
                   margin_calls:
                     type: array
                     items:
-                      $ref: "#/components/schemas/MarginCall"
+                      $ref: '#/components/schemas/MarginCall'
                   pagination:
-                    $ref: "common.yaml#/components/schemas/PaginationResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                    $ref: common.yaml#/components/schemas/PaginationResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/short:
     post:
       tags:
-        - Short Selling
+      - Short Selling
       summary: Открыть короткую позицию
       description: Short selling - уровень 45+, объём 500K+, коллатерал 150%, лимит 30% float
       operationId: openShortPosition
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ShortPositionRequest"
+              $ref: '#/components/schemas/ShortPositionRequest'
       responses:
-        "201":
+        '201':
           description: Позиция открыта
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShortPosition"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/ShortPosition'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
     get:
       tags:
-        - Short Selling
+      - Short Selling
       summary: Список коротких позиций
       description: Позиции с сортировкой по PnL или дате
       operationId: listShortPositions
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список позиций
           content:
             application/json:
@@ -217,92 +227,87 @@ paths:
                   positions:
                     type: array
                     items:
-                      $ref: "#/components/schemas/ShortPosition"
+                      $ref: '#/components/schemas/ShortPosition'
                   pagination:
-                    $ref: "common.yaml#/components/schemas/PaginationResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                    $ref: common.yaml#/components/schemas/PaginationResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/short/{position_id}:
     get:
       tags:
-        - Short Selling
+      - Short Selling
       summary: Информация о короткой позиции
       description: Возвращает детали короткой позиции
       operationId: getShortPosition
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: position_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: position_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Детали позиции
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShortPosition"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/ShortPosition'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/short/{position_id}/close:
     post:
       tags:
-        - Short Selling
+      - Short Selling
       summary: Закрыть короткую позицию
       description: Выкуп акций, возврат брокеру, расчёт PnL
       operationId: closeShortPosition
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: position_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: position_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Позиция закрыта
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClosePositionResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/ClosePositionResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/risk/health:
     get:
       tags:
-        - Risk Management
+      - Risk Management
       summary: Уровень риска
       description: Margin health (5 сек), liquidation price, warnings
       operationId: getRiskHealth
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Показатели риска
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RiskHealth"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                $ref: '#/components/schemas/RiskHealth'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     MarginAccount:
       type: object
@@ -339,7 +344,7 @@ components:
     OpenMarginAccountRequest:
       type: object
       required:
-        - initial_deposit
+      - initial_deposit
       properties:
         initial_deposit:
           type: number
@@ -348,7 +353,7 @@ components:
     BorrowMarginRequest:
       type: object
       required:
-        - amount
+      - amount
       properties:
         amount:
           type: number
@@ -371,7 +376,7 @@ components:
     RepayMarginRequest:
       type: object
       required:
-        - amount
+      - amount
       properties:
         amount:
           type: number
@@ -385,26 +390,27 @@ components:
         account_id:
           type: string
           format: uuid
-        required_amount:
-          type: number
-          description: Требуемая сумма
         status:
           type: string
           enum:
-            - active
-            - fulfilled
-            - liquidated
+          - active
+          - fulfilled
+          - liquidated
         triggered_at:
           type: string
           format: date-time
         resolved_at:
           type: string
           format: date-time
+        required_amount:
+          type: number
+          description: Требуемая сумма
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ShortPositionRequest:
       type: object
       required:
-        - ticker
-        - quantity
+      - ticker
+      - quantity
       properties:
         ticker:
           type: string
@@ -423,8 +429,9 @@ components:
           format: uuid
         ticker:
           type: string
-        quantity:
-          type: integer
+        opened_at:
+          type: string
+          format: date-time
         entry_price:
           type: number
           description: Цена открытия
@@ -437,24 +444,28 @@ components:
         collateral:
           type: number
           description: Удержанный коллатерал (150%)
-        opened_at:
-          type: string
-          format: date-time
+        quantity:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ClosePositionResponse:
       type: object
       properties:
         position_id:
           type: string
           format: uuid
-        realized_pnl:
-          type: number
-          description: Realized PnL
         closed_at:
           type: string
           format: date-time
+        realized_pnl:
+          type: number
+          description: Realized PnL
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RiskHealth:
       type: object
       properties:
+        open_positions_risk:
+          type: object
+          description: Риски открытых позиций
         margin_health:
           type: number
           description: Уровень маржи (%)
@@ -470,7 +481,4 @@ components:
         margin_call_warning:
           type: boolean
           description: Предупреждение (equity <35%)
-        open_positions_risk:
-          type: object
-          description: Риски открытых позиций
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

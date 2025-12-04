@@ -43,20 +43,24 @@ END $$;
 
 -- Таблица инвестиционных продуктов
 CREATE TABLE IF NOT EXISTS economy.investment_products (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    product_type investment_product_type NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    issuer_id UUID, -- FK corporations/factions (nullable)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  issuer_id UUID,
+  description TEXT,
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- FK corporations/factions (nullable)
     base_yield_percentage DECIMAL(5,2) NOT NULL,
-    risk_level investment_risk_level NOT NULL,
-    min_investment_amount DECIMAL(10,2) NOT NULL,
-    max_investment_amount DECIMAL(10,2), -- nullable
-    liquidity investment_liquidity NOT NULL,
-    maturity_days INTEGER, -- nullable, для облигаций
+  min_investment_amount DECIMAL(10,2) NOT NULL,
+  max_investment_amount DECIMAL(10,2),
+  maturity_days INTEGER,
+  для облигаций
     available BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  product_type investment_product_type NOT NULL,
+  risk_level investment_risk_level NOT NULL,
+  -- nullable
+    liquidity investment_liquidity NOT NULL,
+  -- nullable
 );
 
 -- Индексы для investment_products
@@ -69,21 +73,24 @@ CREATE INDEX IF NOT EXISTS idx_investment_products_risk_level
 
 -- Таблица инвестиционных позиций игроков
 CREATE TABLE IF NOT EXISTS economy.player_investment_positions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL, -- FK accounts
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL,
+  -- FK accounts
     product_id UUID NOT NULL REFERENCES economy.investment_products(id) ON DELETE RESTRICT,
-    position_type investment_position_type, -- nullable
-    amount DECIMAL(10,2) NOT NULL,
-    purchase_price DECIMAL(10,2) NOT NULL,
-    current_price DECIMAL(10,2) NOT NULL,
-    current_value DECIMAL(10,2) NOT NULL,
-    profit_loss DECIMAL(10,2) NOT NULL DEFAULT 0,
-    profit_loss_percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
-    status investment_position_status NOT NULL DEFAULT 'active',
-    purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    closed_at TIMESTAMP, -- nullable
+  purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  closed_at TIMESTAMP,
+  -- nullable
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- nullable
+    amount DECIMAL(10,2) NOT NULL,
+  purchase_price DECIMAL(10,2) NOT NULL,
+  current_price DECIMAL(10,2) NOT NULL,
+  current_value DECIMAL(10,2) NOT NULL,
+  profit_loss DECIMAL(10,2) NOT NULL DEFAULT 0,
+  profit_loss_percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
+  position_type investment_position_type,
+  status investment_position_status NOT NULL DEFAULT 'active'
 );
 
 -- Индексы для player_investment_positions
@@ -96,18 +103,21 @@ CREATE INDEX IF NOT EXISTS idx_player_investment_positions_purchased_at
 
 -- Таблица транзакций по инвестициям
 CREATE TABLE IF NOT EXISTS economy.investment_transactions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL, -- FK accounts
-    position_id UUID REFERENCES economy.player_investment_positions(id) ON DELETE SET NULL, -- nullable
-    transaction_type investment_transaction_type NOT NULL,
-    product_id UUID NOT NULL REFERENCES economy.investment_products(id) ON DELETE RESTRICT,
-    amount DECIMAL(10,2) NOT NULL,
-    price DECIMAL(10,2), -- nullable
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL,
+  -- FK accounts
+    position_id UUID REFERENCES economy.player_investment_positions(id) ON DELETE SET NULL,
+  product_id UUID NOT NULL REFERENCES economy.investment_products(id) ON DELETE RESTRICT,
+  currency VARCHAR(10) NOT NULL DEFAULT 'USD',
+  executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  amount DECIMAL(10,2) NOT NULL,
+  price DECIMAL(10,2),
+  -- nullable
     total DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(10) NOT NULL DEFAULT 'USD',
-    status investment_transaction_status NOT NULL DEFAULT 'pending',
-    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  -- nullable
+    transaction_type investment_transaction_type NOT NULL,
+  status investment_transaction_status NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для investment_transactions
@@ -120,15 +130,18 @@ CREATE INDEX IF NOT EXISTS idx_investment_transactions_type_status
 
 -- Таблица снимков портфелей для аналитики
 CREATE TABLE IF NOT EXISTS economy.portfolio_snapshots (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL, -- FK accounts
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL,
+  distribution JSONB NOT NULL DEFAULT '{}',
+  -- 0.00-1.00
+    snapshot_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- FK accounts
     total_value DECIMAL(10,2) NOT NULL,
-    total_cost DECIMAL(10,2) NOT NULL,
-    total_profit_loss DECIMAL(10,2) NOT NULL,
-    total_profit_loss_percentage DECIMAL(5,2) NOT NULL,
-    distribution JSONB NOT NULL DEFAULT '{}', -- распределение по типам продуктов
-    risk_score DECIMAL(3,2) NOT NULL DEFAULT 0.00, -- 0.00-1.00
-    snapshot_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  total_cost DECIMAL(10,2) NOT NULL,
+  total_profit_loss DECIMAL(10,2) NOT NULL,
+  total_profit_loss_percentage DECIMAL(5,2) NOT NULL,
+  -- распределение по типам продуктов
+    risk_score DECIMAL(3,2) NOT NULL DEFAULT 0.00
 );
 
 -- Индексы для portfolio_snapshots
@@ -139,15 +152,18 @@ CREATE INDEX IF NOT EXISTS idx_portfolio_snapshots_snapshot_at
 
 -- Таблица алертов по рискам инвестиций
 CREATE TABLE IF NOT EXISTS economy.investment_risk_alerts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL, -- FK accounts
-    position_id UUID REFERENCES economy.player_investment_positions(id) ON DELETE CASCADE, -- nullable
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL,
+  -- FK accounts
+    position_id UUID REFERENCES economy.player_investment_positions(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  resolved_at TIMESTAMP,
+  -- nullable
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  resolved BOOLEAN NOT NULL DEFAULT false,
+  -- nullable
     alert_type investment_risk_alert_type NOT NULL,
-    severity investment_risk_alert_severity NOT NULL,
-    message TEXT NOT NULL,
-    resolved BOOLEAN NOT NULL DEFAULT false,
-    resolved_at TIMESTAMP, -- nullable
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  severity investment_risk_alert_severity NOT NULL
 );
 
 -- Индексы для investment_risk_alerts

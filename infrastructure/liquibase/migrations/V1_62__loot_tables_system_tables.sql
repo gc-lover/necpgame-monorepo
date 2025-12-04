@@ -40,18 +40,18 @@ END $$;
 
 -- Таблица таблиц лута
 CREATE TABLE IF NOT EXISTS economy.loot_tables (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    source_type loot_source_type NOT NULL,
-    source_id UUID NOT NULL,
-    min_items INTEGER NOT NULL DEFAULT 1 CHECK (min_items >= 0),
-    max_items INTEGER NOT NULL DEFAULT 1 CHECK (max_items >= min_items),
-    currency_min DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (currency_min >= 0),
-    currency_max DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (currency_max >= currency_min),
-    luck_modifier DECIMAL(5,2) NOT NULL DEFAULT 0.0,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  source_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  currency_min DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (currency_min >= 0),
+  currency_max DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (currency_max >= currency_min),
+  luck_modifier DECIMAL(5,2) NOT NULL DEFAULT 0.0,
+  min_items INTEGER NOT NULL DEFAULT 1 CHECK (min_items >= 0),
+  max_items INTEGER NOT NULL DEFAULT 1 CHECK (max_items >= min_items),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  source_type loot_source_type NOT NULL
 );
 
 -- Индексы для loot_tables
@@ -60,17 +60,17 @@ CREATE INDEX IF NOT EXISTS idx_loot_tables_is_active ON economy.loot_tables(is_a
 
 -- Таблица записей в таблицах лута
 CREATE TABLE IF NOT EXISTS economy.loot_table_entries (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    loot_table_id UUID NOT NULL REFERENCES economy.loot_tables(id) ON DELETE CASCADE,
-    item_template_id UUID NOT NULL,
-    weight INTEGER NOT NULL DEFAULT 1 CHECK (weight > 0),
-    min_quantity INTEGER NOT NULL DEFAULT 1 CHECK (min_quantity > 0),
-    max_quantity INTEGER NOT NULL DEFAULT 1 CHECK (max_quantity >= min_quantity),
-    drop_chance DECIMAL(5,2) NOT NULL DEFAULT 0.0 CHECK (drop_chance >= 0 AND drop_chance <= 100),
-    is_guaranteed BOOLEAN NOT NULL DEFAULT false,
-    min_level INTEGER CHECK (min_level IS NULL OR min_level >= 1),
-    max_level INTEGER CHECK (max_level IS NULL OR max_level >= min_level),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  loot_table_id UUID NOT NULL REFERENCES economy.loot_tables(id) ON DELETE CASCADE,
+  item_template_id UUID NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  drop_chance DECIMAL(5,2) NOT NULL DEFAULT 0.0 CHECK (drop_chance >= 0 AND drop_chance <= 100),
+  weight INTEGER NOT NULL DEFAULT 1 CHECK (weight > 0),
+  min_quantity INTEGER NOT NULL DEFAULT 1 CHECK (min_quantity > 0),
+  max_quantity INTEGER NOT NULL DEFAULT 1 CHECK (max_quantity >= min_quantity),
+  min_level INTEGER CHECK (min_level IS NULL OR min_level >= 1),
+  max_level INTEGER CHECK (max_level IS NULL OR max_level >= min_level),
+  is_guaranteed BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Индексы для loot_table_entries
@@ -79,14 +79,14 @@ CREATE INDEX IF NOT EXISTS idx_loot_table_entries_item_template_id ON economy.lo
 
 -- Таблица распределений лута
 CREATE TABLE IF NOT EXISTS economy.loot_distributions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    source_type loot_source_type NOT NULL,
-    source_id UUID NOT NULL,
-    distribution_mode loot_distribution_mode NOT NULL,
-    party_id UUID,
-    status loot_distribution_status NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    distributed_at TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  source_id UUID NOT NULL,
+  party_id UUID,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  distributed_at TIMESTAMP,
+  source_type loot_source_type NOT NULL,
+  distribution_mode loot_distribution_mode NOT NULL,
+  status loot_distribution_status NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для loot_distributions
@@ -96,13 +96,13 @@ CREATE INDEX IF NOT EXISTS idx_loot_distributions_status ON economy.loot_distrib
 
 -- Таблица предметов в распределениях
 CREATE TABLE IF NOT EXISTS economy.loot_distribution_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    distribution_id UUID NOT NULL REFERENCES economy.loot_distributions(id) ON DELETE CASCADE,
-    item_template_id UUID NOT NULL,
-    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    assigned_to UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    status loot_item_status NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  distribution_id UUID NOT NULL REFERENCES economy.loot_distributions(id) ON DELETE CASCADE,
+  item_template_id UUID NOT NULL,
+  assigned_to UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  status loot_item_status NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для loot_distribution_items
@@ -111,14 +111,14 @@ CREATE INDEX IF NOT EXISTS idx_loot_distribution_items_assigned_to ON economy.lo
 
 -- Таблица roll сессий для групп
 CREATE TABLE IF NOT EXISTS economy.loot_rolls (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    distribution_id UUID NOT NULL REFERENCES economy.loot_distributions(id) ON DELETE CASCADE,
-    item_id UUID NOT NULL REFERENCES economy.loot_distribution_items(id) ON DELETE CASCADE,
-    party_id UUID NOT NULL,
-    status loot_roll_status NOT NULL DEFAULT 'active',
-    expires_at TIMESTAMP NOT NULL,
-    winner_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  distribution_id UUID NOT NULL REFERENCES economy.loot_distributions(id) ON DELETE CASCADE,
+  item_id UUID NOT NULL REFERENCES economy.loot_distribution_items(id) ON DELETE CASCADE,
+  party_id UUID NOT NULL,
+  winner_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status loot_roll_status NOT NULL DEFAULT 'active'
 );
 
 -- Индексы для loot_rolls
@@ -128,13 +128,13 @@ CREATE INDEX IF NOT EXISTS idx_loot_rolls_expires_at ON economy.loot_rolls(expir
 
 -- Таблица участников roll сессий
 CREATE TABLE IF NOT EXISTS economy.loot_roll_participants (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    roll_id UUID NOT NULL REFERENCES economy.loot_rolls(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    choice loot_roll_choice NOT NULL,
-    roll_value INTEGER CHECK (roll_value IS NULL OR (roll_value >= 1 AND roll_value <= 100)),
-    rolled_at TIMESTAMP,
-    UNIQUE(roll_id, character_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  roll_id UUID NOT NULL REFERENCES economy.loot_rolls(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  rolled_at TIMESTAMP,
+  roll_value INTEGER CHECK (roll_value IS NULL OR (roll_value >= 1 AND roll_value <= 100)),
+  choice loot_roll_choice NOT NULL,
+  UNIQUE(roll_id, character_id)
 );
 
 -- Индексы для loot_roll_participants
@@ -143,18 +143,18 @@ CREATE INDEX IF NOT EXISTS idx_loot_roll_participants_character_id ON economy.lo
 
 -- Таблица мировых дропов
 CREATE TABLE IF NOT EXISTS economy.world_drops (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    item_template_id UUID NOT NULL,
-    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    location_x DECIMAL(10,2) NOT NULL,
-    location_y DECIMAL(10,2) NOT NULL,
-    location_z DECIMAL(10,2) NOT NULL,
-    world_id UUID NOT NULL,
-    status world_drop_status NOT NULL DEFAULT 'active',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
-    picked_up_by UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    picked_up_at TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  item_template_id UUID NOT NULL,
+  world_id UUID NOT NULL,
+  picked_up_by UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP NOT NULL,
+  picked_up_at TIMESTAMP,
+  location_x DECIMAL(10,2) NOT NULL,
+  location_y DECIMAL(10,2) NOT NULL,
+  location_z DECIMAL(10,2) NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  status world_drop_status NOT NULL DEFAULT 'active'
 );
 
 -- Индексы для world_drops
@@ -164,12 +164,12 @@ CREATE INDEX IF NOT EXISTS idx_world_drops_status_created ON economy.world_drops
 
 -- Таблица истории лута игроков (для smart loot)
 CREATE TABLE IF NOT EXISTS economy.player_loot_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    item_template_id UUID NOT NULL,
-    source_type loot_source_type NOT NULL,
-    obtained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    luck_value DECIMAL(5,2) NOT NULL DEFAULT 0.0
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  item_template_id UUID NOT NULL,
+  obtained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  luck_value DECIMAL(5,2) NOT NULL DEFAULT 0.0,
+  source_type loot_source_type NOT NULL
 );
 
 -- Индексы для player_loot_history

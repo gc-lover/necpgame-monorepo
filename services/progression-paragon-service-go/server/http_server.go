@@ -5,31 +5,32 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/necpgame/progression-paragon-service-go/pkg/api"
-	prestigeapi "github.com/necpgame/progression-paragon-service-go/pkg/api/prestige"
-	masteryapi "github.com/necpgame/progression-paragon-service-go/pkg/api/mastery"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr           string
-	router         *mux.Router
+	router         *chi.Mux
 	paragonService ParagonServiceInterface
-	prestigeService PrestigeServiceInterface
-	masteryService MasteryServiceInterface
 	logger         *logrus.Logger
 	server         *http.Server
 }
 
-func NewHTTPServer(addr string, paragonService ParagonServiceInterface, prestigeService PrestigeServiceInterface, masteryService MasteryServiceInterface) *HTTPServer {
-	router := mux.NewRouter()
+func NewHTTPServer(addr string, paragonService ParagonServiceInterface) *HTTPServer {
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.Timeout(60 * time.Second))
+
 	server := &HTTPServer{
 		addr:           addr,
 		router:         router,
 		paragonService: paragonService,
-		prestigeService: prestigeService,
-		masteryService: masteryService,
 		logger:         GetLogger(),
 	}
 
@@ -37,18 +38,15 @@ func NewHTTPServer(addr string, paragonService ParagonServiceInterface, prestige
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	apiRouter := router.PathPrefix("/api/v1/progression").Subrouter()
+	handlers := NewParagonHandlers(paragonService)
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
+	}
 
-	paragonHandlers := NewParagonHandlers(paragonService)
-	api.HandlerFromMux(paragonHandlers, apiRouter)
-
-	prestigeHandlers := NewPrestigeHandlers(prestigeService)
-	prestigeapi.HandlerFromMux(prestigeHandlers, apiRouter)
-
-	masteryHandlers := NewMasteryHandlers(masteryService)
-	masteryapi.HandlerFromMux(masteryHandlers, apiRouter)
-
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Mount("/api/v1", ogenServer)
+	router.Get("/health", server.healthCheck)
 
 	return server
 }

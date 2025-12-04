@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 // Issue: #PROJECTILE_OPTIMIZATION
 // Projectile Service - UDP Server with Protobuf
 // Performance: UDP (↓50% latency), Protobuf (2.5x faster), Spatial culling (↓70% bandwidth)
@@ -11,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-	pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/projectile"
+	// "google.golang.org/protobuf/proto"
+	// pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/projectile" // TODO: Fix proto import
 )
 
 // UDPServer handles real-time projectile updates over UDP

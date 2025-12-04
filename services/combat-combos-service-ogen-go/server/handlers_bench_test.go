@@ -1,25 +1,22 @@
-// Issue: #1578 + #1590
-// Benchmark comparison: ogen (TYPED) vs oapi-codegen (interface{})
+﻿// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
 	"testing"
 
-	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-ogen-go/pkg/api"
 	"github.com/google/uuid"
 )
 
-// BenchmarkOgenGetComboCatalog benchmarks ogen TYPED handler
-// Expected: 3-5 allocs/op vs 16 with oapi-codegen
-func BenchmarkOgenGetComboCatalog(b *testing.B) {
-	// Setup
-	repo, _ := NewRepository("postgres://test")
-	service := NewService(repo)
+// BenchmarkGetComboCatalog benchmarks GetComboCatalog handler
+// Target: <100Ојs per operation, minimal allocs
+func BenchmarkGetComboCatalog(b *testing.B) {
+	service := NewService(nil)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetComboCatalogParams{}
+	params := api.GetComboCatalogParams{
+	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -29,28 +26,36 @@ func BenchmarkOgenGetComboCatalog(b *testing.B) {
 	}
 }
 
-// BenchmarkOgenActivateCombo benchmarks TYPED request/response
-func BenchmarkOgenActivateCombo(b *testing.B) {
-	repo, _ := NewRepository("postgres://test")
-	service := NewService(repo)
+// BenchmarkGetComboDetails benchmarks GetComboDetails handler
+// Target: <100Ојs per operation, minimal allocs
+func BenchmarkGetComboDetails(b *testing.B) {
+	service := NewService(nil)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	req := &api.ActivateComboRequest{
-		CharacterID: mustUUID("12345678-1234-1234-1234-123456789abc"),
-		ComboID:     mustUUID("87654321-4321-4321-4321-cba987654321"),
+	params := api.GetComboDetailsParams{
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ActivateCombo(ctx, req)
+		_, _ = handlers.GetComboDetails(ctx, params)
 	}
 }
 
-// Helper to parse UUID
-func mustUUID(s string) uuid.UUID {
-	u, _ := uuid.Parse(s)
-	return u
+// BenchmarkActivateCombo benchmarks ActivateCombo handler
+// Target: <100Ојs per operation, minimal allocs
+func BenchmarkActivateCombo(b *testing.B) {
+	service := NewService(nil)
+	handlers := NewHandlers(service)
+
+	ctx := context.Background()
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = handlers.ActivateCombo(ctx)
+	}
 }
+

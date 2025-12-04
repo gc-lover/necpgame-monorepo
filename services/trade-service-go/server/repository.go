@@ -64,3 +64,4 @@ func (r *PostgresRepository) SaveTradeHistory(ctx context.Context, sessionID str
 
 
 
+

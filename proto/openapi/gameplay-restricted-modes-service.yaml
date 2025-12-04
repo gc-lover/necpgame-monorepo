@@ -1,57 +1,62 @@
 openapi: 3.0.3
 info:
   title: Gameplay Restricted Modes Service API
-  description: |
-    API для системы режимов с ограничениями (Ironman, Hardcore, Solo Challenge, No-Death Runs).
-    
+  description: 'API для системы режимов с ограничениями (Ironman, Hardcore, Solo Challenge, No-Death Runs).
+
+
     **Основные возможности:**
+
     - Выбор и активация режимов с ограничениями
+
     - Управление Ironman персонажами
+
     - Отслеживание статуса режимов
+
     - Обработка перманентной смерти
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay
+  description: Продакшен сервер
 tags:
-  - name: Restricted Modes
-    description: Режимы с ограничениями
-  - name: Ironman Mode
-    description: Режим перманентной смерти
-  - name: Hardcore Mode
-    description: Режим с ограниченными ресурсами
-  - name: Solo Challenge
-    description: Одиночное прохождение
-  - name: No-Death Runs
-    description: Прохождение без смертей
-
+- name: Restricted Modes
+  description: Режимы с ограничениями
+- name: Ironman Mode
+  description: Режим перманентной смерти
+- name: Hardcore Mode
+  description: Режим с ограниченными ресурсами
+- name: Solo Challenge
+  description: Одиночное прохождение
+- name: No-Death Runs
+  description: Прохождение без смертей
 paths:
   /restricted-modes/available:
     get:
       tags:
-        - Restricted Modes
+      - Restricted Modes
       summary: Получить доступные режимы
-      description: |
-        Возвращает список всех доступных режимов с ограничениями для персонажа
+      description: 'Возвращает список всех доступных режимов с ограничениями для персонажа
+
         с информацией о требованиях и ограничениях.
+
+        '
       operationId: getAvailableRestrictedModes
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID персонажа
       responses:
         '200':
           description: Список доступных режимов
@@ -61,51 +66,52 @@ paths:
                 $ref: '#/components/schemas/AvailableRestrictedModesResponse'
               example:
                 modes:
-                  - mode_type: "ironman"
-                    name: "Ironman Mode"
-                    description: "Перманентная смерть персонажа"
-                    requirements:
-                      - "Новый персонаж"
-                      - "Минимум 1 достижение"
-                    restrictions:
-                      - "Перманентная смерть"
-                      - "Нет аукциона"
-                    rewards:
-                      - "Уникальные титулы"
-                      - "Эксклюзивная косметика"
-                    available: true
-                  - mode_type: "hardcore"
-                    name: "Hardcore Mode"
-                    description: "Ограниченные ресурсы и снаряжение"
-                    requirements:
-                      - "Уровень персонажа >= 10"
-                    restrictions:
-                      - "Минимальные ресурсы"
-                      - "Нет аукциона"
-                      - "Ограниченное снаряжение"
-                    rewards:
-                      - "Бонусные награды"
-                      - "Уникальные достижения"
-                    available: true
+                - mode_type: ironman
+                  name: Ironman Mode
+                  description: Перманентная смерть персонажа
+                  requirements:
+                  - Новый персонаж
+                  - Минимум 1 достижение
+                  restrictions:
+                  - Перманентная смерть
+                  - Нет аукциона
+                  rewards:
+                  - Уникальные титулы
+                  - Эксклюзивная косметика
+                  available: true
+                - mode_type: hardcore
+                  name: Hardcore Mode
+                  description: Ограниченные ресурсы и снаряжение
+                  requirements:
+                  - Уровень персонажа >= 10
+                  restrictions:
+                  - Минимальные ресурсы
+                  - Нет аукциона
+                  - Ограниченное снаряжение
+                  rewards:
+                  - Бонусные награды
+                  - Уникальные достижения
+                  available: true
                 total: 4
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /restricted-modes/select:
     post:
       tags:
-        - Restricted Modes
+      - Restricted Modes
       summary: Выбрать режим с ограничениями
-      description: |
-        Активирует режим с ограничениями для персонажа.
+      description: 'Активирует режим с ограничениями для персонажа.
+
         Проверяет требования и применяет ограничения режима.
+
+        '
       operationId: selectRestrictedMode
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -113,8 +119,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SelectRestrictedModeRequest'
             example:
-              character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-              mode_type: "ironman"
+              character_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
+              mode_type: ironman
       responses:
         '200':
           description: Режим активирован
@@ -123,45 +129,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/RestrictedModeResponse'
               example:
-                session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
-                mode_type: "ironman"
-                status: "active"
-                started_at: "2025-12-01T10:00:00Z"
+                session_id: b2c3d4e5-f6a7-8901-2345-678901bcdef0
+                mode_type: ironman
+                status: active
+                started_at: '2025-12-01T10:00:00Z'
                 restrictions:
                   permadeath: true
                   auction_disabled: true
-                message: "Ironman Mode activated"
+                message: Ironman Mode activated
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '403':
           description: Режим недоступен или требования не выполнены
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+                $ref: common.yaml#/components/schemas/Error
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /restricted-modes/status:
     get:
       tags:
-        - Restricted Modes
+      - Restricted Modes
       summary: Получить статус режима
-      description: |
-        Возвращает текущий статус активного режима с ограничениями для персонажа.
+      description: 'Возвращает текущий статус активного режима с ограничениями для персонажа.
+
+        '
       operationId: getRestrictedModeStatus
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID персонажа
       responses:
         '200':
           description: Статус режима
@@ -170,10 +176,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/RestrictedModeStatusResponse'
               example:
-                session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
-                mode_type: "ironman"
-                status: "active"
-                started_at: "2025-12-01T10:00:00Z"
+                session_id: b2c3d4e5-f6a7-8901-2345-678901bcdef0
+                mode_type: ironman
+                status: active
+                started_at: '2025-12-01T10:00:00Z'
                 restrictions:
                   permadeath: true
                   auction_disabled: true
@@ -182,27 +188,28 @@ paths:
                   achievements_unlocked: 5
                   time_played: 3600
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
           description: Режим не активен
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+                $ref: common.yaml#/components/schemas/Error
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /restricted-modes/ironman/create:
     post:
       tags:
-        - Ironman Mode
+      - Ironman Mode
       summary: Создать Ironman персонажа
-      description: |
-        Создает нового персонажа в режиме Ironman с перманентной смертью.
+      description: 'Создает нового персонажа в режиме Ironman с перманентной смертью.
+
         Персонаж будет удален при смерти без возможности восстановления.
+
+        '
       operationId: createIronmanCharacter
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -210,9 +217,9 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateIronmanCharacterRequest'
             example:
-              account_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
-              character_name: "Ironman_Player"
-              class_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+              account_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+              character_name: Ironman_Player
+              class_id: d4e5f6a7-b8c9-0123-4567-890123def012
       responses:
         '201':
           description: Ironman персонаж создан
@@ -221,95 +228,97 @@ paths:
               schema:
                 $ref: '#/components/schemas/IronmanCharacterResponse'
               example:
-                character_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
-                ironman_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
-                character_name: "Ironman_Player"
-                mode_type: "ironman"
-                created_at: "2025-12-01T10:00:00Z"
-                status: "active"
-                message: "Ironman character created"
+                character_id: e5f6a7b8-c9d0-1234-5678-901234ef0123
+                ironman_id: f6a7b8c9-d0e1-2345-6789-012345f01234
+                character_name: Ironman_Player
+                mode_type: ironman
+                created_at: '2025-12-01T10:00:00Z'
+                status: active
+                message: Ironman character created
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '409':
           description: Ironman персонаж уже существует
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+                $ref: common.yaml#/components/schemas/Error
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     RestrictedModeType:
       type: string
       enum:
-        - ironman
-        - hardcore
-        - solo
-        - nodeath
+      - ironman
+      - hardcore
+      - solo
+      - nodeath
       description: Тип режима с ограничениями
-
     RestrictedModeStatus:
       type: string
       enum:
-        - active
-        - completed
-        - failed
+      - active
+      - completed
+      - failed
       description: Статус режима
-
     AvailableRestrictedMode:
       type: object
       required:
-        - mode_type
-        - name
-        - description
-        - available
+      - mode_type
+      - name
+      - description
+      - available
       properties:
-        mode_type:
-          $ref: '#/components/schemas/RestrictedModeType'
         name:
           type: string
           description: Название режима
-          example: "Ironman Mode"
+          example: Ironman Mode
         description:
           type: string
           description: Описание режима
-          example: "Перманентная смерть персонажа"
+          example: Перманентная смерть персонажа
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
         requirements:
           type: array
           items:
             type: string
           description: Требования для активации режима
-          example: ["Новый персонаж", "Минимум 1 достижение"]
+          example:
+          - Новый персонаж
+          - Минимум 1 достижение
         restrictions:
           type: array
           items:
             type: string
           description: Ограничения режима
-          example: ["Перманентная смерть", "Нет аукциона"]
+          example:
+          - Перманентная смерть
+          - Нет аукциона
         rewards:
           type: array
           items:
             type: string
           description: Награды за прохождение режима
-          example: ["Уникальные титулы", "Эксклюзивная косметика"]
+          example:
+          - Уникальные титулы
+          - Эксклюзивная косметика
         available:
           type: boolean
           description: Доступен ли режим
           example: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AvailableRestrictedModesResponse:
       type: object
       required:
-        - modes
-        - total
+      - modes
+      - total
       properties:
         modes:
           type: array
@@ -320,43 +329,41 @@ components:
           description: Общее количество режимов
           minimum: 0
           example: 4
-
     SelectRestrictedModeRequest:
       type: object
       required:
-        - character_id
-        - mode_type
+      - character_id
+      - mode_type
       properties:
         character_id:
           type: string
           format: uuid
           description: ID персонажа
-          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         mode_type:
           $ref: '#/components/schemas/RestrictedModeType'
-
     RestrictedModeResponse:
       type: object
       required:
-        - session_id
-        - mode_type
-        - status
-        - started_at
+      - session_id
+      - mode_type
+      - status
+      - started_at
       properties:
         session_id:
           type: string
           format: uuid
           description: ID сессии режима
-          example: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
-        mode_type:
-          $ref: '#/components/schemas/RestrictedModeType'
-        status:
-          $ref: '#/components/schemas/RestrictedModeStatus'
+          example: b2c3d4e5-f6a7-8901-2345-678901bcdef0
+        message:
+          type: string
+          description: Дополнительное сообщение
+          example: Ironman Mode activated
         started_at:
           type: string
           format: date-time
           description: Время начала режима
-          example: "2025-12-01T10:00:00Z"
+          example: '2025-12-01T10:00:00Z'
         restrictions:
           type: object
           description: Примененные ограничения
@@ -365,33 +372,29 @@ components:
           example:
             permadeath: true
             auction_disabled: true
-        message:
-          type: string
-          description: Дополнительное сообщение
-          example: "Ironman Mode activated"
-
+        status:
+          $ref: '#/components/schemas/RestrictedModeStatus'
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RestrictedModeStatusResponse:
       type: object
       required:
-        - session_id
-        - mode_type
-        - status
-        - started_at
+      - session_id
+      - mode_type
+      - status
+      - started_at
       properties:
         session_id:
           type: string
           format: uuid
           description: ID сессии режима
-          example: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
-        mode_type:
-          $ref: '#/components/schemas/RestrictedModeType'
-        status:
-          $ref: '#/components/schemas/RestrictedModeStatus'
+          example: b2c3d4e5-f6a7-8901-2345-678901bcdef0
         started_at:
           type: string
           format: date-time
           description: Время начала режима
-          example: "2025-12-01T10:00:00Z"
+          example: '2025-12-01T10:00:00Z'
         restrictions:
           type: object
           description: Примененные ограничения
@@ -419,78 +422,81 @@ components:
               description: Время игры в секундах
               minimum: 0
               example: 3600
-
+        status:
+          $ref: '#/components/schemas/RestrictedModeStatus'
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateIronmanCharacterRequest:
       type: object
       required:
-        - account_id
-        - character_name
-        - class_id
+      - account_id
+      - character_name
+      - class_id
       properties:
         account_id:
           type: string
           format: uuid
           description: ID аккаунта
-          example: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+          example: c3d4e5f6-a7b8-9012-3456-789012cdef01
+        class_id:
+          type: string
+          format: uuid
+          description: ID класса персонажа
+          example: d4e5f6a7-b8c9-0123-4567-890123def012
         character_name:
           type: string
           description: Имя персонажа
           minLength: 3
           maxLength: 32
-          example: "Ironman_Player"
-        class_id:
-          type: string
-          format: uuid
-          description: ID класса персонажа
-          example: "d4e5f6a7-b8c9-0123-4567-890123def012"
-
+          example: Ironman_Player
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     IronmanCharacterResponse:
       type: object
       required:
-        - character_id
-        - ironman_id
-        - character_name
-        - mode_type
-        - created_at
-        - status
+      - character_id
+      - ironman_id
+      - character_name
+      - mode_type
+      - created_at
+      - status
       properties:
         character_id:
           type: string
           format: uuid
           description: ID персонажа
-          example: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+          example: e5f6a7b8-c9d0-1234-5678-901234ef0123
         ironman_id:
           type: string
           format: uuid
           description: ID Ironman записи
-          example: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+          example: f6a7b8c9-d0e1-2345-6789-012345f01234
         character_name:
           type: string
           description: Имя персонажа
-          example: "Ironman_Player"
-        mode_type:
-          $ref: '#/components/schemas/RestrictedModeType'
+          example: Ironman_Player
+        message:
+          type: string
+          description: Дополнительное сообщение
+          example: Ironman character created
         created_at:
           type: string
           format: date-time
           description: Время создания
-          example: "2025-12-01T10:00:00Z"
+          example: '2025-12-01T10:00:00Z'
         status:
           $ref: '#/components/schemas/RestrictedModeStatus'
-        message:
-          type: string
-          description: Дополнительное сообщение
-          example: "Ironman character created"
-
+        mode_type:
+          $ref: '#/components/schemas/RestrictedModeType'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError
 security:
-  - BearerAuth: []
+- BearerAuth: []

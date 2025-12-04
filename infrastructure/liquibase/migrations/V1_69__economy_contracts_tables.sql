@@ -35,24 +35,24 @@ END $$;
 
 -- Таблица контрактов игроков
 CREATE TABLE IF NOT EXISTS economy.player_contracts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_type contract_type NOT NULL,
-    initiator_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    counterparty_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    status contract_status NOT NULL DEFAULT 'DRAFT',
-    terms JSONB NOT NULL DEFAULT '{}'::jsonb,
-    initiator_assets JSONB NOT NULL DEFAULT '{}'::jsonb,
-    counterparty_assets JSONB NOT NULL DEFAULT '{}'::jsonb,
-    escrow_id UUID,
-    initiator_collateral_id UUID,
-    counterparty_collateral_id UUID,
-    deadline TIMESTAMP NOT NULL,
-    completed_at TIMESTAMP,
-    cancelled_at TIMESTAMP,
-    dispute_id UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (initiator_id != counterparty_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  initiator_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  counterparty_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  escrow_id UUID,
+  initiator_collateral_id UUID,
+  counterparty_collateral_id UUID,
+  dispute_id UUID,
+  terms JSONB NOT NULL DEFAULT '{}'::jsonb,
+  initiator_assets JSONB NOT NULL DEFAULT '{}'::jsonb,
+  counterparty_assets JSONB NOT NULL DEFAULT '{}'::jsonb,
+  deadline TIMESTAMP NOT NULL,
+  completed_at TIMESTAMP,
+  cancelled_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  contract_type contract_type NOT NULL,
+  status contract_status NOT NULL DEFAULT 'DRAFT',
+  CHECK (initiator_id != counterparty_id)
 );
 
 -- Индексы для player_contracts
@@ -67,13 +67,13 @@ CREATE INDEX IF NOT EXISTS idx_player_contracts_status_deadline
 
 -- Таблица переговоров по контрактам
 CREATE TABLE IF NOT EXISTS economy.contract_negotiations (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
-    proposal JSONB NOT NULL DEFAULT '{}'::jsonb,
-    proposer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    status negotiation_status NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    responded_at TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
+  proposer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  proposal JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  responded_at TIMESTAMP,
+  status negotiation_status NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для contract_negotiations
@@ -84,15 +84,15 @@ CREATE INDEX IF NOT EXISTS idx_contract_negotiations_proposer
 
 -- Таблица эскроу для контрактов
 CREATE TABLE IF NOT EXISTS economy.escrows (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL UNIQUE REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
-    initiator_items JSONB NOT NULL DEFAULT '[]'::jsonb,
-    counterparty_items JSONB NOT NULL DEFAULT '[]'::jsonb,
-    initiator_currency DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    counterparty_currency DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    status escrow_status NOT NULL DEFAULT 'locked',
-    locked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    released_at TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL UNIQUE REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
+  initiator_items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  counterparty_items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  locked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  released_at TIMESTAMP,
+  initiator_currency DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  counterparty_currency DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  status escrow_status NOT NULL DEFAULT 'locked'
 );
 
 -- Индексы для escrows
@@ -116,14 +116,14 @@ END $$;
 
 -- Таблица залогов для контрактов
 CREATE TABLE IF NOT EXISTS economy.collaterals (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
-    player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    amount DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    forfeited_amount DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    status collateral_status NOT NULL DEFAULT 'locked',
-    locked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    released_at TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
+  player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  locked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  released_at TIMESTAMP,
+  amount DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  forfeited_amount DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  status collateral_status NOT NULL DEFAULT 'locked'
 );
 
 -- Индексы для collaterals
@@ -155,16 +155,16 @@ END $$;
 
 -- Таблица споров по контрактам
 CREATE TABLE IF NOT EXISTS economy.contract_disputes (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    contract_id UUID NOT NULL UNIQUE REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
-    initiator_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    reason TEXT NOT NULL,
-    evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
-    ai_moderation_result JSONB,
-    decision dispute_decision NOT NULL DEFAULT 'pending',
-    escrow_distribution JSONB,
-    resolved_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  contract_id UUID NOT NULL UNIQUE REFERENCES economy.player_contracts(id) ON DELETE CASCADE,
+  initiator_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+  ai_moderation_result JSONB,
+  escrow_distribution JSONB,
+  resolved_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  decision dispute_decision NOT NULL DEFAULT 'pending'
 );
 
 -- Индексы для contract_disputes

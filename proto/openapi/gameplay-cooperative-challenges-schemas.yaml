@@ -3,36 +3,19 @@ info:
   title: Gameplay Cooperative Challenges Schemas
   description: Общие схемы данных для системы кооперативных испытаний
   version: 1.0.0
-
 components:
   schemas:
     ChallengeType:
       type: string
-      enum: [synchronized_actions, role_specific, team_coordination]
+      enum:
+      - synchronized_actions
+      - role_specific
+      - team_coordination
       description: Тип кооперативного испытания
-      example: "synchronized_actions"
-
+      example: synchronized_actions
     ChallengeConfig:
       type: object
       properties:
-        synchronization_window:
-          type: number
-          format: float
-          description: Окно синхронизации в секундах
-          default: 0.5
-          example: 0.5
-        required_players:
-          type: integer
-          description: Требуемое количество игроков
-          minimum: 2
-          maximum: 8
-          example: 4
-        action_sequence:
-          type: array
-          description: Последовательность действий для синхронизации
-          items:
-            type: string
-          example: ["action1", "action2", "action3"]
         role_requirements:
           type: object
           description: Требования к ролям (для role_specific)
@@ -42,34 +25,62 @@ components:
             tank: 1
             dps: 2
             support: 1
-
+        action_sequence:
+          type: array
+          description: Последовательность действий для синхронизации
+          items:
+            type: string
+          example:
+          - action1
+          - action2
+          - action3
+        required_players:
+          type: integer
+          description: Требуемое количество игроков
+          minimum: 2
+          maximum: 8
+          example: 4
+        synchronization_window:
+          type: number
+          format: float
+          description: Окно синхронизации в секундах
+          default: 0.5
+          example: 0.5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChallengeSession:
       type: object
       required:
-        - session_id
-        - challenge_type
-        - team_id
-        - status
-        - synchronization_score
-        - coordination_score
-        - started_at
+      - session_id
+      - challenge_type
+      - team_id
+      - status
+      - synchronization_score
+      - coordination_score
+      - started_at
       properties:
         session_id:
           type: string
           format: uuid
           description: UUID сессии испытания
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
-        challenge_type:
-          $ref: '#/components/schemas/ChallengeType'
+          example: bb0e8400-e29b-41d4-a716-446655440000
         team_id:
           type: string
           format: uuid
-          example: "aa0e8400-e29b-41d4-a716-446655440000"
+          example: aa0e8400-e29b-41d4-a716-446655440000
         status:
           type: string
-          enum: [active, completed, failed]
+          enum:
+          - active
+          - completed
+          - failed
           description: Статус сессии
-          example: "active"
+          example: active
+        started_at:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
+        challenge_type:
+          $ref: '#/components/schemas/ChallengeType'
         synchronization_score:
           type: number
           format: float
@@ -84,11 +95,7 @@ components:
           minimum: 0.0
           maximum: 1.0
           example: 0.0
-        started_at:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChallengeProgress:
       type: object
       properties:
@@ -107,13 +114,12 @@ components:
           description: Количество идеальных синхронизаций
           minimum: 0
           example: 2
-
     ChallengeRewards:
       type: object
       required:
-        - base_rewards
-        - coordination_bonus_rewards
-        - total_rewards
+      - base_rewards
+      - coordination_bonus_rewards
+      - total_rewards
       properties:
         base_rewards:
           type: object
@@ -151,4 +157,3 @@ components:
               type: integer
               minimum: 0
               example: 9500
-

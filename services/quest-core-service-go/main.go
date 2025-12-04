@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/necpgame/quest-core-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -21,6 +21,16 @@ func main() {
 	metricsAddr := getEnv("METRICS_ADDR", ":9093")
 
 	httpServer := server.NewHTTPServer(addr)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6069")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
@@ -41,7 +51,7 @@ func main() {
 
 	go func() {
 		logger.WithField("addr", addr).Info("HTTP server starting")
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
 			logger.WithError(err).Fatal("Could not start HTTP server")
 		}
 	}()

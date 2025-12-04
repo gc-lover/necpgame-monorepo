@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS mvp_core.notifications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   account_id UUID NOT NULL REFERENCES mvp_core.player_account(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
   type VARCHAR(50) NOT NULL,
   priority VARCHAR(20) NOT NULL DEFAULT 'medium',
   title VARCHAR(200) NOT NULL,
-  content TEXT NOT NULL,
-  data JSONB,
   status VARCHAR(20) NOT NULL DEFAULT 'unread',
+  data JSONB,
   channels JSONB NOT NULL DEFAULT '["in_game"]'::jsonb,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   read_at TIMESTAMP,
@@ -32,6 +32,8 @@ CREATE INDEX IF NOT EXISTS idx_notifications_expires_at
 
 CREATE TABLE IF NOT EXISTS mvp_core.notification_preferences (
   account_id UUID PRIMARY KEY REFERENCES mvp_core.player_account(id) ON DELETE CASCADE,
+  preferred_channels JSONB NOT NULL DEFAULT '["in_game"]'::jsonb,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   quest_enabled BOOLEAN NOT NULL DEFAULT true,
   message_enabled BOOLEAN NOT NULL DEFAULT true,
   achievement_enabled BOOLEAN NOT NULL DEFAULT true,
@@ -39,17 +41,15 @@ CREATE TABLE IF NOT EXISTS mvp_core.notification_preferences (
   friend_enabled BOOLEAN NOT NULL DEFAULT true,
   guild_enabled BOOLEAN NOT NULL DEFAULT true,
   trade_enabled BOOLEAN NOT NULL DEFAULT true,
-  combat_enabled BOOLEAN NOT NULL DEFAULT true,
-  preferred_channels JSONB NOT NULL DEFAULT '["in_game"]'::jsonb,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  combat_enabled BOOLEAN NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS mvp_core.friendships (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   character_a_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
   character_b_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-  status VARCHAR(20) NOT NULL DEFAULT 'pending',
   initiator_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP,

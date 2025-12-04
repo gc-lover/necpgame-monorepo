@@ -6,7 +6,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/combat-sessions-service-go/pkg/api"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -36,10 +35,10 @@ func (c *RedisCache) GetSession(ctx context.Context, sessionID string) (*CombatS
 }
 
 // GetSessionState gets cached state
-func (c *RedisCache) GetSessionState(ctx context.Context, sessionID string) (*api.CombatState, error) {
-	// TODO: Implement state caching
-	return nil, redis.Nil
-}
+// TODO: Implement when CombatState type is available in OpenAPI spec
+// func (c *RedisCache) GetSessionState(ctx context.Context, sessionID string) (*api.CombatState, error) {
+// 	return nil, redis.Nil
+// }
 
 // KafkaEventBus handles Kafka events
 type KafkaEventBus struct {
@@ -58,10 +57,10 @@ func (k *KafkaEventBus) PublishSessionCreated(ctx context.Context, session *Comb
 }
 
 // PublishActionExecuted publishes action executed event
-func (k *KafkaEventBus) PublishActionExecuted(ctx context.Context, session *CombatSession, result *api.ActionResponse) error {
-	// TODO: Implement Kafka publishing
-	return nil
-}
+// TODO: Implement when ActionResponse type is available in OpenAPI spec
+// func (k *KafkaEventBus) PublishActionExecuted(ctx context.Context, session *CombatSession, result *api.ActionResponse) error {
+// 	return nil
+// }
 
 // PublishSessionEnded publishes session ended event
 func (k *KafkaEventBus) PublishSessionEnded(ctx context.Context, session *CombatSession) error {
@@ -78,14 +77,14 @@ func NewAntiCheatValidator() *AntiCheatValidator {
 }
 
 // ValidateAction validates combat action
-func (v *AntiCheatValidator) ValidateAction(ctx context.Context, session *CombatSession, playerID string, req *api.ActionRequest) *api.ActionValidation {
-	// TODO: Implement anti-cheat validation
-	return &api.ActionValidation{
-		AntiCheatPassed: true,
-		PositionValid:   true,
-		CooldownValid:   true,
-	}
-}
+// TODO: Implement when ActionRequest/ActionValidation types are available in OpenAPI spec
+// func (v *AntiCheatValidator) ValidateAction(ctx context.Context, session *CombatSession, playerID string, req *api.ActionRequest) *api.ActionValidation {
+// 	return &api.ActionValidation{
+// 		AntiCheatPassed: true,
+// 		PositionValid:   true,
+// 		CooldownValid:   true,
+// 	}
+// }
 
 // CombatEngine calculates combat results
 type CombatEngine struct{}
@@ -96,14 +95,15 @@ func NewCombatEngine() *CombatEngine {
 }
 
 // ExecuteAction executes combat action and calculates result
-func (e *CombatEngine) ExecuteAction(ctx context.Context, session *CombatSession, playerID string, req *api.ActionRequest) *api.ActionResponse {
-	// TODO: Implement combat calculations
-	return &api.ActionResponse{
-		Success:    true,
-		ActionType: req.ActionType,
-		Timestamp:  time.Now(),
-	}
-}
+// TODO: Implement when ActionRequest/ActionResponse types are available in OpenAPI spec
+// func (e *CombatEngine) ExecuteAction(ctx context.Context, session *CombatSession, playerID string, req *api.ActionRequest) *api.ActionResponse {
+// 	return &api.ActionResponse{
+// 		Success:    true,
+// 		ActionType: req.ActionType,
+// 		Timestamp:  time.Now(),
+// 	}
+// }
+
 
 
 

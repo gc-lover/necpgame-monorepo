@@ -38,12 +38,16 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewSeasonalChallengesHandlers()
+	handlers := NewHandlers()
+	secHandler := &SecurityHandler{}
 
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	// ogen server
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		logger.Fatalf("Failed to create ogen server: %v", err)
+	}
+
+	router.Mount("/api/v1", ogenServer)
 
 	router.Get("/health", server.healthCheck)
 

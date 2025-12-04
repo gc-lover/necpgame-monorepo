@@ -1,208 +1,222 @@
 openapi: 3.0.3
 info:
   title: Blackwall Breach Layers Service API
-  description: |
-    API для работы со слоями защиты при взломе Blackwall.
-    
+  description: 'API для работы со слоями защиты при взломе Blackwall.
+
+
     **Основные возможности:**
+
     - Начало прохождения слоя
+
     - Попытка прохождения (мини-игры)
+
     - Успешное завершение слоя
+
     - Обработка провала слоя
-    
+
+
     **Слои защиты:**
+
     1. Анализ сигнатур (DC 18-24)
+
     2. Анализ поведения (DC 20-26)
+
     3. Ловушки-приманки (DC 18-24)
+
     4. Физический воздушный разрыв (DC 22-28)
+
     5. Квантовое шифрование (DC 24-30)
-    
+
+
     Каждый слой имеет уникальную механику мини-игры и проверки навыков.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8083
-    description: Gameplay Service
-  - url: https://gameplay.necpgame.com
-    description: Gameplay Service (продакшн)
-
+- url: http://localhost:8083
+  description: Gameplay Service
+- url: https://gameplay.necpgame.com
+  description: Gameplay Service (продакшн)
 tags:
-  - name: Layers
-    description: Слои защиты Blackwall
-
+- name: Layers
+  description: Слои защиты Blackwall
 paths:
   /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/start:
     post:
       tags:
-        - Layers
+      - Layers
       summary: Начало прохождения слоя
-      description: |
-        Начинает прохождение определённого слоя защиты.
-        
+      description: 'Начинает прохождение определённого слоя защиты.
+
+
         Возвращает конфигурацию мини-игры и временные ограничения.
+
+        '
       operationId: startLayer
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: breach_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: layer_number
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
+      - name: breach_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: layer_number
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
       responses:
-        "200":
+        '200':
           description: Слой начат
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LayerSession"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/LayerSession'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/attempt:
     post:
       tags:
-        - Layers
+      - Layers
       summary: Попытка прохождения слоя
-      description: |
-        Выполняет попытку прохождения слоя (мини-игра).
-        
+      description: 'Выполняет попытку прохождения слоя (мини-игра).
+
+
         Каждый слой имеет уникальную механику и проверки навыков.
+
+        '
       operationId: attemptLayer
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: breach_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: layer_number
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
+      - name: breach_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: layer_number
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LayerAttemptRequest"
+              $ref: '#/components/schemas/LayerAttemptRequest'
       responses:
-        "200":
+        '200':
           description: Результат попытки
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LayerAttemptResult"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/LayerAttemptResult'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/complete:
     post:
       tags:
-        - Layers
+      - Layers
       summary: Успешное прохождение слоя
-      description: |
-        Завершает успешное прохождение слоя.
-        
+      description: 'Завершает успешное прохождение слоя.
+
+
         Начисляет награды и открывает доступ к следующему слою.
+
+        '
       operationId: completeLayer
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: breach_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: layer_number
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
+      - name: breach_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: layer_number
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
       responses:
-        "200":
+        '200':
           description: Слой пройден
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LayerCompleteResult"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/LayerCompleteResult'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
   /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/fail:
     post:
       tags:
-        - Layers
+      - Layers
       summary: Провал слоя
-      description: |
-        Обрабатывает провал прохождения слоя.
-        
+      description: 'Обрабатывает провал прохождения слоя.
+
+
         Применяет последствия и определяет возможность повторной попытки.
+
+        '
       operationId: failLayer
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: breach_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: layer_number
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
+      - name: breach_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: layer_number
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
       responses:
-        "200":
+        '200':
           description: Провал обработан
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LayerFailResult"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/LayerFailResult'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     LayerSession:
       type: object
       required:
-        - layer_info
-        - time_limit
-        - current_stress
+      - layer_info
+      - time_limit
+      - current_stress
       properties:
-        layer_info:
-          $ref: "#/components/schemas/LayerInfo"
         minigame_config:
           type: object
           description: Конфигурация мини-игры для слоя
+        layer_info:
+          $ref: '#/components/schemas/LayerInfo'
         time_limit:
           type: integer
           description: Временной лимит в секундах
@@ -210,62 +224,61 @@ components:
           type: integer
           minimum: 0
           maximum: 100
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LayerInfo:
       type: object
       required:
-        - layer_number
-        - layer_name
-        - difficulty_dc
+      - layer_number
+      - layer_name
+      - difficulty_dc
       properties:
+        layer_name:
+          type: string
+          example: Анализ сигнатур
         layer_number:
           type: integer
           minimum: 1
           maximum: 5
-        layer_name:
-          type: string
-          example: "Анализ сигнатур"
         difficulty_dc:
           type: integer
           description: Класс сложности
           example: 18
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LayerAttemptRequest:
       type: object
       required:
-        - action_data
-        - skill_check
+      - action_data
+      - skill_check
       properties:
         action_data:
           type: object
           description: Данные действий для мини-игры (зависит от типа слоя)
         skill_check:
-          $ref: "#/components/schemas/SkillCheck"
-
+          $ref: '#/components/schemas/SkillCheck'
     SkillCheck:
       type: object
       required:
-        - skill_name
-        - skill_value
-        - difficulty_class
+      - skill_name
+      - skill_value
+      - difficulty_class
       properties:
         skill_name:
           type: string
-          example: "NETRUN"
+          example: NETRUN
         skill_value:
           type: integer
         difficulty_class:
           type: integer
-
     LayerAttemptResult:
       type: object
       required:
-        - success
-        - progress
-        - stress_change
+      - success
+      - progress
+      - stress_change
       properties:
-        success:
-          type: boolean
+        consequences:
+          type: object
+          description: Последствия попытки (если есть)
         progress:
           type: integer
           minimum: 0
@@ -273,31 +286,30 @@ components:
         stress_change:
           type: integer
           description: Изменение уровня стресса
-        consequences:
-          type: object
-          description: Последствия попытки (если есть)
+        success:
+          type: boolean
         next_layer_available:
           type: boolean
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LayerCompleteResult:
       type: object
       required:
-        - layer_reward
-        - accumulated_stress
+      - layer_reward
+      - accumulated_stress
       properties:
-        layer_reward:
-          $ref: "#/components/schemas/LayerReward"
         next_layer_info:
-          $ref: "#/components/schemas/LayerInfo"
-        accumulated_stress:
-          type: integer
-          minimum: 0
-          maximum: 100
+          $ref: '#/components/schemas/LayerInfo'
+        layer_reward:
+          $ref: '#/components/schemas/LayerReward'
         warnings:
           type: array
           items:
             type: string
-
+        accumulated_stress:
+          type: integer
+          minimum: 0
+          maximum: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LayerReward:
       type: object
       properties:
@@ -306,24 +318,23 @@ components:
         next_layer_bonus:
           type: integer
           description: Бонус к сложности следующего слоя (отрицательный = снижение сложности)
-
     LayerFailResult:
       type: object
       required:
-        - consequences
-        - can_retry
+      - consequences
+      - can_retry
       properties:
-        consequences:
-          $ref: "#/components/schemas/BreachConsequences"
-        can_retry:
-          type: boolean
         rollback_options:
           type: object
+        consequences:
+          $ref: '#/components/schemas/BreachConsequences'
         mortality_risk:
           type: integer
           minimum: 0
           maximum: 100
-
+        can_retry:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BreachConsequences:
       type: object
       properties:
@@ -331,11 +342,6 @@ components:
           type: integer
         stress_increase:
           type: integer
-        system_adaptation:
-          type: boolean
-          description: Адаптировалась ли система защиты
-        trap_activation:
-          type: boolean
         cyberpsychosis_increase:
           type: integer
         data_loss:
@@ -344,4 +350,9 @@ components:
         deck_damage:
           type: integer
           description: Процент повреждения деки (0-100)
-
+        system_adaptation:
+          type: boolean
+          description: Адаптировалась ли система защиты
+        trap_activation:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

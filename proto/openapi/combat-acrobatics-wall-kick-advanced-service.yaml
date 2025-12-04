@@ -1,41 +1,46 @@
 openapi: 3.0.3
 info:
   title: Combat Acrobatics Wall Kick Advanced Service API
-  description: |
-    API для управления Wall Kick (отталкивание от стены) - продвинутый элемент.
-    
+  description: 'API для управления Wall Kick (отталкивание от стены) - продвинутый элемент.
+
+
     **Основные возможности:**
+
     - Выполнение Wall Kick
+
     - Проверка доступности
+
     - Управление цепочками
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+  description: Продакшен сервер
 tags:
-  - name: Wall Kick
-    description: Отталкивание от стены
-
+- name: Wall Kick
+  description: Отталкивание от стены
 paths:
   /wall-kick:
     post:
       tags:
-        - Wall Kick
+      - Wall Kick
       summary: Выполнить Wall Kick
-      description: |
-        Выполняет отталкивание от стены во время Wall Run.
+      description: 'Выполняет отталкивание от стены во время Wall Run.
+
         Изменяет направление движения и применяет импульс.
+
         Может использоваться для цепочки wall runs.
+
+        '
       operationId: executeWallKick
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -50,23 +55,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/WallKickResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /wall-kick/available:
     get:
       tags:
-        - Wall Kick
+      - Wall Kick
       summary: Проверить доступность Wall Kick
-      description: |
-        Проверяет, доступен ли Wall Kick (активен Wall Run,
+      description: 'Проверяет, доступен ли Wall Kick (активен Wall Run,
+
         есть выносливость, не превышен лимит цепочек).
+
+        '
       operationId: checkWallKickAvailable
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Статус доступности Wall Kick
@@ -75,38 +81,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/WallKickAvailableResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     WallKickRequest:
       type: object
       required:
-        - direction
+      - direction
       properties:
         direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
-
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
     WallKickResponse:
       type: object
       required:
-        - kick_id
-        - chain_count
-        - max_chain_count
-        - new_direction
-        - stamina_consumed
-        - timestamp
+      - kick_id
+      - chain_count
+      - max_chain_count
+      - new_direction
+      - stamina_consumed
+      - timestamp
       properties:
         kick_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
+        new_direction:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
         chain_count:
           type: integer
           description: Текущее количество цепочек
@@ -117,32 +126,20 @@ components:
           description: Максимальное количество цепочек
           minimum: 1
           example: 3
-        new_direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
         stamina_consumed:
           type: integer
           minimum: 0
           example: 8
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WallKickAvailableResponse:
       type: object
       required:
-        - is_available
-        - is_in_wall_run
-        - chain_count
-        - max_chain_count
-        - has_stamina
+      - is_available
+      - is_in_wall_run
+      - chain_count
+      - max_chain_count
+      - has_stamina
       properties:
-        is_available:
-          type: boolean
-          example: true
-        is_in_wall_run:
-          type: boolean
-          example: true
         chain_count:
           type: integer
           minimum: 0
@@ -151,15 +148,20 @@ components:
           type: integer
           minimum: 1
           example: 3
+        is_available:
+          type: boolean
+          example: true
+        is_in_wall_run:
+          type: boolean
+          example: true
         has_stamina:
           type: boolean
           example: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

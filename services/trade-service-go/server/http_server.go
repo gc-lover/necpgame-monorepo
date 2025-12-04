@@ -6,56 +6,91 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/trade-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 type HTTPServer struct {
-	addr    string
-	router  *chi.Mux
-	service Service
+	addr   string
+	server *http.Server
 }
 
 func NewHTTPServer(addr string, service Service) *HTTPServer {
-	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-
 	handlers := NewHandlers(service)
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	mux := http.NewServeMux()
+
+	apiHandler := chainMiddleware(ogenServer,
+		recoveryMiddleware,
+		requestIDMiddleware,
+		LoggingMiddleware,
+		MetricsMiddleware,
+	)
+
+	mux.Handle("/api/v1/", apiHandler)
+	mux.HandleFunc("/health", healthCheck)
+	mux.HandleFunc("/metrics", metricsHandler)
+
+	return &HTTPServer{
+		addr: addr,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      mux,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+	}
+}
+
+func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
+}
+
+func recoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
 	})
+}
 
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
-
-	return &HTTPServer{addr: addr, router: router, service: service}
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
+		w.Header().Set("X-Request-ID", requestID)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *HTTPServer) Start() error {
-	return http.ListenAndServe(s.addr, s.router)
+	return s.server.ListenAndServe()
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	return nil
+	return s.server.Shutdown(ctx)
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok"}`))
+	w.Write([]byte("OK"))
 }
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("# HELP trade_service metrics\n"))
 }
-
-
-
-
-
-
-
-

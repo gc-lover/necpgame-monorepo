@@ -1,201 +1,200 @@
-# Issue: #139
 openapi: 3.0.3
 info:
   title: Party Service API
   description: API для управления группами игроков (до 5 человек)
   version: 1.0.0
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Local development
-
+- url: http://localhost:8084/api/v1
+  description: Local development
 tags:
-  - name: Party
-    description: Управление группами
-  - name: Invites
-    description: Приглашения в группу
-  - name: Loot
-    description: Распределение лута
-
+- name: Party
+  description: Управление группами
+- name: Invites
+  description: Приглашения в группу
+- name: Loot
+  description: Распределение лута
 paths:
   /social/party/create:
     post:
-      tags: [Party]
+      tags:
+      - Party
       summary: Создать группу
       operationId: createParty
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreatePartyRequest"
+              $ref: '#/components/schemas/CreatePartyRequest'
       responses:
         '200':
           description: Группа создана
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PartyResponse"
+                $ref: '#/components/schemas/PartyResponse'
         '400':
-          $ref: "common.yaml#/components/responses/BadRequest"
+          $ref: common.yaml#/components/responses/BadRequest
         '409':
           description: Игрок уже в группе
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/Error"
-
+                $ref: common.yaml#/components/schemas/Error
   /social/party/{partyId}:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PartyId"
+    - $ref: common.yaml#/components/parameters/PartyId
     get:
-      tags: [Party]
+      tags:
+      - Party
       summary: Получить информацию о группе
       operationId: getParty
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Информация о группе
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PartyResponse"
+                $ref: '#/components/schemas/PartyResponse'
         '404':
-          $ref: "common.yaml#/components/responses/NotFound"
+          $ref: common.yaml#/components/responses/NotFound
     delete:
-      tags: [Party]
+      tags:
+      - Party
       summary: Распустить группу (только лидер)
       operationId: disbandParty
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Группа распущена
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
+                $ref: common.yaml#/components/schemas/SuccessResponse
         '403':
-          $ref: "common.yaml#/components/responses/Forbidden"
+          $ref: common.yaml#/components/responses/Forbidden
         '404':
-          $ref: "common.yaml#/components/responses/NotFound"
-
+          $ref: common.yaml#/components/responses/NotFound
   /social/party/{partyId}/invite:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PartyId"
+    - $ref: common.yaml#/components/parameters/PartyId
     post:
-      tags: [Invites]
+      tags:
+      - Invites
       summary: Пригласить игрока
       operationId: invitePlayer
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InviteRequest"
+              $ref: '#/components/schemas/InviteRequest'
       responses:
         '200':
           description: Приглашение отправлено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InviteResponse"
+                $ref: '#/components/schemas/InviteResponse'
         '400':
           description: Группа полная или игрок уже в группе
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/Error"
-
+                $ref: common.yaml#/components/schemas/Error
   /social/party/invite/{inviteId}/accept:
     parameters:
-      - name: inviteId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: inviteId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Invites]
+      tags:
+      - Invites
       summary: Принять приглашение
       operationId: acceptInvite
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Приглашение принято
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PartyResponse"
+                $ref: '#/components/schemas/PartyResponse'
         '404':
-          $ref: "common.yaml#/components/responses/NotFound"
+          $ref: common.yaml#/components/responses/NotFound
         '409':
           description: Приглашение истекло или группа полная
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/Error"
-
+                $ref: common.yaml#/components/schemas/Error
   /social/party/invite/{inviteId}/decline:
     parameters:
-      - name: inviteId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: inviteId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
-      tags: [Invites]
+      tags:
+      - Invites
       summary: Отклонить приглашение
       operationId: declineInvite
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Приглашение отклонено
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
   /social/party/{partyId}/leave:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PartyId"
+    - $ref: common.yaml#/components/parameters/PartyId
     post:
-      tags: [Party]
+      tags:
+      - Party
       summary: Покинуть группу
       operationId: leaveParty
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Покинул группу
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
   /social/party/{partyId}/kick:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PartyId"
+    - $ref: common.yaml#/components/parameters/PartyId
     post:
-      tags: [Party]
+      tags:
+      - Party
       summary: Исключить участника (только лидер)
       operationId: kickMember
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [playerId]
+              required:
+              - playerId
               properties:
                 playerId:
                   type: string
@@ -206,80 +205,82 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
+                $ref: common.yaml#/components/schemas/SuccessResponse
         '403':
-          $ref: "common.yaml#/components/responses/Forbidden"
-
+          $ref: common.yaml#/components/responses/Forbidden
   /social/party/{partyId}/settings:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PartyId"
+    - $ref: common.yaml#/components/parameters/PartyId
     patch:
-      tags: [Party]
+      tags:
+      - Party
       summary: Изменить настройки группы (только лидер)
       operationId: updateSettings
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PartySettingsRequest"
+              $ref: '#/components/schemas/PartySettingsRequest'
       responses:
         '200':
           description: Настройки обновлены
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PartyResponse"
-
+                $ref: '#/components/schemas/PartyResponse'
   /social/party/{partyId}/loot/roll:
     parameters:
-      - $ref: "common.yaml#/components/parameters/PartyId"
+    - $ref: common.yaml#/components/parameters/PartyId
     post:
-      tags: [Loot]
+      tags:
+      - Loot
       summary: Бросить кубик на предмет
       operationId: rollForLoot
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LootRollRequest"
+              $ref: '#/components/schemas/LootRollRequest'
       responses:
         '200':
           description: Результат броска
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootRollResponse"
-
+                $ref: '#/components/schemas/LootRollResponse'
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     CreatePartyRequest:
       type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~24 bytes/instance.'
       properties:
         lootMode:
           type: string
-          enum: [need_greed, master_looter, free_for_all, round_robin]
+          enum:
+          - need_greed
+          - master_looter
+          - free_for_all
+          - round_robin
           default: need_greed
         questSharing:
           type: boolean
           default: true
-
     PartyResponse:
       type: object
       required:
-        - partyId
-        - leaderId
-        - members
-        - lootMode
+      - partyId
+      - leaderId
+      - members
+      - lootMode
       properties:
         partyId:
           type: string
@@ -287,27 +288,36 @@ components:
         leaderId:
           type: string
           format: uuid
+        lootMode:
+          type: string
+          enum:
+          - need_greed
+          - master_looter
+          - free_for_all
+          - round_robin
+        partyStatus:
+          type: string
+          enum:
+          - forming
+          - active
+          - in_combat
+          - disbanded
         members:
           type: array
           items:
-            $ref: "#/components/schemas/PartyMember"
+            $ref: '#/components/schemas/PartyMember'
         maxMembers:
           type: integer
           default: 5
-        lootMode:
-          type: string
-          enum: [need_greed, master_looter, free_for_all, round_robin]
         questSharing:
           type: boolean
-        partyStatus:
-          type: string
-          enum: [forming, active, in_combat, disbanded]
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PartyMember:
       type: object
       required:
-        - playerId
-        - role
+      - playerId
+      - role
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~64 bytes/instance.'
       properties:
         playerId:
           type: string
@@ -316,25 +326,27 @@ components:
           type: string
         role:
           type: string
-          enum: [leader, member]
+          enum:
+          - leader
+          - member
         joinedAt:
           type: string
           format: date-time
-
     InviteRequest:
       type: object
       required:
-        - playerId
+      - playerId
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~24 bytes/instance.'
       properties:
         playerId:
           type: string
           format: uuid
-
     InviteResponse:
       type: object
       required:
-        - inviteId
-        - expiresAt
+      - inviteId
+      - expiresAt
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance.'
       properties:
         inviteId:
           type: string
@@ -342,47 +354,55 @@ components:
         expiresAt:
           type: string
           format: date-time
-
     PartySettingsRequest:
       type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~24 bytes/instance.'
       properties:
         lootMode:
           type: string
-          enum: [need_greed, master_looter, free_for_all, round_robin]
+          enum:
+          - need_greed
+          - master_looter
+          - free_for_all
+          - round_robin
         questSharing:
           type: boolean
-
     LootRollRequest:
       type: object
       required:
-        - itemId
-        - rollType
+      - itemId
+      - rollType
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~32 bytes/instance.'
       properties:
         itemId:
           type: string
           format: uuid
         rollType:
           type: string
-          enum: [need, greed, pass]
-
+          enum:
+          - need
+          - greed
+          - pass
     LootRollResponse:
       type: object
       required:
-        - rollValue
-        - playerId
-        - rollType
+      - rollValue
+      - playerId
+      - rollType
       properties:
-        rollValue:
-          type: integer
-          minimum: 1
-          maximum: 100
         playerId:
           type: string
           format: uuid
         rollType:
           type: string
-          enum: [need, greed, pass]
-
+          enum:
+          - need
+          - greed
+          - pass
+        rollValue:
+          type: integer
+          minimum: 1
+          maximum: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

@@ -48,17 +48,19 @@ CREATE INDEX IF NOT EXISTS idx_resources_is_tradeable
 
 -- Таблица источников добычи ресурсов
 CREATE TABLE IF NOT EXISTS economy.resource_sources (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
-    source_type resource_source_type NOT NULL,
-    source_name VARCHAR(255) NOT NULL,
-    source_id UUID, -- nullable, ID источника (NPC, локация, квест, etc.)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
+  source_id UUID,
+  description TEXT,
+  source_name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ID источника (NPC, локация, квест, etc.)
     drop_chance DECIMAL(5,2) CHECK (drop_chance >= 0.00 AND drop_chance <= 100.00),
-    min_quantity INTEGER DEFAULT 1 CHECK (min_quantity > 0),
-    max_quantity INTEGER DEFAULT 1 CHECK (max_quantity >= min_quantity),
-    level_requirement INTEGER DEFAULT 0 CHECK (level_requirement >= 0),
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  min_quantity INTEGER DEFAULT 1 CHECK (min_quantity > 0),
+  max_quantity INTEGER DEFAULT 1 CHECK (max_quantity >= min_quantity),
+  level_requirement INTEGER DEFAULT 0 CHECK (level_requirement >= 0),
+  source_type resource_source_type NOT NULL,
+  -- nullable
 );
 
 -- Индексы для resource_sources
@@ -71,14 +73,18 @@ CREATE INDEX IF NOT EXISTS idx_resource_sources_source_id
 
 -- Таблица применения ресурсов
 CREATE TABLE IF NOT EXISTS economy.resource_applications (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
-    application_type resource_application_type NOT NULL,
-    target_item_type VARCHAR(50), -- nullable, тип предмета (weapon, armor, cyberware, etc.)
-    target_item_tier INTEGER, -- nullable, тиер предмета (1-5)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
+  description TEXT,
+  target_item_type VARCHAR(50),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  тип предмета (weapon, armor, cyberware, etc.)
+    target_item_tier INTEGER,
+  тиер предмета (1-5)
     quantity_required INTEGER DEFAULT 1 CHECK (quantity_required > 0),
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  application_type resource_application_type NOT NULL,
+  -- nullable,
+  -- nullable
 );
 
 -- Индексы для resource_applications
@@ -92,18 +98,23 @@ CREATE INDEX IF NOT EXISTS idx_resource_applications_target_item
 
 -- Таблица зон добычи ресурсов
 CREATE TABLE IF NOT EXISTS economy.resource_mining_zones (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
-    zone_name VARCHAR(255) NOT NULL,
-    region_id UUID, -- FK regions (nullable)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
+  region_id UUID,
+  -- FK regions (nullable)
     location_description TEXT,
-    risk_level VARCHAR(20), -- low, medium, high, very_high
+  zone_name VARCHAR(255) NOT NULL,
+  risk_level VARCHAR(20),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  very_high
     spawn_rate DECIMAL(5,2) CHECK (spawn_rate >= 0.00 AND spawn_rate <= 100.00),
-    respawn_time_minutes INTEGER DEFAULT 60 CHECK (respawn_time_minutes > 0),
-    level_requirement INTEGER DEFAULT 0 CHECK (level_requirement >= 0),
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  respawn_time_minutes INTEGER DEFAULT 60 CHECK (respawn_time_minutes > 0),
+  level_requirement INTEGER DEFAULT 0 CHECK (level_requirement >= 0),
+  is_active BOOLEAN DEFAULT true,
+  -- low,
+  medium,
+  high
 );
 
 -- Индексы для resource_mining_zones
@@ -118,15 +129,25 @@ CREATE INDEX IF NOT EXISTS idx_resource_mining_zones_risk_level
 
 -- Таблица истории цен ресурсов
 CREATE TABLE IF NOT EXISTS economy.resource_price_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
-    price DECIMAL(20,2) NOT NULL CHECK (price >= 0),
-    price_type VARCHAR(20) NOT NULL, -- 'base', 'current', 'vendor', 'player'
-    region_id UUID, -- FK regions (nullable)
-    event_id UUID, -- FK economic_events (nullable)
-    supply_factor DECIMAL(5,2), -- nullable, фактор предложения (0.00-2.00)
-    demand_factor DECIMAL(5,2), -- nullable, фактор спроса (0.00-2.00)
-    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  resource_id UUID NOT NULL REFERENCES economy.resources(id) ON DELETE CASCADE,
+  'player'
+    region_id UUID,
+  -- FK regions (nullable)
+    event_id UUID,
+  price_type VARCHAR(20) NOT NULL,
+  фактор спроса (0.00-2.00)
+    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  price DECIMAL(20,2) NOT NULL CHECK (price >= 0),
+  -- FK economic_events (nullable)
+    supply_factor DECIMAL(5,2),
+  фактор предложения (0.00-2.00)
+    demand_factor DECIMAL(5,2),
+  -- 'base',
+  'current',
+  'vendor',
+  -- nullable,
+  -- nullable
 );
 
 -- Индексы для resource_price_history

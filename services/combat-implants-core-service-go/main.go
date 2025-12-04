@@ -1,15 +1,16 @@
-// Issue: #58
+// Issue: #58, #1584
 package main
 
 import (
 	"context"
 	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/necpgame/combat-implants-core-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-core-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -21,6 +22,16 @@ func main() {
 	metricsAddr := getEnv("METRICS_ADDR", ":9093")
 
 	httpServer := server.NewHTTPServer(addr)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6103")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

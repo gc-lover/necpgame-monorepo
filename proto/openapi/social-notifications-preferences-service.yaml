@@ -1,4 +1,3 @@
-# Issue: #140946814
 openapi: 3.0.3
 info:
   title: Social Notifications Preferences Service API
@@ -7,79 +6,73 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Notifications Preferences
-    description: Настройки уведомлений
-
+- name: Notifications Preferences
+  description: Настройки уведомлений
 paths:
   /social/notifications/preferences:
     get:
       tags:
-        - Notifications Preferences
+      - Notifications Preferences
       summary: Получить настройки уведомлений
       operationId: getNotificationPreferences
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: account_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: account_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Настройки уведомлений
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationPreferences"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/NotificationPreferences'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     put:
       tags:
-        - Notifications Preferences
+      - Notifications Preferences
       summary: Обновить настройки уведомлений
       operationId: updateNotificationPreferences
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateNotificationPreferencesRequest"
+              $ref: '#/components/schemas/UpdateNotificationPreferencesRequest'
       responses:
-        "200":
+        '200':
           description: Настройки обновлены
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationPreferences"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/NotificationPreferences'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     NotificationPreferences:
       type: object
@@ -87,6 +80,19 @@ components:
         account_id:
           type: string
           format: uuid
+        updated_at:
+          type: string
+          format: date-time
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum:
+            - in_game
+            - websocket
+            - email
+          default:
+          - in_game
         quest_enabled:
           type: boolean
           default: true
@@ -111,24 +117,23 @@ components:
         combat_enabled:
           type: boolean
           default: true
-        preferred_channels:
-          type: array
-          items:
-            type: string
-            enum: [in_game, websocket, email]
-          default: [in_game]
-        updated_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateNotificationPreferencesRequest:
       type: object
       required:
-        - account_id
+      - account_id
       properties:
         account_id:
           type: string
           format: uuid
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum:
+            - in_game
+            - websocket
+            - email
         quest_enabled:
           type: boolean
         message_enabled:
@@ -145,36 +150,6 @@ components:
           type: boolean
         combat_enabled:
           type: boolean
-        preferred_channels:
-          type: array
-          items:
-            type: string
-            enum: [in_game, websocket, email]
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

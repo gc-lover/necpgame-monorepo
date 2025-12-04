@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/movement-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 )
 
 type mockMovementService struct {

@@ -17,13 +17,13 @@ CREATE INDEX IF NOT EXISTS idx_achievements_sort_order ON mvp_core.achievements(
 
 -- Таблица титулов игроков
 CREATE TABLE IF NOT EXISTS mvp_core.player_titles (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    account_id UUID NOT NULL,
-    title_id UUID NOT NULL REFERENCES mvp_core.achievements(id) ON DELETE CASCADE,
-    is_equipped BOOLEAN NOT NULL DEFAULT false,
-    unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(account_id, title_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  account_id UUID NOT NULL,
+  title_id UUID NOT NULL REFERENCES mvp_core.achievements(id) ON DELETE CASCADE,
+  unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_equipped BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(account_id, title_id)
 );
 
 -- Индексы для player_titles

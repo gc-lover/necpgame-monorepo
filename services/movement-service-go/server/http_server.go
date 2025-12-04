@@ -3,14 +3,14 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/pkg/api"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/necpgame/movement-service-go/models"
-	"github.com/necpgame/movement-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,145 +22,113 @@ type MovementServiceInterface interface {
 
 type HTTPServer struct {
 	addr            string
-	router          *mux.Router
+	router          chi.Router
 	movementService MovementServiceInterface
 	logger          *logrus.Logger
 	server          *http.Server
 }
 
 func NewHTTPServer(addr string, movementService MovementServiceInterface) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.Timeout(60 * time.Second))
+
+	logger := GetLogger()
+	router.Use(loggingMiddleware(logger))
+	router.Use(metricsMiddleware())
+	router.Use(corsMiddleware())
+
+	// Handlers (реализация api.Handler из handlers.go)
+	handlers := NewHandlers(movementService)
+
+	// Integration with ogen
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	// Mount ogen server under /api/v1
+	router.Mount("/api/v1", ogenServer)
+
+	router.Get("/health", healthCheck)
+
 	server := &HTTPServer{
 		addr:            addr,
 		router:          router,
 		movementService: movementService,
-		logger:          GetLogger(),
+		logger:          logger,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
 	}
-
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-
-	apiRouter := router.PathPrefix("/api/v1").Subrouter()
-
-	handlers := NewMovementHandlers(movementService)
-	HandlerFromMux(handlers, apiRouter)
-
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
 	return server
 }
 
 func (s *HTTPServer) Start(ctx context.Context) error {
-	s.server = &http.Server{
-		Addr:         s.addr,
-		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
-	errChan := make(chan error, 1)
-	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			errChan <- err
-		}
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return s.Shutdown(context.Background())
-	}
+	s.logger.WithField("addr", s.addr).Info("Movement Service starting")
+	return s.server.ListenAndServe()
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	if s.server != nil {
-		return s.server.Shutdown(ctx)
-	}
-	return nil
+	s.logger.Info("Shutting down Movement Service")
+	return s.server.Shutdown(ctx)
 }
 
-func HandlerFromMux(si api.ServerInterface, r *mux.Router) {
-	wrapper := &api.ServerInterfaceWrapper{
-		Handler: si,
-		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		},
-	}
-
-	r.HandleFunc("/movement/{characterId}/history", wrapper.GetPositionHistory).Methods("GET")
-	r.HandleFunc("/movement/{characterId}/position", wrapper.GetPosition).Methods("GET")
-	r.HandleFunc("/movement/{characterId}/position", wrapper.SavePosition).Methods("POST")
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
-}
-
-func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		s.logger.WithError(err).Error("Failed to encode JSON response")
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			next.ServeHTTP(ww, r)
+			logger.WithFields(logrus.Fields{
+				"method":    r.Method,
+				"path":      r.URL.Path,
+				"status":    ww.Status(),
+				"duration":  time.Since(start).String(),
+				"requestID": middleware.GetReqID(r.Context()),
+			}).Info("Request completed")
+		})
 	}
 }
 
-func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
-	s.respondJSON(w, status, map[string]string{"error": message})
+func metricsMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			next.ServeHTTP(ww, r)
+			RecordRequest(r.Method, r.URL.Path, http.StatusText(ww.Status()))
+			RecordRequestDuration(r.Method, r.URL.Path, time.Since(start).Seconds())
+		})
+	}
 }
 
-func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		next.ServeHTTP(w, r)
-
-		duration := time.Since(start)
-		s.logger.WithFields(logrus.Fields{
-			"method":      r.Method,
-			"path":        r.URL.Path,
-			"duration_ms": duration.Milliseconds(),
-			"status":      http.StatusOK,
-		}).Info("HTTP request")
-	})
-}
-
-func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(recorder, r)
-
-		duration := time.Since(start).Seconds()
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(recorder.statusCode))
-		RecordRequestDuration(r.Method, r.URL.Path, duration)
-	})
-}
-
-func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (sr *statusRecorder) WriteHeader(code int) {
-	sr.statusCode = code
-	sr.ResponseWriter.WriteHeader(code)
+func corsMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

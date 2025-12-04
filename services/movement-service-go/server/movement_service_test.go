@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/movement-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

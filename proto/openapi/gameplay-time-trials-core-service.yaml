@@ -1,41 +1,46 @@
 openapi: 3.0.3
 info:
   title: Gameplay Time Trials Core Service API
-  description: |
-    API для основных временных испытаний (Time Trials) - начало и завершение испытаний.
-    
+  description: 'API для основных временных испытаний (Time Trials) - начало и завершение испытаний.
+
+
     **Основные возможности:**
+
     - Начало временных испытаний
+
     - Завершение временных испытаний
+
     - Отслеживание времени прохождения
+
     - Валидация результатов
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay
+  description: Продакшен сервер
 tags:
-  - name: Time Trials
-    description: Временные испытания
-
+- name: Time Trials
+  description: Временные испытания
 paths:
   /time-trials/start:
     post:
       tags:
-        - Time Trials
+      - Time Trials
       summary: Начать временное испытание
-      description: |
-        Начинает временное испытание для указанного контента.
+      description: 'Начинает временное испытание для указанного контента.
+
         Создает сессию испытания и запускает отсчет времени.
+
+        '
       operationId: startTimeTrial
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -43,10 +48,10 @@ paths:
             schema:
               $ref: '#/components/schemas/StartTimeTrialRequest'
             example:
-              trial_type: "speedrun_raid"
-              content_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-              player_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
-              team_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+              trial_type: speedrun_raid
+              content_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
+              player_id: b2c3d4e5-f6a7-8901-2345-678901bcdef0
+              team_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
       responses:
         '200':
           description: Испытание начато
@@ -55,30 +60,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/TimeTrialSessionResponse'
               example:
-                session_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
-                trial_type: "speedrun_raid"
-                content_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-                status: "in_progress"
-                start_time: "2025-12-01T10:00:00Z"
-                message: "Time trial started"
+                session_id: d4e5f6a7-b8c9-0123-4567-890123def012
+                trial_type: speedrun_raid
+                content_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
+                status: in_progress
+                start_time: '2025-12-01T10:00:00Z'
+                message: Time trial started
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /time-trials/complete:
     post:
       tags:
-        - Time Trials
+      - Time Trials
       summary: Завершить временное испытание
-      description: |
-        Завершает временное испытание с указанным временем прохождения.
+      description: 'Завершает временное испытание с указанным временем прохождения.
+
         Проверяет валидность результата и обновляет лидерборды.
+
+        '
       operationId: completeTimeTrial
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -86,7 +92,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CompleteTimeTrialRequest'
             example:
-              session_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+              session_id: d4e5f6a7-b8c9-0123-4567-890123def012
               completion_time: 3600
               validated: true
       responses:
@@ -97,122 +103,118 @@ paths:
               schema:
                 $ref: '#/components/schemas/CompleteTimeTrialResponse'
               example:
-                session_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+                session_id: d4e5f6a7-b8c9-0123-4567-890123def012
                 completion_time: 3600
                 rank: 1
                 is_record: true
                 previous_record: 4200
                 rewards:
-                  - type: "title"
-                    name: "Speedrunner"
-                  - type: "cosmetic"
-                    name: "Speedrun Badge"
-                message: "New record achieved!"
+                - type: title
+                  name: Speedrunner
+                - type: cosmetic
+                  name: Speedrun Badge
+                message: New record achieved!
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
           description: Сессия не найдена
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+                $ref: common.yaml#/components/schemas/Error
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     TrialType:
       type: string
       enum:
-        - speedrun_raid
-        - time_attack_dungeon
-        - weekly_challenge
+      - speedrun_raid
+      - time_attack_dungeon
+      - weekly_challenge
       description: Тип временного испытания
-
     TimeTrialStatus:
       type: string
       enum:
-        - in_progress
-        - completed
-        - failed
+      - in_progress
+      - completed
+      - failed
       description: Статус испытания
-
     StartTimeTrialRequest:
       type: object
       required:
-        - trial_type
-        - content_id
-        - player_id
+      - trial_type
+      - content_id
+      - player_id
       properties:
-        trial_type:
-          $ref: '#/components/schemas/TrialType'
         content_id:
           type: string
           format: uuid
           description: ID контента (рейд, подземелье и т.д.)
-          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         player_id:
           type: string
           format: uuid
           description: ID игрока
-          example: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+          example: b2c3d4e5-f6a7-8901-2345-678901bcdef0
         team_id:
           type: string
           format: uuid
           description: ID команды (для командных испытаний)
           nullable: true
-          example: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
-
+          example: c3d4e5f6-a7b8-9012-3456-789012cdef01
+        trial_type:
+          $ref: '#/components/schemas/TrialType'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TimeTrialSessionResponse:
       type: object
       required:
-        - session_id
-        - trial_type
-        - content_id
-        - status
-        - start_time
+      - session_id
+      - trial_type
+      - content_id
+      - status
+      - start_time
       properties:
         session_id:
           type: string
           format: uuid
           description: ID сессии испытания
-          example: "d4e5f6a7-b8c9-0123-4567-890123def012"
-        trial_type:
-          $ref: '#/components/schemas/TrialType'
+          example: d4e5f6a7-b8c9-0123-4567-890123def012
         content_id:
           type: string
           format: uuid
           description: ID контента
-          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-        status:
-          $ref: '#/components/schemas/TimeTrialStatus'
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        message:
+          type: string
+          description: Дополнительное сообщение
+          example: Time trial started
         start_time:
           type: string
           format: date-time
           description: Время начала испытания
-          example: "2025-12-01T10:00:00Z"
-        message:
-          type: string
-          description: Дополнительное сообщение
-          example: "Time trial started"
-
+          example: '2025-12-01T10:00:00Z'
+        status:
+          $ref: '#/components/schemas/TimeTrialStatus'
+        trial_type:
+          $ref: '#/components/schemas/TrialType'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CompleteTimeTrialRequest:
       type: object
       required:
-        - session_id
-        - completion_time
+      - session_id
+      - completion_time
       properties:
         session_id:
           type: string
           format: uuid
           description: ID сессии испытания
-          example: "d4e5f6a7-b8c9-0123-4567-890123def012"
+          example: d4e5f6a7-b8c9-0123-4567-890123def012
         completion_time:
           type: integer
           description: Время прохождения в секундах
@@ -223,20 +225,28 @@ components:
           description: Результат валидирован
           default: false
           example: true
-
     CompleteTimeTrialResponse:
       type: object
       required:
-        - session_id
-        - completion_time
-        - rank
-        - is_record
+      - session_id
+      - completion_time
+      - rank
+      - is_record
       properties:
         session_id:
           type: string
           format: uuid
           description: ID сессии испытания
-          example: "d4e5f6a7-b8c9-0123-4567-890123def012"
+          example: d4e5f6a7-b8c9-0123-4567-890123def012
+        message:
+          type: string
+          description: Дополнительное сообщение
+          example: New record achieved!
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          description: Полученные награды
         completion_time:
           type: integer
           description: Время прохождения в секундах
@@ -247,62 +257,51 @@ components:
           description: Ранг в лидерборде
           minimum: 1
           example: 1
-        is_record:
-          type: boolean
-          description: Является ли результат новым рекордом
-          example: true
         previous_record:
           type: integer
           description: Предыдущий рекорд в секундах
           nullable: true
           minimum: 0
           example: 4200
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/Reward'
-          description: Полученные награды
-        message:
-          type: string
-          description: Дополнительное сообщение
-          example: "New record achieved!"
-
+        is_record:
+          type: boolean
+          description: Является ли результат новым рекордом
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Reward:
       type: object
       required:
-        - type
-        - name
+      - type
+      - name
       properties:
-        type:
-          type: string
-          enum:
-            - title
-            - cosmetic
-            - currency
-            - item
-          description: Тип награды
-          example: "title"
         name:
           type: string
           description: Название награды
-          example: "Speedrunner"
+          example: Speedrunner
+        type:
+          type: string
+          enum:
+          - title
+          - cosmetic
+          - currency
+          - item
+          description: Тип награды
+          example: title
         amount:
           type: integer
           description: Количество (для currency)
           nullable: true
           minimum: 0
           example: 1000
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/feedback-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -27,7 +27,17 @@ func main() {
 	keycloakRealm := getEnv("KEYCLOAK_REALM", "necpgame")
 	authEnabled := getEnv("AUTH_ENABLED", "true") == "true"
 
-	db, err := pgxpool.New(context.Background(), dbURL)
+	// Connection pool settings for performance (Issue #1605)
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to parse database URL")
+	}
+	config.MaxConns = 25
+	config.MinConns = 5
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 10 * time.Minute
+
+	db, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to connect to database")
 	}
@@ -55,6 +65,16 @@ func main() {
 	}
 
 	httpServer := server.NewHTTPServer(addr, feedbackService, jwtValidator, authEnabled)
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6121")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
 	metricsRouter := http.NewServeMux()
 	metricsRouter.Handle("/metrics", promhttp.Handler())

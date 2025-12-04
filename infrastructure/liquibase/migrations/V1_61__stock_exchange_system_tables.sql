@@ -40,17 +40,17 @@ END $$;
 
 -- Таблица корпораций на бирже
 CREATE TABLE IF NOT EXISTS economy.corporations (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    symbol VARCHAR(10) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    sector VARCHAR(100),
-    stock_type stock_type NOT NULL DEFAULT 'Common',
-    total_shares BIGINT NOT NULL DEFAULT 0 CHECK (total_shares >= 0),
-    ipo_date TIMESTAMP,
-    delisted_at TIMESTAMP,
-    faction_id UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  faction_id UUID,
+  symbol VARCHAR(10) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  sector VARCHAR(100),
+  ipo_date TIMESTAMP,
+  delisted_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  total_shares BIGINT NOT NULL DEFAULT 0 CHECK (total_shares >= 0),
+  stock_type stock_type NOT NULL DEFAULT 'Common'
 );
 
 -- Индексы для corporations
@@ -61,17 +61,17 @@ CREATE INDEX IF NOT EXISTS idx_corporations_delisted_at ON economy.corporations(
 
 -- Таблица истории цен акций
 CREATE TABLE IF NOT EXISTS economy.stock_prices (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
-    price DECIMAL(20, 4) NOT NULL CHECK (price > 0),
-    volume BIGINT NOT NULL DEFAULT 0 CHECK (volume >= 0),
-    high DECIMAL(20, 4) NOT NULL CHECK (high > 0),
-    low DECIMAL(20, 4) NOT NULL CHECK (low > 0),
-    open DECIMAL(20, 4) NOT NULL CHECK (open > 0),
-    close DECIMAL(20, 4) NOT NULL CHECK (close > 0),
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    event_id UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
+  event_id UUID,
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  volume BIGINT NOT NULL DEFAULT 0 CHECK (volume >= 0),
+  price DECIMAL(20, 4) NOT NULL CHECK (price > 0),
+  high DECIMAL(20, 4) NOT NULL CHECK (high > 0),
+  low DECIMAL(20, 4) NOT NULL CHECK (low > 0),
+  open DECIMAL(20, 4) NOT NULL CHECK (open > 0),
+  close DECIMAL(20, 4) NOT NULL CHECK (close > 0)
 );
 
 -- Индексы для stock_prices
@@ -81,16 +81,16 @@ CREATE INDEX IF NOT EXISTS idx_stock_prices_event_id ON economy.stock_prices(eve
 
 -- Таблица портфелей игроков
 CREATE TABLE IF NOT EXISTS economy.player_portfolios (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
-    quantity BIGINT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
-    average_buy_price DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (average_buy_price >= 0),
-    total_invested DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (total_invested >= 0),
-    total_dividends_received DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (total_dividends_received >= 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, corporation_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  quantity BIGINT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+  average_buy_price DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (average_buy_price >= 0),
+  total_invested DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (total_invested >= 0),
+  total_dividends_received DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (total_dividends_received >= 0),
+  UNIQUE(character_id, corporation_id)
 );
 
 -- Индексы для player_portfolios
@@ -99,17 +99,17 @@ CREATE INDEX IF NOT EXISTS idx_player_portfolios_corporation_id ON economy.playe
 
 -- Таблица расписания дивидендов
 CREATE TABLE IF NOT EXISTS economy.dividend_schedules (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
-    dividend_type dividend_type NOT NULL,
-    amount_per_share DECIMAL(20, 4) NOT NULL CHECK (amount_per_share > 0),
-    declaration_date DATE NOT NULL,
-    ex_dividend_date DATE NOT NULL,
-    record_date DATE NOT NULL,
-    payment_date DATE NOT NULL,
-    status dividend_status NOT NULL DEFAULT 'SCHEDULED',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  declaration_date DATE NOT NULL,
+  ex_dividend_date DATE NOT NULL,
+  record_date DATE NOT NULL,
+  payment_date DATE NOT NULL,
+  amount_per_share DECIMAL(20, 4) NOT NULL CHECK (amount_per_share > 0),
+  dividend_type dividend_type NOT NULL,
+  status dividend_status NOT NULL DEFAULT 'SCHEDULED'
 );
 
 -- Индексы для dividend_schedules
@@ -119,17 +119,17 @@ CREATE INDEX IF NOT EXISTS idx_dividend_schedules_status ON economy.dividend_sch
 
 -- Таблица выплат дивидендов
 CREATE TABLE IF NOT EXISTS economy.dividend_payments (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    dividend_schedule_id UUID NOT NULL REFERENCES economy.dividend_schedules(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
-    shares_owned BIGINT NOT NULL CHECK (shares_owned > 0),
-    dividend_amount DECIMAL(20, 4) NOT NULL CHECK (dividend_amount > 0),
-    tax_amount DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (tax_amount >= 0),
-    net_amount DECIMAL(20, 4) NOT NULL CHECK (net_amount > 0),
-    reinvested BOOLEAN NOT NULL DEFAULT false,
-    paid_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  dividend_schedule_id UUID NOT NULL REFERENCES economy.dividend_schedules(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
+  paid_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  shares_owned BIGINT NOT NULL CHECK (shares_owned > 0),
+  dividend_amount DECIMAL(20, 4) NOT NULL CHECK (dividend_amount > 0),
+  tax_amount DECIMAL(20, 4) NOT NULL DEFAULT 0.0 CHECK (tax_amount >= 0),
+  net_amount DECIMAL(20, 4) NOT NULL CHECK (net_amount > 0),
+  reinvested BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Индексы для dividend_payments
@@ -139,14 +139,14 @@ CREATE INDEX IF NOT EXISTS idx_dividend_payments_corporation_id ON economy.divid
 
 -- Таблица биржевых индексов
 CREATE TABLE IF NOT EXISTS economy.stock_indices (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    symbol VARCHAR(20) NOT NULL UNIQUE,
-    calculation_method index_calculation_method NOT NULL,
-    base_value DECIMAL(20, 4) NOT NULL DEFAULT 1000.0 CHECK (base_value > 0),
-    current_value DECIMAL(20, 4) NOT NULL DEFAULT 1000.0 CHECK (current_value > 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  symbol VARCHAR(20) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  base_value DECIMAL(20, 4) NOT NULL DEFAULT 1000.0 CHECK (base_value > 0),
+  current_value DECIMAL(20, 4) NOT NULL DEFAULT 1000.0 CHECK (current_value > 0),
+  calculation_method index_calculation_method NOT NULL
 );
 
 -- Индексы для stock_indices
@@ -154,13 +154,13 @@ CREATE INDEX IF NOT EXISTS idx_stock_indices_symbol ON economy.stock_indices(sym
 
 -- Таблица состава индексов
 CREATE TABLE IF NOT EXISTS economy.index_constituents (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    index_id UUID NOT NULL REFERENCES economy.stock_indices(id) ON DELETE CASCADE,
-    corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
-    weight DECIMAL(10, 6) NOT NULL CHECK (weight >= 0 AND weight <= 1),
-    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    removed_at TIMESTAMP,
-    UNIQUE(index_id, corporation_id, removed_at)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  index_id UUID NOT NULL REFERENCES economy.stock_indices(id) ON DELETE CASCADE,
+  corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
+  added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  removed_at TIMESTAMP,
+  weight DECIMAL(10, 6) NOT NULL CHECK (weight >= 0 AND weight <= 1),
+  UNIQUE(index_id, corporation_id, removed_at)
 );
 
 -- Индексы для index_constituents
@@ -169,13 +169,13 @@ CREATE INDEX IF NOT EXISTS idx_index_constituents_corporation_id ON economy.inde
 
 -- Таблица истории индексов
 CREATE TABLE IF NOT EXISTS economy.index_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    index_id UUID NOT NULL REFERENCES economy.stock_indices(id) ON DELETE CASCADE,
-    value DECIMAL(20, 4) NOT NULL CHECK (value > 0),
-    change DECIMAL(20, 4) NOT NULL,
-    change_percent DECIMAL(10, 4) NOT NULL,
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  index_id UUID NOT NULL REFERENCES economy.stock_indices(id) ON DELETE CASCADE,
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  value DECIMAL(20, 4) NOT NULL CHECK (value > 0),
+  change DECIMAL(20, 4) NOT NULL,
+  change_percent DECIMAL(10, 4) NOT NULL
 );
 
 -- Индексы для index_history
@@ -184,17 +184,17 @@ CREATE INDEX IF NOT EXISTS idx_index_history_timestamp ON economy.index_history(
 
 -- Таблица влияния событий на акции
 CREATE TABLE IF NOT EXISTS economy.stock_events_impact (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id UUID NOT NULL,
-    event_type VARCHAR(50) NOT NULL,
-    corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
-    impact_percent DECIMAL(10, 4) NOT NULL,
-    base_price DECIMAL(20, 4) NOT NULL CHECK (base_price > 0),
-    new_price DECIMAL(20, 4) NOT NULL CHECK (new_price > 0),
-    duration_hours INTEGER NOT NULL CHECK (duration_hours > 0),
-    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL,
+  corporation_id UUID NOT NULL REFERENCES economy.corporations(id) ON DELETE CASCADE,
+  event_type VARCHAR(50) NOT NULL,
+  started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ended_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  impact_percent DECIMAL(10, 4) NOT NULL,
+  base_price DECIMAL(20, 4) NOT NULL CHECK (base_price > 0),
+  new_price DECIMAL(20, 4) NOT NULL CHECK (new_price > 0),
+  duration_hours INTEGER NOT NULL CHECK (duration_hours > 0)
 );
 
 -- Индексы для stock_events_impact
@@ -204,15 +204,15 @@ CREATE INDEX IF NOT EXISTS idx_stock_events_impact_ended_at ON economy.stock_eve
 
 -- Таблица алертов о нарушениях
 CREATE TABLE IF NOT EXISTS economy.compliance_alerts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    alert_type VARCHAR(50) NOT NULL,
-    severity compliance_severity NOT NULL,
-    description TEXT,
-    trade_id UUID,
-    status compliance_alert_status NOT NULL DEFAULT 'OPEN',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  trade_id UUID,
+  description TEXT,
+  alert_type VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  resolved_at TIMESTAMP,
+  severity compliance_severity NOT NULL,
+  status compliance_alert_status NOT NULL DEFAULT 'OPEN'
 );
 
 -- Индексы для compliance_alerts

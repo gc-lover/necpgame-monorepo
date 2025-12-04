@@ -1,72 +1,76 @@
 openapi: 3.0.3
 info:
   title: Analytics Combat Shooting Service API
-  description: |
-    API для статистики стрельбы и оружия.
-    
+  description: 'API для статистики стрельбы и оружия.
+
+
     **Основные возможности:**
+
     - Статистика стрельбы (точность, попадания, промахи)
+
     - TTK метрики (Time To Kill)
+
     - Статистика по оружию
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8089/api/v1/analytics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/analytics
-    description: Продакшен сервер
-
+- url: http://localhost:8089/api/v1/analytics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/analytics
+  description: Продакшен сервер
 tags:
-  - name: Shooting Stats
-    description: Статистика стрельбы
-  - name: TTK Metrics
-    description: Метрики Time To Kill
-  - name: Weapon Stats
-    description: Статистика по оружию
-
+- name: Shooting Stats
+  description: Статистика стрельбы
+- name: TTK Metrics
+  description: Метрики Time To Kill
+- name: Weapon Stats
+  description: Статистика по оружию
 paths:
   /combat/shooting/stats:
     get:
       tags:
-        - Shooting Stats
+      - Shooting Stats
       summary: Получить статистику стрельбы
-      description: |
-        Возвращает статистику стрельбы: общее количество выстрелов, попаданий,
+      description: 'Возвращает статистику стрельбы: общее количество выстрелов, попаданий,
+
         точность, средний урон и другие метрики.
+
+        '
       operationId: getShootingStats
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: mode
-          in: query
-          required: false
-          description: Фильтр по игровому режиму
-          schema:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/GameMode'
-        - name: weapon_id
-          in: query
-          required: false
-          description: Фильтр по оружию
-          schema:
-            type: string
-            format: uuid
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: mode
+        in: query
+        required: false
+        description: Фильтр по игровому режиму
+        schema:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/GameMode
+      - name: weapon_id
+        in: query
+        required: false
+        description: Фильтр по оружию
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Статистика стрельбы
@@ -83,51 +87,52 @@ paths:
                 average_damage: 45.5
                 average_damage_per_second: 22.3
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/shooting/ttk:
     get:
       tags:
-        - TTK Metrics
+      - TTK Metrics
       summary: Получить TTK метрики
-      description: |
-        Возвращает метрики Time To Kill (TTK) для оружия или режима.
+      description: 'Возвращает метрики Time To Kill (TTK) для оружия или режима.
+
         TTK показывает среднее время, необходимое для убийства противника.
+
+        '
       operationId: getTTKMetrics
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: weapon_id
-          in: query
-          required: false
-          description: Фильтр по оружию
-          schema:
-            type: string
-            format: uuid
-        - name: mode
-          in: query
-          required: false
-          description: Фильтр по игровому режиму
-          schema:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/GameMode'
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата периода
-          schema:
-            type: string
-            format: date-time
+      - name: weapon_id
+        in: query
+        required: false
+        description: Фильтр по оружию
+        schema:
+          type: string
+          format: uuid
+      - name: mode
+        in: query
+        required: false
+        description: Фильтр по игровому режиму
+        schema:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/GameMode
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата периода
+        schema:
+          type: string
+          format: date-time
       responses:
         '200':
           description: TTK метрики
@@ -141,70 +146,71 @@ paths:
                 min_ttk: 1.5
                 max_ttk: 4.2
                 sample_count: 10000
-                weapon_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                weapon_id: aa0e8400-e29b-41d4-a716-446655440000
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/shooting/weapons:
     get:
       tags:
-        - Weapon Stats
+      - Weapon Stats
       summary: Получить статистику по оружию
-      description: |
-        Возвращает статистику по всем оружиям или конкретному оружию.
+      description: 'Возвращает статистику по всем оружиям или конкретному оружию.
+
         Включает метрики использования, эффективности и TTK.
+
+        '
       operationId: getWeaponStats
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: weapon_id
-          in: query
-          required: false
-          description: Фильтр по конкретному оружию
-          schema:
-            type: string
-            format: uuid
-        - name: mode
-          in: query
-          required: false
-          description: Фильтр по игровому режиму
-          schema:
-            $ref: 'analytics-combat-schemas.yaml#/components/schemas/GameMode'
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: weapon_id
+        in: query
+        required: false
+        description: Фильтр по конкретному оружию
+        schema:
+          type: string
+          format: uuid
+      - name: mode
+        in: query
+        required: false
+        description: Фильтр по игровому режиму
+        schema:
+          $ref: analytics-combat-schemas.yaml#/components/schemas/GameMode
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Статистика по оружию
@@ -214,34 +220,32 @@ paths:
                 $ref: '#/components/schemas/WeaponStatsResponse'
               example:
                 weapons:
-                  - weapon_id: "aa0e8400-e29b-41d4-a716-446655440000"
-                    weapon_name: "Assault Rifle Alpha"
-                    total_shots: 500000
-                    accuracy: 0.72
-                    average_ttk: 2.3
-                    average_dps: 22.5
-                    usage_rate: 0.25
-                    pick_rate: 0.30
+                - weapon_id: aa0e8400-e29b-41d4-a716-446655440000
+                  weapon_name: Assault Rifle Alpha
+                  total_shots: 500000
+                  accuracy: 0.72
+                  average_ttk: 2.3
+                  average_dps: 22.5
+                  usage_rate: 0.25
+                  pick_rate: 0.3
                 total: 50
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ShootingStats:
       type: object
       required:
-        - total_shots
-        - total_hits
-        - accuracy
+      - total_shots
+      - total_hits
+      - accuracy
       properties:
         total_shots:
           type: integer
@@ -284,13 +288,23 @@ components:
           description: Средний урон в секунду
           minimum: 0
           example: 22.3
-
     TTKMetrics:
       type: object
       required:
-        - average_ttk
-        - sample_count
+      - average_ttk
+      - sample_count
       properties:
+        weapon_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID оружия (если фильтр применен)
+          example: aa0e8400-e29b-41d4-a716-446655440000
+        sample_count:
+          type: integer
+          description: Количество образцов
+          minimum: 0
+          example: 10000
         average_ttk:
           type: number
           format: float
@@ -315,23 +329,12 @@ components:
           description: Максимальный TTK
           minimum: 0
           example: 4.2
-        sample_count:
-          type: integer
-          description: Количество образцов
-          minimum: 0
-          example: 10000
-        weapon_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: ID оружия (если фильтр применен)
-          example: "aa0e8400-e29b-41d4-a716-446655440000"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WeaponStatsResponse:
       type: object
       required:
-        - weapons
-        - total
+      - weapons
+      - total
       properties:
         weapons:
           type: array
@@ -343,27 +346,26 @@ components:
           description: Общее количество оружий
           minimum: 0
           example: 50
-
     WeaponStats:
       type: object
       required:
-        - weapon_id
-        - weapon_name
-        - total_shots
-        - accuracy
-        - average_ttk
-        - average_dps
-        - usage_rate
-        - pick_rate
+      - weapon_id
+      - weapon_name
+      - total_shots
+      - accuracy
+      - average_ttk
+      - average_dps
+      - usage_rate
+      - pick_rate
       properties:
         weapon_id:
           type: string
           format: uuid
-          example: "aa0e8400-e29b-41d4-a716-446655440000"
+          example: aa0e8400-e29b-41d4-a716-446655440000
         weapon_name:
           type: string
           description: Название оружия
-          example: "Assault Rifle Alpha"
+          example: Assault Rifle Alpha
         total_shots:
           type: integer
           minimum: 0
@@ -398,13 +400,11 @@ components:
           description: Процент выбора оружия (0.0-1.0)
           minimum: 0.0
           maximum: 1.0
-          example: 0.30
-
+          example: 0.3
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

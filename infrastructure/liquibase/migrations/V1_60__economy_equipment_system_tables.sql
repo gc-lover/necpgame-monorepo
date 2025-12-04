@@ -28,16 +28,16 @@ END $$;
 
 -- Таблица каталога оборудования
 CREATE TABLE IF NOT EXISTS economy.equipment_catalog (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    category equipment_category NOT NULL,
-    brand VARCHAR(50),
-    rarity equipment_rarity NOT NULL DEFAULT 'common',
-    stats JSONB NOT NULL DEFAULT '{}'::jsonb,
-    signature TEXT,
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  signature TEXT,
+  description TEXT,
+  name VARCHAR(100) NOT NULL,
+  brand VARCHAR(50),
+  stats JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  category equipment_category NOT NULL,
+  rarity equipment_rarity NOT NULL DEFAULT 'common'
 );
 
 -- Индексы для equipment_catalog
@@ -48,17 +48,17 @@ CREATE INDEX IF NOT EXISTS idx_equipment_catalog_name ON economy.equipment_catal
 
 -- Таблица временной линии культового оборудования
 CREATE TABLE IF NOT EXISTS economy.iconic_equipment_timeline (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    equipment_id UUID NOT NULL REFERENCES economy.equipment_catalog(id) ON DELETE CASCADE,
-    era_start INTEGER NOT NULL CHECK (era_start >= 2000 AND era_start <= 2100),
-    era_end INTEGER CHECK (era_end IS NULL OR (era_end >= 2000 AND era_end <= 2100 AND era_end >= era_start)),
-    unlock_conditions JSONB NOT NULL DEFAULT '{}'::jsonb,
-    availability iconic_availability NOT NULL DEFAULT 'always',
-    unlock_date TIMESTAMP,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(equipment_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  equipment_id UUID NOT NULL REFERENCES economy.equipment_catalog(id) ON DELETE CASCADE,
+  unlock_conditions JSONB NOT NULL DEFAULT '{}'::jsonb,
+  unlock_date TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  era_start INTEGER NOT NULL CHECK (era_start >= 2000 AND era_start <= 2100),
+  era_end INTEGER CHECK (era_end IS NULL OR (era_end >= 2000 AND era_end <= 2100 AND era_end >= era_start)),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  availability iconic_availability NOT NULL DEFAULT 'always',
+  UNIQUE(equipment_id)
 );
 
 -- Индексы для iconic_equipment_timeline
@@ -69,14 +69,14 @@ CREATE INDEX IF NOT EXISTS idx_iconic_equipment_timeline_unlock_date ON economy.
 
 -- Таблица разблокировок культового оборудования
 CREATE TABLE IF NOT EXISTS economy.iconic_unlocks (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    iconic_id UUID NOT NULL REFERENCES economy.iconic_equipment_timeline(id) ON DELETE CASCADE,
-    unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    unlock_method iconic_unlock_method NOT NULL,
-    unlock_data JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, iconic_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  iconic_id UUID NOT NULL REFERENCES economy.iconic_equipment_timeline(id) ON DELETE CASCADE,
+  unlock_data JSONB DEFAULT '{}'::jsonb,
+  unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  unlock_method iconic_unlock_method NOT NULL,
+  UNIQUE(character_id, iconic_id)
 );
 
 -- Индексы для iconic_unlocks
@@ -86,16 +86,16 @@ CREATE INDEX IF NOT EXISTS idx_iconic_unlocks_unlock_method ON economy.iconic_un
 
 -- Таблица матрицы характеристик оборудования
 CREATE TABLE IF NOT EXISTS economy.equipment_matrix (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    brand VARCHAR(50) NOT NULL,
-    category equipment_category NOT NULL,
-    rarity equipment_rarity NOT NULL,
-    stat_pools JSONB NOT NULL DEFAULT '{}'::jsonb,
-    modifiers JSONB NOT NULL DEFAULT '{}'::jsonb,
-    version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(brand, category, rarity, version)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  brand VARCHAR(50) NOT NULL,
+  stat_pools JSONB NOT NULL DEFAULT '{}'::jsonb,
+  modifiers JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+  category equipment_category NOT NULL,
+  rarity equipment_rarity NOT NULL,
+  UNIQUE(brand, category, rarity, version)
 );
 
 -- Индексы для equipment_matrix
@@ -105,15 +105,17 @@ CREATE INDEX IF NOT EXISTS idx_equipment_matrix_version ON economy.equipment_mat
 
 -- Таблица процедурно сгенерированного оборудования
 CREATE TABLE IF NOT EXISTS economy.generated_equipment (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    seed BIGINT NOT NULL,
-    brand VARCHAR(50) NOT NULL,
-    category equipment_category NOT NULL,
-    rarity equipment_rarity NOT NULL,
-    stats JSONB NOT NULL DEFAULT '{}'::jsonb,
-    generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    character_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    item_id UUID, -- References character_items, if assigned
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  item_id UUID,
+  brand VARCHAR(50) NOT NULL,
+  stats JSONB NOT NULL DEFAULT '{}'::jsonb,
+  generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  seed BIGINT NOT NULL,
+  category equipment_category NOT NULL,
+  rarity equipment_rarity NOT NULL,
+  -- References character_items,
+  if assigned
     UNIQUE(seed, brand, category)
 );
 

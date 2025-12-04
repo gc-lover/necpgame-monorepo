@@ -32,9 +32,13 @@ func NewHTTPServer(addr string) *http.Server {
 		})
 	})
 
-	handlers := &Handlers{}
-	apiHandler := api.Handler(handlers)
-	r.Mount("/", apiHandler)
+	handlers := NewHandlers()
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+	r.Mount("/api/v1", ogenServer)
 
 	return &http.Server{
 		Addr:         addr,
@@ -79,12 +83,13 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 func respondError(w http.ResponseWriter, status int, message string) {
 	code := http.StatusText(status)
 	err := api.Error{
-		Code:    &code,
+		Code:    api.NewOptNilString(code),
 		Error:   http.StatusText(status),
 		Message: message,
 	}
 	respondJSON(w, status, err)
 }
+
 
 
 

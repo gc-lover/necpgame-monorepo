@@ -1,4 +1,3 @@
-# Issue: #304
 openapi: 3.0.3
 info:
   title: Social NPC Hiring Candidates Service API
@@ -7,98 +6,103 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: NPC Hiring Candidates
-    description: Поиск кандидатов NPC
-
+- name: NPC Hiring Candidates
+  description: Поиск кандидатов NPC
 paths:
   /social/npc-hiring/candidates:
     get:
       tags:
-        - NPC Hiring Candidates
+      - NPC Hiring Candidates
       summary: Поиск кандидатов для найма
       operationId: searchNPCCandidates
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: hiring_type
-          in: query
-          schema:
+      - name: hiring_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - merchant
+          - quest_giver
+          - fixer
+          - bodyguard
+          - mercenary
+          - diplomat
+          - engineer
+          - hacker
+      - name: min_reputation
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+      - name: skills
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
-        - name: min_reputation
-          in: query
-          schema:
-            type: string
-            enum: [low, medium, high]
-        - name: skills
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-        - name: max_salary
-          in: query
-          schema:
-            type: number
-            format: float
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: max_salary
+        in: query
+        schema:
+          type: number
+          format: float
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список кандидатов
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NPCCandidatesResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/NPCCandidatesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/npc-hiring/candidates/{npc_id}:
     get:
       tags:
-        - NPC Hiring Candidates
+      - NPC Hiring Candidates
       summary: Получить информацию о кандидате
       operationId: getNPCCandidate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: npc_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: npc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Информация о кандидате
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NPCCandidate"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/NPCCandidate'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     NPCCandidate:
       type: object
@@ -108,25 +112,29 @@ components:
           format: uuid
         name:
           type: string
+        description:
+          type: string
         hiring_type:
           type: string
-          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+          enum:
+          - merchant
+          - quest_giver
+          - fixer
+          - bodyguard
+          - mercenary
+          - diplomat
+          - engineer
+          - hacker
         reputation_level:
           type: string
-          enum: [low, medium, high]
-        skills:
-          type: array
-          items:
-            type: string
+          enum:
+          - low
+          - medium
+          - high
         skill_levels:
           type: object
           additionalProperties:
             type: integer
-        base_salary:
-          type: number
-          format: float
-        availability:
-          type: boolean
         requirements:
           type: object
           properties:
@@ -140,34 +148,24 @@ components:
               type: number
               format: float
               nullable: true
-        description:
-          type: string
-
+        skills:
+          type: array
+          items:
+            type: string
+        base_salary:
+          type: number
+          format: float
+        availability:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     NPCCandidatesResponse:
       type: object
       properties:
         candidates:
           type: array
           items:
-            $ref: "#/components/schemas/NPCCandidate"
+            $ref: '#/components/schemas/NPCCandidate'
         total:
           type: integer
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

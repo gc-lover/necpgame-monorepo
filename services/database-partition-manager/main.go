@@ -9,6 +9,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling
 	"os"
 	"time"
 
@@ -28,12 +30,27 @@ func main() {
 	}
 	defer db.Close()
 
+	// Connection pool settings for performance (Issue #1605)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
 	// Test connection
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
 	log.Println("Database Partition Manager starting...")
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6114")
+		log.Printf("pprof server starting on %s", pprofAddr)
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
+	}()
 
 	pm := NewPartitionManager(db)
 
@@ -227,6 +244,13 @@ func parsePartitionDate(partitionName, tablePrefix string) (time.Time, error) {
 	
 	// Parse date (format: 2006_01_02)
 	return time.Parse("2006_01_02", dateStr)
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 

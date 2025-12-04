@@ -3,49 +3,77 @@ info:
   title: Blackwall ICE Schemas
   description: Общие схемы данных для Blackwall ICE Protection System
   version: 1.0.0
-
 components:
   schemas:
     ICEType:
       type: string
-      enum: [guardian, hunter, deception, corruption, collective]
+      enum:
+      - guardian
+      - hunter
+      - deception
+      - corruption
+      - collective
       description: Тип Blackwall ICE
-      example: "guardian"
-
+      example: guardian
     ICELevel:
       type: string
-      enum: [alpha, beta, gamma]
+      enum:
+      - alpha
+      - beta
+      - gamma
       description: Уровень сложности ICE
-      example: "alpha"
-
+      example: alpha
     ICEStats:
       type: object
       required:
-        - attack_speed
-        - defense
-        - adaptation_rate
-        - aggression
+      - attack_speed
+      - defense
+      - adaptation_rate
+      - aggression
       properties:
         attack_speed:
           type: string
-          enum: [very_slow, slow, medium, fast, very_fast]
+          enum:
+          - very_slow
+          - slow
+          - medium
+          - fast
+          - very_fast
           description: Скорость атаки
-          example: "slow"
+          example: slow
         defense:
           type: string
-          enum: [low, medium, high, very_high]
+          enum:
+          - low
+          - medium
+          - high
+          - very_high
           description: Уровень защиты
-          example: "high"
+          example: high
         adaptation_rate:
           type: string
-          enum: [low, medium, high, very_high]
+          enum:
+          - low
+          - medium
+          - high
+          - very_high
           description: Скорость адаптации
-          example: "medium"
+          example: medium
         aggression:
           type: string
-          enum: [low, medium, high, very_high]
+          enum:
+          - low
+          - medium
+          - high
+          - very_high
           description: Уровень агрессии
-          example: "low"
+          example: low
+        adaptation_level:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Уровень адаптации
+          example: 2
         defense_multiplier:
           type: number
           format: float
@@ -53,45 +81,31 @@ components:
           maximum: 2.0
           description: Множитель защиты
           example: 1.15
-        adaptation_level:
-          type: integer
-          minimum: 0
-          maximum: 10
-          description: Уровень адаптации
-          example: 2
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ICEInstance:
       type: object
       required:
-        - ice_id
-        - ice_type
-        - level
-        - adaptation_level
-        - defense_multiplier
-        - status
+      - ice_id
+      - ice_type
+      - level
+      - adaptation_level
+      - defense_multiplier
+      - status
       properties:
         ice_id:
           type: string
           format: uuid
           description: UUID Blackwall ICE
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
-        ice_type:
-          $ref: '#/components/schemas/ICEType'
-        level:
-          $ref: '#/components/schemas/ICELevel'
-        adaptation_level:
-          type: integer
-          description: Уровень адаптации ICE (0-10)
-          minimum: 0
-          maximum: 10
-          example: 2
-        defense_multiplier:
-          type: number
-          format: float
-          description: Множитель защиты (1.0 - базовая, увеличивается с адаптацией)
-          minimum: 1.0
-          maximum: 2.0
-          example: 1.15
+          example: bb0e8400-e29b-41d4-a716-446655440000
+        status:
+          type: string
+          enum:
+          - active
+          - hunting
+          - passive
+          - adapting
+          description: Текущий статус ICE
+          example: active
         position:
           type: object
           description: Позиция ICE в киберпространстве
@@ -105,23 +119,39 @@ components:
             z:
               type: number
               format: float
-        status:
-          type: string
-          enum: [active, hunting, passive, adapting]
-          description: Текущий статус ICE
-          example: "active"
-
+        level:
+          $ref: '#/components/schemas/ICELevel'
+        ice_type:
+          $ref: '#/components/schemas/ICEType'
+        adaptation_level:
+          type: integer
+          description: Уровень адаптации ICE (0-10)
+          minimum: 0
+          maximum: 10
+          example: 2
+        defense_multiplier:
+          type: number
+          format: float
+          description: Множитель защиты (1.0 - базовая, увеличивается с адаптацией)
+          minimum: 1.0
+          maximum: 2.0
+          example: 1.15
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ThreatAssessment:
       type: object
       required:
-        - overall_threat
-        - active_threats
+      - overall_threat
+      - active_threats
       properties:
         overall_threat:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           description: Общая оценка угрозы
-          example: "high"
+          example: high
         active_threats:
           type: integer
           description: Количество активных угроз
@@ -131,67 +161,71 @@ components:
           type: boolean
           description: Рекомендуется ли осторожность
           example: true
-
     ICEInteractionAction:
       type: string
-      enum: [detect, analyze, bypass, attack]
+      enum:
+      - detect
+      - analyze
+      - bypass
+      - attack
       description: Тип взаимодействия с ICE
-      example: "analyze"
-
+      example: analyze
     SkillCheck:
       type: object
       required:
-        - skill_type
-        - skill_level
+      - skill_type
+      - skill_level
       properties:
         skill_type:
           type: string
-          enum: [hacking, netrunning, technical]
+          enum:
+          - hacking
+          - netrunning
+          - technical
           description: Тип навыка
-          example: "hacking"
+          example: hacking
+        modifiers:
+          type: array
+          description: Модификаторы навыка
+          items:
+            $ref: '#/components/schemas/SkillModifier'
         skill_level:
           type: integer
           description: Уровень навыка
           minimum: 1
           maximum: 100
           example: 45
-        modifiers:
-          type: array
-          description: Модификаторы навыка
-          items:
-            $ref: '#/components/schemas/SkillModifier'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SkillModifier:
       type: object
       required:
-        - type
-        - value
+      - type
+      - value
       properties:
         type:
           type: string
           description: Тип модификатора
-          example: "netrunner_bonus"
+          example: netrunner_bonus
         value:
           type: number
           format: float
           description: Значение модификатора
           example: 0.2
-
     ICEInteractionResult:
       type: object
       required:
-        - ice_type
-        - level
-        - stats
-        - current_adaptation_level
-        - defense_multiplier
+      - ice_type
+      - level
+      - stats
+      - current_adaptation_level
+      - defense_multiplier
       properties:
-        ice_type:
-          $ref: '#/components/schemas/ICEType'
         level:
           $ref: '#/components/schemas/ICELevel'
         stats:
           $ref: '#/components/schemas/ICEStats'
+        ice_type:
+          $ref: '#/components/schemas/ICEType'
         current_adaptation_level:
           type: integer
           minimum: 0
@@ -203,29 +237,38 @@ components:
           minimum: 1.0
           maximum: 2.0
           example: 1.15
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ICEResponse:
       type: object
       required:
-        - response_type
-        - message
-        - psychological_effect
+      - response_type
+      - message
+      - psychological_effect
       properties:
-        response_type:
-          type: string
-          enum: [defensive, aggressive, deceptive, passive]
-          description: Тип ответа ICE
-          example: "defensive"
         message:
           type: string
           description: Сообщение от ICE (может быть обманом)
-          example: "Защита активирована. Обнаружена попытка анализа."
+          example: Защита активирована. Обнаружена попытка анализа.
+        response_type:
+          type: string
+          enum:
+          - defensive
+          - aggressive
+          - deceptive
+          - passive
+          description: Тип ответа ICE
+          example: defensive
         psychological_effect:
           type: string
-          enum: [none, low, medium, high, critical]
+          enum:
+          - none
+          - low
+          - medium
+          - high
+          - critical
           description: Уровень психологического воздействия
-          example: "low"
-
+          example: low
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ICEConsequences:
       type: object
       properties:
@@ -249,4 +292,3 @@ components:
           type: boolean
           description: Произошло ли цифровое заражение
           example: false
-

@@ -1,13 +1,13 @@
 -- Issue: #1519
 CREATE TABLE IF NOT EXISTS progression.paragon_levels (
   character_id UUID PRIMARY KEY,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  experience_current BIGINT NOT NULL DEFAULT 0,
+  experience_required BIGINT NOT NULL DEFAULT 150000,
   paragon_level INTEGER NOT NULL DEFAULT 0,
   paragon_points_total INTEGER NOT NULL DEFAULT 0,
   paragon_points_spent INTEGER NOT NULL DEFAULT 0,
   paragon_points_available INTEGER NOT NULL DEFAULT 0,
-  experience_current BIGINT NOT NULL DEFAULT 0,
-  experience_required BIGINT NOT NULL DEFAULT 150000,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (character_id) REFERENCES character.characters(id) ON DELETE CASCADE
 );
 
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS progression.paragon_allocations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   character_id UUID NOT NULL,
   stat_type VARCHAR(50) NOT NULL,
-  points_allocated INTEGER NOT NULL DEFAULT 0,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  points_allocated INTEGER NOT NULL DEFAULT 0,
   UNIQUE(character_id, stat_type),
   FOREIGN KEY (character_id) REFERENCES character.characters(id) ON DELETE CASCADE,
   CHECK (stat_type IN ('strength', 'agility', 'intelligence', 'vitality', 'willpower', 'perception'))

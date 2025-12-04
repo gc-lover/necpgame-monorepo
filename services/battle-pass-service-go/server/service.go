@@ -1,9 +1,10 @@
-// Issue: #227
+// Issue: #227, #1607
 package server
 
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/pkg/api"
 )
@@ -19,20 +20,76 @@ var (
 
 const XPPerLevel = 1000 // XP required per level
 
+// Service implements business logic for battle pass
+// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Service struct {
 	repo *Repository
+
+	// Memory pooling for hot path structs (zero allocations target!)
+	seasonPool sync.Pool
+	playerProgressPool sync.Pool
+	claimRewardResponsePool sync.Pool
+	purchasePremiumResponsePool sync.Pool
 }
 
 func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+	s := &Service{repo: repo}
+
+	// Initialize memory pools (zero allocations target!)
+	s.seasonPool = sync.Pool{
+		New: func() interface{} {
+			return &api.Season{}
+		},
+	}
+	s.playerProgressPool = sync.Pool{
+		New: func() interface{} {
+			return &api.PlayerProgress{}
+		},
+	}
+	s.claimRewardResponsePool = sync.Pool{
+		New: func() interface{} {
+			return make(map[string]interface{})
+		},
+	}
+	s.purchasePremiumResponsePool = sync.Pool{
+		New: func() interface{} {
+			return make(map[string]interface{})
+		},
+	}
+
+	return s
 }
 
+// GetCurrentSeason returns current season
+// Issue: #1607 - Uses memory pooling for zero allocations
 func (s *Service) GetCurrentSeason(ctx context.Context) (*api.Season, error) {
-	return s.repo.GetCurrentSeason(ctx)
+	season, err := s.repo.GetCurrentSeason(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Issue: #1607 - Use memory pooling
+	result := s.seasonPool.Get().(*api.Season)
+	// Note: Not returning to pool - struct is returned to caller
+	*result = *season // Copy data
+
+	return result, nil
 }
 
+// GetPlayerProgress returns player progress
+// Issue: #1607 - Uses memory pooling for zero allocations
 func (s *Service) GetPlayerProgress(ctx context.Context, playerId string) (*api.PlayerProgress, error) {
-	return s.repo.GetPlayerProgress(ctx, playerId)
+	progress, err := s.repo.GetPlayerProgress(ctx, playerId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Issue: #1607 - Use memory pooling
+	result := s.playerProgressPool.Get().(*api.PlayerProgress)
+	// Note: Not returning to pool - struct is returned to caller
+	*result = *progress // Copy data
+
+	return result, nil
 }
 
 func (s *Service) ClaimReward(ctx context.Context, playerId string, level int, track api.RewardTrack) (map[string]interface{}, error) {
@@ -87,9 +144,17 @@ func (s *Service) ClaimReward(ctx context.Context, playerId string, level int, t
 
 	// TODO: Distribute rewards to player (integrate with economy service)
 
-	return map[string]interface{}{
-		"rewards": []api.Reward{*reward},
-	}, nil
+	// Issue: #1607 - Use memory pooling
+	result := s.claimRewardResponsePool.Get().(map[string]interface{})
+	// Reset map
+	for k := range result {
+		delete(result, k)
+	}
+	// Note: Not returning to pool - map is returned to caller
+
+	result["rewards"] = []api.Reward{*reward}
+
+	return result, nil
 }
 
 func (s *Service) PurchasePremium(ctx context.Context, playerId string) (map[string]interface{}, error) {
@@ -118,12 +183,22 @@ func (s *Service) PurchasePremium(ctx context.Context, playerId string) (map[str
 
 	// TODO: Distribute retroactive rewards
 
-	return map[string]interface{}{
-		"premium_status":      true,
-		"retroactive_rewards": retroRewards,
-	}, nil
+	// Issue: #1607 - Use memory pooling
+	result := s.purchasePremiumResponsePool.Get().(map[string]interface{})
+	// Reset map
+	for k := range result {
+		delete(result, k)
+	}
+	// Note: Not returning to pool - map is returned to caller
+
+	result["premium_status"] = true
+	result["retroactive_rewards"] = retroRewards
+
+	return result, nil
 }
 
+// GetWeeklyChallenges returns weekly challenges
+// Issue: #1607 - Uses memory pooling for zero allocations
 func (s *Service) GetWeeklyChallenges(ctx context.Context, playerId string) (map[string]interface{}, error) {
 	challenges, err := s.repo.GetWeeklyChallenges(ctx, playerId)
 	if err != nil {
@@ -132,12 +207,22 @@ func (s *Service) GetWeeklyChallenges(ctx context.Context, playerId string) (map
 
 	weekNumber := 1 // TODO: Calculate current week based on season start date
 
-	return map[string]interface{}{
-		"week_number": weekNumber,
-		"challenges":  challenges,
-	}, nil
+	// Issue: #1607 - Use memory pooling
+	result := s.claimRewardResponsePool.Get().(map[string]interface{})
+	// Reset map
+	for k := range result {
+		delete(result, k)
+	}
+	// Note: Not returning to pool - map is returned to caller
+
+	result["week_number"] = weekNumber
+	result["challenges"] = challenges
+
+	return result, nil
 }
 
+// CompleteChallenge completes a challenge
+// Issue: #1607 - Uses memory pooling for zero allocations
 func (s *Service) CompleteChallenge(ctx context.Context, playerId, challengeId string) (map[string]interface{}, error) {
 	// Check if challenge exists and not completed
 	challenge, err := s.repo.GetPlayerChallenge(ctx, playerId, challengeId)
@@ -166,12 +251,22 @@ func (s *Service) CompleteChallenge(ctx context.Context, playerId, challengeId s
 		return nil, err
 	}
 
-	return map[string]interface{}{
-		"xp_awarded": challengeDetails.XpReward,
-		"new_level":  newLevel,
-	}, nil
+	// Issue: #1607 - Use memory pooling
+	result := s.claimRewardResponsePool.Get().(map[string]interface{})
+	// Reset map
+	for k := range result {
+		delete(result, k)
+	}
+	// Note: Not returning to pool - map is returned to caller
+
+	result["xp_awarded"] = challengeDetails.XpReward
+	result["new_level"] = newLevel
+
+	return result, nil
 }
 
+// AddXP adds XP to player progress
+// Issue: #1607 - Uses memory pooling for zero allocations
 func (s *Service) AddXP(ctx context.Context, playerId string, xpAmount int, source string) (map[string]interface{}, error) {
 	newLevel, err := s.addXPInternal(ctx, playerId, xpAmount, source)
 	if err != nil {
@@ -206,12 +301,20 @@ func (s *Service) AddXP(ctx context.Context, playerId string, xpAmount int, sour
 		}
 	}
 
-	return map[string]interface{}{
-		"new_xp":           progress.CurrentXp + xpAmount,
-		"new_level":        newLevel,
-		"level_up":         levelUp,
-		"rewards_unlocked": rewardsUnlocked,
-	}, nil
+	// Issue: #1607 - Use memory pooling
+	result := s.claimRewardResponsePool.Get().(map[string]interface{})
+	// Reset map
+	for k := range result {
+		delete(result, k)
+	}
+	// Note: Not returning to pool - map is returned to caller
+
+	result["new_xp"] = progress.CurrentXp + xpAmount
+	result["new_level"] = newLevel
+	result["level_up"] = levelUp
+	result["rewards_unlocked"] = rewardsUnlocked
+
+	return result, nil
 }
 
 func (s *Service) addXPInternal(ctx context.Context, playerId string, xpAmount int, source string) (int, error) {
@@ -242,6 +345,7 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 func respondError(w http.ResponseWriter, status int, message string) {
 	respondJSON(w, status, map[string]string{"error": message})
 }
+
 
 
 

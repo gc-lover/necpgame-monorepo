@@ -28,24 +28,28 @@ END $$;
 
 -- Таблица голосовых лобби
 CREATE TABLE IF NOT EXISTS social.voice_lobbies (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    type voice_lobby_type NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    owner_id UUID NOT NULL, -- FK characters
-    party_id UUID, -- FK parties
-    guild_id UUID, -- FK guilds
-    clan_id UUID, -- FK clans
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  owner_id UUID NOT NULL,
+  -- FK characters
+    party_id UUID,
+  -- FK parties
+    guild_id UUID,
+  -- FK guilds
+    clan_id UUID,
+  description TEXT,
+  name VARCHAR(255) NOT NULL,
+  -- FK clans
     voice_provider_room_id VARCHAR(255),
-    max_participants INTEGER NOT NULL DEFAULT 8 CHECK (max_participants > 0),
-    max_subchannels INTEGER NOT NULL DEFAULT 4 CHECK (max_subchannels >= 0),
-    region VARCHAR(50),
-    language VARCHAR(10),
-    is_public BOOLEAN NOT NULL DEFAULT false,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    closed_at TIMESTAMP
+  region VARCHAR(50),
+  language VARCHAR(10),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  closed_at TIMESTAMP,
+  max_participants INTEGER NOT NULL DEFAULT 8 CHECK (max_participants > 0),
+  max_subchannels INTEGER NOT NULL DEFAULT 4 CHECK (max_subchannels >= 0),
+  is_public BOOLEAN NOT NULL DEFAULT false,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  type voice_lobby_type NOT NULL
 );
 
 -- Индексы для voice_lobbies
@@ -68,16 +72,18 @@ CREATE INDEX IF NOT EXISTS idx_voice_lobbies_region_language
 
 -- Таблица участников лобби
 CREATE TABLE IF NOT EXISTS social.lobby_participants (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    lobby_id UUID NOT NULL REFERENCES social.voice_lobbies(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL, -- FK characters
-    role lobby_participant_role NOT NULL DEFAULT 'member',
-    subchannel_id UUID, -- FK lobby_subchannels
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  lobby_id UUID NOT NULL REFERENCES social.voice_lobbies(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL,
+  subchannel_id UUID,
+  joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  left_at TIMESTAMP,
+  -- FK lobby_subchannels
     is_muted BOOLEAN NOT NULL DEFAULT false,
-    is_deafened BOOLEAN NOT NULL DEFAULT false,
-    joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    left_at TIMESTAMP,
-    UNIQUE(lobby_id, character_id)
+  is_deafened BOOLEAN NOT NULL DEFAULT false,
+  -- FK characters
+    role lobby_participant_role NOT NULL DEFAULT 'member',
+  UNIQUE(lobby_id, character_id)
 );
 
 -- Индексы для lobby_participants
@@ -94,15 +100,15 @@ CREATE INDEX IF NOT EXISTS idx_lobby_participants_joined_at
 
 -- Таблица подканалов лобби
 CREATE TABLE IF NOT EXISTS social.lobby_subchannels (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    lobby_id UUID NOT NULL REFERENCES social.voice_lobbies(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    type lobby_subchannel_type NOT NULL DEFAULT 'main',
-    voice_provider_channel_id VARCHAR(255),
-    max_participants INTEGER CHECK (max_participants IS NULL OR max_participants > 0),
-    role_restrictions JSONB DEFAULT '{}',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  lobby_id UUID NOT NULL REFERENCES social.voice_lobbies(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  voice_provider_channel_id VARCHAR(255),
+  role_restrictions JSONB DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  max_participants INTEGER CHECK (max_participants IS NULL OR max_participants > 0),
+  type lobby_subchannel_type NOT NULL DEFAULT 'main'
 );
 
 -- Индексы для lobby_subchannels
@@ -120,19 +126,20 @@ ALTER TABLE social.lobby_participants
 
 -- Таблица поисков групп
 CREATE TABLE IF NOT EXISTS social.party_finder_searches (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL, -- FK characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  -- FK characters
     role VARCHAR(50),
-    rating INTEGER CHECK (rating IS NULL OR rating >= 0),
-    activity VARCHAR(50),
-    region VARCHAR(50),
-    language VARCHAR(10),
-    min_level INTEGER CHECK (min_level IS NULL OR min_level >= 0),
-    max_level INTEGER CHECK (max_level IS NULL OR max_level >= 0),
-    status party_finder_search_status NOT NULL DEFAULT 'searching',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    found_at TIMESTAMP
+  activity VARCHAR(50),
+  region VARCHAR(50),
+  language VARCHAR(10),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  found_at TIMESTAMP,
+  rating INTEGER CHECK (rating IS NULL OR rating >= 0),
+  min_level INTEGER CHECK (min_level IS NULL OR min_level >= 0),
+  max_level INTEGER CHECK (max_level IS NULL OR max_level >= 0),
+  status party_finder_search_status NOT NULL DEFAULT 'searching'
 );
 
 -- Индексы для party_finder_searches
@@ -149,12 +156,13 @@ CREATE INDEX IF NOT EXISTS idx_party_finder_searches_rating
 
 -- Таблица телеметрии лобби
 CREATE TABLE IF NOT EXISTS social.lobby_telemetry (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_type VARCHAR(50) NOT NULL,
-    lobby_id UUID REFERENCES social.voice_lobbies(id) ON DELETE CASCADE,
-    character_id UUID, -- FK characters
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  lobby_id UUID REFERENCES social.voice_lobbies(id) ON DELETE CASCADE,
+  character_id UUID,
+  event_type VARCHAR(50) NOT NULL,
+  -- FK characters
     event_data JSONB DEFAULT '{}',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для lobby_telemetry

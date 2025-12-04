@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/combat turns/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-turns-service-go/pkg/api"
 )
 
 // Context timeout constants
@@ -25,94 +25,54 @@ func NewHandlers(service *Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-// ApplyEffects - TYPED response!
-func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (api.ApplyEffectsRes, error) {
+// GetCurrentTurn - TYPED response!
+func (h *Handlers) GetCurrentTurn(ctx context.Context, params api.GetCurrentTurnParams) (api.GetCurrentTurnRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ApplyEffects(ctx, req)
+	result, err := h.service.GetCurrentTurn(ctx, params.SessionId)
 	if err != nil {
-		return &api.ApplyEffectsInternalServerError{}, err
-	}
-
-	// Return TYPED response (ogen will marshal directly!)
-	return result, nil
-}
-
-// CalculateDamage - TYPED response!
-func (h *Handlers) CalculateDamage(ctx context.Context, req *api.CalculateDamageRequest) (api.CalculateDamageRes, error) {
-	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
-	defer cancel()
-
-	result, err := h.service.CalculateDamage(ctx, req)
-	if err != nil {
-		return &api.CalculateDamageInternalServerError{}, err
+		return &api.GetCurrentTurnInternalServerError{}, err
 	}
 
 	return result, nil
 }
 
-// DefendInCombat - TYPED response!
-func (h *Handlers) DefendInCombat(ctx context.Context, req *api.DefendRequest, params api.DefendInCombatParams) (api.DefendInCombatRes, error) {
+// GetTurnOrder - TYPED response!
+func (h *Handlers) GetTurnOrder(ctx context.Context, params api.GetTurnOrderParams) (api.GetTurnOrderRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.DefendInCombat(ctx, params.SessionId.String(), req)
+	result, err := h.service.GetTurnOrder(ctx, params.SessionId)
 	if err != nil {
-		if err == ErrNotFound {
-			return &api.DefendInCombatNotFound{}, nil
-		}
-		return &api.DefendInCombatInternalServerError{}, err
+		return &api.GetTurnOrderInternalServerError{}, err
 	}
 
 	return result, nil
 }
 
-// ProcessAttack - TYPED response!
-func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, params api.ProcessAttackParams) (api.ProcessAttackRes, error) {
+// NextTurn - TYPED response!
+func (h *Handlers) NextTurn(ctx context.Context, params api.NextTurnParams) (api.NextTurnRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ProcessAttack(ctx, params.SessionId.String(), req)
+	result, err := h.service.NextTurn(ctx, params.SessionId)
 	if err != nil {
-		if err == ErrNotFound {
-			return &api.ProcessAttackNotFound{}, nil
-		}
-		return &api.ProcessAttackInternalServerError{}, err
+		return &api.NextTurnInternalServerError{}, err
 	}
 
 	return result, nil
 }
 
-// UseCombatAbility - TYPED response!
-func (h *Handlers) UseCombatAbility(ctx context.Context, req *api.UseAbilityRequest, params api.UseCombatAbilityParams) (api.UseCombatAbilityRes, error) {
+// SkipTurn - TYPED response!
+func (h *Handlers) SkipTurn(ctx context.Context, req *api.SkipTurnRequest, params api.SkipTurnParams) (api.SkipTurnRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.UseCombatAbility(ctx, params.SessionId.String(), req)
+	result, err := h.service.SkipTurn(ctx, params.SessionId, req)
 	if err != nil {
-		if err == ErrNotFound {
-			return &api.UseCombatAbilityNotFound{}, nil
-		}
-		return &api.UseCombatAbilityInternalServerError{}, err
+		return &api.SkipTurnInternalServerError{}, err
 	}
 
 	return result, nil
 }
-
-// UseCombatItem - TYPED response!
-func (h *Handlers) UseCombatItem(ctx context.Context, req *api.UseItemRequest, params api.UseCombatItemParams) (api.UseCombatItemRes, error) {
-	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
-	defer cancel()
-
-	result, err := h.service.UseCombatItem(ctx, params.SessionId.String(), req)
-	if err != nil {
-		if err == ErrNotFound {
-			return &api.UseCombatItemNotFound{}, nil
-		}
-		return &api.UseCombatItemInternalServerError{}, err
-	}
-
-	return result, nil
-}
-

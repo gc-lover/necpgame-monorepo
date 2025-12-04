@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/gc-lover/necpgame-monorepo/services/league-service-go/pkg/api"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	api "github.com/gc-lover/necpgame-monorepo/services/league-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -18,21 +19,25 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewServiceHandlers(logger)
+	handlers := NewHandlers(logger)
 
 	router := chi.NewRouter()
 
-	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
+	router.Use(chiMiddleware.RequestID)
+	router.Use(chiMiddleware.RealIP)
+	router.Use(chiMiddleware.Logger)
+	router.Use(chiMiddleware.Recoverer)
 	router.Use(corsMiddleware)
 
-	// Generated API handlers with Chi
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseRouter: router,
-	})
+	// ogen server integration
+	ogenServer, err := api.NewServer(handlers, nil)
+	if err != nil {
+		logger.Fatalf("Failed to create ogen server: %v", err)
+	}
+
+	router.Mount("/", ogenServer)
 
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,
@@ -57,34 +62,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-			next.ServeHTTP(w, r)
-			logger.WithFields(logrus.Fields{
-				"method":   r.Method,
-				"path":     r.URL.Path,
-				"duration": time.Since(start),
-			}).Info("HTTP request processed")
-		})
-	}
-}
-
-func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				if err := recover(); err != nil {
-					logger.WithField("error", err).Error("Panic recovered")
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				}
-			}()
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -98,12 +75,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"healthy"}`))
 }
 
 

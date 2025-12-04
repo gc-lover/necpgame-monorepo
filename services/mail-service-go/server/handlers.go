@@ -1,13 +1,20 @@
-// Issue: #151
+// Issue: #1599, #1604 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
+	api "github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
 )
 
+// Context timeout constants (Issue #1604)
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
 	service Service
 }
@@ -16,64 +23,63 @@ func NewHandlers(service Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-func (h *Handlers) GetInbox(w http.ResponseWriter, r *http.Request, params api.GetInboxParams) {
-	response, err := h.service.GetInbox(r.Context(), params)
+// GetInbox implements GET /social/mail/inbox - TYPED response!
+func (h *Handlers) GetInbox(ctx context.Context, params api.GetInboxParams) (*api.InboxResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	response, err := h.service.GetInbox(ctx, params)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *Handlers) GetMail(w http.ResponseWriter, r *http.Request, mailId api.MailId) {
-	response, err := h.service.GetMail(r.Context(), mailId.String())
+// GetMail implements GET /social/mail/{mail_id} - TYPED response!
+func (h *Handlers) GetMail(ctx context.Context, params api.GetMailParams) (api.GetMailRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	response, err := h.service.GetMail(ctx, params.MailID.String())
 	if err != nil {
-		respondError(w, http.StatusNotFound, "Mail not found")
-		return
+		return &api.GetMailNotFound{Error: "NotFound", Message: "Mail not found"}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *Handlers) DeleteMail(w http.ResponseWriter, r *http.Request, mailId api.MailId) {
-	err := h.service.DeleteMail(r.Context(), mailId.String())
+// DeleteMail implements DELETE /social/mail/{mail_id} - TYPED response!
+func (h *Handlers) DeleteMail(ctx context.Context, params api.DeleteMailParams) (*api.SuccessResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	err := h.service.DeleteMail(ctx, params.MailID.String())
 	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
+		return nil, err
 	}
-	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	return &api.SuccessResponse{Status: api.NewOptString("deleted")}, nil
 }
 
-func (h *Handlers) SendMail(w http.ResponseWriter, r *http.Request) {
-	var req api.SendMailRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
-		return
-	}
-	
-	response, err := h.service.SendMail(r.Context(), &req)
+// SendMail implements POST /social/mail - TYPED response!
+func (h *Handlers) SendMail(ctx context.Context, req *api.SendMailRequest) (api.SendMailRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	response, err := h.service.SendMail(ctx, req)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return &api.SendMailBadRequest{Error: "BadRequest", Message: err.Error()}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *Handlers) ClaimAttachments(w http.ResponseWriter, r *http.Request, mailId api.MailId) {
-	response, err := h.service.ClaimAttachments(r.Context(), mailId.String())
+// ClaimAttachments implements POST /social/mail/{mail_id}/claim-attachments - TYPED response!
+func (h *Handlers) ClaimAttachments(ctx context.Context, params api.ClaimAttachmentsParams) (api.ClaimAttachmentsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	response, err := h.service.ClaimAttachments(ctx, params.MailID.String())
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return &api.ClaimAttachmentsNotFound{Error: "NotFound", Message: err.Error()}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
-}
-
-func respondJSON(w http.ResponseWriter, code int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, code int, message string) {
-	respondJSON(w, code, map[string]string{"error": message})
+	return response, nil
 }
 

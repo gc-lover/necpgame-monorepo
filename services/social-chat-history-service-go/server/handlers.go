@@ -1,12 +1,18 @@
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	"github.com/necpgame/social-chat-history-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/google/uuid"
+)
+
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond
 )
 
 type ChatHistoryHandlers struct{}
@@ -16,12 +22,16 @@ func NewChatHistoryHandlers() *ChatHistoryHandlers {
 }
 
 func (h *ChatHistoryHandlers) GetChatHistory(w http.ResponseWriter, r *http.Request, channelType api.GetChatHistoryParamsChannelType, params api.GetChatHistoryParams) {
-	messageId1 := openapi_types.UUID(uuid.New())
-	messageId2 := openapi_types.UUID(uuid.New())
-	senderId1 := openapi_types.UUID(uuid.New())
-	senderId2 := openapi_types.UUID(uuid.New())
-	channelId1 := openapi_types.UUID(uuid.New())
-	channelId2 := openapi_types.UUID(uuid.New())
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
+	messageId1 := uuid.UUID(uuid.New())
+	messageId2 := uuid.UUID(uuid.New())
+	senderId1 := uuid.UUID(uuid.New())
+	senderId2 := uuid.UUID(uuid.New())
+	channelId1 := uuid.UUID(uuid.New())
+	channelId2 := uuid.UUID(uuid.New())
 	channelTypePtr := api.ChatMessageChannelType(channelType)
 	messageType := api.Text
 	content1 := "History message 1"
@@ -91,12 +101,16 @@ func (h *ChatHistoryHandlers) GetChatHistory(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ChatHistoryHandlers) SearchChatHistory(w http.ResponseWriter, r *http.Request, params api.SearchChatHistoryParams) {
-	messageId1 := openapi_types.UUID(uuid.New())
-	messageId2 := openapi_types.UUID(uuid.New())
-	senderId1 := openapi_types.UUID(uuid.New())
-	senderId2 := openapi_types.UUID(uuid.New())
-	channelId1 := openapi_types.UUID(uuid.New())
-	channelId2 := openapi_types.UUID(uuid.New())
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
+	messageId1 := uuid.UUID(uuid.New())
+	messageId2 := uuid.UUID(uuid.New())
+	senderId1 := uuid.UUID(uuid.New())
+	senderId2 := uuid.UUID(uuid.New())
+	channelId1 := uuid.UUID(uuid.New())
+	channelId2 := uuid.UUID(uuid.New())
 	channelType := api.ChatMessageChannelTypeGLOBAL
 	messageType := api.Text
 	content1 := "Search result 1"

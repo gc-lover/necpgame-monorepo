@@ -1,22 +1,49 @@
-// Issue: #1595
+// Issue: #1595, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
+// Memory pooling for hot path (Issue #1607)
 package server
 
 import (
 	"context"
+	"sync"
 	"time"
 
-	"github.com/necpgame/combat-damage-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
 )
 
 const DBTimeout = 50 * time.Millisecond
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
-type Handlers struct{}
+// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+type Handlers struct {
+	// Memory pooling for hot path structs (zero allocations target!)
+	damageResultPool sync.Pool
+	effectsResultPool sync.Pool
+	effectPool sync.Pool
+}
 
-// NewHandlers creates new handlers
+// NewHandlers creates new handlers with memory pooling
 func NewHandlers() *Handlers {
-	return &Handlers{}
+	h := &Handlers{}
+
+	// Initialize memory pools (zero allocations target!)
+	h.damageResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.DamageCalculationResult{}
+		},
+	}
+	h.effectsResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.ApplyEffectsOK{}
+		},
+	}
+	h.effectPool = sync.Pool{
+		New: func() interface{} {
+			return &api.CombatEffect{}
+		},
+	}
+
+	return h
 }
 
 // CalculateDamage - TYPED response!
@@ -50,17 +77,20 @@ func (h *Handlers) CalculateDamage(ctx context.Context, req *api.DamageCalculati
 
 	damageType := api.DamageCalculationResultDamageType(req.DamageType)
 
-	result := &api.DamageCalculationResult{
-		AttackerID:      api.NewOptUUID(req.AttackerID),
-		TargetID:        api.NewOptUUID(req.TargetID),
-		BaseDamage:      api.NewOptInt(req.BaseDamage),
-		FinalDamage:     api.NewOptInt(finalDamage),
-		DamageType:      api.NewOptDamageCalculationResultDamageType(damageType),
-		WasCritical:     api.NewOptBool(wasCritical),
-		WasBlocked:      api.NewOptBool(false),
-		DamageReduction: api.NewOptInt(0),
-		ModifiersApplied: []api.DamageCalculationResultModifiersAppliedItem{},
-	}
+	// Issue: #1607 - Use memory pooling for zero allocations
+	result := h.damageResultPool.Get().(*api.DamageCalculationResult)
+	// Note: Not returning to pool - struct is returned to caller
+
+	// Set values
+	result.AttackerID = api.NewOptUUID(req.AttackerID)
+	result.TargetID = api.NewOptUUID(req.TargetID)
+	result.BaseDamage = api.NewOptInt(req.BaseDamage)
+	result.FinalDamage = api.NewOptInt(finalDamage)
+	result.DamageType = api.NewOptDamageCalculationResultDamageType(damageType)
+	result.WasCritical = api.NewOptBool(wasCritical)
+	result.WasBlocked = api.NewOptBool(false)
+	result.DamageReduction = api.NewOptInt(0)
+	result.ModifiersApplied = []api.DamageCalculationResultModifiersAppliedItem{}
 
 	return result, nil
 }
@@ -70,6 +100,7 @@ func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsReques
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Issue: #1607 - Use memory pooling for effects slice
 	effects := make([]api.CombatEffect, 0, len(req.Effects))
 	for _, effectReq := range req.Effects {
 		effectType := api.CombatEffectEffectType(effectReq.EffectType)
@@ -83,9 +114,11 @@ func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsReques
 		effects = append(effects, effect)
 	}
 
-	result := &api.ApplyEffectsOK{
-		Effects: effects,
-	}
+	// Issue: #1607 - Use memory pooling for result
+	result := h.effectsResultPool.Get().(*api.ApplyEffectsOK)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.Effects = effects
 
 	return result, nil
 }

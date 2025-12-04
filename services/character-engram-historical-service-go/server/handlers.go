@@ -1,10 +1,17 @@
+// Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"net/http"
+	"context"
+	"time"
 
-	"github.com/necpgame/character-engram-historical-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
+	api "github.com/necpgame/character-engram-historical-service-go/pkg/api"
+)
+
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
 )
 
 type HistoricalEngramHandlers struct{}
@@ -13,74 +20,65 @@ func NewHistoricalEngramHandlers() *HistoricalEngramHandlers {
 	return &HistoricalEngramHandlers{}
 }
 
-func (h *HistoricalEngramHandlers) GetHistoricalEngrams(w http.ResponseWriter, r *http.Request, params api.GetHistoricalEngramsParams) {
-	engramId := openapi_types.UUID{}
-	originalPersonId := openapi_types.UUID{}
+// GetHistoricalEngrams implements getHistoricalEngrams operation.
+func (h *HistoricalEngramHandlers) GetHistoricalEngrams(ctx context.Context, params api.GetHistoricalEngramsParams) (api.GetHistoricalEngramsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	engramID := uuid.New()
+	originalPersonID := uuid.New()
 	uniqueBonuses := []string{"Silverhand's Charisma", "Rock Legend"}
 	costMultiplier := float32(3.5)
-	storySignificance := api.High
-	questId := openapi_types.UUID{}
+	storySignificance := api.HistoricalEngramStorySignificanceHigh
+	questID := uuid.New()
 
 	engrams := []api.HistoricalEngram{
 		{
-			EngramId:          engramId,
+			EngramID:          engramID,
 			OriginalPersonName: "Johnny Silverhand",
-			OriginalPersonId:  &originalPersonId,
+			OriginalPersonID:  api.NewOptNilUUID(originalPersonID),
 			HistoricalYear:    2023,
 			AvailableFromYear: 2077,
 			IsAvailable:       true,
-			UniqueBonuses:     &uniqueBonuses,
-			SpecialDialogues:  func() *bool { v := true; return &v }(),
-			StorySignificance: &storySignificance,
-			CostMultiplier:    &costMultiplier,
-			QuestRequired:     func() *bool { v := true; return &v }(),
-			QuestId:           &questId,
+			UniqueBonuses:     uniqueBonuses,
+			SpecialDialogues:  api.NewOptBool(true),
+			StorySignificance: api.NewOptHistoricalEngramStorySignificance(storySignificance),
+			CostMultiplier:    api.NewOptFloat32(costMultiplier),
+			QuestRequired:     api.NewOptBool(true),
+			QuestID:           api.NewOptNilUUID(questID),
 		},
 	}
 
-	respondJSON(w, http.StatusOK, engrams)
+	response := &api.GetHistoricalEngramsOKApplicationJSON{}
+	*response = api.GetHistoricalEngramsOKApplicationJSON(engrams)
+	return response, nil
 }
 
-func (h *HistoricalEngramHandlers) GetHistoricalEngram(w http.ResponseWriter, r *http.Request, engramId openapi_types.UUID) {
-	originalPersonId := openapi_types.UUID{}
+// GetHistoricalEngram implements getHistoricalEngram operation.
+func (h *HistoricalEngramHandlers) GetHistoricalEngram(ctx context.Context, params api.GetHistoricalEngramParams) (api.GetHistoricalEngramRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	originalPersonID := uuid.New()
 	uniqueBonuses := []string{"Silverhand's Charisma", "Rock Legend"}
 	costMultiplier := float32(3.5)
-	storySignificance := api.High
-	questId := openapi_types.UUID{}
+	storySignificance := api.HistoricalEngramStorySignificanceHigh
+	questID := uuid.New()
 
-	engram := api.HistoricalEngram{
-		EngramId:          engramId,
+	response := &api.HistoricalEngram{
+		EngramID:          params.EngramID,
 		OriginalPersonName: "Johnny Silverhand",
-		OriginalPersonId:  &originalPersonId,
+		OriginalPersonID:  api.NewOptNilUUID(originalPersonID),
 		HistoricalYear:    2023,
 		AvailableFromYear: 2077,
 		IsAvailable:       true,
-		UniqueBonuses:     &uniqueBonuses,
-		SpecialDialogues:  func() *bool { v := true; return &v }(),
-		StorySignificance: &storySignificance,
-		CostMultiplier:    &costMultiplier,
-		QuestRequired:     func() *bool { v := true; return &v }(),
-		QuestId:           &questId,
+		UniqueBonuses:     uniqueBonuses,
+		SpecialDialogues:  api.NewOptBool(true),
+		StorySignificance: api.NewOptHistoricalEngramStorySignificance(storySignificance),
+		CostMultiplier:    api.NewOptFloat32(costMultiplier),
+		QuestRequired:     api.NewOptBool(true),
+		QuestID:           api.NewOptNilUUID(questID),
 	}
 
-	respondJSON(w, http.StatusOK, engram)
+	return response, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

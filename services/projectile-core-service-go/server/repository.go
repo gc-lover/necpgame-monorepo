@@ -28,19 +28,19 @@ func (r *ProjectileRepository) GetForms(ctx context.Context, params api.GetProje
 	args := []interface{}{}
 
 	// Add filters
-	if params.Type != nil {
+	if params.Type.Set {
 		query += " AND type = $" + string(rune(len(args)+1))
-		args = append(args, string(*params.Type))
+		args = append(args, string(params.Type.Value))
 	}
 
 	// Add pagination
-	if params.Limit != nil {
+	if params.Limit.Set {
 		query += " LIMIT $" + string(rune(len(args)+1))
-		args = append(args, *params.Limit)
+		args = append(args, params.Limit.Value)
 	}
-	if params.Offset != nil {
+	if params.Offset.Set {
 		query += " OFFSET $" + string(rune(len(args)+1))
-		args = append(args, *params.Offset)
+		args = append(args, params.Offset.Value)
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -55,7 +55,7 @@ func (r *ProjectileRepository) GetForms(ctx context.Context, params api.GetProje
 		var paramsJSON []byte
 		var visualEffect *string
 
-		err := rows.Scan(&form.Id, &form.Name, &form.Type, &form.Description, &paramsJSON, &visualEffect)
+		err := rows.Scan(&form.ID, &form.Name, &form.Type, &form.Description, &paramsJSON, &visualEffect)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +66,7 @@ func (r *ProjectileRepository) GetForms(ctx context.Context, params api.GetProje
 		}
 
 		if visualEffect != nil {
-			form.VisualEffect = visualEffect
+			form.VisualEffect = api.NewOptString(*visualEffect)
 		}
 
 		forms = append(forms, &form)
@@ -84,7 +84,7 @@ func (r *ProjectileRepository) GetFormByID(ctx context.Context, formID string) (
 	var visualEffect *string
 
 	err := r.db.QueryRowContext(ctx, query, formID).Scan(
-		&form.Id, &form.Name, &form.Type, &form.Description, &paramsJSON, &visualEffect,
+		&form.ID, &form.Name, &form.Type, &form.Description, &paramsJSON, &visualEffect,
 	)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (r *ProjectileRepository) GetFormByID(ctx context.Context, formID string) (
 	}
 
 	if visualEffect != nil {
-		form.VisualEffect = visualEffect
+		form.VisualEffect = api.NewOptString(*visualEffect)
 	}
 
 	return &form, nil
@@ -166,6 +166,7 @@ func (r *ProjectileRepository) GetCompatibilityMatrix(ctx context.Context) (map[
 
 	return result, nil
 }
+
 
 
 

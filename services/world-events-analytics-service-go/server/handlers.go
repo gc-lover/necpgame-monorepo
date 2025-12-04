@@ -1,15 +1,17 @@
-// Issue: #44
+// Issue: #44 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
 	"github.com/google/uuid"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	api "github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
 	"go.uber.org/zap"
+)
 
-	"github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
+const (
+	DBTimeout = 50 * time.Millisecond
 )
 
 type Handlers struct {
@@ -21,76 +23,80 @@ func NewHandlers(service Service, logger *zap.Logger) *Handlers {
 	return &Handlers{service: service, logger: logger}
 }
 
-func (h *Handlers) GetWorldEventMetrics(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	eventID, err := uuid.Parse(id.String())
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid event ID", h.logger)
-		return
-	}
+func (h *Handlers) GetWorldEventMetrics(ctx context.Context, params api.GetWorldEventMetricsParams) (api.GetWorldEventMetricsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	metrics, err := h.service.GetEventMetrics(r.Context(), eventID)
+	eventID := uuid.UUID(params.ID)
+
+	metrics, err := h.service.GetEventMetrics(ctx, eventID)
 	if err != nil || metrics == nil {
-		respondError(w, http.StatusNotFound, "Metrics not found", h.logger)
-		return
+		h.logger.Error("Failed to get metrics", zap.Error(err))
+		return &api.GetWorldEventMetricsNotFound{
+			Error:   "NotFound",
+			Message: "Metrics not found",
+		}, nil
 	}
 
-	// Convert to API format
-	playerCount := metrics.ParticipantCount
+	playerCount := int(metrics.ParticipantCount)
 	engagementRate := float32(metrics.PlayerEngagement)
 	economicImpact := float32(0.0)
 	socialImpact := float32(0.0)
 
-	response := api.WorldEventMetrics{
-		EventId:        openapi_types.UUID(metrics.EventID),
-		PlayerCount:    &playerCount,
-		EngagementRate: &engagementRate,
-		EconomicImpact: &economicImpact,
-		SocialImpact:   &socialImpact,
-		Uptime:         "0h",
-	}
-
-	respondJSON(w, http.StatusOK, response)
+	return &api.WorldEventMetrics{
+		EventID:        params.ID,
+		PlayerCount:    api.NewOptInt(playerCount),
+		EngagementRate: api.NewOptFloat32(engagementRate),
+		EconomicImpact: api.NewOptFloat32(economicImpact),
+		SocialImpact:   api.NewOptFloat32(socialImpact),
+		Uptime:         0,
+	}, nil
 }
 
-func (h *Handlers) GetWorldEventEngagement(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	// Simplified engagement metrics
-	response := map[string]interface{}{
-		"event_id":         id.String(),
-		"engagement_rate":  0.0,
-		"active_players":   0,
-		"completion_rate":  0.0,
-	}
-	respondJSON(w, http.StatusOK, response)
+func (h *Handlers) GetWorldEventEngagement(ctx context.Context, params api.GetWorldEventEngagementParams) (api.GetWorldEventEngagementRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	return &api.WorldEventEngagement{
+		EventID:                params.ID,
+		EngagementRate:         api.NewOptFloat32(0.0),
+		ActivePlayers:          api.NewOptInt(0),
+		TotalPlayers:           api.NewOptInt(0),
+		AverageSessionDuration: api.NewOptDuration(0),
+		ParticipationRate:      api.NewOptFloat32(0.0),
+	}, nil
 }
 
-func (h *Handlers) GetWorldEventImpact(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	// Simplified impact metrics
-	response := map[string]interface{}{
-		"event_id":        id.String(),
-		"economic_impact": 0.0,
-		"social_impact":   0.0,
-		"gameplay_impact": 0.0,
-	}
-	respondJSON(w, http.StatusOK, response)
+func (h *Handlers) GetWorldEventImpact(ctx context.Context, params api.GetWorldEventImpactParams) (api.GetWorldEventImpactRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	return &api.WorldEventImpact{
+		EventID: params.ID,
+		EconomyImpact: api.NewOptWorldEventImpactEconomyImpact(api.WorldEventImpactEconomyImpact{
+			PriceChanges:    api.NewOptFloat32(0.0),
+			CurrencyChanges: api.NewOptFloat32(0.0),
+			TradeVolume:     api.NewOptFloat32(0.0),
+		}),
+		SocialImpact: api.NewOptWorldEventImpactSocialImpact(api.WorldEventImpactSocialImpact{
+			ReputationChanges:       api.NewOptFloat32(0.0),
+			FactionRelationsChanges: api.NewOptFloat32(0.0),
+		}),
+		GameplayImpact: api.NewOptWorldEventImpactGameplayImpact(api.WorldEventImpactGameplayImpact{
+			TtkChanges:          api.NewOptFloat32(0.0),
+			ContentAvailability: api.NewOptFloat32(0.0),
+		}),
+	}, nil
 }
 
-func (h *Handlers) GetWorldEventAlerts(w http.ResponseWriter, r *http.Request) {
-	// Simplified alerts - empty list
-	response := []interface{}{}
-	respondJSON(w, http.StatusOK, response)
+func (h *Handlers) GetWorldEventAlerts(ctx context.Context) (api.GetWorldEventAlertsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	return &api.WorldEventAlertsResponse{
+		Alerts: []api.WorldEventAlertsResponseAlertsItem{},
+	}, nil
 }
-
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string, logger *zap.Logger) {
-	logger.Error("Request error", zap.String("message", message))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
-}
-
-

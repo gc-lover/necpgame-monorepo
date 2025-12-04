@@ -1,8 +1,8 @@
 package server
 
 import (
-	feedbackapi "github.com/necpgame/feedback-service-go/pkg/api"
-	"github.com/necpgame/feedback-service-go/models"
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 )
 
 func convertFeedbackPriorityFromAPI(p feedbackapi.SubmitFeedbackRequestPriority) models.FeedbackPriority {
@@ -20,20 +20,21 @@ func convertFeedbackPriorityFromAPI(p feedbackapi.SubmitFeedbackRequestPriority)
 	}
 }
 
-func convertFeedbackPriorityToAPI(p models.FeedbackPriority) feedbackapi.FeedbackPriority {
+func convertFeedbackPriorityToAPI(p models.FeedbackPriority) feedbackapi.SubmitFeedbackRequestPriority {
 	switch p {
 	case models.FeedbackPriorityLow:
-		return feedbackapi.FeedbackPriorityLow
+		return feedbackapi.SubmitFeedbackRequestPriorityLow
 	case models.FeedbackPriorityMedium:
-		return feedbackapi.FeedbackPriorityMedium
+		return feedbackapi.SubmitFeedbackRequestPriorityMedium
 	case models.FeedbackPriorityHigh:
-		return feedbackapi.FeedbackPriorityHigh
+		return feedbackapi.SubmitFeedbackRequestPriorityHigh
 	case models.FeedbackPriorityCritical:
-		return feedbackapi.FeedbackPriorityCritical
+		return feedbackapi.SubmitFeedbackRequestPriorityCritical
 	default:
-		return feedbackapi.FeedbackPriorityLow
+		return feedbackapi.SubmitFeedbackRequestPriorityLow
 	}
 }
+
 
 
 

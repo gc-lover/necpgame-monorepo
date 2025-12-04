@@ -1,22 +1,22 @@
 CREATE TABLE IF NOT EXISTS social.voice_channels (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  type VARCHAR(50) NOT NULL,
   owner_id UUID NOT NULL,
+  type VARCHAR(50) NOT NULL,
   owner_type VARCHAR(50) NOT NULL DEFAULT 'character',
   name VARCHAR(255) NOT NULL,
-  max_members INTEGER NOT NULL,
   quality_preset VARCHAR(50) NOT NULL DEFAULT 'standard',
   settings JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  max_members INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS social.voice_participants (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   channel_id UUID NOT NULL REFERENCES social.voice_channels(id) ON DELETE CASCADE,
   character_id UUID NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'connected',
   webrtc_token TEXT,
+  status VARCHAR(50) NOT NULL DEFAULT 'connected',
   position JSONB NOT NULL DEFAULT '{}',
   stats JSONB NOT NULL DEFAULT '{}',
   joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

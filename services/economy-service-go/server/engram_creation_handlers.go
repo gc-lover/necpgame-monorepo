@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -43,7 +44,11 @@ func (s *HTTPServer) createEngram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.engramCreationService.CreateEngram(r.Context(), req.CharacterID, req.ChipTier, req.AttitudeType, req.CustomAttitudeSettings, req.TargetPersonID)
+	// Context timeout for DB operations (Issue #1604)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	result, err := s.engramCreationService.CreateEngram(ctx, req.CharacterID, req.ChipTier, req.AttitudeType, req.CustomAttitudeSettings, req.TargetPersonID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to create engram")
 		s.respondError(w, http.StatusInternalServerError, "failed to create engram")
@@ -83,7 +88,11 @@ func (s *HTTPServer) getEngramCreationCost(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	cost, err := s.engramCreationService.GetCreationCost(r.Context(), chipTier)
+	// Context timeout for DB operations (Issue #1604)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	cost, err := s.engramCreationService.GetCreationCost(ctx, chipTier)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get creation cost")
 		s.respondError(w, http.StatusInternalServerError, "failed to get creation cost")
@@ -132,7 +141,11 @@ func (s *HTTPServer) validateEngramCreation(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	result, err := s.engramCreationService.ValidateCreation(r.Context(), req.CharacterID, req.ChipTier, req.TargetPersonID)
+	// Context timeout for DB operations (Issue #1604)
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	result, err := s.engramCreationService.ValidateCreation(ctx, req.CharacterID, req.ChipTier, req.TargetPersonID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to validate creation")
 		s.respondError(w, http.StatusInternalServerError, "failed to validate creation")

@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/combat-damage-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
 )
 
 // HTTPServer represents HTTP server

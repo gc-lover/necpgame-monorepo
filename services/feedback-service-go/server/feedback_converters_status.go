@@ -1,24 +1,22 @@
 package server
 
 import (
-	feedbackapi "github.com/necpgame/feedback-service-go/pkg/api"
-	"github.com/necpgame/feedback-service-go/models"
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 )
 
-func convertFeedbackStatusFromAPI(s feedbackapi.GetPlayerFeedbackParamsStatus) models.FeedbackStatus {
+func convertFeedbackStatusFromAPI(s feedbackapi.GetPlayerFeedbackStatus) models.FeedbackStatus {
 	switch s {
-	case feedbackapi.Pending:
+	case feedbackapi.GetPlayerFeedbackStatusPending:
 		return models.FeedbackStatusPending
-	case feedbackapi.InReview:
+	case feedbackapi.GetPlayerFeedbackStatusInReview:
 		return models.FeedbackStatusInReview
-	case feedbackapi.Approved:
+	case feedbackapi.GetPlayerFeedbackStatusResolved:
 		return models.FeedbackStatusApproved
-	case feedbackapi.Rejected:
+	case feedbackapi.GetPlayerFeedbackStatusRejected:
 		return models.FeedbackStatusRejected
-	case feedbackapi.Merged:
+	case feedbackapi.GetPlayerFeedbackStatusMerged:
 		return models.FeedbackStatusMerged
-	case feedbackapi.Closed:
-		return models.FeedbackStatusClosed
 	default:
 		return models.FeedbackStatusPending
 	}
@@ -32,17 +30,36 @@ func convertFeedbackStatusToAPI(s models.FeedbackStatus) *feedbackapi.FeedbackSt
 	case models.FeedbackStatusInReview:
 		result = feedbackapi.FeedbackStatusInReview
 	case models.FeedbackStatusApproved:
-		result = feedbackapi.FeedbackStatusApproved
+		result = feedbackapi.FeedbackStatusResolved
 	case models.FeedbackStatusRejected:
 		result = feedbackapi.FeedbackStatusRejected
 	case models.FeedbackStatusMerged:
 		result = feedbackapi.FeedbackStatusMerged
 	case models.FeedbackStatusClosed:
-		result = feedbackapi.FeedbackStatusClosed
+		result = feedbackapi.FeedbackStatusResolved
 	default:
 		result = feedbackapi.FeedbackStatusPending
 	}
 	return &result
+}
+
+func convertFeedbackStatusToAPIValue(s models.FeedbackStatus) feedbackapi.FeedbackStatus {
+	switch s {
+	case models.FeedbackStatusPending:
+		return feedbackapi.FeedbackStatusPending
+	case models.FeedbackStatusInReview:
+		return feedbackapi.FeedbackStatusInReview
+	case models.FeedbackStatusApproved:
+		return feedbackapi.FeedbackStatusResolved
+	case models.FeedbackStatusRejected:
+		return feedbackapi.FeedbackStatusRejected
+	case models.FeedbackStatusMerged:
+		return feedbackapi.FeedbackStatusMerged
+	case models.FeedbackStatusClosed:
+		return feedbackapi.FeedbackStatusResolved
+	default:
+		return feedbackapi.FeedbackStatusPending
+	}
 }
 
 func convertFeedbackStatusToSubmitFeedbackResponseStatus(s models.FeedbackStatus) feedbackapi.SubmitFeedbackResponseStatus {
@@ -52,13 +69,13 @@ func convertFeedbackStatusToSubmitFeedbackResponseStatus(s models.FeedbackStatus
 	case models.FeedbackStatusInReview:
 		return feedbackapi.SubmitFeedbackResponseStatusInReview
 	case models.FeedbackStatusApproved:
-		return feedbackapi.SubmitFeedbackResponseStatusApproved
+		return feedbackapi.SubmitFeedbackResponseStatusResolved
 	case models.FeedbackStatusRejected:
 		return feedbackapi.SubmitFeedbackResponseStatusRejected
 	case models.FeedbackStatusMerged:
 		return feedbackapi.SubmitFeedbackResponseStatusMerged
 	case models.FeedbackStatusClosed:
-		return feedbackapi.SubmitFeedbackResponseStatusClosed
+		return feedbackapi.SubmitFeedbackResponseStatusResolved
 	default:
 		return feedbackapi.SubmitFeedbackResponseStatusPending
 	}
@@ -70,57 +87,18 @@ func convertUpdateStatusRequestStatusFromAPI(s feedbackapi.UpdateStatusRequestSt
 		return models.FeedbackStatusPending
 	case feedbackapi.UpdateStatusRequestStatusInReview:
 		return models.FeedbackStatusInReview
-	case feedbackapi.UpdateStatusRequestStatusApproved:
+	case feedbackapi.UpdateStatusRequestStatusResolved:
 		return models.FeedbackStatusApproved
 	case feedbackapi.UpdateStatusRequestStatusRejected:
 		return models.FeedbackStatusRejected
 	case feedbackapi.UpdateStatusRequestStatusMerged:
 		return models.FeedbackStatusMerged
-	case feedbackapi.UpdateStatusRequestStatusClosed:
-		return models.FeedbackStatusClosed
 	default:
 		return models.FeedbackStatusPending
 	}
 }
 
-func convertFeedbackStatusToFeedbackBoardItemStatus(s models.FeedbackStatus) feedbackapi.FeedbackBoardItemStatus {
-	switch s {
-	case models.FeedbackStatusPending:
-		return feedbackapi.FeedbackBoardItemStatusPending
-	case models.FeedbackStatusInReview:
-		return feedbackapi.FeedbackBoardItemStatusInReview
-	case models.FeedbackStatusApproved:
-		return feedbackapi.FeedbackBoardItemStatusApproved
-	default:
-		return feedbackapi.FeedbackBoardItemStatusPending
-	}
-}
 
-func convertGetFeedbackBoardParamsStatusFromAPI(s feedbackapi.GetFeedbackBoardParamsStatus) models.FeedbackStatus {
-	switch s {
-	case feedbackapi.GetFeedbackBoardParamsStatusPending:
-		return models.FeedbackStatusPending
-	case feedbackapi.GetFeedbackBoardParamsStatusInReview:
-		return models.FeedbackStatusInReview
-	case feedbackapi.GetFeedbackBoardParamsStatusApproved:
-		return models.FeedbackStatusApproved
-	default:
-		return models.FeedbackStatusPending
-	}
-}
-
-func convertModerationStatusToAPI(s models.ModerationStatus) feedbackapi.FeedbackModerationStatus {
-	switch s {
-	case models.ModerationStatusPending:
-		return feedbackapi.FeedbackModerationStatusPending
-	case models.ModerationStatusApproved:
-		return feedbackapi.FeedbackModerationStatusApproved
-	case models.ModerationStatusRejected:
-		return feedbackapi.FeedbackModerationStatusRejected
-	default:
-		return feedbackapi.FeedbackModerationStatusPending
-	}
-}
 
 
 

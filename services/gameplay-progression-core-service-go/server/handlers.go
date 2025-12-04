@@ -1,110 +1,116 @@
-// Issue: #164
+// Issue: #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
 	"github.com/necpgame/gameplay-progression-core-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers)
 type Handlers struct{}
 
 func NewHandlers() *Handlers {
 	return &Handlers{}
 }
 
-// Реализация api.ServerInterface
+// ValidateProgression - TYPED response!
+func (h *Handlers) ValidateProgression(ctx context.Context, req *api.ValidateProgressionRequest) (api.ValidateProgressionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-// ValidateProgression валидирует прогрессию
-func (h *Handlers) ValidateProgression(w http.ResponseWriter, r *http.Request) {
-	var req api.ValidateProgressionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+	// TODO: Implement business logic
+	response := &api.ProgressionValidationResponse{
+		Valid:  api.NewOptBool(true),
+		Issues: []string{},
 	}
 
-	// TODO: Реализовать валидацию прогрессии
-	valid := true
-	response := api.ProgressionValidationResponse{
-		Valid:  &valid,
-		Issues: nil,
-	}
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-// GetCharacterProgression получает прогрессию персонажа
-func (h *Handlers) GetCharacterProgression(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	// TODO: Реализовать получение прогрессии из БД
-	progression := api.CharacterProgression{
-		CharacterId:              &characterId,
-		Level:                    intPtr(1),
-		Experience:               intPtr(0),
-		ExperienceToNextLevel:    intPtr(1000),
-		AvailableAttributePoints: intPtr(5),
-		AvailableSkillPoints:     intPtr(3),
-		Attributes:               nil,
-		Skills:                   nil,
+// GetCharacterProgression - TYPED response!
+func (h *Handlers) GetCharacterProgression(ctx context.Context, params api.GetCharacterProgressionParams) (api.GetCharacterProgressionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	progression := &api.CharacterProgression{
+		CharacterID:              api.NewOptUUID(params.CharacterId),
+		Level:                    api.NewOptInt(1),
+		Experience:               api.NewOptInt(0),
+		ExperienceToNextLevel:    api.NewOptInt(1000),
+		AvailableAttributePoints: api.NewOptInt(5),
+		AvailableSkillPoints:     api.NewOptInt(3),
+		Attributes:               api.OptCharacterProgressionAttributes{},
+		Skills:                   []api.SkillProgress{},
 	}
 
-	respondJSON(w, http.StatusOK, progression)
+	return progression, nil
 }
 
-// DistributeAttributePoints распределяет очки атрибутов
-func (h *Handlers) DistributeAttributePoints(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	var req api.DistributeAttributePointsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+// DistributeAttributePoints - TYPED response!
+func (h *Handlers) DistributeAttributePoints(ctx context.Context, req *api.DistributeAttributePointsRequest, params api.DistributeAttributePointsParams) (api.DistributeAttributePointsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	progression := &api.CharacterProgression{
+		CharacterID:              api.NewOptUUID(params.CharacterId),
+		Level:                    api.NewOptInt(1),
+		Experience:               api.NewOptInt(0),
+		ExperienceToNextLevel:    api.NewOptInt(1000),
+		AvailableAttributePoints: api.NewOptInt(5),
+		AvailableSkillPoints:     api.NewOptInt(3),
+		Attributes:               api.OptCharacterProgressionAttributes{},
+		Skills:                   []api.SkillProgress{},
 	}
 
-	// TODO: Реализовать распределение атрибутов в БД
-	respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+	return progression, nil
 }
 
-// AddExperience начисляет опыт персонажу
-func (h *Handlers) AddExperience(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	var req api.AddExperienceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+// AddExperience - TYPED response!
+func (h *Handlers) AddExperience(ctx context.Context, req *api.AddExperienceRequest, params api.AddExperienceParams) (api.AddExperienceRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	progression := &api.CharacterProgression{
+		CharacterID:              api.NewOptUUID(params.CharacterId),
+		Level:                    api.NewOptInt(1),
+		Experience:               api.NewOptInt(100),
+		ExperienceToNextLevel:    api.NewOptInt(1000),
+		AvailableAttributePoints: api.NewOptInt(5),
+		AvailableSkillPoints:     api.NewOptInt(3),
+		Attributes:               api.OptCharacterProgressionAttributes{},
+		Skills:                   []api.SkillProgress{},
 	}
 
-	// TODO: Реализовать начисление опыта в БД
-	respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+	return progression, nil
 }
 
-// DistributeSkillPoints распределяет очки навыков
-func (h *Handlers) DistributeSkillPoints(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	var req api.DistributeSkillPointsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+// DistributeSkillPoints - TYPED response!
+func (h *Handlers) DistributeSkillPoints(ctx context.Context, req *api.DistributeSkillPointsRequest, params api.DistributeSkillPointsParams) (api.DistributeSkillPointsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	progression := &api.CharacterProgression{
+		CharacterID:              api.NewOptUUID(params.CharacterId),
+		Level:                    api.NewOptInt(1),
+		Experience:               api.NewOptInt(0),
+		ExperienceToNextLevel:    api.NewOptInt(1000),
+		AvailableAttributePoints: api.NewOptInt(5),
+		AvailableSkillPoints:     api.NewOptInt(3),
+		Attributes:               api.OptCharacterProgressionAttributes{},
+		Skills:                   []api.SkillProgress{},
 	}
 
-	// TODO: Реализовать распределение навыков в БД
-	respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func intPtr(i int) *int {
-	return &i
-}
-
-// Helper functions
-
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string) {
-	code := http.StatusText(status)
-	respondJSON(w, status, api.Error{
-		Code:    &code,
-		Message: message,
-		Error:   "error",
-	})
+	return progression, nil
 }
 

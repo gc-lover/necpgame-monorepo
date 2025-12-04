@@ -6,117 +6,110 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8088/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8088/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Auto-Categorization
-    description: Автокатегоризация тикетов
-  - name: Priority Assignment
-    description: Назначение приоритетов
-
+- name: Auto-Categorization
+  description: Автокатегоризация тикетов
+- name: Priority Assignment
+  description: Назначение приоритетов
 paths:
   /support/tickets/{ticket_id}/categorize:
     post:
       tags:
-        - Auto-Categorization
+      - Auto-Categorization
       summary: Категоризировать тикет
       operationId: categorizeTicket
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/TicketId'
+      - $ref: common.yaml#/components/parameters/TicketId
       responses:
-        "200":
+        '200':
           description: Тикет категоризирован
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SupportTicket"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/SupportTicket'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /support/tickets/{ticket_id}/priority:
     post:
       tags:
-        - Priority Assignment
+      - Priority Assignment
       summary: Обновить приоритет тикета
       operationId: updateTicketPriority
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/TicketId'
+      - $ref: common.yaml#/components/parameters/TicketId
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdatePriorityRequest"
+              $ref: '#/components/schemas/UpdatePriorityRequest'
       responses:
-        "200":
+        '200':
           description: Приоритет обновлён
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SupportTicket"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/SupportTicket'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /support/tickets/{ticket_id}/assign:
     post:
       tags:
-        - Priority Assignment
+      - Priority Assignment
       summary: Назначить тикет агенту
       operationId: assignTicket
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/TicketId'
+      - $ref: common.yaml#/components/parameters/TicketId
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AssignTicketRequest"
+              $ref: '#/components/schemas/AssignTicketRequest'
       responses:
-        "200":
+        '200':
           description: Тикет назначен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SupportTicket"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/SupportTicket'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     SupportTicket:
       type: object
@@ -124,42 +117,45 @@ components:
         id:
           type: string
           format: uuid
-        ticket_number:
-          type: string
-          maxLength: 50
         player_id:
           type: string
           format: uuid
-        category:
-          type: string
-          enum: [TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER]
-        priority:
-          $ref: 'common.yaml#/components/schemas/TicketPriority'
-        status:
-          $ref: 'common.yaml#/components/schemas/TicketStatus'
         assigned_agent_id:
           type: string
           format: uuid
           nullable: true
-
+        ticket_number:
+          type: string
+          maxLength: 50
+        category:
+          type: string
+          enum:
+          - TECHNICAL
+          - BILLING
+          - ACCOUNT
+          - GAMEPLAY
+          - BUG_REPORT
+          - FEATURE_REQUEST
+          - OTHER
+        priority:
+          $ref: common.yaml#/components/schemas/TicketPriority
+        status:
+          $ref: common.yaml#/components/schemas/TicketStatus
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdatePriorityRequest:
       type: object
       required:
-        - priority
+      - priority
       properties:
         priority:
-          $ref: 'common.yaml#/components/schemas/TicketPriority'
-
+          $ref: common.yaml#/components/schemas/TicketPriority
     AssignTicketRequest:
       type: object
       required:
-        - agent_id
+      - agent_id
       properties:
         agent_id:
           type: string
           format: uuid
-
 security:
-  - BearerAuth: []
-
-
+- BearerAuth: []

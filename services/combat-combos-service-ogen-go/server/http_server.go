@@ -1,61 +1,95 @@
 // Issue: #1578
+// OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
+// PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
 
 import (
 	"context"
 	"net/http"
+	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-ogen-go/pkg/api"
+	"github.com/google/uuid"
 )
 
-// HTTPServer represents HTTP server
+// HTTPServer represents HTTP server (no chi dependency)
 type HTTPServer struct {
 	addr   string
 	server *http.Server
-	router chi.Router
 }
 
-// NewHTTPServer creates new HTTP server
+// NewHTTPServer creates new HTTP server WITHOUT chi
+// PERFORMANCE: Standard mux for health/metrics, OGEN router for API (already max speed)
 // SOLID: ТОЛЬКО настройка сервера и роутера. Middleware в middleware.go, Handlers в handlers.go
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Built-in middleware
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-
-	// Custom middleware (из middleware.go)
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
-
-	// Handlers (реализация api.Handler из handlers.go)
+	// OGEN server (fast static router - hot path)
 	handlers := NewHandlers(service)
-
-	// Integration with ogen (creates its own Chi router)
 	secHandler := &SecurityHandler{}
 	ogenServer, err := api.NewServer(handlers, secHandler)
 	if err != nil {
 		panic(err)
 	}
-	
-	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
 
-	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	// Standard mux (for health/metrics - cold path)
+	mux := http.NewServeMux()
+
+	// Middleware chain (no duplication, optimized)
+	apiHandler := chainMiddleware(ogenServer,
+		recoveryMiddleware,  // panic recovery
+		requestIDMiddleware,  // request ID
+		LoggingMiddleware,    // structured logging
+		MetricsMiddleware,    // metrics
+	)
+
+	// Mount OGEN (hot path - maximum speed, static router)
+	mux.Handle("/api/v1/", apiHandler)
+
+	// Health/metrics (cold path - simple mux, no chi overhead)
+	mux.HandleFunc("/health", healthCheck)
+	mux.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
-		addr:   addr,
-		router: router,
+		addr: addr,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: router,
+			Addr:         addr,
+			Handler:      mux,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
 		},
 	}
+}
+
+// chainMiddleware chains middleware functions (simple and fast)
+func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
+}
+
+// recoveryMiddleware recovers from panics
+func recoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// requestIDMiddleware adds request ID to headers
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
+		w.Header().Set("X-Request-ID", requestID)
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Start starts HTTP server
@@ -79,4 +113,3 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_combos_service metrics\n"))
 }
-

@@ -23,17 +23,17 @@ END $$;
 
 -- Таблица лиг
 CREATE TABLE IF NOT EXISTS league.leagues (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    seed BIGINT NOT NULL,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    current_phase league_phase NOT NULL DEFAULT 'Start',
-    time_acceleration DECIMAL(5, 2) NOT NULL DEFAULT 1.0 CHECK (time_acceleration > 0),
-    game_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP NOT NULL,
+  game_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  seed BIGINT NOT NULL,
+  time_acceleration DECIMAL(5, 2) NOT NULL DEFAULT 1.0 CHECK (time_acceleration > 0),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  current_phase league_phase NOT NULL DEFAULT 'Start'
 );
 
 -- Индексы для leagues
@@ -43,15 +43,16 @@ CREATE INDEX IF NOT EXISTS idx_leagues_dates ON league.leagues(start_date, end_d
 
 -- Таблица мета-прогресса игроков
 CREATE TABLE IF NOT EXISTS league.player_legacy (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    account_id UUID NOT NULL, -- Assuming accounts table exists
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  account_id UUID NOT NULL,
+  cosmetics UUID[] DEFAULT '{}',
+  titles TEXT[] DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  global_rating DECIMAL(10, 2) NOT NULL DEFAULT 0.0 CHECK (global_rating >= 0),
+  -- Assuming accounts table exists
     legacy_points INTEGER NOT NULL DEFAULT 0 CHECK (legacy_points >= 0),
-    global_rating DECIMAL(10, 2) NOT NULL DEFAULT 0.0 CHECK (global_rating >= 0),
-    titles TEXT[] DEFAULT '{}',
-    cosmetics UUID[] DEFAULT '{}',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(account_id)
+  UNIQUE(account_id)
 );
 
 -- Индексы для player_legacy
@@ -61,17 +62,17 @@ CREATE INDEX IF NOT EXISTS idx_player_legacy_legacy_points ON league.player_lega
 
 -- Таблица статистики лиг
 CREATE TABLE IF NOT EXISTS league.league_statistics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
-    phase league_phase NOT NULL,
-    player_count INTEGER NOT NULL DEFAULT 0 CHECK (player_count >= 0),
-    economy_metrics JSONB,
-    pvp_metrics JSONB,
-    quest_metrics JSONB,
-    top_players JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(league_id, phase)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
+  economy_metrics JSONB,
+  pvp_metrics JSONB,
+  quest_metrics JSONB,
+  top_players JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  player_count INTEGER NOT NULL DEFAULT 0 CHECK (player_count >= 0),
+  phase league_phase NOT NULL,
+  UNIQUE(league_id, phase)
 );
 
 -- Индексы для league_statistics
@@ -80,14 +81,14 @@ CREATE INDEX IF NOT EXISTS idx_league_statistics_phase ON league.league_statisti
 
 -- Таблица Hall of Fame
 CREATE TABLE IF NOT EXISTS league.hall_of_fame_entries (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
-    account_id UUID NOT NULL,
-    category hall_of_fame_category NOT NULL,
-    rank INTEGER NOT NULL CHECK (rank > 0),
-    achievement VARCHAR(255) NOT NULL,
-    statue_model UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
+  account_id UUID NOT NULL,
+  statue_model UUID,
+  achievement VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rank INTEGER NOT NULL CHECK (rank > 0),
+  category hall_of_fame_category NOT NULL
 );
 
 -- Индексы для hall_of_fame_entries
@@ -97,16 +98,16 @@ CREATE INDEX IF NOT EXISTS idx_hall_of_fame_category ON league.hall_of_fame_entr
 
 -- Таблица предметов Legacy Shop
 CREATE TABLE IF NOT EXISTS league.legacy_shop_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    item_name VARCHAR(255) NOT NULL,
-    item_description TEXT,
-    item_type VARCHAR(50) NOT NULL,
-    legacy_points_cost INTEGER NOT NULL CHECK (legacy_points_cost > 0),
-    is_available BOOLEAN NOT NULL DEFAULT true,
-    max_purchases_per_league INTEGER CHECK (max_purchases_per_league IS NULL OR max_purchases_per_league > 0),
-    item_data JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  item_description TEXT,
+  item_name VARCHAR(255) NOT NULL,
+  item_type VARCHAR(50) NOT NULL,
+  item_data JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  legacy_points_cost INTEGER NOT NULL CHECK (legacy_points_cost > 0),
+  max_purchases_per_league INTEGER CHECK (max_purchases_per_league IS NULL OR max_purchases_per_league > 0),
+  is_available BOOLEAN NOT NULL DEFAULT true
 );
 
 -- Индексы для legacy_shop_items
@@ -115,15 +116,15 @@ CREATE INDEX IF NOT EXISTS idx_legacy_shop_items_item_type ON league.legacy_shop
 
 -- Таблица Legacy Items игроков
 CREATE TABLE IF NOT EXISTS league.player_legacy_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    account_id UUID NOT NULL,
-    league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
-    shop_item_id UUID NOT NULL REFERENCES league.legacy_shop_items(id) ON DELETE CASCADE,
-    purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_used BOOLEAN NOT NULL DEFAULT false,
-    used_at TIMESTAMP,
-    item_data JSONB,
-    UNIQUE(account_id, league_id, shop_item_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  account_id UUID NOT NULL,
+  league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
+  shop_item_id UUID NOT NULL REFERENCES league.legacy_shop_items(id) ON DELETE CASCADE,
+  item_data JSONB,
+  purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  used_at TIMESTAMP,
+  is_used BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(account_id, league_id, shop_item_id)
 );
 
 -- Индексы для player_legacy_items
@@ -133,12 +134,12 @@ CREATE INDEX IF NOT EXISTS idx_player_legacy_items_shop_item_id ON league.player
 
 -- Таблица истории покупок Legacy Items
 CREATE TABLE IF NOT EXISTS league.legacy_purchase_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    account_id UUID NOT NULL,
-    shop_item_id UUID NOT NULL REFERENCES league.legacy_shop_items(id) ON DELETE CASCADE,
-    league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
-    legacy_points_spent INTEGER NOT NULL CHECK (legacy_points_spent > 0),
-    purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  account_id UUID NOT NULL,
+  shop_item_id UUID NOT NULL REFERENCES league.legacy_shop_items(id) ON DELETE CASCADE,
+  league_id UUID NOT NULL REFERENCES league.leagues(id) ON DELETE CASCADE,
+  purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  legacy_points_spent INTEGER NOT NULL CHECK (legacy_points_spent > 0)
 );
 
 -- Индексы для legacy_purchase_history

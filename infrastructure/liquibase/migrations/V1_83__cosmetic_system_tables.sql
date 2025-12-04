@@ -28,21 +28,21 @@ END $$;
 
 -- Таблица каталога косметических предметов
 CREATE TABLE IF NOT EXISTS content.cosmetic_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    code VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    category cosmetic_category NOT NULL,
-    rarity cosmetic_rarity NOT NULL DEFAULT 'common',
-    cost JSONB DEFAULT '{}'::jsonb,
-    assets JSONB DEFAULT '{}'::jsonb,
-    description TEXT,
-    is_exclusive BOOLEAN NOT NULL DEFAULT false,
-    is_time_limited BOOLEAN NOT NULL DEFAULT false,
-    available_from TIMESTAMP,
-    available_until TIMESTAMP,
-    level_requirement INTEGER DEFAULT 0 CHECK (level_requirement >= 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  cost JSONB DEFAULT '{}'::jsonb,
+  assets JSONB DEFAULT '{}'::jsonb,
+  available_from TIMESTAMP,
+  available_until TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  level_requirement INTEGER DEFAULT 0 CHECK (level_requirement >= 0),
+  is_exclusive BOOLEAN NOT NULL DEFAULT false,
+  is_time_limited BOOLEAN NOT NULL DEFAULT false,
+  category cosmetic_category NOT NULL,
+  rarity cosmetic_rarity NOT NULL DEFAULT 'common'
 );
 
 -- Индексы для cosmetic_items
@@ -55,16 +55,16 @@ CREATE INDEX IF NOT EXISTS idx_cosmetic_items_level_requirement ON content.cosme
 
 -- Таблица владения косметикой игроками
 CREATE TABLE IF NOT EXISTS content.player_cosmetics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL,
-    cosmetic_id UUID NOT NULL,
-    source VARCHAR(50) NOT NULL,
-    acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    usage_count INTEGER DEFAULT 0 CHECK (usage_count >= 0),
-    last_used_at TIMESTAMP,
-    CONSTRAINT fk_player_cosmetics_character FOREIGN KEY (character_id) REFERENCES mvp_core.characters(id) ON DELETE CASCADE,
-    CONSTRAINT fk_player_cosmetics_cosmetic FOREIGN KEY (cosmetic_id) REFERENCES content.cosmetic_items(id) ON DELETE CASCADE,
-    CONSTRAINT uq_player_cosmetics UNIQUE (character_id, cosmetic_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  cosmetic_id UUID NOT NULL,
+  source VARCHAR(50) NOT NULL,
+  acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TIMESTAMP,
+  usage_count INTEGER DEFAULT 0 CHECK (usage_count >= 0),
+  CONSTRAINT fk_player_cosmetics_character FOREIGN KEY (character_id) REFERENCES mvp_core.characters(id) ON DELETE CASCADE,
+  CONSTRAINT fk_player_cosmetics_cosmetic FOREIGN KEY (cosmetic_id) REFERENCES content.cosmetic_items(id) ON DELETE CASCADE,
+  CONSTRAINT uq_player_cosmetics UNIQUE (character_id, cosmetic_id)
 );
 
 -- Индексы для player_cosmetics
@@ -75,16 +75,16 @@ CREATE INDEX IF NOT EXISTS idx_player_cosmetics_last_used_at ON content.player_c
 
 -- Таблица экипированной косметики игроков
 CREATE TABLE IF NOT EXISTS content.player_equipped_cosmetics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL,
-    slot_type cosmetic_category NOT NULL,
-    slot_name VARCHAR(50) NOT NULL,
-    cosmetic_id UUID,
-    equipped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_player_equipped_cosmetics_character FOREIGN KEY (character_id) REFERENCES mvp_core.characters(id) ON DELETE CASCADE,
-    CONSTRAINT fk_player_equipped_cosmetics_cosmetic FOREIGN KEY (cosmetic_id) REFERENCES content.cosmetic_items(id) ON DELETE SET NULL,
-    CONSTRAINT uq_player_equipped_cosmetics UNIQUE (character_id, slot_type, slot_name)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  cosmetic_id UUID,
+  slot_name VARCHAR(50) NOT NULL,
+  equipped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  slot_type cosmetic_category NOT NULL,
+  CONSTRAINT fk_player_equipped_cosmetics_character FOREIGN KEY (character_id) REFERENCES mvp_core.characters(id) ON DELETE CASCADE,
+  CONSTRAINT fk_player_equipped_cosmetics_cosmetic FOREIGN KEY (cosmetic_id) REFERENCES content.cosmetic_items(id) ON DELETE SET NULL,
+  CONSTRAINT uq_player_equipped_cosmetics UNIQUE (character_id, slot_type, slot_name)
 );
 
 -- Индексы для player_equipped_cosmetics
@@ -94,13 +94,13 @@ CREATE INDEX IF NOT EXISTS idx_player_equipped_cosmetics_slot_type ON content.pl
 
 -- Таблица ротаций магазина косметики
 CREATE TABLE IF NOT EXISTS content.cosmetic_shop_rotations (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    rotation_type cosmetic_rotation_type NOT NULL,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    items JSONB DEFAULT '[]'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_cosmetic_shop_rotations_dates CHECK (end_date > start_date)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  items JSONB DEFAULT '[]'::jsonb,
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rotation_type cosmetic_rotation_type NOT NULL,
+  CONSTRAINT chk_cosmetic_shop_rotations_dates CHECK (end_date > start_date)
 );
 
 -- Индексы для cosmetic_shop_rotations
@@ -110,14 +110,14 @@ CREATE INDEX IF NOT EXISTS idx_cosmetic_shop_rotations_active ON content.cosmeti
 
 -- Таблица телеметрии косметики
 CREATE TABLE IF NOT EXISTS content.cosmetic_telemetry (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_type cosmetic_telemetry_event NOT NULL,
-    character_id UUID NOT NULL,
-    cosmetic_id UUID NOT NULL,
-    event_data JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_cosmetic_telemetry_character FOREIGN KEY (character_id) REFERENCES mvp_core.characters(id) ON DELETE CASCADE,
-    CONSTRAINT fk_cosmetic_telemetry_cosmetic FOREIGN KEY (cosmetic_id) REFERENCES content.cosmetic_items(id) ON DELETE CASCADE
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  cosmetic_id UUID NOT NULL,
+  event_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  event_type cosmetic_telemetry_event NOT NULL,
+  CONSTRAINT fk_cosmetic_telemetry_character FOREIGN KEY (character_id) REFERENCES mvp_core.characters(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cosmetic_telemetry_cosmetic FOREIGN KEY (cosmetic_id) REFERENCES content.cosmetic_items(id) ON DELETE CASCADE
 );
 
 -- Индексы для cosmetic_telemetry

@@ -4,20 +4,20 @@
 
 -- Таблица активаций Sandevistan
 CREATE TABLE IF NOT EXISTS sandevistan_activations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id UUID NOT NULL,
-    session_id UUID,
-    phase VARCHAR(20) NOT NULL CHECK (phase IN ('preparation', 'active', 'recovery')),
-    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    active_phase_started_at TIMESTAMP,
-    recovery_phase_started_at TIMESTAMP,
-    ended_at TIMESTAMP,
-    action_budget_remaining INTEGER NOT NULL DEFAULT 0,
-    action_budget_max INTEGER NOT NULL DEFAULT 3,
-    heat_stacks INTEGER NOT NULL DEFAULT 0 CHECK (heat_stacks >= 0 AND heat_stacks <= 4),
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  character_id UUID NOT NULL,
+  session_id UUID,
+  phase VARCHAR(20) NOT NULL CHECK (phase IN ('preparation', 'active', 'recovery')),
+  started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  active_phase_started_at TIMESTAMP,
+  recovery_phase_started_at TIMESTAMP,
+  ended_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  action_budget_remaining INTEGER NOT NULL DEFAULT 0,
+  action_budget_max INTEGER NOT NULL DEFAULT 3,
+  heat_stacks INTEGER NOT NULL DEFAULT 0 CHECK (heat_stacks >= 0 AND heat_stacks <= 4),
+  is_active BOOLEAN NOT NULL DEFAULT true
 );
 
 -- Индексы для sandevistan_activations
@@ -29,14 +29,14 @@ CREATE INDEX IF NOT EXISTS idx_sandevistan_activations_started_at ON sandevistan
 
 -- Таблица батчей действий в MicroTick Window
 CREATE TABLE IF NOT EXISTS sandevistan_action_batches (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL,
-    tick_number BIGINT NOT NULL,
-    actions JSONB NOT NULL,
-    actions_count INTEGER NOT NULL CHECK (actions_count >= 1 AND actions_count <= 3),
-    processed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL,
+  actions JSONB NOT NULL,
+  processed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  tick_number BIGINT NOT NULL,
+  actions_count INTEGER NOT NULL CHECK (actions_count >= 1 AND actions_count <= 3)
 );
 
 -- Индексы для sandevistan_action_batches
@@ -47,16 +47,16 @@ CREATE INDEX IF NOT EXISTS idx_sandevistan_action_batches_processed_at ON sandev
 
 -- Таблица Temporal Marks целей
 CREATE TABLE IF NOT EXISTS sandevistan_temporal_marks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL,
-    target_id UUID NOT NULL,
-    target_type VARCHAR(20) NOT NULL CHECK (target_type IN ('player', 'npc', 'enemy')),
-    marked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    applied_at TIMESTAMP,
-    damage_dealt INTEGER,
-    effect_applied JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL,
+  target_id UUID NOT NULL,
+  target_type VARCHAR(20) NOT NULL CHECK (target_type IN ('player', 'npc', 'enemy')),
+  effect_applied JSONB,
+  marked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  applied_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  damage_dealt INTEGER
 );
 
 -- Индексы для sandevistan_temporal_marks
@@ -68,17 +68,17 @@ CREATE INDEX IF NOT EXISTS idx_sandevistan_temporal_marks_applied_at ON sandevis
 
 -- Таблица состояния перегрева
 CREATE TABLE IF NOT EXISTS sandevistan_heat_state (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id UUID NOT NULL,
-    current_stacks INTEGER NOT NULL DEFAULT 0 CHECK (current_stacks >= 0 AND current_stacks <= 4),
-    max_stacks INTEGER NOT NULL DEFAULT 4,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    overstress_triggered BOOLEAN NOT NULL DEFAULT false,
-    overstress_triggered_at TIMESTAMP,
-    cooldown_until TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  character_id UUID NOT NULL,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  overstress_triggered_at TIMESTAMP,
+  cooldown_until TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  current_stacks INTEGER NOT NULL DEFAULT 0 CHECK (current_stacks >= 0 AND current_stacks <= 4),
+  max_stacks INTEGER NOT NULL DEFAULT 4,
+  overstress_triggered BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(character_id)
 );
 
 -- Индексы для sandevistan_heat_state
@@ -89,14 +89,14 @@ CREATE INDEX IF NOT EXISTS idx_sandevistan_heat_state_cooldown_until ON sandevis
 
 -- Таблица логов контрплея
 CREATE TABLE IF NOT EXISTS sandevistan_counterplay_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
-    character_id UUID NOT NULL,
-    counterplay_type VARCHAR(30) NOT NULL CHECK (counterplay_type IN ('emp', 'chrono-jammer', 'hacking', 'crowd-control')),
-    applied_by UUID NOT NULL,
-    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    effect_applied JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
+  character_id UUID NOT NULL,
+  applied_by UUID NOT NULL,
+  counterplay_type VARCHAR(30) NOT NULL CHECK (counterplay_type IN ('emp', 'chrono-jammer', 'hacking', 'crowd-control')),
+  effect_applied JSONB,
+  applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для sandevistan_counterplay_logs
@@ -108,15 +108,15 @@ CREATE INDEX IF NOT EXISTS idx_sandevistan_counterplay_logs_applied_at ON sandev
 
 -- Таблица состояния Perception Drag для противников
 CREATE TABLE IF NOT EXISTS sandevistan_perception_drag_state (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id UUID NOT NULL,
-    active_activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
-    drag_delay_ms INTEGER NOT NULL CHECK (drag_delay_ms >= 0 AND drag_delay_ms <= 120),
-    reaction_debuff_percent DECIMAL(5,2) NOT NULL DEFAULT 15.00 CHECK (reaction_debuff_percent >= 0 AND reaction_debuff_percent <= 100),
-    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  character_id UUID NOT NULL,
+  active_activation_id UUID NOT NULL REFERENCES sandevistan_activations(id) ON DELETE CASCADE,
+  applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reaction_debuff_percent DECIMAL(5,2) NOT NULL DEFAULT 15.00 CHECK (reaction_debuff_percent >= 0 AND reaction_debuff_percent <= 100),
+  drag_delay_ms INTEGER NOT NULL CHECK (drag_delay_ms >= 0 AND drag_delay_ms <= 120),
+  is_active BOOLEAN NOT NULL DEFAULT true
 );
 
 -- Индексы для sandevistan_perception_drag_state

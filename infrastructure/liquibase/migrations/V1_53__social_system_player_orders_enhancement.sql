@@ -13,15 +13,15 @@
 
 -- Таблица мульти-исполнительных заказов
 CREATE TABLE IF NOT EXISTS social.multi_executor_orders (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
-    team_leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    required_roles JSONB NOT NULL,
-    executor_ids UUID[] NOT NULL,
-    role_assignments JSONB,
-    reward_distribution JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
+  team_leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  executor_ids UUID[] NOT NULL,
+  required_roles JSONB NOT NULL,
+  role_assignments JSONB,
+  reward_distribution JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для multi_executor_orders
@@ -30,18 +30,18 @@ CREATE INDEX IF NOT EXISTS idx_multi_executor_orders_team_leader_id ON social.mu
 
 -- Таблица аукционов заказов
 CREATE TABLE IF NOT EXISTS social.order_auctions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
-    auction_type VARCHAR(20) NOT NULL CHECK (auction_type IN ('ascending', 'descending', 'sealed')),
-    start_price DECIMAL(10, 2) NOT NULL CHECK (start_price >= 0),
-    current_price DECIMAL(10, 2) NOT NULL CHECK (current_price >= 0),
-    reserve_price DECIMAL(10, 2) CHECK (reserve_price IS NULL OR reserve_price >= 0),
-    start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    end_time TIMESTAMP NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'cancelled')),
-    winner_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
+  winner_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  auction_type VARCHAR(20) NOT NULL CHECK (auction_type IN ('ascending', 'descending', 'sealed')),
+  status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'cancelled')),
+  start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  end_time TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  start_price DECIMAL(10, 2) NOT NULL CHECK (start_price >= 0),
+  current_price DECIMAL(10, 2) NOT NULL CHECK (current_price >= 0),
+  reserve_price DECIMAL(10, 2) CHECK (reserve_price IS NULL OR reserve_price >= 0)
 );
 
 -- Индексы для order_auctions
@@ -51,13 +51,13 @@ CREATE INDEX IF NOT EXISTS idx_order_auctions_winner_id ON social.order_auctions
 
 -- Таблица ставок на аукционах
 CREATE TABLE IF NOT EXISTS social.auction_bids (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    auction_id UUID NOT NULL REFERENCES social.order_auctions(id) ON DELETE CASCADE,
-    bidder_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    bid_amount DECIMAL(10, 2) NOT NULL CHECK (bid_amount > 0),
-    bid_conditions JSONB,
-    bid_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'outbid', 'winning', 'lost'))
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  auction_id UUID NOT NULL REFERENCES social.order_auctions(id) ON DELETE CASCADE,
+  bidder_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'outbid', 'winning', 'lost')),
+  bid_conditions JSONB,
+  bid_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  bid_amount DECIMAL(10, 2) NOT NULL CHECK (bid_amount > 0)
 );
 
 -- Индексы для auction_bids
@@ -67,15 +67,15 @@ CREATE INDEX IF NOT EXISTS idx_auction_bids_status ON social.auction_bids(status
 
 -- Таблица опционов на заказы
 CREATE TABLE IF NOT EXISTS social.order_options (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
-    option_type VARCHAR(30) NOT NULL CHECK (option_type IN ('customer_cancellation', 'executor_cancellation', 'mutual_cancellation')),
-    buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    premium DECIMAL(10, 2) NOT NULL CHECK (premium >= 0),
-    compensation_amount DECIMAL(10, 2) NOT NULL CHECK (compensation_amount >= 0),
-    purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    exercised_at TIMESTAMP,
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'exercised', 'expired'))
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
+  buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  option_type VARCHAR(30) NOT NULL CHECK (option_type IN ('customer_cancellation', 'executor_cancellation', 'mutual_cancellation')),
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'exercised', 'expired')),
+  purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  exercised_at TIMESTAMP,
+  premium DECIMAL(10, 2) NOT NULL CHECK (premium >= 0),
+  compensation_amount DECIMAL(10, 2) NOT NULL CHECK (compensation_amount >= 0)
 );
 
 -- Индексы для order_options
@@ -85,16 +85,16 @@ CREATE INDEX IF NOT EXISTS idx_order_options_status ON social.order_options(stat
 
 -- Таблица арбитража заказов
 CREATE TABLE IF NOT EXISTS social.order_arbitration (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
-    complainant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    defendant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    reason TEXT NOT NULL,
-    evidence JSONB,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in-review', 'resolved', 'dismissed')),
-    decision JSONB,
-    resolved_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
+  complainant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  defendant_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in-review', 'resolved', 'dismissed')),
+  evidence JSONB,
+  decision JSONB,
+  resolved_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для order_arbitration
@@ -104,15 +104,15 @@ CREATE INDEX IF NOT EXISTS idx_order_arbitration_defendant ON social.order_arbit
 
 -- Таблица страхования заказов
 CREATE TABLE IF NOT EXISTS social.order_insurance (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
-    insurance_type VARCHAR(30) NOT NULL CHECK (insurance_type IN ('mission_failure', 'cargo', 'delay', 'comprehensive')),
-    buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    premium DECIMAL(10, 2) NOT NULL CHECK (premium >= 0),
-    coverage_amount DECIMAL(10, 2) NOT NULL CHECK (coverage_amount >= 0),
-    purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    claimed_at TIMESTAMP,
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'claimed', 'expired'))
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
+  buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  insurance_type VARCHAR(30) NOT NULL CHECK (insurance_type IN ('mission_failure', 'cargo', 'delay', 'comprehensive')),
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'claimed', 'expired')),
+  purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  claimed_at TIMESTAMP,
+  premium DECIMAL(10, 2) NOT NULL CHECK (premium >= 0),
+  coverage_amount DECIMAL(10, 2) NOT NULL CHECK (coverage_amount >= 0)
 );
 
 -- Индексы для order_insurance
@@ -122,20 +122,20 @@ CREATE INDEX IF NOT EXISTS idx_order_insurance_status ON social.order_insurance(
 
 -- Таблица рейтингов заказов
 CREATE TABLE IF NOT EXISTS social.order_ratings (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
-    rater_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    rated_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    rating_type VARCHAR(20) NOT NULL CHECK (rating_type IN ('customer', 'executor')),
-    completion_rate DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (completion_rate >= 0 AND completion_rate <= 1),
-    quality_score DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (quality_score >= 0 AND quality_score <= 1),
-    timeliness DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (timeliness >= 0 AND timeliness <= 1),
-    communication DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (communication >= 0 AND communication <= 1),
-    cooperation DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (cooperation >= 0 AND cooperation <= 1),
-    overall_rating DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (overall_rating >= 0 AND overall_rating <= 1),
-    review_text TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(order_id, rater_id, rating_type)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
+  rater_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  rated_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  review_text TEXT,
+  rating_type VARCHAR(20) NOT NULL CHECK (rating_type IN ('customer', 'executor')),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completion_rate DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (completion_rate >= 0 AND completion_rate <= 1),
+  quality_score DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (quality_score >= 0 AND quality_score <= 1),
+  timeliness DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (timeliness >= 0 AND timeliness <= 1),
+  communication DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (communication >= 0 AND communication <= 1),
+  cooperation DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (cooperation >= 0 AND cooperation <= 1),
+  overall_rating DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (overall_rating >= 0 AND overall_rating <= 1),
+  UNIQUE(order_id, rater_id, rating_type)
 );
 
 -- Индексы для order_ratings
@@ -145,17 +145,17 @@ CREATE INDEX IF NOT EXISTS idx_order_ratings_overall ON social.order_ratings(ove
 
 -- Таблица репутации в заказах
 CREATE TABLE IF NOT EXISTS social.order_reputation (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    reputation_type VARCHAR(20) NOT NULL CHECK (reputation_type IN ('customer', 'executor')),
-    order_count INTEGER NOT NULL DEFAULT 0 CHECK (order_count >= 0),
-    completion_rate DECIMAL(5, 4) NOT NULL DEFAULT 0.0000 CHECK (completion_rate >= 0 AND completion_rate <= 1),
-    average_rating DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (average_rating >= 0 AND average_rating <= 1),
-    arbitration_cases INTEGER NOT NULL DEFAULT 0 CHECK (arbitration_cases >= 0),
-    insurance_claims INTEGER NOT NULL DEFAULT 0 CHECK (insurance_claims >= 0),
-    trust_level DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (trust_level >= 0 AND trust_level <= 1),
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, reputation_type)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  reputation_type VARCHAR(20) NOT NULL CHECK (reputation_type IN ('customer', 'executor')),
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completion_rate DECIMAL(5, 4) NOT NULL DEFAULT 0.0000 CHECK (completion_rate >= 0 AND completion_rate <= 1),
+  average_rating DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (average_rating >= 0 AND average_rating <= 1),
+  trust_level DECIMAL(3, 2) NOT NULL DEFAULT 0.00 CHECK (trust_level >= 0 AND trust_level <= 1),
+  order_count INTEGER NOT NULL DEFAULT 0 CHECK (order_count >= 0),
+  arbitration_cases INTEGER NOT NULL DEFAULT 0 CHECK (arbitration_cases >= 0),
+  insurance_claims INTEGER NOT NULL DEFAULT 0 CHECK (insurance_claims >= 0),
+  UNIQUE(character_id, reputation_type)
 );
 
 -- Индексы для order_reputation
@@ -165,13 +165,13 @@ CREATE INDEX IF NOT EXISTS idx_order_reputation_trust ON social.order_reputation
 
 -- Таблица экономики заказов
 CREATE TABLE IF NOT EXISTS social.order_economy (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
-    transaction_type VARCHAR(30) NOT NULL CHECK (transaction_type IN ('deposit', 'payment', 'commission', 'refund', 'penalty')),
-    amount DECIMAL(10, 2) NOT NULL,
-    from_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    to_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    transaction_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES social.player_orders(id) ON DELETE CASCADE,
+  from_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  to_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  transaction_type VARCHAR(30) NOT NULL CHECK (transaction_type IN ('deposit', 'payment', 'commission', 'refund', 'penalty')),
+  transaction_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  amount DECIMAL(10, 2) NOT NULL
 );
 
 -- Индексы для order_economy

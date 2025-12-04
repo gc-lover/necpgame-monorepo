@@ -6,19 +6,19 @@
 CREATE SCHEMA IF NOT EXISTS inventory;
 
 CREATE TABLE IF NOT EXISTS inventory.engram_chip_tiers (
-    tier INTEGER PRIMARY KEY CHECK (tier >= 1 AND tier <= 5),
-    tier_name VARCHAR(50) NOT NULL UNIQUE CHECK (tier_name IN ('prototype', 'standard', 'advanced', 'corporate', 'legendary')),
-    stability_level VARCHAR(20) NOT NULL CHECK (stability_level IN ('low', 'medium', 'high', 'very_high', 'maximum')),
-    lifespan_years_min INTEGER NOT NULL CHECK (lifespan_years_min > 0),
-    lifespan_years_max INTEGER NOT NULL CHECK (lifespan_years_max >= lifespan_years_min),
-    corruption_risk VARCHAR(20) NOT NULL CHECK (corruption_risk IN ('high', 'medium', 'low', 'very_low', 'minimal')),
-    corruption_risk_percent DECIMAL(5,2) NOT NULL CHECK (corruption_risk_percent >= 0 AND corruption_risk_percent <= 100),
-    protection_level VARCHAR(20) NOT NULL CHECK (protection_level IN ('limited', 'standard', 'advanced', 'corporate', 'military')),
-    creation_cost_min DECIMAL(12,2) NOT NULL CHECK (creation_cost_min >= 0),
-    creation_cost_max DECIMAL(12,2) NOT NULL CHECK (creation_cost_max >= creation_cost_min),
-    available_from_year INTEGER NOT NULL CHECK (available_from_year >= 2020 AND available_from_year <= 2093),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  tier INTEGER PRIMARY KEY CHECK (tier >= 1 AND tier <= 5),
+  tier_name VARCHAR(50) NOT NULL UNIQUE CHECK (tier_name IN ('prototype', 'standard', 'advanced', 'corporate', 'legendary')),
+  stability_level VARCHAR(20) NOT NULL CHECK (stability_level IN ('low', 'medium', 'high', 'very_high', 'maximum')),
+  corruption_risk VARCHAR(20) NOT NULL CHECK (corruption_risk IN ('high', 'medium', 'low', 'very_low', 'minimal')),
+  protection_level VARCHAR(20) NOT NULL CHECK (protection_level IN ('limited', 'standard', 'advanced', 'corporate', 'military')),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  corruption_risk_percent DECIMAL(5,2) NOT NULL CHECK (corruption_risk_percent >= 0 AND corruption_risk_percent <= 100),
+  creation_cost_min DECIMAL(12,2) NOT NULL CHECK (creation_cost_min >= 0),
+  creation_cost_max DECIMAL(12,2) NOT NULL CHECK (creation_cost_max >= creation_cost_min),
+  lifespan_years_min INTEGER NOT NULL CHECK (lifespan_years_min > 0),
+  lifespan_years_max INTEGER NOT NULL CHECK (lifespan_years_max >= lifespan_years_min),
+  available_from_year INTEGER NOT NULL CHECK (available_from_year >= 2020 AND available_from_year <= 2093)
 );
 
 INSERT INTO inventory.engram_chip_tiers (tier, tier_name, stability_level, lifespan_years_min, lifespan_years_max, corruption_risk, corruption_risk_percent, protection_level, creation_cost_min, creation_cost_max, available_from_year) VALUES
@@ -30,21 +30,21 @@ INSERT INTO inventory.engram_chip_tiers (tier, tier_name, stability_level, lifes
 ON CONFLICT (tier) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS inventory.engram_chip_decay (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    chip_id UUID NOT NULL,
-    tier INTEGER NOT NULL REFERENCES inventory.engram_chip_tiers(tier),
-    decay_percent DECIMAL(5,2) NOT NULL DEFAULT 0.0 CHECK (decay_percent >= 0 AND decay_percent <= 100),
-    decay_risk VARCHAR(20) NOT NULL DEFAULT 'none' CHECK (decay_risk IN ('none', 'low', 'medium', 'high', 'critical')),
-    storage_temperature VARCHAR(20) NOT NULL DEFAULT 'optimal' CHECK (storage_temperature IN ('optimal', 'acceptable', 'poor', 'critical')),
-    storage_humidity VARCHAR(20) NOT NULL DEFAULT 'optimal' CHECK (storage_humidity IN ('optimal', 'acceptable', 'poor', 'critical')),
-    electromagnetic_shield BOOLEAN NOT NULL DEFAULT false,
-    storage_time_outside_hours INTEGER NOT NULL DEFAULT 0 CHECK (storage_time_outside_hours >= 0),
-    time_until_critical_hours INTEGER,
-    decay_effects JSONB DEFAULT '[]'::jsonb,
-    last_checked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_chip_decay UNIQUE (chip_id)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chip_id UUID NOT NULL,
+  decay_risk VARCHAR(20) NOT NULL DEFAULT 'none' CHECK (decay_risk IN ('none', 'low', 'medium', 'high', 'critical')),
+  storage_temperature VARCHAR(20) NOT NULL DEFAULT 'optimal' CHECK (storage_temperature IN ('optimal', 'acceptable', 'poor', 'critical')),
+  storage_humidity VARCHAR(20) NOT NULL DEFAULT 'optimal' CHECK (storage_humidity IN ('optimal', 'acceptable', 'poor', 'critical')),
+  decay_effects JSONB DEFAULT '[]'::jsonb,
+  last_checked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  decay_percent DECIMAL(5,2) NOT NULL DEFAULT 0.0 CHECK (decay_percent >= 0 AND decay_percent <= 100),
+  tier INTEGER NOT NULL REFERENCES inventory.engram_chip_tiers(tier),
+  storage_time_outside_hours INTEGER NOT NULL DEFAULT 0 CHECK (storage_time_outside_hours >= 0),
+  time_until_critical_hours INTEGER,
+  electromagnetic_shield BOOLEAN NOT NULL DEFAULT false,
+  CONSTRAINT uq_chip_decay UNIQUE (chip_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_engram_chip_decay_chip_id ON inventory.engram_chip_decay(chip_id);

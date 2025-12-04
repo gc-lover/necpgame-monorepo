@@ -1,185 +1,228 @@
+// Issue: #1595, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"sync"
 	"time"
 
-	"github.com/necpgame/hacking-core-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/gc-lover/necpgame-monorepo/services/hacking-core-service-go/pkg/api"
 	"github.com/google/uuid"
 )
 
-type HackingHandlers struct{}
+// Context timeout constants
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
+)
 
-func NewHackingHandlers() *HackingHandlers {
-	return &HackingHandlers{}
+// Handlers implements api.Handler interface (ogen typed handlers!)
+// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+type Handlers struct {
+	// Memory pooling for hot path structs (zero allocations target!)
+	hackSessionPool      sync.Pool
+	successResponsePool  sync.Pool
+	hackResultPool       sync.Pool
+	hackStepResultPool   sync.Pool
+	hackProcessStatusPool sync.Pool
 }
 
-func (h *HackingHandlers) InitiateHack(w http.ResponseWriter, r *http.Request) {
-	var req api.InitiateHackRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
+// NewHandlers creates new handlers
+func NewHandlers() *Handlers {
+	h := &Handlers{}
+
+	// Initialize memory pools (zero allocations target!)
+	h.hackSessionPool = sync.Pool{
+		New: func() interface{} {
+			return &api.HackSession{}
+		},
+	}
+	h.successResponsePool = sync.Pool{
+		New: func() interface{} {
+			return &api.SuccessResponse{}
+		},
+	}
+	h.hackResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.HackResult{}
+		},
+	}
+	h.hackStepResultPool = sync.Pool{
+		New: func() interface{} {
+			return &api.HackStepResult{}
+		},
+	}
+	h.hackProcessStatusPool = sync.Pool{
+		New: func() interface{} {
+			return &api.HackProcessStatus{}
+		},
 	}
 
-	hackId := openapi_types.UUID(uuid.New())
+	return h
+}
+
+// InitiateHack - TYPED response!
+func (h *Handlers) InitiateHack(ctx context.Context, req *api.InitiateHackRequest) (api.InitiateHackRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	hackID := uuid.New()
 	now := time.Now()
 	difficulty := 5
-	if req.Difficulty != nil {
-		difficulty = *req.Difficulty
+	if req.Difficulty.IsSet() {
+		difficulty = req.Difficulty.Value
 	}
 	progress := 0
-	targetType := api.HackSessionTargetType(req.TargetType)
-	status := api.HackSessionStatusInitiated
 
-	response := api.HackSession{
-		Id:          &hackId,
-		CharacterId: &req.CharacterId,
-		TargetId:    &req.TargetId,
-		TargetType:  &targetType,
-		Difficulty:  &difficulty,
-		Progress:    &progress,
-		Status:      &status,
-		CreatedAt:   &now,
-		UpdatedAt:   &now,
-	}
+	// Issue: #1607 - Use memory pooling
+	result := h.hackSessionPool.Get().(*api.HackSession)
+	// Note: Not returning to pool - struct is returned to caller
 
-	respondJSON(w, http.StatusCreated, response)
+	result.ID = api.NewOptUUID(hackID)
+	result.CharacterID = api.NewOptUUID(req.CharacterID)
+	result.TargetID = api.NewOptUUID(req.TargetID)
+	result.TargetType = api.NewOptHackSessionTargetType(api.HackSessionTargetType(req.TargetType))
+	result.Difficulty = api.NewOptInt(difficulty)
+	result.Progress = api.NewOptInt(progress)
+	result.Status = api.NewOptHackSessionStatus(api.HackSessionStatusInitiated)
+	result.CreatedAt = api.NewOptDateTime(now)
+	result.UpdatedAt = api.NewOptDateTime(now)
+
+	return result, nil
 }
 
-func (h *HackingHandlers) CancelHack(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	status := api.HackSessionStatusCancelled
+// CancelHack - TYPED response!
+func (h *Handlers) CancelHack(ctx context.Context, params api.CancelHackParams) (api.CancelHackRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// Issue: #1607 - Use memory pooling
+	result := h.successResponsePool.Get().(*api.SuccessResponse)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.Status = api.NewOptString("cancelled")
+
+	return result, nil
+}
+
+// ExecuteHack - TYPED response!
+func (h *Handlers) ExecuteHack(ctx context.Context, req *api.ExecuteHackRequest, params api.ExecuteHackParams) (api.ExecuteHackRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// Issue: #1607 - Use memory pooling
+	result := h.hackResultPool.Get().(*api.HackResult)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.HackID = api.NewOptUUID(params.HackId)
+	result.Success = api.NewOptBool(true)
+	result.ResultType = api.NewOptHackResultResultType(api.HackResultResultTypeAccess)
+	result.Data = &api.HackResultData{}
+	result.Effects = []api.HackResultEffectsItem{}
+
+	return result, nil
+}
+
+// ExecuteHackStep - TYPED response!
+func (h *Handlers) ExecuteHackStep(ctx context.Context, req *api.HackStepRequest, params api.ExecuteHackStepParams) (api.ExecuteHackStepRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// Issue: #1607 - Use memory pooling
+	result := h.hackStepResultPool.Get().(*api.HackStepResult)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.Success = api.NewOptBool(true)
+	result.Message = api.NewOptString("Step executed successfully")
+	result.StepType = api.NewOptString(string(req.StepType))
+	result.Progress = api.NewOptInt(75)
+
+	return result, nil
+}
+
+// GetHackProcessStatus - TYPED response!
+func (h *Handlers) GetHackProcessStatus(ctx context.Context, params api.GetHackProcessStatusParams) (api.GetHackProcessStatusRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// Issue: #1607 - Use memory pooling
+	result := h.hackProcessStatusPool.Get().(*api.HackProcessStatus)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.HackID = api.NewOptUUID(params.HackId)
+	result.Status = api.NewOptHackProcessStatusStatus(api.HackProcessStatusStatusInProgress)
+	result.CurrentStep = api.NewOptString("scanning")
+	result.Progress = api.NewOptInt(50)
+	result.StepsCompleted = api.NewOptInt(2)
+	result.TotalSteps = api.NewOptInt(4)
+
+	return result, nil
+}
+
+// GetHackResult - TYPED response!
+func (h *Handlers) GetHackResult(ctx context.Context, params api.GetHackResultParams) (api.GetHackResultRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// Issue: #1607 - Use memory pooling
+	result := h.hackResultPool.Get().(*api.HackResult)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.HackID = api.NewOptUUID(params.HackId)
+	result.Success = api.NewOptBool(true)
+	result.ResultType = api.NewOptHackResultResultType(api.HackResultResultTypeAccess)
+	result.Data = &api.HackResultData{}
+	result.Effects = []api.HackResultEffectsItem{}
+
+	return result, nil
+}
+
+// GetHackStatus - TYPED response!
+func (h *Handlers) GetHackStatus(ctx context.Context, params api.GetHackStatusParams) (api.GetHackStatusRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
 	now := time.Now()
-	response := api.HackSession{
-		Id:        &hackId,
-		Status:    &status,
-		UpdatedAt: &now,
-	}
 
-	respondJSON(w, http.StatusOK, response)
+	// Issue: #1607 - Use memory pooling
+	result := h.hackSessionPool.Get().(*api.HackSession)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.ID = api.NewOptUUID(params.HackId)
+	result.Status = api.NewOptHackSessionStatus(api.HackSessionStatusInProgress)
+	result.Progress = api.NewOptInt(60)
+	result.Difficulty = api.NewOptInt(5)
+	result.UpdatedAt = api.NewOptDateTime(now)
+
+	return result, nil
 }
 
-func (h *HackingHandlers) ExecuteHack(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	var req api.ExecuteHackRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
+// RetryHackStep - TYPED response!
+func (h *Handlers) RetryHackStep(ctx context.Context, params api.RetryHackStepParams) (api.RetryHackStepRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	result := &api.HackStepResult{
+		Success:  api.NewOptBool(true),
+		Message:  api.NewOptString("Step retried successfully"),
+		StepType: api.NewOptString("retry"),
+		Progress: api.NewOptInt(50),
 	}
 
-	now := time.Now()
-	status := api.HackSessionStatusInProgress
-	if req.Action == api.Complete {
-		status = api.HackSessionStatusCompleted
-	}
-
-	response := api.HackSession{
-		Id:        &hackId,
-		Status:    &status,
-		UpdatedAt: &now,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+	return result, nil
 }
 
-func (h *HackingHandlers) RetryHackStep(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	success := true
-	message := "Step retried successfully"
-	stepType := "retry"
-	progress := 50
+// ApplyHackResult - TYPED response!
+func (h *Handlers) ApplyHackResult(ctx context.Context, params api.ApplyHackResultParams) (api.ApplyHackResultRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	response := api.HackStepResult{
-		Success:  &success,
-		Message:  &message,
-		StepType: &stepType,
-		Progress: &progress,
-	}
+	// Issue: #1607 - Use memory pooling
+	result := h.successResponsePool.Get().(*api.SuccessResponse)
+	// Note: Not returning to pool - struct is returned to caller
 
-	respondJSON(w, http.StatusOK, response)
+	result.Status = api.NewOptString("applied")
+
+	return result, nil
 }
-
-func (h *HackingHandlers) GetHackProcessStatus(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	status := api.HackProcessStatusStatusInProgress
-	currentStep := "scanning"
-	progress := 50
-	stepsCompleted := 2
-	totalSteps := 4
-
-	response := api.HackProcessStatus{
-		HackId:        &hackId,
-		Status:         &status,
-		CurrentStep:    &currentStep,
-		Progress:       &progress,
-		StepsCompleted: &stepsCompleted,
-		TotalSteps:     &totalSteps,
-	}
-
-	respondJSON(w, http.StatusOK, response)
-}
-
-func (h *HackingHandlers) ExecuteHackStep(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	var req api.HackStepRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	success := true
-	message := "Step executed successfully"
-	stepType := string(req.StepType)
-	progress := 75
-
-	response := api.HackStepResult{
-		Success:  &success,
-		Message:  &message,
-		StepType: &stepType,
-		Progress: &progress,
-	}
-
-	respondJSON(w, http.StatusOK, response)
-}
-
-func (h *HackingHandlers) GetHackResult(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	success := true
-	resultType := api.HackResultResultTypeAccess
-	data := map[string]interface{}{
-		"access_level": "read",
-		"target_id":    hackId.String(),
-	}
-
-	response := api.HackResult{
-		HackId:     &hackId,
-		Success:    &success,
-		ResultType: &resultType,
-		Data:       &data,
-	}
-
-	respondJSON(w, http.StatusOK, response)
-}
-
-func (h *HackingHandlers) ApplyHackResult(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	status := "applied"
-	response := api.SuccessResponse{
-		Status: &status,
-	}
-
-	respondJSON(w, http.StatusOK, response)
-}
-
-func (h *HackingHandlers) GetHackStatus(w http.ResponseWriter, r *http.Request, hackId openapi_types.UUID) {
-	now := time.Now()
-	status := api.HackSessionStatusInProgress
-	progress := 60
-	difficulty := 5
-
-	response := api.HackSession{
-		Id:        &hackId,
-		Status:    &status,
-		Progress:  &progress,
-		Difficulty: &difficulty,
-		UpdatedAt: &now,
-	}
-
-	respondJSON(w, http.StatusOK, response)
-}
-

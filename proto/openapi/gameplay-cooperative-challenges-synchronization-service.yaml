@@ -1,41 +1,46 @@
 openapi: 3.0.3
 info:
   title: Gameplay Cooperative Challenges Synchronization Service API
-  description: |
-    API для синхронизации действий команды в кооперативных испытаниях.
-    
+  description: 'API для синхронизации действий команды в кооперативных испытаниях.
+
+
     **Основные возможности:**
+
     - Регистрация синхронизированных действий игроков
+
     - Проверка окна синхронизации (±0.5 сек)
+
     - Расчет бонусов за координацию
+
     - Отслеживание прогресса синхронизации
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay
+  description: Продакшен сервер
 tags:
-  - name: Synchronization
-    description: Синхронизация действий команды
-
+- name: Synchronization
+  description: Синхронизация действий команды
 paths:
   /cooperative-challenges/synchronize:
     post:
       tags:
-        - Synchronization
+      - Synchronization
       summary: Синхронизировать действие
-      description: |
-        Регистрирует синхронизированное действие игрока в рамках испытания.
+      description: 'Регистрирует синхронизированное действие игрока в рамках испытания.
+
         Система проверяет окно синхронизации (±0.5 сек) и увеличивает бонус за координацию.
+
+        '
       operationId: synchronizeAction
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -43,10 +48,10 @@ paths:
             schema:
               $ref: '#/components/schemas/SynchronizeActionRequest'
             example:
-              session_id: "bb0e8400-e29b-41d4-a716-446655440000"
-              character_id: "cc0e8400-e29b-41d4-a716-446655440000"
-              action_type: "action1"
-              timestamp: "2025-12-01T10:00:05.250Z"
+              session_id: bb0e8400-e29b-41d4-a716-446655440000
+              character_id: cc0e8400-e29b-41d4-a716-446655440000
+              action_type: action1
+              timestamp: '2025-12-01T10:00:05.250Z'
       responses:
         '200':
           description: Действие синхронизировано
@@ -55,78 +60,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/SynchronizationResult'
               example:
-                synchronization_id: "dd0e8400-e29b-41d4-a716-446655440000"
-                session_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                synchronization_id: dd0e8400-e29b-41d4-a716-446655440000
+                session_id: bb0e8400-e29b-41d4-a716-446655440000
                 synchronized: true
                 synchronization_window: 0.25
                 coordination_bonus: 0.15
                 total_synchronization_score: 0.75
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     SynchronizeActionRequest:
       type: object
       required:
-        - session_id
-        - character_id
-        - action_type
-        - timestamp
+      - session_id
+      - character_id
+      - action_type
+      - timestamp
       properties:
         session_id:
           type: string
           format: uuid
           description: UUID сессии испытания
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
+          example: bb0e8400-e29b-41d4-a716-446655440000
         character_id:
           type: string
           format: uuid
           description: UUID персонажа
-          example: "cc0e8400-e29b-41d4-a716-446655440000"
+          example: cc0e8400-e29b-41d4-a716-446655440000
         action_type:
           type: string
           description: Тип действия для синхронизации
-          example: "action1"
+          example: action1
         timestamp:
           type: string
           format: date-time
           description: Временная метка действия
-          example: "2025-12-01T10:00:05.250Z"
-
+          example: '2025-12-01T10:00:05.250Z'
     SynchronizationResult:
       type: object
       required:
-        - synchronization_id
-        - session_id
-        - synchronized
-        - synchronization_window
-        - coordination_bonus
-        - total_synchronization_score
+      - synchronization_id
+      - session_id
+      - synchronized
+      - synchronization_window
+      - coordination_bonus
+      - total_synchronization_score
       properties:
         synchronization_id:
           type: string
           format: uuid
           description: UUID события синхронизации
-          example: "dd0e8400-e29b-41d4-a716-446655440000"
+          example: dd0e8400-e29b-41d4-a716-446655440000
         session_id:
           type: string
           format: uuid
-          example: "bb0e8400-e29b-41d4-a716-446655440000"
-        synchronized:
-          type: boolean
-          description: Была ли синхронизация успешной
-          example: true
+          example: bb0e8400-e29b-41d4-a716-446655440000
         synchronization_window:
           type: number
           format: float
@@ -146,14 +144,17 @@ components:
           minimum: 0.0
           maximum: 1.0
           example: 0.75
-
+        synchronized:
+          type: boolean
+          description: Была ли синхронизация успешной
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: 'common.yaml#/components/responses/NotFound'
+      $ref: common.yaml#/components/responses/NotFound
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

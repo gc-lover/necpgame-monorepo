@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +22,15 @@ func main() {
 	addr := getEnv("ADDR", "0.0.0.0:8124")
 
 	httpServer := server.NewHTTPServer(addr, logger)
+
+	// OPTIMIZATION: Issue #1584 - pprof for performance monitoring
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6066")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

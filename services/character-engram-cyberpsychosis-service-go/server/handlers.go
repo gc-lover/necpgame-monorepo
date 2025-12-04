@@ -1,12 +1,17 @@
+// Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
 	"time"
 
-	"github.com/necpgame/character-engram-cyberpsychosis-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
+	api "github.com/necpgame/character-engram-cyberpsychosis-service-go/pkg/api"
+)
+
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
 )
 
 type EngramCyberpsychosisHandlers struct{}
@@ -15,7 +20,11 @@ func NewEngramCyberpsychosisHandlers() *EngramCyberpsychosisHandlers {
 	return &EngramCyberpsychosisHandlers{}
 }
 
-func (h *EngramCyberpsychosisHandlers) GetEngramCyberpsychosisRisk(w http.ResponseWriter, r *http.Request, characterId api.CharacterId) {
+// GetEngramCyberpsychosisRisk implements getEngramCyberpsychosisRisk operation.
+func (h *EngramCyberpsychosisHandlers) GetEngramCyberpsychosisRisk(ctx context.Context, params api.GetEngramCyberpsychosisRiskParams) (api.GetEngramCyberpsychosisRiskRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
 	baseRisk := float32(20.0)
 	engramRisk := float32(30.0)
 	totalRisk := float32(50.0)
@@ -23,57 +32,65 @@ func (h *EngramCyberpsychosisHandlers) GetEngramCyberpsychosisRisk(w http.Respon
 
 	riskFactors := []api.RiskFactor{
 		{
-			FactorType: api.BasePerEngram,
+			FactorType: api.RiskFactorFactorTypeBasePerEngram,
 			RiskAmount: 10.0,
-			EngramId:   nil,
+			EngramID:   api.OptNilUUID{},
 		},
 		{
-			FactorType: api.AggressiveEngram,
+			FactorType: api.RiskFactorFactorTypeAggressiveEngram,
 			RiskAmount: 5.0,
-			EngramId:   nil,
+			EngramID:   api.OptNilUUID{},
 		},
 	}
 
-	response := api.CyberpsychosisRisk{
-		CharacterId:     characterId,
-		BaseRisk:        baseRisk,
-		EngramRisk:      engramRisk,
-		TotalRisk:       totalRisk,
-		RiskFactors:     &riskFactors,
-		BlockerReduction: &blockerReduction,
-	}
-
-	respondJSON(w, http.StatusOK, response)
-}
-
-func (h *EngramCyberpsychosisHandlers) UpdateEngramCyberpsychosisRisk(w http.ResponseWriter, r *http.Request, characterId api.CharacterId) {
-	baseRisk := float32(20.0)
-	engramRisk := float32(30.0)
-	totalRisk := float32(50.0)
-	blockerReduction := float32(10.0)
-
-	riskFactors := []api.RiskFactor{
-		{
-			FactorType: api.BasePerEngram,
-			RiskAmount: 10.0,
-			EngramId:   nil,
-		},
-	}
-
-	response := api.CyberpsychosisRisk{
-		CharacterId:      characterId,
+	response := &api.CyberpsychosisRisk{
+		CharacterID:      params.CharacterID,
 		BaseRisk:         baseRisk,
 		EngramRisk:       engramRisk,
 		TotalRisk:        totalRisk,
-		RiskFactors:      &riskFactors,
-		BlockerReduction: &blockerReduction,
+		RiskFactors:      riskFactors,
+		BlockerReduction: api.NewOptFloat32(blockerReduction),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *EngramCyberpsychosisHandlers) GetEngramBlockers(w http.ResponseWriter, r *http.Request, characterId api.CharacterId) {
-	blockerId := openapi_types.UUID{}
+// UpdateEngramCyberpsychosisRisk implements updateEngramCyberpsychosisRisk operation.
+func (h *EngramCyberpsychosisHandlers) UpdateEngramCyberpsychosisRisk(ctx context.Context, params api.UpdateEngramCyberpsychosisRiskParams) (api.UpdateEngramCyberpsychosisRiskRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	baseRisk := float32(20.0)
+	engramRisk := float32(30.0)
+	totalRisk := float32(50.0)
+	blockerReduction := float32(10.0)
+
+	riskFactors := []api.RiskFactor{
+		{
+			FactorType: api.RiskFactorFactorTypeBasePerEngram,
+			RiskAmount: 10.0,
+			EngramID:   api.OptNilUUID{},
+		},
+	}
+
+	response := &api.CyberpsychosisRisk{
+		CharacterID:      params.CharacterID,
+		BaseRisk:         baseRisk,
+		EngramRisk:       engramRisk,
+		TotalRisk:        totalRisk,
+		RiskFactors:      riskFactors,
+		BlockerReduction: api.NewOptFloat32(blockerReduction),
+	}
+
+	return response, nil
+}
+
+// GetEngramBlockers implements getEngramBlockers operation.
+func (h *EngramCyberpsychosisHandlers) GetEngramBlockers(ctx context.Context, params api.GetEngramBlockersParams) (api.GetEngramBlockersRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	blockerID := uuid.New()
 	now := time.Now()
 	expiresAt := now.Add(60 * 24 * time.Hour)
 
@@ -81,53 +98,47 @@ func (h *EngramCyberpsychosisHandlers) GetEngramBlockers(w http.ResponseWriter, 
 	concentration := float32(5.0)
 	energyRecovery := float32(-10.0)
 
-	buffs := &struct {
-		AllSkills        *float32 `json:"all_skills,omitempty"`
-		Concentration   *float32 `json:"concentration,omitempty"`
-		HackResistance  *float32 `json:"hack_resistance,omitempty"`
-		MentalResistance *float32 `json:"mental_resistance,omitempty"`
-	}{
-		AllSkills:        nil,
-		Concentration:   &concentration,
-		HackResistance:  nil,
-		MentalResistance: &mentalResistance,
+	buffs := api.EngramBlockerBuffs{
+		Concentration:    api.NewOptFloat32(concentration),
+		MentalResistance: api.NewOptFloat32(mentalResistance),
 	}
 
-	debuffs := &struct {
-		EnergyRecovery  *float32 `json:"energy_recovery,omitempty"`
-		PhysicalStrength *float32 `json:"physical_strength,omitempty"`
-	}{
-		EnergyRecovery:  &energyRecovery,
-		PhysicalStrength: nil,
+	debuffs := api.EngramBlockerDebuffs{
+		EnergyRecovery: api.NewOptFloat32(energyRecovery),
 	}
+
+	durationDays := 60
+	influenceReduction := float32(20.0)
+	isActive := true
+	riskReduction := float32(10.0)
 
 	blockers := []api.EngramBlocker{
 		{
-			BlockerId:         blockerId,
-			Buffs:             buffs,
-			CharacterId:      characterId,
-			Debuffs:           debuffs,
-			DurationDays:      func() *int { v := 60; return &v }(),
+			BlockerID:         blockerID,
+			Buffs:             api.NewOptEngramBlockerBuffs(buffs),
+			CharacterID:       params.CharacterID,
+			Debuffs:           api.NewOptEngramBlockerDebuffs(debuffs),
+			DurationDays:      api.NewOptInt(durationDays),
 			ExpiresAt:         expiresAt,
-			InfluenceReduction: func() *float32 { v := float32(20.0); return &v }(),
+			InfluenceReduction: api.NewOptFloat32(influenceReduction),
 			InstalledAt:       now,
-			IsActive:          func() *bool { v := true; return &v }(),
-			RiskReduction:     func() *float32 { v := float32(10.0); return &v }(),
+			IsActive:          api.NewOptBool(isActive),
+			RiskReduction:     api.NewOptFloat32(riskReduction),
 			Tier:              2,
 		},
 	}
 
-	respondJSON(w, http.StatusOK, blockers)
+	response := &api.GetEngramBlockersOKApplicationJSON{}
+	*response = api.GetEngramBlockersOKApplicationJSON(blockers)
+	return response, nil
 }
 
-func (h *EngramCyberpsychosisHandlers) InstallEngramBlocker(w http.ResponseWriter, r *http.Request, characterId api.CharacterId) {
-	var req api.InstallBlockerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
+// InstallEngramBlocker implements installEngramBlocker operation.
+func (h *EngramCyberpsychosisHandlers) InstallEngramBlocker(ctx context.Context, req *api.InstallBlockerRequest, params api.InstallEngramBlockerParams) (api.InstallEngramBlockerRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	blockerId := openapi_types.UUID{}
+	blockerID := uuid.New()
 	now := time.Now()
 	var expiresAt time.Time
 	var durationDays int
@@ -160,40 +171,28 @@ func (h *EngramCyberpsychosisHandlers) InstallEngramBlocker(w http.ResponseWrite
 	concentration := float32(float32(req.BlockerTier) * 2.5)
 	energyRecovery := float32(-float32(req.BlockerTier) * 5.0)
 
-	buffs := &struct {
-		AllSkills        *float32 `json:"all_skills,omitempty"`
-		Concentration   *float32 `json:"concentration,omitempty"`
-		HackResistance  *float32 `json:"hack_resistance,omitempty"`
-		MentalResistance *float32 `json:"mental_resistance,omitempty"`
-	}{
-		AllSkills:        nil,
-		Concentration:   &concentration,
-		HackResistance:  nil,
-		MentalResistance: &mentalResistance,
+	buffs := api.EngramBlockerBuffs{
+		Concentration:    api.NewOptFloat32(concentration),
+		MentalResistance: api.NewOptFloat32(mentalResistance),
 	}
 
-	debuffs := &struct {
-		EnergyRecovery  *float32 `json:"energy_recovery,omitempty"`
-		PhysicalStrength *float32 `json:"physical_strength,omitempty"`
-	}{
-		EnergyRecovery:  &energyRecovery,
-		PhysicalStrength: nil,
+	debuffs := api.EngramBlockerDebuffs{
+		EnergyRecovery: api.NewOptFloat32(energyRecovery),
 	}
 
-	response := api.EngramBlocker{
-		BlockerId:         blockerId,
-		Buffs:             buffs,
-		CharacterId:      characterId,
-		Debuffs:           debuffs,
-		DurationDays:      func() *int { v := durationDays; return &v }(),
+	response := &api.EngramBlocker{
+		BlockerID:         blockerID,
+		Buffs:             api.NewOptEngramBlockerBuffs(buffs),
+		CharacterID:       params.CharacterID,
+		Debuffs:           api.NewOptEngramBlockerDebuffs(debuffs),
+		DurationDays:      api.NewOptInt(durationDays),
 		ExpiresAt:         expiresAt,
-		InfluenceReduction: &influenceReduction,
+		InfluenceReduction: api.NewOptFloat32(influenceReduction),
 		InstalledAt:       now,
-		IsActive:          func() *bool { v := true; return &v }(),
-		RiskReduction:     &riskReduction,
+		IsActive:          api.NewOptBool(true),
+		RiskReduction:     api.NewOptFloat32(riskReduction),
 		Tier:              req.BlockerTier,
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
-

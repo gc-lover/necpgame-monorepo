@@ -1,108 +1,114 @@
-// Issue: #1560
-
+// Issue: #1595
+// OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
+// PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/lib/pq"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/gc-lover/necpgame-monorepo/services/projectile-core-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
-// HTTPServer represents the HTTP server
+// HTTPServer represents HTTP server (no chi dependency)
 type HTTPServer struct {
-	addr    string
-	router  chi.Router
-	server  *http.Server
-	db      *sql.DB
-	service *ProjectileService
+	addr   string
+	server *http.Server
 }
 
-// NewHTTPServer creates a new HTTP server
-func NewHTTPServer(addr, dbConnStr string) (*HTTPServer, error) {
-	// Connect to database
-	db, err := sql.Open("postgres", dbConnStr)
+// NewHTTPServer creates new HTTP server WITHOUT chi
+// PERFORMANCE: Standard mux for health/metrics, OGEN router for API (already max speed)
+func NewHTTPServer(addr string, service *ProjectileService) *HTTPServer {
+	// OGEN server (fast static router - hot path)
+	handlers := NewHandlers(service)
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
+	// Standard mux (for health/metrics - cold path)
+	mux := http.NewServeMux()
 
-	// Initialize components
-	repo := NewProjectileRepository(db)
-	service := NewProjectileService(repo)
-	handlers := NewProjectileHandlers(service)
+	// Middleware chain (no duplication, optimized)
+	apiHandler := chainMiddleware(ogenServer,
+		recoveryMiddleware,  // panic recovery
+		requestIDMiddleware,  // request ID
+		LoggingMiddleware,    // structured logging
+		MetricsMiddleware,    // metrics
+	)
 
-	// Setup router
-	router := chi.NewRouter()
+	// Mount OGEN (hot path - maximum speed, static router)
+	mux.Handle("/api/v1/", apiHandler)
 
-	// Register middlewares
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-	router.Use(LoggingMiddleware())
-	router.Use(MetricsMiddleware())
-
-	// Register API handlers
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
-
-	// Health check
-	router.Get("/health", healthCheck)
-
-	// Metrics
-	router.Handle("/metrics", promhttp.Handler())
+	// Health/metrics (cold path - simple mux, no chi overhead)
+	mux.HandleFunc("/health", healthCheck)
+	mux.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
-		addr:    addr,
-		router:  router,
-		db:      db,
-		service: service,
-	}, nil
+		addr: addr,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      mux,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+	}
 }
 
-// Start starts the HTTP server
-func (s *HTTPServer) Start() error {
-	s.server = &http.Server{
-		Addr:    s.addr,
-		Handler: s.router,
+// chainMiddleware chains middleware functions (simple and fast)
+func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
 	}
+	return h
+}
+
+// recoveryMiddleware recovers from panics
+func recoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// requestIDMiddleware adds request ID to headers
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
+		w.Header().Set("X-Request-ID", requestID)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Start starts HTTP server
+func (s *HTTPServer) Start() error {
 	return s.server.ListenAndServe()
 }
 
-// Shutdown gracefully shuts down the server
+// Shutdown gracefully shuts down HTTP server
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	if s.db != nil {
-		s.db.Close()
-	}
-	if s.server != nil {
-		return s.server.Shutdown(ctx)
-	}
-	return nil
+	return s.server.Shutdown(ctx)
 }
 
+// Health check handler
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"healthy"}`))
+	w.Write([]byte("OK"))
 }
 
-
-
-
-
-
-
-
+// Metrics handler (stub)
+func metricsHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("# HELP projectile_core_service metrics\n"))
+}

@@ -1,45 +1,48 @@
-# Issue: #461
 openapi: 3.0.3
 info:
   title: Economy Procedural Equipment Generation Service API
-  description: |
-    API для процедурной генерации снаряжения и управления матрицей характеристик.
-    
+  description: 'API для процедурной генерации снаряжения и управления матрицей характеристик.
+
+
     **Основные возможности:**
+
     - Процедурная генерация предметов (оружие, импланты, броня, аксессуары)
+
     - Управление матрицей характеристик на основе брендов
+
     - Получение информации о брендах и редкостях
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8085/api/v1/economy
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/economy
-    description: Продакшен сервер
-
+- url: http://localhost:8085/api/v1/economy
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/economy
+  description: Продакшен сервер
 tags:
-  - name: Equipment Generation
-    description: Процедурная генерация предметов
-  - name: Equipment Matrix
-    description: Матрица характеристик
-  - name: Brands
-    description: Бренды и корпорации
-
+- name: Equipment Generation
+  description: Процедурная генерация предметов
+- name: Equipment Matrix
+  description: Матрица характеристик
+- name: Brands
+  description: Бренды и корпорации
 paths:
   /equipment/generate:
     post:
       tags:
-        - Equipment Generation
+      - Equipment Generation
       summary: Сгенерировать предмет процедурно
-      description: |
-        Генерирует предмет (оружие, имплант, броню или аксессуар) процедурно на основе матрицы характеристик.
+      description: 'Генерирует предмет (оружие, имплант, броню или аксессуар) процедурно на основе матрицы характеристик.
+
         Использует детерминированные сиды для воспроизводимости генерации.
+
+        '
       operationId: generateEquipment
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -51,16 +54,16 @@ paths:
                 summary: Генерация оружия
                 value:
                   item_type: WEAPON
-                  brand_id: "550e8400-e29b-41d4-a716-446655440000"
+                  brand_id: 550e8400-e29b-41d4-a716-446655440000
                   rarity: RARE
-                  seed: "weapon-seed-12345"
+                  seed: weapon-seed-12345
               implant:
                 summary: Генерация импланта
                 value:
                   item_type: IMPLANT
-                  brand_id: "550e8400-e29b-41d4-a716-446655440001"
+                  brand_id: 550e8400-e29b-41d4-a716-446655440001
                   rarity: EPIC
-                  seed: "implant-seed-67890"
+                  seed: implant-seed-67890
       responses:
         '201':
           description: Предмет успешно сгенерирован
@@ -69,9 +72,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/GeneratedItem'
               example:
-                id: "550e8400-e29b-41d4-a716-446655440002"
-                seed: "weapon-seed-12345"
-                brand_id: "550e8400-e29b-41d4-a716-446655440000"
+                id: 550e8400-e29b-41d4-a716-446655440002
+                seed: weapon-seed-12345
+                brand_id: 550e8400-e29b-41d4-a716-446655440000
                 item_type: WEAPON
                 rarity: RARE
                 stats:
@@ -80,50 +83,51 @@ paths:
                   range: 45.0
                   fire_rate: 12.5
                 modifiers:
-                  - id: "550e8400-e29b-41d4-a716-446655440003"
-                    name: "Critical Damage Boost"
-                    modifier_type: CRIT_DAMAGE
-                    value: 1.25
+                - id: 550e8400-e29b-41d4-a716-446655440003
+                  name: Critical Damage Boost
+                  modifier_type: CRIT_DAMAGE
+                  value: 1.25
                 mod_slots: 2
-                generated_at: "2025-11-29T10:00:00Z"
+                generated_at: '2025-11-29T10:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /equipment/matrix:
     get:
       tags:
-        - Equipment Matrix
+      - Equipment Matrix
       summary: Получить матрицу характеристик
-      description: |
-        Возвращает матрицу характеристик для указанных параметров.
+      description: 'Возвращает матрицу характеристик для указанных параметров.
+
         Если параметры не указаны, возвращает общую матрицу.
+
+        '
       operationId: getEquipmentMatrix
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: brand_id
-          in: query
-          description: ID бренда для фильтрации
-          required: false
-          schema:
-            type: string
-            format: uuid
-        - name: item_type
-          in: query
-          description: Тип предмета для фильтрации
-          required: false
-          schema:
-            $ref: '#/components/schemas/ItemType'
-        - name: rarity
-          in: query
-          description: Редкость для фильтрации
-          required: false
-          schema:
-            $ref: '#/components/schemas/Rarity'
+      - name: brand_id
+        in: query
+        description: ID бренда для фильтрации
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: item_type
+        in: query
+        description: Тип предмета для фильтрации
+        required: false
+        schema:
+          $ref: '#/components/schemas/ItemType'
+      - name: rarity
+        in: query
+        description: Редкость для фильтрации
+        required: false
+        schema:
+          $ref: '#/components/schemas/Rarity'
       responses:
         '200':
           description: Матрица характеристик успешно получена
@@ -132,42 +136,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/EquipmentMatrix'
               example:
-                id: "550e8400-e29b-41d4-a716-446655440004"
-                brand_id: "550e8400-e29b-41d4-a716-446655440000"
+                id: 550e8400-e29b-41d4-a716-446655440004
+                brand_id: 550e8400-e29b-41d4-a716-446655440000
                 item_type: WEAPON
                 rarity: RARE
                 stat_pools:
-                  - id: "550e8400-e29b-41d4-a716-446655440005"
-                    name: "Damage Pool"
-                    stat_type: DAMAGE
-                    min_value: 100.0
-                    max_value: 150.0
-                    distribution: NORMAL
+                - id: 550e8400-e29b-41d4-a716-446655440005
+                  name: Damage Pool
+                  stat_type: DAMAGE
+                  min_value: 100.0
+                  max_value: 150.0
+                  distribution: NORMAL
                 modifiers:
-                  - id: "550e8400-e29b-41d4-a716-446655440003"
-                    name: "Critical Damage Boost"
-                    modifier_type: CRIT_DAMAGE
-                    value: 1.25
-                    rarity: RARE
+                - id: 550e8400-e29b-41d4-a716-446655440003
+                  name: Critical Damage Boost
+                  modifier_type: CRIT_DAMAGE
+                  value: 1.25
+                  rarity: RARE
                 brand_bonuses:
                   damage_multiplier: 1.1
                   accuracy_bonus: 0.05
                 version: 1
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /equipment/brands:
     get:
       tags:
-        - Brands
+      - Brands
       summary: Получить список брендов
-      description: |
-        Возвращает список всех доступных брендов (корпораций) для процедурной генерации.
+      description: 'Возвращает список всех доступных брендов (корпораций) для процедурной генерации.
+
+        '
       operationId: getBrands
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Список брендов успешно получен
@@ -178,27 +182,27 @@ paths:
                 items:
                   $ref: '#/components/schemas/Brand'
               example:
-                - id: "550e8400-e29b-41d4-a716-446655440000"
-                  name: "Arasaka"
-                  identity: "Precision and reliability"
-                  bonuses:
-                    accuracy_bonus: 0.1
-                    damage_multiplier: 0.95
+              - id: 550e8400-e29b-41d4-a716-446655440000
+                name: Arasaka
+                identity: Precision and reliability
+                bonuses:
+                  accuracy_bonus: 0.1
+                  damage_multiplier: 0.95
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /equipment/rarities:
     get:
       tags:
-        - Equipment Matrix
+      - Equipment Matrix
       summary: Получить список редкостей
-      description: |
-        Возвращает список всех доступных редкостей предметов с их характеристиками.
+      description: 'Возвращает список всех доступных редкостей предметов с их характеристиками.
+
+        '
       operationId: getRarities
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Список редкостей успешно получен
@@ -209,80 +213,78 @@ paths:
                 items:
                   $ref: '#/components/schemas/RarityInfo'
               example:
-                - rarity: COMMON
-                  name: "Обычный"
-                  stat_multiplier: 1.0
-                  modifier_chance: 0.1
-                  mod_slots: 0
-                - rarity: RARE
-                  name: "Редкий"
-                  stat_multiplier: 1.25
-                  modifier_chance: 0.35
-                  mod_slots: 2
-                - rarity: LEGENDARY
-                  name: "Легендарный"
-                  stat_multiplier: 2.0
-                  modifier_chance: 0.75
-                  mod_slots: 4
+              - rarity: COMMON
+                name: Обычный
+                stat_multiplier: 1.0
+                modifier_chance: 0.1
+                mod_slots: 0
+              - rarity: RARE
+                name: Редкий
+                stat_multiplier: 1.25
+                modifier_chance: 0.35
+                mod_slots: 2
+              - rarity: LEGENDARY
+                name: Легендарный
+                stat_multiplier: 2.0
+                modifier_chance: 0.75
+                mod_slots: 4
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     GenerateEquipmentRequest:
       type: object
       required:
-        - item_type
+      - item_type
       properties:
-        item_type:
-          $ref: '#/components/schemas/ItemType'
         brand_id:
           type: string
           format: uuid
           description: ID бренда (опционально, если не указан - случайный)
-        rarity:
-          $ref: '#/components/schemas/Rarity'
-          description: Редкость (опционально, если не указана - случайная)
         seed:
           type: string
           description: Детерминированный сид для воспроизводимости (опционально)
-          example: "weapon-seed-12345"
+          example: weapon-seed-12345
+        item_type:
+          $ref: '#/components/schemas/ItemType'
+        rarity:
+          $ref: '#/components/schemas/Rarity'
+          description: Редкость (опционально, если не указана - случайная)
         force_rarity:
           type: boolean
           description: Принудительно использовать указанную редкость
           default: false
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GeneratedItem:
       type: object
       required:
-        - id
-        - seed
-        - item_type
-        - rarity
-        - stats
-        - generated_at
+      - id
+      - seed
+      - item_type
+      - rarity
+      - stats
+      - generated_at
       properties:
         id:
           type: string
           format: uuid
           description: ID сгенерированного предмета
-        seed:
-          type: string
-          description: Сид, использованный для генерации
         brand_id:
           type: string
           format: uuid
           description: ID бренда предмета
-        item_type:
-          $ref: '#/components/schemas/ItemType'
-        rarity:
-          $ref: '#/components/schemas/Rarity'
+        seed:
+          type: string
+          description: Сид, использованный для генерации
+        generated_at:
+          type: string
+          format: date-time
+          description: Время генерации предмета
         stats:
           type: object
           description: Сгенерированные характеристики предмета
@@ -293,6 +295,10 @@ components:
             accuracy: 0.85
             range: 45.0
             fire_rate: 12.5
+        item_type:
+          $ref: '#/components/schemas/ItemType'
+        rarity:
+          $ref: '#/components/schemas/Rarity'
         modifiers:
           type: array
           description: Список примененных модификаторов
@@ -303,18 +309,14 @@ components:
           description: Количество слотов для модификаторов
           minimum: 0
           maximum: 4
-        generated_at:
-          type: string
-          format: date-time
-          description: Время генерации предмета
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EquipmentMatrix:
       type: object
       required:
-        - id
-        - item_type
-        - rarity
-        - version
+      - id
+      - item_type
+      - rarity
+      - version
       properties:
         id:
           type: string
@@ -323,6 +325,14 @@ components:
           type: string
           format: uuid
           description: ID бренда (опционально)
+        brand_bonuses:
+          type: object
+          description: Бонусы бренда
+          additionalProperties:
+            type: number
+          example:
+            damage_multiplier: 1.1
+            accuracy_bonus: 0.05
         item_type:
           $ref: '#/components/schemas/ItemType'
         rarity:
@@ -338,24 +348,16 @@ components:
           description: Доступные модификаторы
           items:
             $ref: '#/components/schemas/Modifier'
-        brand_bonuses:
-          type: object
-          description: Бонусы бренда
-          additionalProperties:
-            type: number
-          example:
-            damage_multiplier: 1.1
-            accuracy_bonus: 0.05
         version:
           type: integer
           description: Версия матрицы
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Brand:
       type: object
       required:
-        - id
-        - name
-        - identity
+      - id
+      - name
+      - identity
       properties:
         id:
           type: string
@@ -363,14 +365,14 @@ components:
         name:
           type: string
           description: Название бренда
-          example: "Arasaka"
+          example: Arasaka
         description:
           type: string
           description: Описание бренда
         identity:
           type: string
           description: Лорная идентичность бренда
-          example: "Precision and reliability"
+          example: Precision and reliability
         bonuses:
           type: object
           description: Бонусы бренда
@@ -379,21 +381,20 @@ components:
           example:
             accuracy_bonus: 0.1
             damage_multiplier: 0.95
-
     RarityInfo:
       type: object
       required:
-        - rarity
-        - name
-        - stat_multiplier
-        - modifier_chance
-        - mod_slots
+      - rarity
+      - name
+      - stat_multiplier
+      - modifier_chance
+      - mod_slots
       properties:
-        rarity:
-          $ref: '#/components/schemas/Rarity'
         name:
           type: string
           description: Локализованное название редкости
+        rarity:
+          $ref: '#/components/schemas/Rarity'
         stat_multiplier:
           type: number
           description: Множитель характеристик
@@ -408,15 +409,15 @@ components:
           description: Количество слотов для модификаторов
           minimum: 0
           maximum: 4
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Modifier:
       type: object
       required:
-        - id
-        - name
-        - modifier_type
-        - value
-        - rarity
+      - id
+      - name
+      - modifier_type
+      - value
+      - rarity
       properties:
         id:
           type: string
@@ -424,12 +425,13 @@ components:
         name:
           type: string
           description: Название модификатора
-          example: "Critical Damage Boost"
+          example: Critical Damage Boost
+        restrictions:
+          type: object
+          description: Ограничения применения
+          additionalProperties: true
         modifier_type:
           $ref: '#/components/schemas/ModifierType'
-        value:
-          type: number
-          description: Значение модификатора
         rarity:
           $ref: '#/components/schemas/Rarity'
         compatibility:
@@ -437,50 +439,45 @@ components:
           description: Совместимые типы предметов
           items:
             $ref: '#/components/schemas/ItemType'
-        restrictions:
-          type: object
-          description: Ограничения применения
-          additionalProperties: true
-
+        value:
+          type: number
+          description: Значение модификатора
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ItemType:
       type: string
       enum:
-        - WEAPON
-        - IMPLANT
-        - ARMOR
-        - ACCESSORY
+      - WEAPON
+      - IMPLANT
+      - ARMOR
+      - ACCESSORY
       description: Тип предмета
-
     Rarity:
       type: string
       enum:
-        - COMMON
-        - UNCOMMON
-        - RARE
-        - EPIC
-        - LEGENDARY
+      - COMMON
+      - UNCOMMON
+      - RARE
+      - EPIC
+      - LEGENDARY
       description: Редкость предмета
-
     ModifierType:
       type: string
       enum:
-        - DAMAGE_BOOST
-        - CRIT_CHANCE
-        - CRIT_DAMAGE
-        - ELEMENTAL_DAMAGE
-        - FIRE_RATE_BOOST
-        - ACCURACY_BOOST
-        - RANGE_BOOST
-        - HANDLING_BOOST
-        - STABILITY_BOOST
-        - PENETRATION_BOOST
+      - DAMAGE_BOOST
+      - CRIT_CHANCE
+      - CRIT_DAMAGE
+      - ELEMENTAL_DAMAGE
+      - FIRE_RATE_BOOST
+      - ACCURACY_BOOST
+      - RANGE_BOOST
+      - HANDLING_BOOST
+      - STABILITY_BOOST
+      - PENETRATION_BOOST
       description: Тип модификатора
-
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

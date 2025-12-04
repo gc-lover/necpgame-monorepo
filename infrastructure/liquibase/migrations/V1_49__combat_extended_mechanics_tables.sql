@@ -9,16 +9,16 @@
 
 -- Таблица выполнений взлома в бою
 CREATE TABLE IF NOT EXISTS mvp_core.combat_hacking_executions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL,
-    session_id UUID,
-    hacking_type VARCHAR(100) NOT NULL,
-    network_id UUID,
-    target_id UUID,
-    target_type VARCHAR(30) CHECK (target_type IN ('player', 'npc', 'device', 'infrastructure')),
-    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    effects_applied JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  session_id UUID,
+  network_id UUID,
+  target_id UUID,
+  hacking_type VARCHAR(100) NOT NULL,
+  target_type VARCHAR(30) CHECK (target_type IN ('player', 'npc', 'device', 'infrastructure')),
+  effects_applied JSONB,
+  executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для combat_hacking_executions
@@ -30,13 +30,13 @@ CREATE INDEX IF NOT EXISTS idx_combat_hacking_executions_executed_at ON mvp_core
 
 -- Таблица сетей для взлома
 CREATE TABLE IF NOT EXISTS mvp_core.combat_hacking_networks (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    network_name VARCHAR(255) NOT NULL,
-    network_type VARCHAR(30) NOT NULL CHECK (network_type IN ('enemy', 'device', 'infrastructure', 'combat_scenario')),
-    access_level INTEGER NOT NULL DEFAULT 0,
-    requirements JSONB,
-    available_demons JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  network_name VARCHAR(255) NOT NULL,
+  network_type VARCHAR(30) NOT NULL CHECK (network_type IN ('enemy', 'device', 'infrastructure', 'combat_scenario')),
+  requirements JSONB,
+  available_demons JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  access_level INTEGER NOT NULL DEFAULT 0
 );
 
 -- Индексы для combat_hacking_networks
@@ -46,15 +46,15 @@ CREATE INDEX IF NOT EXISTS idx_combat_hacking_networks_name ON mvp_core.combat_h
 
 -- Таблица активаций имплантов в бою
 CREATE TABLE IF NOT EXISTS mvp_core.combat_implant_activations (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL,
-    session_id UUID,
-    implant_id UUID NOT NULL,
-    activated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    effects_applied JSONB,
-    energy_used INTEGER NOT NULL DEFAULT 0,
-    humanity_cost INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  session_id UUID,
+  implant_id UUID NOT NULL,
+  effects_applied JSONB,
+  activated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  energy_used INTEGER NOT NULL DEFAULT 0,
+  humanity_cost INTEGER NOT NULL DEFAULT 0
 );
 
 -- Индексы для combat_implant_activations
@@ -65,16 +65,16 @@ CREATE INDEX IF NOT EXISTS idx_combat_implant_activations_activated_at ON mvp_co
 
 -- Таблица статистики продвинутой стрельбы
 CREATE TABLE IF NOT EXISTS mvp_core.combat_advanced_shooting_stats (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL,
-    session_id UUID,
-    weapon_id UUID NOT NULL,
-    aim_accuracy DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (aim_accuracy >= 0 AND aim_accuracy <= 100),
-    recoil_control DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (recoil_control >= 0 AND recoil_control <= 100),
-    shots_fired INTEGER NOT NULL DEFAULT 0,
-    hits_landed INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  session_id UUID,
+  weapon_id UUID NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  aim_accuracy DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (aim_accuracy >= 0 AND aim_accuracy <= 100),
+  recoil_control DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (recoil_control >= 0 AND recoil_control <= 100),
+  shots_fired INTEGER NOT NULL DEFAULT 0,
+  hits_landed INTEGER NOT NULL DEFAULT 0
 );
 
 -- Индексы для combat_advanced_shooting_stats
@@ -85,16 +85,16 @@ CREATE INDEX IF NOT EXISTS idx_combat_advanced_shooting_stats_character_session 
 
 -- Таблица лоадаутов боевой системы
 CREATE TABLE IF NOT EXISTS mvp_core.combat_loadouts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    weapons JSONB NOT NULL,
-    abilities JSONB NOT NULL,
-    implants JSONB NOT NULL,
-    equipment JSONB NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  weapons JSONB NOT NULL,
+  abilities JSONB NOT NULL,
+  implants JSONB NOT NULL,
+  equipment JSONB NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Индексы для combat_loadouts

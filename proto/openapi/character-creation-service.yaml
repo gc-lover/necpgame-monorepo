@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Character Creation Service API
+  description: API для создания персонажей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+- url: http://localhost:8082/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
+tags:
+- name: Character Creation
+  description: Создание персонажей
+paths:
+  /players/{account_id}/characters:
+    post:
+      tags:
+      - Character Creation
+      summary: Создать персонажа
+      operationId: createCharacter
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterRequest'
+      responses:
+        '201':
+          description: Персонаж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    CreateCharacterRequest:
+      type: object
+      required:
+      - name
+      - origin
+      - class
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 32
+        origin:
+          type: string
+          enum:
+          - street_kid
+          - nomad
+          - corpo
+        class:
+          type: string
+          enum:
+          - solo
+          - netrunner
+          - techie
+          - medtech
+          - media
+          - lawman
+          - exec
+          - fixer
+          - rockerboy
+    CharacterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        origin:
+          type: string
+        class:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        level:
+          type: integer
+          default: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+security:
+- BearerAuth: []

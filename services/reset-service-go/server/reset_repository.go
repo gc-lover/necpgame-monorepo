@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/necpgame/reset-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 

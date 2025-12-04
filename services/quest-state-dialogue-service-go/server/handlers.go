@@ -1,17 +1,28 @@
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
 
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/necpgame/quest-state-dialogue-service-go/pkg/api"
+)
+
+// Context timeout constants (Issue #1604)
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
 )
 
 type Handlers struct{}
 
 func (h *Handlers) GetQuestState(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	response := api.QuestState{
 		State:            api.QuestStateStateINPROGRESS,
 		CurrentObjective: 1,
@@ -23,6 +34,10 @@ func (h *Handlers) GetQuestState(w http.ResponseWriter, r *http.Request, questId
 }
 
 func (h *Handlers) UpdateQuestState(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.UpdateStateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
@@ -38,6 +53,10 @@ func (h *Handlers) UpdateQuestState(w http.ResponseWriter, r *http.Request, ques
 }
 
 func (h *Handlers) GetQuestDialogue(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	response := api.DialogueNode{
 		NodeId: "start",
 		Text:   "Welcome to the quest!",
@@ -66,6 +85,10 @@ func (h *Handlers) GetQuestDialogue(w http.ResponseWriter, r *http.Request, ques
 }
 
 func (h *Handlers) MakeDialogueChoice(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.DialogueChoiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
@@ -89,6 +112,10 @@ func (h *Handlers) MakeDialogueChoice(w http.ResponseWriter, r *http.Request, qu
 }
 
 func (h *Handlers) GetDialogueHistory(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID, params api.GetDialogueHistoryParams) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	now := time.Now()
 	response := api.DialogueHistory{
 		QuestInstanceId: questId,

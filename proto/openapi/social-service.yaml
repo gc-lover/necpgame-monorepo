@@ -1,31 +1,102 @@
-# Issue: SOLID refactoring - simplified social-service (health only)
+# Issue: #104
+
 openapi: 3.0.3
 info:
   title: Social Service API
-  version: 1.0.0
-  description: Social system - simplified spec for chi migration
+  description: |
+    API для социальных механик: отношения с NPC, найм, заказы, наставничество, репутация, гильдии.
+    
+    **Основные модули:**
+    - Relationships - отношения с NPC
+    - NPC Hiring - найм NPC
+    - Player Orders - заказы от игроков
+    - Mentorship - система наставничества
+    - Reputation - репутация
+    - Guilds - гильдии
+    - Family - семейные отношения
+    
+    **Performance:**
+    - Hot endpoints: GET /social/relationships, GET /social/guilds
+    - Expected load: 500 RPS, P99 <50ms
+    - Event-based для большинства операций
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
 servers:
-  - url: http://localhost:8143
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
 tags:
-  - name: health
+  - name: Relationships
+    description: Отношения
+  - name: NPC Hiring
+    description: Найм NPC
+  - name: Player Orders
+    description: Заказы игроков
+  - name: Mentorship
+    description: Наставничество
+  - name: Reputation
+    description: Репутация
+  - name: Guilds
+    description: Гильдии
+
 paths:
-  /health:
+  /social/relationships:
+    $ref: "social-relationships-core-service.yaml#/paths/~1social~1relationships"
+  
+  /social/npc/hiring/candidates:
+    $ref: "social-npc-hiring-candidates-service.yaml#/paths/~1social~1npc~1hiring~1candidates"
+  
+  /social/orders:
+    $ref: "social-player-orders-core-service.yaml#/paths/~1social~1orders"
+  
+  /social/mentorship/contracts:
+    $ref: "social-mentorship-contracts-service.yaml#/paths/~1social~1mentorship~1contracts"
+  
+  /social/reputation:
     get:
-      tags: [health]
-      operationId: healthCheck
+      tags:
+        - Reputation
+      summary: Получить репутацию
+      operationId: getReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Service is healthy
+          description: Репутация
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
+                $ref: "social-reputation-schemas.yaml#/components/schemas/Reputation"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /social/guilds:
+    $ref: "social-guild-core-service.yaml#/paths/~1social~1guilds"
+
 components:
   securitySchemes:
-    $ref: "common.yaml#/components/securitySchemes"
-  responses:
-    $ref: "common.yaml#/components/responses"
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
 
+  responses:
+    BadRequest:
+      $ref: "common.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "common.yaml#/components/responses/Unauthorized"
+    InternalServerError:
+      $ref: "common.yaml#/components/responses/InternalServerError"
+
+security:
+  - BearerAuth: []

@@ -1,39 +1,257 @@
-# Issue: SOLID refactoring - simplified gameplay-service (health only)
-openapi: 3.0.3
+# Issue: #104
 
+openapi: 3.0.3
 info:
   title: Gameplay Service API
-  version: 1.0.0
   description: |
-    Gameplay mechanics - simplified spec for chi migration.
-    Note: Gameplay has 44 modules. Full spec will be created later.
+    API для игровых механик: боевые системы, способности, импланты, стелс, паркур, экстракт-зоны, арены.
+    
+    **Основные модули:**
+    - Combat Sessions - боевые сессии
+    - Combat Abilities - способности и активация
+    - Combat Combos - комбо и синергии
+    - Combat Implants - импланты и киберпсихоз
+    - Stealth System - стелс механики
+    - Freerun System - паркур и акробатика
+    - Extract Zones - зоны экстракции
+    - Arena System - арены
+    
+    **Performance:**
+    - Hot endpoints: POST /combat/sessions, POST /combat/abilities/activate
+    - Expected load: 2k RPS, P99 <50ms
+    - Tick rate: 60-128 Hz для боевых действий
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
 
 servers:
-  - url: http://localhost:8120
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 
 tags:
-  - name: health
+  - name: Combat Sessions
+    description: Боевые сессии
+  - name: Combat Abilities
+    description: Способности
+  - name: Combat Combos
+    description: Комбо и синергии
+  - name: Combat Implants
+    description: Импланты
+  - name: Stealth
+    description: Стелс система
+  - name: Freerun
+    description: Паркур
+  - name: Extract Zones
+    description: Зоны экстракции
+  - name: Arena
+    description: Арены
+  - name: Loadouts
+    description: Лоадауты
 
 paths:
-  /health:
+  /gameplay/combat/sessions:
+    $ref: "combat-session-service.yaml#/paths/~1gameplay~1combat~1sessions"
+  
+  /gameplay/combat/sessions/{sessionId}:
+    $ref: "combat-session-service.yaml#/paths/~1gameplay~1combat~1sessions~1{sessionId}"
+  
+  /gameplay/combat/abilities/catalog:
+    $ref: "combat-abilities-catalog-service.yaml#/paths/~1gameplay~1combat~1abilities~1catalog"
+  
+  /gameplay/combat/abilities/activate:
+    $ref: "combat-abilities-activation-service.yaml#/paths/~1gameplay~1combat~1abilities~1activate"
+  
+  /gameplay/combat/abilities/synergies:
+    $ref: "combat-abilities-synergies-service.yaml#/paths/~1gameplay~1combat~1abilities~1synergies"
+  
+  /gameplay/combat/combos/catalog:
+    $ref: "combat-combos-service.yaml#/paths/~1gameplay~1combat~1combos~1catalog"
+  
+  /gameplay/combat/combos/activate:
+    $ref: "combat-combos-service.yaml#/paths/~1gameplay~1combat~1combos~1activate"
+  
+  /gameplay/combat/implants:
     get:
-      tags: [health]
-      operationId: healthCheck
+      tags:
+        - Combat Implants
+      summary: Получить установленные импланты
+      operationId: getInstalledImplants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          description: Service is healthy
+          description: Список имплантов
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status:
-                    type: string
+                  implants:
+                    type: array
+                    items:
+                      $ref: "combat-implants-core-service.yaml#/components/schemas/Implant"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /gameplay/combat/stealth/status:
+    get:
+      tags:
+        - Stealth
+      summary: Получить статус стелса
+      operationId: getStealthStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус стелса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_stealthed:
+                    type: boolean
+                  detection_level:
+                    type: number
+                    format: float
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /gameplay/combat/freerun/routes:
+    get:
+      tags:
+        - Freerun
+      summary: Получить доступные маршруты паркура
+      operationId: getFreerunRoutes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: position
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "x,y,z"
+        - name: radius
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 100.0
+      responses:
+        "200":
+          description: Список маршрутов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routes:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /gameplay/extract/zones:
+    get:
+      tags:
+        - Extract Zones
+      summary: Получить зоны экстракции
+      operationId: getExtractZones
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список зон
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zones:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /gameplay/arena/sessions:
+    get:
+      tags:
+        - Arena
+      summary: Получить ареновые сессии
+      operationId: getArenaSessions
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список сессий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /gameplay/loadouts:
+    get:
+      tags:
+        - Loadouts
+      summary: Получить лоадауты персонажа
+      operationId: getLoadouts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список лоадаутов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loadouts:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
 
 components:
   securitySchemes:
-    $ref: "common.yaml#/components/securitySchemes"
-  
-  responses:
-    $ref: "common.yaml#/components/responses"
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
 
+  responses:
+    BadRequest:
+      $ref: "common.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "common.yaml#/components/responses/Unauthorized"
+    InternalServerError:
+      $ref: "common.yaml#/components/responses/InternalServerError"
+
+security:
+  - BearerAuth: []

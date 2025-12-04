@@ -25,16 +25,16 @@ END $$;
 
 -- Таблица типов взлома
 CREATE TABLE IF NOT EXISTS hacking.hacking_types (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    type_name VARCHAR(100) NOT NULL UNIQUE,
-    category hacking_type_category NOT NULL,
-    class_requirement VARCHAR(50),
-    skill_requirement JSONB,
-    overheat_cost INTEGER NOT NULL DEFAULT 0 CHECK (overheat_cost >= 0),
-    cooldown_duration INTEGER NOT NULL DEFAULT 0 CHECK (cooldown_duration >= 0),
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  type_name VARCHAR(100) NOT NULL UNIQUE,
+  class_requirement VARCHAR(50),
+  skill_requirement JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  overheat_cost INTEGER NOT NULL DEFAULT 0 CHECK (overheat_cost >= 0),
+  cooldown_duration INTEGER NOT NULL DEFAULT 0 CHECK (cooldown_duration >= 0),
+  category hacking_type_category NOT NULL
 );
 
 -- Индексы для hacking_types
@@ -44,16 +44,16 @@ CREATE INDEX IF NOT EXISTS idx_hacking_types_overheat_cost ON hacking.hacking_ty
 
 -- Таблица сетей для взлома (детальная структура)
 CREATE TABLE IF NOT EXISTS hacking.hacking_networks (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    network_name VARCHAR(255) NOT NULL UNIQUE,
-    network_type hacking_network_type NOT NULL,
-    security_level INTEGER NOT NULL DEFAULT 0 CHECK (security_level >= 0 AND security_level <= 100),
-    access_method hacking_access_method NOT NULL DEFAULT 'remote',
-    protection_levels JSONB,
-    available_demons JSONB,
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT,
+  network_name VARCHAR(255) NOT NULL UNIQUE,
+  protection_levels JSONB,
+  available_demons JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  security_level INTEGER NOT NULL DEFAULT 0 CHECK (security_level >= 0 AND security_level <= 100),
+  network_type hacking_network_type NOT NULL,
+  access_method hacking_access_method NOT NULL DEFAULT 'remote'
 );
 
 -- Индексы для hacking_networks
@@ -63,16 +63,16 @@ CREATE INDEX IF NOT EXISTS idx_hacking_networks_access_method ON hacking.hacking
 
 -- Таблица состояния перегрева
 CREATE TABLE IF NOT EXISTS hacking.hacking_overheat_state (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    session_id UUID REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
-    current_heat INTEGER NOT NULL DEFAULT 0 CHECK (current_heat >= 0),
-    max_heat INTEGER NOT NULL DEFAULT 100 CHECK (max_heat > 0),
-    is_overheated BOOLEAN NOT NULL DEFAULT false,
-    cooling_applied INTEGER NOT NULL DEFAULT 0 CHECK (cooling_applied >= 0),
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, session_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  session_id UUID REFERENCES mvp_core.combat_sessions(id) ON DELETE CASCADE,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  current_heat INTEGER NOT NULL DEFAULT 0 CHECK (current_heat >= 0),
+  max_heat INTEGER NOT NULL DEFAULT 100 CHECK (max_heat > 0),
+  cooling_applied INTEGER NOT NULL DEFAULT 0 CHECK (cooling_applied >= 0),
+  is_overheated BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(character_id, session_id)
 );
 
 -- Индексы для hacking_overheat_state
@@ -82,16 +82,16 @@ CREATE INDEX IF NOT EXISTS idx_hacking_overheat_state_overheated ON hacking.hack
 
 -- Таблица доступа к сетям
 CREATE TABLE IF NOT EXISTS hacking.hacking_network_access (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    network_id UUID NOT NULL REFERENCES hacking.hacking_networks(id) ON DELETE CASCADE,
-    access_level INTEGER NOT NULL DEFAULT 0 CHECK (access_level >= 0),
-    access_method hacking_access_method NOT NULL DEFAULT 'remote',
-    granted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(character_id, network_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  network_id UUID NOT NULL REFERENCES hacking.hacking_networks(id) ON DELETE CASCADE,
+  granted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  access_level INTEGER NOT NULL DEFAULT 0 CHECK (access_level >= 0),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  access_method hacking_access_method NOT NULL DEFAULT 'remote',
+  UNIQUE(character_id, network_id)
 );
 
 -- Индексы для hacking_network_access

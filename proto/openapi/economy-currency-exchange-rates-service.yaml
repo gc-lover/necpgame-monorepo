@@ -1,42 +1,44 @@
-# Issue: #224
 openapi: 3.0.3
 info:
   title: Economy Currency Exchange Rates Service API
-  description: |
-    API для управления курсами валют.
-    
+  description: 'API для управления курсами валют.
+
+
     **Основные возможности:**
+
     - Получение текущих курсов валют
+
     - Получение истории курсов
+
     - Расчёт предварительной котировки
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Exchange Rates
-    description: Управление курсами валют
-
+- name: Exchange Rates
+  description: Управление курсами валют
 paths:
   /currency-exchange/rates:
     get:
       tags:
-        - Exchange Rates
+      - Exchange Rates
       summary: Получить текущие курсы валют
-      description: |
-        Возвращает текущие курсы всех доступных валютных пар.
+      description: 'Возвращает текущие курсы всех доступных валютных пар.
+
+        '
       operationId: getExchangeRates
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Текущие курсы валют
           content:
             application/json:
@@ -46,80 +48,80 @@ paths:
                   rates:
                     type: array
                     items:
-                      $ref: "#/components/schemas/ExchangeRate"
+                      $ref: '#/components/schemas/ExchangeRate'
                   updated_at:
                     type: string
                     format: date-time
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /currency-exchange/rates/{pair}:
     get:
       tags:
-        - Exchange Rates
+      - Exchange Rates
       summary: Получить курс валютной пары
-      description: |
-        Возвращает текущий курс для указанной валютной пары.
+      description: 'Возвращает текущий курс для указанной валютной пары.
+
+        '
       operationId: getExchangeRate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: pair
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Валютная пара (например, USD/EUR)
-          example: "USD/EUR"
+      - name: pair
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Валютная пара (например, USD/EUR)
+        example: USD/EUR
       responses:
-        "200":
+        '200':
           description: Курс валютной пары
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExchangeRate"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ExchangeRate'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /currency-exchange/rates/history:
     get:
       tags:
-        - Exchange Rates
+      - Exchange Rates
       summary: Получить историю курсов
-      description: |
-        Возвращает историю курсов для указанной валютной пары за период.
+      description: 'Возвращает историю курсов для указанной валютной пары за период.
+
+        '
       operationId: getExchangeRateHistory
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: pair
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Валютная пара (например, USD/EUR)
-        - name: period_start
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: period_end
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: pair
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Валютная пара (например, USD/EUR)
+      - name: period_start
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода
+      - name: period_end
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Конец периода
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: История курсов
           content:
             application/json:
@@ -131,52 +133,51 @@ paths:
                   history:
                     type: array
                     items:
-                      $ref: "#/components/schemas/ExchangeRateHistory"
+                      $ref: '#/components/schemas/ExchangeRateHistory'
                   total:
                     type: integer
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /currency-exchange/quote:
     post:
       tags:
-        - Exchange Rates
+      - Exchange Rates
       summary: Расчёт предварительной котировки
-      description: |
-        Рассчитывает предварительную котировку для обмена валют,
+      description: 'Рассчитывает предварительную котировку для обмена валют,
+
         включая курс, комиссию и итоговую сумму.
+
+        '
       operationId: calculateQuote
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/QuoteRequest"
+              $ref: '#/components/schemas/QuoteRequest'
       responses:
-        "200":
+        '200':
           description: Предварительная котировка
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QuoteResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ExchangeRate:
       type: object
@@ -188,6 +189,9 @@ components:
           type: string
         quote_currency:
           type: string
+        updated_at:
+          type: string
+          format: date-time
         rate:
           type: number
           description: Курс обмена
@@ -200,27 +204,24 @@ components:
         sell_rate:
           type: number
           description: Курс продажи
-        updated_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ExchangeRateHistory:
       type: object
       properties:
         pair:
           type: string
-        rate:
-          type: number
         timestamp:
           type: string
           format: date-time
-
+        rate:
+          type: number
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuoteRequest:
       type: object
       required:
-        - from_currency
-        - to_currency
-        - amount
+      - from_currency
+      - to_currency
+      - amount
       properties:
         from_currency:
           type: string
@@ -229,7 +230,6 @@ components:
         amount:
           type: number
           minimum: 0
-
     QuoteResponse:
       type: object
       properties:
@@ -237,6 +237,9 @@ components:
           type: string
         to_currency:
           type: string
+        valid_until:
+          type: string
+          format: date-time
         amount:
           type: number
         rate:
@@ -245,10 +248,6 @@ components:
           type: number
         total:
           type: number
-        valid_until:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

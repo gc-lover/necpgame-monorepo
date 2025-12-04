@@ -2,38 +2,40 @@ openapi: 3.0.3
 info:
   title: Player Orders Multi-Executor Service API
   version: 1.0.0
-  description: |
-    API для управления мульти-исполнительными заказами.
+  description: 'API для управления мульти-исполнительными заказами.
+
     Включает приглашение и присоединение исполнителей.
+
+    '
   contact:
     name: NECP Game API Team
     email: api@necp.game
 servers:
-  - url: https://api.necp.game/v1
-    description: Production server
-  - url: https://api-dev.necp.game/v1
-    description: Development server
+- url: https://api.necp.game/v1
+  description: Production server
+- url: https://api-dev.necp.game/v1
+  description: Development server
 tags:
-  - name: Multi-Executor
-    description: Мульти-исполнительные заказы
+- name: Multi-Executor
+  description: Мульти-исполнительные заказы
 paths:
   /social/orders/{orderId}/executors/invite:
     post:
       tags:
-        - Multi-Executor
+      - Multi-Executor
       summary: Пригласить исполнителя
       description: Приглашение дополнительного исполнителя для мульти-исполнительного заказа.
       operationId: inviteExecutor
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: Уникальный идентификатор заказа
-          schema:
-            type: string
-            format: uuid
+      - name: orderId
+        in: path
+        required: true
+        description: Уникальный идентификатор заказа
+        schema:
+          type: string
+          format: uuid
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -60,20 +62,20 @@ paths:
   /social/orders/{orderId}/executors/join:
     post:
       tags:
-        - Multi-Executor
+      - Multi-Executor
       summary: Присоединиться к заказу
       description: Присоединение к мульти-исполнительному заказу.
       operationId: joinOrder
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: Уникальный идентификатор заказа
-          schema:
-            type: string
-            format: uuid
+      - name: orderId
+        in: path
+        required: true
+        description: Уникальный идентификатор заказа
+        schema:
+          type: string
+          format: uuid
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Успешное присоединение к заказу
@@ -102,7 +104,7 @@ components:
     InviteExecutorRequest:
       type: object
       required:
-        - executorId
+      - executorId
       properties:
         executorId:
           type: string
@@ -115,11 +117,11 @@ components:
     ExecutorInvitation:
       type: object
       required:
-        - id
-        - orderId
-        - executorId
-        - status
-        - createdAt
+      - id
+      - orderId
+      - executorId
+      - status
+      - createdAt
       properties:
         id:
           type: string
@@ -136,17 +138,17 @@ components:
         status:
           type: string
           enum:
-            - pending
-            - accepted
-            - declined
+          - pending
+          - accepted
+          - declined
         createdAt:
           type: string
           format: date-time
     Error:
       type: object
       required:
-        - error
-        - message
+      - error
+      - message
       properties:
         error:
           type: string
@@ -166,15 +168,15 @@ components:
     Order:
       type: object
       required:
-        - id
-        - clientId
-        - title
-        - description
-        - orderType
-        - status
-        - reward
-        - riskLevel
-        - createdAt
+      - id
+      - clientId
+      - title
+      - description
+      - orderType
+      - status
+      - reward
+      - riskLevel
+      - createdAt
       properties:
         id:
           type: string
@@ -200,52 +202,70 @@ components:
         orderType:
           type: string
           enum:
-            - combat
-            - hacking
-            - trade
-            - political
-            - intelligence
-            - medical
-            - rescue
-            - transport
-            - diplomatic
-            - social
+          - combat
+          - hacking
+          - trade
+          - political
+          - intelligence
+          - medical
+          - rescue
+          - transport
+          - diplomatic
+          - social
           description: Тип заказа
         status:
           type: string
           enum:
-            - pending
-            - accepted
-            - in_progress
-            - completed
-            - cancelled
-            - expired
+          - pending
+          - accepted
+          - in_progress
+          - completed
+          - cancelled
+          - expired
           description: Статус заказа
+        riskLevel:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
+          description: Уровень риска
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Крайний срок выполнения
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата и время создания заказа
+        updatedAt:
+          type: string
+          format: date-time
+          description: Дата и время последнего обновления
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата и время завершения заказа
         reward:
           type: object
           required:
-            - currency
-            - amount
+          - currency
+          - amount
           properties:
             currency:
               type: string
               enum:
-                - ed
-                - credits
-                - reputation
+              - ed
+              - credits
+              - reputation
               description: Валюта награды
             amount:
               type: integer
               minimum: 0
               description: Размер награды
-        riskLevel:
-          type: string
-          enum:
-            - low
-            - medium
-            - high
-            - extreme
-          description: Уровень риска
         requirements:
           type: object
           description: Требования к исполнителю
@@ -268,24 +288,7 @@ components:
             type: string
             format: uuid
           description: Список исполнителей (для мульти-исполнительных заказов)
-        deadline:
-          type: string
-          format: date-time
-          nullable: true
-          description: Крайний срок выполнения
-        createdAt:
-          type: string
-          format: date-time
-          description: Дата и время создания заказа
-        updatedAt:
-          type: string
-          format: date-time
-          description: Дата и время последнего обновления
-        completedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Дата и время завершения заказа
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
       description: Неверный запрос

@@ -28,17 +28,17 @@ END $$;
 
 -- Таблица определений лидербордов
 CREATE TABLE IF NOT EXISTS world.leaderboards (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    code VARCHAR(100) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('global', 'class', 'seasonal', 'friend', 'guild')),
-    scope VARCHAR(100) NOT NULL,
-    metric_type VARCHAR(100) NOT NULL,
-    update_frequency VARCHAR(20) NOT NULL CHECK (update_frequency IN ('realtime', 'hourly', 'daily', 'weekly')),
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    season_id UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  season_id UUID,
+  code VARCHAR(100) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(20) NOT NULL CHECK (type IN ('global', 'class', 'seasonal', 'friend', 'guild')),
+  scope VARCHAR(100) NOT NULL,
+  metric_type VARCHAR(100) NOT NULL,
+  update_frequency VARCHAR(20) NOT NULL CHECK (update_frequency IN ('realtime', 'hourly', 'daily', 'weekly')),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN NOT NULL DEFAULT true
 );
 
 -- Индексы для leaderboards
@@ -48,17 +48,17 @@ CREATE INDEX IF NOT EXISTS idx_leaderboards_season_id ON world.leaderboards(seas
 
 -- Таблица записей в лидербордах
 CREATE TABLE IF NOT EXISTS world.leaderboard_entries (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    leaderboard_id UUID NOT NULL REFERENCES world.leaderboards(id) ON DELETE CASCADE,
-    player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    score DECIMAL(20, 2) NOT NULL DEFAULT 0,
-    rank INTEGER NOT NULL DEFAULT 0,
-    previous_rank INTEGER,
-    tier VARCHAR(20) CHECK (tier IN ('diamond', 'platinum', 'gold', 'silver', 'bronze')),
-    metadata JSONB DEFAULT '{}'::jsonb,
-    season_id UUID,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(leaderboard_id, player_id, season_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  leaderboard_id UUID NOT NULL REFERENCES world.leaderboards(id) ON DELETE CASCADE,
+  player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  season_id UUID,
+  tier VARCHAR(20) CHECK (tier IN ('diamond', 'platinum', 'gold', 'silver', 'bronze')),
+  metadata JSONB DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  score DECIMAL(20, 2) NOT NULL DEFAULT 0,
+  rank INTEGER NOT NULL DEFAULT 0,
+  previous_rank INTEGER,
+  UNIQUE(leaderboard_id, player_id, season_id)
 );
 
 -- Индексы для leaderboard_entries
@@ -82,14 +82,14 @@ CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_season ON world.leaderboard
 
 -- Таблица сезонов лидербордов
 CREATE TABLE IF NOT EXISTS world.leaderboard_seasons (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'ended', 'archived')),
-    rewards_distributed BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (end_date > start_date)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'ended', 'archived')),
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rewards_distributed BOOLEAN NOT NULL DEFAULT false,
+  CHECK (end_date > start_date)
 );
 
 -- Индексы для leaderboard_seasons
@@ -98,14 +98,14 @@ CREATE INDEX IF NOT EXISTS idx_leaderboard_seasons_start_end_date ON world.leade
 
 -- Таблица наград за позиции в лидербордах
 CREATE TABLE IF NOT EXISTS world.leaderboard_rewards (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    leaderboard_id UUID NOT NULL REFERENCES world.leaderboards(id) ON DELETE CASCADE,
-    season_id UUID REFERENCES world.leaderboard_seasons(id) ON DELETE CASCADE,
-    tier VARCHAR(20) NOT NULL CHECK (tier IN ('diamond', 'platinum', 'gold', 'silver', 'bronze')),
-    rank_min INTEGER NOT NULL CHECK (rank_min > 0),
-    rank_max INTEGER NOT NULL CHECK (rank_max >= rank_min),
-    rewards JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  leaderboard_id UUID NOT NULL REFERENCES world.leaderboards(id) ON DELETE CASCADE,
+  season_id UUID REFERENCES world.leaderboard_seasons(id) ON DELETE CASCADE,
+  tier VARCHAR(20) NOT NULL CHECK (tier IN ('diamond', 'platinum', 'gold', 'silver', 'bronze')),
+  rewards JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rank_min INTEGER NOT NULL CHECK (rank_min > 0),
+  rank_max INTEGER NOT NULL CHECK (rank_max >= rank_min)
 );
 
 -- Индексы для leaderboard_rewards

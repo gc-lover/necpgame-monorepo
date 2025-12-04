@@ -57,18 +57,21 @@ CREATE INDEX IF NOT EXISTS idx_outbox_event_type
 
 -- Таблица Saga транзакций
 CREATE TABLE IF NOT EXISTS mvp_meta.saga (
-    saga_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    saga_type VARCHAR(255) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'compensating', 'failed', 'cancelled')),
-    current_step INTEGER NOT NULL DEFAULT 0 CHECK (current_step >= 0),
-    total_steps INTEGER NOT NULL DEFAULT 0 CHECK (total_steps >= 0),
-    steps JSONB NOT NULL DEFAULT '[]', -- массив шагов Saga
-    compensation_steps JSONB DEFAULT '[]', -- компенсирующие шаги
-    context JSONB DEFAULT '{}', -- контекст Saga
+  saga_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  -- контекст Saga
     error_message TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP
+  saga_type VARCHAR(255) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'compensating', 'failed', 'cancelled')),
+  steps JSONB NOT NULL DEFAULT '[]',
+  -- массив шагов Saga
+    compensation_steps JSONB DEFAULT '[]',
+  -- компенсирующие шаги
+    context JSONB DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
+  current_step INTEGER NOT NULL DEFAULT 0 CHECK (current_step >= 0),
+  total_steps INTEGER NOT NULL DEFAULT 0 CHECK (total_steps >= 0)
 );
 
 -- Индексы для saga
@@ -81,13 +84,14 @@ CREATE INDEX IF NOT EXISTS idx_saga_created_at
 
 -- Таблица состояния синхронизации
 CREATE TABLE IF NOT EXISTS mvp_meta.sync_state (
-    key VARCHAR(255) NOT NULL,
-    category VARCHAR(100) NOT NULL,
-    value JSONB NOT NULL DEFAULT '{}',
-    version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 0),
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by UUID, -- FK characters или сервис
-    PRIMARY KEY (key, category)
+  -- FK characters или сервис
+    PRIMARY KEY (key, category),
+  updated_by UUID,
+  key VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  value JSONB NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 0)
 );
 
 -- Индексы для sync_state
@@ -100,17 +104,19 @@ CREATE INDEX IF NOT EXISTS idx_sync_state_updated_by
 
 -- Таблица конфликтов синхронизации
 CREATE TABLE IF NOT EXISTS mvp_meta.conflicts (
-    conflict_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    key VARCHAR(255) NOT NULL,
-    category VARCHAR(100) NOT NULL,
-    conflict_type VARCHAR(100) NOT NULL CHECK (conflict_type IN ('version', 'timestamp', 'state', 'custom')),
-    old_value JSONB,
-    new_value JSONB,
-    detected_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP,
-    resolution_strategy VARCHAR(100), -- стратегия разрешения конфликта
-    resolved_by UUID, -- FK characters или сервис
-    resolution_data JSONB DEFAULT '{}'
+  conflict_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  -- стратегия разрешения конфликта
+    resolved_by UUID,
+  key VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  conflict_type VARCHAR(100) NOT NULL CHECK (conflict_type IN ('version', 'timestamp', 'state', 'custom')),
+  resolution_strategy VARCHAR(100),
+  old_value JSONB,
+  new_value JSONB,
+  -- FK characters или сервис
+    resolution_data JSONB DEFAULT '{}',
+  detected_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  resolved_at TIMESTAMP
 );
 
 -- Индексы для conflicts
@@ -125,15 +131,17 @@ CREATE INDEX IF NOT EXISTS idx_conflicts_detected_at
 
 -- Таблица проверок консистентности
 CREATE TABLE IF NOT EXISTS mvp_meta.consistency_checks (
-    check_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    service_name VARCHAR(255) NOT NULL,
-    check_type VARCHAR(100) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'passed', 'failed', 'warning')),
-    violations JSONB DEFAULT '[]', -- массив нарушений консистентности
+  service_name VARCHAR(255) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'passed', 'failed', 'warning')),
+  violations JSONB DEFAULT '[]',
+  -- длительность проверки в миллисекундах
+    metadata JSONB DEFAULT '{}' -- дополнительная информация о проверке,
+  -- массив нарушений консистентности
     checked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP,
-    duration_ms INTEGER, -- длительность проверки в миллисекундах
-    metadata JSONB DEFAULT '{}' -- дополнительная информация о проверке
+  completed_at TIMESTAMP,
+  duration_ms INTEGER,
+  check_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  check_type VARCHAR(100) NOT NULL
 );
 
 -- Индексы для consistency_checks

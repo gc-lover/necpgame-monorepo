@@ -1,4 +1,4 @@
-// Issue: #141888786
+// Issue: #141888786, ogen migration
 package server
 
 import (
@@ -9,9 +9,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/necpgame/clan-war-service-go/models"
+	clanwarapi "github.com/necpgame/clan-war-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,7 +35,7 @@ type ClanWarServiceInterface interface {
 
 type HTTPServer struct {
 	addr           string
-	router         *mux.Router
+	router         *chi.Mux
 	clanWarService ClanWarServiceInterface
 	logger         *logrus.Logger
 	server         *http.Server
@@ -42,7 +44,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, clanWarService ClanWarServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	server := &HTTPServer{
 		addr:           addr,
 		router:         router,
@@ -55,30 +57,33 @@ func NewHTTPServer(addr string, clanWarService ClanWarServiceInterface, jwtValid
 	router.Use(server.loggingMiddleware)
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
+	router.Use(middleware.Recoverer)
 
-	if authEnabled {
-		router.Use(server.authMiddleware)
+	// Initialize ogen handlers and security handler
+	ogenHandlers := NewHandlers(clanWarService)
+	ogenSecurity := NewSecurityHandler(jwtValidator, authEnabled)
+
+	// Create ogen server
+	ogenServer, err := clanwarapi.NewServer(ogenHandlers, ogenSecurity)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	api := router.PathPrefix("/api/v1/clan-war").Subrouter()
+	router.Mount("/api/v1/world/clan-war", ogenServer)
 
-	api.HandleFunc("/wars", server.declareWar).Methods("POST")
-	api.HandleFunc("/wars", server.listWars).Methods("GET")
-	api.HandleFunc("/wars/{war_id}", server.getWar).Methods("GET")
-	api.HandleFunc("/wars/{war_id}/start", server.startWar).Methods("POST")
-	api.HandleFunc("/wars/{war_id}/complete", server.completeWar).Methods("POST")
+	// Legacy handlers for battles and territories (not in core spec yet)
+	router.Route("/api/v1/clan-war", func(r chi.Router) {
+		r.Post("/battles", server.createBattle)
+		r.Get("/battles", server.listBattles)
+		r.Get("/battles/{battle_id}", server.getBattle)
+		r.Post("/battles/{battle_id}/start", server.startBattle)
+		r.Post("/battles/{battle_id}/complete", server.completeBattle)
+		r.Put("/battles/{battle_id}/score", server.updateBattleScore)
+		r.Get("/territories", server.listTerritories)
+		r.Get("/territories/{territory_id}", server.getTerritory)
+	})
 
-	api.HandleFunc("/battles", server.createBattle).Methods("POST")
-	api.HandleFunc("/battles", server.listBattles).Methods("GET")
-	api.HandleFunc("/battles/{battle_id}", server.getBattle).Methods("GET")
-	api.HandleFunc("/battles/{battle_id}/start", server.startBattle).Methods("POST")
-	api.HandleFunc("/battles/{battle_id}/complete", server.completeBattle).Methods("POST")
-	api.HandleFunc("/battles/{battle_id}/score", server.updateBattleScore).Methods("PUT")
-
-	api.HandleFunc("/territories", server.listTerritories).Methods("GET")
-	api.HandleFunc("/territories/{territory_id}", server.getTerritory).Methods("GET")
-
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.HandleFunc("/health", server.healthCheck)
 
 	return server
 }
@@ -153,31 +158,14 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			s.respondError(w, http.StatusUnauthorized, "missing authorization header")
-			return
-		}
-
-		claims, err := s.jwtValidator.Verify(r.Context(), authHeader)
-		if err != nil {
-			s.logger.WithError(err).Warn("JWT validation failed")
-			s.respondError(w, http.StatusUnauthorized, "invalid token")
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "claims", claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(data); err != nil {
 		s.logger.WithError(err).Error("Failed to encode JSON response")
-		// Send error response to client
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		errorResponse := map[string]string{"error": "Failed to encode response"}
@@ -192,124 +180,7 @@ func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interfa
 	}
 }
 
-func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
-	s.respondJSON(w, status, map[string]string{"error": message})
-}
-
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
-}
-
-func (s *HTTPServer) declareWar(w http.ResponseWriter, r *http.Request) {
-	var req models.DeclareWarRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	war, err := s.clanWarService.DeclareWar(r.Context(), &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to declare war")
-		s.respondError(w, http.StatusInternalServerError, "failed to declare war")
-		return
-	}
-
-	s.respondJSON(w, http.StatusCreated, war)
-}
-
-func (s *HTTPServer) getWar(w http.ResponseWriter, r *http.Request) {
-	warIDStr := mux.Vars(r)["war_id"]
-	warID, err := uuid.Parse(warIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid war ID")
-		return
-	}
-
-	war, err := s.clanWarService.GetWar(r.Context(), warID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get war")
-		s.respondError(w, http.StatusInternalServerError, "failed to get war")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, war)
-}
-
-func (s *HTTPServer) listWars(w http.ResponseWriter, r *http.Request) {
-	var guildID *uuid.UUID
-	if guildIDStr := r.URL.Query().Get("guild_id"); guildIDStr != "" {
-		id, err := uuid.Parse(guildIDStr)
-		if err == nil {
-			guildID = &id
-		}
-	}
-
-	var status *models.WarStatus
-	if statusStr := r.URL.Query().Get("status"); statusStr != "" {
-		s := models.WarStatus(statusStr)
-		status = &s
-	}
-
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	if limit <= 0 {
-		limit = 20
-	}
-	if limit > 100 {
-		limit = 100
-	}
-
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	if offset < 0 {
-		offset = 0
-	}
-
-	wars, total, err := s.clanWarService.ListWars(r.Context(), guildID, status, limit, offset)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to list wars")
-		s.respondError(w, http.StatusInternalServerError, "failed to list wars")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, models.WarListResponse{
-		Wars:  wars,
-		Total: total,
-	})
-}
-
-func (s *HTTPServer) startWar(w http.ResponseWriter, r *http.Request) {
-	warIDStr := mux.Vars(r)["war_id"]
-	warID, err := uuid.Parse(warIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid war ID")
-		return
-	}
-
-	if err := s.clanWarService.StartWar(r.Context(), warID); err != nil {
-		s.logger.WithError(err).Error("Failed to start war")
-		s.respondError(w, http.StatusInternalServerError, "failed to start war")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "war started"})
-}
-
-func (s *HTTPServer) completeWar(w http.ResponseWriter, r *http.Request) {
-	warIDStr := mux.Vars(r)["war_id"]
-	warID, err := uuid.Parse(warIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid war ID")
-		return
-	}
-
-	if err := s.clanWarService.CompleteWar(r.Context(), warID); err != nil {
-		s.logger.WithError(err).Error("Failed to complete war")
-		s.respondError(w, http.StatusInternalServerError, "failed to complete war")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "war completed"})
-}
-
+// Legacy handlers (battles, territories) - keep for backward compatibility
 func (s *HTTPServer) createBattle(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateBattleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -328,7 +199,7 @@ func (s *HTTPServer) createBattle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) getBattle(w http.ResponseWriter, r *http.Request) {
-	battleIDStr := mux.Vars(r)["battle_id"]
+	battleIDStr := chi.URLParam(r, "battle_id")
 	battleID, err := uuid.Parse(battleIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid battle ID")
@@ -387,7 +258,7 @@ func (s *HTTPServer) listBattles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) startBattle(w http.ResponseWriter, r *http.Request) {
-	battleIDStr := mux.Vars(r)["battle_id"]
+	battleIDStr := chi.URLParam(r, "battle_id")
 	battleID, err := uuid.Parse(battleIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid battle ID")
@@ -404,7 +275,7 @@ func (s *HTTPServer) startBattle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) completeBattle(w http.ResponseWriter, r *http.Request) {
-	battleIDStr := mux.Vars(r)["battle_id"]
+	battleIDStr := chi.URLParam(r, "battle_id")
 	battleID, err := uuid.Parse(battleIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid battle ID")
@@ -421,7 +292,7 @@ func (s *HTTPServer) completeBattle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) updateBattleScore(w http.ResponseWriter, r *http.Request) {
-	battleIDStr := mux.Vars(r)["battle_id"]
+	battleIDStr := chi.URLParam(r, "battle_id")
 	battleID, err := uuid.Parse(battleIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid battle ID")
@@ -445,7 +316,7 @@ func (s *HTTPServer) updateBattleScore(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) getTerritory(w http.ResponseWriter, r *http.Request) {
-	territoryIDStr := mux.Vars(r)["territory_id"]
+	territoryIDStr := chi.URLParam(r, "territory_id")
 	territoryID, err := uuid.Parse(territoryIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid territory ID")
@@ -495,6 +366,10 @@ func (s *HTTPServer) listTerritories(w http.ResponseWriter, r *http.Request) {
 		Territories: territories,
 		Total:       total,
 	})
+}
+
+func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
+	s.respondJSON(w, status, map[string]string{"error": message})
 }
 
 type responseRecorder struct {

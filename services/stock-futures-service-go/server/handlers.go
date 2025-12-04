@@ -1,205 +1,128 @@
+// Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
 	"time"
 
-	"github.com/necpgame/stock-futures-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
+	api "github.com/necpgame/stock-futures-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
+)
+
+// FuturesHandlers implements api.Handler interface (ogen typed handlers)
 type FuturesHandlers struct {
 	logger *logrus.Logger
 }
 
+// NewFuturesHandlers creates new handlers
 func NewFuturesHandlers() *FuturesHandlers {
 	return &FuturesHandlers{
 		logger: GetLogger(),
 	}
 }
 
-func (h *FuturesHandlers) ListFuturesContracts(w http.ResponseWriter, r *http.Request, params api.ListFuturesContractsParams) {
-	ctx := r.Context()
-	_ = ctx
+// ListFuturesContracts - TYPED response!
+func (h *FuturesHandlers) ListFuturesContracts(ctx context.Context, params api.ListFuturesContractsParams) (api.ListFuturesContractsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"underlying":      params.Underlying,
-		"expiration_from": params.ExpirationFrom,
-		"expiration_to":   params.ExpirationTo,
-		"limit":           params.Limit,
-		"offset":          params.Offset,
+		"underlying": params.Underlying,
 	}).Info("ListFuturesContracts request")
 
+	// TODO: Implement business logic
 	contracts := []api.FuturesContract{}
 	total := 0
-	limit := 50
-	if params.Limit != nil {
-		limit = *params.Limit
-	}
-	offset := 0
-	if params.Offset != nil {
-		offset = *params.Offset
-	}
 
-	type ListFuturesContractsResponse struct {
-		Data       []api.FuturesContract    `json:"data"`
-		Pagination *api.PaginationResponse `json:"pagination,omitempty"`
-	}
-
-	pagination := api.PaginationResponse{
-		Total:  total,
-		Limit:  &limit,
-		Offset: &offset,
-		Items:  []interface{}{},
-	}
-
-	response := ListFuturesContractsResponse{
-		Data:       contracts,
-		Pagination: &pagination,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.ListFuturesContractsOK{
+		Contracts: contracts,
+		Pagination: api.NewOptPaginationResponse(api.PaginationResponse{
+			Total:  total,
+			Limit:  api.NewOptInt(50),
+			Offset: api.NewOptInt(0),
+		}),
+	}, nil
 }
 
-func (h *FuturesHandlers) OpenFuturesPosition(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
-
-	var req api.OpenFuturesPositionJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode OpenFuturesPosition request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+// OpenFuturesPosition - TYPED response!
+func (h *FuturesHandlers) OpenFuturesPosition(ctx context.Context, req *api.OpenFuturesRequest) (api.OpenFuturesPositionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"contract_id": req.ContractId,
+		"contract_id": req.ContractID,
 		"quantity":    req.Quantity,
 	}).Info("OpenFuturesPosition request")
 
-	positionId := openapi_types.UUID{}
+	// TODO: Implement business logic
+	positionID := uuid.New()
 	now := time.Now()
-	entryPrice := float32(0.0)
-	currentPrice := float32(0.0)
-	marginHeld := float32(0.0)
-	pnl := float32(0.0)
+	entryPrice := float64(0.0)
+	currentPrice := float64(0.0)
+	marginHeld := float64(0.0)
+	pnl := float64(0.0)
 	daysToSettlement := 0
-	quantity := req.Quantity
 
-	response := api.FuturesPosition{
-		PositionId:       &positionId,
-		ContractId:       &req.ContractId,
-		PlayerId:         nil,
-		Quantity:         &quantity,
-		EntryPrice:       &entryPrice,
-		CurrentPrice:     &currentPrice,
-		MarginHeld:       &marginHeld,
-		Pnl:              &pnl,
-		DaysToSettlement: &daysToSettlement,
-		OpenedAt:         &now,
-	}
-
-	h.respondJSON(w, http.StatusCreated, response)
+	return &api.FuturesPosition{
+		PositionID:       api.NewOptUUID(positionID),
+		ContractID:      api.NewOptUUID(req.ContractID),
+		Quantity:        api.NewOptInt(req.Quantity),
+		EntryPrice:      api.NewOptFloat64(entryPrice),
+		CurrentPrice:    api.NewOptFloat64(currentPrice),
+		MarginHeld:      api.NewOptFloat64(marginHeld),
+		Pnl:             api.NewOptFloat64(pnl),
+		DaysToSettlement: api.NewOptInt(daysToSettlement),
+		OpenedAt:        api.NewOptDateTime(now),
+	}, nil
 }
 
-func (h *FuturesHandlers) ListFuturesPositions(w http.ResponseWriter, r *http.Request, params api.ListFuturesPositionsParams) {
-	ctx := r.Context()
-	_ = ctx
+// ListFuturesPositions - TYPED response!
+func (h *FuturesHandlers) ListFuturesPositions(ctx context.Context, params api.ListFuturesPositionsParams) (api.ListFuturesPositionsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 	activeOnly := false
-	if params.ActiveOnly != nil {
-		activeOnly = *params.ActiveOnly
+	if params.ActiveOnly.Set {
+		activeOnly = params.ActiveOnly.Value
 	}
 
 	h.logger.WithFields(logrus.Fields{
 		"active_only": activeOnly,
-		"limit":       params.Limit,
-		"offset":      params.Offset,
 	}).Info("ListFuturesPositions request")
 
+	// TODO: Implement business logic
 	positions := []api.FuturesPosition{}
 	total := 0
-	limit := 50
-	if params.Limit != nil {
-		limit = *params.Limit
-	}
-	offset := 0
-	if params.Offset != nil {
-		offset = *params.Offset
-	}
 
-	type ListFuturesPositionsResponse struct {
-		Data       []api.FuturesPosition     `json:"data"`
-		Pagination *api.PaginationResponse  `json:"pagination,omitempty"`
-	}
-
-	pagination := api.PaginationResponse{
-		Total:  total,
-		Limit:  &limit,
-		Offset: &offset,
-		Items:  []interface{}{},
-	}
-
-	response := ListFuturesPositionsResponse{
-		Data:       positions,
-		Pagination: &pagination,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.ListFuturesPositionsOK{
+		Positions: positions,
+		Pagination: api.NewOptPaginationResponse(api.PaginationResponse{
+			Total:  total,
+			Limit:  api.NewOptInt(50),
+			Offset: api.NewOptInt(0),
+		}),
+	}, nil
 }
 
-func (h *FuturesHandlers) CloseFuturesPosition(w http.ResponseWriter, r *http.Request, positionId openapi_types.UUID) {
-	ctx := r.Context()
-	_ = ctx
+// CloseFuturesPosition - TYPED response!
+func (h *FuturesHandlers) CloseFuturesPosition(ctx context.Context, params api.CloseFuturesPositionParams) (api.CloseFuturesPositionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("position_id", positionId).Info("CloseFuturesPosition request")
+	h.logger.WithField("position_id", params.PositionID).Info("CloseFuturesPosition request")
 
+	// TODO: Implement business logic
 	now := time.Now()
-	realizedPnl := float32(0.0)
-	response := api.ClosePositionResponse{
-		PositionId:  &positionId,
-		RealizedPnl: &realizedPnl,
-		ClosedAt:    &now,
-	}
+	realizedPnl := float64(0.0)
 
-	h.respondJSON(w, http.StatusOK, response)
+	return &api.ClosePositionResponse{
+		PositionID:  api.NewOptUUID(params.PositionID),
+		RealizedPnl: api.NewOptFloat64(realizedPnl),
+		ClosedAt:    api.NewOptDateTime(now),
+	}, nil
 }
-
-func (h *FuturesHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (h *FuturesHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-		Code:    nil,
-		Details: nil,
-	}
-	h.respondJSON(w, status, errorResponse)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

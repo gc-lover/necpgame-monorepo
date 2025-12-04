@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/movement-service-go/models"
-	"github.com/necpgame/movement-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/pkg/api"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

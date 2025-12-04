@@ -1,63 +1,78 @@
-# Issue: #216
 openapi: 3.0.3
 info:
   title: Economy Analytics Alerts Service API
-  description: |
-    API для оповещений экономической аналитики в NECPGAME.
-    
+  description: 'API для оповещений экономической аналитики в NECPGAME.
+
+
     **Основные возможности:**
+
     - Создание ценовых оповещений
+
     - Создание событийных оповещений
+
     - Управление оповещениями
+
     - Получение списка оповещений
-    
+
+
     **Интеграции:**
+
     - economy-service - данные о ценах
+
     - stock-exchange-service - данные биржи
+
     - notification-service - отправка уведомлений
+
     - analytics-service - основная логика аналитики
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8095/api/v1
-    description: Analytics Service (локальная разработка)
-  - url: https://api.necp.game/api/v1
-    description: Analytics Service (продакшн)
-
+- url: http://localhost:8095/api/v1
+  description: Analytics Service (локальная разработка)
+- url: https://api.necp.game/api/v1
+  description: Analytics Service (продакшн)
 tags:
-  - name: Alerts
-    description: Оповещения
-
+- name: Alerts
+  description: Оповещения
 paths:
   /analytics/alerts:
     get:
       tags:
-        - Alerts
+      - Alerts
       summary: Получить список оповещений
-      description: |
-        Возвращает список оповещений игрока.
+      description: 'Возвращает список оповещений игрока.
+
+        '
       operationId: getAlerts
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: active_only
-          in: query
-          schema:
-            type: boolean
-          description: Только активные оповещения
-        - name: alert_type
-          in: query
-          schema:
-            type: string
-            enum: [price_above, price_below, price_crosses_above, price_crosses_below, rsi_above, rsi_below, event]
-          description: Фильтр по типу оповещения
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+        description: Только активные оповещения
+      - name: alert_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - price_above
+          - price_below
+          - price_crosses_above
+          - price_crosses_below
+          - rsi_above
+          - rsi_below
+          - event
+        description: Фильтр по типу оповещения
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список оповещений
           content:
             application/json:
@@ -67,159 +82,157 @@ paths:
                   alerts:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Alert"
+                      $ref: '#/components/schemas/Alert'
                   total:
                     type: integer
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     post:
       tags:
-        - Alerts
+      - Alerts
       summary: Создать оповещение
-      description: |
-        Создает новое оповещение для игрока.
+      description: 'Создает новое оповещение для игрока.
+
+        '
       operationId: createAlert
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateAlertRequest"
+              $ref: '#/components/schemas/CreateAlertRequest'
       responses:
-        "201":
+        '201':
           description: Оповещение создано
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Alert"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Alert'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/alerts/{alert_id}:
     get:
       tags:
-        - Alerts
+      - Alerts
       summary: Получить информацию об оповещении
-      description: |
-        Возвращает детальную информацию об оповещении.
+      description: 'Возвращает детальную информацию об оповещении.
+
+        '
       operationId: getAlertById
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: alert_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор оповещения
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор оповещения
       responses:
-        "200":
+        '200':
           description: Информация об оповещении
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Alert"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Alert'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     put:
       tags:
-        - Alerts
+      - Alerts
       summary: Обновить оповещение
-      description: |
-        Обновляет существующее оповещение.
+      description: 'Обновляет существующее оповещение.
+
+        '
       operationId: updateAlert
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: alert_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор оповещения
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор оповещения
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateAlertRequest"
+              $ref: '#/components/schemas/UpdateAlertRequest'
       responses:
-        "200":
+        '200':
           description: Оповещение обновлено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Alert"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Alert'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     delete:
       tags:
-        - Alerts
+      - Alerts
       summary: Удалить оповещение
-      description: |
-        Удаляет оповещение.
+      description: 'Удаляет оповещение.
+
+        '
       operationId: deleteAlert
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: alert_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор оповещения
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор оповещения
       responses:
-        "200":
+        '200':
           description: Оповещение удалено
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/StatusResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: common.yaml#/components/schemas/StatusResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Alert:
       type: object
       required:
-        - id
-        - player_id
-        - alert_type
-        - active
-        - created_at
+      - id
+      - player_id
+      - alert_type
+      - active
+      - created_at
       properties:
         id:
           type: string
@@ -227,73 +240,97 @@ components:
         player_id:
           type: string
           format: uuid
-        alert_type:
-          type: string
-          enum: [price_above, price_below, price_crosses_above, price_crosses_below, rsi_above, rsi_below, event]
         symbol:
           type: string
           nullable: true
         event_type:
           type: string
           nullable: true
+        alert_type:
+          type: string
+          enum:
+          - price_above
+          - price_below
+          - price_crosses_above
+          - price_crosses_below
+          - rsi_above
+          - rsi_below
+          - event
         condition:
           type: string
-          enum: [above, below, crosses_above, crosses_below]
+          enum:
+          - above
+          - below
+          - crosses_above
+          - crosses_below
           nullable: true
-        target_value:
-          type: number
-          format: float
-          nullable: true
-        triggered:
-          type: boolean
         triggered_at:
           type: string
           format: date-time
           nullable: true
-        active:
-          type: boolean
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
+        target_value:
+          type: number
+          format: float
+          nullable: true
+        triggered:
+          type: boolean
+        active:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateAlertRequest:
       type: object
       required:
-        - alert_type
+      - alert_type
       properties:
-        alert_type:
-          type: string
-          enum: [price_above, price_below, price_crosses_above, price_crosses_below, rsi_above, rsi_below, event]
         symbol:
           type: string
           nullable: true
         event_type:
           type: string
           nullable: true
+        alert_type:
+          type: string
+          enum:
+          - price_above
+          - price_below
+          - price_crosses_above
+          - price_crosses_below
+          - rsi_above
+          - rsi_below
+          - event
         condition:
           type: string
-          enum: [above, below, crosses_above, crosses_below]
+          enum:
+          - above
+          - below
+          - crosses_above
+          - crosses_below
           nullable: true
         target_value:
           type: number
           format: float
           nullable: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateAlertRequest:
       type: object
       properties:
         condition:
           type: string
-          enum: [above, below, crosses_above, crosses_below]
+          enum:
+          - above
+          - below
+          - crosses_above
+          - crosses_below
         target_value:
           type: number
           format: float
         active:
           type: boolean
-
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

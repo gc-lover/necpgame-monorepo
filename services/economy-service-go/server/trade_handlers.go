@@ -1,189 +1,285 @@
-// Issue: #131
+// Issue: #131, #1604
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
+	"context"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/economy-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
-type TradeHandlers struct {
+
+// EconomyHandlers implements api.Handler interface (ogen typed handlers!)
+type EconomyHandlers struct {
 	tradeService TradeServiceInterface
 	logger       *logrus.Logger
 }
 
-func NewTradeHandlers(tradeService TradeServiceInterface) *TradeHandlers {
-	return &TradeHandlers{
+func NewEconomyHandlers(tradeService TradeServiceInterface) *EconomyHandlers {
+	return &EconomyHandlers{
 		tradeService: tradeService,
 		logger:       GetLogger(),
 	}
 }
 
-func (h *TradeHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if data != nil {
-		if err := json.NewEncoder(w).Encode(data); err != nil {
-			h.logger.WithError(err).Error("Failed to encode JSON response")
-		}
-	}
-}
+// InitiateTrade implements initiateTrade operation (TYPED ogen response!)
+func (h *EconomyHandlers) InitiateTrade(ctx context.Context, req *api.InitiateTradeRequest) (api.InitiateTradeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-func (h *TradeHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	h.respondJSON(w, status, api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-	})
-}
+	// TODO: Get user ID from context (from SecurityHandler)
+	// For now, use InitiatorID from request
+	initiatorID := req.InitiatorID
 
-func (h *TradeHandlers) CreateTradeSession(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		h.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	initiatorID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	var req api.CreateTradeSessionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	createReq := convertCreateTradeSessionRequestFromAPI(req)
-	session, err := h.tradeService.CreateTrade(r.Context(), initiatorID, createReq)
+	createReq := convertInitiateTradeRequestFromAPI(req)
+	session, err := h.tradeService.CreateTrade(ctx, initiatorID, createReq)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to create trade session")
-		h.respondError(w, http.StatusInternalServerError, "failed to create trade session")
-		return
+		return &api.InitiateTradeInternalServerError{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to create trade session",
+		}, nil
 	}
 
 	if session == nil {
-		h.respondError(w, http.StatusBadRequest, "cannot create trade session")
-		return
+		return &api.InitiateTradeBadRequest{
+			Error:   http.StatusText(http.StatusBadRequest),
+			Message: "cannot create trade session",
+		}, nil
 	}
 
-	h.respondJSON(w, http.StatusOK, convertTradeSessionToAPI(session))
+	apiSession := convertTradeSessionToAPI(session)
+	return apiSession, nil
 }
 
-func (h *TradeHandlers) CancelTradeSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		h.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
+// AcceptTrade implements acceptTrade operation (TYPED ogen response!)
+func (h *EconomyHandlers) AcceptTrade(ctx context.Context, params api.AcceptTradeParams) (api.AcceptTradeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	characterID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
+	// TODO: Get user ID from context (from SecurityHandler)
+	// For now, use a placeholder
+	characterID := uuid.New()
 
-	sessionUUID := uuid.UUID(sessionId)
-	err = h.tradeService.CancelTrade(r.Context(), sessionUUID, characterID)
-	if err != nil {
-		h.logger.WithError(err).Error("Failed to cancel trade session")
-		h.respondError(w, http.StatusInternalServerError, "failed to cancel trade session")
-		return
-	}
-
-	h.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (h *TradeHandlers) GetTradeSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	sessionUUID := uuid.UUID(sessionId)
-	session, err := h.tradeService.GetTrade(r.Context(), sessionUUID)
+	session, err := h.tradeService.GetTrade(ctx, params.TradeID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get trade session")
-		h.respondError(w, http.StatusInternalServerError, "failed to get trade session")
-		return
+		return &api.AcceptTradeInternalServerError{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to get trade session",
+		}, nil
 	}
 
 	if session == nil {
-		h.respondError(w, http.StatusNotFound, "trade session not found")
-		return
+		return &api.AcceptTradeNotFound{
+			Error:   http.StatusText(http.StatusNotFound),
+			Message: "trade session not found",
+		}, nil
 	}
 
-	h.respondJSON(w, http.StatusOK, convertTradeSessionToAPI(session))
+	// TODO: Implement ConfirmTrade logic
+	_, err = h.tradeService.ConfirmTrade(ctx, params.TradeID, characterID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to accept trade")
+		return &api.AcceptTradeInternalServerError{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to accept trade",
+		}, nil
+	}
+
+	// StatusResponse implements acceptTradeRes()
+	return &api.StatusResponse{Status: api.NewOptString("accepted")}, nil
 }
 
-func (h *TradeHandlers) GetTradeSessionAudit(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	sessionUUID := uuid.UUID(sessionId)
-	session, err := h.tradeService.GetTrade(r.Context(), sessionUUID)
+// CancelTrade implements cancelTrade operation (TYPED ogen response!)
+func (h *EconomyHandlers) CancelTrade(ctx context.Context, params api.CancelTradeParams) (api.CancelTradeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Get user ID from context (from SecurityHandler)
+	// For now, use a placeholder
+	characterID := uuid.New()
+
+	err := h.tradeService.CancelTrade(ctx, params.TradeID, characterID)
 	if err != nil {
-		h.logger.WithError(err).Error("Failed to get trade session audit")
-		h.respondError(w, http.StatusInternalServerError, "failed to get trade session audit")
-		return
+		h.logger.WithError(err).Error("Failed to cancel trade session")
+		return &api.CancelTradeInternalServerError{
+			Error:   http.StatusText(http.StatusInternalServerError),
+			Message: "failed to cancel trade session",
+		}, nil
 	}
 
-	if session == nil {
-		h.respondError(w, http.StatusNotFound, "trade session not found")
-		return
-	}
-
-	audit := convertTradeSessionToAudit(session)
-	h.respondJSON(w, http.StatusOK, audit)
+	return &api.StatusResponse{Status: api.NewOptString("success")}, nil
 }
 
-func (h *TradeHandlers) GetTradeConfirmationStatus(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	sessionUUID := uuid.UUID(sessionId)
-	session, err := h.tradeService.GetTrade(r.Context(), sessionUUID)
-	if err != nil {
-		h.logger.WithError(err).Error("Failed to get trade confirmation status")
-		h.respondError(w, http.StatusInternalServerError, "failed to get trade confirmation status")
-		return
-	}
+// CreateTradingGuild implements createTradingGuild operation (TYPED ogen response!)
+func (h *EconomyHandlers) CreateTradingGuild(ctx context.Context, req *api.CreateGuildRequest) (api.CreateTradingGuildRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	if session == nil {
-		h.respondError(w, http.StatusNotFound, "trade session not found")
-		return
-	}
-
-	status := convertTradeSessionToConfirmationStatus(session)
-	h.respondJSON(w, http.StatusOK, status)
+	// TODO: Implement CreateTradingGuild logic
+	h.logger.Info("CreateTradingGuild not implemented")
+	return &api.CreateTradingGuildInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
 }
 
-func (h *TradeHandlers) GetActiveTrades(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		h.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
+// GetCurrencies implements getCurrencies operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetCurrencies(ctx context.Context) (api.GetCurrenciesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	characterID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
+	// TODO: Implement GetCurrencies logic
+	h.logger.Info("GetCurrencies not implemented")
+	return &api.GetCurrenciesInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
 
-	sessions, err := h.tradeService.GetActiveTrades(r.Context(), characterID)
-	if err != nil {
-		h.logger.WithError(err).Error("Failed to get active trades")
-		h.respondError(w, http.StatusInternalServerError, "failed to get active trades")
-		return
-	}
+// GetCurrencyBalance implements getCurrencyBalance operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetCurrencyBalance(ctx context.Context, params api.GetCurrencyBalanceParams) (api.GetCurrencyBalanceRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	tradeSessions := make([]api.TradeSession, 0, len(sessions))
-	for i := range sessions {
-		apiSession := convertTradeSessionToAPI(&sessions[i])
-		if apiSession != nil {
-			tradeSessions = append(tradeSessions, *apiSession)
-		}
-	}
+	// TODO: Implement GetCurrencyBalance logic
+	h.logger.Info("GetCurrencyBalance not implemented")
+	return &api.GetCurrencyBalanceInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
 
-	response := api.ActiveTradesResponse{
-		Trades: tradeSessions,
-		Total:  len(tradeSessions),
-	}
+// GetEconomyModel implements getEconomyModel operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetEconomyModel(ctx context.Context) (api.GetEconomyModelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement GetEconomyModel logic
+	h.logger.Info("GetEconomyModel not implemented")
+	return &api.GetEconomyModelInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetEconomyOverview implements getEconomyOverview operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetEconomyOverview(ctx context.Context) (api.GetEconomyOverviewRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetEconomyOverview logic
+	h.logger.Info("GetEconomyOverview not implemented")
+	return &api.GetEconomyOverviewInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetResourceById implements getResourceById operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetResourceById(ctx context.Context, params api.GetResourceByIdParams) (api.GetResourceByIdRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetResourceById logic
+	h.logger.Info("GetResourceById not implemented")
+	return &api.GetResourceByIdInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetResourcePrice implements getResourcePrice operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetResourcePrice(ctx context.Context, params api.GetResourcePriceParams) (api.GetResourcePriceRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetResourcePrice logic
+	h.logger.Info("GetResourcePrice not implemented")
+	return &api.GetResourcePriceInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetResources implements getResources operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetResources(ctx context.Context, params api.GetResourcesParams) (api.GetResourcesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetResources logic
+	h.logger.Info("GetResources not implemented")
+	return &api.GetResourcesInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetResourcesByCategory implements getResourcesByCategory operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetResourcesByCategory(ctx context.Context, params api.GetResourcesByCategoryParams) (api.GetResourcesByCategoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetResourcesByCategory logic
+	h.logger.Info("GetResourcesByCategory not implemented")
+	return &api.GetResourcesByCategoryInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetResourcesByTier implements getResourcesByTier operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetResourcesByTier(ctx context.Context, params api.GetResourcesByTierParams) (api.GetResourcesByTierRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetResourcesByTier logic
+	h.logger.Info("GetResourcesByTier not implemented")
+	return &api.GetResourcesByTierInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetTradingGuilds implements getTradingGuilds operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetTradingGuilds(ctx context.Context, params api.GetTradingGuildsParams) (api.GetTradingGuildsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetTradingGuilds logic
+	h.logger.Info("GetTradingGuilds not implemented")
+	return &api.GetTradingGuildsInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// GetWorldImpact implements getWorldImpact operation (TYPED ogen response!)
+func (h *EconomyHandlers) GetWorldImpact(ctx context.Context, params api.GetWorldImpactParams) (api.GetWorldImpactRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement GetWorldImpact logic
+	h.logger.Info("GetWorldImpact not implemented")
+	return &api.GetWorldImpactInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
+}
+
+// JoinTradingGuild implements joinTradingGuild operation (TYPED ogen response!)
+func (h *EconomyHandlers) JoinTradingGuild(ctx context.Context, req *api.JoinTradingGuildReq, params api.JoinTradingGuildParams) (api.JoinTradingGuildRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement JoinTradingGuild logic
+	h.logger.Info("JoinTradingGuild not implemented")
+	return &api.JoinTradingGuildInternalServerError{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "not implemented",
+	}, nil
 }

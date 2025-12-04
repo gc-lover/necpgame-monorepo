@@ -6,18 +6,18 @@ import "time"
 
 // CombatSession internal model
 type CombatSession struct {
-	ID              string
-	SessionType     string
+	ExpiresAt       time.Time
+	CreatedAt       time.Time
+	EndedAt         time.Time
+	StartedAt       time.Time
+	Settings        map[string]interface{}
+	CurrentTurn     string
 	ZoneID          string
 	Status          string
-	MaxParticipants int
-	Settings        map[string]interface{}
-	CreatedAt       time.Time
-	StartedAt       time.Time
-	EndedAt         time.Time
-	ExpiresAt       time.Time
+	SessionType     string
+	ID              string
 	WinnerTeam      string
-	CurrentTurn     string
+	MaxParticipants int
 	TurnNumber      int
 	NextSequence    int64
 }
@@ -29,9 +29,9 @@ type CombatParticipant struct {
 	SessionID   string
 	Team        string
 	Role        string
-	Health      int
-	MaxHealth   int
 	Status      string
+	MaxHealth   int
+	Health      int
 	DamageDealt int64
 	DamageTaken int64
 	Kills       int
@@ -43,21 +43,13 @@ type CombatParticipant struct {
 
 // CombatLog internal model
 type CombatLog struct {
-	ID             int64
+	Timestamp      time.Time
+	ActionData     map[string]interface{}
+	ResultData     map[string]interface{}
 	SessionID      string
 	EventType      string
 	ActorID        string
 	TargetID       string
-	ActionData     map[string]interface{}
-	ResultData     map[string]interface{}
-	Timestamp      time.Time
+	ID             int64
 	SequenceNumber int64
 }
-
-
-
-
-
-
-
-

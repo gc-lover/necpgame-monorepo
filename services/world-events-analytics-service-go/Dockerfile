@@ -41,3 +41,4 @@ ENTRYPOINT ["/app/world-events-analytics-service"]
 
 
 
+

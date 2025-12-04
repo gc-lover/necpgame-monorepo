@@ -29,23 +29,24 @@ END $$;
 
 -- Таблица экономических событий
 CREATE TABLE IF NOT EXISTS economy.economic_events (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_type economic_event_type NOT NULL,
-    scope economic_event_scope NOT NULL,
-    region_id UUID, -- для региональных событий (может быть NULL для глобальных)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  region_id UUID,
+  description TEXT,
+  -- для региональных событий (может быть NULL для глобальных)
     title VARCHAR(255) NOT NULL,
-    description TEXT,
-    status economic_event_status NOT NULL DEFAULT 'PLANNED',
-    planned_start TIMESTAMP,
-    announced_at TIMESTAMP,
-    started_at TIMESTAMP,
-    ended_at TIMESTAMP,
-    archived_at TIMESTAMP,
-    effects JSONB NOT NULL DEFAULT '{}',
-    coverage JSONB NOT NULL DEFAULT '{}',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (
+  effects JSONB NOT NULL DEFAULT '{}',
+  coverage JSONB NOT NULL DEFAULT '{}',
+  planned_start TIMESTAMP,
+  announced_at TIMESTAMP,
+  started_at TIMESTAMP,
+  ended_at TIMESTAMP,
+  archived_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  event_type economic_event_type NOT NULL,
+  scope economic_event_scope NOT NULL,
+  status economic_event_status NOT NULL DEFAULT 'PLANNED',
+  CHECK (
         (scope = 'REGIONAL' AND region_id IS NOT NULL) OR
         (scope = 'GLOBAL' AND region_id IS NULL)
     )
@@ -69,12 +70,13 @@ CREATE INDEX IF NOT EXISTS idx_economic_events_status_started
 
 -- Таблица истории изменений событий
 CREATE TABLE IF NOT EXISTS economy.economic_event_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id UUID NOT NULL REFERENCES economy.economic_events(id) ON DELETE CASCADE,
-    action economic_event_action NOT NULL,
-    changed_by UUID, -- user_id или system (может быть NULL для системных изменений)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES economy.economic_events(id) ON DELETE CASCADE,
+  changed_by UUID,
+  -- user_id или system (может быть NULL для системных изменений)
     changes JSONB NOT NULL DEFAULT '{}',
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  action economic_event_action NOT NULL
 );
 
 -- Индексы для economic_event_history
@@ -87,11 +89,11 @@ CREATE INDEX IF NOT EXISTS idx_economic_event_history_action
 
 -- Таблица метрик событий для мониторинга
 CREATE TABLE IF NOT EXISTS economy.economic_event_metrics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id UUID NOT NULL REFERENCES economy.economic_events(id) ON DELETE CASCADE,
-    metric_type economic_event_metric_type NOT NULL,
-    value DECIMAL(20,8) NOT NULL,
-    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES economy.economic_events(id) ON DELETE CASCADE,
+  recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  value DECIMAL(20,8) NOT NULL,
+  metric_type economic_event_metric_type NOT NULL
 );
 
 -- Индексы для economic_event_metrics

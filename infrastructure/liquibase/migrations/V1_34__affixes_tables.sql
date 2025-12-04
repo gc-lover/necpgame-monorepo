@@ -1,22 +1,22 @@
 -- Issue: #1517
 CREATE TABLE IF NOT EXISTS gameplay.affixes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  description TEXT NOT NULL,
   name VARCHAR(100) NOT NULL UNIQUE,
   category VARCHAR(50) NOT NULL,
-  description TEXT NOT NULL,
   mechanics JSONB,
   visual_effects JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   reward_modifier DECIMAL(5,2) NOT NULL DEFAULT 1.0 CHECK (reward_modifier >= 1.0),
   difficulty_modifier DECIMAL(5,2) NOT NULL DEFAULT 1.0 CHECK (difficulty_modifier >= 1.0),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CHECK (category IN ('combat', 'environmental', 'debuff', 'defensive'))
 );
 
 CREATE TABLE IF NOT EXISTS gameplay.affix_rotations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  seasonal_affix_id UUID,
   week_start TIMESTAMP NOT NULL,
   week_end TIMESTAMP NOT NULL,
-  seasonal_affix_id UUID,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(week_start, week_end),
   FOREIGN KEY (seasonal_affix_id) REFERENCES gameplay.affixes(id) ON DELETE SET NULL

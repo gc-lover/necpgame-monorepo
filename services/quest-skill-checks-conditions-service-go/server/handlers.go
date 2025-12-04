@@ -1,13 +1,20 @@
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/necpgame/quest-skill-checks-conditions-service-go/pkg/api"
+)
+
+// Context timeout constants (Issue #1604)
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
 )
 
 type Handlers struct{}
@@ -26,6 +33,10 @@ type QuestConditionCheckResult struct {
 }
 
 func (h *Handlers) CheckQuestConditions(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	response := CheckQuestConditionsResponse{
 		AllConditionsMet: true,
 		Conditions: []QuestConditionCheckResult{
@@ -42,6 +53,10 @@ func (h *Handlers) CheckQuestConditions(w http.ResponseWriter, r *http.Request, 
 }
 
 func (h *Handlers) GetQuestRequirements(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	response := api.QuestRequirements{
 		Level: func() *int { v := 10; return &v }(),
 		Items: &[]struct {
@@ -61,6 +76,10 @@ func (h *Handlers) GetQuestRequirements(w http.ResponseWriter, r *http.Request, 
 }
 
 func (h *Handlers) PerformSkillCheck(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.SkillCheckRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
@@ -85,6 +104,10 @@ func (h *Handlers) PerformSkillCheck(w http.ResponseWriter, r *http.Request, que
 }
 
 func (h *Handlers) GetSkillCheckHistory(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID, params api.GetSkillCheckHistoryParams) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	now := time.Now()
 	resultId := openapi_types.UUID(uuid.New())
 	questInstanceId := questId

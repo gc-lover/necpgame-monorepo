@@ -8,16 +8,16 @@
 
 -- Таблица объявлений на игровом рынке
 CREATE TABLE IF NOT EXISTS economy.market_listings (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    item_id UUID NOT NULL,
-    price DECIMAL(15, 2) NOT NULL CHECK (price > 0),
-    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'expired', 'cancelled')),
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    sold_at TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  item_id UUID NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'expired', 'cancelled')),
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sold_at TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  price DECIMAL(15, 2) NOT NULL CHECK (price > 0),
+  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0)
 );
 
 -- Индексы для market_listings
@@ -29,20 +29,20 @@ CREATE INDEX IF NOT EXISTS idx_market_listings_expires_at ON economy.market_list
 
 -- Таблица лотов аукционного дома
 CREATE TABLE IF NOT EXISTS economy.auction_lots (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    item_id UUID NOT NULL,
-    start_price DECIMAL(15, 2) NOT NULL CHECK (start_price > 0),
-    buyout_price DECIMAL(15, 2) CHECK (buyout_price IS NULL OR buyout_price >= start_price),
-    current_bid DECIMAL(15, 2) NOT NULL DEFAULT 0,
-    bidder_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-    bid_count INTEGER NOT NULL DEFAULT 0,
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'expired', 'cancelled')),
-    duration_hours INTEGER NOT NULL DEFAULT 24 CHECK (duration_hours > 0),
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  item_id UUID NOT NULL,
+  bidder_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'expired', 'cancelled')),
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  start_price DECIMAL(15, 2) NOT NULL CHECK (start_price > 0),
+  buyout_price DECIMAL(15, 2) CHECK (buyout_price IS NULL OR buyout_price >= start_price),
+  current_bid DECIMAL(15, 2) NOT NULL DEFAULT 0,
+  bid_count INTEGER NOT NULL DEFAULT 0,
+  duration_hours INTEGER NOT NULL DEFAULT 24 CHECK (duration_hours > 0)
 );
 
 -- Индексы для auction_lots
@@ -55,18 +55,18 @@ CREATE INDEX IF NOT EXISTS idx_auction_lots_current_bid ON economy.auction_lots(
 
 -- Таблица ордеров на бирже
 CREATE TABLE IF NOT EXISTS economy.stock_orders (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    stock_symbol VARCHAR(20) NOT NULL,
-    order_type VARCHAR(10) NOT NULL CHECK (order_type IN ('buy', 'sell')),
-    order_side VARCHAR(10) NOT NULL CHECK (order_side IN ('market', 'limit')),
-    quantity INTEGER NOT NULL CHECK (quantity > 0),
-    price DECIMAL(15, 2) CHECK (order_side = 'limit' AND price IS NOT NULL OR order_side = 'market' AND price IS NULL),
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'filled', 'partially_filled', 'cancelled')),
-    filled_quantity INTEGER NOT NULL DEFAULT 0 CHECK (filled_quantity >= 0 AND filled_quantity <= quantity),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    executed_at TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  stock_symbol VARCHAR(20) NOT NULL,
+  order_type VARCHAR(10) NOT NULL CHECK (order_type IN ('buy', 'sell')),
+  order_side VARCHAR(10) NOT NULL CHECK (order_side IN ('market', 'limit')),
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'filled', 'partially_filled', 'cancelled')),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  executed_at TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  price DECIMAL(15, 2) CHECK (order_side = 'limit' AND price IS NOT NULL OR order_side = 'market' AND price IS NULL),
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  filled_quantity INTEGER NOT NULL DEFAULT 0 CHECK (filled_quantity >= 0 AND filled_quantity <= quantity)
 );
 
 -- Индексы для stock_orders
@@ -78,13 +78,13 @@ CREATE INDEX IF NOT EXISTS idx_stock_orders_status ON economy.stock_orders(statu
 
 -- Таблица исполненных сделок на бирже
 CREATE TABLE IF NOT EXISTS economy.stock_trades (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    buy_order_id UUID NOT NULL REFERENCES economy.stock_orders(id) ON DELETE CASCADE,
-    sell_order_id UUID NOT NULL REFERENCES economy.stock_orders(id) ON DELETE CASCADE,
-    stock_symbol VARCHAR(20) NOT NULL,
-    quantity INTEGER NOT NULL CHECK (quantity > 0),
-    price DECIMAL(15, 2) NOT NULL CHECK (price > 0),
-    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  buy_order_id UUID NOT NULL REFERENCES economy.stock_orders(id) ON DELETE CASCADE,
+  sell_order_id UUID NOT NULL REFERENCES economy.stock_orders(id) ON DELETE CASCADE,
+  stock_symbol VARCHAR(20) NOT NULL,
+  executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  price DECIMAL(15, 2) NOT NULL CHECK (price > 0),
+  quantity INTEGER NOT NULL CHECK (quantity > 0)
 );
 
 -- Индексы для stock_trades
@@ -95,12 +95,12 @@ CREATE INDEX IF NOT EXISTS idx_stock_trades_executed_at ON economy.stock_trades(
 
 -- Таблица лога всех экономических операций
 CREATE TABLE IF NOT EXISTS economy.economy_operations_log (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    operation_type VARCHAR(30) NOT NULL CHECK (operation_type IN ('trade', 'market_purchase', 'auction_bid', 'stock_order')),
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    operation_data JSONB NOT NULL,
-    result JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  operation_type VARCHAR(30) NOT NULL CHECK (operation_type IN ('trade', 'market_purchase', 'auction_bid', 'stock_order')),
+  operation_data JSONB NOT NULL,
+  result JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для economy_operations_log

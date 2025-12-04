@@ -9,9 +9,12 @@
 
 -- Table: factions
 CREATE TABLE IF NOT EXISTS factions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL UNIQUE,
-    type VARCHAR(50) NOT NULL CHECK (type IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  leader_clan_id UUID,
+  ideology TEXT,
+  description TEXT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  type VARCHAR(50) NOT NULL CHECK (type IN (
         'criminal_gang',
         'professional_guild',
         'political_movement',
@@ -19,16 +22,13 @@ CREATE TABLE IF NOT EXISTS factions (
         'religious_sect',
         'scientific_org'
     )),
-    ideology TEXT,
-    description TEXT,
-    leader_clan_id UUID,
-    status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN (
+  status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN (
         'active',
         'disbanded',
         'suspended'
     )),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_factions_type ON factions(type);
@@ -41,21 +41,21 @@ COMMENT ON COLUMN factions.ideology IS 'Идеология и цели фрак�
 
 -- Table: faction_hierarchy
 CREATE TABLE IF NOT EXISTS faction_hierarchy (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
-    role VARCHAR(100) NOT NULL CHECK (role IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
+  clan_id UUID NOT NULL,
+  player_id UUID,
+  appointed_by UUID,
+  role VARCHAR(100) NOT NULL CHECK (role IN (
         'leader',
         'officer',
         'council_member',
         'member',
         'recruit'
     )),
-    clan_id UUID NOT NULL,
-    player_id UUID,
-    permissions JSONB NOT NULL DEFAULT '{}',
-    appointed_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    appointed_by UUID,
-    UNIQUE(faction_id, clan_id)
+  permissions JSONB NOT NULL DEFAULT '{}',
+  appointed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE(faction_id, clan_id)
 );
 
 CREATE INDEX idx_faction_hierarchy_faction ON faction_hierarchy(faction_id);
@@ -68,9 +68,10 @@ COMMENT ON COLUMN faction_hierarchy.permissions IS 'JSON с правами: {"ca
 
 -- Table: faction_niches
 CREATE TABLE IF NOT EXISTS faction_niches (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL UNIQUE,
-    type VARCHAR(50) NOT NULL CHECK (type IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  description TEXT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  type VARCHAR(50) NOT NULL CHECK (type IN (
         'territorial',
         'economic',
         'political',
@@ -78,11 +79,10 @@ CREATE TABLE IF NOT EXISTS faction_niches (
         'technological',
         'social'
     )),
-    description TEXT,
-    benefits JSONB NOT NULL DEFAULT '{}',
-    requirements JSONB NOT NULL DEFAULT '{}',
-    max_controllers INT DEFAULT 1,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  benefits JSONB NOT NULL DEFAULT '{}',
+  requirements JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  max_controllers INT DEFAULT 1
 );
 
 CREATE INDEX idx_faction_niches_type ON faction_niches(type);
@@ -93,14 +93,14 @@ COMMENT ON COLUMN faction_niches.requirements IS 'JSON с требованиям
 
 -- Table: faction_niche_control
 CREATE TABLE IF NOT EXISTS faction_niche_control (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
-    niche_id UUID NOT NULL REFERENCES faction_niches(id) ON DELETE CASCADE,
-    controlled_since TIMESTAMP NOT NULL DEFAULT NOW(),
-    control_strength FLOAT NOT NULL DEFAULT 1.0 CHECK (control_strength >= 0.0 AND control_strength <= 1.0),
-    contested BOOLEAN NOT NULL DEFAULT false,
-    contested_by UUID REFERENCES factions(id),
-    UNIQUE(faction_id, niche_id)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
+  niche_id UUID NOT NULL REFERENCES faction_niches(id) ON DELETE CASCADE,
+  contested_by UUID REFERENCES factions(id),
+  controlled_since TIMESTAMP NOT NULL DEFAULT NOW(),
+  control_strength FLOAT NOT NULL DEFAULT 1.0 CHECK (control_strength >= 0.0 AND control_strength <= 1.0),
+  contested BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(faction_id, niche_id)
 );
 
 CREATE INDEX idx_faction_niche_control_faction ON faction_niche_control(faction_id);
@@ -112,21 +112,21 @@ COMMENT ON COLUMN faction_niche_control.control_strength IS 'Сила контр
 
 -- Table: faction_relations
 CREATE TABLE IF NOT EXISTS faction_relations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
-    target_faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
-    relation_type VARCHAR(50) NOT NULL DEFAULT 'neutral' CHECK (relation_type IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
+  target_faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
+  relation_type VARCHAR(50) NOT NULL DEFAULT 'neutral' CHECK (relation_type IN (
         'allied',
         'neutral',
         'competitive',
         'hostile',
         'trading'
     )),
-    relation_value INT NOT NULL DEFAULT 0 CHECK (relation_value >= -100 AND relation_value <= 100),
-    treaty_data JSONB,
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    UNIQUE(faction_id, target_faction_id),
-    CHECK (faction_id != target_faction_id)
+  treaty_data JSONB,
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  relation_value INT NOT NULL DEFAULT 0 CHECK (relation_value >= -100 AND relation_value <= 100),
+  UNIQUE(faction_id, target_faction_id),
+  CHECK (faction_id != target_faction_id)
 );
 
 CREATE INDEX idx_faction_relations_faction ON faction_relations(faction_id);
@@ -139,29 +139,29 @@ COMMENT ON COLUMN faction_relations.treaty_data IS 'JSON с данными до�
 
 -- Table: faction_conflicts
 CREATE TABLE IF NOT EXISTS faction_conflicts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    attacker_faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
-    defender_faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
-    conflict_type VARCHAR(50) NOT NULL CHECK (conflict_type IN (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  attacker_faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
+  defender_faction_id UUID NOT NULL REFERENCES factions(id) ON DELETE CASCADE,
+  winner_faction_id UUID REFERENCES factions(id),
+  description TEXT,
+  conflict_type VARCHAR(50) NOT NULL CHECK (conflict_type IN (
         'territorial',
         'economic',
         'political',
         'ideological',
         'resource'
     )),
-    status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN (
+  status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN (
         'active',
         'resolved',
         'ongoing',
         'stalemate'
     )),
-    description TEXT,
-    stakes JSONB,
-    started_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    ended_at TIMESTAMP,
-    winner_faction_id UUID REFERENCES factions(id),
-    resolution_type VARCHAR(50),
-    CHECK (attacker_faction_id != defender_faction_id)
+  resolution_type VARCHAR(50),
+  stakes JSONB,
+  started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  ended_at TIMESTAMP,
+  CHECK (attacker_faction_id != defender_faction_id)
 );
 
 CREATE INDEX idx_faction_conflicts_attacker ON faction_conflicts(attacker_faction_id);
@@ -174,13 +174,13 @@ COMMENT ON COLUMN faction_conflicts.stakes IS 'JSON с ставками конф
 
 -- Table: faction_conflict_battles
 CREATE TABLE IF NOT EXISTS faction_conflict_battles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    conflict_id UUID NOT NULL REFERENCES faction_conflicts(id) ON DELETE CASCADE,
-    battle_date TIMESTAMP NOT NULL DEFAULT NOW(),
-    attacker_score INT NOT NULL DEFAULT 0,
-    defender_score INT NOT NULL DEFAULT 0,
-    participants_count INT NOT NULL DEFAULT 0,
-    battle_data JSONB
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conflict_id UUID NOT NULL REFERENCES faction_conflicts(id) ON DELETE CASCADE,
+  battle_data JSONB,
+  battle_date TIMESTAMP NOT NULL DEFAULT NOW(),
+  attacker_score INT NOT NULL DEFAULT 0,
+  defender_score INT NOT NULL DEFAULT 0,
+  participants_count INT NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_faction_conflict_battles_conflict ON faction_conflict_battles(conflict_id);
@@ -204,6 +204,7 @@ ON CONFLICT DO NOTHING;
 -- rollback DROP TABLE IF EXISTS faction_niches CASCADE;
 -- rollback DROP TABLE IF EXISTS faction_hierarchy CASCADE;
 -- rollback DROP TABLE IF EXISTS factions CASCADE;
+
 
 
 

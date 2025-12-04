@@ -4,16 +4,18 @@ CREATE TABLE IF NOT EXISTS economy.trade_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   initiator_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
   recipient_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-  initiator_offer JSONB NOT NULL DEFAULT '{"items": [], "currency": {}}',
-  recipient_offer JSONB NOT NULL DEFAULT '{"items": [], "currency": {}}',
-  initiator_confirmed BOOLEAN NOT NULL DEFAULT false,
-  recipient_confirmed BOOLEAN NOT NULL DEFAULT false,
-  status VARCHAR(20) NOT NULL DEFAULT 'pending',
   zone_id UUID,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  initiator_offer JSONB NOT NULL DEFAULT '{"items": [],
+  recipient_offer JSONB NOT NULL DEFAULT '{"items": [],
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   expires_at TIMESTAMP NOT NULL,
-  completed_at TIMESTAMP
+  completed_at TIMESTAMP,
+  initiator_confirmed BOOLEAN NOT NULL DEFAULT false,
+  recipient_confirmed BOOLEAN NOT NULL DEFAULT false,
+  "currency": {}}',
+  "currency": {}}'
 );
 
 CREATE TABLE IF NOT EXISTS economy.trade_history (
@@ -21,10 +23,10 @@ CREATE TABLE IF NOT EXISTS economy.trade_history (
   trade_session_id UUID NOT NULL,
   initiator_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
   recipient_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  zone_id UUID,
+  status VARCHAR(20) NOT NULL,
   initiator_offer JSONB NOT NULL,
   recipient_offer JSONB NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  zone_id UUID,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   completed_at TIMESTAMP NOT NULL
 );

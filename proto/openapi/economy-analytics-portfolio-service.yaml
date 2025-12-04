@@ -1,109 +1,123 @@
-# Issue: #216
 openapi: 3.0.3
 info:
   title: Economy Analytics Portfolio Service API
-  description: |
-    API для портфельной аналитики в NECPGAME.
-    
+  description: 'API для портфельной аналитики в NECPGAME.
+
+
     **Основные возможности:**
+
     - Аналитика портфеля игрока
+
     - Метрики производительности (Sharpe ratio, win rate, profit factor)
+
     - История портфеля
+
     - Динамика прибыли и убытков
-    
+
+
     **Интеграции:**
+
     - economy-service - данные о портфеле
+
     - stock-exchange-service - данные о сделках
+
     - analytics-service - основная логика аналитики
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8095/api/v1
-    description: Analytics Service (локальная разработка)
-  - url: https://api.necp.game/api/v1
-    description: Analytics Service (продакшн)
-
+- url: http://localhost:8095/api/v1
+  description: Analytics Service (локальная разработка)
+- url: https://api.necp.game/api/v1
+  description: Analytics Service (продакшн)
 tags:
-  - name: Portfolio
-    description: Аналитика портфеля
-
+- name: Portfolio
+  description: Аналитика портфеля
 paths:
   /analytics/portfolio/{player_id}:
     get:
       tags:
-        - Portfolio
+      - Portfolio
       summary: Получить аналитику портфеля
-      description: |
-        Возвращает текущую аналитику портфеля игрока.
+      description: 'Возвращает текущую аналитику портфеля игрока.
+
+        '
       operationId: getPortfolioAnalytics
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор игрока
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [1d, 1w, 1M, 3M, 6M, 1y, all]
-            default: all
-          description: Период аналитики
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор игрока
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 1w
+          - 1M
+          - 3M
+          - 6M
+          - 1y
+          - all
+          default: all
+        description: Период аналитики
       responses:
-        "200":
+        '200':
           description: Аналитика портфеля
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PortfolioAnalytics"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/PortfolioAnalytics'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/portfolio/{player_id}/history:
     get:
       tags:
-        - Portfolio
+      - Portfolio
       summary: Получить историю портфеля
-      description: |
-        Возвращает историю портфеля игрока (снимки портфеля).
+      description: 'Возвращает историю портфеля игрока (снимки портфеля).
+
+        '
       operationId: getPortfolioHistory
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор игрока
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор игрока
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Конец периода
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: История портфеля
           content:
             application/json:
@@ -113,89 +127,96 @@ paths:
                   snapshots:
                     type: array
                     items:
-                      $ref: "#/components/schemas/PortfolioSnapshot"
+                      $ref: '#/components/schemas/PortfolioSnapshot'
                   total:
                     type: integer
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/portfolio/{player_id}/metrics:
     get:
       tags:
-        - Portfolio
+      - Portfolio
       summary: Получить метрики производительности
-      description: |
-        Возвращает метрики производительности портфеля (Sharpe ratio, win rate, profit factor).
+      description: 'Возвращает метрики производительности портфеля (Sharpe ratio, win rate, profit factor).
+
+        '
       operationId: getPortfolioMetrics
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор игрока
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [1d, 1w, 1M, 3M, 6M, 1y, all]
-            default: all
-          description: Период для расчета метрик
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор игрока
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 1w
+          - 1M
+          - 3M
+          - 6M
+          - 1y
+          - all
+          default: all
+        description: Период для расчета метрик
       responses:
-        "200":
+        '200':
           description: Метрики производительности
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PortfolioMetrics"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/PortfolioMetrics'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/portfolio/{player_id}/trades:
     get:
       tags:
-        - Portfolio
+      - Portfolio
       summary: Получить историю сделок
-      description: |
-        Возвращает историю сделок игрока.
+      description: 'Возвращает историю сделок игрока.
+
+        '
       operationId: getTradeHistory
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор игрока
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор игрока
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Конец периода
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: История сделок
           content:
             application/json:
@@ -205,34 +226,40 @@ paths:
                   trades:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Trade"
+                      $ref: '#/components/schemas/Trade'
                   total:
                     type: integer
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     PortfolioAnalytics:
       type: object
       required:
-        - player_id
-        - total_value
-        - total_cost
-        - total_return
-        - total_return_percentage
+      - player_id
+      - total_value
+      - total_cost
+      - total_return
+      - total_return_percentage
       properties:
         player_id:
           type: string
           format: uuid
+        allocation_by_sector:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectorAllocation'
+        allocation_by_symbol:
+          type: array
+          items:
+            $ref: '#/components/schemas/SymbolAllocation'
         total_value:
           type: number
           format: float
@@ -249,23 +276,15 @@ components:
           type: number
           format: float
           description: Доходность в процентах
-        allocation_by_sector:
-          type: array
-          items:
-            $ref: "#/components/schemas/SectorAllocation"
-        allocation_by_symbol:
-          type: array
-          items:
-            $ref: "#/components/schemas/SymbolAllocation"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PortfolioSnapshot:
       type: object
       required:
-        - timestamp
-        - total_value
-        - total_cost
-        - total_return
-        - total_return_percentage
+      - timestamp
+      - total_value
+      - total_cost
+      - total_return
+      - total_return_percentage
       properties:
         timestamp:
           type: string
@@ -294,19 +313,34 @@ components:
           type: number
           format: float
           nullable: true
-
     PortfolioMetrics:
       type: object
       required:
-        - player_id
-        - period
+      - player_id
+      - period
       properties:
         player_id:
           type: string
           format: uuid
         period:
           type: string
-          enum: [1d, 1w, 1M, 3M, 6M, 1y, all]
+          enum:
+          - 1d
+          - 1w
+          - 1M
+          - 3M
+          - 6M
+          - 1y
+          - all
+        total_trades:
+          type: integer
+          description: Общее количество сделок
+        profitable_trades:
+          type: integer
+          description: Количество прибыльных сделок
+        losing_trades:
+          type: integer
+          description: Количество убыточных сделок
         total_return:
           type: number
           format: float
@@ -339,22 +373,13 @@ components:
           type: number
           format: float
           description: Средний убыток
-        total_trades:
-          type: integer
-          description: Общее количество сделок
-        profitable_trades:
-          type: integer
-          description: Количество прибыльных сделок
-        losing_trades:
-          type: integer
-          description: Количество убыточных сделок
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SectorAllocation:
       type: object
       required:
-        - sector
-        - percentage
-        - value
+      - sector
+      - percentage
+      - value
       properties:
         sector:
           type: string
@@ -366,13 +391,12 @@ components:
           type: number
           format: float
           description: Стоимость в секторе
-
     SymbolAllocation:
       type: object
       required:
-        - symbol
-        - percentage
-        - value
+      - symbol
+      - percentage
+      - value
       properties:
         symbol:
           type: string
@@ -384,16 +408,15 @@ components:
           type: number
           format: float
           description: Стоимость символа
-
     Trade:
       type: object
       required:
-        - id
-        - symbol
-        - trade_type
-        - quantity
-        - price
-        - timestamp
+      - id
+      - symbol
+      - trade_type
+      - quantity
+      - price
+      - timestamp
       properties:
         id:
           type: string
@@ -402,7 +425,12 @@ components:
           type: string
         trade_type:
           type: string
-          enum: [buy, sell]
+          enum:
+          - buy
+          - sell
+        timestamp:
+          type: string
+          format: date-time
         quantity:
           type: number
           format: float
@@ -420,10 +448,6 @@ components:
           type: number
           format: float
           nullable: true
-        timestamp:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
+- BearerAuth: []

@@ -1,50 +1,43 @@
-# Issue: #44
-.PHONY: generate-api bundle-api clean verify-api check-deps generate-types generate-server generate-spec check-file-sizes
+﻿# Issue: #44
+.PHONY: generate-api bundle-api clean verify-api check-deps
 
 SERVICE_NAME := world-events-scheduler-service
-OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := chi-server
+OGEN := ogen
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
 SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-
-# Split output files (SOLID compliance)
-TYPES_FILE := $(API_DIR)/types.gen.go
-SERVER_FILE := $(API_DIR)/server.gen.go
-SPEC_FILE := $(API_DIR)/spec.gen.go
+BUNDLED_SPEC := openapi-bundled.yaml
 
 check-deps:
-	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "вќЊ node not found"; exit 1; }
+	@command -v $(OGEN) >/dev/null 2>&1 || { echo "вќЊ ogen not found"; exit 1; }
 
 bundle-api: check-deps
-	@mkdir -p $(API_DIR)
 	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
 
-generate-types: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate types -o $(TYPES_FILE) $(BUNDLED_SPEC) || exit 1
-
-generate-server: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate $(ROUTER_TYPE) -o $(SERVER_FILE) $(BUNDLED_SPEC) || exit 1
-
-generate-spec: bundle-api
-	@$(OAPI_CODEGEN) -package api -generate spec -o $(SPEC_FILE) $(BUNDLED_SPEC) || exit 1
-
-generate-api: generate-types generate-server generate-spec
+generate-api: bundle-api
+	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
 
 verify-api: check-deps
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
 
 clean:
-	@rm -f $(BUNDLED_SPEC) $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE)
+	@rm -f $(BUNDLED_SPEC)
 
 
+.PHONY: bench bench-json bench-quick
 
+# Run benchmarks (human-readable)
+bench:
+	go test -run=^ -bench=. -benchmem ./server
 
+# Run benchmarks (JSON output for CI)
+bench-json:
+	@mkdir -p ../../.benchmarks/results
+	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/world-events-scheduler-service_bench.json
 
-
-
-
+# Quick benchmark (short duration)
+bench-quick:
+	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server

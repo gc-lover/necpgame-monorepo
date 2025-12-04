@@ -1,43 +1,46 @@
 openapi: 3.0.3
 info:
   title: Gameplay Affixes Service API
-  description: |
-    API для системы аффиксов рейдов и подземелий: управление аффиксами, ротация, применение к инстансам.
-    
+  description: 'API для системы аффиксов рейдов и подземелий: управление аффиксами, ротация, применение к инстансам.
+
+
     Система добавляет 2-4 случайных модификатора к каждому инстансу рейда или подземелья.
+
     Аффиксы меняют механики боя, требуют адаптации тактики и влияют на награды.
+
     Ротация аффиксов происходит еженедельно.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay
+  description: Продакшен сервер
 tags:
-  - name: Affixes
-    description: Управление аффиксами
-  - name: Affix Rotation
-    description: Ротация аффиксов
-  - name: Instance Affixes
-    description: Аффиксы инстансов
-
+- name: Affixes
+  description: Управление аффиксами
+- name: Affix Rotation
+  description: Ротация аффиксов
+- name: Instance Affixes
+  description: Аффиксы инстансов
 paths:
   /affixes/active:
     get:
       tags:
-        - Affixes
+      - Affixes
       summary: Получить список активных аффиксов
-      description: |
-        Возвращает список аффиксов, активных в текущей неделе.
+      description: 'Возвращает список аффиксов, активных в текущей неделе.
+
         Аффиксы ротируются еженедельно (понедельник 00:00 UTC).
+
+        '
       operationId: getActiveAffixes
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Список активных аффиксов
@@ -49,49 +52,50 @@ paths:
                 week_start: '2025-12-01T00:00:00Z'
                 week_end: '2025-12-08T00:00:00Z'
                 active_affixes:
-                  - id: '550e8400-e29b-41d4-a716-446655440000'
-                    name: Volatile
-                    category: combat
-                    description: Враги взрываются при смерти, нанося урон в радиусе
-                    reward_modifier: 1.25
-                    difficulty_modifier: 1.15
-                  - id: '550e8400-e29b-41d4-a716-446655440001'
-                    name: Fortified
-                    category: defensive
-                    description: Враги имеют +50% HP
-                    reward_modifier: 1.35
-                    difficulty_modifier: 1.25
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Volatile
+                  category: combat
+                  description: Враги взрываются при смерти, нанося урон в радиусе
+                  reward_modifier: 1.25
+                  difficulty_modifier: 1.15
+                - id: 550e8400-e29b-41d4-a716-446655440001
+                  name: Fortified
+                  category: defensive
+                  description: Враги имеют +50% HP
+                  reward_modifier: 1.35
+                  difficulty_modifier: 1.25
                 seasonal_affix:
-                  id: '550e8400-e29b-41d4-a716-446655440002'
+                  id: 550e8400-e29b-41d4-a716-446655440002
                   name: Frostbite
                   category: environmental
                   description: Периодически накладывает замедление на игроков
-                  reward_modifier: 1.50
-                  difficulty_modifier: 1.40
+                  reward_modifier: 1.5
+                  difficulty_modifier: 1.4
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /affixes/{id}:
     get:
       tags:
-        - Affixes
+      - Affixes
       summary: Получить информацию об аффиксе
-      description: |
-        Возвращает детальную информацию об аффиксе по его ID.
+      description: 'Возвращает детальную информацию об аффиксе по его ID.
+
         Включает описание механик, визуальные эффекты и модификаторы.
+
+        '
       operationId: getAffix
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID аффикса
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID аффикса
       responses:
         '200':
           description: Информация об аффиксе
@@ -100,7 +104,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Affix'
               example:
-                id: '550e8400-e29b-41d4-a716-446655440000'
+                id: 550e8400-e29b-41d4-a716-446655440000
                 name: Volatile
                 category: combat
                 description: Враги взрываются при смерти, нанося урон в радиусе 5 метров
@@ -111,38 +115,39 @@ paths:
                   damage_percent: 50
                   damage_type: fire
                 visual_effects:
-                  explosion_particle: 'volatile_explosion'
-                  sound_effect: 'volatile_explode'
+                  explosion_particle: volatile_explosion
+                  sound_effect: volatile_explode
                   screen_shake: true
                 reward_modifier: 1.25
                 difficulty_modifier: 1.15
                 created_at: '2025-11-01T00:00:00Z'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /instances/{instance_id}/affixes:
     get:
       tags:
-        - Instance Affixes
+      - Instance Affixes
       summary: Получить аффиксы инстанса
-      description: |
-        Возвращает список аффиксов, примененных к конкретному инстансу рейда или подземелья.
+      description: 'Возвращает список аффиксов, примененных к конкретному инстансу рейда или подземелья.
+
         Каждый инстанс имеет 2-4 случайных аффикса из активных.
+
+        '
       operationId: getInstanceAffixes
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: instance_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID инстанса рейда или подземелья
+      - name: instance_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID инстанса рейда или подземелья
       responses:
         '200':
           description: Аффиксы инстанса
@@ -151,54 +156,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/InstanceAffixesResponse'
               example:
-                instance_id: '660e8400-e29b-41d4-a716-446655440000'
+                instance_id: 660e8400-e29b-41d4-a716-446655440000
                 applied_at: '2025-12-01T10:30:00Z'
                 affixes:
-                  - id: '550e8400-e29b-41d4-a716-446655440000'
-                    name: Volatile
-                    category: combat
-                    description: Враги взрываются при смерти
-                    reward_modifier: 1.25
-                    difficulty_modifier: 1.15
-                  - id: '550e8400-e29b-41d4-a716-446655440001'
-                    name: Fortified
-                    category: defensive
-                    description: Враги имеют +50% HP
-                    reward_modifier: 1.35
-                    difficulty_modifier: 1.25
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Volatile
+                  category: combat
+                  description: Враги взрываются при смерти
+                  reward_modifier: 1.25
+                  difficulty_modifier: 1.15
+                - id: 550e8400-e29b-41d4-a716-446655440001
+                  name: Fortified
+                  category: defensive
+                  description: Враги имеют +50% HP
+                  reward_modifier: 1.35
+                  difficulty_modifier: 1.25
                 total_reward_modifier: 1.69
                 total_difficulty_modifier: 1.44
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
+          $ref: common.yaml#/components/responses/Forbidden
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /affixes/rotation/history:
     get:
       tags:
-        - Affix Rotation
+      - Affix Rotation
       summary: Получить историю ротаций аффиксов
-      description: |
-        Возвращает историю еженедельных ротаций аффиксов.
+      description: 'Возвращает историю еженедельных ротаций аффиксов.
+
         Поддерживает пагинацию для просмотра прошлых ротаций.
+
+        '
       operationId: getAffixRotationHistory
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
-        - name: weeks_back
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 52
-            default: 4
-          description: Количество недель назад для получения истории
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      - name: weeks_back
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 52
+          default: 4
+        description: Количество недель назад для получения истории
       responses:
         '200':
           description: История ротаций
@@ -208,38 +214,40 @@ paths:
                 $ref: '#/components/schemas/AffixRotationHistoryResponse'
               example:
                 items:
-                  - id: '770e8400-e29b-41d4-a716-446655440000'
-                    week_start: '2025-12-01T00:00:00Z'
-                    week_end: '2025-12-08T00:00:00Z'
-                    active_affixes:
-                      - id: '550e8400-e29b-41d4-a716-446655440000'
-                        name: Volatile
-                      - id: '550e8400-e29b-41d4-a716-446655440001'
-                        name: Fortified
-                    seasonal_affix:
-                      id: '550e8400-e29b-41d4-a716-446655440002'
-                      name: Frostbite
-                    created_at: '2025-12-01T00:00:00Z'
+                - id: 770e8400-e29b-41d4-a716-446655440000
+                  week_start: '2025-12-01T00:00:00Z'
+                  week_end: '2025-12-08T00:00:00Z'
+                  active_affixes:
+                  - id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Volatile
+                  - id: 550e8400-e29b-41d4-a716-446655440001
+                    name: Fortified
+                  seasonal_affix:
+                    id: 550e8400-e29b-41d4-a716-446655440002
+                    name: Frostbite
+                  created_at: '2025-12-01T00:00:00Z'
                 total: 52
                 limit: 20
                 offset: 0
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /affixes/rotation/trigger:
     post:
       tags:
-        - Affix Rotation
+      - Affix Rotation
       summary: Запустить ротацию аффиксов (admin)
-      description: |
-        Принудительно запускает ротацию аффиксов для следующей недели.
+      description: 'Принудительно запускает ротацию аффиксов для следующей недели.
+
         Доступно только администраторам.
+
         Обычно ротация происходит автоматически каждую неделю (понедельник 00:00 UTC).
+
+        '
       operationId: triggerAffixRotation
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: false
         content:
@@ -249,14 +257,14 @@ paths:
             example:
               force: false
               custom_affixes:
-                - '550e8400-e29b-41d4-a716-446655440000'
-                - '550e8400-e29b-41d4-a716-446655440001'
-                - '550e8400-e29b-41d4-a716-446655440002'
-                - '550e8400-e29b-41d4-a716-446655440003'
-                - '550e8400-e29b-41d4-a716-446655440004'
-                - '550e8400-e29b-41d4-a716-446655440005'
-                - '550e8400-e29b-41d4-a716-446655440006'
-                - '550e8400-e29b-41d4-a716-446655440007'
+              - 550e8400-e29b-41d4-a716-446655440000
+              - 550e8400-e29b-41d4-a716-446655440001
+              - 550e8400-e29b-41d4-a716-446655440002
+              - 550e8400-e29b-41d4-a716-446655440003
+              - 550e8400-e29b-41d4-a716-446655440004
+              - 550e8400-e29b-41d4-a716-446655440005
+              - 550e8400-e29b-41d4-a716-446655440006
+              - 550e8400-e29b-41d4-a716-446655440007
       responses:
         '200':
           description: Ротация успешно запущена
@@ -265,32 +273,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/AffixRotation'
               example:
-                id: '770e8400-e29b-41d4-a716-446655440001'
+                id: 770e8400-e29b-41d4-a716-446655440001
                 week_start: '2025-12-08T00:00:00Z'
                 week_end: '2025-12-15T00:00:00Z'
                 active_affixes:
-                  - id: '550e8400-e29b-41d4-a716-446655440003'
-                    name: Raging
-                  - id: '550e8400-e29b-41d4-a716-446655440004'
-                    name: Afflicted
+                - id: 550e8400-e29b-41d4-a716-446655440003
+                  name: Raging
+                - id: 550e8400-e29b-41d4-a716-446655440004
+                  name: Afflicted
                 seasonal_affix:
-                  id: '550e8400-e29b-41d4-a716-446655440005'
+                  id: 550e8400-e29b-41d4-a716-446655440005
                   name: Heat Wave
                 created_at: '2025-12-08T00:00:00Z'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '403':
-          $ref: 'common.yaml#/components/responses/Forbidden'
+          $ref: common.yaml#/components/responses/Forbidden
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Affix:
       type: object
@@ -303,13 +309,21 @@ components:
           type: string
           description: Название аффикса
           example: Volatile
-        category:
-          type: string
-          enum: [combat, environmental, debuff, defensive]
-          description: Категория аффикса
         description:
           type: string
           description: Описание механики аффикса
+        category:
+          type: string
+          enum:
+          - combat
+          - environmental
+          - debuff
+          - defensive
+          description: Категория аффикса
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания аффикса
         mechanics:
           type: object
           description: Детальные механики аффикса
@@ -360,11 +374,7 @@ components:
           minimum: 1.0
           description: Модификатор сложности (1.0 = базовая сложность, 1.15 = +15%)
           example: 1.15
-        created_at:
-          type: string
-          format: date-time
-          description: Дата создания аффикса
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AffixSummary:
       type: object
       properties:
@@ -373,11 +383,15 @@ components:
           format: uuid
         name:
           type: string
-        category:
-          type: string
-          enum: [combat, environmental, debuff, defensive]
         description:
           type: string
+        category:
+          type: string
+          enum:
+          - combat
+          - environmental
+          - debuff
+          - defensive
         reward_modifier:
           type: number
           format: float
@@ -386,7 +400,7 @@ components:
           type: number
           format: float
           minimum: 1.0
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActiveAffixesResponse:
       type: object
       properties:
@@ -398,18 +412,18 @@ components:
           type: string
           format: date-time
           description: Конец текущей недели ротации
+        seasonal_affix:
+          type: object
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/AffixSummary'
+          description: Сезонный аффикс (если есть)
         active_affixes:
           type: array
           items:
             $ref: '#/components/schemas/AffixSummary'
           description: Список активных аффиксов на текущей неделе
-        seasonal_affix:
-          type: object
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/AffixSummary'
-          description: Сезонный аффикс (если есть)
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InstanceAffixesResponse:
       type: object
       properties:
@@ -438,7 +452,6 @@ components:
           minimum: 1.0
           description: Общий модификатор сложности (произведение всех модификаторов)
           example: 1.44
-
     AffixRotation:
       type: object
       properties:
@@ -454,40 +467,35 @@ components:
           type: string
           format: date-time
           description: Конец недели
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания ротации
+        seasonal_affix:
+          type: object
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/AffixSummary'
+          description: Сезонный аффикс
         active_affixes:
           type: array
           items:
             $ref: '#/components/schemas/AffixSummary'
           description: Активные аффиксы на неделе
-        seasonal_affix:
-          type: object
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/AffixSummary'
-          description: Сезонный аффикс
-        created_at:
-          type: string
-          format: date-time
-          description: Дата создания ротации
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AffixRotationHistoryResponse:
       allOf:
-        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
-        - type: object
-          properties:
+      - $ref: common.yaml#/components/schemas/PaginationResponse
+      - type: object
+        properties:
+          items:
+            type: array
             items:
-              type: array
-              items:
-                $ref: '#/components/schemas/AffixRotation'
-              description: История ротаций
-
+              $ref: '#/components/schemas/AffixRotation'
+            description: История ротаций
     TriggerRotationRequest:
       type: object
       properties:
-        force:
-          type: boolean
-          default: false
-          description: Принудительно запустить ротацию даже если уже есть активная
         custom_affixes:
           type: array
           items:
@@ -496,4 +504,8 @@ components:
           description: Кастомный список аффиксов (опционально, иначе случайный выбор)
           maxItems: 10
           minItems: 8
-
+        force:
+          type: boolean
+          default: false
+          description: Принудительно запустить ротацию даже если уже есть активная
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

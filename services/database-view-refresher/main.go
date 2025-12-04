@@ -8,6 +8,8 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling
 	"os"
 	"time"
 
@@ -27,12 +29,27 @@ func main() {
 	}
 	defer db.Close()
 
+	// Connection pool settings for performance (Issue #1605)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
 	// Test connection
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
 	log.Println("Database View Refresher starting...")
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6115")
+		log.Printf("pprof server starting on %s", pprofAddr)
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
+	}()
 
 	refresher := NewViewRefresher(db)
 
@@ -110,6 +127,13 @@ func (vr *ViewRefresher) logViewSizes(ctx context.Context) {
 
 		log.Printf("  - %s.%s: %s (%d bytes)", schema, viewName, size, bytes)
 	}
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 

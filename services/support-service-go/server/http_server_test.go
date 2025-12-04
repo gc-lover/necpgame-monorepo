@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/support-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 )
 
 type mockTicketService struct {

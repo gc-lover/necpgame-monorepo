@@ -1,24 +1,128 @@
-# Issue: SOLID refactoring - main for world-service (continent-core domain)
+# Issue: #104
+
 openapi: 3.0.3
 info:
-  title: World Service API (Continents Domain)
-  version: 1.0.0
-  description: World system - using continent-core as primary module
+  title: World Service API
+  description: |
+    API для мировых механик: события, рейды, боссы, территории, данжи.
+    
+    **Основные модули:**
+    - World Events - мировые события
+    - Raids - рейды
+    - Bosses - боссы
+    - Territories - территории
+    - Dungeons - данжи
+    - World State - состояние мира
+    
+    **Performance:**
+    - Hot endpoints: GET /world/events, GET /world/raids
+    - Expected load: 200 RPS, P99 <100ms
+    - Tick rate: 1-10 Hz для событий
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
 servers:
-  - url: http://localhost:8155
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
 tags:
-  - name: world
+  - name: World Events
+    description: Мировые события
+  - name: Raids
+    description: Рейды
+  - name: Bosses
+    description: Боссы
+  - name: Territories
+    description: Территории
+  - name: Dungeons
+    description: Данжи
+
 paths:
+  /world/events:
+    $ref: "world-events-core-service.yaml#/paths/~1world~1events"
+  
+  /world/raids:
+    get:
+      tags:
+        - Raids
+      summary: Получить активные рейды
+      operationId: getRaids
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список рейдов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  raids:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /world/bosses:
+    get:
+      tags:
+        - Bosses
+      summary: Получить активных боссов
+      operationId: getBosses
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список боссов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bosses:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /world/territories:
+    get:
+      tags:
+        - Territories
+      summary: Получить территории
+      operationId: getTerritories
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список территорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  territories:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
   /world/continents:
     $ref: "world-continent-core-service.yaml#/paths/~1world~1continents"
+
 components:
-  schemas:
-    Continent:
-      type: object
   securitySchemes:
-    $ref: "common.yaml#/components/securitySchemes"
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
   responses:
-    $ref: "common.yaml#/components/responses"
+    BadRequest:
+      $ref: "common.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "common.yaml#/components/responses/Unauthorized"
+    InternalServerError:
+      $ref: "common.yaml#/components/responses/InternalServerError"
+
 security:
   - BearerAuth: []
-

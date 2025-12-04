@@ -1,22 +1,22 @@
 CREATE TABLE IF NOT EXISTS social.mail_messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   sender_id UUID REFERENCES mvp_core.character(id) ON DELETE SET NULL,
-  sender_name VARCHAR(200) NOT NULL,
   recipient_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  sender_name VARCHAR(200) NOT NULL,
   type VARCHAR(50) NOT NULL DEFAULT 'player',
   subject VARCHAR(500) NOT NULL,
-  content TEXT NOT NULL,
-  attachments JSONB,
-  cod_amount INT,
   status VARCHAR(20) NOT NULL DEFAULT 'unread',
-  is_read BOOLEAN NOT NULL DEFAULT false,
-  is_claimed BOOLEAN NOT NULL DEFAULT false,
+  attachments JSONB,
   sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   read_at TIMESTAMP,
   expires_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP
+  deleted_at TIMESTAMP,
+  cod_amount INT,
+  is_read BOOLEAN NOT NULL DEFAULT false,
+  is_claimed BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE INDEX IF NOT EXISTS idx_mail_messages_recipient 

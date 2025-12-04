@@ -40,7 +40,7 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	handlers := NewHandlers(service)
 
 	// Security handler (JWT validation)
-	secHandler := NewSecurityHandler()
+	secHandler := &SecurityHandler{}
 
 	// Integration with ogen (creates its own router)
 	ogenServer, err := api.NewServer(handlers, secHandler)

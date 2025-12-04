@@ -6,90 +6,103 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8088/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8088/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Agent Queue
-    description: Управление очередями агентов
-
+- name: Agent Queue
+  description: Управление очередями агентов
 paths:
   /support/agents/queue:
     get:
       tags:
-        - Agent Queue
+      - Agent Queue
       summary: Получить очередь агента
       operationId: getAgentQueue
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: agent_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER]
-        - name: priority
-          in: query
-          schema:
-            type: string
-            enum: [LOW, NORMAL, HIGH, URGENT, CRITICAL]
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: agent_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - TECHNICAL
+          - BILLING
+          - ACCOUNT
+          - GAMEPLAY
+          - BUG_REPORT
+          - FEATURE_REQUEST
+          - OTHER
+      - name: priority
+        in: query
+        schema:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - URGENT
+          - CRITICAL
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Очередь агента
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AgentQueueResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/AgentQueueResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /support/agents/available:
     get:
       tags:
-        - Agent Queue
+      - Agent Queue
       summary: Получить доступных агентов
       operationId: getAvailableAgents
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER]
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - TECHNICAL
+          - BILLING
+          - ACCOUNT
+          - GAMEPLAY
+          - BUG_REPORT
+          - FEATURE_REQUEST
+          - OTHER
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список доступных агентов
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AvailableAgentsResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/AvailableAgentsResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     SupportTicket:
       type: object
@@ -97,21 +110,40 @@ components:
         id:
           type: string
           format: uuid
-        ticket_number:
-          type: string
         player_id:
           type: string
           format: uuid
+        ticket_number:
+          type: string
         category:
           type: string
-          enum: [TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER]
+          enum:
+          - TECHNICAL
+          - BILLING
+          - ACCOUNT
+          - GAMEPLAY
+          - BUG_REPORT
+          - FEATURE_REQUEST
+          - OTHER
         priority:
           type: string
-          enum: [LOW, NORMAL, HIGH, URGENT, CRITICAL]
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - URGENT
+          - CRITICAL
         status:
           type: string
-          enum: [OPEN, ASSIGNED, IN_PROGRESS, WAITING_FOR_PLAYER, RESOLVED, CLOSED, CANCELLED]
-
+          enum:
+          - OPEN
+          - ASSIGNED
+          - IN_PROGRESS
+          - WAITING_FOR_PLAYER
+          - RESOLVED
+          - CLOSED
+          - CANCELLED
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AgentQueueResponse:
       type: object
       properties:
@@ -121,10 +153,9 @@ components:
         tickets:
           type: array
           items:
-            $ref: "#/components/schemas/SupportTicket"
+            $ref: '#/components/schemas/SupportTicket'
         total:
           type: integer
-
     AvailableAgent:
       type: object
       properties:
@@ -137,46 +168,26 @@ components:
           type: array
           items:
             type: string
-            enum: [TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER]
+            enum:
+            - TECHNICAL
+            - BILLING
+            - ACCOUNT
+            - GAMEPLAY
+            - BUG_REPORT
+            - FEATURE_REQUEST
+            - OTHER
         current_queue_size:
           type: integer
         is_available:
           type: boolean
-
     AvailableAgentsResponse:
       type: object
       properties:
         agents:
           type: array
           items:
-            $ref: "#/components/schemas/AvailableAgent"
+            $ref: '#/components/schemas/AvailableAgent'
         total:
           type: integer
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

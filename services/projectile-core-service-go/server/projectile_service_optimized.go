@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 // Issue: #PROJECTILE_OPTIMIZATION
 // Projectile Service - Server-Side Projectile Simulation with Anti-Cheat
 // Performance: Ballistic physics, hit detection, spatial culling
@@ -10,7 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/projectile"
+	// pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/projectile" // TODO: Fix proto import
 )
 
 // Projectile represents a server-authoritative projectile

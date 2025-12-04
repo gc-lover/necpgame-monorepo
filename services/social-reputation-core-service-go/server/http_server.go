@@ -5,9 +5,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gc-lover/necpgame-monorepo/services/social-reputation-core-service-go/pkg/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gc-lover/necpgame-monorepo/services/social reputation core/pkg/api"
 )
 
 // HTTPServer represents HTTP server
@@ -40,7 +40,7 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	// Mount ogen server under /api/v1
 	router.Mount("/api/v1", ogenServer)
 
@@ -79,4 +79,3 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_actions_service metrics\n"))
 }
-

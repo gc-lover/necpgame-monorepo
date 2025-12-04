@@ -56,8 +56,10 @@ func (s *TradeService) CompleteTrade(ctx context.Context, sessionID string) (*ap
 }
 
 func (s *TradeService) GetTradeHistory(ctx context.Context, playerID string, params api.GetTradeHistoryParams) (*api.TradeHistoryResponse, error) {
-	return &api.TradeHistoryResponse{History: &[]api.TradeHistoryEntry{}}, nil
+	emptyHistory := []api.TradeHistoryEntry{}
+	return &api.TradeHistoryResponse{History: emptyHistory}, nil
 }
+
 
 
 

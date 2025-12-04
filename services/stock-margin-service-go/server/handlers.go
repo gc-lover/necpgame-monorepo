@@ -1,368 +1,151 @@
+// Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
 	"time"
 
-	"github.com/necpgame/stock-margin-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
+	api "github.com/necpgame/stock-margin-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
-type MarginHandlers struct {
+const (
+	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers)
+type Handlers struct {
 	logger *logrus.Logger
 }
 
-func NewMarginHandlers() *MarginHandlers {
-	return &MarginHandlers{
+// NewHandlers creates new handlers
+func NewHandlers() *Handlers {
+	return &Handlers{
 		logger: GetLogger(),
 	}
 }
 
-func (h *MarginHandlers) GetMarginAccount(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
+// GetMarginAccount - TYPED response!
+func (h *Handlers) GetMarginAccount(ctx context.Context) (api.GetMarginAccountRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.Info("GetMarginAccount request")
-
-	accountId := openapi_types.UUID{}
-	playerId := openapi_types.UUID{}
-	balance := float32(0.0)
-	borrowedAmount := float32(0.0)
-	equity := float32(0.0)
-	leverage := float32(2.0)
-	availableCredit := float32(0.0)
-	maintenanceMargin := float32(0.0)
-	marginHealth := float32(100.0)
-
-	response := api.MarginAccount{
-		AccountId:         &accountId,
-		PlayerId:          &playerId,
-		Balance:           &balance,
-		BorrowedAmount:    &borrowedAmount,
-		Equity:            &equity,
-		Leverage:          &leverage,
-		AvailableCredit:   &availableCredit,
-		MaintenanceMargin: &maintenanceMargin,
-		MarginHealth:      &marginHealth,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.MarginAccount{
+		AccountID: api.NewOptUUID(uuid.New()),
+		Balance:   api.NewOptFloat64(0.0),
+		Equity:    api.NewOptFloat64(0.0),
+		Leverage:  api.NewOptFloat64(1.0),
+	}, nil
 }
 
-func (h *MarginHandlers) OpenMarginAccount(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
+// BorrowMargin - TYPED response!
+func (h *Handlers) BorrowMargin(ctx context.Context, req *api.BorrowMarginRequest) (api.BorrowMarginRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req api.OpenMarginAccountJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode OpenMarginAccount request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	h.logger.WithField("initial_deposit", req.InitialDeposit).Info("OpenMarginAccount request")
-
-	accountId := openapi_types.UUID{}
-	playerId := openapi_types.UUID{}
-	balance := req.InitialDeposit
-	borrowedAmount := float32(0.0)
-	equity := balance
-	leverage := float32(2.0)
-	availableCredit := balance * leverage
-	maintenanceMargin := balance * 0.3
-	marginHealth := float32(100.0)
-
-	response := api.MarginAccount{
-		AccountId:         &accountId,
-		PlayerId:          &playerId,
-		Balance:           &balance,
-		BorrowedAmount:    &borrowedAmount,
-		Equity:            &equity,
-		Leverage:          &leverage,
-		AvailableCredit:   &availableCredit,
-		MaintenanceMargin: &maintenanceMargin,
-		MarginHealth:      &marginHealth,
-	}
-
-	h.respondJSON(w, http.StatusCreated, response)
+	// TODO: Implement business logic
+	return &api.BorrowMarginOK{
+		BorrowedAmount: api.NewOptFloat64(0.0),
+		NewBalance:     api.NewOptFloat64(0.0),
+	}, nil
 }
 
-func (h *MarginHandlers) BorrowMargin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
+// RepayMargin - TYPED response!
+func (h *Handlers) RepayMargin(ctx context.Context, req *api.RepayMarginRequest) (api.RepayMarginRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req api.BorrowMarginJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode BorrowMargin request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	h.logger.WithField("amount", req.Amount).Info("BorrowMargin request")
-
-	borrowedAmount := req.Amount
-	interestRate := float32(5.0)
-	leverage := float32(2.0)
-	collateralRequired := req.Amount * 1.5
-
-	response := api.BorrowMarginResponse{
-		BorrowedAmount:     &borrowedAmount,
-		InterestRate:       &interestRate,
-		Leverage:           &leverage,
-		CollateralRequired: &collateralRequired,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.RepayMarginOK{
+		RepaidAmount: api.NewOptFloat64(0.0),
+		NewBalance:   api.NewOptFloat64(0.0),
+	}, nil
 }
 
-func (h *MarginHandlers) RepayMargin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
+// OpenMarginAccount - TYPED response!
+func (h *Handlers) OpenMarginAccount(ctx context.Context, req *api.OpenMarginAccountRequest) (api.OpenMarginAccountRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req api.RepayMarginJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode RepayMargin request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	h.logger.WithField("amount", req.Amount).Info("RepayMargin request")
-
-	response := map[string]interface{}{
-		"success": true,
-		"amount":  req.Amount,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.MarginAccount{
+		AccountID: api.NewOptUUID(uuid.New()),
+		Balance:   api.NewOptFloat64(req.InitialDeposit),
+		Equity:    api.NewOptFloat64(req.InitialDeposit),
+		Leverage:  api.NewOptFloat64(1.0),
+	}, nil
 }
 
-func (h *MarginHandlers) GetMarginCallHistory(w http.ResponseWriter, r *http.Request, params api.GetMarginCallHistoryParams) {
-	ctx := r.Context()
-	_ = ctx
+// GetMarginCallHistory - TYPED response!
+func (h *Handlers) GetMarginCallHistory(ctx context.Context, params api.GetMarginCallHistoryParams) (api.GetMarginCallHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithFields(logrus.Fields{
-		"limit":  params.Limit,
-		"offset": params.Offset,
-	}).Info("GetMarginCallHistory request")
-
-	calls := []api.MarginCall{}
-	total := 0
-	limit := 50
-	if params.Limit != nil {
-		limit = *params.Limit
-	}
-	offset := 0
-	if params.Offset != nil {
-		offset = *params.Offset
-	}
-
-	type GetMarginCallHistoryResponse struct {
-		Data       []api.MarginCall         `json:"data"`
-		Pagination *api.PaginationResponse `json:"pagination,omitempty"`
-	}
-
-	pagination := api.PaginationResponse{
-		Total:  total,
-		Limit:  &limit,
-		Offset: &offset,
-		Items:  []interface{}{},
-	}
-
-	response := GetMarginCallHistoryResponse{
-		Data:       calls,
-		Pagination: &pagination,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.MarginCallHistoryOK{
+		History: []api.MarginCall{},
+	}, nil
 }
 
-func (h *MarginHandlers) OpenShortPosition(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
+// GetRiskHealth - TYPED response!
+func (h *Handlers) GetRiskHealth(ctx context.Context) (api.GetRiskHealthRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	var req api.OpenShortPositionJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.WithError(err).Error("Failed to decode OpenShortPosition request")
-		h.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	h.logger.WithFields(logrus.Fields{
-		"ticker":   req.Ticker,
-		"quantity": req.Quantity,
-	}).Info("OpenShortPosition request")
-
-	positionId := openapi_types.UUID{}
-	playerId := openapi_types.UUID{}
-	now := time.Now()
-	entryPrice := float32(0.0)
-	currentPrice := float32(0.0)
-	pnl := float32(0.0)
-	collateral := entryPrice * float32(req.Quantity) * 1.5
-
-	response := api.ShortPosition{
-		PositionId:  &positionId,
-		PlayerId:    &playerId,
-		Ticker:      &req.Ticker,
-		Quantity:    &req.Quantity,
-		EntryPrice:  &entryPrice,
-		CurrentPrice: &currentPrice,
-		Pnl:         &pnl,
-		Collateral:  &collateral,
-		OpenedAt:    &now,
-	}
-
-	h.respondJSON(w, http.StatusCreated, response)
+	// TODO: Implement business logic
+	return &api.RiskHealthOK{
+		MarginHealth:    api.NewOptFloat64(1.0),
+		LiquidationPrice: api.NewOptFloat64(0.0),
+		Warnings:        []string{},
+	}, nil
 }
 
-func (h *MarginHandlers) ListShortPositions(w http.ResponseWriter, r *http.Request, params api.ListShortPositionsParams) {
-	ctx := r.Context()
-	_ = ctx
+// OpenShortPosition - TYPED response!
+func (h *Handlers) OpenShortPosition(ctx context.Context, req *api.ShortPositionRequest) (api.OpenShortPositionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithFields(logrus.Fields{
-		"limit":  params.Limit,
-		"offset": params.Offset,
-	}).Info("ListShortPositions request")
-
-	positions := []api.ShortPosition{}
-	total := 0
-	limit := 50
-	if params.Limit != nil {
-		limit = *params.Limit
-	}
-	offset := 0
-	if params.Offset != nil {
-		offset = *params.Offset
-	}
-
-	type ListShortPositionsResponse struct {
-		Data       []api.ShortPosition      `json:"data"`
-		Pagination *api.PaginationResponse `json:"pagination,omitempty"`
-	}
-
-	pagination := api.PaginationResponse{
-		Total:  total,
-		Limit:  &limit,
-		Offset: &offset,
-		Items:  []interface{}{},
-	}
-
-	response := ListShortPositionsResponse{
-		Data:       positions,
-		Pagination: &pagination,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.ShortPosition{
+		PositionID: api.NewOptUUID(uuid.New()),
+		Ticker:     req.Ticker,
+		Quantity:   req.Quantity,
+		EntryPrice: api.NewOptFloat64(0.0),
+	}, nil
 }
 
-func (h *MarginHandlers) GetShortPosition(w http.ResponseWriter, r *http.Request, positionId openapi_types.UUID) {
-	ctx := r.Context()
-	_ = ctx
+// ListShortPositions - TYPED response!
+func (h *Handlers) ListShortPositions(ctx context.Context, params api.ListShortPositionsParams) (api.ListShortPositionsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("position_id", positionId).Info("GetShortPosition request")
-
-	ticker := ""
-	quantity := 0
-	entryPrice := float32(0.0)
-	currentPrice := float32(0.0)
-	pnl := float32(0.0)
-	collateral := float32(0.0)
-	playerId := openapi_types.UUID{}
-	now := time.Now()
-
-	response := api.ShortPosition{
-		PositionId:  &positionId,
-		PlayerId:    &playerId,
-		Ticker:      &ticker,
-		Quantity:    &quantity,
-		EntryPrice:  &entryPrice,
-		CurrentPrice: &currentPrice,
-		Pnl:         &pnl,
-		Collateral:  &collateral,
-		OpenedAt:    &now,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.ShortPositionsListOK{
+		Positions: []api.ShortPosition{},
+	}, nil
 }
 
-func (h *MarginHandlers) CloseShortPosition(w http.ResponseWriter, r *http.Request, positionId openapi_types.UUID) {
-	ctx := r.Context()
-	_ = ctx
+// GetShortPosition - TYPED response!
+func (h *Handlers) GetShortPosition(ctx context.Context, params api.GetShortPositionParams) (api.GetShortPositionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.WithField("position_id", positionId).Info("CloseShortPosition request")
-
-	now := time.Now()
-	realizedPnl := float32(0.0)
-
-	response := api.ClosePositionResponse{
-		PositionId:  &positionId,
-		RealizedPnl: &realizedPnl,
-		ClosedAt:    &now,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.ShortPosition{
+		PositionID: api.NewOptUUID(params.PositionID),
+	}, nil
 }
 
-func (h *MarginHandlers) GetRiskHealth(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	_ = ctx
+// CloseShortPosition - TYPED response!
+func (h *Handlers) CloseShortPosition(ctx context.Context, params api.CloseShortPositionParams) (api.CloseShortPositionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-	h.logger.Info("GetRiskHealth request")
-
-	marginHealth := float32(100.0)
-	maintenanceMargin := float32(0.0)
-	liquidationPrice := float32(0.0)
-	atRisk := false
-	marginCallWarning := false
-	openPositionsRisk := map[string]interface{}{}
-
-	response := api.RiskHealth{
-		MarginHealth:       &marginHealth,
-		MaintenanceMargin:  &maintenanceMargin,
-		LiquidationPrice:   &liquidationPrice,
-		AtRisk:             &atRisk,
-		MarginCallWarning:  &marginCallWarning,
-		OpenPositionsRisk:  &openPositionsRisk,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	// TODO: Implement business logic
+	return &api.CloseShortPositionOK{
+		PositionID:  api.NewOptUUID(params.PositionID),
+		RealizedPnl: api.NewOptFloat64(0.0),
+	}, nil
 }
-
-func (h *MarginHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func (h *MarginHandlers) respondError(w http.ResponseWriter, status int, message string) {
-	errorResponse := api.Error{
-		Error:   http.StatusText(status),
-		Message: message,
-		Code:    nil,
-		Details: nil,
-	}
-	h.respondJSON(w, status, errorResponse)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

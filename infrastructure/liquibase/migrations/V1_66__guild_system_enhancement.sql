@@ -147,12 +147,12 @@ END $$;
 
 -- Таблица предметов в банке гильдии
 CREATE TABLE IF NOT EXISTS social.guild_bank_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
-    item_id UUID NOT NULL,
-    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    deposited_by UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    deposited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
+  item_id UUID NOT NULL,
+  deposited_by UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  deposited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0)
 );
 
 -- Индексы для guild_bank_items
@@ -161,15 +161,15 @@ CREATE INDEX IF NOT EXISTS idx_guild_bank_items_item_id ON social.guild_bank_ite
 
 -- Таблица гильдейских войн
 CREATE TABLE IF NOT EXISTS social.guild_wars (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    attacker_guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
-    defender_guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
-    status VARCHAR(20) NOT NULL DEFAULT 'declared' CHECK (status IN ('declared', 'active', 'ended', 'cancelled')),
-    declared_by UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    started_at TIMESTAMP,
-    ended_at TIMESTAMP,
-    winner_guild_id UUID REFERENCES social.guilds(id) ON DELETE SET NULL,
-    CHECK (attacker_guild_id != defender_guild_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  attacker_guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
+  defender_guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
+  declared_by UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  winner_guild_id UUID REFERENCES social.guilds(id) ON DELETE SET NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'declared' CHECK (status IN ('declared', 'active', 'ended', 'cancelled')),
+  started_at TIMESTAMP,
+  ended_at TIMESTAMP,
+  CHECK (attacker_guild_id != defender_guild_id)
 );
 
 -- Индексы для guild_wars
@@ -179,12 +179,12 @@ CREATE INDEX IF NOT EXISTS idx_guild_wars_status ON social.guild_wars(status);
 
 -- Таблица территорий гильдий
 CREATE TABLE IF NOT EXISTS social.guild_territories (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
-    territory_id UUID NOT NULL,
-    captured_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    tax_rate DECIMAL(5, 2) NOT NULL DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 100),
-    resources JSONB DEFAULT '{}'::jsonb
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  guild_id UUID NOT NULL REFERENCES social.guilds(id) ON DELETE CASCADE,
+  territory_id UUID NOT NULL,
+  resources JSONB DEFAULT '{}'::jsonb,
+  captured_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  tax_rate DECIMAL(5, 2) NOT NULL DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 100)
 );
 
 -- Индексы для guild_territories

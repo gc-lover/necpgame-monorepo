@@ -55,7 +55,19 @@ func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payl
 }
 
 func NewAdminService(dbURL, redisURL string) (*AdminService, error) {
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Issue: #1605 - DB Connection Pool configuration
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Pool configuration for MMOFPS performance
+	config.MaxConns = 50        // MaxOpenConns
+	config.MinConns = 10         // MinIdleConns
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 1 * time.Minute
+	
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}

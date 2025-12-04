@@ -1,110 +1,105 @@
-// Issue: #164
+// Issue: #1604, #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"time"
 
 	"github.com/necpgame/progression-experience-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Context timeout constants
+const (
+	DBTimeout = 50 * time.Millisecond
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers)
 type Handlers struct{}
 
 func NewHandlers() *Handlers {
 	return &Handlers{}
 }
 
-// Реализация api.ServerInterface
+// AddExperience - TYPED response!
+func (h *Handlers) AddExperience(ctx context.Context, req *api.AddExperienceRequest) (api.AddExperienceRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
-// ValidateProgression валидирует прогрессию
-func (h *Handlers) ValidateProgression(w http.ResponseWriter, r *http.Request) {
-	var req api.ValidateProgressionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+	// TODO: Implement business logic
+	progression := &api.CharacterProgression{
+		CharacterID:              api.NewOptUUID(req.PlayerID),
+		Level:                    api.NewOptInt(1),
+		Experience:               api.NewOptInt(req.ExperienceAmount),
+		ExperienceToNextLevel:    api.NewOptInt(1000),
+		AvailableAttributePoints: api.NewOptInt(5),
+		AvailableSkillPoints:     api.NewOptInt(3),
 	}
 
-	// TODO: Реализовать валидацию прогрессии
-	valid := true
-	response := api.ProgressionValidationResponse{
-		Valid:  &valid,
-		Issues: nil,
-	}
-	respondJSON(w, http.StatusOK, response)
+	return progression, nil
 }
 
-// GetCharacterProgression получает прогрессию персонажа
-func (h *Handlers) GetCharacterProgression(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	// TODO: Реализовать получение прогрессии из БД
-	progression := api.CharacterProgression{
-		CharacterId:              &characterId,
-		Level:                    intPtr(1),
-		Experience:               intPtr(0),
-		ExperienceToNextLevel:    intPtr(1000),
-		AvailableAttributePoints: intPtr(5),
-		AvailableSkillPoints:     intPtr(3),
-		Attributes:               nil,
-		Skills:                   nil,
+// CalculateExperience - TYPED response!
+func (h *Handlers) CalculateExperience(ctx context.Context, req *api.CalculateExperienceRequest) (api.CalculateExperienceRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	response := &api.ExperienceCalculationResponse{
+		BaseXp:    api.NewOptInt(100),
+		FinalXp:   api.NewOptInt(120),
+		Modifiers: api.NewOptExperienceCalculationResponseModifiers(map[string]float32{}),
 	}
 
-	respondJSON(w, http.StatusOK, progression)
+	return response, nil
 }
 
-// DistributeAttributePoints распределяет очки атрибутов
-func (h *Handlers) DistributeAttributePoints(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	var req api.DistributeAttributePointsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+// CheckLevelUp - TYPED response!
+func (h *Handlers) CheckLevelUp(ctx context.Context, req *api.CheckLevelUpRequest) (api.CheckLevelUpRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	response := &api.LevelUpCheckResponse{
+		PlayerID:              api.NewOptUUID(req.PlayerID),
+		LevelUpAvailable:      api.NewOptBool(false),
+		CurrentLevel:          api.NewOptInt(1),
+		NewLevel:              api.OptNilInt{},
+		AttributePointsGained: api.OptNilInt{},
+		SkillPointsGained:     api.OptNilInt{},
 	}
 
-	// TODO: Реализовать распределение атрибутов в БД
-	respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+	return response, nil
 }
 
-// AddExperience начисляет опыт персонажу
-func (h *Handlers) AddExperience(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	var req api.AddExperienceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+// GetLevelRequirements - TYPED response!
+func (h *Handlers) GetLevelRequirements(ctx context.Context, params api.GetLevelRequirementsParams) (api.GetLevelRequirementsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	response := &api.LevelRequirementsResponse{
+		Level:              api.NewOptInt(params.Level),
+		ExperienceRequired: api.NewOptInt(1000),
+		AttributePointsReward: api.NewOptInt(5),
+		SkillPointsReward:     api.NewOptInt(3),
 	}
 
-	// TODO: Реализовать начисление опыта в БД
-	respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+	return response, nil
 }
 
-// DistributeSkillPoints распределяет очки навыков
-func (h *Handlers) DistributeSkillPoints(w http.ResponseWriter, r *http.Request, characterId openapi_types.UUID) {
-	var req api.DistributeSkillPointsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
+// GetPlayerLevel - TYPED response!
+func (h *Handlers) GetPlayerLevel(ctx context.Context, params api.GetPlayerLevelParams) (api.GetPlayerLevelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement business logic
+	response := &api.PlayerLevelResponse{
+		PlayerID:              api.NewOptUUID(params.PlayerID),
+		Level:                 api.NewOptInt(1),
+		Experience:            api.NewOptInt(0),
+		ExperienceToNextLevel: api.NewOptInt(1000),
 	}
 
-	// TODO: Реализовать распределение навыков в БД
-	respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func intPtr(i int) *int {
-	return &i
-}
-
-// Helper functions
-
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string) {
-	code := http.StatusText(status)
-	respondJSON(w, status, api.Error{
-		Code:    &code,
-		Message: message,
-		Error:   "error",
-	})
+	return response, nil
 }
 

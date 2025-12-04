@@ -56,8 +56,31 @@
     image: prom/prometheus:v2.53.0
     volumes:
       - ./infrastructure/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+      - ./.benchmarks:/benchmarks:ro
     ports:
       - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=365d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: unless-stopped
+
+  pyroscope:
+    image: pyroscope/pyroscope:latest
+    container_name: necpgame-pyroscope
+    command:
+      - server
+    ports:
+      - "4040:4040"
+    volumes:
+      - pyroscope-data:/var/lib/pyroscope
+    environment:
+      - PYROSCOPE_STORAGE_PATH=/var/lib/pyroscope
+      - PYROSCOPE_RETENTION_PERIOD=30d
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:11.1.0
@@ -66,6 +89,7 @@
       GF_SECURITY_ADMIN_PASSWORD: admin
     volumes:
       - ./infrastructure/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "3000:3000"
     depends_on:
@@ -1027,3 +1051,5 @@ volumes:
   pgdata:
   redisdata:
   nexus-data:
+  prometheus-data:
+  pyroscope-data:

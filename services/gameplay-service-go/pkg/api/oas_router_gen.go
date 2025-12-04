@@ -40,6 +40,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
+	args := [1]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -48,24 +49,352 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/health"
+		case '/': // Prefix: "/gameplay/"
 
-			if l := len("/health"); len(elem) >= l && elem[0:l] == "/health" {
+			if l := len("/gameplay/"); len(elem) >= l && elem[0:l] == "/gameplay/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				// Leaf node.
-				switch r.Method {
-				case "GET":
-					s.handleHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-				default:
-					s.notAllowed(w, r, "GET")
+				break
+			}
+			switch elem[0] {
+			case 'a': // Prefix: "arena/sessions"
+
+				if l := len("arena/sessions"); len(elem) >= l && elem[0:l] == "arena/sessions" {
+					elem = elem[l:]
+				} else {
+					break
 				}
 
-				return
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetArenaSessionsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
+			case 'c': // Prefix: "combat/"
+
+				if l := len("combat/"); len(elem) >= l && elem[0:l] == "combat/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'a': // Prefix: "abilities/"
+
+					if l := len("abilities/"); len(elem) >= l && elem[0:l] == "abilities/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "activate"
+
+						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleActivateAbilityRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
+					case 'c': // Prefix: "catalog"
+
+						if l := len("catalog"); len(elem) >= l && elem[0:l] == "catalog" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetAbilityCatalogRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 's': // Prefix: "synergies"
+
+						if l := len("synergies"); len(elem) >= l && elem[0:l] == "synergies" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetAvailableSynergiesRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					}
+
+				case 'c': // Prefix: "combos/"
+
+					if l := len("combos/"); len(elem) >= l && elem[0:l] == "combos/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "activate"
+
+						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleActivateComboRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
+					case 'c': // Prefix: "catalog"
+
+						if l := len("catalog"); len(elem) >= l && elem[0:l] == "catalog" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetComboCatalogRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					}
+
+				case 'f': // Prefix: "freerun/routes"
+
+					if l := len("freerun/routes"); len(elem) >= l && elem[0:l] == "freerun/routes" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleGetFreerunRoutesRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+
+				case 'i': // Prefix: "implants"
+
+					if l := len("implants"); len(elem) >= l && elem[0:l] == "implants" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleGetInstalledImplantsRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+
+				case 's': // Prefix: "s"
+
+					if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'e': // Prefix: "essions"
+
+						if l := len("essions"); len(elem) >= l && elem[0:l] == "essions" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch r.Method {
+							case "GET":
+								s.handleListCombatSessionsRequest([0]string{}, elemIsEscaped, w, r)
+							case "POST":
+								s.handleCreateCombatSessionRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET,POST")
+							}
+
+							return
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "sessionId"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "DELETE":
+									s.handleEndCombatSessionRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "GET":
+									s.handleGetCombatSessionRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "DELETE,GET")
+								}
+
+								return
+							}
+
+						}
+
+					case 't': // Prefix: "tealth/status"
+
+						if l := len("tealth/status"); len(elem) >= l && elem[0:l] == "tealth/status" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetStealthStatusRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					}
+
+				}
+
+			case 'e': // Prefix: "extract/zones"
+
+				if l := len("extract/zones"); len(elem) >= l && elem[0:l] == "extract/zones" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetExtractZonesRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
+			case 'l': // Prefix: "loadouts"
+
+				if l := len("loadouts"); len(elem) >= l && elem[0:l] == "loadouts" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetLoadoutsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
 			}
 
 		}
@@ -81,7 +410,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [0]string
+	args           [1]string
 }
 
 // Name returns ogen operation name.
@@ -154,29 +483,427 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/health"
+		case '/': // Prefix: "/gameplay/"
 
-			if l := len("/health"); len(elem) >= l && elem[0:l] == "/health" {
+			if l := len("/gameplay/"); len(elem) >= l && elem[0:l] == "/gameplay/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				// Leaf node.
-				switch method {
-				case "GET":
-					r.name = HealthCheckOperation
-					r.summary = ""
-					r.operationID = "healthCheck"
-					r.operationGroup = ""
-					r.pathPattern = "/health"
-					r.args = args
-					r.count = 0
-					return r, true
-				default:
-					return
+				break
+			}
+			switch elem[0] {
+			case 'a': // Prefix: "arena/sessions"
+
+				if l := len("arena/sessions"); len(elem) >= l && elem[0:l] == "arena/sessions" {
+					elem = elem[l:]
+				} else {
+					break
 				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetArenaSessionsOperation
+						r.summary = "Получить ареновые сессии"
+						r.operationID = "getArenaSessions"
+						r.operationGroup = ""
+						r.pathPattern = "/gameplay/arena/sessions"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'c': // Prefix: "combat/"
+
+				if l := len("combat/"); len(elem) >= l && elem[0:l] == "combat/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'a': // Prefix: "abilities/"
+
+					if l := len("abilities/"); len(elem) >= l && elem[0:l] == "abilities/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "activate"
+
+						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = ActivateAbilityOperation
+								r.summary = "Активировать способность"
+								r.operationID = "activateAbility"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/abilities/activate"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'c': // Prefix: "catalog"
+
+						if l := len("catalog"); len(elem) >= l && elem[0:l] == "catalog" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetAbilityCatalogOperation
+								r.summary = "Получить каталог способностей"
+								r.operationID = "getAbilityCatalog"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/abilities/catalog"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 's': // Prefix: "synergies"
+
+						if l := len("synergies"); len(elem) >= l && elem[0:l] == "synergies" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetAvailableSynergiesOperation
+								r.summary = "Получить доступные синергии"
+								r.operationID = "getAvailableSynergies"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/abilities/synergies"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				case 'c': // Prefix: "combos/"
+
+					if l := len("combos/"); len(elem) >= l && elem[0:l] == "combos/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "activate"
+
+						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = ActivateComboOperation
+								r.summary = "Активировать комбо"
+								r.operationID = "activateCombo"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/combos/activate"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'c': // Prefix: "catalog"
+
+						if l := len("catalog"); len(elem) >= l && elem[0:l] == "catalog" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetComboCatalogOperation
+								r.summary = "Получить каталог комбо"
+								r.operationID = "getComboCatalog"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/combos/catalog"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				case 'f': // Prefix: "freerun/routes"
+
+					if l := len("freerun/routes"); len(elem) >= l && elem[0:l] == "freerun/routes" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = GetFreerunRoutesOperation
+							r.summary = "Получить доступные маршруты паркура"
+							r.operationID = "getFreerunRoutes"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/combat/freerun/routes"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+				case 'i': // Prefix: "implants"
+
+					if l := len("implants"); len(elem) >= l && elem[0:l] == "implants" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = GetInstalledImplantsOperation
+							r.summary = "Получить установленные импланты"
+							r.operationID = "getInstalledImplants"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/combat/implants"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+				case 's': // Prefix: "s"
+
+					if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'e': // Prefix: "essions"
+
+						if l := len("essions"); len(elem) >= l && elem[0:l] == "essions" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch method {
+							case "GET":
+								r.name = ListCombatSessionsOperation
+								r.summary = "Список сессий"
+								r.operationID = "listCombatSessions"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/sessions"
+								r.args = args
+								r.count = 0
+								return r, true
+							case "POST":
+								r.name = CreateCombatSessionOperation
+								r.summary = "Создать боевую сессию"
+								r.operationID = "createCombatSession"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/sessions"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "sessionId"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "DELETE":
+									r.name = EndCombatSessionOperation
+									r.summary = "Завершить сессию"
+									r.operationID = "endCombatSession"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/sessions/{sessionId}"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "GET":
+									r.name = GetCombatSessionOperation
+									r.summary = "Получить сессию"
+									r.operationID = "getCombatSession"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/sessions/{sessionId}"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					case 't': // Prefix: "tealth/status"
+
+						if l := len("tealth/status"); len(elem) >= l && elem[0:l] == "tealth/status" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetStealthStatusOperation
+								r.summary = "Получить статус стелса"
+								r.operationID = "getStealthStatus"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/stealth/status"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				}
+
+			case 'e': // Prefix: "extract/zones"
+
+				if l := len("extract/zones"); len(elem) >= l && elem[0:l] == "extract/zones" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetExtractZonesOperation
+						r.summary = "Получить зоны экстракции"
+						r.operationID = "getExtractZones"
+						r.operationGroup = ""
+						r.pathPattern = "/gameplay/extract/zones"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'l': // Prefix: "loadouts"
+
+				if l := len("loadouts"); len(elem) >= l && elem[0:l] == "loadouts" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetLoadoutsOperation
+						r.summary = "Получить лоадауты персонажа"
+						r.operationID = "getLoadouts"
+						r.operationGroup = ""
+						r.pathPattern = "/gameplay/loadouts"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
 			}
 
 		}

@@ -1,3 +1,4 @@
+// Issue: #1599, ogen migration
 package server
 
 import (
@@ -6,36 +7,46 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/necpgame/cosmetic-service-go/pkg/api"
+	"github.com/go-chi/chi/v5/middleware"
+	cosmeticapi "github.com/necpgame/cosmetic-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr   string
+	router *chi.Mux
 	server *http.Server
 	logger *logrus.Logger
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewServiceHandlers(logger)
-
 	router := chi.NewRouter()
 
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.Timeout(60 * time.Second))
+
+	// Custom middlewares
 	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
 	router.Use(corsMiddleware)
 
-	// Generated API handlers with Chi
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseRouter: router,
-	})
+	// Register ogen handlers
+	ogenHandlers := NewHandlers(logger)
+	ogenServer, err := cosmeticapi.NewServer(ogenHandlers, nil)
+	if err != nil {
+		logger.Fatalf("Failed to create ogen server: %v", err)
+	}
+
+	router.Mount("/", ogenServer)
 
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
 
 	return &HTTPServer{
-		addr: addr,
+		addr:   addr,
+		router: router,
 		server: &http.Server{
 			Addr:         addr,
 			Handler:      router,
@@ -47,9 +58,22 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	}
 }
 
-func (s *HTTPServer) Start() error {
+func (s *HTTPServer) Start(ctx context.Context) error {
 	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
-	return s.server.ListenAndServe()
+
+	errChan := make(chan error, 1)
+	go func() {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		return s.Shutdown(context.Background())
+	}
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
@@ -71,20 +95,6 @@ func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				if err := recover(); err != nil {
-					logger.WithField("error", err).Error("Panic recovered")
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				}
-			}()
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -100,8 +110,3 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"healthy"}`))
-}

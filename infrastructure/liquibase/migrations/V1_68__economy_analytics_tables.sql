@@ -29,18 +29,18 @@ END $$;
 
 -- Таблица данных для графиков
 CREATE TABLE IF NOT EXISTS analytics.analytics_chart_data (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    symbol VARCHAR(50) NOT NULL,
-    chart_type chart_type NOT NULL,
-    time_frame VARCHAR(20) NOT NULL CHECK (time_frame IN ('1m', '5m', '15m', '1h', '4h', '1d', '1w')),
-    timestamp TIMESTAMP NOT NULL,
-    open DECIMAL(20,8),
-    high DECIMAL(20,8),
-    low DECIMAL(20,8),
-    close DECIMAL(20,8) NOT NULL,
-    volume DECIMAL(20,2),
-    data JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  symbol VARCHAR(50) NOT NULL,
+  time_frame VARCHAR(20) NOT NULL CHECK (time_frame IN ('1m', '5m', '15m', '1h', '4h', '1d', '1w')),
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  timestamp TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  open DECIMAL(20,8),
+  high DECIMAL(20,8),
+  low DECIMAL(20,8),
+  close DECIMAL(20,8) NOT NULL,
+  volume DECIMAL(20,2),
+  chart_type chart_type NOT NULL
 );
 
 -- Индексы для analytics_chart_data
@@ -53,14 +53,14 @@ CREATE INDEX IF NOT EXISTS idx_analytics_chart_data_symbol_timestamp
 
 -- Таблица технических индикаторов
 CREATE TABLE IF NOT EXISTS analytics.analytics_indicators (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    symbol VARCHAR(50) NOT NULL,
-    indicator_type VARCHAR(50) NOT NULL,
-    parameters JSONB NOT NULL DEFAULT '{}'::jsonb,
-    timestamp TIMESTAMP NOT NULL,
-    value DECIMAL(20,8) NOT NULL,
-    signal indicator_signal,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  symbol VARCHAR(50) NOT NULL,
+  indicator_type VARCHAR(50) NOT NULL,
+  parameters JSONB NOT NULL DEFAULT '{}'::jsonb,
+  timestamp TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  value DECIMAL(20,8) NOT NULL,
+  signal indicator_signal
 );
 
 -- Индексы для analytics_indicators
@@ -73,14 +73,14 @@ CREATE INDEX IF NOT EXISTS idx_analytics_indicators_symbol_timestamp
 
 -- Таблица анализа настроений
 CREATE TABLE IF NOT EXISTS analytics.analytics_sentiment (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    symbol VARCHAR(50),
-    timestamp TIMESTAMP NOT NULL,
-    bullish_signals INTEGER NOT NULL DEFAULT 0,
-    bearish_signals INTEGER NOT NULL DEFAULT 0,
-    fear_greed_index DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (fear_greed_index >= 0.00 AND fear_greed_index <= 100.00),
-    sentiment_score DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (sentiment_score >= -100.00 AND sentiment_score <= 100.00),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  symbol VARCHAR(50),
+  timestamp TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fear_greed_index DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (fear_greed_index >= 0.00 AND fear_greed_index <= 100.00),
+  sentiment_score DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (sentiment_score >= -100.00 AND sentiment_score <= 100.00),
+  bullish_signals INTEGER NOT NULL DEFAULT 0,
+  bearish_signals INTEGER NOT NULL DEFAULT 0
 );
 
 -- Индексы для analytics_sentiment
@@ -93,17 +93,17 @@ CREATE INDEX IF NOT EXISTS idx_analytics_sentiment_symbol_null_timestamp
 
 -- Таблица снимков портфеля для аналитики
 CREATE TABLE IF NOT EXISTS analytics.analytics_portfolio_snapshots (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    timestamp TIMESTAMP NOT NULL,
-    total_value DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    total_cost DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    total_return DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    total_return_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    sharpe_ratio DECIMAL(5,2),
-    win_rate DECIMAL(5,2) CHECK (win_rate IS NULL OR (win_rate >= 0.00 AND win_rate <= 100.00)),
-    profit_factor DECIMAL(5,2),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  timestamp TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  total_value DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  total_cost DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  total_return DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+  total_return_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  sharpe_ratio DECIMAL(5,2),
+  win_rate DECIMAL(5,2) CHECK (win_rate IS NULL OR (win_rate >= 0.00 AND win_rate <= 100.00)),
+  profit_factor DECIMAL(5,2)
 );
 
 -- Индексы для analytics_portfolio_snapshots
@@ -114,19 +114,19 @@ CREATE INDEX IF NOT EXISTS idx_analytics_portfolio_snapshots_timestamp
 
 -- Таблица оповещений игроков
 CREATE TABLE IF NOT EXISTS analytics.analytics_alerts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    alert_type alert_type NOT NULL,
-    symbol VARCHAR(50),
-    event_type VARCHAR(50),
-    condition alert_condition NOT NULL,
-    target_value DECIMAL(20,8),
-    triggered BOOLEAN NOT NULL DEFAULT false,
-    triggered_at TIMESTAMP,
-    active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  symbol VARCHAR(50),
+  event_type VARCHAR(50),
+  triggered_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  target_value DECIMAL(20,8),
+  triggered BOOLEAN NOT NULL DEFAULT false,
+  active BOOLEAN NOT NULL DEFAULT true,
+  alert_type alert_type NOT NULL,
+  condition alert_condition NOT NULL,
+  CHECK (
         (alert_type = 'price' AND symbol IS NOT NULL AND event_type IS NULL) OR
         (alert_type = 'event' AND event_type IS NOT NULL)
     )

@@ -6,19 +6,19 @@
 CREATE SCHEMA IF NOT EXISTS character;
 
 CREATE TABLE IF NOT EXISTS character.engram_slots (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id UUID NOT NULL,
-    slot_id INTEGER NOT NULL CHECK (slot_id >= 1 AND slot_id <= 3),
-    engram_id UUID,
-    installed_at TIMESTAMP WITH TIME ZONE,
-    influence_level DECIMAL(5,2) NOT NULL DEFAULT 0.0 CHECK (influence_level >= 0 AND influence_level <= 100),
-    usage_points INTEGER NOT NULL DEFAULT 0 CHECK (usage_points >= 0),
-    is_active BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_character FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    CONSTRAINT uq_character_slot UNIQUE (character_id, slot_id),
-    CONSTRAINT uq_engram_installed UNIQUE (engram_id) WHERE engram_id IS NOT NULL
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  character_id UUID NOT NULL,
+  engram_id UUID,
+  installed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  influence_level DECIMAL(5,2) NOT NULL DEFAULT 0.0 CHECK (influence_level >= 0 AND influence_level <= 100),
+  slot_id INTEGER NOT NULL CHECK (slot_id >= 1 AND slot_id <= 3),
+  usage_points INTEGER NOT NULL DEFAULT 0 CHECK (usage_points >= 0),
+  is_active BOOLEAN NOT NULL DEFAULT false,
+  CONSTRAINT fk_character FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  CONSTRAINT uq_character_slot UNIQUE (character_id, slot_id),
+  CONSTRAINT uq_engram_installed UNIQUE (engram_id) WHERE engram_id IS NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_engram_slots_character_id ON character.engram_slots(character_id);
@@ -27,17 +27,17 @@ CREATE INDEX IF NOT EXISTS idx_engram_slots_engram_id ON character.engram_slots(
 CREATE INDEX IF NOT EXISTS idx_engram_slots_is_active ON character.engram_slots(character_id, is_active) WHERE is_active = true;
 
 CREATE TABLE IF NOT EXISTS character.engram_influence_history (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id UUID NOT NULL,
-    engram_id UUID NOT NULL,
-    slot_id INTEGER NOT NULL CHECK (slot_id >= 1 AND slot_id <= 3),
-    influence_level_before DECIMAL(5,2) NOT NULL CHECK (influence_level_before >= 0 AND influence_level_before <= 100),
-    influence_level_after DECIMAL(5,2) NOT NULL CHECK (influence_level_after >= 0 AND influence_level_after <= 100),
-    change_amount DECIMAL(5,2) NOT NULL,
-    change_reason VARCHAR(50) NOT NULL CHECK (change_reason IN ('skill_usage', 'decision_alignment', 'time_pass', 'blocker_effect', 'manual_adjust', 'conflict', 'removal')),
-    action_data JSONB,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_character FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  character_id UUID NOT NULL,
+  engram_id UUID NOT NULL,
+  change_reason VARCHAR(50) NOT NULL CHECK (change_reason IN ('skill_usage', 'decision_alignment', 'time_pass', 'blocker_effect', 'manual_adjust', 'conflict', 'removal')),
+  action_data JSONB,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  influence_level_before DECIMAL(5,2) NOT NULL CHECK (influence_level_before >= 0 AND influence_level_before <= 100),
+  influence_level_after DECIMAL(5,2) NOT NULL CHECK (influence_level_after >= 0 AND influence_level_after <= 100),
+  change_amount DECIMAL(5,2) NOT NULL,
+  slot_id INTEGER NOT NULL CHECK (slot_id >= 1 AND slot_id <= 3),
+  CONSTRAINT fk_character FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_engram_influence_history_character_id ON character.engram_influence_history(character_id);

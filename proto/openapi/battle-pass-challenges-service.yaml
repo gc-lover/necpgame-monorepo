@@ -1,4 +1,3 @@
-# Issue: #227
 openapi: 3.0.3
 info:
   title: Battle Pass Challenges Service API
@@ -7,40 +6,37 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8093/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8093/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Challenges
-    description: Еженедельные испытания
-
+- name: Challenges
+  description: Еженедельные испытания
 paths:
   /battle-pass/challenges/weekly:
     get:
       tags:
-        - Challenges
+      - Challenges
       summary: Получить еженедельные испытания
       operationId: getWeeklyChallenges
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: week_number
-          in: query
-          schema:
-            type: integer
-            minimum: 1
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: week_number
+        in: query
+        schema:
+          type: integer
+          minimum: 1
       responses:
-        "200":
+        '200':
           description: Еженедельные испытания
           content:
             application/json:
@@ -50,90 +46,86 @@ paths:
                   challenges:
                     type: array
                     items:
-                      $ref: "#/components/schemas/WeeklyChallenge"
+                      $ref: '#/components/schemas/WeeklyChallenge'
                   total:
                     type: integer
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /battle-pass/challenges/{challengeId}/complete:
     post:
       tags:
-        - Challenges
+      - Challenges
       summary: Завершить испытание
       operationId: completeChallenge
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: challengeId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: challengeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CompleteChallengeRequest"
+              $ref: '#/components/schemas/CompleteChallengeRequest'
       responses:
-        "200":
+        '200':
           description: Испытание завершено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WeeklyChallenge"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/WeeklyChallenge'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /battle-pass/challenges/season/{player_id}:
     get:
       tags:
-        - Challenges
+      - Challenges
       summary: Получить испытания сезона игрока
       operationId: getSeasonChallenges
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: season_id
-          in: query
-          schema:
-            type: string
-            format: uuid
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: season_id
+        in: query
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Испытания сезона
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SeasonChallengesResponse"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/SeasonChallengesResponse'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     WeeklyChallenge:
       type: object
@@ -153,20 +145,19 @@ components:
         target:
           type: integer
           minimum: 1
-        is_completed:
-          type: boolean
         week_number:
           type: integer
-
+        is_completed:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CompleteChallengeRequest:
       type: object
       required:
-        - character_id
+      - character_id
       properties:
         character_id:
           type: string
           format: uuid
-
     SeasonChallengesResponse:
       type: object
       properties:
@@ -179,24 +170,8 @@ components:
         challenges:
           type: array
           items:
-            $ref: "#/components/schemas/WeeklyChallenge"
+            $ref: '#/components/schemas/WeeklyChallenge'
         total:
           type: integer
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

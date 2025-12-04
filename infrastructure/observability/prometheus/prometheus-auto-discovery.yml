@@ -1,0 +1,92 @@
+# Issue: Local monitoring stack
+# Автоматическое обнаружение всех сервисов через Docker labels
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'local'
+    environment: 'development'
+
+# Service discovery через Docker
+scrape_configs:
+  # Docker containers с метриками
+  - job_name: 'docker-services'
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+    relabel_configs:
+      # Только контейнеры с метриками
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        regex: '.*-service.*|.*-go'
+        action: keep
+      # Извлекаем имя сервиса
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      # Порт метрик из переменной окружения или дефолт
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        regex: '(.+)'
+        replacement: '${1}:9090'
+        target_label: __address__
+      # Метрики endpoint
+      - target_label: __metrics_path__
+        replacement: '/metrics'
+      # Дополнительные метки
+      - source_labels: [__meta_docker_container_name]
+        target_label: container_name
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        target_label: project
+
+  # Ручная конфигурация для критичных сервисов (fallback)
+  - job_name: 'realtime-gateway-go'
+    static_configs:
+      - targets: ['realtime-gateway:9090']
+        labels:
+          service: 'realtime-gateway-go'
+    metrics_path: /metrics
+
+  - job_name: 'matchmaking-go'
+    static_configs:
+      - targets: ['matchmaking-go:9090']
+        labels:
+          service: 'matchmaking-go'
+    metrics_path: /metrics
+
+  - job_name: 'inventory-service-go'
+    static_configs:
+      - targets: ['inventory-service:9223']
+        labels:
+          service: 'inventory-service-go'
+    metrics_path: /metrics
+
+  - job_name: 'character-service-go'
+    static_configs:
+      - targets: ['character-service:9092']
+        labels:
+          service: 'character-service-go'
+    metrics_path: /metrics
+
+  # Prometheus сам
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Pyroscope
+  - job_name: 'pyroscope'
+    static_configs:
+      - targets: ['pyroscope:4040']
+        labels:
+          service: 'pyroscope'
+
+  # Docker metrics (cAdvisor)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: 'docker'
+
+# Recording rules для агрегации
+rule_files:
+  - 'recording_rules.yml'
+

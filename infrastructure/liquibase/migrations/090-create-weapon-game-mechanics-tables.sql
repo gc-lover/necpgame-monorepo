@@ -8,18 +8,17 @@
 -- WEAPON RESOURCES
 -- ============================================================================
 
-CREATE TABLE weapon_resources (
-    weapon_instance_id UUID PRIMARY KEY,
-    ammunition_current INT NOT NULL DEFAULT 0,
-    ammunition_max INT NOT NULL DEFAULT 100,
-    heat_current DECIMAL(5,2) NOT NULL DEFAULT 0.0,
-    energy_current DECIMAL(5,2) NOT NULL DEFAULT 100.0,
-    cooldowns JSONB NOT NULL DEFAULT '{}',
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    
-    CONSTRAINT ammunition_valid CHECK (ammunition_current >= 0 AND ammunition_current <= ammunition_max),
-    CONSTRAINT heat_valid CHECK (heat_current >= 0 AND heat_current <= 100),
-    CONSTRAINT energy_valid CHECK (energy_current >= 0 AND energy_current <= 100)
+CREATE TABLE IF NOT EXISTS weapon_resources (
+  weapon_instance_id UUID PRIMARY KEY,
+  cooldowns JSONB NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  heat_current DECIMAL(5,2) NOT NULL DEFAULT 0.0,
+  energy_current DECIMAL(5,2) NOT NULL DEFAULT 100.0,
+  ammunition_current INT NOT NULL DEFAULT 0,
+  ammunition_max INT NOT NULL DEFAULT 100,
+  CONSTRAINT ammunition_valid CHECK (ammunition_current >= 0 AND ammunition_current <= ammunition_max),
+  CONSTRAINT heat_valid CHECK (heat_current >= 0 AND heat_current <= 100),
+  CONSTRAINT energy_valid CHECK (energy_current >= 0 AND energy_current <= 100)
 );
 
 CREATE INDEX idx_weapon_resources_updated ON weapon_resources(updated_at);
@@ -35,16 +34,15 @@ COMMENT ON COLUMN weapon_resources.cooldowns IS 'JSON object with active cooldow
 -- WEAPON UPGRADES
 -- ============================================================================
 
-CREATE TABLE weapon_upgrades (
-    weapon_instance_id UUID PRIMARY KEY,
-    upgrade_level INT NOT NULL DEFAULT 0,
-    experience INT NOT NULL DEFAULT 0,
-    unlocked_perks UUID[] NOT NULL DEFAULT '{}',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    
-    CONSTRAINT upgrade_level_valid CHECK (upgrade_level >= 0 AND upgrade_level <= 10),
-    CONSTRAINT experience_valid CHECK (experience >= 0)
+CREATE TABLE IF NOT EXISTS weapon_upgrades (
+  weapon_instance_id UUID PRIMARY KEY,
+  unlocked_perks UUID[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  upgrade_level INT NOT NULL DEFAULT 0,
+  experience INT NOT NULL DEFAULT 0,
+  CONSTRAINT upgrade_level_valid CHECK (upgrade_level >= 0 AND upgrade_level <= 10),
+  CONSTRAINT experience_valid CHECK (experience >= 0)
 );
 
 CREATE INDEX idx_weapon_upgrades_level ON weapon_upgrades(upgrade_level);
@@ -59,16 +57,15 @@ COMMENT ON COLUMN weapon_upgrades.unlocked_perks IS 'Array of unlocked perk IDs 
 -- WEAPON PERKS (DEFINITIONS)
 -- ============================================================================
 
-CREATE TABLE weapon_perks (
-    perk_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    weapon_type VARCHAR(50) NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL,
-    effect JSONB NOT NULL,
-    unlock_requirements JSONB NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    
-    UNIQUE(weapon_type, name)
+CREATE TABLE IF NOT EXISTS weapon_perks (
+  perk_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  description TEXT NOT NULL,
+  weapon_type VARCHAR(50) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  effect JSONB NOT NULL,
+  unlock_requirements JSONB NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE(weapon_type, name)
 );
 
 CREATE INDEX idx_weapon_perks_type ON weapon_perks(weapon_type);
@@ -82,19 +79,18 @@ COMMENT ON COLUMN weapon_perks.unlock_requirements IS 'JSON object with requirem
 -- WEAPON MASTERY
 -- ============================================================================
 
-CREATE TABLE weapon_mastery (
-    player_id UUID NOT NULL,
-    weapon_type VARCHAR(50) NOT NULL,
-    uses_count INT NOT NULL DEFAULT 0,
-    kills_count INT NOT NULL DEFAULT 0,
-    mastery_level INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    
-    PRIMARY KEY (player_id, weapon_type),
-    CONSTRAINT uses_valid CHECK (uses_count >= 0),
-    CONSTRAINT kills_valid CHECK (kills_count >= 0),
-    CONSTRAINT mastery_level_valid CHECK (mastery_level >= 0 AND mastery_level <= 100)
+CREATE TABLE IF NOT EXISTS weapon_mastery (
+  player_id UUID NOT NULL,
+  weapon_type VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  uses_count INT NOT NULL DEFAULT 0,
+  kills_count INT NOT NULL DEFAULT 0,
+  mastery_level INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (player_id, weapon_type),
+  CONSTRAINT uses_valid CHECK (uses_count >= 0),
+  CONSTRAINT kills_valid CHECK (kills_count >= 0),
+  CONSTRAINT mastery_level_valid CHECK (mastery_level >= 0 AND mastery_level <= 100)
 );
 
 CREATE INDEX idx_weapon_mastery_player ON weapon_mastery(player_id);
@@ -280,6 +276,7 @@ CREATE TRIGGER trigger_update_weapon_resources_timestamp
 -- rollback DROP TABLE IF EXISTS weapon_perks;
 -- rollback DROP TABLE IF EXISTS weapon_upgrades;
 -- rollback DROP TABLE IF EXISTS weapon_resources;
+
 
 
 

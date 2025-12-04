@@ -11,18 +11,18 @@ CREATE SCHEMA IF NOT EXISTS economy;
 
 -- Таблица истории сделок на рынке
 CREATE TABLE IF NOT EXISTS economy.market_trade_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    listing_id UUID NOT NULL REFERENCES economy.market_listings(id) ON DELETE CASCADE,
-    buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    item_id UUID NOT NULL,
-    quantity INTEGER NOT NULL CHECK (quantity > 0),
-    price_per_unit DECIMAL(15,2) NOT NULL CHECK (price_per_unit > 0),
-    total_price DECIMAL(15,2) NOT NULL CHECK (total_price > 0),
-    commission DECIMAL(15,2) NOT NULL DEFAULT 0.0 CHECK (commission >= 0),
-    seller_received DECIMAL(15,2) NOT NULL CHECK (seller_received >= 0),
-    completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  listing_id UUID NOT NULL REFERENCES economy.market_listings(id) ON DELETE CASCADE,
+  buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  item_id UUID NOT NULL,
+  completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  price_per_unit DECIMAL(15,2) NOT NULL CHECK (price_per_unit > 0),
+  total_price DECIMAL(15,2) NOT NULL CHECK (total_price > 0),
+  commission DECIMAL(15,2) NOT NULL DEFAULT 0.0 CHECK (commission >= 0),
+  seller_received DECIMAL(15,2) NOT NULL CHECK (seller_received >= 0),
+  quantity INTEGER NOT NULL CHECK (quantity > 0)
 );
 
 -- Индексы для market_trade_history
@@ -34,17 +34,17 @@ CREATE INDEX IF NOT EXISTS idx_market_trade_history_completed_at ON economy.mark
 
 -- Таблица отзывов продавцов
 CREATE TABLE IF NOT EXISTS economy.seller_reviews (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    trade_id UUID NOT NULL REFERENCES economy.market_trade_history(id) ON DELETE CASCADE,
-    seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
-    is_positive BOOLEAN NOT NULL DEFAULT true,
-    reported BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(trade_id, buyer_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  trade_id UUID NOT NULL REFERENCES economy.market_trade_history(id) ON DELETE CASCADE,
+  seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  buyer_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  comment TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  is_positive BOOLEAN NOT NULL DEFAULT true,
+  reported BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(trade_id, buyer_id)
 );
 
 -- Индексы для seller_reviews
@@ -56,19 +56,19 @@ CREATE INDEX IF NOT EXISTS idx_seller_reviews_reported ON economy.seller_reviews
 
 -- Таблица статистики продавцов
 CREATE TABLE IF NOT EXISTS economy.seller_statistics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    total_sales INTEGER NOT NULL DEFAULT 0 CHECK (total_sales >= 0),
-    total_revenue DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (total_revenue >= 0),
-    average_rating DECIMAL(3,2) NOT NULL DEFAULT 0.0 CHECK (average_rating >= 0 AND average_rating <= 5),
-    positive_reviews INTEGER NOT NULL DEFAULT 0 CHECK (positive_reviews >= 0),
-    negative_reviews INTEGER NOT NULL DEFAULT 0 CHECK (negative_reviews >= 0),
-    total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
-    items_sold INTEGER NOT NULL DEFAULT 0 CHECK (items_sold >= 0),
-    last_sale_at TIMESTAMP,
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(seller_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  last_sale_at TIMESTAMP,
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  total_revenue DECIMAL(20,2) NOT NULL DEFAULT 0.0 CHECK (total_revenue >= 0),
+  average_rating DECIMAL(3,2) NOT NULL DEFAULT 0.0 CHECK (average_rating >= 0 AND average_rating <= 5),
+  total_sales INTEGER NOT NULL DEFAULT 0 CHECK (total_sales >= 0),
+  positive_reviews INTEGER NOT NULL DEFAULT 0 CHECK (positive_reviews >= 0),
+  negative_reviews INTEGER NOT NULL DEFAULT 0 CHECK (negative_reviews >= 0),
+  total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
+  items_sold INTEGER NOT NULL DEFAULT 0 CHECK (items_sold >= 0),
+  UNIQUE(seller_id)
 );
 
 -- Индексы для seller_statistics
@@ -92,14 +92,14 @@ CREATE INDEX IF NOT EXISTS idx_seller_favorites_seller_id ON economy.seller_favo
 
 -- Таблица подписок на продавцов
 CREATE TABLE IF NOT EXISTS economy.seller_subscriptions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    subscriber_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    notify_on_new_listings BOOLEAN NOT NULL DEFAULT true,
-    notify_on_price_drops BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(subscriber_id, seller_id)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  subscriber_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  seller_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  notify_on_new_listings BOOLEAN NOT NULL DEFAULT true,
+  notify_on_price_drops BOOLEAN NOT NULL DEFAULT true,
+  UNIQUE(subscriber_id, seller_id)
 );
 
 -- Индексы для seller_subscriptions

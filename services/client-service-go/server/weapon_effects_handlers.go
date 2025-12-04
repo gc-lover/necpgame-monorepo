@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,7 +34,7 @@ func (h *WeaponEffectsHandlers) TriggerAudioEffect(w http.ResponseWriter, r *htt
 	h.respondError(w, http.StatusNotImplemented, "handler not implemented - run 'make generate-weapon-effects-api' first")
 }
 
-func (h *WeaponEffectsHandlers) GetEffect(w http.ResponseWriter, r *http.Request, effectId openapi_types.UUID) {
+func (h *WeaponEffectsHandlers) GetEffect(w http.ResponseWriter, r *http.Request, effectId uuid.UUID) {
 	h.respondError(w, http.StatusNotImplemented, "handler not implemented - run 'make generate-weapon-effects-api' first")
 }
 

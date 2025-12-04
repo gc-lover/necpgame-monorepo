@@ -13,9 +13,147 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// HealthCheck implements healthCheck operation.
+// ActivateAbility implements activateAbility operation.
 //
-// GET /health
-func (UnimplementedHandler) HealthCheck(ctx context.Context) (r *HealthCheckOK, _ error) {
+// Активирует способность для текущего персонажа.
+// Проверяет доступность, кулдауны, ресурсы (энергия,
+// здоровье) и киберпсихоз.
+// При успешной активации запускает кулдаун и обновляет
+// киберпсихоз.
+//
+// POST /gameplay/combat/abilities/activate
+func (UnimplementedHandler) ActivateAbility(ctx context.Context, req *AbilityActivationRequest) (r ActivateAbilityRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ActivateCombo implements activateCombo operation.
+//
+// Активировать комбо.
+//
+// POST /gameplay/combat/combos/activate
+func (UnimplementedHandler) ActivateCombo(ctx context.Context, req *ActivateComboRequest) (r ActivateComboRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateCombatSession implements createCombatSession operation.
+//
+// Создать боевую сессию.
+//
+// POST /gameplay/combat/sessions
+func (UnimplementedHandler) CreateCombatSession(ctx context.Context, req *CreateSessionRequest) (r CreateCombatSessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// EndCombatSession implements endCombatSession operation.
+//
+// Завершить сессию.
+//
+// DELETE /gameplay/combat/sessions/{sessionId}
+func (UnimplementedHandler) EndCombatSession(ctx context.Context, params EndCombatSessionParams) (r EndCombatSessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAbilityCatalog implements getAbilityCatalog operation.
+//
+// Возвращает каталог способностей с возможностью
+// фильтрации по типу, слоту и источнику.
+// Поддерживает пагинацию.
+//
+// GET /gameplay/combat/abilities/catalog
+func (UnimplementedHandler) GetAbilityCatalog(ctx context.Context, params GetAbilityCatalogParams) (r GetAbilityCatalogRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetArenaSessions implements getArenaSessions operation.
+//
+// Получить ареновые сессии.
+//
+// GET /gameplay/arena/sessions
+func (UnimplementedHandler) GetArenaSessions(ctx context.Context) (r GetArenaSessionsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAvailableSynergies implements getAvailableSynergies operation.
+//
+// Возвращает список доступных синергий для текущего
+// персонажа.
+// Фильтрует синергии на основе активных способностей,
+// имплантов и экипировки.
+// Поддерживает фильтрацию по типу синергии и пагинацию.
+//
+// GET /gameplay/combat/abilities/synergies
+func (UnimplementedHandler) GetAvailableSynergies(ctx context.Context, params GetAvailableSynergiesParams) (r GetAvailableSynergiesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetCombatSession implements getCombatSession operation.
+//
+// Получить сессию.
+//
+// GET /gameplay/combat/sessions/{sessionId}
+func (UnimplementedHandler) GetCombatSession(ctx context.Context, params GetCombatSessionParams) (r GetCombatSessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetComboCatalog implements getComboCatalog operation.
+//
+// Получить каталог комбо.
+//
+// GET /gameplay/combat/combos/catalog
+func (UnimplementedHandler) GetComboCatalog(ctx context.Context, params GetComboCatalogParams) (r GetComboCatalogRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetExtractZones implements getExtractZones operation.
+//
+// Получить зоны экстракции.
+//
+// GET /gameplay/extract/zones
+func (UnimplementedHandler) GetExtractZones(ctx context.Context) (r GetExtractZonesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetFreerunRoutes implements getFreerunRoutes operation.
+//
+// Получить доступные маршруты паркура.
+//
+// GET /gameplay/combat/freerun/routes
+func (UnimplementedHandler) GetFreerunRoutes(ctx context.Context, params GetFreerunRoutesParams) (r GetFreerunRoutesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetInstalledImplants implements getInstalledImplants operation.
+//
+// Получить установленные импланты.
+//
+// GET /gameplay/combat/implants
+func (UnimplementedHandler) GetInstalledImplants(ctx context.Context, params GetInstalledImplantsParams) (r GetInstalledImplantsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetLoadouts implements getLoadouts operation.
+//
+// Получить лоадауты персонажа.
+//
+// GET /gameplay/loadouts
+func (UnimplementedHandler) GetLoadouts(ctx context.Context, params GetLoadoutsParams) (r GetLoadoutsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetStealthStatus implements getStealthStatus operation.
+//
+// Получить статус стелса.
+//
+// GET /gameplay/combat/stealth/status
+func (UnimplementedHandler) GetStealthStatus(ctx context.Context, params GetStealthStatusParams) (r GetStealthStatusRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListCombatSessions implements listCombatSessions operation.
+//
+// Список сессий.
+//
+// GET /gameplay/combat/sessions
+func (UnimplementedHandler) ListCombatSessions(ctx context.Context, params ListCombatSessionsParams) (r *SessionListResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }

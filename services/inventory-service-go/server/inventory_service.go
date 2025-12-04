@@ -34,7 +34,17 @@ type InventoryService struct {
 }
 
 func NewInventoryService(dbURL, redisURL string) (*InventoryService, error) {
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Issue: #1605 - DB Connection Pool configuration
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	config.MaxConns = 50
+	config.MinConns = 10
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 1 * time.Minute
+	
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}
@@ -290,15 +300,22 @@ func (s *InventoryService) EquipItem(ctx context.Context, characterID uuid.UUID,
 		return errors.New("item cannot be equipped")
 	}
 
+	// Batch update: collect items to update, then update in one transaction (Issue #1608)
+	var itemsToUpdate []*models.InventoryItem
 	for i := range items {
 		if items[i].IsEquipped && items[i].EquipSlot == req.EquipSlot {
 			items[i].IsEquipped = false
 			items[i].EquipSlot = ""
 			items[i].UpdatedAt = time.Now()
-			err = s.repo.UpdateItem(ctx, &items[i])
-			if err != nil {
-				return err
-			}
+			itemsToUpdate = append(itemsToUpdate, &items[i])
+		}
+	}
+
+	// Batch update all items in one transaction (DB round trips ↓90%)
+	if len(itemsToUpdate) > 0 {
+		err = s.repo.UpdateItemsBatch(ctx, itemsToUpdate)
+		if err != nil {
+			return err
 		}
 	}
 

@@ -31,12 +31,23 @@ type CharacterService struct {
 	engramCyberpsychosisRepo  EngramCyberpsychosisRepositoryInterface
 	engramCyberpsychosisService EngramCyberpsychosisServiceInterface
 	cache                     *redis.Client
+	characterCache            *CharacterCache // Issue: #1609 - 3-tier cache
 	logger                    *logrus.Logger
 	keycloakURL               string
 }
 
 func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService, error) {
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Issue: #1605 - DB Connection Pool configuration
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	config.MaxConns = 50
+	config.MinConns = 10
+	config.MaxConnLifetime = 5 * time.Minute
+	config.MaxConnIdleTime = 1 * time.Minute
+	
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +69,9 @@ func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService
 	engramCyberpsychosisRepo := NewEngramCyberpsychosisRepository(dbPool)
 	engramCyberpsychosisService := NewEngramCyberpsychosisService(engramCyberpsychosisRepo, engramService, redisClient)
 
+	// Issue: #1609 - 3-tier cache (Memory → Redis → DB)
+	characterCache := NewCharacterCache(redisClient, repo)
+
 	return &CharacterService{
 		repo:                      repo,
 		engramRepo:                engramRepo,
@@ -67,6 +81,7 @@ func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService
 		engramCyberpsychosisRepo:  engramCyberpsychosisRepo,
 		engramCyberpsychosisService: engramCyberpsychosisService,
 		cache:                     redisClient,
+		characterCache:            characterCache, // Issue: #1609
 		logger:                    GetLogger(),
 		keycloakURL:               keycloakURL,
 	}, nil
@@ -122,23 +137,11 @@ func (s *CharacterService) CreateAccount(ctx context.Context, req *models.Create
 }
 
 func (s *CharacterService) GetCharactersByAccountID(ctx context.Context, accountID uuid.UUID) ([]models.Character, error) {
-	cacheKey := "characters:account:" + accountID.String()
-	
-	cached, err := s.cache.Get(ctx, cacheKey).Result()
-	if err == nil && cached != "" {
-		var characters []models.Character
-		if err := json.Unmarshal([]byte(cached), &characters); err == nil {
-			return characters, nil
-		}
-	}
-
-	characters, err := s.repo.GetCharactersByAccountID(ctx, accountID)
+	// Issue: #1609 - Use 3-tier cache (Memory → Redis → DB)
+	characters, err := s.characterCache.GetByAccountID(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
-
-	charactersJSON, _ := json.Marshal(characters)
-	s.cache.Set(ctx, cacheKey, charactersJSON, 5*time.Minute)
 
 	SetCharactersCount(accountID.String(), float64(len(characters)))
 
@@ -146,27 +149,8 @@ func (s *CharacterService) GetCharactersByAccountID(ctx context.Context, account
 }
 
 func (s *CharacterService) GetCharacter(ctx context.Context, characterID uuid.UUID) (*models.Character, error) {
-	cacheKey := "character:" + characterID.String()
-	
-	cached, err := s.cache.Get(ctx, cacheKey).Result()
-	if err == nil && cached != "" {
-		var char models.Character
-		if err := json.Unmarshal([]byte(cached), &char); err == nil {
-			return &char, nil
-		}
-	}
-
-	char, err := s.repo.GetCharacterByID(ctx, characterID)
-	if err != nil {
-		return nil, err
-	}
-
-	if char != nil {
-		charJSON, _ := json.Marshal(char)
-		s.cache.Set(ctx, cacheKey, charJSON, 5*time.Minute)
-	}
-
-	return char, nil
+	// Issue: #1609 - Use 3-tier cache (Memory → Redis → DB)
+	return s.characterCache.Get(ctx, characterID)
 }
 
 func (s *CharacterService) CreateCharacter(ctx context.Context, req *models.CreateCharacterRequest) (*models.Character, error) {
@@ -223,8 +207,8 @@ func (s *CharacterService) ValidateCharacter(ctx context.Context, characterID uu
 }
 
 func (s *CharacterService) invalidateCharacterCache(ctx context.Context, characterID uuid.UUID) {
-	cacheKey := "character:" + characterID.String()
-	s.cache.Del(ctx, cacheKey)
+	// Issue: #1609 - Invalidate 3-tier cache
+	s.characterCache.Invalidate(ctx, characterID)
 }
 
 func (s *CharacterService) SwitchCharacter(ctx context.Context, accountID, characterID uuid.UUID) (*models.SwitchCharacterResponse, error) {
@@ -266,9 +250,10 @@ func (s *CharacterService) SwitchCharacter(ctx context.Context, accountID, chara
 }
 
 func (s *CharacterService) invalidateAccountCache(ctx context.Context, accountID uuid.UUID) {
+	// Issue: #1609 - Invalidate 3-tier cache
+	s.characterCache.InvalidateAccount(ctx, accountID)
+	
+	// Also invalidate account cache
 	cacheKey := "account:" + accountID.String()
 	s.cache.Del(ctx, cacheKey)
-	
-	charactersCacheKey := "characters:account:" + accountID.String()
-	s.cache.Del(ctx, charactersCacheKey)
 }

@@ -4,34 +4,34 @@
 CREATE SCHEMA IF NOT EXISTS housing;
 
 CREATE TABLE IF NOT EXISTS housing.apartments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID NOT NULL,
-    owner_type VARCHAR(50) NOT NULL DEFAULT 'character',
-    apartment_type VARCHAR(50) NOT NULL,
-    location VARCHAR(255) NOT NULL,
-    price BIGINT NOT NULL,
-    furniture_slots INTEGER NOT NULL DEFAULT 20,
-    prestige_score INTEGER NOT NULL DEFAULT 0,
-    is_public BOOLEAN NOT NULL DEFAULT false,
-    guests JSONB DEFAULT '[]'::jsonb,
-    settings JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_apartment_type CHECK (apartment_type IN ('studio', 'standard', 'penthouse', 'guild_hall')),
-    CONSTRAINT chk_owner_type CHECK (owner_type IN ('character', 'guild')),
-    CONSTRAINT chk_furniture_slots CHECK (furniture_slots >= 0)
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id UUID NOT NULL,
+  owner_type VARCHAR(50) NOT NULL DEFAULT 'character',
+  apartment_type VARCHAR(50) NOT NULL,
+  location VARCHAR(255) NOT NULL,
+  guests JSONB DEFAULT '[]'::jsonb,
+  settings JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  price BIGINT NOT NULL,
+  furniture_slots INTEGER NOT NULL DEFAULT 20,
+  prestige_score INTEGER NOT NULL DEFAULT 0,
+  is_public BOOLEAN NOT NULL DEFAULT false,
+  CONSTRAINT chk_apartment_type CHECK (apartment_type IN ('studio', 'standard', 'penthouse', 'guild_hall')),
+  CONSTRAINT chk_owner_type CHECK (owner_type IN ('character', 'guild')),
+  CONSTRAINT chk_furniture_slots CHECK (furniture_slots >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS housing.furniture_items (
-    id VARCHAR(255) PRIMARY KEY,
-    category VARCHAR(50) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    price BIGINT NOT NULL DEFAULT 0,
-    prestige_value INTEGER NOT NULL DEFAULT 0,
-    function_bonus JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_furniture_category CHECK (category IN ('decorative', 'functional', 'comfort', 'storage'))
+  id VARCHAR(255) PRIMARY KEY,
+  description TEXT,
+  category VARCHAR(50) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  function_bonus JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  price BIGINT NOT NULL DEFAULT 0,
+  prestige_value INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT chk_furniture_category CHECK (category IN ('decorative', 'functional', 'comfort', 'storage'))
 );
 
 CREATE TABLE IF NOT EXISTS housing.placed_furniture (

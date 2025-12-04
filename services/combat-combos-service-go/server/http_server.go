@@ -1,81 +1,77 @@
-// Issue: #1578
+// Issue: #1595
 package server
 
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
+	"github.com/sirupsen/logrus"
 )
 
-// HTTPServer represents HTTP server (OPTIMIZATION: Issue #1586 - struct field alignment)
-// Before: 40 bytes, After: 32 bytes (-20%)
-// Ordered: interface → pointer → string
 type HTTPServer struct {
-	router chi.Router    // interface (16 bytes on 64-bit)
-	server *http.Server  // pointer (8 bytes)
-	addr   string        // string (16 bytes)
-	// Total: 16+8+16 = 40 bytes → 32 bytes optimized
+	addr   string
+	router chi.Router
+	logger *logrus.Logger
+	server *http.Server
 }
 
-// NewHTTPServer creates new HTTP server
-// SOLID: ТОЛЬКО настройка сервера и роутера. Middleware в middleware.go, Handlers в handlers.go
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	router := chi.NewRouter()
 
-	// Built-in middleware
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RequestID)
 
-	// Custom middleware (из middleware.go)
+	logger := GetLogger()
 	router.Use(LoggingMiddleware)
 	router.Use(MetricsMiddleware)
 
-	// Handlers (реализация api.ServerInterface из handlers.go)
+	// Handlers (реализация api.Handler из handlers.go)
 	handlers := NewHandlers(service)
 
-	// Integration with oapi-codegen (Chi router)
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	// Integration with ogen
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
 
-	// Health check
+	// Mount ogen server under /api/v1
+	router.Mount("/api/v1", ogenServer)
+
 	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
 
-	return &HTTPServer{
+	server := &HTTPServer{
 		addr:   addr,
 		router: router,
+		logger: logger,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: router,
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
 		},
 	}
+
+	return server
 }
 
-// Start starts HTTP server
 func (s *HTTPServer) Start() error {
+	s.logger.WithField("addr", s.addr).Info("Combat Combos Service starting")
 	return s.server.ListenAndServe()
 }
 
-// Shutdown gracefully shuts down HTTP server
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
+	s.logger.Info("Shutting down Combat Combos Service")
 	return s.server.Shutdown(ctx)
 }
 
-// Health check handler
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
-
-// Metrics handler (stub)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("# HELP combat_combos_service metrics\n"))
-}
-

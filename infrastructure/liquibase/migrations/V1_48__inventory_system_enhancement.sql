@@ -21,17 +21,17 @@ ADD COLUMN IF NOT EXISTS bind_on_pickup BOOLEAN NOT NULL DEFAULT false;
 
 -- Таблица экипировки персонажа
 CREATE TABLE IF NOT EXISTS mvp_core.character_equipment (
-    character_id UUID NOT NULL,
-    slot_type VARCHAR(50) NOT NULL CHECK (slot_type IN (
+  character_id UUID NOT NULL,
+  item_id UUID NOT NULL REFERENCES mvp_core.character_items(id) ON DELETE CASCADE,
+  slot_type VARCHAR(50) NOT NULL CHECK (slot_type IN (
         'weapon_primary', 'weapon_secondary', 'weapon_melee',
         'armor_head', 'armor_body', 'armor_legs', 'armor_feet', 'armor_hands',
         'implant_1', 'implant_2', 'implant_3', 'implant_4', 'implant_5',
         'cyberdeck', 'operating_system', 'nervous_system'
     )),
-    item_id UUID NOT NULL REFERENCES mvp_core.character_items(id) ON DELETE CASCADE,
-    equipped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (character_id, slot_type),
-    FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE
+  equipped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (character_id, slot_type),
+  FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE
 );
 
 -- Индексы для character_equipment
@@ -41,16 +41,16 @@ CREATE INDEX IF NOT EXISTS idx_character_equipment_slot_type ON mvp_core.charact
 
 -- Таблица хранилища персонажа (банк/стэш)
 CREATE TABLE IF NOT EXISTS mvp_core.character_storage (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-    storage_type VARCHAR(30) NOT NULL CHECK (storage_type IN ('personal_bank', 'guild_bank', 'stash')),
-    max_slots INTEGER NOT NULL DEFAULT 50,
-    current_weight DECIMAL(10, 2) NOT NULL DEFAULT 0,
-    max_weight DECIMAL(10, 2) NOT NULL DEFAULT 500.0,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP,
-    UNIQUE(character_id, storage_type) WHERE deleted_at IS NULL
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  storage_type VARCHAR(30) NOT NULL CHECK (storage_type IN ('personal_bank', 'guild_bank', 'stash')),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP,
+  current_weight DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  max_weight DECIMAL(10, 2) NOT NULL DEFAULT 500.0,
+  max_slots INTEGER NOT NULL DEFAULT 50,
+  UNIQUE(character_id, storage_type) WHERE deleted_at IS NULL
 );
 
 -- Индексы для character_storage
@@ -60,18 +60,18 @@ CREATE INDEX IF NOT EXISTS idx_character_storage_character_type ON mvp_core.char
 
 -- Таблица предметов в хранилище
 CREATE TABLE IF NOT EXISTS mvp_core.storage_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    storage_id UUID NOT NULL REFERENCES mvp_core.character_storage(id) ON DELETE CASCADE,
-    item_template_id UUID,
-    slot_index INTEGER NOT NULL,
-    stack_size INTEGER NOT NULL DEFAULT 1,
-    durability INTEGER,
-    bind_status VARCHAR(20) CHECK (bind_status IN ('unbound', 'bound', 'account_bound')),
-    modifiers JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP,
-    UNIQUE(storage_id, slot_index) WHERE deleted_at IS NULL
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  storage_id UUID NOT NULL REFERENCES mvp_core.character_storage(id) ON DELETE CASCADE,
+  item_template_id UUID,
+  bind_status VARCHAR(20) CHECK (bind_status IN ('unbound', 'bound', 'account_bound')),
+  modifiers JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP,
+  slot_index INTEGER NOT NULL,
+  stack_size INTEGER NOT NULL DEFAULT 1,
+  durability INTEGER,
+  UNIQUE(storage_id, slot_index) WHERE deleted_at IS NULL
 );
 
 -- Индексы для storage_items

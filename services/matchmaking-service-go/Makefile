@@ -1,4 +1,4 @@
-# Issue: #1579 - ogen migration + performance optimizations
+﻿# Issue: #1579 - ogen migration + performance optimizations
 .PHONY: generate-api clean verify-api check-deps check-file-sizes
 
 SERVICE_NAME := matchmaking-service
@@ -11,36 +11,50 @@ SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
 BUNDLED_SPEC := openapi-bundled.yaml
 
 check-deps:
-	@command -v $(OGEN) >/dev/null 2>&1 || { echo "❌ ogen not found. Install: go install -v github.com/ogen-go/ogen/cmd/ogen@latest"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "❌ node not found. Install Node.js"; exit 1; }
+	@command -v $(OGEN) >/dev/null 2>&1 || { echo "вќЊ ogen not found. Install: go install -v github.com/ogen-go/ogen/cmd/ogen@latest"; exit 1; }
+	@command -v node >/dev/null 2>&1 || { echo "вќЊ node not found. Install Node.js"; exit 1; }
 
 verify-api: check-deps
-	@echo "🔍 Validating OpenAPI spec..."
+	@echo "рџ”Ќ Validating OpenAPI spec..."
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
-	@echo "✅ OpenAPI spec is valid!"
+	@echo "вњ… OpenAPI spec is valid!"
 
 generate-api: check-deps verify-api
-	@echo "📦 Bundling OpenAPI spec..."
+	@echo "рџ“¦ Bundling OpenAPI spec..."
 	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
-	@echo "🔨 Generating ogen code..."
+	@echo "рџ”Ё Generating ogen code..."
 	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
 	@$(MAKE) check-file-sizes
-	@echo "✅ ogen code generated successfully!"
+	@echo "вњ… ogen code generated successfully!"
 
 check-file-sizes:
-	@echo "🔍 Checking generated file sizes..."
+	@echo "рџ”Ќ Checking generated file sizes..."
 	@find $(API_DIR) -name "*.go" -type f 2>/dev/null | while read file; do \
 		lines=$$(wc -l < "$$file" 2>/dev/null || powershell -Command "(Get-Content '$$file').Count"); \
 		if [ $$lines -gt 500 ]; then \
-			echo "⚠️  $$file: $$lines lines (exceeds 500 limit!)"; \
+			echo "вљ пёЏ  $$file: $$lines lines (exceeds 500 limit!)"; \
 		else \
-			echo "✅ $$file: $$lines lines (OK)"; \
+			echo "вњ… $$file: $$lines lines (OK)"; \
 		fi; \
 	done || true
 
 clean:
-	@echo "🧹 Cleaning generated files..."
+	@echo "рџ§№ Cleaning generated files..."
 	@rm -rf $(API_DIR)/* $(BUNDLED_SPEC)
-	@echo "✅ Clean complete!"
+	@echo "вњ… Clean complete!"
 
 
+.PHONY: bench bench-json bench-quick
+
+# Run benchmarks (human-readable)
+bench:
+	go test -run=^ -bench=. -benchmem ./server
+
+# Run benchmarks (JSON output for CI)
+bench-json:
+	@mkdir -p ../../.benchmarks/results
+	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/matchmaking-service_bench.json
+
+# Quick benchmark (short duration)
+bench-quick:
+	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server

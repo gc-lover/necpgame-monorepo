@@ -1,3 +1,6 @@
+// Issue: #1595
+// OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
+// PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
 
 import (
@@ -5,72 +8,70 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/combat-sessions-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sessions-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
+// HTTPServer represents HTTP server (no chi dependency)
 type HTTPServer struct {
 	addr   string
 	server *http.Server
 	logger *logrus.Logger
 }
 
+// NewHTTPServer creates new HTTP server WITHOUT chi
+// PERFORMANCE: Standard mux for health/metrics, OGEN router for API (already max speed)
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewServiceHandlers(logger)
+	// OGEN server (fast static router - hot path)
+	handlers := NewHandlers()
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
 
-	router := chi.NewRouter()
+	// Standard mux (for health/metrics - cold path)
+	mux := http.NewServeMux()
 
-	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
-	router.Use(corsMiddleware)
+	// Middleware chain (no duplication, optimized)
+	apiHandler := chainMiddleware(ogenServer,
+		recoveryMiddleware(logger),  // panic recovery
+		requestIDMiddleware,  // request ID
+		loggingMiddleware(logger),    // structured logging
+		CORSMiddleware(),       // CORS
+	)
 
-	// Generated API handlers with Chi
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseRouter: router,
-	})
+	// Mount OGEN (hot path - maximum speed, static router)
+	mux.Handle("/api/v1/", apiHandler)
 
-	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
+	// Health/metrics (cold path - simple mux, no chi overhead)
+	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,
+		logger: logger,
 		server: &http.Server{
 			Addr:         addr,
-			Handler:      router,
+			Handler:      mux,
 			ReadTimeout:  15 * time.Second,
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		},
-		logger: logger,
 	}
 }
 
-func (s *HTTPServer) Start() error {
-	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
-	return s.server.ListenAndServe()
-}
-
-func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	s.logger.Info("Shutting down HTTP server")
-	return s.server.Shutdown(ctx)
-}
-
-func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-			next.ServeHTTP(w, r)
-			logger.WithFields(logrus.Fields{
-				"method":   r.Method,
-				"path":     r.URL.Path,
-				"duration": time.Since(start),
-			}).Info("HTTP request processed")
-		})
+// chainMiddleware chains middleware functions (simple and fast)
+func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
 	}
+	return h
 }
 
+// recoveryMiddleware recovers from panics
 func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -85,21 +86,46 @@ func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func corsMiddleware(next http.Handler) http.Handler {
+// requestIDMiddleware adds request ID to headers
+func requestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			requestID = uuid.New().String()
 		}
-
+		w.Header().Set("X-Request-ID", requestID)
 		next.ServeHTTP(w, r)
 	})
 }
 
+// loggingMiddleware logs HTTP requests
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"duration": time.Since(start),
+			}).Info("HTTP request processed")
+		})
+	}
+}
+
+// Start starts HTTP server
+func (s *HTTPServer) Start() error {
+	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
+	return s.server.ListenAndServe()
+}
+
+// Shutdown gracefully shuts down HTTP server
+func (s *HTTPServer) Shutdown(ctx context.Context) error {
+	s.logger.Info("Shutting down HTTP server")
+	return s.server.Shutdown(ctx)
+}
+
+// Health check handler
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

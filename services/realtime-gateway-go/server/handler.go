@@ -59,9 +59,18 @@ type GatewayHandler struct {
 	sessionTokensMu  sync.RWMutex
 	banNotifier      *BanNotificationSubscriber
 	notificationSubscriber *NotificationSubscriber
+	compressor       *AdaptiveCompressor // Issue: #1612 - Adaptive compression
 }
 
 func NewGatewayHandler(tickRate int, sessionMgr SessionManagerInterface) *GatewayHandler {
+	// Issue: #1612 - Initialize adaptive compressor
+	compressor, err := NewAdaptiveCompressor()
+	if err != nil {
+		// Log error but continue without compression
+		GetLogger().WithError(err).Warn("Failed to initialize compressor, continuing without compression")
+		compressor = nil
+	}
+
 	handler := &GatewayHandler{
 		tickRate:            tickRate,
 		gameStateMgr:        NewGameStateManager(tickRate),
@@ -70,6 +79,7 @@ func NewGatewayHandler(tickRate int, sessionMgr SessionManagerInterface) *Gatewa
 		clientDeltaStates:   make(map[*websocket.Conn]*ClientDeltaState),
 		useDeltaCompression: true,
 		sessionTokens:       make(map[*websocket.Conn]string),
+		compressor:          compressor, // Issue: #1612
 	}
 	return handler
 }
@@ -246,6 +256,14 @@ func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 				} else {
 					deltaState.SetLastState(CopyGameStateData(newState))
 					continue
+				}
+
+				// Issue: #1612 - Adaptive compression (LZ4 для real-time)
+				if h.compressor != nil {
+					compressed, err := h.compressor.Compress(data, true) // true = real-time data
+					if err == nil && len(compressed) < len(data) {
+						data = compressed
+					}
 				}
 
 				atomic.AddInt64(&totalDeltaSize, int64(len(data)))

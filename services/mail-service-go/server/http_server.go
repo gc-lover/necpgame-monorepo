@@ -1,4 +1,4 @@
-// Issue: #151
+// Issue: #1599 - ogen migration
 package server
 
 import (
@@ -7,50 +7,82 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	api "github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HTTPServer struct {
 	addr    string
 	router  *chi.Mux
+	server  *http.Server
 	service Service
 }
 
 func NewHTTPServer(addr string, service Service) *HTTPServer {
 	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+
+	router.Use(chiMiddleware.RequestID)
+	router.Use(chiMiddleware.RealIP)
+	router.Use(chiMiddleware.Logger)
+	router.Use(chiMiddleware.Recoverer)
+	router.Use(corsMiddleware)
 
 	handlers := NewHandlers(service)
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	secHandler := &SecurityHandler{}
 
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	router.Mount("/api/v1", ogenServer)
+	router.Handle("/metrics", promhttp.Handler())
 	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
 
-	return &HTTPServer{addr: addr, router: router, service: service}
+	return &HTTPServer{
+		addr:   addr,
+		router: router,
+		server: &http.Server{
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		},
+		service: service,
+	}
 }
 
 func (s *HTTPServer) Start() error {
-	return http.ListenAndServe(s.addr, s.router)
+	return s.server.ListenAndServe()
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	return nil
+	return s.server.Shutdown(ctx)
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
 }
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
+
 
 
 

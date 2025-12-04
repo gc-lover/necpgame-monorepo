@@ -1,128 +1,193 @@
-// Issue: #131
+// Issue: #131, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
-	"encoding/json"
-	"net/http"
+	"context"
+	"errors"
+	"sync"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/trade-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+const DBTimeout = 50 * time.Millisecond
+
+var (
+	ErrNotFound = errors.New("not found")
+)
+
+// Handlers implements api.Handler interface (ogen typed handlers!)
+// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Handlers struct {
 	service Service
+
+	// Memory pooling for hot path structs (zero allocations target!)
+	successResponsePool      sync.Pool
+	tradeSessionResponsePool sync.Pool
+	tradeHistoryResponsePool sync.Pool
 }
 
+// NewHandlers creates new handlers
 func NewHandlers(service Service) *Handlers {
-	return &Handlers{service: service}
+	h := &Handlers{service: service}
+
+	// Initialize memory pools (zero allocations target!)
+	h.successResponsePool = sync.Pool{
+		New: func() interface{} {
+			return &api.SuccessResponse{}
+		},
+	}
+	h.tradeSessionResponsePool = sync.Pool{
+		New: func() interface{} {
+			return &api.TradeSessionResponse{}
+		},
+	}
+	h.tradeHistoryResponsePool = sync.Pool{
+		New: func() interface{} {
+			return &api.TradeHistoryResponse{}
+		},
+	}
+
+	return h
 }
 
-func (h *Handlers) CreateTradeSession(w http.ResponseWriter, r *http.Request) {
-	var req api.CreateTradeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
-		return
-	}
-	response, err := h.service.CreateTradeSession(r.Context(), &req)
+// CreateTradeSession - TYPED response!
+func (h *Handlers) CreateTradeSession(ctx context.Context, req *api.CreateTradeRequest) (api.CreateTradeSessionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	response, err := h.service.CreateTradeSession(ctx, req)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return &api.CreateTradeSessionBadRequest{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) GetTradeSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	response, err := h.service.GetTradeSession(r.Context(), sessionId.String())
+// GetTradeSession - TYPED response!
+func (h *Handlers) GetTradeSession(ctx context.Context, params api.GetTradeSessionParams) (api.GetTradeSessionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	sessionID := params.SessionID.String()
+	response, err := h.service.GetTradeSession(ctx, sessionID)
 	if err != nil {
-		respondError(w, http.StatusNotFound, "Trade session not found")
-		return
+		if err == ErrNotFound {
+			return &api.Error{
+				Error:   "NOT_FOUND",
+				Message: "Trade session not found",
+			}, nil
+		}
+		return &api.Error{
+			Error:   "INTERNAL_SERVER_ERROR",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) CancelTradeSession(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	err := h.service.CancelTradeSession(r.Context(), sessionId.String())
+// CancelTradeSession - TYPED response!
+func (h *Handlers) CancelTradeSession(ctx context.Context, params api.CancelTradeSessionParams) (api.CancelTradeSessionRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	sessionID := params.SessionID.String()
+	err := h.service.CancelTradeSession(ctx, sessionID)
 	if err != nil {
-		respondError(w, http.StatusForbidden, err.Error())
-		return
+		return &api.CancelTradeSessionForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, map[string]string{"status": "cancelled"})
+
+	// Issue: #1607 - Use memory pooling
+	result := h.successResponsePool.Get().(*api.SuccessResponse)
+	// Note: Not returning to pool - struct is returned to caller
+
+	result.Status = api.NewOptString("cancelled")
+	return result, nil
 }
 
-func (h *Handlers) AddTradeItems(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	var req api.AddItemsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
-		return
-	}
-	response, err := h.service.AddTradeItems(r.Context(), sessionId.String(), &req)
+// AddTradeItems - TYPED response!
+func (h *Handlers) AddTradeItems(ctx context.Context, req *api.AddItemsRequest, params api.AddTradeItemsParams) (api.AddTradeItemsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	sessionID := params.SessionID.String()
+	response, err := h.service.AddTradeItems(ctx, sessionID, req)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return &api.AddTradeItemsBadRequest{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) AddTradeCurrency(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	var req api.AddCurrencyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
-		return
-	}
-	response, err := h.service.AddTradeCurrency(r.Context(), sessionId.String(), &req)
+// AddTradeCurrency - TYPED response!
+func (h *Handlers) AddTradeCurrency(ctx context.Context, req *api.AddCurrencyRequest, params api.AddTradeCurrencyParams) (api.AddTradeCurrencyRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	sessionID := params.SessionID.String()
+	response, err := h.service.AddTradeCurrency(ctx, sessionID, req)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return &api.Error{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) SetTradeReady(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	var req api.ReadyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request")
-		return
-	}
-	response, err := h.service.SetTradeReady(r.Context(), sessionId.String(), &req)
+// SetTradeReady - TYPED response!
+func (h *Handlers) SetTradeReady(ctx context.Context, req *api.ReadyRequest, params api.SetTradeReadyParams) (*api.TradeSessionResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	sessionID := params.SessionID.String()
+	response, err := h.service.SetTradeReady(ctx, sessionID, req)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return nil, err
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) CompleteTrade(w http.ResponseWriter, r *http.Request, sessionId openapi_types.UUID) {
-	response, err := h.service.CompleteTrade(r.Context(), sessionId.String())
+// CompleteTrade - TYPED response!
+func (h *Handlers) CompleteTrade(ctx context.Context, params api.CompleteTradeParams) (api.CompleteTradeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	sessionID := params.SessionID.String()
+	response, err := h.service.CompleteTrade(ctx, sessionID)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
+		return &api.CompleteTradeBadRequest{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) GetTradeHistory(w http.ResponseWriter, r *http.Request, playerId openapi_types.UUID, params api.GetTradeHistoryParams) {
-	response, err := h.service.GetTradeHistory(r.Context(), playerId.String(), params)
+// GetTradeHistory - TYPED response!
+func (h *Handlers) GetTradeHistory(ctx context.Context, params api.GetTradeHistoryParams) (*api.TradeHistoryResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	playerID := params.PlayerID.String()
+	response, err := h.service.GetTradeHistory(ctx, playerID, params)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
-
-func respondJSON(w http.ResponseWriter, code int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, code int, message string) {
-	respondJSON(w, code, map[string]string{"error": message})
-}
-
-
-
-
-
-
-
-

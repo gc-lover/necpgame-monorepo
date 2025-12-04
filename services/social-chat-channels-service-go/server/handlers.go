@@ -1,13 +1,20 @@
+// Issue: #1604
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/necpgame/social-chat-channels-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/google/uuid"
+)
+
+// Context timeout constants (Issue #1604)
+const (
+	DBTimeout    = 50 * time.Millisecond
+	CacheTimeout = 10 * time.Millisecond
 )
 
 type ChatChannelsHandlers struct{}
@@ -17,8 +24,12 @@ func NewChatChannelsHandlers() *ChatChannelsHandlers {
 }
 
 func (h *ChatChannelsHandlers) GetChannels(w http.ResponseWriter, r *http.Request, params api.GetChannelsParams) {
-	channelId1 := openapi_types.UUID(uuid.New())
-	channelId2 := openapi_types.UUID(uuid.New())
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
+	channelId1 := uuid.UUID(uuid.New())
+	channelId2 := uuid.UUID(uuid.New())
 	channelType1 := api.ChatChannelChannelTypeGLOBAL
 	channelType2 := api.ChatChannelChannelTypeTRADE
 	now := time.Now()
@@ -68,6 +79,10 @@ func (h *ChatChannelsHandlers) GetChannels(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ChatChannelsHandlers) GetChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	channelType := api.ChatChannelChannelTypeGLOBAL
 	now := time.Now()
 	name := "Global Chat"
@@ -93,6 +108,10 @@ func (h *ChatChannelsHandlers) GetChannel(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ChatChannelsHandlers) JoinChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.JoinChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err, "Invalid request body")
@@ -124,6 +143,10 @@ func (h *ChatChannelsHandlers) JoinChannel(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ChatChannelsHandlers) LeaveChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
 	var req api.LeaveChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err, "Invalid request body")
@@ -139,9 +162,13 @@ func (h *ChatChannelsHandlers) LeaveChannel(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *ChatChannelsHandlers) GetChannelMembers(w http.ResponseWriter, r *http.Request, channelId api.ChannelId, params api.GetChannelMembersParams) {
-	memberId1 := openapi_types.UUID(uuid.New())
-	memberId2 := openapi_types.UUID(uuid.New())
-	members := []openapi_types.UUID{memberId1, memberId2}
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	_ = ctx // Will be used when DB operations are implemented
+
+	memberId1 := uuid.UUID(uuid.New())
+	memberId2 := uuid.UUID(uuid.New())
+	members := []uuid.UUID{memberId1, memberId2}
 	total := len(members)
 	limit := 50
 	offset := 0
@@ -163,6 +190,7 @@ func (h *ChatChannelsHandlers) GetChannelMembers(w http.ResponseWriter, r *http.
 
 	respondJSON(w, http.StatusOK, response)
 }
+
 
 
 

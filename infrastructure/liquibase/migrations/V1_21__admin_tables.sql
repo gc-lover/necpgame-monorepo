@@ -3,12 +3,12 @@ CREATE SCHEMA IF NOT EXISTS admin;
 CREATE TABLE IF NOT EXISTS admin.admin_audit_log (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   admin_id UUID NOT NULL,
-  action_type VARCHAR(50) NOT NULL,
   target_id UUID,
-  target_type VARCHAR(50) NOT NULL,
-  details JSONB NOT NULL DEFAULT '{}',
-  ip_address VARCHAR(45),
   user_agent TEXT,
+  action_type VARCHAR(50) NOT NULL,
+  target_type VARCHAR(50) NOT NULL,
+  ip_address VARCHAR(45),
+  details JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

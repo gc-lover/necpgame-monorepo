@@ -8,27 +8,125 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// HealthCheck implements healthCheck operation.
+	// ActivateAbility implements activateAbility operation.
 	//
-	// GET /health
-	HealthCheck(ctx context.Context) (*HealthCheckOK, error)
+	// Активирует способность для текущего персонажа.
+	// Проверяет доступность, кулдауны, ресурсы (энергия,
+	// здоровье) и киберпсихоз.
+	// При успешной активации запускает кулдаун и обновляет
+	// киберпсихоз.
+	//
+	// POST /gameplay/combat/abilities/activate
+	ActivateAbility(ctx context.Context, req *AbilityActivationRequest) (ActivateAbilityRes, error)
+	// ActivateCombo implements activateCombo operation.
+	//
+	// Активировать комбо.
+	//
+	// POST /gameplay/combat/combos/activate
+	ActivateCombo(ctx context.Context, req *ActivateComboRequest) (ActivateComboRes, error)
+	// CreateCombatSession implements createCombatSession operation.
+	//
+	// Создать боевую сессию.
+	//
+	// POST /gameplay/combat/sessions
+	CreateCombatSession(ctx context.Context, req *CreateSessionRequest) (CreateCombatSessionRes, error)
+	// EndCombatSession implements endCombatSession operation.
+	//
+	// Завершить сессию.
+	//
+	// DELETE /gameplay/combat/sessions/{sessionId}
+	EndCombatSession(ctx context.Context, params EndCombatSessionParams) (EndCombatSessionRes, error)
+	// GetAbilityCatalog implements getAbilityCatalog operation.
+	//
+	// Возвращает каталог способностей с возможностью
+	// фильтрации по типу, слоту и источнику.
+	// Поддерживает пагинацию.
+	//
+	// GET /gameplay/combat/abilities/catalog
+	GetAbilityCatalog(ctx context.Context, params GetAbilityCatalogParams) (GetAbilityCatalogRes, error)
+	// GetArenaSessions implements getArenaSessions operation.
+	//
+	// Получить ареновые сессии.
+	//
+	// GET /gameplay/arena/sessions
+	GetArenaSessions(ctx context.Context) (GetArenaSessionsRes, error)
+	// GetAvailableSynergies implements getAvailableSynergies operation.
+	//
+	// Возвращает список доступных синергий для текущего
+	// персонажа.
+	// Фильтрует синергии на основе активных способностей,
+	// имплантов и экипировки.
+	// Поддерживает фильтрацию по типу синергии и пагинацию.
+	//
+	// GET /gameplay/combat/abilities/synergies
+	GetAvailableSynergies(ctx context.Context, params GetAvailableSynergiesParams) (GetAvailableSynergiesRes, error)
+	// GetCombatSession implements getCombatSession operation.
+	//
+	// Получить сессию.
+	//
+	// GET /gameplay/combat/sessions/{sessionId}
+	GetCombatSession(ctx context.Context, params GetCombatSessionParams) (GetCombatSessionRes, error)
+	// GetComboCatalog implements getComboCatalog operation.
+	//
+	// Получить каталог комбо.
+	//
+	// GET /gameplay/combat/combos/catalog
+	GetComboCatalog(ctx context.Context, params GetComboCatalogParams) (GetComboCatalogRes, error)
+	// GetExtractZones implements getExtractZones operation.
+	//
+	// Получить зоны экстракции.
+	//
+	// GET /gameplay/extract/zones
+	GetExtractZones(ctx context.Context) (GetExtractZonesRes, error)
+	// GetFreerunRoutes implements getFreerunRoutes operation.
+	//
+	// Получить доступные маршруты паркура.
+	//
+	// GET /gameplay/combat/freerun/routes
+	GetFreerunRoutes(ctx context.Context, params GetFreerunRoutesParams) (GetFreerunRoutesRes, error)
+	// GetInstalledImplants implements getInstalledImplants operation.
+	//
+	// Получить установленные импланты.
+	//
+	// GET /gameplay/combat/implants
+	GetInstalledImplants(ctx context.Context, params GetInstalledImplantsParams) (GetInstalledImplantsRes, error)
+	// GetLoadouts implements getLoadouts operation.
+	//
+	// Получить лоадауты персонажа.
+	//
+	// GET /gameplay/loadouts
+	GetLoadouts(ctx context.Context, params GetLoadoutsParams) (GetLoadoutsRes, error)
+	// GetStealthStatus implements getStealthStatus operation.
+	//
+	// Получить статус стелса.
+	//
+	// GET /gameplay/combat/stealth/status
+	GetStealthStatus(ctx context.Context, params GetStealthStatusParams) (GetStealthStatusRes, error)
+	// ListCombatSessions implements listCombatSessions operation.
+	//
+	// Список сессий.
+	//
+	// GET /gameplay/combat/sessions
+	ListCombatSessions(ctx context.Context, params ListCombatSessionsParams) (*SessionListResponse, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and
 // calls Handler to handle requests.
 type Server struct {
-	h Handler
+	h   Handler
+	sec SecurityHandler
 	baseServer
 }
 
 // NewServer creates new Server.
-func NewServer(h Handler, opts ...ServerOption) (*Server, error) {
+func NewServer(h Handler, sec SecurityHandler, opts ...ServerOption) (*Server, error) {
 	s, err := newServerConfig(opts...).baseServer()
 	if err != nil {
 		return nil, err
 	}
 	return &Server{
 		h:          h,
+		sec:        sec,
 		baseServer: s,
 	}, nil
 }

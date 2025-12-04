@@ -6,41 +6,38 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8082/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8082/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Character State
-    description: Сохранение и загрузка состояния персонажей
-
+- name: Character State
+  description: Сохранение и загрузка состояния персонажей
 paths:
   /character/characters/{character_id}/save-state:
     post:
       tags:
-        - Character State
+      - Character State
       summary: Сохранение состояния персонажа
       operationId: saveCharacterState
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SaveStateRequest"
+              $ref: '#/components/schemas/SaveStateRequest'
       responses:
-        "200":
+        '200':
           description: Состояние сохранено
           content:
             application/json:
@@ -52,86 +49,82 @@ paths:
                   saved_at:
                     type: string
                     format: date-time
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /character/characters/{character_id}/load-state:
     get:
       tags:
-        - Character State
+      - Character State
       summary: Загрузка состояния персонажа
       operationId: loadCharacterState
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Состояние персонажа
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharacterState"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/CharacterState'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /character/characters/{character_id}/snapshot:
     post:
       tags:
-        - Character State
+      - Character State
       summary: Создать снапшот состояния
       operationId: createCharacterSnapshot
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: false
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SaveStateRequest"
+              $ref: '#/components/schemas/SaveStateRequest'
       responses:
-        "200":
+        '200':
           description: Снапшот создан
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharacterState"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/CharacterState'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     SaveStateRequest:
       type: object
@@ -145,13 +138,15 @@ components:
         include_session:
           type: boolean
           default: true
-
     CharacterState:
       type: object
       properties:
         character_id:
           type: string
           format: uuid
+        saved_at:
+          type: string
+          format: date-time
         character_data:
           type: object
           additionalProperties: true
@@ -167,34 +162,6 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-        saved_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

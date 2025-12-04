@@ -1,13 +1,16 @@
+// Issue: #1584
 package main
 
 import (
 	"context"
+	"net/http"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/necpgame/stock-protection-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/stock-protection-service-go/server"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,6 +21,16 @@ func main() {
 	logger.Info("Stock  Protection  Service starting...")
 
 	addr := getEnv("ADDR", "0.0.0.0:8152")
+
+	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	go func() {
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6084")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
 
 	httpServer := server.NewHTTPServer(addr, logger)
 
@@ -34,7 +47,10 @@ func main() {
 	}()
 
 	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := httpServer.Start(ctx); err != nil {
 		logger.WithError(err).Fatal("Server error")
 	}
 
@@ -47,11 +63,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-
-
-
-
-
-

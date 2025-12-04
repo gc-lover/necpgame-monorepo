@@ -2,16 +2,16 @@ CREATE SCHEMA IF NOT EXISTS social;
 
 CREATE TABLE IF NOT EXISTS social.guilds (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
+  description TEXT,
   name VARCHAR(100) NOT NULL UNIQUE,
   tag VARCHAR(10) NOT NULL UNIQUE,
-  leader_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
-  level INT NOT NULL DEFAULT 1,
-  experience INT NOT NULL DEFAULT 0,
-  max_members INT NOT NULL DEFAULT 20,
-  description TEXT,
   status VARCHAR(20) NOT NULL DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  level INT NOT NULL DEFAULT 1,
+  experience INT NOT NULL DEFAULT 0,
+  max_members INT NOT NULL DEFAULT 20
 );
 
 CREATE TABLE IF NOT EXISTS social.guild_members (
@@ -20,9 +20,9 @@ CREATE TABLE IF NOT EXISTS social.guild_members (
   character_id UUID NOT NULL REFERENCES mvp_core.character(id) ON DELETE CASCADE,
   rank VARCHAR(20) NOT NULL DEFAULT 'recruit',
   status VARCHAR(20) NOT NULL DEFAULT 'active',
-  contribution INT NOT NULL DEFAULT 0,
   joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  contribution INT NOT NULL DEFAULT 0,
   UNIQUE(guild_id, character_id)
 );
 

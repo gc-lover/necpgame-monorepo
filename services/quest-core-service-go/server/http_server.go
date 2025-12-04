@@ -4,13 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 type HTTPServer struct {
 	addr   string
@@ -38,8 +47,29 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewQuestHandlers()
-	api.HandlerFromMux(handlers, router)
+	// Issue: #1609 - Initialize Redis client for caching
+	redisURL := getEnv("REDIS_URL", "redis://localhost:6379")
+	redisOpts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		server.logger.WithError(err).Warn("Failed to parse Redis URL, caching disabled")
+		redisOpts = nil
+	}
+	var redisClient *redis.Client
+	if redisOpts != nil {
+		redisClient = redis.NewClient(redisOpts)
+	}
+
+	handlers := NewHandlers(redisClient)
+
+	// Integration with ogen
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	// Mount ogen server under /api/v1
+	router.Mount("/api/v1", ogenServer)
 
 	server.server = &http.Server{
 		Addr:         addr,
@@ -51,7 +81,7 @@ func NewHTTPServer(addr string) *HTTPServer {
 	return server
 }
 
-func (s *HTTPServer) ListenAndServe() error {
+func (s *HTTPServer) Start() error {
 	return s.server.ListenAndServe()
 }
 
@@ -111,7 +141,7 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 	w.WriteHeader(statusCode)
 	code := http.StatusText(statusCode)
 	errorResponse := api.Error{
-		Code:    &code,
+		Code:    api.NewOptNilString(code),
 		Message: details,
 		Error:   "error",
 	}
@@ -119,6 +149,7 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 		GetLogger().WithError(err).Error("Failed to encode JSON error response")
 	}
 }
+
 
 
 

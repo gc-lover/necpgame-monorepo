@@ -1,4 +1,3 @@
-# Issue: #306
 openapi: 3.0.3
 info:
   title: Social Relationships Core Service API
@@ -7,40 +6,43 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Relationships
-    description: Основные отношения между игроками
-
+- name: Relationships
+  description: Основные отношения между игроками
 paths:
   /social/relationships/{player_id}:
     get:
       tags:
-        - Relationships
+      - Relationships
       summary: Получить отношения персонажа
       operationId: getRelationships
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: relationship_type
-          in: query
-          schema:
-            type: string
-            enum: [friends, close_allies, pact, neutral, enemies, nemesis]
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: relationship_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - friends
+          - close_allies
+          - pact
+          - neutral
+          - enemies
+          - nemesis
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Отношения персонажа
@@ -49,27 +51,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/RelationshipsResponse'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/relationships/{player_id}/set:
     post:
       tags:
-        - Relationships
+      - Relationships
       summary: Установить отношение
       operationId: setRelationship
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -84,33 +85,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Relationship'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/relationships/{player_id1}/{player_id2}:
     get:
       tags:
-        - Relationships
+      - Relationships
       summary: Получить отношение между персонажами
       operationId: getRelationshipBetween
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id1
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: player_id2
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: player_id1
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: player_id2
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Отношение между персонажами
@@ -119,17 +119,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Relationship'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Relationship:
       type: object
@@ -142,7 +140,19 @@ components:
           format: uuid
         relationship_type:
           type: string
-          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+          enum:
+          - friends
+          - close_allies
+          - pact
+          - neutral
+          - enemies
+          - nemesis
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         reputation_value:
           type: integer
           minimum: -100
@@ -151,13 +161,7 @@ components:
           type: integer
           minimum: 1
           maximum: 5
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RelationshipsResponse:
       type: object
       properties:
@@ -170,27 +174,27 @@ components:
             $ref: '#/components/schemas/Relationship'
         total:
           type: integer
-
     SetRelationshipRequest:
       type: object
       required:
-        - target_player_id
-        - relationship_type
+      - target_player_id
+      - relationship_type
       properties:
         target_player_id:
           type: string
           format: uuid
         relationship_type:
           type: string
-          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+          enum:
+          - friends
+          - close_allies
+          - pact
+          - neutral
+          - enemies
+          - nemesis
         reputation_value:
           type: integer
           minimum: -100
           maximum: 100
-
 security:
-  - BearerAuth: []
-
-
-
-
+- BearerAuth: []

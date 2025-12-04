@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/necpgame/stock-protection-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/stock-protection-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -26,10 +26,13 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	router.Use(recoveryMiddleware(logger))
 	router.Use(corsMiddleware)
 
-	// Generated API handlers with Chi
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseRouter: router,
-	})
+	// ogen server integration
+	ogenServer, err := api.NewServer(handlers)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create ogen server")
+	}
+
+	router.Mount("/api/v1", ogenServer)
 
 	router.Handle("/metrics", promhttp.Handler())
 
@@ -46,9 +49,22 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	}
 }
 
-func (s *HTTPServer) Start() error {
+func (s *HTTPServer) Start(ctx context.Context) error {
 	s.logger.WithField("address", s.addr).Info("Starting HTTP server")
-	return s.server.ListenAndServe()
+
+	errChan := make(chan error, 1)
+	go func() {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		return s.Shutdown(context.Background())
+	}
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
@@ -98,6 +114,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
 
 
 

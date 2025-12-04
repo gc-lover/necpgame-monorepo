@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	api "github.com/gc-lover/necpgame-monorepo/services/world-events-scheduler-service-go/pkg/api"
 	"go.uber.org/zap"
-
-	"github.com/gc-lover/necpgame-monorepo/services/world-events-scheduler-service-go/pkg/api"
 )
 
 type HTTPServer struct {
@@ -17,16 +17,23 @@ type HTTPServer struct {
 	logger *zap.Logger
 }
 
-func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPServer {
+func NewHTTPServer(addr string, service Service, logger *zap.Logger) *HTTPServer {
 	router := chi.NewRouter()
 
+	router.Use(chiMiddleware.Logger)
+	router.Use(chiMiddleware.Recoverer)
+	router.Use(chiMiddleware.RequestID)
 	router.Use(CORSMiddleware())
 	router.Use(LoggingMiddleware(logger))
 
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	handlers := NewHandlers(service, logger)
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		logger.Fatal("Failed to create ogen server", zap.Error(err))
+	}
+
+	router.Mount("/api/v1", ogenServer)
 
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -50,11 +57,3 @@ func (s *HTTPServer) Start() error {
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
-
-
-
-
-
-
-
-

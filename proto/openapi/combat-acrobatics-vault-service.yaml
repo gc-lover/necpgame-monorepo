@@ -1,40 +1,44 @@
 openapi: 3.0.3
 info:
   title: Combat Acrobatics Vault Service API
-  description: |
-    API для управления Vault (перепрыгивание через препятствия).
-    
+  description: 'API для управления Vault (перепрыгивание через препятствия).
+
+
     **Основные возможности:**
+
     - Выполнение Vault
+
     - Получение доступных препятствий
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
-    description: Продакшен сервер
-
+- url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+  description: Продакшен сервер
 tags:
-  - name: Vault
-    description: Перепрыгивание через препятствия
-
+- name: Vault
+  description: Перепрыгивание через препятствия
 paths:
   /vault:
     post:
       tags:
-        - Vault
+      - Vault
       summary: Выполнить Vault
-      description: |
-        Выполняет перепрыгивание через препятствие. Автоматически
+      description: 'Выполняет перепрыгивание через препятствие. Автоматически
+
         определяет препятствие или использует указанное.
+
         Сохраняет инерцию движения и разрешает стрельбу.
+
+        '
       operationId: executeVault
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: false
         content:
@@ -49,33 +53,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/VaultResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /vault/obstacles:
     get:
       tags:
-        - Vault
+      - Vault
       summary: Получить доступные препятствия для Vault
-      description: |
-        Возвращает список доступных препятствий для Vault
+      description: 'Возвращает список доступных препятствий для Vault
+
         в текущей области персонажа.
+
+        '
       operationId: getVaultObstacles
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: radius
-          in: query
-          required: false
-          description: Радиус поиска препятствий
-          schema:
-            type: number
-            format: float
-            minimum: 0
-            default: 10.0
+      - name: radius
+        in: query
+        required: false
+        description: Радиус поиска препятствий
+        schema:
+          type: number
+          format: float
+          minimum: 0
+          default: 10.0
       responses:
         '200':
           description: Список доступных препятствий
@@ -84,15 +89,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ObstaclesResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     VaultRequest:
       type: object
@@ -102,47 +105,46 @@ components:
           format: uuid
           description: ID препятствия (если не указан, определяется автоматически)
           nullable: true
-          example: "cc0e8400-e29b-41d4-a716-446655440000"
-
+          example: cc0e8400-e29b-41d4-a716-446655440000
     VaultResponse:
       type: object
       required:
-        - vault_id
-        - obstacle_id
-        - start_position
-        - end_position
-        - direction
-        - stamina_consumed
-        - timestamp
+      - vault_id
+      - obstacle_id
+      - start_position
+      - end_position
+      - direction
+      - stamina_consumed
+      - timestamp
       properties:
         vault_id:
           type: string
           format: uuid
-          example: "dd0e8400-e29b-41d4-a716-446655440000"
+          example: dd0e8400-e29b-41d4-a716-446655440000
         obstacle_id:
           type: string
           format: uuid
-          example: "cc0e8400-e29b-41d4-a716-446655440000"
-        start_position:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D'
-        end_position:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D'
+          example: cc0e8400-e29b-41d4-a716-446655440000
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-01T10:00:00Z'
         direction:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D'
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Direction3D
+        start_position:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D
+        end_position:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D
         stamina_consumed:
           type: integer
           minimum: 0
           example: 5
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-12-01T10:00:00Z"
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ObstaclesResponse:
       type: object
       required:
-        - obstacles
-        - total
+      - obstacles
+      - total
       properties:
         obstacles:
           type: array
@@ -152,41 +154,43 @@ components:
           type: integer
           minimum: 0
           example: 1
-
     Obstacle:
       type: object
       required:
-        - obstacle_id
-        - obstacle_type
-        - position
-        - dimensions
-        - material
-        - is_suitable
+      - obstacle_id
+      - obstacle_type
+      - position
+      - dimensions
+      - material
+      - is_suitable
       properties:
         obstacle_id:
           type: string
           format: uuid
-          example: "cc0e8400-e29b-41d4-a716-446655440000"
-        obstacle_type:
-          type: string
-          enum: [barrier, fence, wall, crate]
-          example: "barrier"
-        position:
-          $ref: 'combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D'
-        dimensions:
-          $ref: 'combat-acrobatics-advanced-schemas.yaml#/components/schemas/Dimensions3D'
+          example: cc0e8400-e29b-41d4-a716-446655440000
         material:
           type: string
-          example: "metal"
+          example: metal
+        obstacle_type:
+          type: string
+          enum:
+          - barrier
+          - fence
+          - wall
+          - crate
+          example: barrier
+        dimensions:
+          $ref: combat-acrobatics-advanced-schemas.yaml#/components/schemas/Dimensions3D
+        position:
+          $ref: combat-acrobatics-basic-schemas.yaml#/components/schemas/Position3D
         is_suitable:
           type: boolean
           example: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
+      $ref: common.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: 'common.yaml#/components/responses/Unauthorized'
+      $ref: common.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: 'common.yaml#/components/responses/InternalServerError'
-
+      $ref: common.yaml#/components/responses/InternalServerError

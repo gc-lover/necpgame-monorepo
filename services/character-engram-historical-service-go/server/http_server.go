@@ -39,7 +39,12 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.corsMiddleware)
 
 	handlers := NewHistoricalEngramHandlers()
-	api.HandlerFromMux(handlers, router)
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
+	}
+	router.Mount("/api/v1", ogenServer)
 
 	server.server = &http.Server{
 		Addr:         addr,
@@ -111,13 +116,14 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 	w.WriteHeader(statusCode)
 	code := http.StatusText(statusCode)
 	errorResponse := api.Error{
-		Code:    &code,
+		Code:    api.NewOptNilString(code),
 		Message: details,
 	}
 	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
 		GetLogger().WithError(err).Error("Failed to encode JSON error response")
 	}
 }
+
 
 
 

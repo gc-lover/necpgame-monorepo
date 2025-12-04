@@ -1,95 +1,114 @@
-// Issue: #39
+// Issue: #1595
+// OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
+// PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/combat-sandevistan-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sandevistan-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
+// HTTPServer represents HTTP server (no chi dependency)
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
-	logger *logrus.Logger
 	server *http.Server
 }
 
+// NewHTTPServer creates new HTTP server WITHOUT chi
+// PERFORMANCE: Standard mux for health/metrics, OGEN router for API (already max speed)
 func NewHTTPServer(addr string) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-
 	logger := GetLogger()
-	router.Use(loggingMiddleware(logger))
-	router.Use(metricsMiddleware())
-	router.Use(corsMiddleware())
 
-	handlers := NewSandevistanHandlers()
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	// OGEN server (fast static router - hot path)
+	handlers := NewHandlers()
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		panic(err)
+	}
 
-	router.Get("/health", healthCheck)
+	// Standard mux (for health/metrics - cold path)
+	mux := http.NewServeMux()
 
-	server := &HTTPServer{
-		addr:   addr,
-		router: router,
-		logger: logger,
+	// Middleware chain (no duplication, optimized)
+	apiHandler := chainMiddleware(ogenServer,
+		recoveryMiddleware(logger),  // panic recovery
+		requestIDMiddleware,  // request ID
+		loggingMiddleware(logger),    // structured logging
+		metricsMiddleware(),    // metrics
+		corsMiddleware(),       // CORS
+	)
+
+	// Mount OGEN (hot path - maximum speed, static router)
+	mux.Handle("/api/v1/", apiHandler)
+
+	// Health/metrics (cold path - simple mux, no chi overhead)
+	mux.HandleFunc("/health", healthCheck)
+
+	return &HTTPServer{
+		addr: addr,
 		server: &http.Server{
 			Addr:         addr,
-			Handler:      router,
+			Handler:      mux,
 			ReadTimeout:  15 * time.Second,
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		},
 	}
-
-	return server
 }
 
+// chainMiddleware chains middleware functions (simple and fast)
+func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
+}
+
+// recoveryMiddleware recovers from panics
+func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.WithField("error", err).Error("Panic recovered")
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// requestIDMiddleware adds request ID to headers
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
+		w.Header().Set("X-Request-ID", requestID)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// ListenAndServe starts HTTP server
 func (s *HTTPServer) ListenAndServe() error {
 	return s.server.ListenAndServe()
 }
 
+// Shutdown gracefully shuts down HTTP server
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
+// Health check handler
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
-
-func respondJSON(w http.ResponseWriter, statusCode int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func respondError(w http.ResponseWriter, statusCode int, err error, details string) {
-	GetLogger().WithError(err).Error(details)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	code := http.StatusText(statusCode)
-	errorResponse := api.Error{
-		Code:    &code,
-		Message: details,
-		Error:   "error",
-	}
-	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON error response")
-	}
-}
-

@@ -37,24 +37,24 @@ END $$;
 
 -- Таблица мировых событий
 CREATE TABLE IF NOT EXISTS world_events.world_events (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    type world_event_type NOT NULL,
-    scale world_event_scale NOT NULL,
-    frequency world_event_frequency NOT NULL,
-    status world_event_status NOT NULL DEFAULT 'PLANNED',
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    duration INTERVAL,
-    target_regions TEXT[],
-    target_factions UUID[],
-    prerequisites UUID[],
-    cooldown_duration INTERVAL,
-    max_concurrent INTEGER NOT NULL DEFAULT 1 CHECK (max_concurrent > 0),
-    version INTEGER NOT NULL DEFAULT 1,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  target_factions UUID[],
+  prerequisites UUID[],
+  description TEXT,
+  target_regions TEXT[],
+  title VARCHAR(255) NOT NULL,
+  start_time TIMESTAMP,
+  end_time TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  duration INTERVAL,
+  cooldown_duration INTERVAL,
+  max_concurrent INTEGER NOT NULL DEFAULT 1 CHECK (max_concurrent > 0),
+  version INTEGER NOT NULL DEFAULT 1,
+  type world_event_type NOT NULL,
+  scale world_event_scale NOT NULL,
+  frequency world_event_frequency NOT NULL,
+  status world_event_status NOT NULL DEFAULT 'PLANNED'
 );
 
 -- Индексы для world_events
@@ -67,16 +67,16 @@ CREATE INDEX IF NOT EXISTS idx_world_events_active ON world_events.world_events(
 
 -- Таблица эффектов событий
 CREATE TABLE IF NOT EXISTS world_events.event_effects (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
-    target_system event_effect_target_system NOT NULL,
-    effect_type VARCHAR(100) NOT NULL,
-    parameters JSONB NOT NULL,
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
+  effect_type VARCHAR(100) NOT NULL,
+  parameters JSONB NOT NULL,
+  start_time TIMESTAMP NOT NULL,
+  end_time TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  target_system event_effect_target_system NOT NULL
 );
 
 -- Индексы для event_effects
@@ -87,14 +87,14 @@ CREATE INDEX IF NOT EXISTS idx_event_effects_time_range ON world_events.event_ef
 
 -- Таблица расписания событий
 CREATE TABLE IF NOT EXISTS world_events.event_schedules (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
-    scheduled_time TIMESTAMP NOT NULL,
-    trigger_type event_schedule_trigger_type NOT NULL,
-    trigger_parameters JSONB,
-    status event_schedule_status NOT NULL DEFAULT 'SCHEDULED',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
+  trigger_parameters JSONB,
+  scheduled_time TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  trigger_type event_schedule_trigger_type NOT NULL,
+  status event_schedule_status NOT NULL DEFAULT 'SCHEDULED'
 );
 
 -- Индексы для event_schedules
@@ -105,12 +105,12 @@ CREATE INDEX IF NOT EXISTS idx_event_schedules_status ON world_events.event_sche
 
 -- Таблица истории событий
 CREATE TABLE IF NOT EXISTS world_events.event_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
-    action VARCHAR(50) NOT NULL CHECK (action IN ('CREATED', 'UPDATED', 'ANNOUNCED', 'ACTIVATED', 'DEACTIVATED', 'ARCHIVED', 'CANCELLED')),
-    changed_by UUID,
-    changes JSONB,
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
+  changed_by UUID,
+  action VARCHAR(50) NOT NULL CHECK (action IN ('CREATED', 'UPDATED', 'ANNOUNCED', 'ACTIVATED', 'DEACTIVATED', 'ARCHIVED', 'CANCELLED')),
+  changes JSONB,
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для event_history
@@ -121,12 +121,12 @@ CREATE INDEX IF NOT EXISTS idx_event_history_changed_by ON world_events.event_hi
 
 -- Таблица аналитики событий
 CREATE TABLE IF NOT EXISTS world_events.event_analytics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
-    metric_name VARCHAR(100) NOT NULL,
-    metric_value DECIMAL(15, 4),
-    metric_data JSONB,
-    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES world_events.world_events(id) ON DELETE CASCADE,
+  metric_name VARCHAR(100) NOT NULL,
+  metric_data JSONB,
+  recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  metric_value DECIMAL(15, 4)
 );
 
 -- Индексы для event_analytics

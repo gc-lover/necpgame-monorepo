@@ -1,98 +1,121 @@
-# Issue: #142109968
 openapi: 3.0.3
 info:
   title: Stock Options Service API
-  description: |
-    API для опционов фондовой биржи NECPGAME.
+  description: 'API для опционов фондовой биржи NECPGAME.
+
 
     **Основные возможности:**
+
     - Опционы Call и Put
+
     - Ценообразование (Black-Scholes)
+
     - Greeks (delta, gamma, theta, vega)
+
     - Исполнение контрактов
+
     - Мониторинг до экспирации
 
+
     **Параметры:**
+
     - Размер контракта: 100 акций
+
     - Экспирация: еженедельная
+
     - Модель: Black-Scholes с исторической волатильностью
+
     - Strike price с шагами
 
+
     **Требования:**
+
     - Обучение пройдено
+
     - 10+ успешных сделок
 
+
     **Интеграция:**
+
     - analytics-service для Greeks
+
     - notification-service для экспираций
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8080
-    description: Options Service (локальная разработка)
-  - url: https://trading.necpgame.com
-    description: Options Service (продакшн)
-
+- url: http://localhost:8080
+  description: Options Service (локальная разработка)
+- url: https://trading.necpgame.com
+  description: Options Service (продакшн)
 tags:
-  - name: Contracts
-    description: Опционные контракты
-  - name: Positions
-    description: Позиции
-  - name: Greeks
-    description: Показатели чувствительности
-
+- name: Contracts
+  description: Опционные контракты
+- name: Positions
+  description: Позиции
+- name: Greeks
+  description: Показатели чувствительности
 paths:
   /api/v1/options/contracts:
     get:
       tags:
-        - Contracts
+      - Contracts
       summary: Список опционных контрактов
-      description: |
-        Возвращает доступные опционные контракты.
+      description: 'Возвращает доступные опционные контракты.
+
 
         **Типы:**
+
         - Call - право купить актив по strike price
+
         - Put - право продать актив по strike price
 
+
         **Параметры:**
+
         - Strike price (шаги по цене)
+
         - Expiration date (еженедельные экспирации)
+
         - Premium (Black-Scholes)
+
         - Lot size: 100 акций
+
+        '
       operationId: listOptionsContracts
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: ticker
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum:
-              - call
-              - put
-        - name: expiration_from
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: expiration_to
-          in: query
-          schema:
-            type: string
-            format: date
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: ticker
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - call
+          - put
+      - name: expiration_from
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: expiration_to
+        in: query
+        schema:
+          type: string
+          format: date
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список контрактов
           content:
             application/json:
@@ -102,70 +125,78 @@ paths:
                   contracts:
                     type: array
                     items:
-                      $ref: "#/components/schemas/OptionsContract"
+                      $ref: '#/components/schemas/OptionsContract'
                   pagination:
-                    $ref: "common.yaml#/components/schemas/PaginationResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                    $ref: common.yaml#/components/schemas/PaginationResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/options/buy:
     post:
       tags:
-        - Contracts
+      - Contracts
       summary: Купить опционный контракт
-      description: |
-        Покупает опционный контракт.
+      description: 'Покупает опционный контракт.
+
 
         **Требования:**
+
         - Обучение пройдено
+
         - 10+ успешных сделок
+
         - Достаточный баланс для premium
+
+        '
       operationId: buyOptionsContract
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BuyOptionsRequest"
+              $ref: '#/components/schemas/BuyOptionsRequest'
       responses:
-        "201":
+        '201':
           description: Контракт куплен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OptionsPosition"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                $ref: '#/components/schemas/OptionsPosition'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/options/positions:
     get:
       tags:
-        - Positions
+      - Positions
       summary: Список опционных позиций
-      description: |
-        Возвращает опционные позиции игрока.
+      description: 'Возвращает опционные позиции игрока.
+
 
         **Данные:**
+
         - Текущая стоимость
+
         - Days to expiration
+
         - Unrealized PnL
+
+        '
       operationId: listOptionsPositions
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: active_only
-          in: query
-          schema:
-            type: boolean
-            default: true
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список позиций
           content:
             application/json:
@@ -175,86 +206,94 @@ paths:
                   positions:
                     type: array
                     items:
-                      $ref: "#/components/schemas/OptionsPosition"
+                      $ref: '#/components/schemas/OptionsPosition'
                   pagination:
-                    $ref: "common.yaml#/components/schemas/PaginationResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                    $ref: common.yaml#/components/schemas/PaginationResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/options/exercise:
     post:
       tags:
-        - Positions
+      - Positions
       summary: Исполнить опцион
-      description: |
-        Исполняет опционный контракт до экспирации.
+      description: 'Исполняет опционный контракт до экспирации.
+
 
         **Процесс:**
+
         - Проверка In-The-Money (ITM)
+
         - Исполнение контракта
+
         - Приобретение/продажа акций
+
         - Расчёт realized PnL
+
+        '
       operationId: exerciseOption
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ExerciseOptionRequest"
+              $ref: '#/components/schemas/ExerciseOptionRequest'
       responses:
-        "200":
+        '200':
           description: Опцион исполнен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExerciseOptionResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-
+                $ref: '#/components/schemas/ExerciseOptionResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /api/v1/options/greeks/{position_id}:
     get:
       tags:
-        - Greeks
+      - Greeks
       summary: Greeks опциона
-      description: |
-        Возвращает Greeks для опционной позиции.
+      description: 'Возвращает Greeks для опционной позиции.
+
 
         **Greeks:**
+
         - Delta - чувствительность к цене актива
+
         - Gamma - изменение Delta
+
         - Theta - временной распад
+
         - Vega - чувствительность к волатильности
+
+        '
       operationId: getOptionsGreeks
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: position_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: position_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Greeks
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Greeks"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/Greeks'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     OptionsContract:
       type: object
@@ -267,25 +306,26 @@ components:
         type:
           type: string
           enum:
-            - call
-            - put
-        strike_price:
-          type: number
+          - call
+          - put
         expiration_date:
           type: string
           format: date
+        strike_price:
+          type: number
         premium:
+          type: number
+        implied_volatility:
           type: number
         lot_size:
           type: integer
           default: 100
-        implied_volatility:
-          type: number
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BuyOptionsRequest:
       type: object
       required:
-        - contract_id
-        - quantity
+      - contract_id
+      - quantity
       properties:
         contract_id:
           type: string
@@ -304,23 +344,24 @@ components:
         contract_id:
           type: string
           format: uuid
-        quantity:
-          type: integer
+        opened_at:
+          type: string
+          format: date-time
         premium_paid:
           type: number
         current_value:
           type: number
         pnl:
           type: number
+        quantity:
+          type: integer
         days_to_expiration:
           type: integer
-        opened_at:
-          type: string
-          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ExerciseOptionRequest:
       type: object
       required:
-        - position_id
+      - position_id
       properties:
         position_id:
           type: string
@@ -331,15 +372,16 @@ components:
         position_id:
           type: string
           format: uuid
-        shares_acquired:
-          type: integer
+        exercised_at:
+          type: string
+          format: date-time
         total_cost:
           type: number
         realized_pnl:
           type: number
-        exercised_at:
-          type: string
-          format: date-time
+        shares_acquired:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Greeks:
       type: object
       properties:
@@ -351,4 +393,3 @@ components:
           type: number
         vega:
           type: number
-

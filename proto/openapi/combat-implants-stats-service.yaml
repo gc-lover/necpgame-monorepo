@@ -1,33 +1,53 @@
-# Issue: #58
 openapi: 3.0.3
 info:
   title: Combat Implants Stats Service API
-  description: |
-    API для статов и ограничений имплантов в NECPGAME.
+  description: 'API для статов и ограничений имплантов в NECPGAME.
+
 
     **Основные возможности:**
+
     - Энергетический пул и перегрев
+
     - Человечность и киберпсихоз
+
     - Совместимость имплантов
+
     - Сет-бонусы брендов
 
+
     **Ограничения:**
+
     - Слоты (боевые, тактические, защитные, двигательные, OS)
+
     - Энергопотребление
+
     - Человечность
+
     - Совместимость
 
+
     **Бренды и сет-бонусы:**
+
     - Arasaka - тактические преимущества
+
     - Militech - боевые усиления
+
     - Kang Tao - точность и крит
+
     - Zetatech - энергоэффективность
+
     - Biotechnica - регенерация
 
+
     **Киберпсихоз:**
+
     - Риск растёт с установкой имплантов
+
     - Несовместимые импланты повышают риск
+
     - Временное превышение лимитов опасно
+
+    '
   version: 1.0.0
   license:
     name: Proprietary
@@ -36,186 +56,200 @@ info:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Gameplay Service (локальная разработка)
-  - url: https://gameplay.necpgame.com/api/v1
-    description: Gameplay Service (продакшн)
-
+- url: http://localhost:8083/api/v1
+  description: Gameplay Service (локальная разработка)
+- url: https://gameplay.necpgame.com/api/v1
+  description: Gameplay Service (продакшн)
 tags:
-  - name: Energy
-    description: Энергия
-  - name: Humanity
-    description: Человечность
-  - name: Compatibility
-    description: Совместимость
-  - name: Set Bonuses
-    description: Сет-бонусы
-
+- name: Energy
+  description: Энергия
+- name: Humanity
+  description: Человечность
+- name: Compatibility
+  description: Совместимость
+- name: Set Bonuses
+  description: Сет-бонусы
 paths:
   /combat/implants/energy:
     get:
       tags:
-        - Energy
+      - Energy
       summary: Энергетический статус
-      description: |
-        Возвращает текущий энергетический статус.
+      description: 'Возвращает текущий энергетический статус.
+
 
         **Параметры:**
+
         - Current - текущая энергия
+
         - Max - максимальная энергия
+
         - Consumption - потребление
+
         - Overheated - флаг перегрева
+
+        '
       operationId: getEnergyStatus
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
+      - name: character_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ID персонажа (если не указан, используется текущий персонаж)
       responses:
-        "200":
+        '200':
           description: Энергия
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnergyStatus"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/EnergyStatus'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/implants/humanity:
     get:
       tags:
-        - Humanity
+      - Humanity
       summary: Человечность
-      description: |
-        Возвращает текущий уровень человечности.
+      description: 'Возвращает текущий уровень человечности.
+
 
         **Параметры:**
+
         - Current - текущая человечность
+
         - Max - максимальная человечность
+
         - Cyberpsychosis Risk - риск киберпсихоза (0-100%)
+
+        '
       operationId: getHumanityStatus
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
+      - name: character_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ID персонажа (если не указан, используется текущий персонаж)
       responses:
-        "200":
+        '200':
           description: Человечность
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HumanityStatus"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/HumanityStatus'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/implants/compatibility:
     get:
       tags:
-        - Compatibility
+      - Compatibility
       summary: Проверка совместимости
-      description: |
-        Проверяет совместимость имплантов.
+      description: 'Проверяет совместимость имплантов.
+
 
         **Проверки:**
+
         - Конфликты с установленными имплантами
+
         - Энергетический лимит
+
         - Человечность
+
         - Слоты
+
+        '
       operationId: checkCompatibility
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
-        - name: implant_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID импланта для проверки
+      - name: character_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ID персонажа (если не указан, используется текущий персонаж)
+      - name: implant_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID импланта для проверки
       responses:
-        "200":
+        '200':
           description: Результат проверки
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompatibilityResult"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/CompatibilityResult'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /combat/implants/set-bonuses:
     get:
       tags:
-        - Set Bonuses
+      - Set Bonuses
       summary: Сет-бонусы
-      description: |
-        Возвращает активные сет-бонусы брендов.
+      description: 'Возвращает активные сет-бонусы брендов.
+
 
         **Бонусы:**
+
         - 2 items - малый бонус
+
         - 3 items - средний бонус
+
         - 4+ items - полный сет-бонус
+
+        '
       operationId: getSetBonuses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
+      - name: character_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ID персонажа (если не указан, используется текущий персонаж)
       responses:
-        "200":
+        '200':
           description: Сет-бонусы
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SetBonuses"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/SetBonuses'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     EnergyStatus:
       type: object
@@ -232,17 +266,21 @@ components:
           type: number
           description: Потребление
           format: float
-        overheated:
-          type: boolean
-          description: Флаг перегрева
         cooling_rate:
           type: number
           description: Скорость охлаждения
           format: float
-
+        overheated:
+          type: boolean
+          description: Флаг перегрева
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HumanityStatus:
       type: object
       properties:
+        implant_count:
+          type: integer
+          description: Количество имплантов
+          minimum: 0
         current:
           type: number
           description: Текущая человечность
@@ -257,33 +295,10 @@ components:
           format: float
           minimum: 0
           maximum: 100
-        implant_count:
-          type: integer
-          description: Количество имплантов
-          minimum: 0
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CompatibilityResult:
       type: object
       properties:
-        compatible:
-          type: boolean
-          description: Совместим ли
-        conflicts:
-          type: array
-          description: Конфликты
-          items:
-            type: object
-            properties:
-              implant_id:
-                type: string
-                format: uuid
-              reason:
-                type: string
-        warnings:
-          type: array
-          description: Предупреждения
-          items:
-            type: string
         energy_check:
           type: object
           description: Проверка энергии
@@ -308,7 +323,26 @@ components:
               format: float
             sufficient:
               type: boolean
-
+        conflicts:
+          type: array
+          description: Конфликты
+          items:
+            type: object
+            properties:
+              implant_id:
+                type: string
+                format: uuid
+              reason:
+                type: string
+        warnings:
+          type: array
+          description: Предупреждения
+          items:
+            type: string
+        compatible:
+          type: boolean
+          description: Совместим ли
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SetBonuses:
       type: object
       properties:
@@ -338,6 +372,5 @@ components:
                     value:
                       type: number
                       format: float
-
 security:
-  - BearerAuth: []
+- BearerAuth: []

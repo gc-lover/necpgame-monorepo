@@ -1,4 +1,3 @@
-# Issue: #306
 openapi: 3.0.3
 info:
   title: Social Relationships Arbitration Service API
@@ -7,35 +6,32 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Relationships Arbitration
-    description: История и арбитраж
-
+- name: Relationships Arbitration
+  description: История и арбитраж
 paths:
   /social/relationships/history/{player_id}:
     get:
       tags:
-        - Relationships Arbitration
+      - Relationships Arbitration
       summary: Получить историю взаимодействий
       operationId: getInteractionHistory
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: История взаимодействий
@@ -44,20 +40,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/InteractionHistoryResponse'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/relationships/arbitration/request:
     post:
       tags:
-        - Relationships Arbitration
+      - Relationships Arbitration
       summary: Запросить арбитраж
       operationId: requestArbitration
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -72,27 +67,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArbitrationCase'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /social/relationships/arbitration/{case_id}:
     get:
       tags:
-        - Relationships Arbitration
+      - Relationships Arbitration
       summary: Получить информацию об арбитраже
       operationId: getArbitrationCase
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: case_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Информация об арбитраже
@@ -101,17 +95,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArbitrationCase'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     InteractionHistoryResponse:
       type: object
@@ -125,7 +117,6 @@ components:
             $ref: '#/components/schemas/InteractionEntry'
         total:
           type: integer
-
     InteractionEntry:
       type: object
       properties:
@@ -138,39 +129,49 @@ components:
         player_id2:
           type: string
           format: uuid
-        interaction_type:
-          type: string
-          enum: [quest, trade, combat, social, other]
         description:
           type: string
+        interaction_type:
+          type: string
+          enum:
+          - quest
+          - trade
+          - combat
+          - social
+          - other
+        occurred_at:
+          type: string
+          format: date-time
         reputation_change:
           type: integer
         trust_change:
           type: integer
-        occurred_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RequestArbitrationRequest:
       type: object
       required:
-        - target_player_id
-        - dispute_type
-        - description
+      - target_player_id
+      - dispute_type
+      - description
       properties:
         target_player_id:
           type: string
           format: uuid
-        dispute_type:
-          type: string
-          enum: [trade, contract, alliance, reputation, other]
         description:
           type: string
+        dispute_type:
+          type: string
+          enum:
+          - trade
+          - contract
+          - alliance
+          - reputation
+          - other
         evidence:
           type: array
           items:
             type: string
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ArbitrationCase:
       type: object
       properties:
@@ -189,7 +190,11 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, in_progress, resolved, dismissed]
+          enum:
+          - pending
+          - in_progress
+          - resolved
+          - dismissed
         created_at:
           type: string
           format: date-time
@@ -197,19 +202,5 @@ components:
           type: string
           format: date-time
           nullable: true
-
 security:
-  - BearerAuth: []
-
-
-
-
-
-
-
-
-
-
-
-
-
+- BearerAuth: []

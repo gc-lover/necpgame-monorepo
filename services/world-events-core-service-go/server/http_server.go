@@ -6,12 +6,11 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
-
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-core-service-go/pkg/api"
+	"go.uber.org/zap"
 )
 
-// HTTPServer - HTTP сервер
 type HTTPServer struct {
 	addr   string
 	router chi.Router
@@ -19,28 +18,30 @@ type HTTPServer struct {
 	logger *zap.Logger
 }
 
-// NewHTTPServer создает новый HTTP сервер
-func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPServer {
+func NewHTTPServer(addr string, service Service, logger *zap.Logger) *HTTPServer {
 	router := chi.NewRouter()
 
-	// Middleware
+	router.Use(chiMiddleware.Logger)
+	router.Use(chiMiddleware.Recoverer)
+	router.Use(chiMiddleware.RequestID)
 	router.Use(CORSMiddleware())
 	router.Use(LoggingMiddleware(logger))
 	router.Use(MetricsMiddleware())
 
-	// Register handlers using oapi-codegen generated router
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseURL:    "/api/v1",
-		BaseRouter: router,
-	})
+	handlers := NewHandlers(service, logger)
+	secHandler := &SecurityHandler{}
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		logger.Fatal("Failed to create ogen server", zap.Error(err))
+	}
 
-	// Health check
+	router.Mount("/api/v1", ogenServer)
+
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
-	// Metrics endpoint
 	router.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("# HELP world_events_core_service World Events Core Service metrics\n"))
@@ -57,22 +58,12 @@ func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPSer
 	}
 }
 
-// Start запускает HTTP сервер
 func (s *HTTPServer) Start() error {
 	s.logger.Info("Starting HTTP server", zap.String("addr", s.addr))
 	return s.server.ListenAndServe()
 }
 
-// Shutdown останавливает HTTP сервер
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down HTTP server")
 	return s.server.Shutdown(ctx)
 }
-
-
-
-
-
-
-
-

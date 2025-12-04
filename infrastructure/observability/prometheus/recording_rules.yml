@@ -1,0 +1,37 @@
+# Issue: Local monitoring stack
+# Recording rules для агрегации метрик
+
+groups:
+  - name: service_performance
+    interval: 30s
+    rules:
+      # Latency агрегация
+      - record: service:http_request_duration_seconds:rate5m
+        expr: rate(http_request_duration_seconds_bucket[5m])
+      
+      - record: service:http_request_duration_seconds:p99
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+      
+      # Throughput
+      - record: service:http_requests_total:rate5m
+        expr: rate(http_requests_total[5m])
+      
+      # Error rate
+      - record: service:http_requests_total:error_rate5m
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
+
+  - name: resource_usage
+    interval: 1m
+    rules:
+      # CPU usage per service
+      - record: service:cpu_usage_percent
+        expr: rate(container_cpu_usage_seconds_total[1m]) * 100
+      
+      # Memory usage per service
+      - record: service:memory_usage_bytes
+        expr: container_memory_usage_bytes
+      
+      # Memory usage percent
+      - record: service:memory_usage_percent
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100
+
