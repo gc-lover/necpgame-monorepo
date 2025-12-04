@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: World Events System - Analytics Service API
+  description: API для аналитики по мировым событиям
+  version: 1.0.0
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Event Analytics
+    description: Аналитика по событиям
+paths:
+  /analytics/world-events/{id}/metrics:
+    get:
+      tags:
+        - Event Analytics
+      summary: Получить метрики события
+      operationId: getWorldEventMetrics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Метрики события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventMetrics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /analytics/world-events/{id}/engagement:
+    get:
+      tags:
+        - Event Analytics
+      summary: Получить метрики вовлеченности игроков
+      operationId: getWorldEventEngagement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Метрики вовлеченности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventEngagement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /analytics/world-events/{id}/impact:
+    get:
+      tags:
+        - Event Analytics
+      summary: Получить метрики влияния на системы
+      operationId: getWorldEventImpact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Метрики влияния
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventImpact'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /analytics/world-events/alerts:
+    get:
+      tags:
+        - Event Analytics
+      summary: Получить активные алерты
+      operationId: getWorldEventAlerts
+      responses:
+        '200':
+          description: Список активных алертов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventAlertsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    WorldEventMetrics:
+      type: object
+      required:
+        - event_id
+        - uptime
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        uptime:
+          type: string
+          format: duration
+          description: Время активности события
+        player_count:
+          type: integer
+          description: Количество игроков, затронутых событием
+        engagement_rate:
+          type: number
+          format: float
+          description: Процент вовлеченности игроков
+        economic_impact:
+          type: number
+          format: float
+          description: Экономическое влияние
+        social_impact:
+          type: number
+          format: float
+          description: Социальное влияние
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    WorldEventEngagement:
+      type: object
+      required:
+        - event_id
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        total_players:
+          type: integer
+        active_players:
+          type: integer
+        engagement_rate:
+          type: number
+          format: float
+        average_session_duration:
+          type: string
+          format: duration
+        participation_rate:
+          type: number
+          format: float
+    WorldEventImpact:
+      type: object
+      required:
+        - event_id
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        economy_impact:
+          type: object
+          properties:
+            price_changes:
+              type: number
+              format: float
+            currency_changes:
+              type: number
+              format: float
+            trade_volume:
+              type: number
+              format: float
+        social_impact:
+          type: object
+          properties:
+            reputation_changes:
+              type: number
+              format: float
+            faction_relations_changes:
+              type: number
+              format: float
+        gameplay_impact:
+          type: object
+          properties:
+            ttk_changes:
+              type: number
+              format: float
+            content_availability:
+              type: number
+              format: float
+    WorldEventAlertsResponse:
+      type: object
+      required:
+        - alerts
+      properties:
+        alerts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              event_id:
+                type: string
+                format: uuid
+              alert_type:
+                type: string
+                example: engagement_below_threshold
+              message:
+                type: string
+              severity:
+                type: string
+                enum:
+                  - LOW
+                  - MEDIUM
+                  - HIGH
+                  - CRITICAL
+              created_at:
+                type: string
+                format: date-time
+  responses:
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR

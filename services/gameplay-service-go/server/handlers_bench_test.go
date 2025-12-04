@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkActivateAbility benchmarks ActivateAbility handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkActivateAbility(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)
@@ -25,7 +25,7 @@ func BenchmarkActivateAbility(b *testing.B) {
 }
 
 // BenchmarkActivateCombo benchmarks ActivateCombo handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkActivateCombo(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)
@@ -40,7 +40,7 @@ func BenchmarkActivateCombo(b *testing.B) {
 }
 
 // BenchmarkCreateCombatSession benchmarks CreateCombatSession handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateCombatSession(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)

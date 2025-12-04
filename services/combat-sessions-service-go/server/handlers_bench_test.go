@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"// Issue: #130/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkListCombatSessions benchmarks ListCombatSessions handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkListCombatSessions(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -26,7 +27,7 @@ func BenchmarkListCombatSessions(b *testing.B) {
 }
 
 // BenchmarkCreateCombatSession benchmarks CreateCombatSession handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateCombatSession(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -44,7 +45,7 @@ func BenchmarkCreateCombatSession(b *testing.B) {
 }
 
 // BenchmarkGetCombatSession benchmarks GetCombatSession handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetCombatSession(b *testing.B) {
 	handlers := NewHandlers()
 

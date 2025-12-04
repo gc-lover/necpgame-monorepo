@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkGetCurrentSeason benchmarks GetCurrentSeason handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetCurrentSeason(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -27,7 +27,7 @@ func BenchmarkGetCurrentSeason(b *testing.B) {
 }
 
 // BenchmarkGetSeasonChallenges benchmarks GetSeasonChallenges handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetSeasonChallenges(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -44,7 +44,7 @@ func BenchmarkGetSeasonChallenges(b *testing.B) {
 }
 
 // BenchmarkGetSeasonRewards benchmarks GetSeasonRewards handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetSeasonRewards(b *testing.B) {
 	handlers := NewHandlers()
 

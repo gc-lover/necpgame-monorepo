@@ -1,0 +1,492 @@
+openapi: 3.0.0
+info:
+  title: Battle Pass Service API
+  version: 1.0.0
+  description: |
+    API для управления Battle Pass: сезоны, прогрессия, награды, челленджи.
+
+    Сезонная прогрессия с бесплатным и премиум треками, еженедельными челленджами.
+servers:
+  - url: http://localhost:8087
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+security:
+  - BearerAuth: []
+tags:
+  - name: seasons
+    description: Сезоны Battle Pass
+  - name: progress
+    description: Прогресс игрока
+  - name: rewards
+    description: Награды
+  - name: challenges
+    description: Еженедельные челленджи
+paths:
+  /api/v1/economy/battle-pass/current:
+    get:
+      tags:
+        - seasons
+      summary: Получить текущий сезон
+      operationId: getCurrentSeason
+      responses:
+        '200':
+          description: Текущий сезон
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Season'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/economy/battle-pass/progress:
+    get:
+      tags:
+        - progress
+      summary: Получить прогресс игрока
+      operationId: getPlayerProgress
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProgress'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/economy/battle-pass/claim:
+    post:
+      tags:
+        - rewards
+      summary: Забрать награду уровня
+      operationId: claimReward
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+                - level
+                - track
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                level:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                track:
+                  $ref: '#/components/schemas/RewardTrack'
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/economy/battle-pass/purchase-premium:
+    post:
+      tags:
+        - rewards
+      summary: Купить премиум трек
+      operationId: purchasePremium
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Премиум активирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  premium_status:
+                    type: boolean
+                  retroactive_rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+                    description: Награды за уже достигнутые уровни
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/economy/battle-pass/challenges/weekly:
+    get:
+      tags:
+        - challenges
+      summary: Получить еженедельные челленджи
+      operationId: getWeeklyChallenges
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Еженедельные челленджи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  week_number:
+                    type: integer
+                  challenges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeeklyChallenge'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/economy/battle-pass/challenges/{challengeId}/complete:
+    post:
+      tags:
+        - challenges
+      summary: Завершить челлендж
+      operationId: completeChallenge
+      parameters:
+        - name: challengeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Челлендж завершен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  xp_awarded:
+                    type: integer
+                  new_level:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/economy/battle-pass/xp/add:
+    post:
+      tags:
+        - progress
+      summary: Добавить XP игроку
+      description: Добавить XP за игровые действия (используется другими сервисами)
+      operationId: addXP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+                - xp_amount
+                - source
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                xp_amount:
+                  type: integer
+                  minimum: 1
+                source:
+                  type: string
+                  description: Источник XP (quest, combat, challenge, etc.)
+      responses:
+        '200':
+          description: XP добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_xp:
+                    type: integer
+                  new_level:
+                    type: integer
+                  level_up:
+                    type: boolean
+                  rewards_unlocked:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    RewardTrack:
+      type: string
+      enum:
+        - free
+        - premium
+    Season:
+      type: object
+      required:
+        - id
+        - name
+        - season_number
+        - start_date
+        - end_date
+        - max_level
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        season_number:
+          type: integer
+          minimum: 1
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        max_level:
+          type: integer
+          default: 100
+        theme:
+          type: string
+        status:
+          type: string
+          enum:
+            - scheduled
+            - active
+            - ended
+    PlayerProgress:
+      type: object
+      required:
+        - player_id
+        - season_id
+        - current_level
+        - current_xp
+        - has_premium
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        season:
+          $ref: '#/components/schemas/Season'
+        current_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        current_xp:
+          type: integer
+          minimum: 0
+        xp_to_next_level:
+          type: integer
+        has_premium:
+          type: boolean
+        premium_purchased_at:
+          type: string
+          format: date-time
+        claimed_levels_free:
+          type: array
+          items:
+            type: integer
+        claimed_levels_premium:
+          type: array
+          items:
+            type: integer
+        unclaimed_rewards_count:
+          type: integer
+    Reward:
+      type: object
+      required:
+        - level
+        - track
+        - reward_type
+        - reward_data
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        track:
+          $ref: '#/components/schemas/RewardTrack'
+        reward_type:
+          type: string
+          enum:
+            - currency
+            - item
+            - cosmetic
+            - title
+            - emote
+            - xp_boost
+        reward_data:
+          type: object
+          additionalProperties: true
+        claimed:
+          type: boolean
+    WeeklyChallenge:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - objective_type
+        - objective_count
+        - xp_reward
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        objective_type:
+          type: string
+          enum:
+            - kill_enemies
+            - complete_quests
+            - earn_currency
+            - play_matches
+            - deal_damage
+            - collect_items
+            - win_matches
+        objective_count:
+          type: integer
+          minimum: 1
+        xp_reward:
+          type: integer
+          minimum: 0
+        current_progress:
+          type: integer
+          minimum: 0
+        completed_at:
+          type: string
+          format: date-time
+        claimed_at:
+          type: string
+          format: date-time
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS

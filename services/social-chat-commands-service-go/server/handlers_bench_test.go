@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 // Auto-generated benchmark file
 package server
 
@@ -10,11 +10,10 @@ import (
 )
 
 // BenchmarkHandler benchmarks handler performance
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkHandler(b *testing.B) {
 	// Setup - adjust based on service structure
-	service := NewService(nil)
-	handlers := NewHandlers(service)
+	handlers := NewHandlers()
 
 	ctx := context.Background()
 

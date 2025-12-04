@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkGetGlobalLeaderboard benchmarks GetGlobalLeaderboard handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetGlobalLeaderboard(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)
@@ -28,7 +28,7 @@ func BenchmarkGetGlobalLeaderboard(b *testing.B) {
 }
 
 // BenchmarkGetFactionLeaderboard benchmarks GetFactionLeaderboard handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetFactionLeaderboard(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)
@@ -46,7 +46,7 @@ func BenchmarkGetFactionLeaderboard(b *testing.B) {
 }
 
 // BenchmarkGetPlayerRank benchmarks GetPlayerRank handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetPlayerRank(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)

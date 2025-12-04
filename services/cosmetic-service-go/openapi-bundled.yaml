@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Cosmetic Service API
+  version: 1.0.0
+  description: Cosmetic system - simplified spec for chi migration
+servers:
+  - url: http://localhost:8117
+tags:
+  - name: health
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Проверка состояния сервиса
+      tags:
+        - health
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Доступ запрещен
+            code: ACCESS_DENIED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    Conflict:
+      description: Конфликт ресурсов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Conflict
+            message: Конфликт ресурсов
+            code: RESOURCE_CONFLICT
+    TooManyRequests:
+      description: Превышен лимит запросов
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Количество секунд до следующего запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: TooManyRequests
+            message: Превышен лимит запросов
+            code: RATE_LIMIT_EXCEEDED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true

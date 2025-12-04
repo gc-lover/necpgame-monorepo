@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sandevistan-service-go/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkActivateSandevistan benchmarks ActivateSandevistan handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkActivateSandevistan(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -23,7 +24,7 @@ func BenchmarkActivateSandevistan(b *testing.B) {
 }
 
 // BenchmarkDeactivateSandevistan benchmarks DeactivateSandevistan handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkDeactivateSandevistan(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -37,7 +38,7 @@ func BenchmarkDeactivateSandevistan(b *testing.B) {
 }
 
 // BenchmarkGetSandevistanStatus benchmarks GetSandevistanStatus handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetSandevistanStatus(b *testing.B) {
 	handlers := NewHandlers()
 

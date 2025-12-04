@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkActivateCombatImplant benchmarks ActivateCombatImplant handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkActivateCombatImplant(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -24,7 +24,7 @@ func BenchmarkActivateCombatImplant(b *testing.B) {
 }
 
 // BenchmarkAdvancedAim benchmarks AdvancedAim handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkAdvancedAim(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -39,7 +39,7 @@ func BenchmarkAdvancedAim(b *testing.B) {
 }
 
 // BenchmarkControlRecoil benchmarks ControlRecoil handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkControlRecoil(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

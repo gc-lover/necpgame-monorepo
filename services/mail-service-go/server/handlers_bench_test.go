@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkGetInbox benchmarks GetInbox handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetInbox(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +27,7 @@ func BenchmarkGetInbox(b *testing.B) {
 }
 
 // BenchmarkGetMail benchmarks GetMail handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetMail(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -45,7 +45,7 @@ func BenchmarkGetMail(b *testing.B) {
 }
 
 // BenchmarkDeleteMail benchmarks DeleteMail handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkDeleteMail(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

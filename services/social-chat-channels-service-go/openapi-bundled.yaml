@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: Social Chat Channels Service API
+  description: API для управления каналами чата
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Chat Channels
+    description: Управление каналами чата
+paths:
+  /social/chat/channels:
+    get:
+      tags:
+        - Chat Channels
+      summary: Получить список каналов
+      operationId: getChannels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ChannelType'
+      responses:
+        '200':
+          description: Список каналов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /social/chat/channels/{channel_id}:
+    get:
+      tags:
+        - Chat Channels
+      summary: Получить канал
+      operationId: getChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelId'
+      responses:
+        '200':
+          description: Информация о канале
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannel'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /social/chat/channels/{channel_id}/join:
+    post:
+      tags:
+        - Chat Channels
+      summary: Присоединиться к каналу
+      operationId: joinChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinChannelRequest'
+      responses:
+        '200':
+          description: Присоединение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /social/chat/channels/{channel_id}/leave:
+    post:
+      tags:
+        - Chat Channels
+      summary: Покинуть канал
+      operationId: leaveChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveChannelRequest'
+      responses:
+        '200':
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                status: left
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /social/chat/channels/{channel_id}/members:
+    get:
+      tags:
+        - Chat Channels
+      summary: Получить список участников канала
+      operationId: getChannelMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelMembersResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    ChannelType:
+      type: string
+      enum:
+        - GLOBAL
+        - TRADE
+        - NEWBIE
+        - LOCAL
+        - PARTY
+        - RAID
+        - GUILD
+        - GUILD_OFFICER
+        - WHISPER
+        - SYSTEM
+        - COMBAT_LOG
+        - RP_EMOTE
+    ChatChannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel_type:
+          type: string
+          enum:
+            - GLOBAL
+            - TRADE
+            - NEWBIE
+            - LOCAL
+            - PARTY
+            - RAID
+            - GUILD
+            - GUILD_OFFICER
+            - WHISPER
+            - SYSTEM
+            - COMBAT_LOG
+            - RP_EMOTE
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+        read_permission:
+          type: object
+          additionalProperties: true
+          nullable: true
+        write_permission:
+          type: object
+          additionalProperties: true
+          nullable: true
+        cooldown_seconds:
+          type: integer
+          default: 0
+        max_message_length:
+          type: integer
+          default: 500
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+    ChannelListResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatChannel'
+        total:
+          type: integer
+    JoinChannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+    LeaveChannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+    ChannelMembersResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Статус операции
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+  parameters:
+    ChannelId:
+      name: channel_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор канала
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации

@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkCreateParty benchmarks CreateParty handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreateParty(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -28,7 +28,7 @@ func BenchmarkCreateParty(b *testing.B) {
 }
 
 // BenchmarkGetParty benchmarks GetParty handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetParty(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -46,7 +46,7 @@ func BenchmarkGetParty(b *testing.B) {
 }
 
 // BenchmarkDisbandParty benchmarks DisbandParty handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkDisbandParty(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

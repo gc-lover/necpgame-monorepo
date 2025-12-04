@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"// Issue: #164/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkValidateProgression benchmarks ValidateProgression handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkValidateProgression(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -23,7 +24,7 @@ func BenchmarkValidateProgression(b *testing.B) {
 }
 
 // BenchmarkGetCharacterProgression benchmarks GetCharacterProgression handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetCharacterProgression(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -41,7 +42,7 @@ func BenchmarkGetCharacterProgression(b *testing.B) {
 }
 
 // BenchmarkDistributeAttributePoints benchmarks DistributeAttributePoints handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkDistributeAttributePoints(b *testing.B) {
 	handlers := NewHandlers()
 

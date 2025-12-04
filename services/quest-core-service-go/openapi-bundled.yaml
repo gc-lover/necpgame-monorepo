@@ -1,0 +1,514 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Core Service API
+  description: |
+    API для управления основными операциями с квестами.
+
+    **Основные возможности:**
+    - Начало квестов
+    - Получение информации о квестах
+    - Завершение и отмена квестов
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Quest Management
+    description: Управление квестами
+paths:
+  /gameplay/quests/start:
+    post:
+      tags:
+        - Quest Management
+      summary: Начать квест
+      description: |
+        Начинает новый квест для текущего игрока.
+        Проверяет требования квеста и создаёт инстанс квеста.
+      operationId: startQuest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartQuestRequest'
+      responses:
+        '200':
+          description: Квест успешно начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartQuestResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}:
+    get:
+      tags:
+        - Quest Management
+      summary: Получить информацию о квесте
+      description: |
+        Возвращает информацию о квесте по ID инстанса квеста.
+        Включает состояние, прогресс и детали квеста.
+      operationId: getQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о квесте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/by-player/{player_id}:
+    get:
+      tags:
+        - Quest Management
+      summary: Получить квесты игрока
+      description: |
+        Возвращает список всех квестов игрока.
+        Поддерживает фильтрацию по состоянию и пагинацию.
+      operationId: getPlayerQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: state
+          in: query
+          description: Фильтр по состоянию квеста
+          schema:
+            type: string
+            enum:
+              - NOT_STARTED
+              - IN_PROGRESS
+              - COMPLETED
+              - FAILED
+              - CANCELLED
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список квестов игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/complete:
+    post:
+      tags:
+        - Quest Management
+      summary: Завершить квест
+      description: |
+        Завершает квест и распределяет награды.
+        Проверяет выполнение всех целей перед завершением.
+      operationId: completeQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteQuestRequest'
+      responses:
+        '200':
+          description: Квест успешно завершён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteQuestResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/cancel:
+    post:
+      tags:
+        - Quest Management
+      summary: Отменить квест
+      description: |
+        Отменяет активный квест.
+        Квест переходит в состояние CANCELLED.
+      operationId: cancelQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Квест успешно отменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+  schemas:
+    StartQuestRequest:
+      type: object
+      required:
+        - quest_id
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: ID определения квеста для начала
+    QuestInstance:
+      type: object
+      description: |
+        BACKEND NOTE: Quest tracking (100+ active quests per player).
+        Fields ordered for struct alignment. Expected memory: ~112 bytes/instance.
+      required:
+        - id
+        - quest_id
+        - player_id
+        - state
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор инстанса квеста
+        quest_id:
+          type: string
+          format: uuid
+          description: ID определения квеста
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        state:
+          type: string
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+            - CANCELLED
+          description: |
+            Состояние квеста:
+            - `NOT_STARTED` - квест не начат
+            - `IN_PROGRESS` - квест в процессе
+            - `COMPLETED` - квест завершён
+            - `FAILED` - квест провален
+            - `CANCELLED` - квест отменён
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала квеста
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения квеста
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+        progress_data:
+          type: object
+          description: Данные прогресса квеста (JSON)
+          additionalProperties: true
+        current_objective:
+          type: integer
+          description: Текущий номер цели (индекс)
+          minimum: 0
+    DialogueChoice:
+      type: object
+      required:
+        - choice_id
+        - text
+      properties:
+        choice_id:
+          type: string
+          description: ID выбора
+        text:
+          type: string
+          description: Текст выбора
+        next_node_id:
+          type: string
+          description: ID следующего узла
+        requirements:
+          type: object
+          description: Требования для выбора
+          additionalProperties: true
+    SkillCheck:
+      type: object
+      required:
+        - check_type
+        - check_target
+        - required_value
+      properties:
+        check_type:
+          type: string
+          enum:
+            - attribute
+            - skill
+            - item
+            - reputation
+          description: |
+            Тип проверки:
+            - `attribute` - проверка атрибутов
+            - `skill` - проверка навыков
+            - `item` - проверка предметов
+            - `reputation` - проверка репутации
+        check_target:
+          type: string
+          description: Цель проверки (название атрибута/навыка/предмета)
+        required_value:
+          type: integer
+          description: Требуемое значение
+          minimum: 0
+    DialogueNode:
+      type: object
+      required:
+        - node_id
+        - text
+      properties:
+        node_id:
+          type: string
+          description: ID узла диалога
+        text:
+          type: string
+          description: Текст диалога
+        speaker:
+          type: string
+          description: Имя говорящего
+        choices:
+          type: array
+          description: Варианты выбора
+          items:
+            $ref: '#/components/schemas/DialogueChoice'
+        skill_checks:
+          type: array
+          description: Проверки навыков для этого узла
+          items:
+            $ref: '#/components/schemas/SkillCheck'
+    StartQuestResponse:
+      type: object
+      required:
+        - quest_instance
+      properties:
+        quest_instance:
+          $ref: '#/components/schemas/QuestInstance'
+        dialogue:
+          $ref: '#/components/schemas/DialogueNode'
+          nullable: true
+          description: Начальный диалог (если есть)
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    QuestListResponse:
+      type: object
+      required:
+        - quests
+        - total
+      properties:
+        quests:
+          type: array
+          description: Список квестов
+          items:
+            $ref: '#/components/schemas/QuestInstance'
+        total:
+          type: integer
+          description: Общее количество квестов
+          minimum: 0
+    CompleteQuestRequest:
+      type: object
+      properties:
+        force:
+          type: boolean
+          default: false
+          description: Принудительное завершение (для админов)
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          description: Опыт
+          minimum: 0
+        currency:
+          type: integer
+          description: Валюта
+          minimum: 0
+        items:
+          type: array
+          description: Предметы
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        reputation:
+          type: object
+          description: Репутация
+          additionalProperties: true
+        titles:
+          type: array
+          description: Титулы
+          items:
+            type: string
+    CompleteQuestResponse:
+      type: object
+      required:
+        - quest_instance
+        - rewards
+      properties:
+        quest_instance:
+          $ref: '#/components/schemas/QuestInstance'
+        rewards:
+          $ref: '#/components/schemas/QuestRewards'
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации

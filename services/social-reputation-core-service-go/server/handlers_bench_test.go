@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkGetReputation benchmarks GetReputation handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetReputation(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +27,7 @@ func BenchmarkGetReputation(b *testing.B) {
 }
 
 // BenchmarkGetFactionReputation benchmarks GetFactionReputation handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetFactionReputation(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -45,7 +45,7 @@ func BenchmarkGetFactionReputation(b *testing.B) {
 }
 
 // BenchmarkGetFactionRelations benchmarks GetFactionRelations handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetFactionRelations(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

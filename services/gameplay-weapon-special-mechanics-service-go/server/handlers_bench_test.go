@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"// Issue: #1595 - ogen migration/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkApplySpecialMechanics benchmarks ApplySpecialMechanics handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkApplySpecialMechanics(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -24,7 +25,7 @@ func BenchmarkApplySpecialMechanics(b *testing.B) {
 }
 
 // BenchmarkCalculateChainDamage benchmarks CalculateChainDamage handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCalculateChainDamage(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -39,7 +40,7 @@ func BenchmarkCalculateChainDamage(b *testing.B) {
 }
 
 // BenchmarkCreatePersistentEffect benchmarks CreatePersistentEffect handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCreatePersistentEffect(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

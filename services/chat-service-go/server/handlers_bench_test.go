@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkApplyEffects benchmarks ApplyEffects handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkApplyEffects(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -24,7 +24,7 @@ func BenchmarkApplyEffects(b *testing.B) {
 }
 
 // BenchmarkCalculateDamage benchmarks CalculateDamage handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCalculateDamage(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -39,7 +39,7 @@ func BenchmarkCalculateDamage(b *testing.B) {
 }
 
 // BenchmarkDefendInCombat benchmarks DefendInCombat handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkDefendInCombat(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

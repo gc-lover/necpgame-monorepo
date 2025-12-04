@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: Reset Service API
+  description: API для управления ежедневными и еженедельными сбросами игровых данных
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+tags:
+  - name: Reset
+    description: Управление сбросами
+paths:
+  /reset/stats:
+    get:
+      tags:
+        - Reset
+      summary: Получить статистику сбросов
+      operationId: getResetStats
+      responses:
+        '200':
+          description: Статистика сбросов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetStats'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /reset/history:
+    get:
+      tags:
+        - Reset
+      summary: Получить историю сбросов
+      operationId: getResetHistory
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ResetType'
+          description: Тип сброса (daily или weekly)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Количество записей на странице
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: История сбросов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /reset/trigger:
+    post:
+      tags:
+        - Reset
+      summary: Запустить сброс
+      operationId: triggerReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerResetRequest'
+      responses:
+        '200':
+          description: Сброс запущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ResetType:
+      type: string
+      enum:
+        - daily
+        - weekly
+      description: Тип сброса
+    ResetStatus:
+      type: string
+      enum:
+        - pending
+        - running
+        - completed
+        - failed
+      description: Статус сброса
+    ResetRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/ResetType'
+        status:
+          $ref: '#/components/schemas/ResetStatus'
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+    ResetStats:
+      type: object
+      properties:
+        last_daily_reset:
+          type: string
+          format: date-time
+          nullable: true
+        last_weekly_reset:
+          type: string
+          format: date-time
+          nullable: true
+        next_daily_reset:
+          type: string
+          format: date-time
+        next_weekly_reset:
+          type: string
+          format: date-time
+    TriggerResetRequest:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          $ref: '#/components/schemas/ResetType'
+    ResetListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ResetRecord'
+              description: Список сбросов
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    PaginationResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          description: Список элементов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество элементов
+        limit:
+          type: integer
+          minimum: 1
+          description: Количество элементов на странице
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение для пагинации
+        has_more:
+          type: boolean
+          description: Есть ли еще элементы
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          description: Статус операции
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR

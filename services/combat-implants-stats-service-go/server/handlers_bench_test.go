@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-stats-service-go/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkGetEnergyStatus benchmarks GetEnergyStatus handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetEnergyStatus(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -26,7 +27,7 @@ func BenchmarkGetEnergyStatus(b *testing.B) {
 }
 
 // BenchmarkGetHumanityStatus benchmarks GetHumanityStatus handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetHumanityStatus(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -43,7 +44,7 @@ func BenchmarkGetHumanityStatus(b *testing.B) {
 }
 
 // BenchmarkCheckCompatibility benchmarks CheckCompatibility handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCheckCompatibility(b *testing.B) {
 	handlers := NewHandlers()
 

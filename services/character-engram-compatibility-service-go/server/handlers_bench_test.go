@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"github.com/necpgame/character-engram-compatibility-service-go/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkGetEngramCompatibility benchmarks GetEngramCompatibility handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetEngramCompatibility(b *testing.B) {
 	handlers := NewHandlers()
 
@@ -26,21 +27,26 @@ func BenchmarkGetEngramCompatibility(b *testing.B) {
 }
 
 // BenchmarkCheckEngramCompatibility benchmarks CheckEngramCompatibility handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkCheckEngramCompatibility(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
+	req := &api.CheckCompatibilityRequest{
+		EngramIds: []uuid.UUID{uuid.New()},
+	}
+	params := api.CheckEngramCompatibilityParams{}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.CheckEngramCompatibility(ctx)
+		_, _ = handlers.CheckEngramCompatibility(ctx, req, params)
 	}
 }
 
 // BenchmarkGetEngramConflicts benchmarks GetEngramConflicts handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetEngramConflicts(b *testing.B) {
 	handlers := NewHandlers()
 

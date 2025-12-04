@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // BenchmarkAPIV1WeaponsResourcesWeaponIdGet benchmarks APIV1WeaponsResourcesWeaponIdGet handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkAPIV1WeaponsResourcesWeaponIdGet(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +27,7 @@ func BenchmarkAPIV1WeaponsResourcesWeaponIdGet(b *testing.B) {
 }
 
 // BenchmarkAPIV1WeaponsResourcesWeaponIdConsumePost benchmarks APIV1WeaponsResourcesWeaponIdConsumePost handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkAPIV1WeaponsResourcesWeaponIdConsumePost(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -46,7 +46,7 @@ func BenchmarkAPIV1WeaponsResourcesWeaponIdConsumePost(b *testing.B) {
 }
 
 // BenchmarkAPIV1WeaponsResourcesWeaponIdCooldownPost benchmarks APIV1WeaponsResourcesWeaponIdCooldownPost handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkAPIV1WeaponsResourcesWeaponIdCooldownPost(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

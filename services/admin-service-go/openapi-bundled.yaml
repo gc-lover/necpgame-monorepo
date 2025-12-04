@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Admin Dashboard Service API
+  description: API для главной панели администрирования
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Dashboard
+    description: Главная панель администрирования
+paths:
+  /dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: Главная панель администрирования
+      operationId: getDashboard
+      responses:
+        '200':
+          description: Данные главной панели
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    DashboardData:
+      type: object
+      properties:
+        recent_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        online_players:
+          type: integer
+        total_players:
+          type: integer
+        active_matches:
+          type: integer
+        pending_reports:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        admin_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+        reason:
+          type: string
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        target_type:
+          type: string
+          enum:
+            - player
+            - economy
+            - content
+            - moderation
+        created_at:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Доступ запрещен
+            code: ACCESS_DENIED

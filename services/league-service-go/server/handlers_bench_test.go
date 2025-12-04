@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // BenchmarkHealthCheck benchmarks HealthCheck handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkHealthCheck(b *testing.B) {
 	logger := GetLogger()
 	handlers := NewHandlers(logger)

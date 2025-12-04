@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkGetComboCatalog benchmarks GetComboCatalog handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetComboCatalog(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +28,7 @@ func BenchmarkGetComboCatalog(b *testing.B) {
 }
 
 // BenchmarkGetComboDetails benchmarks GetComboDetails handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetComboDetails(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -45,7 +46,7 @@ func BenchmarkGetComboDetails(b *testing.B) {
 }
 
 // BenchmarkActivateCombo benchmarks ActivateCombo handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkActivateCombo(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)

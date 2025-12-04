@@ -1,0 +1,641 @@
+openapi: 3.0.3
+info:
+  title: Seasonal Challenges Service API
+  description: |
+    API для управления сезонными испытаниями в NECPGAME.
+
+    **Основные возможности:**
+    - Управление сезонами
+    - Управление сезонными испытаниями
+    - Управление сезонными аффиксами
+    - Управление сезонной валютой
+    - Расчёт сезонных наград
+
+    **Типы контента:**
+    - Seasonal Raids: уникальные рейды с сезонными боссами
+    - Limited Time Challenges: временные испытания
+    - Seasonal Affixes: уникальные сезонные аффиксы
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8085/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necpgame.com/api/v1
+    description: World Service (продакшн)
+security:
+  - BearerAuth: []
+tags:
+  - name: Seasons
+    description: Управление сезонами
+  - name: Challenges
+    description: Управление сезонными испытаниями
+  - name: Currency
+    description: Управление сезонной валютой
+  - name: Affixes
+    description: Управление сезонными аффиксами
+paths:
+  /seasons/current:
+    get:
+      tags:
+        - Seasons
+      summary: Получить текущий сезон
+      description: |
+        Возвращает информацию о текущем активном сезоне.
+      operationId: getCurrentSeason
+      responses:
+        '200':
+          description: Текущий сезон
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Season'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /seasons/{season_id}/challenges:
+    get:
+      tags:
+        - Challenges
+      summary: Получить испытания сезона
+      description: |
+        Возвращает список всех испытаний для указанного сезона.
+      operationId: getSeasonChallenges
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сезона
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список испытаний сезона
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SeasonalChallenge'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /seasons/{season_id}/rewards:
+    get:
+      tags:
+        - Challenges
+      summary: Получить награды сезона
+      description: |
+        Возвращает список всех доступных наград для указанного сезона.
+      operationId: getSeasonRewards
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сезона
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список наград сезона
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SeasonalReward'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /gameplay/seasonal/challenges/active:
+    get:
+      tags:
+        - Challenges
+      summary: Получить активные испытания
+      description: |
+        Возвращает список активных сезонных испытаний для текущего игрока.
+      operationId: getActiveChallenges
+      parameters:
+        - name: player_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID игрока (если не указан, используется текущий игрок)
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список активных испытаний
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerSeasonalChallenge'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /gameplay/seasonal/challenges/{challenge_id}/complete:
+    post:
+      tags:
+        - Challenges
+      summary: Завершить сезонное испытание
+      description: |
+        Завершает сезонное испытание и начисляет награды.
+      operationId: completeSeasonalChallenge
+      parameters:
+        - name: challenge_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID испытания
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                completion_data:
+                  type: object
+                  description: Дополнительные данные о завершении
+      responses:
+        '200':
+          description: Испытание завершено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChallengeCompletionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /gameplay/seasonal/currency/balance:
+    get:
+      tags:
+        - Currency
+      summary: Получить баланс сезонной валюты
+      description: |
+        Возвращает баланс сезонной валюты для текущего игрока в текущем сезоне.
+      operationId: getSeasonalCurrencyBalance
+      parameters:
+        - name: player_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID игрока (если не указан, используется текущий игрок)
+        - name: season_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID сезона (если не указан, используется текущий сезон)
+      responses:
+        '200':
+          description: Баланс сезонной валюты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonalCurrencyBalance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /gameplay/seasonal/currency/exchange:
+    post:
+      tags:
+        - Currency
+      summary: Обменять сезонную валюту
+      description: |
+        Обменивает сезонную валюту на предметы, косметику, титулы или способности.
+      operationId: exchangeSeasonalCurrency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyExchangeRequest'
+      responses:
+        '200':
+          description: Валюта обменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyExchangeResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    Conflict:
+      description: Конфликт ресурсов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Conflict
+            message: Конфликт ресурсов
+            code: RESOURCE_CONFLICT
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+  schemas:
+    Season:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сезона
+        name:
+          type: string
+          description: Название сезона
+        start_date:
+          type: string
+          format: date-time
+          description: Дата начала сезона
+        end_date:
+          type: string
+          format: date-time
+          description: Дата окончания сезона
+        status:
+          type: string
+          enum:
+            - upcoming
+            - active
+            - ended
+          description: Статус сезона
+        seasonal_affix_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID сезонного аффикса
+        theme:
+          type: string
+          description: Тема сезона
+        description:
+          type: string
+          description: Описание сезона
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    SeasonalChallenge:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID испытания
+        season_id:
+          type: string
+          format: uuid
+          description: ID сезона
+        challenge_type:
+          type: string
+          enum:
+            - weekly
+            - event
+            - seasonal
+            - raid
+          description: Тип испытания
+        name:
+          type: string
+          description: Название испытания
+        description:
+          type: string
+          description: Описание испытания
+        content_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID контента (рейд, событие и т.д.)
+        conditions:
+          type: object
+          description: Условия выполнения (JSON)
+        rewards:
+          type: object
+          description: Награды (JSON)
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время истечения испытания
+    SeasonalReward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID награды
+        season_id:
+          type: string
+          format: uuid
+          description: ID сезона
+        reward_type:
+          type: string
+          enum:
+            - currency
+            - item
+            - cosmetic
+            - title
+            - ability
+          description: Тип награды
+        reward_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID предмета/косметики/титула/способности
+        currency_cost:
+          type: integer
+          description: Стоимость в сезонной валюте
+          minimum: 0
+        name:
+          type: string
+          description: Название награды
+        description:
+          type: string
+          description: Описание награды
+        available:
+          type: boolean
+          description: Доступна ли награда
+        stock:
+          type: integer
+          nullable: true
+          description: Остаток (если ограничено)
+    PlayerSeasonalChallenge:
+      type: object
+      properties:
+        challenge:
+          $ref: '#/components/schemas/SeasonalChallenge'
+        progress:
+          type: integer
+          description: Прогресс выполнения (0-100)
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum:
+            - available
+            - in_progress
+            - completed
+            - expired
+          description: Статус испытания для игрока
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения
+    ChallengeCompletionResult:
+      type: object
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+        completed:
+          type: boolean
+          description: Успешно ли завершено
+        currency_earned:
+          type: integer
+          description: Получено сезонной валюты
+          minimum: 0
+        rewards:
+          type: array
+          description: Полученные награды
+          items:
+            type: object
+            properties:
+              reward_type:
+                type: string
+              reward_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        completed_at:
+          type: string
+          format: date-time
+    SeasonalCurrencyBalance:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        currency_amount:
+          type: integer
+          description: Количество сезонной валюты
+          minimum: 0
+        max_currency:
+          type: integer
+          description: Максимальное количество валюты за сезон
+          minimum: 0
+          default: 10000
+        updated_at:
+          type: string
+          format: date-time
+    CurrencyExchangeRequest:
+      type: object
+      required:
+        - reward_id
+        - quantity
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: ID награды для обмена
+        quantity:
+          type: integer
+          description: Количество
+          minimum: 1
+          default: 1
+        season_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID сезона (если не указан, используется текущий сезон)
+    CurrencyExchangeResult:
+      type: object
+      properties:
+        exchange_id:
+          type: string
+          format: uuid
+        reward_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        currency_spent:
+          type: integer
+          description: Потрачено сезонной валюты
+        remaining_currency:
+          type: integer
+          description: Остаток сезонной валюты
+        reward_received:
+          type: object
+          description: Полученная награда
+          properties:
+            reward_type:
+              type: string
+            reward_id:
+              type: string
+              format: uuid
+            quantity:
+              type: integer
+        exchanged_at:
+          type: string
+          format: date-time
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации

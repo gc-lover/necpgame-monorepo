@@ -1,0 +1,539 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Service API
+  description: API для системы матчмейкинга - подбор игроков для PvP, PvE и рейдов
+  version: 1.0.0
+  contact:
+    name: Matchmaking Team
+    email: matchmaking@necp.game
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Local development
+  - url: https://api.necp.game/api/v1
+    description: Production
+security:
+  - BearerAuth: []
+tags:
+  - name: Queue
+    description: Управление очередями матчмейкинга
+  - name: Rating
+    description: Рейтинговая система (MMR/ELO)
+  - name: Match
+    description: Управление матчами
+paths:
+  /matchmaking/queue:
+    post:
+      tags:
+        - Queue
+      summary: Войти в очередь
+      operationId: enterQueue
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnterQueueRequest'
+      responses:
+        '200':
+          description: Успешно добавлен в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Игрок уже в очереди
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /matchmaking/queue/{queueId}:
+    parameters:
+      - name: queueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Queue
+      summary: Получить статус очереди
+      operationId: getQueueStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Статус очереди
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Queue
+      summary: Выйти из очереди
+      operationId: leaveQueue
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешно вышел из очереди
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveQueueResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matchmaking/rating/{player_id}:
+    parameters:
+      - $ref: '#/components/parameters/PlayerId'
+    get:
+      tags:
+        - Rating
+      summary: Получить рейтинг игрока
+      operationId: getPlayerRating
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Рейтинг игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatingResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matchmaking/leaderboard/{activityType}:
+    parameters:
+      - name: activityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - pvp_5v5
+            - pvp_10v10
+            - pve_dungeon
+            - raid_10man
+            - raid_25man
+    get:
+      tags:
+        - Rating
+      summary: Таблица лидеров
+      operationId: getLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - name: seasonId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Таблица лидеров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+  /matchmaking/match/{matchId}/accept:
+    parameters:
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Match
+      summary: Принять найденный матч
+      operationId: acceptMatch
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Матч принят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Матч уже отменён или начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /matchmaking/match/{matchId}/decline:
+    parameters:
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Match
+      summary: Отклонить матч
+      operationId: declineMatch
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Матч отклонён (вернётесь в очередь)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    EnterQueueRequest:
+      type: object
+      required:
+        - activityType
+      properties:
+        activityType:
+          type: string
+          enum:
+            - pvp_5v5
+            - pvp_10v10
+            - pve_dungeon
+            - raid_10man
+            - raid_25man
+          description: Тип активности
+        preferredRoles:
+          type: array
+          items:
+            type: string
+            enum:
+              - tank
+              - healer
+              - dps
+              - support
+          description: Предпочитаемые роли
+        partyId:
+          type: string
+          format: uuid
+          description: ID группы (для группового матчмейкинга)
+    QueueResponse:
+      type: object
+      required:
+        - queueId
+        - estimatedWaitTime
+        - currentQueueSize
+      description: |
+        BACKEND NOTE: Hot endpoint (2000+ RPS). Use memory pooling.
+        Expected memory: ~24 bytes/instance.
+      properties:
+        queueId:
+          type: string
+          format: uuid
+        estimatedWaitTime:
+          type: integer
+          format: int32
+          description: Ожидаемое время в секундах
+          example: 120
+        currentQueueSize:
+          type: integer
+          format: int32
+          description: Текущий размер очереди
+          example: 45
+    QueueStatusResponse:
+      type: object
+      required:
+        - queueId
+        - status
+        - timeInQueue
+      description: |
+        BACKEND NOTE: Polling endpoint (100+ RPS). Cache 5s.
+        Expected memory: ~48 bytes/instance.
+      properties:
+        queueId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - waiting
+            - matched
+            - cancelled
+        ratingRange:
+          type: array
+          items:
+            type: integer
+            format: int32
+          minItems: 2
+          maxItems: 2
+          description: Текущий диапазон поиска [min, max]
+          example:
+            - 1450
+            - 1550
+        timeInQueue:
+          type: integer
+          format: int32
+          description: Время в очереди (секунды)
+        estimatedWaitTime:
+          type: integer
+          format: int32
+          description: Оставшееся ожидаемое время
+    LeaveQueueResponse:
+      type: object
+      required:
+        - status
+        - waitTimeSeconds
+      properties:
+        status:
+          type: string
+          enum:
+            - cancelled
+        waitTimeSeconds:
+          type: integer
+          format: int32
+          description: Время проведённое в очереди
+    PlayerRatingResponse:
+      type: object
+      required:
+        - playerId
+        - ratings
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        ratings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityRating'
+    ActivityRating:
+      type: object
+      required:
+        - activityType
+        - currentRating
+        - tier
+        - wins
+        - losses
+      description: |
+        BACKEND NOTE: Fields ordered large→small for struct alignment.
+        Expected memory: ~60 bytes/instance (vs 72 bytes unoptimized).
+        Hot endpoint: use pooling.
+      properties:
+        activityType:
+          type: string
+        tier:
+          type: string
+          enum:
+            - bronze
+            - silver
+            - gold
+            - platinum
+            - diamond
+            - master
+            - grandmaster
+        currentRating:
+          type: integer
+          format: int32
+          description: Текущий MMR
+        peakRating:
+          type: integer
+          format: int32
+          description: Пиковый MMR
+        league:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 4
+        wins:
+          type: integer
+          format: int32
+        losses:
+          type: integer
+          format: int32
+        draws:
+          type: integer
+          format: int32
+        currentStreak:
+          type: integer
+          format: int32
+          description: Текущая серия (положительная = победы, отрицательная = поражения)
+    LeaderboardResponse:
+      type: object
+      required:
+        - activityType
+        - seasonId
+        - leaderboard
+      description: |
+        BACKEND NOTE: Heavy endpoint. Cache 5min. Use materialized view.
+        Limit: 100 entries default.
+      properties:
+        activityType:
+          type: string
+        seasonId:
+          type: string
+        leaderboard:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          maxItems: 100
+    LeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - playerId
+        - playerName
+        - rating
+        - tier
+      description: |
+        BACKEND NOTE: Fields ordered large→small for struct alignment.
+        Expected memory: ~60 bytes/instance (vs 68 bytes unoptimized).
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        playerName:
+          type: string
+        tier:
+          type: string
+          enum:
+            - bronze
+            - silver
+            - gold
+            - platinum
+            - diamond
+            - master
+            - grandmaster
+        rank:
+          type: integer
+          format: int32
+          minimum: 1
+        rating:
+          type: integer
+          format: int32
+        wins:
+          type: integer
+          format: int32
+        losses:
+          type: integer
+          format: int32
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          description: Статус операции
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    TooManyRequests:
+      description: Превышен лимит запросов
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Количество секунд до следующего запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: TooManyRequests
+            message: Превышен лимит запросов
+            code: RATE_LIMIT_EXCEEDED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+  parameters:
+    PlayerId:
+      name: player_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор игрока
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице

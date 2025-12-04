@@ -1,4 +1,4 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
@@ -6,28 +6,27 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/pkg/api"
 )
 
 // BenchmarkGetCurrentSeason benchmarks GetCurrentSeason handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetCurrentSeason(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetCurrentSeasonParams{
-	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetCurrentSeason(ctx, params)
+		_, _ = handlers.GetCurrentSeason(ctx)
 	}
 }
 
 // BenchmarkGetPlayerProgress benchmarks GetPlayerProgress handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetPlayerProgress(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -46,17 +45,23 @@ func BenchmarkGetPlayerProgress(b *testing.B) {
 }
 
 // BenchmarkClaimReward benchmarks ClaimReward handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkClaimReward(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
+	req := &api.ClaimRewardReq{
+		PlayerID: uuid.New(),
+		Level:    1,
+		Track:    api.RewardTrackFree,
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ClaimReward(ctx)
+		_, _ = handlers.ClaimReward(ctx, req)
 	}
 }
 

@@ -1,15 +1,16 @@
-﻿// Issue: Performance benchmarks
+// Issue: Performance benchmarks
 package server
 
 import (
 	"context"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
 // BenchmarkGetFeedback benchmarks GetFeedback handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetFeedback(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -27,7 +28,7 @@ func BenchmarkGetFeedback(b *testing.B) {
 }
 
 // BenchmarkGetPlayerFeedback benchmarks GetPlayerFeedback handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkGetPlayerFeedback(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
@@ -46,7 +47,7 @@ func BenchmarkGetPlayerFeedback(b *testing.B) {
 }
 
 // BenchmarkSubmitFeedback benchmarks SubmitFeedback handler
-// Target: <100Ојs per operation, minimal allocs
+// Target: <100μs per operation, minimal allocs
 func BenchmarkSubmitFeedback(b *testing.B) {
 	service := NewService(nil)
 	handlers := NewHandlers(service)
