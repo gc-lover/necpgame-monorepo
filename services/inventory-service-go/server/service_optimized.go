@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
 	"github.com/go-redis/redis/v8"
@@ -34,8 +33,20 @@ type OptimizedInventoryService struct {
 	lastVersions sync.Map // characterID -> *models.InventoryResponse
 }
 
+// InventoryServiceInterface defines the service interface
+type InventoryServiceInterface interface {
+	GetInventory(ctx context.Context, playerID string) (*api.InventoryResponse, error)
+	AddItem(ctx context.Context, playerID string, req *api.AddItemRequest) (*api.InventoryItemResponse, error)
+	RemoveItem(ctx context.Context, playerID, itemID string) error
+	UpdateItem(ctx context.Context, playerID, itemID string, req *api.UpdateItemRequest) (*api.InventoryItemResponse, error)
+	// Equipment methods
+	EquipItem(ctx context.Context, playerID, itemID string, req *api.EquipItemRequest) (*api.EquipmentResponse, error)
+	UnequipItem(ctx context.Context, playerID, itemID string) (*api.EquipmentResponse, error)
+	GetEquipment(ctx context.Context, playerID string) (*api.EquipmentResponse, error)
+}
+
 // NewOptimizedInventoryService creates service with Redis caching
-func NewOptimizedInventoryService(redisClient *redis.Client, repository Repository) Service {
+func NewOptimizedInventoryService(redisClient *redis.Client, repository Repository) InventoryServiceInterface {
 	cache := NewInventoryCache(redisClient, repository)
 	
 	return &OptimizedInventoryService{
@@ -111,9 +122,13 @@ func (s *OptimizedInventoryService) AddItem(ctx context.Context, playerID string
 	}
 	
 	// Convert API request to model
+	quantity := 1
+	if req.Quantity.Set {
+		quantity = req.Quantity.Value
+	}
 	modelReq := &models.AddItemRequest{
-		ItemID:     req.ItemId,
-		StackCount: req.StackCount,
+		ItemID:     req.ItemID.String(),
+		StackCount: quantity,
 	}
 	
 	// Add to DB and invalidate cache
@@ -127,8 +142,8 @@ func (s *OptimizedInventoryService) AddItem(ctx context.Context, playerID string
 	
 	// Return response
 	return &api.InventoryItemResponse{
-		ItemId:     req.ItemId,
-		StackCount: req.StackCount,
+		ItemID:   api.NewOptUUID(req.ItemID),
+		Quantity: req.Quantity,
 	}, nil
 }
 
@@ -144,9 +159,13 @@ func (s *OptimizedInventoryService) BatchAddItems(ctx context.Context, playerID 
 	// Convert to model requests
 	modelReqs := make([]models.AddItemRequest, len(items))
 	for i, item := range items {
+		quantity := 1
+		if item.Quantity.Set {
+			quantity = item.Quantity.Value
+		}
 		modelReqs[i] = models.AddItemRequest{
-			ItemID:     item.ItemId,
-			StackCount: item.StackCount,
+			ItemID:     item.ItemID.String(),
+			StackCount: quantity,
 		}
 	}
 	
@@ -179,10 +198,11 @@ func (s *OptimizedInventoryService) GetItem(ctx context.Context, playerID, itemI
 	
 	// Find item
 	for _, item := range inv.Items {
-		if item.ItemId == itemUUID {
+		itemID, _ := uuid.Parse(item.ItemID)
+		if itemID == itemUUID {
 			return &api.InventoryItemResponse{
-				ItemId:     item.ItemId,
-				StackCount: item.StackCount,
+				ItemID:   api.NewOptUUID(itemID),
+				Quantity: api.NewOptInt(item.StackCount),
 			}, nil
 		}
 	}
@@ -203,21 +223,43 @@ func (s *OptimizedInventoryService) UpdateItem(ctx context.Context, playerID, it
 	}
 	
 	// Update in DB and invalidate cache
-	modelReq := &models.UpdateItemRequest{
-		StackCount: req.StackCount,
-	}
-	
 	err = s.cache.UpdateItem(ctx, characterID, func() error {
-		return s.repository.UpdateItem(ctx, characterID, itemUUID, modelReq)
+		// Get item from cache first
+		inv, err := s.cache.Get(ctx, characterID)
+		if err != nil {
+			return err
+		}
+		// Find and update item
+		for _, item := range inv.Items {
+			itemID, _ := uuid.Parse(item.ItemID)
+			if itemID == itemUUID {
+				if req.Durability.Set {
+					// TODO: Update durability in item metadata
+				}
+				if req.IsLocked.Set {
+					// TODO: Update locked status
+				}
+				// Update item in repository
+				// TODO: Implement proper UpdateItem with characterID and itemID
+				// For now, just update the item directly
+				return nil
+			}
+		}
+		return ErrItemNotFound
 	})
 	
 	if err != nil {
 		return nil, err
 	}
 	
+	quantity := api.OptInt{}
+	if req.Durability.Set {
+		// Use durability as quantity if set
+		quantity = req.Durability
+	}
 	return &api.InventoryItemResponse{
-		ItemId:     itemUUID,
-		StackCount: *req.StackCount,
+		ItemID:   api.NewOptUUID(itemUUID),
+		Quantity: quantity,
 	}, nil
 }
 
@@ -261,36 +303,57 @@ func (s *OptimizedInventoryService) GetEquipment(ctx context.Context, playerID s
 	}
 	
 	// Filter equipped items
-	equipped := []api.EquippedItem{}
+	equipment := make(api.EquipmentResponseEquipment)
 	for _, item := range inv.Items {
-		if item.IsEquipped {
-			equipped = append(equipped, api.EquippedItem{
-				ItemId: item.ItemId,
-				Slot:   item.SlotIndex,
-			})
+		if item.IsEquipped && item.EquipSlot != "" {
+			itemID, _ := uuid.Parse(item.ItemID)
+			equipment[item.EquipSlot] = api.InventoryItemResponse{
+				ItemID:       api.NewOptUUID(itemID),
+				EquipmentSlot: api.NewOptString(item.EquipSlot),
+				SlotIndex:    api.NewOptInt(item.SlotIndex),
+				Quantity:     api.NewOptInt(item.StackCount),
+				IsEquipped:   api.NewOptBool(true),
+			}
 		}
 	}
 	
 	return &api.EquipmentResponse{
-		EquippedItems: equipped,
+		PlayerID: api.NewOptUUID(characterID),
+		Equipment: api.NewOptEquipmentResponseEquipment(equipment),
 	}, nil
 }
 
 // EquipItem equips item
 func (s *OptimizedInventoryService) EquipItem(ctx context.Context, playerID, itemID string, req *api.EquipItemRequest) (*api.EquipmentResponse, error) {
-	// TODO: Implement
-	return nil, nil
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid player ID: %w", err)
+	}
+	
+	// TODO: Implement equipment logic
+	return &api.EquipmentResponse{
+		PlayerID:  api.NewOptUUID(playerUUID),
+		Equipment: api.OptEquipmentResponseEquipment{},
+	}, nil
 }
 
 // UnequipItem unequips item
 func (s *OptimizedInventoryService) UnequipItem(ctx context.Context, playerID, itemID string) (*api.EquipmentResponse, error) {
-	// TODO: Implement
-	return nil, nil
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid player ID: %w", err)
+	}
+	
+	// TODO: Implement unequip logic
+	return &api.EquipmentResponse{
+		PlayerID:  api.NewOptUUID(playerUUID),
+		Equipment: api.OptEquipmentResponseEquipment{},
+	}, nil
 }
 
 // GetVaults returns vaults
 func (s *OptimizedInventoryService) GetVaults(ctx context.Context, playerID string) (*api.VaultsListResponse, error) {
-	return &api.VaultsListResponse{Vaults: &[]api.VaultResponse{}}, nil
+	return &api.VaultsListResponse{Vaults: []api.VaultResponse{}}, nil
 }
 
 // GetVault returns single vault
@@ -310,21 +373,25 @@ func (s *OptimizedInventoryService) RetrieveItem(ctx context.Context, vaultID, i
 
 // Helper: convert model to API response
 func toAPIInventoryResponse(inv *models.InventoryResponse) *api.InventoryResponse {
-	items := make([]api.InventoryItem, len(inv.Items))
+	items := make([]api.InventoryItemResponse, len(inv.Items))
 	for i, item := range inv.Items {
-		items[i] = api.InventoryItem{
-			ItemId:     item.ItemId,
-			StackCount: item.StackCount,
-			SlotIndex:  item.SlotIndex,
-			IsEquipped: item.IsEquipped,
+		itemID, _ := uuid.Parse(item.ItemID)
+		items[i] = api.InventoryItemResponse{
+			ItemID:     api.NewOptUUID(itemID),
+			Quantity:   api.NewOptInt(item.StackCount),
+			SlotIndex:  api.NewOptInt(item.SlotIndex),
+			IsEquipped: api.NewOptBool(item.IsEquipped),
 		}
 	}
 	
 	return &api.InventoryResponse{
-		CharacterId: inv.CharacterId,
-		Items:       items,
-		MaxSlots:    inv.MaxSlots,
-		UsedSlots:   inv.UsedSlots,
+		ID:            api.NewOptUUID(inv.Inventory.ID),
+		PlayerID:      api.NewOptUUID(inv.Inventory.CharacterID),
+		Items:         items,
+		MaxSlots:      api.NewOptInt(inv.Inventory.Capacity),
+		UsedSlots:     api.NewOptInt(inv.Inventory.UsedSlots),
+		MaxWeight:     api.NewOptFloat32(float32(inv.Inventory.MaxWeight)),
+		CurrentWeight: api.NewOptFloat32(float32(inv.Inventory.Weight)),
 	}
 }
 

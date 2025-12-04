@@ -83,6 +83,12 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(400) // Max 400 goroutines for party service
+	go monitor.Start()
+	defer monitor.Stop()
+	log.Println("✅ Goroutine monitor started")
+
 	// Start HTTP server
 	go func() {
 		log.Printf("✅ Party Service (ogen) listening on %s", addr)

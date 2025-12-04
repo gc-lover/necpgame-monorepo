@@ -102,4 +102,14 @@ jobs:
           git add .benchmarks/
           git diff --staged --quiet || git commit -m "[ci] benchmark: update results $(date +%Y%m%d_%H%M%S)"
           git push || echo "No changes to commit"
+      
+      - name: Build and push dashboard
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./infrastructure/benchmark-dashboard
+          push: true
+          tags: ghcr.io/${{ github.repository }}/benchmark-dashboard:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 

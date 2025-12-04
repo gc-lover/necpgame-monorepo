@@ -1,4 +1,4 @@
-﻿# Issue: #1581 - ogen migration + performance optimizations
+# Issue: #1581 - ogen migration + performance optimizations
 .PHONY: generate-api clean verify-api check-deps check-file-sizes
 
 SERVICE_NAME := inventory-service
@@ -27,6 +27,22 @@ generate-api: check-deps verify-api
 	@echo "вњ… ogen code generated successfully!"
 
 clean:
+
+.PHONY: test bench-quick build
+
+# Run tests
+test:
+	@go test -v ./...
+
+# Quick benchmark (short duration)
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
+		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \
+	fi
+
+# Build (runs tests and benchmarks first)
+build: test bench-quick
+	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/inventory-service .
 	@echo "рџ§№ Cleaning generated files..."
 	@rm -rf $(API_DIR)/* $(BUNDLED_SPEC)
 	@rm -f default.pgo

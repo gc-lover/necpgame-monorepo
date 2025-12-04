@@ -3,7 +3,7 @@
 
 param(
     [string]$MetricsFile = ".benchmarks/metrics.prom",
-    [int]$Port = 9099
+    [int]$Port = 9100
 )
 
 $ErrorActionPreference = "Continue"
@@ -20,9 +20,45 @@ if (-not (Test-Path $MetricsFile)) {
 }
 
 # Простой HTTP сервер
+# Проверяем не занят ли порт
+$existing = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+if ($existing) {
+    Write-Host "Port $Port is already in use. Stopping existing process..." -ForegroundColor Yellow
+    $processId = $existing | Select-Object -ExpandProperty OwningProcess -Unique
+    Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2
+}
+
 $Listener = New-Object System.Net.HttpListener
-$Listener.Prefixes.Add("http://localhost:$Port/")
-$Listener.Start()
+
+# Try to listen on all interfaces first (requires admin or URL reservation)
+# If that fails, fallback to localhost (Docker can still access via host.docker.internal)
+$bindAll = $false
+try {
+    # Check if URL is already reserved
+    $urlCheck = netsh http show urlacl | Select-String "http://\*:$Port/"
+    if ($urlCheck) {
+        Write-Host "URL reservation found, binding to all interfaces..." -ForegroundColor Gray
+        $Listener.Prefixes.Add("http://*:$Port/")
+        $bindAll = $true
+    } else {
+        throw "URL not reserved"
+    }
+} catch {
+    # Fallback to localhost - Docker can access via host.docker.internal
+    Write-Host "Binding to localhost (Docker will use host.docker.internal)" -ForegroundColor Gray
+    $Listener.Prefixes.Add("http://localhost:$Port/")
+    Write-Host "Note: For better Docker access, run as Administrator:" -ForegroundColor Yellow
+    Write-Host "  netsh http add urlacl url=http://*:$Port/ user=Everyone" -ForegroundColor White
+}
+
+try {
+    $Listener.Start()
+} catch {
+    Write-Host "Failed to start listener: $_" -ForegroundColor Red
+    Write-Host "Port $Port may be in use. Try a different port or stop the conflicting process." -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "Server started. Press Ctrl+C to stop." -ForegroundColor Green
 Write-Host ""

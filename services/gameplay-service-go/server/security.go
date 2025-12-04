@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	api "github.com/necpgame/gameplay-service-go/pkg/api"
+	api "github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 )
 
 type SecurityHandler struct{}

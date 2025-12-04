@@ -1,4 +1,4 @@
-﻿# Issue: #1595 - ogen migration
+# Issue: #1595 - ogen migration
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
 
 SERVICE_NAME := gameplay-weapon-special-mechanics-core-service
@@ -54,6 +54,22 @@ verify-api: check-deps
 	@echo "вњ… Valid OpenAPI spec"
 
 clean:
+
+.PHONY: test bench-quick build
+
+# Run tests
+test:
+	@go test -v ./...
+
+# Quick benchmark (short duration)
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
+		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \
+	fi
+
+# Build (runs tests and benchmarks first)
+build: test bench-quick
+	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/gameplay-weapon-special-mechanics-core-service .
 	@rm -rf $(API_DIR)/oas_*_gen.go
 	@rm -f $(BUNDLED_SPEC)
 	@echo "вњ… Cleaned generated files"

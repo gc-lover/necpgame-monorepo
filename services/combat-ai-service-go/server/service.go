@@ -88,12 +88,12 @@ func (s *Service) ListAIProfiles(ctx context.Context, params api.ListAIProfilesP
 	// TODO: Implement
 	// Reset pooled struct
 	resp.Profiles = resp.Profiles[:0] // Reuse slice
-	resp.Pagination = api.PaginationResponse{}
+	resp.Total = 0
 	
 	// Clone response (caller owns it)
 	result := &api.ListAIProfilesOK{
-		Profiles:   append([]api.AIProfile{}, resp.Profiles...),
-		Pagination: resp.Pagination,
+		Profiles: append([]api.AIProfile{}, resp.Profiles...),
+		Total:    resp.Total,
 	}
 	return result, nil
 }

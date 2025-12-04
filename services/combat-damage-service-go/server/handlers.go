@@ -15,11 +15,18 @@ const DBTimeout = 50 * time.Millisecond
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 // Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+// Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 type Handlers struct {
 	// Memory pooling for hot path structs (zero allocations target!)
-	damageResultPool sync.Pool
+	damageResultPool  sync.Pool
 	effectsResultPool sync.Pool
-	effectPool sync.Pool
+	effectPool        sync.Pool
+	// Issue: #1588 - Resilience patterns
+	loadShedder *LoadShedder
+	// Issue: #1587 - Anti-cheat validation
+	actionValidator *ActionValidator
+	anomalyDetector *AnomalyDetector
 }
 
 // NewHandlers creates new handlers with memory pooling
@@ -43,11 +50,29 @@ func NewHandlers() *Handlers {
 		},
 	}
 
+	// Issue: #1588 - Resilience patterns for hot path service (3k+ RPS)
+	h.loadShedder = NewLoadShedder(1500) // Max 1500 concurrent requests
+
+	// Issue: #1587 - Anti-cheat validation
+	h.actionValidator = NewActionValidator()
+	h.anomalyDetector = NewAnomalyDetector()
+
 	return h
 }
 
 // CalculateDamage - TYPED response!
 func (h *Handlers) CalculateDamage(ctx context.Context, req *api.DamageCalculationRequest) (api.CalculateDamageRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.CalculateDamageInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -97,6 +122,17 @@ func (h *Handlers) CalculateDamage(ctx context.Context, req *api.DamageCalculati
 
 // ApplyEffects - TYPED response!
 func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (api.ApplyEffectsRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.ApplyEffectsInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

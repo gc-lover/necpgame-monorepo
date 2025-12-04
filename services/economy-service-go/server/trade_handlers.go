@@ -5,19 +5,11 @@ package server
 import (
 	"context"
 	"net/http"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
-
-// Context timeout constants (Issue #1604)
-const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
-)
-
 
 // EconomyHandlers implements api.Handler interface (ogen typed handlers!)
 type EconomyHandlers struct {

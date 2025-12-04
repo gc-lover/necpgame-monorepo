@@ -5,17 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/necpgame/social-service-go/pkg/api/groups"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants
-const (
-	DBTimeout = 50 * time.Millisecond
-)
+// Constants moved to handlers.go to avoid duplication
 
 // GroupHandlers implements groups.ServerInterface
 type GroupHandlers struct {

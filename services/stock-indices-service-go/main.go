@@ -47,7 +47,10 @@ func main() {
 	}()
 
 	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := httpServer.Start(ctx); err != nil {
 		logger.WithError(err).Fatal("Server error")
 	}
 

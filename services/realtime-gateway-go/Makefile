@@ -1,4 +1,4 @@
-﻿# Issue: #1600 - realtime-gateway-go Makefile
+# Issue: #1600 - realtime-gateway-go Makefile
 # This service uses WebSocket/UDP for real-time game state (no REST API)
 # Protobuf generation for real-time game state (UDP)
 # Gains: 2.5x faster encoding, 7.5x faster decoding, 50% smaller
@@ -24,6 +24,22 @@ generate-proto:
 	@ls -lh $(PROTO_OUT_DIR)/*.pb.go || true
 
 clean:
+
+.PHONY: test bench-quick build
+
+# Run tests
+test:
+	@go test -v ./...
+
+# Quick benchmark (short duration)
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
+		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \
+	fi
+
+# Build (runs tests and benchmarks first)
+build: test bench-quick
+	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/realtime-gateway .
 	@rm -rf $(PROTO_OUT_DIR)
 
 

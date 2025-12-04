@@ -20,7 +20,7 @@ type HTTPServerOgen struct {
 
 // NewHTTPServerOgen creates ogen-based HTTP server with typed handlers
 // PERFORMANCE: Uses ogen optimized JSON encoding (90% faster vs oapi-codegen)
-func NewHTTPServerOgen(addr string, service *InventoryService) *HTTPServerOgen {
+func NewHTTPServerOgen(addr string, service InventoryServiceInterface) *HTTPServerOgen {
 	router := chi.NewRouter()
 
 	// Built-in middleware

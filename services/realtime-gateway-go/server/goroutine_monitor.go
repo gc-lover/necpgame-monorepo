@@ -5,8 +5,21 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
+
+var (
+	// goroutineCount is a Prometheus gauge for current goroutine count
+	goroutineCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "go_goroutines",
+		Help: "Current number of goroutines",
+	})
+)
+
+func init() {
+	prometheus.MustRegister(goroutineCount)
+}
 
 // GoroutineMonitor monitors goroutine count and detects leaks
 type GoroutineMonitor struct {
@@ -50,8 +63,8 @@ func (gm *GoroutineMonitor) Start() {
 				gm.logger.WithField("count", count).Debug("Goroutine count OK")
 			}
 
-			// Prometheus metric (if metrics available)
-			// goroutineCount.Set(float64(count))
+			// Prometheus metric (Issue: #1585)
+			goroutineCount.Set(float64(count))
 		}
 	}
 }

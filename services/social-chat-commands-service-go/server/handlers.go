@@ -1,67 +1,42 @@
-// Issue: #1604
+// Issue: #1598, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
-	"github.com/necpgame/social-chat-commands-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-commands-service-go/pkg/api"
 )
 
-// Context timeout constants
+// Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
 
+// ChatCommandsHandlers implements api.Handler interface (ogen typed handlers!)
 type ChatCommandsHandlers struct{}
 
 func NewChatCommandsHandlers() *ChatCommandsHandlers {
 	return &ChatCommandsHandlers{}
 }
 
-func (h *ChatCommandsHandlers) ExecuteChatCommand(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// ExecuteChatCommand - TYPED response!
+func (h *ChatCommandsHandlers) ExecuteChatCommand(ctx context.Context, req *api.ExecuteCommandRequest) (api.ExecuteChatCommandRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
-
-	var req api.ExecuteCommandRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
 
 	success := true
 	result := "Command executed successfully"
 	command := req.Command
 
-	response := api.CommandResponse{
-		Success: &success,
-		Command: &command,
-		Result:  &result,
-		Error:   nil,
+	response := &api.CommandResponse{
+		Success: api.NewOptBool(success),
+		Command: api.NewOptString(command),
+		Result:  api.NewOptNilString(result),
+		Error:   api.OptNilString{},
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

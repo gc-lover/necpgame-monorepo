@@ -26,10 +26,14 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	router.Use(recoveryMiddleware(logger))
 	router.Use(corsMiddleware)
 
-	// Generated API handlers with Chi
-	api.HandlerWithOptions(handlers, api.ChiServerOptions{
-		BaseRouter: router,
-	})
+	// ogen handlers
+	ogenServer, err := api.NewServer(handlers)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create ogen server")
+	}
+
+	// Mount ogen server under /api/v1
+	router.Mount("/api/v1", ogenServer)
 
 	router.Handle("/metrics", promhttp.Handler())
 	router.Get("/health", healthCheckHandler)

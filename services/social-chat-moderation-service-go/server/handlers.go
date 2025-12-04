@@ -1,15 +1,13 @@
-// Issue: #1604
+// Issue: #1598, #1604
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
-	"github.com/necpgame/social-chat-moderation-service-go/pkg/api"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-moderation-service-go/pkg/api"
 )
 
 // Context timeout constants
@@ -17,73 +15,58 @@ const (
 	DBTimeout = 50 * time.Millisecond
 )
 
+// ChatModerationHandlers implements api.Handler interface (ogen typed handlers!)
 type ChatModerationHandlers struct{}
 
 func NewChatModerationHandlers() *ChatModerationHandlers {
 	return &ChatModerationHandlers{}
 }
 
-func (h *ChatModerationHandlers) ReportChatMessage(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// ReportChatMessage implements POST /social/chat/report - TYPED response!
+func (h *ChatModerationHandlers) ReportChatMessage(ctx context.Context, req *api.ReportMessageRequest) (api.ReportChatMessageRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	_ = ctx // Will be used when DB operations are implemented
 
-	var req api.ReportMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	reportId := openapi_types.UUID(uuid.New())
+	reportId := uuid.New()
 	success := true
 
-	response := api.ReportResponse{
-		ReportId: &reportId,
-		Success:  &success,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+	return &api.ReportResponse{
+		ReportID: api.NewOptUUID(reportId),
+		Success:  api.NewOptBool(success),
+	}, nil
 }
 
-func (h *ChatModerationHandlers) BanChatUser(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// BanChatUser implements POST /social/chat/ban - TYPED response!
+func (h *ChatModerationHandlers) BanChatUser(ctx context.Context, req *api.BanUserRequest) (api.BanChatUserRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	_ = ctx // Will be used when DB operations are implemented
 
-	var req api.BanUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	banId := openapi_types.UUID(uuid.New())
+	banId := uuid.New()
 	success := true
-	var expiresAt *time.Time
-	if req.DurationHours != nil {
-		exp := time.Now().Add(time.Duration(*req.DurationHours) * time.Hour)
-		expiresAt = &exp
+	var expiresAt api.OptNilDateTime
+	if durationHours, ok := req.DurationHours.Get(); ok {
+		exp := time.Now().Add(time.Duration(durationHours) * time.Hour)
+		expiresAt = api.NewOptNilDateTime(exp)
 	}
 
-	response := api.BanResponse{
-		BanId:     &banId,
-		Success:   &success,
+	return &api.BanResponse{
+		BanID:     api.NewOptUUID(banId),
+		Success:   api.NewOptBool(success),
 		ExpiresAt: expiresAt,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+	}, nil
 }
 
-func (h *ChatModerationHandlers) GetChatBans(w http.ResponseWriter, r *http.Request, params api.GetChatBansParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetChatBans implements GET /social/chat/bans - TYPED response!
+func (h *ChatModerationHandlers) GetChatBans(ctx context.Context, params api.GetChatBansParams) (api.GetChatBansRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	_ = ctx // Will be used when DB operations are implemented
 
-	banId1 := openapi_types.UUID(uuid.New())
-	banId2 := openapi_types.UUID(uuid.New())
-	playerId1 := openapi_types.UUID(uuid.New())
-	playerId2 := openapi_types.UUID(uuid.New())
-	bannedBy1 := openapi_types.UUID(uuid.New())
-	bannedBy2 := openapi_types.UUID(uuid.New())
+	banId1 := uuid.New()
+	banId2 := uuid.New()
+	playerId1 := uuid.New()
+	playerId2 := uuid.New()
+	bannedBy1 := uuid.New()
+	bannedBy2 := uuid.New()
 	now := time.Now()
 	durationHours1 := 24
 	durationHours2 := 48
@@ -92,22 +75,22 @@ func (h *ChatModerationHandlers) GetChatBans(w http.ResponseWriter, r *http.Requ
 
 	bans := []api.ChatBan{
 		{
-			Id:           &banId1,
-			PlayerId:     &playerId1,
-			BannedBy:     &bannedBy1,
-			Reason:       &reason1,
-			DurationHours: &durationHours1,
-			CreatedAt:    &now,
-			ExpiresAt:    nil,
+			ID:            api.NewOptUUID(banId1),
+			PlayerID:      api.NewOptUUID(playerId1),
+			BannedBy:      api.NewOptUUID(bannedBy1),
+			Reason:        api.NewOptString(reason1),
+			DurationHours: api.NewOptNilInt(durationHours1),
+			CreatedAt:     api.NewOptDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
 		},
 		{
-			Id:           &banId2,
-			PlayerId:     &playerId2,
-			BannedBy:     &bannedBy2,
-			Reason:       &reason2,
-			DurationHours: &durationHours2,
-			CreatedAt:    &now,
-			ExpiresAt:    nil,
+			ID:            api.NewOptUUID(banId2),
+			PlayerID:      api.NewOptUUID(playerId2),
+			BannedBy:      api.NewOptUUID(bannedBy2),
+			Reason:        api.NewOptString(reason2),
+			DurationHours: api.NewOptNilInt(durationHours2),
+			CreatedAt:     api.NewOptDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
 		},
 	}
 
@@ -115,35 +98,30 @@ func (h *ChatModerationHandlers) GetChatBans(w http.ResponseWriter, r *http.Requ
 	limit := 50
 	offset := 0
 
-	if params.Limit != nil {
-		limit = int(*params.Limit)
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
 	}
-	if params.Offset != nil {
-		offset = int(*params.Offset)
-	}
-
-	response := api.BanListResponse{
-		Bans:   &bans,
-		Total:  &total,
-		Limit:  &limit,
-		Offset: &offset,
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return &api.BanListResponse{
+		Bans:   bans,
+		Total:  api.NewOptInt(total),
+		Limit:  api.NewOptInt(limit),
+		Offset: api.NewOptInt(offset),
+	}, nil
 }
 
-func (h *ChatModerationHandlers) RevokeChatBan(w http.ResponseWriter, r *http.Request, banId api.BanId) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// RevokeChatBan implements DELETE /social/chat/bans/{ban_id} - TYPED response!
+func (h *ChatModerationHandlers) RevokeChatBan(ctx context.Context, req *api.RevokeBanRequest, params api.RevokeChatBanParams) (api.RevokeChatBanRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	_ = ctx // Will be used when DB operations are implemented
 
 	success := true
 
-	response := api.RevokeBanResponse{
-		BanId:   &banId,
-		Success: &success,
-	}
-
-	respondJSON(w, http.StatusOK, response)
+	return &api.RevokeBanResponse{
+		BanID:   api.NewOptUUID(params.BanID),
+		Success: api.NewOptBool(success),
+	}, nil
 }
-

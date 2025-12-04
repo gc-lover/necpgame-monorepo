@@ -1,4 +1,4 @@
-﻿# Issue: #1595
+# Issue: #1595
 # Makefile for ogen code generation (migrated from oapi-codegen)
 
 .PHONY: generate-api clean check-deps
@@ -24,6 +24,22 @@ generate-api: check-deps
 	@echo "вњ… Code generation complete!"
 
 clean:
+
+.PHONY: test bench-quick build
+
+# Run tests
+test:
+	@go test -v ./...
+
+# Quick benchmark (short duration)
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
+		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \
+	fi
+
+# Build (runs tests and benchmarks first)
+build: test bench-quick
+	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/combat-damage-service .
 	@rm -f $(BUNDLED_SPEC)
 	@rm -rf $(API_DIR)/oas_*_gen.go
 

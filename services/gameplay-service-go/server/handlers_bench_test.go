@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/necpgame/gameplay-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/google/uuid"
 )
 

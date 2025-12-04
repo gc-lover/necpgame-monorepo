@@ -25,94 +25,244 @@ func NewHandlers(service *Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-// ApplyEffects - TYPED response!
-func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (api.ApplyEffectsRes, error) {
+// SendMessage implements sendMessage operation
+func (h *Handlers) SendMessage(ctx context.Context, req *api.SendMessageRequest) (api.SendMessageRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ApplyEffects(ctx, req)
+	result, err := h.service.SendMessage(ctx, req)
 	if err != nil {
-		return &api.ApplyEffectsInternalServerError{}, err
-	}
-
-	// Return TYPED response (ogen will marshal directly!)
-	return result, nil
-}
-
-// CalculateDamage - TYPED response!
-func (h *Handlers) CalculateDamage(ctx context.Context, req *api.CalculateDamageRequest) (api.CalculateDamageRes, error) {
-	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
-	defer cancel()
-
-	result, err := h.service.CalculateDamage(ctx, req)
-	if err != nil {
-		return &api.CalculateDamageInternalServerError{}, err
+		return &api.SendMessageBadRequest{
+			Error:   err.Error(),
+			Message: err.Error(),
+		}, nil
 	}
 
 	return result, nil
 }
 
-// DefendInCombat - TYPED response!
-func (h *Handlers) DefendInCombat(ctx context.Context, req *api.DefendRequest, params api.DefendInCombatParams) (api.DefendInCombatRes, error) {
+// GetChannelMessages implements getChannelMessages operation
+func (h *Handlers) GetChannelMessages(ctx context.Context, params api.GetChannelMessagesParams) (api.GetChannelMessagesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.DefendInCombat(ctx, params.SessionId.String(), req)
+	result, err := h.service.GetChannelMessages(ctx, params)
 	if err != nil {
 		if err == ErrNotFound {
-			return &api.DefendInCombatNotFound{}, nil
+			return &api.GetChannelMessagesNotFound{
+				Error:   "NOT_FOUND",
+				Message: err.Error(),
+			}, nil
 		}
-		return &api.DefendInCombatInternalServerError{}, err
+		return &api.GetChannelMessagesForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
 	}
 
 	return result, nil
 }
 
-// ProcessAttack - TYPED response!
-func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, params api.ProcessAttackParams) (api.ProcessAttackRes, error) {
+// GetChannels implements getChannels operation
+func (h *Handlers) GetChannels(ctx context.Context) (*api.ChannelsListResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ProcessAttack(ctx, params.SessionId.String(), req)
+	result, err := h.service.GetChannels(ctx)
 	if err != nil {
-		if err == ErrNotFound {
-			return &api.ProcessAttackNotFound{}, nil
-		}
-		return &api.ProcessAttackInternalServerError{}, err
+		return nil, err
 	}
 
 	return result, nil
 }
 
-// UseCombatAbility - TYPED response!
-func (h *Handlers) UseCombatAbility(ctx context.Context, req *api.UseAbilityRequest, params api.UseCombatAbilityParams) (api.UseCombatAbilityRes, error) {
+// CreateChannel implements createChannel operation
+func (h *Handlers) CreateChannel(ctx context.Context, req *api.CreateChannelRequest) (api.CreateChannelRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.UseCombatAbility(ctx, params.SessionId.String(), req)
+	result, err := h.service.CreateChannel(ctx, req)
 	if err != nil {
-		if err == ErrNotFound {
-			return &api.UseCombatAbilityNotFound{}, nil
-		}
-		return &api.UseCombatAbilityInternalServerError{}, err
+		return &api.Error{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
 	}
 
 	return result, nil
 }
 
-// UseCombatItem - TYPED response!
-func (h *Handlers) UseCombatItem(ctx context.Context, req *api.UseItemRequest, params api.UseCombatItemParams) (api.UseCombatItemRes, error) {
+// GetChannel implements getChannel operation
+func (h *Handlers) GetChannel(ctx context.Context, params api.GetChannelParams) (api.GetChannelRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.UseCombatItem(ctx, params.SessionId.String(), req)
+	result, err := h.service.GetChannel(ctx, params)
 	if err != nil {
-		if err == ErrNotFound {
-			return &api.UseCombatItemNotFound{}, nil
-		}
-		return &api.UseCombatItemInternalServerError{}, err
+		return &api.Error{
+			Error:   "NOT_FOUND",
+			Message: err.Error(),
+		}, nil
 	}
 
 	return result, nil
+}
+
+// UpdateChannel implements updateChannel operation
+func (h *Handlers) UpdateChannel(ctx context.Context, req *api.UpdateChannelRequest, params api.UpdateChannelParams) (api.UpdateChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	result, err := h.service.UpdateChannel(ctx, params, req)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.UpdateChannelNotFound{
+				Error:   "NOT_FOUND",
+				Message: err.Error(),
+			}, nil
+		}
+		return &api.UpdateChannelForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return result, nil
+}
+
+// DeleteChannel implements deleteChannel operation
+func (h *Handlers) DeleteChannel(ctx context.Context, params api.DeleteChannelParams) (api.DeleteChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	err := h.service.DeleteChannel(ctx, params)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.DeleteChannelNotFound{
+				Error:   "NOT_FOUND",
+				Message: err.Error(),
+			}, nil
+		}
+		return &api.DeleteChannelForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &api.SuccessResponse{
+		Status: api.NewOptString("success"),
+	}, nil
+}
+
+// AddChannelMember implements addChannelMember operation
+func (h *Handlers) AddChannelMember(ctx context.Context, req *api.AddMemberRequest, params api.AddChannelMemberParams) (api.AddChannelMemberRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	_, err := h.service.AddChannelMember(ctx, params, req)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.AddChannelMemberNotFound{
+				Error:   "NOT_FOUND",
+				Message: err.Error(),
+			}, nil
+		}
+		return &api.AddChannelMemberForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &api.SuccessResponse{
+		Status: api.NewOptString("success"),
+	}, nil
+}
+
+// RemoveChannelMember implements removeChannelMember operation
+func (h *Handlers) RemoveChannelMember(ctx context.Context, params api.RemoveChannelMemberParams) (api.RemoveChannelMemberRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	err := h.service.RemoveChannelMember(ctx, params)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.RemoveChannelMemberNotFound{
+				Error:   "NOT_FOUND",
+				Message: err.Error(),
+			}, nil
+		}
+		return &api.RemoveChannelMemberForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &api.SuccessResponse{
+		Status: api.NewOptString("success"),
+	}, nil
+}
+
+// BanPlayer implements banPlayer operation
+func (h *Handlers) BanPlayer(ctx context.Context, req *api.BanPlayerRequest) (api.BanPlayerRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	result, err := h.service.BanPlayer(ctx, req)
+	if err != nil {
+		return &api.BanPlayerBadRequest{
+			Error:   "BAD_REQUEST",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return result, nil
+}
+
+// UnbanPlayer implements unbanPlayer operation
+func (h *Handlers) UnbanPlayer(ctx context.Context, params api.UnbanPlayerParams) (api.UnbanPlayerRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	err := h.service.UnbanPlayer(ctx, params)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.UnbanPlayerNotFound{
+				Error:   "NOT_FOUND",
+				Message: err.Error(),
+			}, nil
+		}
+		return &api.UnbanPlayerForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &api.SuccessResponse{
+		Status: api.NewOptString("success"),
+	}, nil
+}
+
+// DeleteMessage implements deleteMessage operation
+func (h *Handlers) DeleteMessage(ctx context.Context, params api.DeleteMessageParams) (api.DeleteMessageRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	err := h.service.DeleteMessage(ctx, params)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.DeleteMessageNotFound{
+				Error:   "NOT_FOUND",
+				Message: err.Error(),
+			}, nil
+		}
+		return &api.DeleteMessageForbidden{
+			Error:   "FORBIDDEN",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &api.SuccessResponse{
+		Status: api.NewOptString("success"),
+	}, nil
 }
 

@@ -4,16 +4,12 @@ package server
 
 import (
 	"context"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/necpgame/social-service-go/pkg/api"
 )
 
-const (
-	DBTimeout    = 50 * time.Millisecond  // Hot path: 2k RPS
-	CacheTimeout = 10 * time.Millisecond  // Redis
-)
+// Constants moved to handlers.go to avoid duplication
 
 // SocialHandlersOgen implements api.Handler (ogen)
 type SocialHandlersOgen struct {

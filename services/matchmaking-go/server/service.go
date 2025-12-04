@@ -32,14 +32,22 @@ type Service struct {
 
 	// Matchmaking algorithm (skill buckets for O(1) matching)
 	matcher *SkillBucketMatcher
+
+	// Issue: #1588 - Feature flags for graceful degradation
+	features *FeatureFlags
+
+	// Issue: #1588 - Fallback strategy (primary → cache → default)
+	fallback *FallbackStrategy
 }
 
 // NewService creates new service with Level 2+ optimizations
 func NewService(repo *Repository, cache *CacheManager) *Service {
 	s := &Service{
-		repo:    repo,
-		cache:   cache,
-		matcher: NewSkillBucketMatcher(),
+		repo:     repo,
+		cache:    cache,
+		matcher:  NewSkillBucketMatcher(),
+		features: NewFeatureFlags(), // Issue: #1588
+		fallback: NewFallbackStrategy(repo, cache), // Issue: #1588
 	}
 
 	// Initialize memory pools (zero allocations target!)
@@ -70,9 +78,10 @@ func (s *Service) EnterQueue(ctx context.Context, playerID uuid.UUID, req *api.E
 	}
 
 	// Get player rating (covering index = <1ms)
-	rating, err := s.repo.GetPlayerRating(ctx, playerID, string(req.ActivityType))
+	// Issue: #1588 - Fallback: primary → cache → default
+	rating, err := s.fallback.GetPlayerRatingWithFallback(ctx, playerID, string(req.ActivityType))
 	if err != nil {
-		rating = 1500 // Default MMR
+		rating = 1500 // Default MMR (should not happen with fallback)
 	}
 
 	// Create queue entry
@@ -126,7 +135,8 @@ func (s *Service) EnterQueue(ctx context.Context, playerID uuid.UUID, req *api.E
 }
 
 // GetQueueStatus - HOT PATH: 5000+ RPS (polling)
-// Optimizations: Redis cache 5s TTL (95%+ hit rate), zero allocations
+// Optimizations: Redis cache 5s TTL (95%+ hit rate), zero allocations, fallback strategy
+// Issue: #1588 - Fallback: primary → cache → default
 func (s *Service) GetQueueStatus(ctx context.Context, queueID uuid.UUID) (*api.QueueStatusResponse, error) {
 	// Try Redis cache first (hit = <1ms, miss = 10ms DB query)
 	cached, err := s.cache.GetQueueStatus(ctx, queueID)
@@ -136,37 +146,38 @@ func (s *Service) GetQueueStatus(ctx context.Context, queueID uuid.UUID) (*api.Q
 
 	// Cache miss: query DB (covering index = <10ms)
 	entry, err := s.repo.GetQueueEntry(ctx, queueID)
-	if err != nil {
-		return nil, ErrNotFound
+	if err == nil && entry != nil {
+		// Build response
+		resp := &api.QueueStatusResponse{
+			QueueId:     entry.ID,
+			Status:      api.QueueStatusResponseStatus(entry.Status),
+			TimeInQueue: int32(time.Since(entry.EnteredAt).Seconds()),
+		}
+
+		// Calculate rating range (expands over time)
+		timeInQueue := time.Since(entry.EnteredAt)
+		ratingExpansion := int32(timeInQueue.Seconds() / 10) // +100 MMR per 10s
+		resp.RatingRange = []int32{
+			int32(entry.Rating) - 50 - ratingExpansion,
+			int32(entry.Rating) + 50 + ratingExpansion,
+		}
+
+		// Estimated wait time
+		queueSize := s.matcher.GetQueueSize(entry.ActivityType, entry.Rating)
+		remainingWait := calculateWaitTime(queueSize) - int(timeInQueue.Seconds())
+		if remainingWait < 0 {
+			remainingWait = 5 // At least 5s
+		}
+		resp.EstimatedWaitTime.SetTo(int32(remainingWait))
+
+		// Cache for 5s (hot data!)
+		s.cache.CacheQueueStatus(ctx, queueID, resp, 5*time.Second)
+
+		return resp, nil
 	}
 
-	// Build response
-	resp := &api.QueueStatusResponse{
-		QueueId:     entry.ID,
-		Status:      api.QueueStatusResponseStatus(entry.Status),
-		TimeInQueue: int32(time.Since(entry.EnteredAt).Seconds()),
-	}
-
-	// Calculate rating range (expands over time)
-	timeInQueue := time.Since(entry.EnteredAt)
-	ratingExpansion := int32(timeInQueue.Seconds() / 10) // +100 MMR per 10s
-	resp.RatingRange = []int32{
-		int32(entry.Rating) - 50 - ratingExpansion,
-		int32(entry.Rating) + 50 + ratingExpansion,
-	}
-
-	// Estimated wait time
-	queueSize := s.matcher.GetQueueSize(entry.ActivityType, entry.Rating)
-	remainingWait := calculateWaitTime(queueSize) - int(timeInQueue.Seconds())
-	if remainingWait < 0 {
-		remainingWait = 5 // At least 5s
-	}
-	resp.EstimatedWaitTime.SetTo(int32(remainingWait))
-
-	// Cache for 5s (hot data!)
-	s.cache.CacheQueueStatus(ctx, queueID, resp, 5*time.Second)
-
-	return resp, nil
+	// Issue: #1588 - Fallback: try cache (stale OK), then default
+	return s.fallback.GetQueueStatusWithFallback(ctx, queueID)
 }
 
 // LeaveQueue - Standard path: ~500 RPS

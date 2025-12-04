@@ -4,7 +4,7 @@ package server
 import (
 	"context"
 
-	"github.com/necpgame/world-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/world-service-go/pkg/api"
 )
 
 // HandleBearerAuth implements ogen security

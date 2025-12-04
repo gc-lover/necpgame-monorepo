@@ -16,7 +16,7 @@ generate-api:
 clean:
 	rm -rf $(API_DIR)/* $(BUNDLED_SPEC)
 
-build:
+build: test bench-quick
 	go build -o party-service ./...
 
 test:
@@ -24,3 +24,12 @@ test:
 
 bench:
 	go test -bench=. -benchmem -run=^$$ ./server
+
+.PHONY: test
+test:
+	@go test -v ./...
+
+
+.PHONY: bench-quick
+bench-quick:
+	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \	fi

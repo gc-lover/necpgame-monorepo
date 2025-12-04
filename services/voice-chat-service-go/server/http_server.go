@@ -9,8 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
-	"github.com/necpgame/voice-chat-service-go/models"
-	"github.com/necpgame/voice-chat-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 

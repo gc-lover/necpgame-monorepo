@@ -1,5 +1,4 @@
-// Issue: #1597
-// SecurityHandler implements ogen security
+// Issue: #1597 - ogen security handlers
 package server
 
 import (
@@ -13,7 +12,6 @@ type SecurityHandler struct{}
 // HandleBearerAuth implements ogen security
 func (h *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT validation
-	// For now, just return context
+	// For now, accept all requests
 	return ctx, nil
 }
-

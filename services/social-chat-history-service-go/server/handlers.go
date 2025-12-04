@@ -1,181 +1,175 @@
-// Issue: #1604
+// Issue: #1598, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"net/http"
 	"time"
 
-	"github.com/necpgame/social-chat-history-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-history-service-go/pkg/api"
 	"github.com/google/uuid"
 )
 
-// Context timeout constants
+// Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
 
+// ChatHistoryHandlers implements api.Handler interface (ogen typed handlers!)
 type ChatHistoryHandlers struct{}
 
 func NewChatHistoryHandlers() *ChatHistoryHandlers {
 	return &ChatHistoryHandlers{}
 }
 
-func (h *ChatHistoryHandlers) GetChatHistory(w http.ResponseWriter, r *http.Request, channelType api.GetChatHistoryParamsChannelType, params api.GetChatHistoryParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetChatHistory - TYPED response!
+func (h *ChatHistoryHandlers) GetChatHistory(ctx context.Context, params api.GetChatHistoryParams) (api.GetChatHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	messageId1 := uuid.UUID(uuid.New())
-	messageId2 := uuid.UUID(uuid.New())
-	senderId1 := uuid.UUID(uuid.New())
-	senderId2 := uuid.UUID(uuid.New())
-	channelId1 := uuid.UUID(uuid.New())
-	channelId2 := uuid.UUID(uuid.New())
-	channelTypePtr := api.ChatMessageChannelType(channelType)
-	messageType := api.Text
-	content1 := "History message 1"
-	content2 := "History message 2"
-	senderName1 := "Player1"
-	senderName2 := "Player2"
+	messageId1 := uuid.New()
+	messageId2 := uuid.New()
+	senderId1 := uuid.New()
+	senderId2 := uuid.New()
+	channelId1 := uuid.New()
+	channelId2 := uuid.New()
 	now := time.Now()
-	isDeleted := false
-	isEdited := false
-	channelTypeStr := string(channelType)
+
+	// Convert GetChatHistoryChannelType to ChatMessageChannelType
+	channelTypeMsg := api.ChatMessageChannelType(params.ChannelType)
 
 	messages := []api.ChatMessage{
 		{
-			Id:           &messageId1,
-			ChannelId:    &channelId1,
-			ChannelType:  &channelTypePtr,
-			SenderId:     &senderId1,
-			SenderName:   &senderName1,
-			Content:      &content1,
-			MessageType:  &messageType,
-			CreatedAt:    &now,
-			UpdatedAt:    &now,
-			ExpiresAt:    nil,
-			IsDeleted:    &isDeleted,
-			IsEdited:     &isEdited,
-			FormattedText: nil,
+			ID:           api.NewOptUUID(messageId1),
+			ChannelID:    api.NewOptUUID(channelId1),
+			ChannelType:  api.NewOptChatMessageChannelType(channelTypeMsg),
+			SenderID:     api.NewOptUUID(senderId1),
+			SenderName:   api.NewOptString("Player1"),
+			Content:      api.NewOptString("History message 1"),
+			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:    api.NewOptDateTime(now),
+			UpdatedAt:    api.NewOptNilDateTime(now),
+			ExpiresAt:    api.OptNilDateTime{},
+			IsDeleted:    api.NewOptBool(false),
+			IsEdited:     api.NewOptBool(false),
+			FormattedText: api.OptString{},
 		},
 		{
-			Id:           &messageId2,
-			ChannelId:    &channelId2,
-			ChannelType:  &channelTypePtr,
-			SenderId:     &senderId2,
-			SenderName:   &senderName2,
-			Content:      &content2,
-			MessageType:  &messageType,
-			CreatedAt:    &now,
-			UpdatedAt:    &now,
-			ExpiresAt:    nil,
-			IsDeleted:    &isDeleted,
-			IsEdited:     &isEdited,
-			FormattedText: nil,
+			ID:           api.NewOptUUID(messageId2),
+			ChannelID:    api.NewOptUUID(channelId2),
+			ChannelType:  api.NewOptChatMessageChannelType(channelTypeMsg),
+			SenderID:     api.NewOptUUID(senderId2),
+			SenderName:   api.NewOptString("Player2"),
+			Content:      api.NewOptString("History message 2"),
+			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:    api.NewOptDateTime(now),
+			UpdatedAt:    api.NewOptNilDateTime(now),
+			ExpiresAt:    api.OptNilDateTime{},
+			IsDeleted:    api.NewOptBool(false),
+			IsEdited:     api.NewOptBool(false),
+			FormattedText: api.OptString{},
 		},
 	}
 
 	total := len(messages)
 	limit := 50
 	offset := 0
-	hasMore := false
 
-	if params.Limit != nil {
-		limit = int(*params.Limit)
+	if params.Limit.Set {
+		limit = params.Limit.Value
 	}
-	if params.Offset != nil {
-		offset = int(*params.Offset)
+	if params.Offset.Set {
+		offset = params.Offset.Value
 	}
 
-	response := api.ChatHistoryResponse{
-		ChannelType: &channelTypeStr,
+	channelTypeStr := string(params.ChannelType)
+
+	response := &api.ChatHistoryResponse{
+		ChannelType: api.NewOptString(channelTypeStr),
 		Items:       messages,
 		Total:       total,
-		Limit:       &limit,
-		Offset:      &offset,
-		HasMore:     &hasMore,
+		Limit:       api.NewOptInt(limit),
+		Offset:      api.NewOptInt(offset),
+		HasMore:     api.NewOptBool(false),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *ChatHistoryHandlers) SearchChatHistory(w http.ResponseWriter, r *http.Request, params api.SearchChatHistoryParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// SearchChatHistory - TYPED response!
+func (h *ChatHistoryHandlers) SearchChatHistory(ctx context.Context, params api.SearchChatHistoryParams) (api.SearchChatHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	messageId1 := uuid.UUID(uuid.New())
-	messageId2 := uuid.UUID(uuid.New())
-	senderId1 := uuid.UUID(uuid.New())
-	senderId2 := uuid.UUID(uuid.New())
-	channelId1 := uuid.UUID(uuid.New())
-	channelId2 := uuid.UUID(uuid.New())
-	channelType := api.ChatMessageChannelTypeGLOBAL
-	messageType := api.Text
-	content1 := "Search result 1"
-	content2 := "Search result 2"
-	senderName1 := "Player1"
-	senderName2 := "Player2"
+	messageId1 := uuid.New()
+	messageId2 := uuid.New()
+	senderId1 := uuid.New()
+	senderId2 := uuid.New()
+	channelId1 := uuid.New()
+	channelId2 := uuid.New()
 	now := time.Now()
-	isDeleted := false
-	isEdited := false
-	query := params.Query
+
+	channelType := api.ChatMessageChannelTypeGLOBAL
+	if params.ChannelType.Set {
+		channelType = api.ChatMessageChannelType(params.ChannelType.Value)
+	}
 
 	messages := []api.ChatMessage{
 		{
-			Id:           &messageId1,
-			ChannelId:    &channelId1,
-			ChannelType:  &channelType,
-			SenderId:     &senderId1,
-			SenderName:   &senderName1,
-			Content:      &content1,
-			MessageType:  &messageType,
-			CreatedAt:    &now,
-			UpdatedAt:    &now,
-			ExpiresAt:    nil,
-			IsDeleted:    &isDeleted,
-			IsEdited:     &isEdited,
-			FormattedText: nil,
+			ID:           api.NewOptUUID(messageId1),
+			ChannelID:    api.NewOptUUID(channelId1),
+			ChannelType:  api.NewOptChatMessageChannelType(channelType),
+			SenderID:     api.NewOptUUID(senderId1),
+			SenderName:   api.NewOptString("Player1"),
+			Content:      api.NewOptString("Search result 1"),
+			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:    api.NewOptDateTime(now),
+			UpdatedAt:    api.NewOptNilDateTime(now),
+			ExpiresAt:    api.OptNilDateTime{},
+			IsDeleted:    api.NewOptBool(false),
+			IsEdited:     api.NewOptBool(false),
+			FormattedText: api.OptString{},
 		},
 		{
-			Id:           &messageId2,
-			ChannelId:    &channelId2,
-			ChannelType:  &channelType,
-			SenderId:     &senderId2,
-			SenderName:   &senderName2,
-			Content:      &content2,
-			MessageType:  &messageType,
-			CreatedAt:    &now,
-			UpdatedAt:    &now,
-			ExpiresAt:    nil,
-			IsDeleted:    &isDeleted,
-			IsEdited:     &isEdited,
-			FormattedText: nil,
+			ID:           api.NewOptUUID(messageId2),
+			ChannelID:    api.NewOptUUID(channelId2),
+			ChannelType:  api.NewOptChatMessageChannelType(channelType),
+			SenderID:     api.NewOptUUID(senderId2),
+			SenderName:   api.NewOptString("Player2"),
+			Content:      api.NewOptString("Search result 2"),
+			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:    api.NewOptDateTime(now),
+			UpdatedAt:    api.NewOptNilDateTime(now),
+			ExpiresAt:    api.OptNilDateTime{},
+			IsDeleted:    api.NewOptBool(false),
+			IsEdited:     api.NewOptBool(false),
+			FormattedText: api.OptString{},
 		},
 	}
 
 	total := len(messages)
 	limit := 50
 	offset := 0
-	hasMore := false
 
-	if params.Limit != nil {
-		limit = int(*params.Limit)
+	if params.Limit.Set {
+		limit = params.Limit.Value
 	}
-	if params.Offset != nil {
-		offset = int(*params.Offset)
+	if params.Offset.Set {
+		offset = params.Offset.Value
 	}
 
-	response := api.ChatSearchResponse{
-		Query:   &query,
+	query := params.Query
+
+	response := &api.ChatSearchResponse{
+		Query:   api.NewOptString(query),
 		Items:   messages,
 		Total:   total,
-		Limit:   &limit,
-		Offset:  &offset,
-		HasMore: &hasMore,
+		Limit:   api.NewOptInt(limit),
+		Offset:  api.NewOptInt(offset),
+		HasMore: api.NewOptBool(false),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
-

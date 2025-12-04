@@ -29,16 +29,38 @@ func (r *Repository) CreateFaction(ctx context.Context, req api.CreateFactionReq
 	`
 
 	var faction api.Faction
+	var idStr, leaderClanIDStr, name, ideology, description, status, createdAt, updatedAt string
+	var factionType string
 	err := r.db.QueryRowContext(ctx, query,
-		id, req.Name, req.Type, req.Ideology, req.Description, req.LeaderClanId, now, now,
+		id, req.Name, req.Type, req.Ideology, req.Description, req.LeaderClanID, now, now,
 	).Scan(
-		&faction.Id, &faction.Name, &faction.Type, &faction.Ideology, &faction.Description,
-		&faction.LeaderClanId, &faction.Status, &faction.CreatedAt, &faction.UpdatedAt,
+		&idStr, &name, &factionType, &ideology, &description,
+		&leaderClanIDStr, &status, &createdAt, &updatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}
+	
+	// Convert to OptUUID and OptString
+	idUUID, _ := uuid.Parse(idStr)
+	faction.ID = api.NewOptUUID(idUUID)
+	faction.Name = api.NewOptString(name)
+	faction.Type = api.NewOptFactionType(api.FactionType(factionType))
+	if ideology != "" {
+		faction.Ideology = api.NewOptString(ideology)
+	}
+	if description != "" {
+		faction.Description = api.NewOptString(description)
+	}
+	if leaderClanIDStr != "" {
+		leaderClanIDUUID, _ := uuid.Parse(leaderClanIDStr)
+		faction.LeaderClanID = api.NewOptUUID(leaderClanIDUUID)
+	}
+	faction.Status = api.NewOptFactionStatus(api.FactionStatus(status))
+	createdAtTime, _ := time.Parse(time.RFC3339, createdAt)
+	updatedAtTime, _ := time.Parse(time.RFC3339, updatedAt)
+	faction.CreatedAt = api.NewOptDateTime(createdAtTime)
+	faction.UpdatedAt = api.NewOptDateTime(updatedAtTime)
 
 	return &faction, nil
 }
@@ -50,10 +72,10 @@ func (r *Repository) GetFactionByID(ctx context.Context, factionId string) (*api
 		WHERE id = $1
 	`
 
-	var faction api.Faction
+	var idStr, name, factionType, ideology, description, leaderClanIDStr, status, createdAt, updatedAt string
 	err := r.db.QueryRowContext(ctx, query, factionId).Scan(
-		&faction.Id, &faction.Name, &faction.Type, &faction.Ideology, &faction.Description,
-		&faction.LeaderClanId, &faction.Status, &faction.CreatedAt, &faction.UpdatedAt,
+		&idStr, &name, &factionType, &ideology, &description,
+		&leaderClanIDStr, &status, &createdAt, &updatedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -62,6 +84,28 @@ func (r *Repository) GetFactionByID(ctx context.Context, factionId string) (*api
 	if err != nil {
 		return nil, err
 	}
+
+	// Convert to Opt* types
+	var faction api.Faction
+	idUUID, _ := uuid.Parse(idStr)
+	faction.ID = api.NewOptUUID(idUUID)
+	faction.Name = api.NewOptString(name)
+	faction.Type = api.NewOptFactionType(api.FactionType(factionType))
+	if ideology != "" {
+		faction.Ideology = api.NewOptString(ideology)
+	}
+	if description != "" {
+		faction.Description = api.NewOptString(description)
+	}
+	if leaderClanIDStr != "" {
+		leaderClanIDUUID, _ := uuid.Parse(leaderClanIDStr)
+		faction.LeaderClanID = api.NewOptUUID(leaderClanIDUUID)
+	}
+	faction.Status = api.NewOptFactionStatus(api.FactionStatus(status))
+	createdAtTime, _ := time.Parse(time.RFC3339, createdAt)
+	updatedAtTime, _ := time.Parse(time.RFC3339, updatedAt)
+	faction.CreatedAt = api.NewOptDateTime(createdAtTime)
+	faction.UpdatedAt = api.NewOptDateTime(updatedAtTime)
 
 	return &faction, nil
 }
@@ -80,17 +124,53 @@ func (r *Repository) UpdateFaction(ctx context.Context, factionId string, req ap
 		RETURNING id, name, type, ideology, description, leader_clan_id, status, created_at, updated_at
 	`
 
-	var faction api.Faction
+	var nameVal, ideologyVal, descriptionVal, statusVal interface{}
+	if req.Name.Set {
+		nameVal = req.Name.Value
+	}
+	if req.Ideology.Set {
+		ideologyVal = req.Ideology.Value
+	}
+	if req.Description.Set {
+		descriptionVal = req.Description.Value
+	}
+	if req.Status.Set {
+		statusVal = req.Status.Value
+	}
+
+	var idStr, name, factionType, ideology, description, leaderClanIDStr, status, createdAt, updatedAt string
 	err := r.db.QueryRowContext(ctx, query,
-		req.Name, req.Ideology, req.Description, req.Status, now, factionId,
+		nameVal, ideologyVal, descriptionVal, statusVal, now, factionId,
 	).Scan(
-		&faction.Id, &faction.Name, &faction.Type, &faction.Ideology, &faction.Description,
-		&faction.LeaderClanId, &faction.Status, &faction.CreatedAt, &faction.UpdatedAt,
+		&idStr, &name, &factionType, &ideology, &description,
+		&leaderClanIDStr, &status, &createdAt, &updatedAt,
 	)
 
 	if err != nil {
 		return nil, err
 	}
+
+	// Convert to Opt* types
+	var faction api.Faction
+	idUUID, _ := uuid.Parse(idStr)
+	faction.ID = api.NewOptUUID(idUUID)
+	faction.Name = api.NewOptString(name)
+	faction.Type = api.NewOptFactionType(api.FactionType(factionType))
+	if ideology != "" {
+		faction.Ideology = api.NewOptString(ideology)
+	}
+	if description != "" {
+		faction.Description = api.NewOptString(description)
+	}
+	if leaderClanIDStr != "" {
+		leaderClanIDUUID, _ := uuid.Parse(leaderClanIDStr)
+		faction.LeaderClanID = api.NewOptUUID(leaderClanIDUUID)
+	}
+	faction.Status = api.NewOptFactionStatus(api.FactionStatus(status))
+	createdAtTime, _ := time.Parse(time.RFC3339, createdAt)
+	updatedAtTime, _ := time.Parse(time.RFC3339, updatedAt)
+	faction.CreatedAt = api.NewOptDateTime(createdAtTime)
+	faction.UpdatedAt = api.NewOptDateTime(updatedAtTime)
 
 	return &faction, nil
 }
@@ -109,17 +189,17 @@ func (r *Repository) ListFactions(ctx context.Context, params api.ListFactionsPa
 	argIndex := 1
 
 	// Apply filters
-	if params.Type != nil {
+	if params.Type.Set {
 		baseQuery += ` AND type = $` + string(rune(argIndex))
 		countQuery += ` AND type = $` + string(rune(argIndex))
-		args = append(args, *params.Type)
+		args = append(args, params.Type.Value)
 		argIndex++
 	}
 
-	if params.Status != nil {
+	if params.Status.Set {
 		baseQuery += ` AND status = $` + string(rune(argIndex))
 		countQuery += ` AND status = $` + string(rune(argIndex))
-		args = append(args, *params.Status)
+		args = append(args, params.Status.Value)
 		argIndex++
 	}
 
@@ -131,13 +211,13 @@ func (r *Repository) ListFactions(ctx context.Context, params api.ListFactionsPa
 
 	// Apply pagination
 	page := 1
-	if params.Page != nil {
-		page = *params.Page
+	if params.Page.Set {
+		page = params.Page.Value
 	}
 
 	limit := 10
-	if params.Limit != nil {
-		limit = *params.Limit
+	if params.Limit.Set {
+		limit = params.Limit.Value
 	}
 
 	offset := (page - 1) * limit
@@ -152,13 +232,36 @@ func (r *Repository) ListFactions(ctx context.Context, params api.ListFactionsPa
 
 	var factions []api.Faction
 	for rows.Next() {
-		var faction api.Faction
+		var idStr, name, factionType, ideology, description, leaderClanIDStr, status, createdAt, updatedAt string
 		if err := rows.Scan(
-			&faction.Id, &faction.Name, &faction.Type, &faction.Ideology, &faction.Description,
-			&faction.LeaderClanId, &faction.Status, &faction.CreatedAt, &faction.UpdatedAt,
+			&idStr, &name, &factionType, &ideology, &description,
+			&leaderClanIDStr, &status, &createdAt, &updatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
+
+		// Convert to Opt* types
+		var faction api.Faction
+		idUUID, _ := uuid.Parse(idStr)
+		faction.ID = api.NewOptUUID(idUUID)
+		faction.Name = api.NewOptString(name)
+		faction.Type = api.NewOptFactionType(api.FactionType(factionType))
+		if ideology != "" {
+			faction.Ideology = api.NewOptString(ideology)
+		}
+		if description != "" {
+			faction.Description = api.NewOptString(description)
+		}
+		if leaderClanIDStr != "" {
+			leaderClanIDUUID, _ := uuid.Parse(leaderClanIDStr)
+			faction.LeaderClanID = api.NewOptUUID(leaderClanIDUUID)
+		}
+		faction.Status = api.NewOptFactionStatus(api.FactionStatus(status))
+		createdAtTime, _ := time.Parse(time.RFC3339, createdAt)
+		updatedAtTime, _ := time.Parse(time.RFC3339, updatedAt)
+		faction.CreatedAt = api.NewOptDateTime(createdAtTime)
+		faction.UpdatedAt = api.NewOptDateTime(updatedAtTime)
+
 		factions = append(factions, faction)
 	}
 
@@ -188,11 +291,27 @@ func (r *Repository) GetHierarchy(ctx context.Context, factionId string) ([]api.
 	var members []api.HierarchyMember
 	for rows.Next() {
 		var member api.HierarchyMember
+		var id, factionID, clanID, playerID, appointedBy uuid.UUID
+		var role string
+		var permissions []byte
+		var appointedAt time.Time
 		if err := rows.Scan(
-			&member.Id, &member.FactionId, &member.Role, &member.ClanId,
-			&member.PlayerId, &member.Permissions, &member.AppointedAt, &member.AppointedBy,
+			&id, &factionID, &role, &clanID,
+			&playerID, &permissions, &appointedAt, &appointedBy,
 		); err != nil {
 			return nil, err
+		}
+		member.ID = api.NewOptUUID(id)
+		member.FactionID = api.NewOptUUID(factionID)
+		member.ClanID = api.NewOptUUID(clanID)
+		member.PlayerID = api.NewOptUUID(playerID)
+		member.AppointedBy = api.NewOptUUID(appointedBy)
+		member.AppointedAt = api.NewOptDateTime(appointedAt)
+		member.Role = api.NewOptHierarchyRole(api.HierarchyRole(role))
+		// TODO: Parse permissions JSON from database
+		if len(permissions) > 0 {
+			// Parse JSON permissions if needed
+			member.Permissions = api.OptHierarchyMemberPermissions{}
 		}
 		members = append(members, member)
 	}

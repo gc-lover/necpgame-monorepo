@@ -12,17 +12,36 @@ import (
 const DBTimeout = 50 * time.Millisecond
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
+// Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
 type Handlers struct {
-	service *ProjectileService
+	service     *ProjectileService
+	loadShedder *LoadShedder
 }
 
 // NewHandlers creates new handlers
 func NewHandlers(service *ProjectileService) *Handlers {
-	return &Handlers{service: service}
+	// Issue: #1588 - Resilience patterns for hot path service (2k+ RPS)
+	loadShedder := NewLoadShedder(1000) // Max 1000 concurrent requests
+	
+	return &Handlers{
+		service:     service,
+		loadShedder: loadShedder,
+	}
 }
 
 // GetProjectileForms - TYPED response!
 func (h *Handlers) GetProjectileForms(ctx context.Context, params api.GetProjectileFormsParams) (api.GetProjectileFormsRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.GetProjectileFormsInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -36,6 +55,17 @@ func (h *Handlers) GetProjectileForms(ctx context.Context, params api.GetProject
 
 // GetProjectileForm - TYPED response!
 func (h *Handlers) GetProjectileForm(ctx context.Context, params api.GetProjectileFormParams) (api.GetProjectileFormRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.GetProjectileFormInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -49,6 +79,17 @@ func (h *Handlers) GetProjectileForm(ctx context.Context, params api.GetProjecti
 
 // SpawnProjectile - TYPED response!
 func (h *Handlers) SpawnProjectile(ctx context.Context, req *api.SpawnProjectileRequest) (api.SpawnProjectileRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.SpawnProjectileInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -62,6 +103,17 @@ func (h *Handlers) SpawnProjectile(ctx context.Context, req *api.SpawnProjectile
 
 // ValidateCompatibility - TYPED response!
 func (h *Handlers) ValidateCompatibility(ctx context.Context, req *api.ValidateCompatibilityRequest) (api.ValidateCompatibilityRes, error) {
+	// Issue: #1588 - Load shedding (prevent overload)
+	if !h.loadShedder.Allow() {
+		err := api.ValidateCompatibilityInternalServerError(api.Error{
+			Error:   "ServiceUnavailable",
+			Message: "service overloaded, please try again later",
+			Code:    api.NewOptNilString("503"),
+		})
+		return &err, nil
+	}
+	defer h.loadShedder.Done()
+
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

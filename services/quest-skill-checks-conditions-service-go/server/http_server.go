@@ -88,7 +88,7 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 func respondError(w http.ResponseWriter, status int, message string) {
 	code := http.StatusText(status)
 	err := api.Error{
-		Code:    &code,
+		Code:    api.NewOptNilString(code),
 		Error:   http.StatusText(status),
 		Message: message,
 	}

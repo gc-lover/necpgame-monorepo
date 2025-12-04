@@ -10,9 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	api "github.com/necpgame/admin-service-go/pkg/api"
 	"github.com/necpgame/admin-service-go/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,7 +39,7 @@ type AdminServiceInterface interface {
 
 type HTTPServer struct {
 	addr          string
-	router        *mux.Router
+	router        http.Handler // Can be chi.Router or mux.Router
 	adminService  AdminServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
@@ -44,52 +48,99 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	router := mux.NewRouter()
+	// Use chi router for ogen integration
+	router := chi.NewRouter()
+	
 	server := &HTTPServer{
 		addr:         addr,
-		router:       router,
+		router:       mux.NewRouter(), // Keep mux for legacy endpoints
 		adminService: adminService,
 		logger:       GetLogger(),
 		jwtValidator: jwtValidator,
 		authEnabled:  authEnabled,
 	}
 
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
+	// Chi middleware for ogen server
+	router.Use(chiMiddleware.RequestID)
+	router.Use(chiMiddleware.RealIP)
+	router.Use(chiMiddleware.Logger)
+	router.Use(chiMiddleware.Recoverer)
+	router.Use(corsMiddlewareChi)
 
-	if authEnabled {
-		router.Use(server.authMiddleware)
-		router.Use(server.permissionMiddleware)
+	// ogen handlers
+	ogenHandlers := NewAdminHandlers(adminService, server.logger)
+	secHandler := NewSecurityHandler(jwtValidator, authEnabled)
+
+	// Create ogen server
+	ogenServer, err := api.NewServer(ogenHandlers, secHandler)
+	if err != nil {
+		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	api := router.PathPrefix("/api/v1/admin").Subrouter()
+	// Mount ogen server at /api/v1/admin
+	router.Mount("/api/v1/admin", ogenServer)
 
-	api.HandleFunc("/players/ban", server.banPlayer).Methods("POST")
-	api.HandleFunc("/players/kick", server.kickPlayer).Methods("POST")
-	api.HandleFunc("/players/mute", server.mutePlayer).Methods("POST")
-	api.HandleFunc("/players/unban", server.unbanPlayer).Methods("POST")
-	api.HandleFunc("/players/unmute", server.unmutePlayer).Methods("POST")
-	api.HandleFunc("/players/search", server.searchPlayers).Methods("POST")
+	// Legacy endpoints (keep for backward compatibility)
+	legacyRouter := server.router.(*mux.Router)
+	legacyRouter.Use(server.loggingMiddleware)
+	legacyRouter.Use(server.metricsMiddleware)
+	legacyRouter.Use(server.corsMiddleware)
 
-	api.HandleFunc("/inventory/give", server.giveItem).Methods("POST")
-	api.HandleFunc("/inventory/remove", server.removeItem).Methods("POST")
+	if authEnabled {
+		legacyRouter.Use(server.authMiddleware)
+		legacyRouter.Use(server.permissionMiddleware)
+	}
 
-	api.HandleFunc("/economy/set-currency", server.setCurrency).Methods("POST")
-	api.HandleFunc("/economy/add-currency", server.addCurrency).Methods("POST")
+	apiRouter := legacyRouter.PathPrefix("/api/v1/admin").Subrouter()
 
-	api.HandleFunc("/world/flags", server.setWorldFlag).Methods("POST")
+	apiRouter.HandleFunc("/players/ban", server.banPlayer).Methods("POST")
+	apiRouter.HandleFunc("/players/kick", server.kickPlayer).Methods("POST")
+	apiRouter.HandleFunc("/players/mute", server.mutePlayer).Methods("POST")
+	apiRouter.HandleFunc("/players/unban", server.unbanPlayer).Methods("POST")
+	apiRouter.HandleFunc("/players/unmute", server.unmutePlayer).Methods("POST")
+	apiRouter.HandleFunc("/players/search", server.searchPlayers).Methods("POST")
 
-	api.HandleFunc("/events", server.createEvent).Methods("POST")
+	apiRouter.HandleFunc("/inventory/give", server.giveItem).Methods("POST")
+	apiRouter.HandleFunc("/inventory/remove", server.removeItem).Methods("POST")
 
-	api.HandleFunc("/analytics", server.getAnalytics).Methods("GET")
+	apiRouter.HandleFunc("/economy/set-currency", server.setCurrency).Methods("POST")
+	apiRouter.HandleFunc("/economy/add-currency", server.addCurrency).Methods("POST")
 
-	api.HandleFunc("/audit-logs", server.getAuditLogs).Methods("GET")
-	api.HandleFunc("/audit-logs/{log_id}", server.getAuditLog).Methods("GET")
+	apiRouter.HandleFunc("/world/flags", server.setWorldFlag).Methods("POST")
 
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	apiRouter.HandleFunc("/events", server.createEvent).Methods("POST")
+
+	apiRouter.HandleFunc("/analytics", server.getAnalytics).Methods("GET")
+
+	apiRouter.HandleFunc("/audit-logs", server.getAuditLogs).Methods("GET")
+	apiRouter.HandleFunc("/audit-logs/{log_id}", server.getAuditLog).Methods("GET")
+
+	legacyRouter.HandleFunc("/health", server.healthCheck).Methods("GET")
+	legacyRouter.Handle("/metrics", promhttp.Handler())
+
+	// Mount legacy router to chi
+	router.Mount("/legacy", legacyRouter)
+
+	// Set router to chi router
+	server.router = router
 
 	return server
+}
+
+// corsMiddlewareChi is CORS middleware for chi router
+func corsMiddlewareChi(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *HTTPServer) Start(ctx context.Context) error {
@@ -487,8 +538,8 @@ func (s *HTTPServer) getAuditLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) getAuditLog(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	logID, err := uuid.Parse(vars["log_id"])
+	logIDStr := chi.URLParam(r, "log_id")
+	logID, err := uuid.Parse(logIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid log_id")
 		return
