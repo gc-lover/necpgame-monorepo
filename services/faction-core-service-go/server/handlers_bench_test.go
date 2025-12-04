@@ -3,14 +3,16 @@ package server
 
 import (
 	"context"
-	"// Issue: #1602/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
 )
 
 // BenchmarkCreateFaction benchmarks CreateFaction handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCreateFaction(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -29,7 +31,8 @@ func BenchmarkCreateFaction(b *testing.B) {
 // BenchmarkGetFaction benchmarks GetFaction handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetFaction(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -47,19 +50,21 @@ func BenchmarkGetFaction(b *testing.B) {
 // BenchmarkUpdateFaction benchmarks UpdateFaction handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkUpdateFaction(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
 	req := &api.UpdateFactionRequest{
 		// TODO: Fill request fields based on API spec
 	}
+	params := api.UpdateFactionParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.UpdateFaction(ctx, req)
+		_, _ = handlers.UpdateFaction(ctx, req, params)
 	}
 }
 

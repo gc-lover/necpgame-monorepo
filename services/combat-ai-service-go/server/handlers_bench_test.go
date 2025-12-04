@@ -3,14 +3,16 @@ package server
 
 import (
 	"context"
-	"// Issue: #1595/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-ai-service-go/pkg/api"
 )
 
 // BenchmarkGetAIProfile benchmarks GetAIProfile handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetAIProfile(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -28,7 +30,8 @@ func BenchmarkGetAIProfile(b *testing.B) {
 // BenchmarkGetAIProfileTelemetry benchmarks GetAIProfileTelemetry handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetAIProfileTelemetry(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -46,7 +49,8 @@ func BenchmarkGetAIProfileTelemetry(b *testing.B) {
 // BenchmarkListAIProfiles benchmarks ListAIProfiles handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkListAIProfiles(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()

@@ -3,14 +3,16 @@ package server
 
 import (
 	"context"
-	"// Issue: #1595/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-turns-service-go/pkg/api"
 )
 
 // BenchmarkGetCurrentTurn benchmarks GetCurrentTurn handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetCurrentTurn(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -28,7 +30,8 @@ func BenchmarkGetCurrentTurn(b *testing.B) {
 // BenchmarkGetTurnOrder benchmarks GetTurnOrder handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetTurnOrder(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -46,15 +49,17 @@ func BenchmarkGetTurnOrder(b *testing.B) {
 // BenchmarkNextTurn benchmarks NextTurn handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkNextTurn(b *testing.B) {
-	service := NewService(nil)
+	repo := &Repository{}
+	service := NewService(repo)
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
+	params := api.NextTurnParams{}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.NextTurn(ctx)
+		_, _ = handlers.NextTurn(ctx, params)
 	}
 }
 
