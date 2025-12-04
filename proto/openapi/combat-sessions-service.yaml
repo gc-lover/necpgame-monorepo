@@ -96,13 +96,18 @@ components:
   schemas:
     CreateSessionRequest:
       type: object
+      description: |
+        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory: ~40 bytes/instance.
       required:
       - player_id
       - session_type
       properties:
+        # UUID fields first (16 bytes)
         player_id:
           type: string
           format: uuid
+        # String fields (16 bytes)
         map_id:
           type: string
         session_type:
@@ -111,9 +116,12 @@ components:
           - pve
           - pvp
           - raid
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CombatSession:
       type: object
+      description: |
+        BACKEND NOTE: Hot path (session management, 500+ RPS).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~72 bytes/instance.
       required:
       - id
       - player_id
@@ -121,12 +129,14 @@ components:
       - status
       - created_at
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
+        # String fields (16 bytes)
         session_type:
           type: string
         status:
@@ -135,6 +145,7 @@ components:
           - active
           - ended
           - abandoned
+        # DateTime fields (8 bytes each)
         created_at:
           type: string
           format: date-time

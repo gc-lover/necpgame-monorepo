@@ -1,13 +1,13 @@
-// Issue: #1604
+// Issue: #1597, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
-	"github.com/necpgame/quest-state-dialogue-service-go/pkg/api"
+	"github.com/go-faster/jx"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-state-dialogue-service-go/pkg/api"
 )
 
 // Context timeout constants (Issue #1604)
@@ -16,128 +16,159 @@ const (
 	CacheTimeout = 10 * time.Millisecond
 )
 
+// Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct{}
 
-func (h *Handlers) GetQuestState(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetQuestState - TYPED response!
+func (h *Handlers) GetQuestState(ctx context.Context, params api.GetQuestStateParams) (api.GetQuestStateRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	response := api.QuestState{
+	// Progress data as jx.Raw map
+	progressJSON := jx.Raw(`50`)
+	progressData := api.QuestStateProgressData{
+		"progress": progressJSON,
+	}
+
+	response := &api.QuestState{
 		State:            api.QuestStateStateINPROGRESS,
 		CurrentObjective: 1,
-		ProgressData: &map[string]interface{}{
-			"progress": 50,
-		},
+		ProgressData:     api.NewOptQuestStateProgressData(progressData),
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) UpdateQuestState(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// UpdateQuestState - TYPED response!
+func (h *Handlers) UpdateQuestState(ctx context.Context, req *api.UpdateStateRequest, params api.UpdateQuestStateParams) (api.UpdateQuestStateRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	var req api.UpdateStateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
+	// Convert UpdateStateRequestProgressData to QuestStateProgressData
+	var progressData api.QuestStateProgressData
+	if req.ProgressData.Set {
+		progressData = api.QuestStateProgressData(req.ProgressData.Value)
+	} else {
+		progressData = api.QuestStateProgressData{}
 	}
 
-	response := api.QuestState{
-		State:            api.QuestStateState(req.State),
+	// Convert UpdateStateRequestState to QuestStateState
+	var state api.QuestStateState
+	switch req.State {
+	case api.UpdateStateRequestStateINPROGRESS:
+		state = api.QuestStateStateINPROGRESS
+	case api.UpdateStateRequestStateCOMPLETED:
+		state = api.QuestStateStateCOMPLETED
+	case api.UpdateStateRequestStateFAILED:
+		state = api.QuestStateStateFAILED
+	case api.UpdateStateRequestStateCANCELLED:
+		state = api.QuestStateStateCANCELLED
+	default:
+		state = api.QuestStateStateINPROGRESS
+	}
+
+	response := &api.QuestState{
+		State:            state,
 		CurrentObjective: 1,
-		ProgressData:    req.ProgressData,
+		ProgressData:     api.NewOptQuestStateProgressData(progressData),
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) GetQuestDialogue(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetQuestDialogue - TYPED response!
+func (h *Handlers) GetQuestDialogue(ctx context.Context, params api.GetQuestDialogueParams) (api.GetQuestDialogueRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	response := api.DialogueNode{
-		NodeId: "start",
-		Text:   "Welcome to the quest!",
-		Speaker: func() *string { s := "NPC"; return &s }(),
-		Choices: &[]api.DialogueChoice{
+	speaker := "NPC"
+	nextNodeId1 := "node_2"
+	nextNodeId2 := "node_3"
+
+	response := &api.DialogueNode{
+		NodeID:  "start",
+		Text:    "Welcome to the quest!",
+		Speaker: api.NewOptString(speaker),
+		Choices: []api.DialogueChoice{
 			{
-				ChoiceId:   "choice_1",
+				ChoiceID:   "choice_1",
 				Text:       "Accept the quest",
-				NextNodeId: func() *string { s := "node_2"; return &s }(),
+				NextNodeID: api.NewOptString(nextNodeId1),
 			},
 			{
-				ChoiceId:   "choice_2",
+				ChoiceID:   "choice_2",
 				Text:       "Decline",
-				NextNodeId: func() *string { s := "node_3"; return &s }(),
+				NextNodeID: api.NewOptString(nextNodeId2),
 			},
 		},
-		SkillChecks: &[]api.SkillCheck{
+		SkillChecks: []api.SkillCheck{
 			{
-				CheckTarget:    "intelligence",
-				CheckType:      api.Attribute,
-				RequiredValue:  10,
+				CheckTarget:   "intelligence",
+				CheckType:     api.SkillCheckCheckTypeAttribute,
+				RequiredValue: 10,
 			},
 		},
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) MakeDialogueChoice(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// MakeDialogueChoice - TYPED response!
+func (h *Handlers) MakeDialogueChoice(ctx context.Context, req *api.DialogueChoiceRequest, params api.MakeDialogueChoiceParams) (api.MakeDialogueChoiceRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	var req api.DialogueChoiceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+	speaker := "NPC"
+	nextNodeId := "node_4"
 
-	nextNodeId := "node_2"
-	response := api.DialogueNode{
-		NodeId: nextNodeId,
-		Text:   "You made a choice!",
-		Speaker: func() *string { s := "NPC"; return &s }(),
-		Choices: &[]api.DialogueChoice{
+	response := &api.DialogueNode{
+		NodeID:  "node_2",
+		Text:    "You made a choice!",
+		Speaker: api.NewOptString(speaker),
+		Choices: []api.DialogueChoice{
 			{
-				ChoiceId:   "choice_3",
+				ChoiceID:   "choice_3",
 				Text:       "Continue",
-				NextNodeId: func() *string { s := "node_4"; return &s }(),
+				NextNodeID: api.NewOptString(nextNodeId),
 			},
 		},
 	}
-	respondJSON(w, http.StatusOK, response)
+
+	return response, nil
 }
 
-func (h *Handlers) GetDialogueHistory(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID, params api.GetDialogueHistoryParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetDialogueHistory - TYPED response!
+func (h *Handlers) GetDialogueHistory(ctx context.Context, params api.GetDialogueHistoryParams) (api.GetDialogueHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
 	now := time.Now()
-	response := api.DialogueHistory{
-		QuestInstanceId: questId,
-		History: []struct {
-			ChoiceMade *string    `json:"choice_made"`
-			NodeId     *string    `json:"node_id,omitempty"`
-			Speaker    *string    `json:"speaker,omitempty"`
-			Text       *string    `json:"text,omitempty"`
-			Timestamp  *time.Time `json:"timestamp,omitempty"`
-		}{
+	nodeId1 := "start"
+	speaker1 := "NPC"
+	text1 := "Welcome to the quest!"
+	choiceMade1 := "choice_1"
+	timestamp2 := now.Add(1 * time.Minute)
+
+	response := &api.DialogueHistory{
+		QuestInstanceID: params.QuestID,
+		History: []api.DialogueHistoryHistoryItem{
 			{
-				NodeId:    func() *string { s := "start"; return &s }(),
-				Speaker:   func() *string { s := "NPC"; return &s }(),
-				Text:      func() *string { s := "Welcome to the quest!"; return &s }(),
-				Timestamp: &now,
+				NodeID:    api.NewOptString(nodeId1),
+				Speaker:   api.NewOptString(speaker1),
+				Text:      api.NewOptString(text1),
+				Timestamp: api.NewOptDateTime(now),
 			},
 			{
-				ChoiceMade: func() *string { s := "choice_1"; return &s }(),
-				Timestamp: func() *time.Time { t := now.Add(1 * time.Minute); return &t }(),
+				ChoiceMade: api.NewOptNilString(choiceMade1),
+				Timestamp:  api.NewOptDateTime(timestamp2),
 			},
 		},
 	}
-	respondJSON(w, http.StatusOK, response)
-}
 
+	return response, nil
+}

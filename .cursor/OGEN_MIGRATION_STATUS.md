@@ -1,7 +1,7 @@
 # ogen Migration Status - Updated
 
 **Last Updated:** 2025-12-04  
-**Progress:** 40/86 fully migrated (46.5%)
+**Progress:** 38/86 fully migrated (44.2%)
 
 ---
 
@@ -74,9 +74,9 @@
 
 ### Quest Services (COMPLETE ✅)
 - [x] quest-core-service-go ✅ 2025-12-04 (Already migrated, verified)
-- [x] quest-rewards-events-service-go ✅ 2025-12-04 (Already migrated, verified)
-- [x] quest-skill-checks-conditions-service-go ✅ 2025-12-04 (Already migrated, verified)
-- [x] quest-state-dialogue-service-go ✅ 2025-12-04 (Already migrated, verified)
+- [x] quest-rewards-events-service-go ✅ 2025-12-04 (Migrated to ogen)
+- [x] quest-skill-checks-conditions-service-go ✅ 2025-12-04 (Migrated to ogen)
+- [x] quest-state-dialogue-service-go ✅ 2025-12-04 (Migrated to ogen)
 - [x] gameplay-progression-core-service-go ✅ 2025-12-04 (Already migrated, verified)
 
 ### Chat & Social (9)

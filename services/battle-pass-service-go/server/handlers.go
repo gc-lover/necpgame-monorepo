@@ -1,10 +1,8 @@
-// Issue: #1604
+// Issue: #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/pkg/api"
@@ -24,175 +22,232 @@ func NewHandlers(service *Service) *Handlers {
 	return &Handlers{service: service}
 }
 
-// GetCurrentSeason implements GET /api/v1/economy/battle-pass/current
-func (h *Handlers) GetCurrentSeason(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetCurrentSeason implements getCurrentSeason operation.
+func (h *Handlers) GetCurrentSeason(ctx context.Context) (api.GetCurrentSeasonRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
+
 	season, err := h.service.GetCurrentSeason(ctx)
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "No active season")
-			return
+			return &api.GetCurrentSeasonNotFound{
+				Error:   "NotFound",
+				Message: "No active season",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.GetCurrentSeasonInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, season)
+	return season, nil
 }
 
-// GetPlayerProgress implements GET /api/v1/economy/battle-pass/progress
-func (h *Handlers) GetPlayerProgress(w http.ResponseWriter, r *http.Request, params api.GetPlayerProgressParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetPlayerProgress implements getPlayerProgress operation.
+func (h *Handlers) GetPlayerProgress(ctx context.Context, params api.GetPlayerProgressParams) (api.GetPlayerProgressRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	progress, err := h.service.GetPlayerProgress(ctx, *params.PlayerId)
+
+	playerID := params.PlayerID
+	progress, err := h.service.GetPlayerProgress(ctx, playerID.String())
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Player progress not found")
-			return
+			return &api.GetPlayerProgressNotFound{
+				Error:   "NotFound",
+				Message: "Player progress not found",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.GetPlayerProgressInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, progress)
+	return progress, nil
 }
 
-// ClaimReward implements POST /api/v1/economy/battle-pass/claim
-func (h *Handlers) ClaimReward(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		PlayerID string `json:"player_id"`
-		Level    int    `json:"level"`
-		Track    string `json:"track"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// ClaimReward implements claimReward operation.
+func (h *Handlers) ClaimReward(ctx context.Context, req *api.ClaimRewardReq) (api.ClaimRewardRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	result, err := h.service.ClaimReward(ctx, req.PlayerID, req.Level, api.RewardTrack(req.Track))
+
+	result, err := h.service.ClaimReward(ctx, req.PlayerID.String(), req.Level, req.Track)
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Reward not found")
-			return
+			return &api.ClaimRewardNotFound{
+				Error:   "NotFound",
+				Message: "Reward not found",
+			}, nil
 		}
 		if err == ErrAlreadyClaimed {
-			respondError(w, http.StatusBadRequest, "Reward already claimed")
-			return
+			return &api.ClaimRewardBadRequest{
+				Error:   "BadRequest",
+				Message: "Reward already claimed",
+			}, nil
 		}
 		if err == ErrPremiumRequired {
-			respondError(w, http.StatusBadRequest, "Premium required")
-			return
+			return &api.ClaimRewardBadRequest{
+				Error:   "BadRequest",
+				Message: "Premium required",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.ClaimRewardInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, result)
+	// Convert result to ogen response
+	rewards := []api.Reward{}
+	if rewardsData, ok := result["rewards"].([]api.Reward); ok {
+		rewards = rewardsData
+	}
+
+	return &api.ClaimRewardOK{
+		Rewards: rewards,
+	}, nil
 }
 
-// PurchasePremium implements POST /api/v1/economy/battle-pass/purchase-premium
-func (h *Handlers) PurchasePremium(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		PlayerID string `json:"player_id"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// PurchasePremium implements purchasePremium operation.
+func (h *Handlers) PurchasePremium(ctx context.Context, req *api.PurchasePremiumReq) (api.PurchasePremiumRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	result, err := h.service.PurchasePremium(ctx, req.PlayerID)
+
+	result, err := h.service.PurchasePremium(ctx, req.PlayerID.String())
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Player not found")
-			return
+			return &api.PurchasePremiumInternalServerError{
+				Error:   "NotFound",
+				Message: "Player not found",
+			}, nil
 		}
 		if err == ErrAlreadyPremium {
-			respondError(w, http.StatusBadRequest, "Premium already purchased")
-			return
+			return &api.PurchasePremiumBadRequest{
+				Error:   "BadRequest",
+				Message: "Premium already purchased",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.PurchasePremiumInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, result)
+	// Convert result to ogen response
+	premiumStatus := false
+	if premium, ok := result["is_premium"].(bool); ok {
+		premiumStatus = premium
+	}
+	retroactiveRewards := []api.Reward{}
+	if rewards, ok := result["retroactive_rewards"].([]api.Reward); ok {
+		retroactiveRewards = rewards
+	}
+
+	return &api.PurchasePremiumOK{
+		PremiumStatus:      api.NewOptBool(premiumStatus),
+		RetroactiveRewards: retroactiveRewards,
+	}, nil
 }
 
-// GetWeeklyChallenges implements GET /api/v1/economy/battle-pass/challenges/weekly
-func (h *Handlers) GetWeeklyChallenges(w http.ResponseWriter, r *http.Request, params api.GetWeeklyChallengesParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetWeeklyChallenges implements getWeeklyChallenges operation.
+func (h *Handlers) GetWeeklyChallenges(ctx context.Context, params api.GetWeeklyChallengesParams) (api.GetWeeklyChallengesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	challenges, err := h.service.GetWeeklyChallenges(ctx, *params.PlayerId)
+
+	playerID := params.PlayerID
+	challenges, err := h.service.GetWeeklyChallenges(ctx, playerID.String())
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.GetWeeklyChallengesInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, challenges)
+	// challenges is already []api.WeeklyChallenge from service
+	weekNumber := 1 // TODO: Calculate from season start date
+	return &api.GetWeeklyChallengesOK{
+		WeekNumber: api.NewOptInt(weekNumber),
+		Challenges: challenges,
+	}, nil
 }
 
-// CompleteChallenge implements POST /api/v1/economy/battle-pass/challenges/{challengeId}/complete
-func (h *Handlers) CompleteChallenge(w http.ResponseWriter, r *http.Request, challengeId string) {
-	var req struct {
-		PlayerID string `json:"player_id"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// CompleteChallenge implements completeChallenge operation.
+func (h *Handlers) CompleteChallenge(ctx context.Context, req *api.CompleteChallengeReq, params api.CompleteChallengeParams) (api.CompleteChallengeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	result, err := h.service.CompleteChallenge(ctx, req.PlayerID, challengeId)
+
+	result, err := h.service.CompleteChallenge(ctx, req.PlayerID.String(), params.ChallengeId.String())
 	if err != nil {
 		if err == ErrNotFound {
-			respondError(w, http.StatusNotFound, "Challenge not found")
-			return
+			return &api.CompleteChallengeNotFound{
+				Error:   "NotFound",
+				Message: "Challenge not found",
+			}, nil
 		}
 		if err == ErrAlreadyCompleted {
-			respondError(w, http.StatusBadRequest, "Challenge already completed")
-			return
+			return &api.CompleteChallengeBadRequest{
+				Error:   "BadRequest",
+				Message: "Challenge already completed",
+			}, nil
 		}
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.CompleteChallengeInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, result)
+	// Convert result to ogen response
+	xpAwarded := 0
+	if xp, ok := result["xp_awarded"].(int); ok {
+		xpAwarded = xp
+	}
+	newLevel := 0
+	if level, ok := result["new_level"].(int); ok {
+		newLevel = level
+	}
+
+	return &api.CompleteChallengeOK{
+		XpAwarded: api.NewOptInt(xpAwarded),
+		NewLevel:  api.NewOptInt(newLevel),
+	}, nil
 }
 
-// AddXP implements POST /api/v1/economy/battle-pass/xp/add
-func (h *Handlers) AddXP(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		PlayerID  string `json:"player_id"`
-		XPAmount  int    `json:"xp_amount"`
-		Source    string `json:"source"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// AddXP implements addXP operation.
+func (h *Handlers) AddXP(ctx context.Context, req *api.AddXPReq) (api.AddXPRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
-	result, err := h.service.AddXP(ctx, req.PlayerID, req.XPAmount, req.Source)
+
+	result, err := h.service.AddXP(ctx, req.PlayerID.String(), req.XpAmount, req.Source)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
+		return &api.AddXPInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
 	}
 
-	respondJSON(w, http.StatusOK, result)
-}
+	// Convert result to ogen response
+	newXP := 0
+	if xp, ok := result["new_xp"].(int); ok {
+		newXP = xp
+	}
+	newLevel := 0
+	if level, ok := result["new_level"].(int); ok {
+		newLevel = level
+	}
+	levelUp := false
+	if up, ok := result["level_up"].(bool); ok {
+		levelUp = up
+	}
+	rewardsUnlocked := []api.Reward{}
+	if rewards, ok := result["rewards_unlocked"].([]api.Reward); ok {
+		rewardsUnlocked = rewards
+	}
 
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string) {
-	respondJSON(w, status, map[string]string{"error": message})
+	return &api.AddXPOK{
+		NewXp:           api.NewOptInt(newXP),
+		NewLevel:        api.NewOptInt(newLevel),
+		LevelUp:         api.NewOptBool(levelUp),
+		RewardsUnlocked: rewardsUnlocked,
+	}, nil
 }

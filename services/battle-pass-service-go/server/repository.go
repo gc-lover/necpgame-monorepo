@@ -29,7 +29,7 @@ func (r *Repository) GetCurrentSeason(ctx context.Context) (*api.Season, error) 
 
 	var season api.Season
 	err := r.db.QueryRowContext(ctx, query).Scan(
-		&season.Id, &season.Name, &season.Description, &season.SeasonNumber,
+		&season.ID, &season.Name, &season.Description, &season.SeasonNumber,
 		&season.StartDate, &season.EndDate, &season.MaxLevel, &season.Theme, &season.Status,
 	)
 	if err == sql.ErrNoRows {
@@ -57,31 +57,31 @@ func (r *Repository) GetPlayerProgress(ctx context.Context, playerId string) (*a
 	`
 
 	var progress api.PlayerProgress
-	err = r.db.QueryRowContext(ctx, query, playerId, season.Id).Scan(
-		&progress.PlayerId, &progress.SeasonId, &progress.CurrentLevel, &progress.CurrentXp,
+	err = r.db.QueryRowContext(ctx, query, playerId, season.ID).Scan(
+		&progress.PlayerID, &progress.SeasonID, &progress.CurrentLevel, &progress.CurrentXp,
 		&progress.HasPremium, &progress.PremiumPurchasedAt,
 		pq.Array(&progress.ClaimedLevelsFree), pq.Array(&progress.ClaimedLevelsPremium),
 	)
 	if err == sql.ErrNoRows {
 		// Create initial progress
-		return r.CreatePlayerProgress(ctx, playerId, season.Id)
+		return r.CreatePlayerProgress(ctx, playerId, season.ID.String())
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	progress.Season = season
+	progress.Season = api.NewOptSeason(*season)
 
 	// Calculate XP to next level
 	xpToNext := ((progress.CurrentLevel) * 1000) - progress.CurrentXp
-	progress.XpToNextLevel = &xpToNext
+	progress.XpToNextLevel = api.NewOptInt(xpToNext)
 
 	// Calculate unclaimed rewards
 	unclaimed := progress.CurrentLevel - len(progress.ClaimedLevelsFree)
 	if progress.HasPremium {
 		unclaimed += progress.CurrentLevel - len(progress.ClaimedLevelsPremium)
 	}
-	progress.UnclaimedRewardsCount = &unclaimed
+	progress.UnclaimedRewardsCount = api.NewOptInt(unclaimed)
 
 	return &progress, nil
 }
@@ -96,7 +96,7 @@ func (r *Repository) CreatePlayerProgress(ctx context.Context, playerId, seasonI
 
 	var progress api.PlayerProgress
 	err := r.db.QueryRowContext(ctx, query, playerId, seasonId).Scan(
-		&progress.PlayerId, &progress.SeasonId, &progress.CurrentLevel, &progress.CurrentXp,
+		&progress.PlayerID, &progress.SeasonID, &progress.CurrentLevel, &progress.CurrentXp,
 		&progress.HasPremium, &progress.PremiumPurchasedAt,
 		pq.Array(&progress.ClaimedLevelsFree), pq.Array(&progress.ClaimedLevelsPremium),
 	)
@@ -106,7 +106,9 @@ func (r *Repository) CreatePlayerProgress(ctx context.Context, playerId, seasonI
 
 	// Get season
 	season, _ := r.GetCurrentSeason(ctx)
-	progress.Season = season
+	if season != nil {
+		progress.Season = api.NewOptSeason(*season)
+	}
 
 	return &progress, nil
 }
@@ -130,7 +132,7 @@ func (r *Repository) GetReward(ctx context.Context, seasonId string, level int, 
 	}
 
 	claimed := false
-	reward.Claimed = &claimed
+	reward.Claimed = api.NewOptBool(claimed)
 
 	return &reward, nil
 }
@@ -206,7 +208,7 @@ func (r *Repository) GetWeeklyChallenges(ctx context.Context, playerId string) (
 		ORDER BY c.week_number, c.title
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, playerId, season.Id)
+	rows, err := r.db.QueryContext(ctx, query, playerId, season.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +218,7 @@ func (r *Repository) GetWeeklyChallenges(ctx context.Context, playerId string) (
 	for rows.Next() {
 		var ch api.WeeklyChallenge
 		err := rows.Scan(
-			&ch.Id, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
+			&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
 			&ch.StartDate, &ch.EndDate, &ch.CurrentProgress, &ch.CompletedAt, &ch.ClaimedAt,
 		)
 		if err != nil {
@@ -239,7 +241,7 @@ func (r *Repository) GetPlayerChallenge(ctx context.Context, playerId, challenge
 
 	var ch api.WeeklyChallenge
 	err := r.db.QueryRowContext(ctx, query, playerId, challengeId).Scan(
-		&ch.Id, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
+		&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
 		&ch.StartDate, &ch.EndDate, &ch.CurrentProgress, &ch.CompletedAt, &ch.ClaimedAt,
 	)
 	if err == sql.ErrNoRows {
@@ -261,7 +263,7 @@ func (r *Repository) GetChallengeDetails(ctx context.Context, challengeId string
 
 	var ch api.WeeklyChallenge
 	err := r.db.QueryRowContext(ctx, query, challengeId).Scan(
-		&ch.Id, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount,
+		&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount,
 		&ch.XpReward, &ch.StartDate, &ch.EndDate,
 	)
 	if err == sql.ErrNoRows {

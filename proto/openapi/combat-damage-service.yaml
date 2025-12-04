@@ -337,12 +337,17 @@ components:
   schemas:
     DamageCalculationRequest:
       type: object
+      description: |
+        BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~56 bytes/instance.
       required:
       - attacker_id
       - target_id
       - base_damage
       - damage_type
       properties:
+        # UUID fields first (16 bytes each)
         attacker_id:
           type: string
           format: uuid
@@ -351,6 +356,7 @@ components:
           type: string
           format: uuid
           description: ID цели атаки
+        # String fields (16 bytes)
         damage_type:
           type: string
           enum:
@@ -375,10 +381,18 @@ components:
             - `cyber` - киберурон (взлом имплантов)
 
             '
+        # Object fields (8 bytes pointer)
         modifiers:
           type: object
           description: Модификаторы урона
           properties:
+            range_modifier:
+              type: number
+              format: float
+              description: Модификатор дистанции (0.5-1.5)
+              minimum: 0.5
+              maximum: 1.5
+              default: 1
             is_critical:
               type: boolean
               description: Критический удар (x2 урона)
@@ -387,26 +401,19 @@ components:
               type: boolean
               description: Попадание в слабое место (+50% урона)
               default: false
-            range_modifier:
-              type: number
-              format: float
-              description: Модификатор дистанции (0.5-1.5)
-              minimum: 0.5
-              maximum: 1.5
-              default: 1
+        # Integer fields (4 bytes)
         base_damage:
           type: integer
           description: Базовый урон оружия/способности
           minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DamageCalculationResult:
       type: object
-      description: 'BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
-
-        Fields ordered for struct alignment. Expected memory: ~64 bytes/instance.
-
-        '
+      description: |
+        BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~64 bytes/instance.
       properties:
+        # UUID fields first (16 bytes each)
         attacker_id:
           type: string
           format: uuid
@@ -415,6 +422,7 @@ components:
           type: string
           format: uuid
           description: ID цели
+        # String fields (16 bytes)
         damage_type:
           type: string
           enum:
@@ -425,6 +433,7 @@ components:
           - poison
           - cyber
           description: Тип урона
+        # Array fields (24 bytes: pointer + len + cap)
         modifiers_applied:
           type: array
           description: Список примененных модификаторов
@@ -437,6 +446,7 @@ components:
               value:
                 type: number
                 description: Значение модификатора
+        # Integer fields (4 bytes each)
         base_damage:
           type: integer
           description: Базовый урон
@@ -446,6 +456,7 @@ components:
         damage_reduction:
           type: integer
           description: Урон поглощённый брони/сопротивлениями
+        # Boolean fields last (1 byte each)
         was_critical:
           type: boolean
           description: Был ли критический удар

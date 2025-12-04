@@ -49,7 +49,8 @@ $Hour = $TimestampStr.Substring(9, 2)
 $Minute = $TimestampStr.Substring(11, 2)
 $Second = $TimestampStr.Substring(13, 2)
 
-$DateTime = [DateTime]::ParseExact("${Year}-${Month}-${Day} ${Hour}:${Minute}:${Second}", "yyyy-MM-dd HH:mm:ss", $null)
+$DateTimeStr = "${Year}-${Month}-${Day} ${Hour}:${Minute}:${Second}"
+$DateTime = [DateTime]::ParseExact($DateTimeStr, "yyyy-MM-dd HH:mm:ss", $null)
 $Timestamp = [DateTimeOffset]::new($DateTime).ToUnixTimeSeconds()
 
 foreach ($Service in $Data.services) {
@@ -104,6 +105,4 @@ Write-Host ""
 Write-Host "📊 Summary:" -ForegroundColor Cyan
 Write-Host "   Services: $($Data.services.Count)" -ForegroundColor Gray
 $TotalBenchmarks = ($Data.services | ForEach-Object { $_.benchmarks.Count } | Measure-Object -Sum).Sum
-$TotalBenchmarks = ($Data.services | ForEach-Object { $_.benchmarks.Count } | Measure-Object -Sum).Sum
 Write-Host "   Benchmarks: $TotalBenchmarks" -ForegroundColor Gray
-

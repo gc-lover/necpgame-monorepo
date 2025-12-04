@@ -1,13 +1,12 @@
-// Issue: #1604
+// Issue: #1598, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
-	"github.com/necpgame/social-chat-channels-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-channels-service-go/pkg/api"
 	"github.com/google/uuid"
 )
 
@@ -17,196 +16,151 @@ const (
 	CacheTimeout = 10 * time.Millisecond
 )
 
+// ChatChannelsHandlers implements api.Handler interface (ogen typed handlers!)
 type ChatChannelsHandlers struct{}
 
 func NewChatChannelsHandlers() *ChatChannelsHandlers {
 	return &ChatChannelsHandlers{}
 }
 
-func (h *ChatChannelsHandlers) GetChannels(w http.ResponseWriter, r *http.Request, params api.GetChannelsParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetChannels - TYPED response!
+func (h *ChatChannelsHandlers) GetChannels(ctx context.Context, params api.GetChannelsParams) (api.GetChannelsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	channelId1 := uuid.UUID(uuid.New())
-	channelId2 := uuid.UUID(uuid.New())
-	channelType1 := api.ChatChannelChannelTypeGLOBAL
-	channelType2 := api.ChatChannelChannelTypeTRADE
+	channelId1 := uuid.New()
+	channelId2 := uuid.New()
 	now := time.Now()
-	name1 := "Global Chat"
-	name2 := "Trade Chat"
-	cooldownSeconds := 0
-	maxMessageLength := 500
-	isActive := true
 
 	channels := []api.ChatChannel{
 		{
-			Id:               &channelId1,
-			ChannelType:      &channelType1,
-			OwnerId:          nil,
-			Name:             &name1,
-			Description:      nil,
-			ReadPermission:  nil,
-			WritePermission: nil,
-			CooldownSeconds:  &cooldownSeconds,
-			MaxMessageLength: &maxMessageLength,
-			IsActive:         &isActive,
-			CreatedAt:        &now,
+			ID:               api.NewOptUUID(channelId1),
+			ChannelType:      api.NewOptChatChannelChannelType(api.ChatChannelChannelTypeGLOBAL),
+			OwnerID:          api.OptNilUUID{},
+			Name:             api.NewOptString("Global Chat"),
+			Description:      api.OptNilString{},
+			ReadPermission:   api.OptNilChatChannelReadPermission{},
+			WritePermission:  api.OptNilChatChannelWritePermission{},
+			CooldownSeconds:  api.NewOptInt(0),
+			MaxMessageLength: api.NewOptInt(500),
+			IsActive:         api.NewOptBool(true),
+			CreatedAt:        api.NewOptDateTime(now),
 		},
 		{
-			Id:               &channelId2,
-			ChannelType:      &channelType2,
-			OwnerId:          nil,
-			Name:             &name2,
-			Description:      nil,
-			ReadPermission:  nil,
-			WritePermission: nil,
-			CooldownSeconds:  &cooldownSeconds,
-			MaxMessageLength: &maxMessageLength,
-			IsActive:         &isActive,
-			CreatedAt:        &now,
+			ID:               api.NewOptUUID(channelId2),
+			ChannelType:      api.NewOptChatChannelChannelType(api.ChatChannelChannelTypeTRADE),
+			OwnerID:          api.OptNilUUID{},
+			Name:             api.NewOptString("Trade Chat"),
+			Description:      api.OptNilString{},
+			ReadPermission:   api.OptNilChatChannelReadPermission{},
+			WritePermission:  api.OptNilChatChannelWritePermission{},
+			CooldownSeconds:  api.NewOptInt(0),
+			MaxMessageLength: api.NewOptInt(500),
+			IsActive:         api.NewOptBool(true),
+			CreatedAt:        api.NewOptDateTime(now),
 		},
 	}
 
-	total := len(channels)
-
-	response := api.ChannelListResponse{
-		Channels: &channels,
-		Total:    &total,
+	response := &api.ChannelListResponse{
+		Channels: channels,
+		Total:    api.NewOptInt(len(channels)),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *ChatChannelsHandlers) GetChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetChannel - TYPED response!
+func (h *ChatChannelsHandlers) GetChannel(ctx context.Context, params api.GetChannelParams) (api.GetChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	channelType := api.ChatChannelChannelTypeGLOBAL
 	now := time.Now()
-	name := "Global Chat"
-	cooldownSeconds := 0
-	maxMessageLength := 500
-	isActive := true
 
-	response := api.ChatChannel{
-		Id:               &channelId,
-		ChannelType:      &channelType,
-		OwnerId:          nil,
-		Name:             &name,
-		Description:      nil,
-		ReadPermission:  nil,
-		WritePermission: nil,
-		CooldownSeconds:  &cooldownSeconds,
-		MaxMessageLength: &maxMessageLength,
-		IsActive:         &isActive,
-		CreatedAt:        &now,
+	response := &api.ChatChannel{
+		ID:               api.NewOptUUID(params.ChannelID),
+		ChannelType:      api.NewOptChatChannelChannelType(api.ChatChannelChannelTypeGLOBAL),
+		OwnerID:          api.OptNilUUID{},
+		Name:             api.NewOptString("Global Chat"),
+		Description:      api.OptNilString{},
+		ReadPermission:   api.OptNilChatChannelReadPermission{},
+		WritePermission:  api.OptNilChatChannelWritePermission{},
+		CooldownSeconds:  api.NewOptInt(0),
+		MaxMessageLength: api.NewOptInt(500),
+		IsActive:         api.NewOptBool(true),
+		CreatedAt:        api.NewOptDateTime(now),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *ChatChannelsHandlers) JoinChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// JoinChannel - TYPED response!
+func (h *ChatChannelsHandlers) JoinChannel(ctx context.Context, req *api.JoinChannelRequest, params api.JoinChannelParams) (api.JoinChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	var req api.JoinChannelRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
-
-	channelType := api.ChatChannelChannelTypeGLOBAL
 	now := time.Now()
-	name := "Global Chat"
-	cooldownSeconds := 0
-	maxMessageLength := 500
-	isActive := true
 
-	response := api.ChatChannel{
-		Id:               &channelId,
-		ChannelType:      &channelType,
-		OwnerId:          nil,
-		Name:             &name,
-		Description:      nil,
-		ReadPermission:  nil,
-		WritePermission: nil,
-		CooldownSeconds:  &cooldownSeconds,
-		MaxMessageLength: &maxMessageLength,
-		IsActive:         &isActive,
-		CreatedAt:        &now,
+	response := &api.ChatChannel{
+		ID:               api.NewOptUUID(params.ChannelID),
+		ChannelType:      api.NewOptChatChannelChannelType(api.ChatChannelChannelTypeGLOBAL),
+		OwnerID:          api.OptNilUUID{},
+		Name:             api.NewOptString("Global Chat"),
+		Description:      api.OptNilString{},
+		ReadPermission:   api.OptNilChatChannelReadPermission{},
+		WritePermission:  api.OptNilChatChannelWritePermission{},
+		CooldownSeconds:  api.NewOptInt(0),
+		MaxMessageLength: api.NewOptInt(500),
+		IsActive:         api.NewOptBool(true),
+		CreatedAt:        api.NewOptDateTime(now),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *ChatChannelsHandlers) LeaveChannel(w http.ResponseWriter, r *http.Request, channelId api.ChannelId) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// LeaveChannel - TYPED response!
+func (h *ChatChannelsHandlers) LeaveChannel(ctx context.Context, req *api.LeaveChannelRequest, params api.LeaveChannelParams) (api.LeaveChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
-
-	var req api.LeaveChannelRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, err, "Invalid request body")
-		return
-	}
 
 	status := "left"
-	response := api.StatusResponse{
-		Status: &status,
+	response := &api.StatusResponse{
+		Status: api.NewOptString(status),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *ChatChannelsHandlers) GetChannelMembers(w http.ResponseWriter, r *http.Request, channelId api.ChannelId, params api.GetChannelMembersParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetChannelMembers - TYPED response!
+func (h *ChatChannelsHandlers) GetChannelMembers(ctx context.Context, params api.GetChannelMembersParams) (api.GetChannelMembersRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	memberId1 := uuid.UUID(uuid.New())
-	memberId2 := uuid.UUID(uuid.New())
+	memberId1 := uuid.New()
+	memberId2 := uuid.New()
 	members := []uuid.UUID{memberId1, memberId2}
 	total := len(members)
+
 	limit := 50
 	offset := 0
-
-	if params.Limit != nil {
-		limit = int(*params.Limit)
+	if params.Limit.Set {
+		limit = params.Limit.Value
 	}
-	if params.Offset != nil {
-		offset = int(*params.Offset)
-	}
-
-	response := api.ChannelMembersResponse{
-		ChannelId: &channelId,
-		Members:   &members,
-		Total:     &total,
-		Limit:     &limit,
-		Offset:    &offset,
+	if params.Offset.Set {
+		offset = params.Offset.Value
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	response := &api.ChannelMembersResponse{
+		ChannelID: api.NewOptUUID(params.ChannelID),
+		Members:   members,
+		Total:     api.NewOptInt(total),
+		Limit:     api.NewOptInt(limit),
+		Offset:    api.NewOptInt(offset),
+	}
+
+	return response, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

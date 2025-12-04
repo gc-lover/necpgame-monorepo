@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/necpgame/quest-skill-checks-conditions-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-skill-checks-conditions-service-go/pkg/api"
 )
 
 func NewHTTPServer(addr string) *http.Server {
@@ -32,9 +32,18 @@ func NewHTTPServer(addr string) *http.Server {
 		})
 	})
 
+	// ogen handlers
 	handlers := &Handlers{}
-	apiHandler := api.Handler(handlers)
-	r.Mount("/", apiHandler)
+	secHandler := &SecurityHandler{}
+
+	// Integration with ogen
+	ogenServer, err := api.NewServer(handlers, secHandler)
+	if err != nil {
+		GetLogger().WithError(err).Fatal("Failed to create ogen server")
+	}
+
+	// Mount ogen server under /api/v1
+	r.Mount("/api/v1", ogenServer)
 
 	return &http.Server{
 		Addr:         addr,

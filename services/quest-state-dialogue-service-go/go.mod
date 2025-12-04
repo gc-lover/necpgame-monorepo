@@ -1,4 +1,4 @@
-module github.com/necpgame/quest-state-dialogue-service-go
+module github.com/gc-lover/necpgame-monorepo/services/quest-state-dialogue-service-go
 
 go 1.24.0
 
@@ -13,6 +13,7 @@ require (
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/metric v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
+	go.uber.org/goleak v1.3.0
 )
 
 require (

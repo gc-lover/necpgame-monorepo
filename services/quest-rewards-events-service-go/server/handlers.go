@@ -1,12 +1,14 @@
-// Issue: #1604
+// Issue: #1597, #1607
+// ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
 import (
 	"context"
-	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/necpgame/quest-rewards-events-service-go/pkg/api"
+	"github.com/go-faster/jx"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-rewards-events-service-go/pkg/api"
 	"github.com/google/uuid"
 )
 
@@ -16,170 +18,156 @@ const (
 	CacheTimeout = 10 * time.Millisecond
 )
 
+// QuestRewardsEventsHandlers implements api.Handler interface (ogen typed handlers!)
 type QuestRewardsEventsHandlers struct{}
 
 func NewQuestRewardsEventsHandlers() *QuestRewardsEventsHandlers {
 	return &QuestRewardsEventsHandlers{}
 }
 
-func (h *QuestRewardsEventsHandlers) GetQuestRewards(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetQuestRewards - TYPED response!
+func (h *QuestRewardsEventsHandlers) GetQuestRewards(ctx context.Context, params api.GetQuestRewardsParams) (api.GetQuestRewardsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
 	experience := 1000
 	currency := 5000
-	itemId1 := openapi_types.UUID(uuid.New())
-	itemId2 := openapi_types.UUID(uuid.New())
+	itemId1 := uuid.New()
+	itemId2 := uuid.New()
 	quantity1 := 1
 	quantity2 := 2
-	items := []struct {
-		ItemId   *openapi_types.UUID `json:"item_id,omitempty"`
-		Quantity *int                 `json:"quantity,omitempty"`
-	}{
+
+	items := []api.QuestRewardsItemsItem{
 		{
-			ItemId:   &itemId1,
-			Quantity: &quantity1,
+			ItemID:   api.NewOptUUID(itemId1),
+			Quantity: api.NewOptInt(quantity1),
 		},
 		{
-			ItemId:   &itemId2,
-			Quantity: &quantity2,
+			ItemID:   api.NewOptUUID(itemId2),
+			Quantity: api.NewOptInt(quantity2),
 		},
 	}
 
-	rewards := api.QuestRewards{
-		Experience: &experience,
-		Currency:   &currency,
-		Items:      &items,
-		Reputation: nil,
-		Titles:     nil,
+	rewards := &api.QuestRewards{
+		Experience: api.NewOptInt(experience),
+		Currency:   api.NewOptInt(currency),
+		Items:      items,
+		Reputation: api.OptQuestRewardsReputation{},
+		Titles:     []string{},
 	}
 
-	respondJSON(w, http.StatusOK, rewards)
+	return rewards, nil
 }
 
-func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// DistributeQuestRewards - TYPED response!
+func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(ctx context.Context, params api.DistributeQuestRewardsParams) (api.DistributeQuestRewardsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
 	experience := 1000
 	currency := 5000
 	success := true
-	distributionDetails := map[string]interface{}{
-		"experience_sent": true,
-		"currency_sent":   true,
-		"items_sent":      true,
+
+	// Distribution details as jx.Raw map
+	detailsJSON := jx.Raw(`{"experience_sent":true,"currency_sent":true,"items_sent":true}`)
+	distributionDetails := api.DistributeQuestRewardsOKDistributionDetails{
+		"experience_sent": detailsJSON,
+		"currency_sent":   detailsJSON,
+		"items_sent":      detailsJSON,
 	}
 
-	itemId1 := openapi_types.UUID(uuid.New())
-	itemId2 := openapi_types.UUID(uuid.New())
+	itemId1 := uuid.New()
+	itemId2 := uuid.New()
 	quantity1 := 1
 	quantity2 := 2
-	items := []struct {
-		ItemId   *openapi_types.UUID `json:"item_id,omitempty"`
-		Quantity *int                 `json:"quantity,omitempty"`
-	}{
+
+	items := []api.QuestRewardsItemsItem{
 		{
-			ItemId:   &itemId1,
-			Quantity: &quantity1,
+			ItemID:   api.NewOptUUID(itemId1),
+			Quantity: api.NewOptInt(quantity1),
 		},
 		{
-			ItemId:   &itemId2,
-			Quantity: &quantity2,
+			ItemID:   api.NewOptUUID(itemId2),
+			Quantity: api.NewOptInt(quantity2),
 		},
 	}
 
 	rewards := api.QuestRewards{
-		Experience: &experience,
-		Currency:   &currency,
-		Items:      &items,
-		Reputation: nil,
-		Titles:     nil,
+		Experience: api.NewOptInt(experience),
+		Currency:   api.NewOptInt(currency),
+		Items:      items,
+		Reputation: api.OptQuestRewardsReputation{},
+		Titles:     []string{},
 	}
 
-	response := map[string]interface{}{
-		"success":             success,
-		"rewards":             rewards,
-		"distribution_details": distributionDetails,
+	response := &api.DistributeQuestRewardsOK{
+		Success:             success,
+		Rewards:             rewards,
+		DistributionDetails: api.NewOptDistributeQuestRewardsOKDistributionDetails(distributionDetails),
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
 
-func (h *QuestRewardsEventsHandlers) GetQuestEvents(w http.ResponseWriter, r *http.Request, questId openapi_types.UUID, params api.GetQuestEventsParams) {
-	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+// GetQuestEvents - TYPED response!
+func (h *QuestRewardsEventsHandlers) GetQuestEvents(ctx context.Context, params api.GetQuestEventsParams) (api.GetQuestEventsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
-	eventId1 := openapi_types.UUID(uuid.New())
-	eventId2 := openapi_types.UUID(uuid.New())
-	eventId3 := openapi_types.UUID(uuid.New())
-	questInstanceId := openapi_types.UUID(uuid.New())
+	eventId1 := uuid.New()
+	eventId2 := uuid.New()
+	eventId3 := uuid.New()
+	questInstanceId := uuid.New()
 	now := time.Now()
-	eventType1 := api.QuestEventEventTypeStarted
-	eventType2 := api.QuestEventEventTypeObjectiveCompleted
-	eventType3 := api.QuestEventEventTypeCompleted
-	eventData1 := map[string]interface{}{
-		"objective_index": 0,
+
+	// Event data as jx.Raw
+	eventData1JSON := jx.Raw(`{"objective_index":0}`)
+	eventData2JSON := jx.Raw(`{"objective_index":1}`)
+	eventData3JSON := jx.Raw(`{"completion_time":` + strconv.FormatInt(now.Unix(), 10) + `}`)
+
+	eventData1 := api.QuestEventEventData{
+		"objective_index": eventData1JSON,
 	}
-	eventData2 := map[string]interface{}{
-		"objective_index": 1,
+	eventData2 := api.QuestEventEventData{
+		"objective_index": eventData2JSON,
 	}
-	eventData3 := map[string]interface{}{
-		"completion_time": now.Unix(),
+	eventData3 := api.QuestEventEventData{
+		"completion_time": eventData3JSON,
 	}
 
 	events := []api.QuestEvent{
 		{
-			Id:              &eventId1,
-			QuestInstanceId: &questInstanceId,
-			EventType:       eventType1,
+			ID:              api.NewOptUUID(eventId1),
+			QuestInstanceID: api.NewOptUUID(questInstanceId),
+			EventType:       api.QuestEventEventTypeStarted,
 			Timestamp:       now.Add(-48 * time.Hour),
-			EventData:       &eventData1,
+			EventData:       api.NewOptQuestEventEventData(eventData1),
 		},
 		{
-			Id:              &eventId2,
-			QuestInstanceId: &questInstanceId,
-			EventType:       eventType2,
+			ID:              api.NewOptUUID(eventId2),
+			QuestInstanceID: api.NewOptUUID(questInstanceId),
+			EventType:       api.QuestEventEventTypeObjectiveCompleted,
 			Timestamp:       now.Add(-24 * time.Hour),
-			EventData:       &eventData2,
+			EventData:       api.NewOptQuestEventEventData(eventData2),
 		},
 		{
-			Id:              &eventId3,
-			QuestInstanceId: &questInstanceId,
-			EventType:       eventType3,
+			ID:              api.NewOptUUID(eventId3),
+			QuestInstanceID: api.NewOptUUID(questInstanceId),
+			EventType:       api.QuestEventEventTypeCompleted,
 			Timestamp:       now,
-			EventData:       &eventData3,
+			EventData:       api.NewOptQuestEventEventData(eventData3),
 		},
 	}
 
 	total := len(events)
 
-	response := api.QuestEventsResponse{
+	response := &api.QuestEventsResponse{
 		Events: events,
 		Total:  total,
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	return response, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

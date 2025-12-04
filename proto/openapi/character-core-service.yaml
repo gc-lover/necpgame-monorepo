@@ -192,18 +192,19 @@ components:
           type: string
     CharacterFull:
       type: object
-      description: 'BACKEND NOTE: Core character data. Fields ordered for struct alignment.
-
-        Expected memory: ~160 bytes/instance. Hot path queries.
-
-        '
+      description: |
+        BACKEND NOTE: Core character data (hot path, 1.5k+ RPS).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~160 bytes/instance.
       properties:
+        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
+        # String fields (16 bytes each)
         name:
           type: string
         class:
@@ -229,6 +230,7 @@ components:
           type: string
           format: date-time
           nullable: true
+        # Objects/pointers (8 bytes each)
         attributes:
           type: object
           additionalProperties: true
@@ -238,21 +240,27 @@ components:
         stats:
           type: object
           additionalProperties: true
+        # int32 fields (4 bytes)
         level:
           type: integer
           format: int32
           minimum: 1
+        # bool fields last (1 byte)
         deleted:
           type: boolean
     ValidateNameResponse:
       type: object
+      description: |
+        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory: ~24 bytes/instance.
       properties:
+        # String fields first (16 bytes)
         message:
           type: string
           nullable: true
+        # bool fields last (1 byte)
         available:
           type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DeleteCharacterRequest:
       type: object
       required:

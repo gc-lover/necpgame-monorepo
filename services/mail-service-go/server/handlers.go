@@ -42,7 +42,7 @@ func (h *Handlers) GetMail(ctx context.Context, params api.GetMailParams) (api.G
 
 	response, err := h.service.GetMail(ctx, params.MailID.String())
 	if err != nil {
-		return &api.GetMailNotFound{Error: "NotFound", Message: "Mail not found"}, nil
+		return &api.Error{Error: "NotFound", Message: "Mail not found"}, nil
 	}
 	return response, nil
 }
@@ -66,7 +66,7 @@ func (h *Handlers) SendMail(ctx context.Context, req *api.SendMailRequest) (api.
 
 	response, err := h.service.SendMail(ctx, req)
 	if err != nil {
-		return &api.SendMailBadRequest{Error: "BadRequest", Message: err.Error()}, nil
+		return &api.Error{Error: "BadRequest", Message: err.Error()}, nil
 	}
 	return response, nil
 }
