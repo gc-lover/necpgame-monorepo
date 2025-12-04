@@ -6,25 +6,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-moderation-service-go/pkg/api"
 )
 
-// BenchmarkHandler benchmarks handler performance
+// BenchmarkModerateMessage benchmarks ModerateMessage handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkHandler(b *testing.B) {
-	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+func BenchmarkModerateMessage(b *testing.B) {
+	handlers := NewChatModerationHandlers()
 
 	ctx := context.Background()
+	req := &api.ModerateMessageRequest{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// TODO: Add actual handler call based on service API
-		// Example:
-		// _, _ = handlers.Get(ctx, api.GetParams{ID: uuid.New()})
-		_ = handlers
-		_ = ctx
+		_, _ = handlers.ModerateMessage(ctx, req)
 	}
 }

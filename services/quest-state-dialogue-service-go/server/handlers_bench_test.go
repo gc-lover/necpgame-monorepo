@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-state-dialogue-service-go/pkg/api"
 )
 
 // BenchmarkGetQuestState benchmarks GetQuestState handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetQuestState(b *testing.B) {
-	handlers := NewHandlers()
+	handlers := &Handlers{}
 
 	ctx := context.Background()
 	params := api.GetQuestStateParams{
@@ -29,25 +30,28 @@ func BenchmarkGetQuestState(b *testing.B) {
 // BenchmarkUpdateQuestState benchmarks UpdateQuestState handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkUpdateQuestState(b *testing.B) {
-	handlers := NewHandlers()
+	handlers := &Handlers{}
 
 	ctx := context.Background()
-	req := &api.UpdateQuestStateRequest{
+	req := &api.UpdateStateRequest{
 		// TODO: Fill request fields based on API spec
+	}
+	params := api.UpdateQuestStateParams{
+		QuestID: uuid.New(),
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.UpdateQuestState(ctx, req)
+		_, _ = handlers.UpdateQuestState(ctx, req, params)
 	}
 }
 
 // BenchmarkGetQuestDialogue benchmarks GetQuestDialogue handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetQuestDialogue(b *testing.B) {
-	handlers := NewHandlers()
+	handlers := &Handlers{}
 
 	ctx := context.Background()
 	params := api.GetQuestDialogueParams{

@@ -6,25 +6,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/social-chat-format-service-go/pkg/api"
 )
 
-// BenchmarkHandler benchmarks handler performance
+// BenchmarkFormatChatMessage benchmarks FormatChatMessage handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkHandler(b *testing.B) {
-	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+func BenchmarkFormatChatMessage(b *testing.B) {
+	handlers := NewChatFormatHandlers()
 
 	ctx := context.Background()
+	req := &api.FormatMessageRequest{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// TODO: Add actual handler call based on service API
-		// Example:
-		// _, _ = handlers.Get(ctx, api.GetParams{ID: uuid.New()})
-		_ = handlers
-		_ = ctx
+		_, _ = handlers.FormatChatMessage(ctx, req)
 	}
 }

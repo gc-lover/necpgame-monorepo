@@ -12,13 +12,19 @@ import (
 var (
 	// goroutineCount is a Prometheus gauge for current goroutine count
 	goroutineCount = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "go_goroutines",
-		Help: "Current number of goroutines",
+		Name: "combat_sessions_goroutines",
+		Help: "Current number of goroutines in combat-sessions-service",
 	})
 )
 
+var goroutineCountRegistered bool
+
 func init() {
-	prometheus.MustRegister(goroutineCount)
+	// Only register if not already registered (avoid duplicate registration in tests)
+	if !goroutineCountRegistered {
+		prometheus.MustRegister(goroutineCount)
+		goroutineCountRegistered = true
+	}
 }
 
 // GoroutineMonitor monitors goroutine count and detects leaks
