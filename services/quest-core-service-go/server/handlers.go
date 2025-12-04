@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/necpgame/quest-core-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/google/uuid"
 )
@@ -182,6 +182,8 @@ func (h *QuestHandlers) CompleteQuest(w http.ResponseWriter, r *http.Request, qu
 
 	respondJSON(w, http.StatusOK, response)
 }
+
+
 
 
 

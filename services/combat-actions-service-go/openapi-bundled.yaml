@@ -1,0 +1,463 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Actions Service API
+  description: API для боевых действий в сессиях
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Combat Actions
+    description: Боевые действия в сессиях
+paths:
+  /gameplay/combat/sessions/{sessionId}/attack:
+    post:
+      tags:
+        - Combat Actions
+      summary: Выполнить атаку
+      operationId: processAttack
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttackRequest'
+      responses:
+        '200':
+          description: Атака обработана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttackResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/sessions/{sessionId}/ability:
+    post:
+      tags:
+        - Combat Actions
+      summary: Использовать способность в бою
+      operationId: useCombatAbility
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseAbilityRequest'
+      responses:
+        '200':
+          description: Способность использована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/sessions/{sessionId}/defend:
+    post:
+      tags:
+        - Combat Actions
+      summary: Защититься в бою
+      operationId: defendInCombat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefendRequest'
+      responses:
+        '200':
+          description: Защита активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/sessions/{sessionId}/item:
+    post:
+      tags:
+        - Combat Actions
+      summary: Использовать предмет в бою
+      operationId: useCombatItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemRequest'
+      responses:
+        '200':
+          description: Предмет использован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/calculate-damage:
+    post:
+      tags:
+        - Combat Actions
+      summary: Рассчитать урон
+      operationId: calculateDamage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateDamageRequest'
+      responses:
+        '200':
+          description: Урон рассчитан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/apply-effects:
+    post:
+      tags:
+        - Combat Actions
+      summary: Применить эффекты
+      operationId: applyEffects
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectsRequest'
+      responses:
+        '200':
+          description: Эффекты применены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectsResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    AttackRequest:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - attack_type
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        attack_type:
+          type: string
+          enum:
+            - melee
+            - ranged
+            - ability
+        ability_id:
+          type: string
+          nullable: true
+    AttackResult:
+      type: object
+      properties:
+        damage:
+          type: integer
+          minimum: 0
+        critical:
+          type: boolean
+        status_effects_applied:
+          type: array
+          items:
+            type: object
+        target_health_after:
+          type: integer
+        turn_ended:
+          type: boolean
+        next_turn:
+          type: string
+          format: uuid
+          nullable: true
+    UseAbilityRequest:
+      type: object
+      required:
+        - attacker_id
+        - ability_id
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        ability_id:
+          type: string
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+    DefendRequest:
+      type: object
+      required:
+        - defender_id
+      properties:
+        defender_id:
+          type: string
+          format: uuid
+        defense_type:
+          type: string
+          enum:
+            - block
+            - dodge
+            - parry
+    UseItemRequest:
+      type: object
+      required:
+        - user_id
+        - item_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+    CombatActionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        action_type:
+          type: string
+        damage:
+          type: integer
+          nullable: true
+        effects_applied:
+          type: array
+          items:
+            type: object
+        turn_ended:
+          type: boolean
+        next_turn:
+          type: string
+          format: uuid
+          nullable: true
+    CalculateDamageRequest:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - attack_type
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        attack_type:
+          type: string
+          enum:
+            - melee
+            - ranged
+            - ability
+        ability_id:
+          type: string
+          nullable: true
+        modifiers:
+          type: object
+          additionalProperties: true
+    DamageCalculationResult:
+      type: object
+      properties:
+        base_damage:
+          type: integer
+        final_damage:
+          type: integer
+        critical:
+          type: boolean
+        modifiers:
+          type: object
+          additionalProperties: true
+        blocked:
+          type: boolean
+        blocked_amount:
+          type: integer
+          nullable: true
+    ApplyEffectsRequest:
+      type: object
+      required:
+        - target_id
+        - effects
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        effects:
+          type: array
+          items:
+            type: object
+    EffectsResult:
+      type: object
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        effects_applied:
+          type: array
+          items:
+            type: object
+        effects_removed:
+          type: array
+          items:
+            type: object
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR

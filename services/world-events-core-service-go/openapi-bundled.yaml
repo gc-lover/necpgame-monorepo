@@ -1,0 +1,714 @@
+openapi: 3.0.3
+info:
+  title: World Events System - Core Service API
+  description: API для управления жизненным циклом мировых событий
+  version: 1.0.0
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: World Events
+    description: Управление мировыми событиями
+  - name: Event Lifecycle
+    description: Управление жизненным циклом событий
+paths:
+  /world/events:
+    get:
+      tags:
+        - World Events
+      summary: Получить список всех событий с фильтрацией
+      operationId: listWorldEvents
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/WorldEventStatus'
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/WorldEventType'
+        - name: scale
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/WorldEventScale'
+        - name: frequency
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/WorldEventFrequency'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - World Events
+      summary: Создать новое событие
+      operationId: createWorldEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorldEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/{id}:
+    get:
+      tags:
+        - World Events
+      summary: Получить детали события
+      operationId: getWorldEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+        - World Events
+      summary: Обновить событие
+      operationId: updateWorldEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorldEventRequest'
+      responses:
+        '200':
+          description: Событие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - World Events
+      summary: Удалить событие
+      operationId: deleteWorldEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Событие удалено
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/{id}/announce:
+    post:
+      tags:
+        - Event Lifecycle
+      summary: Анонсировать событие
+      operationId: announceWorldEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Событие анонсировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/{id}/activate:
+    post:
+      tags:
+        - Event Lifecycle
+      summary: Активировать событие
+      operationId: activateWorldEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Событие активировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/{id}/deactivate:
+    post:
+      tags:
+        - Event Lifecycle
+      summary: Деактивировать событие
+      operationId: deactivateWorldEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Событие деактивировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/active:
+    get:
+      tags:
+        - World Events
+      summary: Получить список активных событий
+      operationId: getActiveWorldEvents
+      responses:
+        '200':
+          description: Список активных событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventsListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/planned:
+    get:
+      tags:
+        - World Events
+      summary: Получить список запланированных событий
+      operationId: getPlannedWorldEvents
+      responses:
+        '200':
+          description: Список запланированных событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventsListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/by-scale/{scale}:
+    get:
+      tags:
+        - World Events
+      summary: Получить события по масштабу
+      operationId: getWorldEventsByScale
+      parameters:
+        - name: scale
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WorldEventScale'
+      responses:
+        '200':
+          description: Список событий по масштабу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/by-type/{type}:
+    get:
+      tags:
+        - World Events
+      summary: Получить события по типу
+      operationId: getWorldEventsByType
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WorldEventType'
+      responses:
+        '200':
+          description: Список событий по типу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/events/by-frequency/{frequency}:
+    get:
+      tags:
+        - World Events
+      summary: Получить события по частоте
+      operationId: getWorldEventsByFrequency
+      parameters:
+        - name: frequency
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WorldEventFrequency'
+      responses:
+        '200':
+          description: Список событий по частоте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    WorldEventStatus:
+      type: string
+      enum:
+        - PLANNED
+        - ANNOUNCED
+        - ACTIVE
+        - COOLDOWN
+        - ARCHIVED
+      description: Статус мирового события
+    WorldEventType:
+      type: string
+      enum:
+        - STORY
+        - TECHNOLOGICAL
+        - ECONOMIC
+        - POLITICAL
+        - MILITARY
+        - SPORTS
+        - ENVIRONMENTAL
+      description: Тип мирового события
+    WorldEventScale:
+      type: string
+      enum:
+        - GLOBAL
+        - REGIONAL
+        - CITY
+        - LOCAL
+      description: Масштаб мирового события
+    WorldEventFrequency:
+      type: string
+      enum:
+        - ONE_TIME
+        - PERIODIC
+        - REGULAR
+      description: Частота мирового события
+    EventTargetSystem:
+      type: string
+      enum:
+        - ECONOMY
+        - SOCIAL
+        - GAMEPLAY
+        - REPUTATION
+        - QUEST
+      description: Целевая система для эффекта
+    EventEffect:
+      type: object
+      required:
+        - id
+        - event_id
+        - target_system
+        - effect_type
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор эффекта
+        event_id:
+          type: string
+          format: uuid
+          description: ID события
+        target_system:
+          $ref: '#/components/schemas/EventTargetSystem'
+        effect_type:
+          type: string
+          description: Тип эффекта
+          example: price_modifier
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Параметры эффекта
+          example:
+            resource_type: weapons
+            modifier: 0.15
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала эффекта
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания эффекта
+        is_active:
+          type: boolean
+          description: Активен ли эффект
+    WorldEvent:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - type
+        - scale
+        - frequency
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор события
+        title:
+          type: string
+          description: Название события
+          example: Технологический прорыв в киберимплантах
+        description:
+          type: string
+          description: Описание события
+          example: Новая технология киберимплантов увеличивает эффективность на 30%
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        scale:
+          $ref: '#/components/schemas/WorldEventScale'
+        frequency:
+          $ref: '#/components/schemas/WorldEventFrequency'
+        status:
+          $ref: '#/components/schemas/WorldEventStatus'
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала события
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания события
+        duration:
+          type: string
+          format: duration
+          nullable: true
+          description: Продолжительность события
+          example: P7D
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventEffect'
+          description: Эффекты события
+        target_regions:
+          type: array
+          items:
+            type: string
+          description: Целевые регионы
+          example:
+            - night-city
+            - pacific-northwest
+        target_factions:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Целевые фракции
+        prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Предварительные условия (ID других событий)
+        cooldown_duration:
+          type: string
+          format: duration
+          nullable: true
+          description: Длительность cooldown после события
+          example: P30D
+        max_concurrent:
+          type: integer
+          nullable: true
+          description: Максимальное количество одновременных событий этого типа
+        version:
+          type: integer
+          description: Версия события
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+    WorldEventsListResponse:
+      type: object
+      required:
+        - events
+        - total
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorldEvent'
+        total:
+          type: integer
+          description: Общее количество событий
+        limit:
+          type: integer
+        offset:
+          type: integer
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    CreateWorldEventRequest:
+      type: object
+      required:
+        - title
+        - description
+        - type
+        - scale
+        - frequency
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        scale:
+          $ref: '#/components/schemas/WorldEventScale'
+        frequency:
+          $ref: '#/components/schemas/WorldEventFrequency'
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        duration:
+          type: string
+          format: duration
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              target_system:
+                $ref: '#/components/schemas/EventTargetSystem'
+              effect_type:
+                type: string
+              parameters:
+                type: object
+                additionalProperties: true
+        target_regions:
+          type: array
+          items:
+            type: string
+        target_factions:
+          type: array
+          items:
+            type: string
+            format: uuid
+        prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+        cooldown_duration:
+          type: string
+          format: duration
+        max_concurrent:
+          type: integer
+          minimum: 1
+    UpdateWorldEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        scale:
+          $ref: '#/components/schemas/WorldEventScale'
+        frequency:
+          $ref: '#/components/schemas/WorldEventFrequency'
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        duration:
+          type: string
+          format: duration
+        effects:
+          type: array
+          items:
+            type: object
+        target_regions:
+          type: array
+          items:
+            type: string
+        target_factions:
+          type: array
+          items:
+            type: string
+            format: uuid
+        prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+        cooldown_duration:
+          type: string
+          format: duration
+        max_concurrent:
+          type: integer
+          minimum: 1
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND

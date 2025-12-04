@@ -62,3 +62,5 @@ ENTRYPOINT ["/app/projectile-core-service"]
 
 
 
+
+

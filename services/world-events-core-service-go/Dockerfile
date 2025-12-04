@@ -37,3 +37,5 @@ ENTRYPOINT ["/app/world-events-core-service"]
 
 
 
+
+

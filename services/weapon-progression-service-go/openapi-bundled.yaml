@@ -1,0 +1,495 @@
+openapi: 3.0.0
+info:
+  title: Weapon Progression Service API
+  description: Service for managing weapon progression, upgrades, perks, and mastery
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
+tags:
+  - name: progression
+    description: Weapon progression and upgrades
+  - name: perks
+    description: Weapon perks management
+  - name: mastery
+    description: Weapon mastery tracking
+paths:
+  /api/v1/weapons/progression/{weaponId}:
+    get:
+      summary: Get weapon progression
+      description: Retrieve progression data for a specific weapon instance
+      tags:
+        - progression
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Weapon instance ID
+      responses:
+        '200':
+          description: Weapon progression data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponProgression'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+    post:
+      summary: Upgrade weapon
+      description: Upgrade weapon to next level
+      tags:
+        - progression
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeWeaponRequest'
+      responses:
+        '200':
+          description: Weapon upgraded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponProgression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/perks:
+    get:
+      summary: List all weapon perks
+      description: Get all available weapon perks with optional filtering
+      tags:
+        - perks
+      parameters:
+        - name: weaponType
+          in: query
+          schema:
+            type: string
+            enum:
+              - assault_rifle
+              - sniper_rifle
+              - shotgun
+              - pistol
+              - smg
+          description: Filter by weapon type
+        - $ref: '#/components/parameters/Page'
+        - $ref: common.yaml#/components/parameters/PageSize
+      responses:
+        '200':
+          description: List of weapon perks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  perks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeaponPerk'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/perks/{perkId}/unlock:
+    post:
+      summary: Unlock weapon perk
+      description: Unlock a specific perk for player's weapon type
+      tags:
+        - perks
+      parameters:
+        - name: perkId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockPerkRequest'
+      responses:
+        '200':
+          description: Perk unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockPerkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/mastery/{weaponType}:
+    get:
+      summary: Get weapon mastery
+      description: Retrieve player's mastery for specific weapon type
+      tags:
+        - mastery
+      parameters:
+        - name: weaponType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - assault_rifle
+              - sniper_rifle
+              - shotgun
+              - pistol
+              - smg
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Weapon mastery data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponMastery'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+  /api/v1/weapons/mastery:
+    get:
+      summary: Get all weapon masteries
+      description: Retrieve all weapon masteries for a player
+      tags:
+        - mastery
+      parameters:
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of weapon masteries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  masteries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeaponMastery'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+components:
+  schemas:
+    WeaponProgression:
+      type: object
+      properties:
+        weaponInstanceId:
+          type: string
+          format: uuid
+          description: Weapon instance ID
+        upgradeLevel:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Current upgrade level
+        experience:
+          type: integer
+          minimum: 0
+          description: Weapon experience points
+        unlockedPerks:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Array of unlocked perk IDs
+        stats:
+          $ref: '#/components/schemas/WeaponStats'
+        nextUpgradeCost:
+          type: integer
+          description: Cost for next upgrade
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - weaponInstanceId
+        - upgradeLevel
+        - experience
+        - unlockedPerks
+        - stats
+    WeaponStats:
+      type: object
+      properties:
+        damageBonus:
+          type: number
+          format: float
+          description: Damage bonus percentage (0.05 = 5%)
+        accuracyBonus:
+          type: number
+          format: float
+          description: Accuracy bonus percentage
+        rangeBonus:
+          type: number
+          format: float
+          description: Range bonus percentage
+        criticalChanceBonus:
+          type: number
+          format: float
+          description: Critical chance bonus percentage
+      required:
+        - damageBonus
+        - accuracyBonus
+        - rangeBonus
+        - criticalChanceBonus
+    UpgradeWeaponRequest:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+          description: Player ID performing upgrade
+        materials:
+          type: object
+          description: Materials used for upgrade
+          additionalProperties:
+            type: integer
+      required:
+        - playerId
+    WeaponPerk:
+      type: object
+      properties:
+        perkId:
+          type: string
+          format: uuid
+        weaponType:
+          type: string
+          enum:
+            - assault_rifle
+            - sniper_rifle
+            - shotgun
+            - pistol
+            - smg
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        effect:
+          type: object
+          description: Perk effect definition
+          additionalProperties: true
+        unlockRequirements:
+          type: object
+          properties:
+            playerLevel:
+              type: integer
+              minimum: 0
+            weaponMastery:
+              type: integer
+              minimum: 0
+              maximum: 100
+            achievement:
+              type: string
+              format: uuid
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - perkId
+        - weaponType
+        - name
+        - description
+        - effect
+        - unlockRequirements
+    UnlockPerkRequest:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        weaponInstanceId:
+          type: string
+          format: uuid
+      required:
+        - playerId
+        - weaponInstanceId
+    UnlockPerkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        perk:
+          $ref: '#/components/schemas/WeaponPerk'
+        message:
+          type: string
+      required:
+        - success
+    WeaponMastery:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        weaponType:
+          type: string
+          enum:
+            - assault_rifle
+            - sniper_rifle
+            - shotgun
+            - pistol
+            - smg
+        usesCount:
+          type: integer
+          minimum: 0
+          description: Number of times weapon type was used
+        killsCount:
+          type: integer
+          minimum: 0
+          description: Number of kills with weapon type
+        masteryLevel:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Calculated mastery level
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - playerId
+        - weaponType
+        - usesCount
+        - killsCount
+        - masteryLevel
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    PaginationResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          description: Список элементов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество элементов
+        limit:
+          type: integer
+          minimum: 1
+          description: Количество элементов на странице
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение для пагинации
+        has_more:
+          type: boolean
+          description: Есть ли еще элементы
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  responses:
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Номер страницы

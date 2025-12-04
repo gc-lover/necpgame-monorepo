@@ -28,8 +28,13 @@ func main() {
 	db.SetConnMaxLifetime(5 * time.Minute)
 	db.SetConnMaxIdleTime(10 * time.Minute)
 
-	repository := server.NewPostgresRepository(db)
-	service := server.NewAchievementService(repository)
+	repository, err := server.NewRepository(dbURL)
+	if err != nil {
+		log.Fatalf("Failed to initialize repository: %v", err)
+	}
+	defer repository.Close()
+
+	service := server.NewService(repository)
 
 	addr := getEnv("HTTP_ADDR", ":8097")
 	httpServer := server.NewHTTPServer(addr, service)
