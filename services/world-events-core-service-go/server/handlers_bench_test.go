@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"WorldEvent"
-	"github.com/google/uuid"
 )
 
 // BenchmarkCreateWorldEvent benchmarks CreateWorldEvent handler

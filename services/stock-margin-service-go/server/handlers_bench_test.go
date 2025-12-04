@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/necpgame/stock-margin-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkGetMarginAccount benchmarks GetMarginAccount handler

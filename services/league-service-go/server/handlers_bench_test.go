@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gc-lover/necpgame-monorepo/services/league-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkHealthCheck benchmarks HealthCheck handler

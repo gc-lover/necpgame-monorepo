@@ -4,8 +4,6 @@ package server
 import (
 	"context"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkGetProjectileForms benchmarks GetProjectileForms handler

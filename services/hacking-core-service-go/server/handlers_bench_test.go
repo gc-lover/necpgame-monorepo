@@ -4,8 +4,6 @@ package server
 import (
 	"context"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkInitiateHack benchmarks InitiateHack handler

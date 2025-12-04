@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkActivateAbility benchmarks ActivateAbility handler

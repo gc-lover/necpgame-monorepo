@@ -5,8 +5,6 @@ import (
 	"context"
 	"// Issue: #130/pkg/api"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkListCombatSessions benchmarks ListCombatSessions handler

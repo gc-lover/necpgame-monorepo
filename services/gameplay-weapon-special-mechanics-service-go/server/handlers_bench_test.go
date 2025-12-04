@@ -5,8 +5,6 @@ import (
 	"context"
 	"// Issue: #1595 - ogen migration/pkg/api"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkApplySpecialMechanics benchmarks ApplySpecialMechanics handler

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/necpgame/seasonal-challenges-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkGetCurrentSeason benchmarks GetCurrentSeason handler

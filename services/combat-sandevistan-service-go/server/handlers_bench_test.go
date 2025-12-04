@@ -5,8 +5,6 @@ import (
 	"context"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-sandevistan-service-go/pkg/api"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkActivateSandevistan benchmarks ActivateSandevistan handler

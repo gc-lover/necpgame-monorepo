@@ -5,8 +5,6 @@ import (
 	"context"
 	"// Issue: #1595/pkg/api"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // BenchmarkGetAIProfile benchmarks GetAIProfile handler

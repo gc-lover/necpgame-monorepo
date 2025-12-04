@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/necpgame/companion-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkHealthCheck benchmarks HealthCheck handler

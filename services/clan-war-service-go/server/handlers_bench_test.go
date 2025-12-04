@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/necpgame/clan-war-service-go/pkg/api"
-	"github.com/google/uuid"
 )
 
 // BenchmarkDeclareWar benchmarks DeclareWar handler
