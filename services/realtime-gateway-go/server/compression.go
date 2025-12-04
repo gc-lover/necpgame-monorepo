@@ -3,7 +3,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/klauspost/compress/zstd"
@@ -12,8 +11,6 @@ import (
 
 // AdaptiveCompressor выбирает compression в зависимости от типа данных
 type AdaptiveCompressor struct {
-	lz4Encoder *lz4.Compressor
-	lz4Decoder *lz4.Decompressor
 	zstdEncoder *zstd.Encoder
 	zstdDecoder *zstd.Decoder
 	threshold   int // Минимальный размер для compression
@@ -32,8 +29,6 @@ func NewAdaptiveCompressor() (*AdaptiveCompressor, error) {
 	}
 
 	return &AdaptiveCompressor{
-		lz4Encoder:  &lz4.Compressor{},
-		lz4Decoder:  &lz4.Decompressor{},
 		zstdEncoder: zstdEncoder,
 		zstdDecoder: zstdDecoder,
 		threshold:   100, // <100 bytes: no compression (overhead > gain)
