@@ -90,8 +90,12 @@ func setupTestEngramTransferService() (*EngramTransferService, *mockEngramTransf
 	mockRepo := new(mockEngramTransferRepository)
 	mockCreationRepo := new(mockEngramCreationRepositoryForTransfer)
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		DB:   1,
+		Addr:         "localhost:6379",
+		DB:           1,
+		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		PoolTimeout:  1 * time.Second,
 	})
 
 	service := NewEngramTransferService(mockRepo, mockCreationRepo, redisClient)

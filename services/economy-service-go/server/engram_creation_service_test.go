@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -50,8 +51,12 @@ func (m *mockEngramCreationRepository) CompleteCreation(ctx context.Context, cre
 func setupTestEngramCreationService() (*EngramCreationService, *mockEngramCreationRepository, *redis.Client) {
 	mockRepo := new(mockEngramCreationRepository)
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		DB:   1,
+		Addr:         "localhost:6379",
+		DB:           1,
+		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		PoolTimeout:  1 * time.Second,
 	})
 
 	service := NewEngramCreationService(mockRepo, redisClient)

@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -45,8 +46,12 @@ func (m *mockWeaponCombinationsRepository) GetWeaponModifiers(ctx context.Contex
 func setupTestWeaponCombinationsService() (*WeaponCombinationsService, *mockWeaponCombinationsRepository, *redis.Client) {
 	mockRepo := new(mockWeaponCombinationsRepository)
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		DB:   1,
+		Addr:         "localhost:6379",
+		DB:           1,
+		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		PoolTimeout:  1 * time.Second,
 	})
 
 	service := &WeaponCombinationsService{

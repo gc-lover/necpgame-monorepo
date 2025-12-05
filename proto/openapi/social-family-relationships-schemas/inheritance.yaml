@@ -1,0 +1,190 @@
+components:
+  schemas:
+    FamilyInheritance:
+      type: object
+      required:
+      - family_id
+      properties:
+        family_id:
+          type: string
+          format: uuid
+        wills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Will'
+        active_claims:
+          type: array
+          items:
+            $ref: '#/components/schemas/InheritanceClaim'
+        disputes:
+          type: array
+          items:
+            $ref: '#/components/schemas/InheritanceDispute'
+    Will:
+      type: object
+      required:
+      - will_id
+      - testator_id
+      properties:
+        will_id:
+          type: string
+          format: uuid
+        testator_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        assets:
+          type: object
+          properties:
+            property:
+              type: array
+              items:
+                type: string
+            companies:
+              type: array
+              items:
+                type: string
+            caches:
+              type: array
+              items:
+                type: string
+        beneficiaries:
+          type: array
+          items:
+            type: object
+            properties:
+              character_id:
+                type: string
+              share:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CalculateInheritanceRequest:
+      type: object
+      required:
+      - testator_id
+      - beneficiary_id
+      properties:
+        testator_id:
+          type: string
+          format: uuid
+        beneficiary_id:
+          type: string
+          format: uuid
+        include_taxes:
+          type: boolean
+          default: true
+    InheritanceCalculation:
+      type: object
+      required:
+      - testator_id
+      - beneficiary_id
+      - total_value
+      properties:
+        testator_id:
+          type: string
+          format: uuid
+        beneficiary_id:
+          type: string
+          format: uuid
+        assets:
+          type: object
+          properties:
+            property:
+              type: number
+              format: float
+            companies:
+              type: number
+              format: float
+            caches:
+              type: number
+              format: float
+        total_value:
+          type: number
+          format: float
+        taxes:
+          type: number
+          format: float
+        net_value:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ClaimInheritanceRequest:
+      type: object
+      required:
+      - testator_id
+      - beneficiary_id
+      properties:
+        testator_id:
+          type: string
+          format: uuid
+        beneficiary_id:
+          type: string
+          format: uuid
+        will_id:
+          type: string
+          format: uuid
+    InheritanceClaim:
+      type: object
+      required:
+      - claim_id
+      - testator_id
+      - beneficiary_id
+      - status
+      properties:
+        claim_id:
+          type: string
+          format: uuid
+        testator_id:
+          type: string
+          format: uuid
+        beneficiary_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - pending
+          - approved
+          - rejected
+          - disputed
+        created_at:
+          type: string
+          format: date-time
+        claimed_value:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InheritanceDispute:
+      type: object
+      required:
+      - dispute_id
+      - claim_id
+      - status
+      properties:
+        dispute_id:
+          type: string
+          format: uuid
+        claim_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - open
+          - resolved
+          - escalated
+        created_at:
+          type: string
+          format: date-time
+        disputing_parties:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+

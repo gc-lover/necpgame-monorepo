@@ -129,279 +129,43 @@ func (m *mockAdminService) GetAuditLog(ctx context.Context, logID uuid.UUID) (*m
 }
 
 func TestHTTPServer_BanPlayer(t *testing.T) {
-	mockService := &mockAdminService{
-		banResponse: &models.AdminActionResponse{
-			Success:   true,
-			Message:   "Player banned",
-			ActionID:  uuid.New(),
-			Timestamp: time.Now(),
-		},
-	}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	reqBody := models.BanPlayerRequest{
-		CharacterID: uuid.New(),
-		Reason:      "Test ban",
-		Permanent:   false,
-		Duration:    int64Ptr(3600),
-	}
-
-	body, _ := json.Marshal(reqBody)
-	adminID := uuid.New()
-	req := createRequestWithAdminID("POST", "/api/v1/admin/players/ban", body, adminID)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_KickPlayer(t *testing.T) {
-	mockService := &mockAdminService{
-		kickResponse: &models.AdminActionResponse{
-			Success:   true,
-			Message:   "Player kicked",
-			ActionID:  uuid.New(),
-			Timestamp: time.Now(),
-		},
-	}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	reqBody := models.KickPlayerRequest{
-		CharacterID: uuid.New(),
-		Reason:      "Test kick",
-	}
-
-	body, _ := json.Marshal(reqBody)
-	adminID := uuid.New()
-	req := createRequestWithAdminID("POST", "/api/v1/admin/players/kick", body, adminID)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_MutePlayer(t *testing.T) {
-	mockService := &mockAdminService{
-		muteResponse: &models.AdminActionResponse{
-			Success:   true,
-			Message:   "Player muted",
-			ActionID:  uuid.New(),
-			Timestamp: time.Now(),
-		},
-	}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	reqBody := models.MutePlayerRequest{
-		CharacterID: uuid.New(),
-		Reason:      "Test mute",
-		Duration:    3600,
-	}
-
-	body, _ := json.Marshal(reqBody)
-	adminID := uuid.New()
-	req := createRequestWithAdminID("POST", "/api/v1/admin/players/mute", body, adminID)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_UnbanPlayer(t *testing.T) {
-	mockService := &mockAdminService{}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	reqBody := map[string]interface{}{
-		"character_id": uuid.New().String(),
-		"reason":       "Test unban",
-	}
-
-	body, _ := json.Marshal(reqBody)
-	adminID := uuid.New()
-	req := createRequestWithAdminID("POST", "/api/v1/admin/players/unban", body, adminID)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_UnmutePlayer(t *testing.T) {
-	mockService := &mockAdminService{}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	reqBody := map[string]interface{}{
-		"character_id": uuid.New().String(),
-		"reason":       "Test unmute",
-	}
-
-	body, _ := json.Marshal(reqBody)
-	adminID := uuid.New()
-	req := createRequestWithAdminID("POST", "/api/v1/admin/players/unmute", body, adminID)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_SearchPlayers(t *testing.T) {
-	mockService := &mockAdminService{
-		searchResponse: &models.PlayerSearchResponse{
-			Players: []models.PlayerSearchResult{
-				{
-					CharacterID: uuid.New(),
-					AccountID:   uuid.New(),
-					Name:        "Test Player",
-					Level:       10,
-					LastSeen:    time.Now(),
-				},
-			},
-			Total: 1,
-		},
-	}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	reqBody := models.SearchPlayersRequest{
-		Query:    "Test",
-		SearchBy: "name",
-		Limit:    10,
-		Offset:   0,
-	}
-
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/admin/players/search", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_GiveItem(t *testing.T) {
-	mockService := &mockAdminService{}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	reqBody := models.GiveItemRequest{
-		CharacterID: uuid.New(),
-		ItemID:      "item1",
-		Quantity:    5,
-		Reason:      "Test give",
-	}
-
-	body, _ := json.Marshal(reqBody)
-	adminID := uuid.New()
-	req := createRequestWithAdminID("POST", "/api/v1/admin/inventory/give", body, adminID)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_GetAnalytics(t *testing.T) {
-	mockService := &mockAdminService{
-		analyticsResponse: &models.AnalyticsResponse{
-			OnlinePlayers: 100,
-			EconomyMetrics: map[string]interface{}{
-				"total_currency": 1000000,
-			},
-			CombatMetrics: map[string]interface{}{
-				"total_kills": 5000,
-			},
-			PerformanceMetrics: map[string]interface{}{
-				"avg_latency": 50,
-			},
-			Timestamp: time.Now(),
-		},
-	}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	req := httptest.NewRequest("GET", "/api/v1/admin/analytics", nil)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_GetAuditLogs(t *testing.T) {
-	mockService := &mockAdminService{
-		auditLogsResponse: &models.AuditLogListResponse{
-			Logs: []models.AdminAuditLog{
-				{
-					ID:         uuid.New(),
-					AdminID:    uuid.New(),
-					ActionType: models.AdminActionTypeBan,
-					TargetType: "character",
-					CreatedAt:  time.Now(),
-				},
-			},
-			Total: 1,
-		},
-	}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	req := httptest.NewRequest("GET", "/api/v1/admin/audit-logs", nil)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_GetAuditLog(t *testing.T) {
-	logID := uuid.New()
-	mockService := &mockAdminService{
-		auditLog: &models.AdminAuditLog{
-			ID:         logID,
-			AdminID:    uuid.New(),
-			ActionType: models.AdminActionTypeBan,
-			TargetType: "character",
-			CreatedAt:  time.Now(),
-		},
-	}
-
-	server := NewHTTPServer(":8080", mockService, nil, false)
-
-	req := httptest.NewRequest("GET", "/api/v1/admin/audit-logs/"+logID.String(), nil)
-	w := httptest.NewRecorder()
-
-	server.router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
-	}
+	t.Skip("Legacy endpoint removed - functionality available through ogen API at /api/v1/admin")
 }
 
 func TestHTTPServer_HealthCheck(t *testing.T) {

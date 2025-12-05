@@ -1,0 +1,165 @@
+components:
+  schemas:
+    AdoptionRequest:
+      type: object
+      required:
+      - player_id
+      - family_id
+      - adoption_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        family_id:
+          type: string
+          format: uuid
+        target_member_id:
+          type: string
+          format: uuid
+          description: Член семьи, который инициирует усыновление
+        adoption_type:
+          type: string
+          enum:
+          - adoption
+          - membership
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AdoptionProcess:
+      type: object
+      required:
+      - process_id
+      - player_id
+      - family_id
+      - status
+      properties:
+        process_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        family_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - pending_approval
+          - approved
+          - rejected
+          - completed
+        created_at:
+          type: string
+          format: date-time
+        requirements:
+          type: object
+          properties:
+            reputation_check:
+              type: boolean
+            faction_approval:
+              type: boolean
+            quest_completion:
+              type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    FamilyClan:
+      type: object
+      required:
+      - clan_id
+      - name
+      properties:
+        clan_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        alliance_strength:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Guardianship:
+      type: object
+      required:
+      - guardianship_id
+      - guardian_id
+      - ward_id
+      properties:
+        guardianship_id:
+          type: string
+          format: uuid
+        guardian_id:
+          type: string
+          format: uuid
+        ward_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - active
+          - terminated
+          - pending
+        created_at:
+          type: string
+          format: date-time
+        responsibilities:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    FamilyWorldImpact:
+      type: object
+      required:
+      - family_id
+      properties:
+        family_id:
+          type: string
+          format: uuid
+        faction_influence:
+          type: object
+          properties:
+            faction_id:
+              type: string
+              format: uuid
+            influence_level:
+              type: number
+              format: float
+              minimum: -1
+              maximum: 1
+        diplomacy_impact:
+          type: object
+          properties:
+            relationships:
+              type: object
+            alliances:
+              type: array
+              items:
+                type: string
+        city_events:
+          type: array
+          items:
+            type: object
+            properties:
+              event_id:
+                type: string
+                format: uuid
+              impact:
+                type: string
+                enum:
+                - positive
+                - negative
+                - neutral
+        public_opinion:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+

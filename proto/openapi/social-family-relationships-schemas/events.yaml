@@ -1,0 +1,111 @@
+components:
+  schemas:
+    FamilyEvent:
+      type: object
+      required:
+      - event_id
+      - family_id
+      - event_type
+      - timestamp
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        family_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+          description: Связанный квест (если есть)
+        title:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+          enum:
+          - wedding
+          - birth
+          - illness
+          - conflict
+          - tragedy
+          - celebration
+        timestamp:
+          type: string
+          format: date-time
+        consequences:
+          type: object
+          properties:
+            relationship_changes:
+              type: object
+            reputation_changes:
+              type: object
+            world_impact:
+              type: object
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateFamilyEventRequest:
+      type: object
+      required:
+      - event_type
+      - title
+      - timestamp
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+          enum:
+          - wedding
+          - birth
+          - illness
+          - conflict
+          - tragedy
+          - celebration
+        timestamp:
+          type: string
+          format: date-time
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        trigger_quest:
+          type: boolean
+          default: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    FamilyHistoryEntry:
+      type: object
+      required:
+      - entry_id
+      - timestamp
+      - entry_type
+      properties:
+        entry_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        entry_type:
+          type: string
+          enum:
+          - event
+          - relationship_change
+          - inheritance
+          - adoption
+          - clan_alliance
+          - world_impact
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+

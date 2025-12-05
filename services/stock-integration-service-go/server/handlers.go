@@ -5,7 +5,6 @@ import (
 	"context"
 	"time"
 
-	api "github.com/necpgame/stock-integration-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -13,7 +12,7 @@ const (
 	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
 )
 
-// IntegrationHandlers implements api.Handler interface (ogen typed handlers)
+// IntegrationHandlers implements handlers for stock integration service
 type IntegrationHandlers struct {
 	logger *logrus.Logger
 }
@@ -23,13 +22,13 @@ func NewIntegrationHandlers(logger *logrus.Logger) *IntegrationHandlers {
 	return &IntegrationHandlers{logger: logger}
 }
 
-// HealthCheck - TYPED response!
-func (h *IntegrationHandlers) HealthCheck(ctx context.Context) (*api.HealthCheckOK, error) {
+// HealthCheck returns health status
+func (h *IntegrationHandlers) HealthCheck(ctx context.Context) (map[string]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	return &api.HealthCheckOK{
-		Status: api.NewOptString("ok"),
+	return map[string]string{
+		"status": "ok",
 	}, nil
 }
 

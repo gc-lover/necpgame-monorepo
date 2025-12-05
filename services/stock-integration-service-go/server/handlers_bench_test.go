@@ -6,14 +6,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
+
+// GetLogger returns a logger for testing
+func GetLogger() *logrus.Logger {
+	return logrus.New()
+}
 
 // BenchmarkHandler benchmarks handler performance
 // Target: <100μs per operation, minimal allocs
 func BenchmarkHandler(b *testing.B) {
 	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+	logger := GetLogger()
+	handlers := NewIntegrationHandlers(logger)
 
 	ctx := context.Background()
 

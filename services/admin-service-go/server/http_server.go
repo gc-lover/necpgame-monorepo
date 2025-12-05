@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -76,46 +77,15 @@ func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator
 	// Mount ogen server at /api/v1/admin
 	router.Mount("/api/v1/admin", ogenServer)
 
-	// Legacy endpoints (keep for backward compatibility)
-	legacyRouter := mux.NewRouter()
-	legacyRouter.Use(server.loggingMiddleware)
-	legacyRouter.Use(server.metricsMiddleware)
-	legacyRouter.Use(server.corsMiddleware)
-
-	if authEnabled {
-		legacyRouter.Use(server.authMiddleware)
-		legacyRouter.Use(server.permissionMiddleware)
-	}
-
-	apiRouter := legacyRouter.PathPrefix("/api/v1/admin").Subrouter()
-
-	apiRouter.HandleFunc("/players/ban", server.banPlayer).Methods("POST")
-	apiRouter.HandleFunc("/players/kick", server.kickPlayer).Methods("POST")
-	apiRouter.HandleFunc("/players/mute", server.mutePlayer).Methods("POST")
-	apiRouter.HandleFunc("/players/unban", server.unbanPlayer).Methods("POST")
-	apiRouter.HandleFunc("/players/unmute", server.unmutePlayer).Methods("POST")
-	apiRouter.HandleFunc("/players/search", server.searchPlayers).Methods("POST")
-
-	apiRouter.HandleFunc("/inventory/give", server.giveItem).Methods("POST")
-	apiRouter.HandleFunc("/inventory/remove", server.removeItem).Methods("POST")
-
-	apiRouter.HandleFunc("/economy/set-currency", server.setCurrency).Methods("POST")
-	apiRouter.HandleFunc("/economy/add-currency", server.addCurrency).Methods("POST")
-
-	apiRouter.HandleFunc("/world/flags", server.setWorldFlag).Methods("POST")
-
-	apiRouter.HandleFunc("/events", server.createEvent).Methods("POST")
-
-	apiRouter.HandleFunc("/analytics", server.getAnalytics).Methods("GET")
-
-	apiRouter.HandleFunc("/audit-logs", server.getAuditLogs).Methods("GET")
-	apiRouter.HandleFunc("/audit-logs/{log_id}", server.getAuditLog).Methods("GET")
-
-	legacyRouter.HandleFunc("/health", server.healthCheck).Methods("GET")
-	legacyRouter.Handle("/metrics", promhttp.Handler())
-
-	// Mount legacy router to chi (available at root for backward compatibility)
-	router.Mount("/", legacyRouter)
+	// Health and metrics endpoints
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+	})
+	router.Handle("/metrics", promhttp.Handler())
+	
+	// Legacy endpoints removed - all functionality available through ogen API at /api/v1/admin
 
 	// Set router to chi router
 	server.router = router

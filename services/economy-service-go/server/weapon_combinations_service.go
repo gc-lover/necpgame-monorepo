@@ -54,7 +54,7 @@ func (s *WeaponCombinationsService) GetWeaponCombinationMatrix(ctx context.Conte
 
 func (s *WeaponCombinationsService) GetWeaponModifiers(ctx context.Context) ([]map[string]interface{}, error) {
 	s.logger.Info("Getting weapon modifiers")
-	return []map[string]interface{}{}, nil
+	return s.repo.GetWeaponModifiers(ctx)
 }
 
 func (s *WeaponCombinationsService) ApplyWeaponModifier(ctx context.Context, weaponID, modifierID uuid.UUID, modifierType string, characterID *uuid.UUID) (map[string]interface{}, error) {
