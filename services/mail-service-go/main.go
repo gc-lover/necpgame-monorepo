@@ -35,9 +35,19 @@ func main() {
 	// Initialize repository
 	repository := server.NewPostgresRepository(db)
 	
+	// Initialize JWT validator
+	issuer := getEnv("JWT_ISSUER", "http://localhost:8080/realms/necpgame")
+	jwksURL := getEnv("JWT_JWKS_URL", "http://localhost:8080/realms/necpgame/protocol/openid-connect/certs")
+	authEnabled := getEnv("AUTH_ENABLED", "true") == "true"
+	
+	var jwtValidator *server.JwtValidator
+	if authEnabled {
+		jwtValidator = server.NewJwtValidator(issuer, jwksURL, logger)
+	}
+	
 	// Initialize service
 	mailService := server.NewMailService(repository)
-	httpServer := server.NewHTTPServer(addr, mailService)
+	httpServer := server.NewHTTPServer(addr, mailService, jwtValidator)
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
