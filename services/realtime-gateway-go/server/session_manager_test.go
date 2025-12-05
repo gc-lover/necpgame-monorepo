@@ -28,12 +28,17 @@ func TestSessionManager_CreateSession(t *testing.T) {
 	redisClient := setupTestRedis()
 	defer cleanupTestRedis(redisClient)
 
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		t.Skipf("Skipping test due to Redis not available: %v", err)
+	}
+
 	sm, err := NewSessionManager("redis://localhost:6379/15", "test-server")
 	if err != nil {
 		t.Fatalf("Failed to create session manager: %v", err)
 	}
 
-	ctx := context.Background()
 	characterID := uuid.New()
 	session, err := sm.CreateSession(ctx, "player123", "127.0.0.1", "test-agent", &characterID)
 	if err != nil {
@@ -65,12 +70,17 @@ func TestSessionManager_GetSessionByToken(t *testing.T) {
 	redisClient := setupTestRedis()
 	defer cleanupTestRedis(redisClient)
 
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		t.Skipf("Skipping test due to Redis not available: %v", err)
+	}
+
 	sm, err := NewSessionManager("redis://localhost:6379/15", "test-server")
 	if err != nil {
 		t.Fatalf("Failed to create session manager: %v", err)
 	}
 
-	ctx := context.Background()
 	characterID := uuid.New()
 	session, err := sm.CreateSession(ctx, "player123", "127.0.0.1", "test-agent", &characterID)
 	if err != nil {
@@ -99,12 +109,17 @@ func TestSessionManager_UpdateHeartbeat(t *testing.T) {
 	redisClient := setupTestRedis()
 	defer cleanupTestRedis(redisClient)
 
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		t.Skipf("Skipping test due to Redis not available: %v", err)
+	}
+
 	sm, err := NewSessionManager("redis://localhost:6379/15", "test-server")
 	if err != nil {
 		t.Fatalf("Failed to create session manager: %v", err)
 	}
 
-	ctx := context.Background()
 	characterID := uuid.New()
 	session, err := sm.CreateSession(ctx, "player123", "127.0.0.1", "test-agent", &characterID)
 	if err != nil {
@@ -137,12 +152,17 @@ func TestSessionManager_ReconnectSession(t *testing.T) {
 	redisClient := setupTestRedis()
 	defer cleanupTestRedis(redisClient)
 
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		t.Skipf("Skipping test due to Redis not available: %v", err)
+	}
+
 	sm, err := NewSessionManager("redis://localhost:6379/15", "test-server")
 	if err != nil {
 		t.Fatalf("Failed to create session manager: %v", err)
 	}
 
-	ctx := context.Background()
 	characterID := uuid.New()
 	session, err := sm.CreateSession(ctx, "player123", "127.0.0.1", "test-agent", &characterID)
 	if err != nil {
@@ -176,12 +196,17 @@ func TestSessionManager_CloseSession(t *testing.T) {
 	redisClient := setupTestRedis()
 	defer cleanupTestRedis(redisClient)
 
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		t.Skipf("Skipping test due to Redis not available: %v", err)
+	}
+
 	sm, err := NewSessionManager("redis://localhost:6379/15", "test-server")
 	if err != nil {
 		t.Fatalf("Failed to create session manager: %v", err)
 	}
 
-	ctx := context.Background()
 	characterID := uuid.New()
 	session, err := sm.CreateSession(ctx, "player123", "127.0.0.1", "test-agent", &characterID)
 	if err != nil {
@@ -207,12 +232,17 @@ func TestSessionManager_GetActiveSessionsCount(t *testing.T) {
 	redisClient := setupTestRedis()
 	defer cleanupTestRedis(redisClient)
 
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		t.Skipf("Skipping test due to Redis not available: %v", err)
+	}
+
 	sm, err := NewSessionManager("redis://localhost:6379/15", "test-server")
 	if err != nil {
 		t.Fatalf("Failed to create session manager: %v", err)
 	}
 
-	ctx := context.Background()
 	characterID := uuid.New()
 
 	session1, err := sm.CreateSession(ctx, "player1", "127.0.0.1", "test-agent", &characterID)

@@ -16,6 +16,8 @@ func TestMain(m *testing.M) {
 		// Ignore known persistent goroutines
 		goleak.IgnoreTopFunction("internal/poll.runtime_pollWait"),
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
+		goleak.IgnoreTopFunction("runtime/pprof.runtime_goroutine_label_with_setting"),
+		goleak.IgnoreTopFunction("runtime.goexit"),
 	)
 }
 

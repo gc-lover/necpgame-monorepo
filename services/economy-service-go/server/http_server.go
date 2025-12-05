@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,6 +57,18 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
+	// Legacy endpoints (must be registered BEFORE ogen server to avoid conflicts)
+	// Legacy trade endpoints (not in ogen API yet)
+	// IMPORTANT: More specific routes must be registered FIRST
+	router.HandleFunc("/api/v1/economy/trade/history", server.getTradeHistory).Methods("GET")
+	router.HandleFunc("/api/v1/economy/trade/{trade_id}/offer", server.updateOffer).Methods("PUT")
+	router.HandleFunc("/api/v1/economy/trade/{trade_id}/confirm", server.confirmTrade).Methods("POST")
+	router.HandleFunc("/api/v1/economy/trade/{trade_id}/complete", server.completeTrade).Methods("POST")
+	router.HandleFunc("/api/v1/economy/trade/{trade_id}/cancel", server.cancelTrade).Methods("POST")
+	router.HandleFunc("/api/v1/economy/trade/{trade_id}", server.getTrade).Methods("GET")
+	router.HandleFunc("/api/v1/economy/trade", server.getActiveTrades).Methods("GET")
+	router.HandleFunc("/api/v1/economy/trade", server.createTradeLegacy).Methods("POST")
+
 	// ogen server
 	handlers := NewEconomyHandlers(server.tradeService)
 	secHandler := NewSecurityHandler(server.jwtValidator)
@@ -66,8 +79,6 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 	}
 
 	router.PathPrefix("/api/v1").Handler(ogenServer)
-
-	// Legacy endpoints (not in ogen API yet)
 	if server.engramCreationService != nil {
 		router.HandleFunc("/api/v1/economy/engrams/create", server.createEngram).Methods("POST")
 		router.HandleFunc("/api/v1/economy/engrams/create/cost/{chip_tier}", server.getEngramCreationCost).Methods("GET")
@@ -226,5 +237,288 @@ type statusRecorder struct {
 func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
+}
+
+// getActiveTrades is a legacy endpoint for getting active trades
+func (s *HTTPServer) getActiveTrades(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	
+	// Get user ID from context (set by authMiddleware or createRequestWithUserID)
+	userIDStr, ok := ctx.Value("user_id").(string)
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
+		return
+	}
+	
+	characterID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+	
+	trades, err := s.tradeService.GetActiveTrades(ctx, characterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get active trades")
+		s.respondError(w, http.StatusInternalServerError, "failed to get active trades")
+		return
+	}
+	
+	s.respondJSON(w, http.StatusOK, trades)
+}
+
+// createTradeLegacy is a legacy endpoint for creating trades
+func (s *HTTPServer) createTradeLegacy(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+	
+	// Get user ID from context
+	userIDStr, ok := ctx.Value("user_id").(string)
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
+		return
+	}
+	
+	initiatorID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+	
+	var reqBody models.CreateTradeRequest
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	
+	session, err := s.tradeService.CreateTrade(ctx, initiatorID, &reqBody)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to create trade")
+		s.respondError(w, http.StatusInternalServerError, "failed to create trade")
+		return
+	}
+	
+	s.respondJSON(w, http.StatusCreated, session)
+}
+
+// getTrade is a legacy endpoint for getting a trade by ID
+func (s *HTTPServer) getTrade(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	tradeIDStr, ok := vars["trade_id"]
+	if !ok {
+		s.respondError(w, http.StatusBadRequest, "trade_id is required")
+		return
+	}
+
+	tradeID, err := uuid.Parse(tradeIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid trade_id")
+		return
+	}
+
+	session, err := s.tradeService.GetTrade(ctx, tradeID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get trade")
+		s.respondError(w, http.StatusNotFound, "trade not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, session)
+}
+
+// updateOffer is a legacy endpoint for updating a trade offer
+func (s *HTTPServer) updateOffer(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	tradeIDStr, ok := vars["trade_id"]
+	if !ok {
+		s.respondError(w, http.StatusBadRequest, "trade_id is required")
+		return
+	}
+
+	tradeID, err := uuid.Parse(tradeIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid trade_id")
+		return
+	}
+
+	userIDStr, ok := r.Context().Value("user_id").(string)
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
+		return
+	}
+
+	characterID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+
+	var reqBody models.UpdateTradeOfferRequest
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	session, err := s.tradeService.UpdateOffer(ctx, tradeID, characterID, &reqBody)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to update offer")
+		s.respondError(w, http.StatusInternalServerError, "failed to update offer")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, session)
+}
+
+// confirmTrade is a legacy endpoint for confirming a trade
+func (s *HTTPServer) confirmTrade(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	tradeIDStr, ok := vars["trade_id"]
+	if !ok {
+		s.respondError(w, http.StatusBadRequest, "trade_id is required")
+		return
+	}
+
+	tradeID, err := uuid.Parse(tradeIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid trade_id")
+		return
+	}
+
+	userIDStr, ok := r.Context().Value("user_id").(string)
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
+		return
+	}
+
+	characterID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+
+	session, err := s.tradeService.ConfirmTrade(ctx, tradeID, characterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to confirm trade")
+		s.respondError(w, http.StatusInternalServerError, "failed to confirm trade")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, session)
+}
+
+// completeTrade is a legacy endpoint for completing a trade
+func (s *HTTPServer) completeTrade(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	tradeIDStr, ok := vars["trade_id"]
+	if !ok {
+		s.respondError(w, http.StatusBadRequest, "trade_id is required")
+		return
+	}
+
+	tradeID, err := uuid.Parse(tradeIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid trade_id")
+		return
+	}
+
+	err = s.tradeService.CompleteTrade(ctx, tradeID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to complete trade")
+		s.respondError(w, http.StatusInternalServerError, "failed to complete trade")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "completed"})
+}
+
+// cancelTrade is a legacy endpoint for canceling a trade
+func (s *HTTPServer) cancelTrade(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	tradeIDStr, ok := vars["trade_id"]
+	if !ok {
+		s.respondError(w, http.StatusBadRequest, "trade_id is required")
+		return
+	}
+
+	tradeID, err := uuid.Parse(tradeIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid trade_id")
+		return
+	}
+
+	userIDStr, ok := r.Context().Value("user_id").(string)
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
+		return
+	}
+
+	characterID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+
+	err = s.tradeService.CancelTrade(ctx, tradeID, characterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to cancel trade")
+		s.respondError(w, http.StatusInternalServerError, "failed to cancel trade")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "cancelled"})
+}
+
+// getTradeHistory is a legacy endpoint for getting trade history
+func (s *HTTPServer) getTradeHistory(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
+	defer cancel()
+
+	userIDStr, ok := r.Context().Value("user_id").(string)
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
+		return
+	}
+
+	characterID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+
+	limit := 10
+	offset := 0
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsed, err := strconv.Atoi(limitStr); err == nil {
+			limit = parsed
+		}
+	}
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if parsed, err := strconv.Atoi(offsetStr); err == nil {
+			offset = parsed
+		}
+	}
+
+	history, err := s.tradeService.GetTradeHistory(ctx, characterID, limit, offset)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get trade history")
+		s.respondError(w, http.StatusInternalServerError, "failed to get trade history")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, history)
 }
 

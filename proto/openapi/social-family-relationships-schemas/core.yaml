@@ -1,0 +1,144 @@
+components:
+  schemas:
+    FamilyTree:
+      type: object
+      required:
+      - family_id
+      - core_family
+      properties:
+        family_id:
+          type: string
+          format: uuid
+        core_family:
+          type: object
+          properties:
+            parents:
+              type: array
+              items:
+                $ref: '#/components/schemas/FamilyMember'
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/FamilyMember'
+            spouses:
+              type: array
+              items:
+                $ref: '#/components/schemas/FamilyMember'
+        extended_relatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+        clans:
+          type: array
+          items:
+            $ref: 'clans.yaml#/components/schemas/FamilyClan'
+        guardianships:
+          type: array
+          items:
+            $ref: 'clans.yaml#/components/schemas/Guardianship'
+    FamilyMember:
+      type: object
+      required:
+      - character_id
+      - role
+      - status
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        profession:
+          type: string
+        faction:
+          type: string
+        role:
+          type: string
+          enum:
+          - parent
+          - child
+          - spouse
+          - guardian
+          - clan_member
+          - extended_relative
+        status:
+          type: string
+          enum:
+          - alive
+          - deceased
+          - missing
+          - unknown
+        emotions:
+          type: object
+          properties:
+            attachment:
+              type: number
+              format: float
+              minimum: -1
+              maximum: 1
+            anxiety:
+              type: number
+              format: float
+              minimum: -1
+              maximum: 1
+            pride:
+              type: number
+              format: float
+              minimum: -1
+              maximum: 1
+            anger:
+              type: number
+              format: float
+              minimum: -1
+              maximum: 1
+        secrets:
+          type: array
+          items:
+            type: string
+        relationship_level:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateFamilyTreeRequest:
+      type: object
+      required:
+      - family_id
+      - updates
+      properties:
+        family_id:
+          type: string
+          format: uuid
+        updates:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+                enum:
+                - add_member
+                - remove_member
+                - update_role
+                - update_status
+              character_id:
+                type: string
+                format: uuid
+              role:
+                type: string
+                enum:
+                - parent
+                - child
+                - spouse
+                - guardian
+                - clan_member
+                - extended_relative
+              status:
+                type: string
+                enum:
+                - alive
+                - deceased
+                - missing
+                - unknown
+

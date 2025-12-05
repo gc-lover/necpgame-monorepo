@@ -11,8 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/economy-service-go/models"
-	tradeapi "github.com/necpgame/economy-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 )
 
 type mockTradeService struct {
@@ -300,17 +299,14 @@ func TestHTTPServer_GetActiveTrades(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var response tradeapi.ActiveTradesResponse
+	// Response is JSON array, not ActiveTradesResponse
+	var response []models.TradeSession
 	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	if response.Total != 2 {
-		t.Errorf("Expected total 2, got %d", response.Total)
-	}
-
-	if len(response.Trades) != 2 {
-		t.Errorf("Expected 2 trades, got %d", len(response.Trades))
+	if len(response) != 2 {
+		t.Errorf("Expected 2 trades, got %d", len(response))
 	}
 }
 
@@ -533,4 +529,3 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		t.Errorf("Expected status 'healthy', got %s", response["status"])
 	}
 }
-

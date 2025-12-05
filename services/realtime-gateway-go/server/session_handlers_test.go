@@ -2,109 +2,36 @@ package server
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 )
 
-type mockSessionManager struct {
-	sessions map[string]*PlayerSession
-}
-
-func (m *mockSessionManager) CreateSession(ctx context.Context, playerID, ipAddress, userAgent string, characterID *uuid.UUID) (*PlayerSession, error) {
-	session := &PlayerSession{
-		ID:              uuid.New(),
-		PlayerID:        playerID,
-		Token:           uuid.New().String(),
-		ReconnectToken:  uuid.New().String(),
-		Status:          SessionStatusActive,
-		IPAddress:       ipAddress,
-		UserAgent:       userAgent,
-		CharacterID:     characterID,
-	}
-	m.sessions[session.Token] = session
-	return session, nil
-}
-
-func (m *mockSessionManager) GetSessionByToken(ctx context.Context, token string) (*PlayerSession, error) {
-	return m.sessions[token], nil
-}
-
-func (m *mockSessionManager) GetSessionByPlayerID(ctx context.Context, playerID string) (*PlayerSession, error) {
-	for _, s := range m.sessions {
-		if s.PlayerID == playerID {
-			return s, nil
-		}
-	}
-	return nil, nil
-}
-
-func (m *mockSessionManager) UpdateHeartbeat(ctx context.Context, token string) error {
-	session := m.sessions[token]
-	if session == nil {
-		return nil
-	}
-	return nil
-}
-
-func (m *mockSessionManager) ReconnectSession(ctx context.Context, reconnectToken, ipAddress, userAgent string) (*PlayerSession, error) {
-	for _, s := range m.sessions {
-		if s.ReconnectToken == reconnectToken {
-			if s.Status == SessionStatusDisconnected {
-				s.Status = SessionStatusActive
-				s.IPAddress = ipAddress
-				s.UserAgent = userAgent
-				s.DisconnectCount++
-				return s, nil
-			}
-		}
-	}
-	return nil, nil
-}
-
-func (m *mockSessionManager) CloseSession(ctx context.Context, token string) error {
-	delete(m.sessions, token)
-	return nil
-}
-
-func (m *mockSessionManager) DisconnectSession(ctx context.Context, token string) error {
-	session := m.sessions[token]
-	if session != nil {
-		session.Status = SessionStatusDisconnected
-	}
-	return nil
-}
-
-func (m *mockSessionManager) GetActiveSessionsCount(ctx context.Context) (int, error) {
-	count := 0
-	for _, s := range m.sessions {
-		if s.Status == SessionStatusActive {
-			count++
-		}
-	}
-	return count, nil
-}
-
-func (m *mockSessionManager) CleanupExpiredSessions(ctx context.Context) error {
-	return nil
-}
-
-func (m *mockSessionManager) SaveSession(ctx context.Context, session *PlayerSession) error {
-	m.sessions[session.Token] = session
-	return nil
-}
+// mockSessionManager is defined in ban_notifications_test.go to avoid duplication
 
 func TestHandleHeartbeat(t *testing.T) {
-	mockMgr := &mockSessionManager{
-		sessions: make(map[string]*PlayerSession),
-	}
+	mockMgr := new(mockSessionManager)
 
 	characterID := uuid.New()
-	session, _ := mockMgr.CreateSession(context.Background(), "player123", "127.0.0.1", "test-agent", &characterID)
+	session := &PlayerSession{
+		ID:             uuid.New(),
+		PlayerID:       "player123",
+		Token:          uuid.New().String(),
+		ReconnectToken: uuid.New().String(),
+		Status:         SessionStatusActive,
+		IPAddress:      "127.0.0.1",
+		UserAgent:      "test-agent",
+		CharacterID:    &characterID,
+		CreatedAt:      time.Now(),
+		LastHeartbeat:  time.Now(),
+	}
+	mockMgr.On("GetSessionByToken", mock.Anything, session.Token).Return(session, nil)
+	mockMgr.On("UpdateHeartbeat", mock.Anything, session.Token).Return(nil)
 
 	handler := &GatewayHandler{
 		sessionMgr: mockMgr,
@@ -137,9 +64,7 @@ func TestHandleHeartbeat(t *testing.T) {
 }
 
 func TestHandleHeartbeatInvalidMethod(t *testing.T) {
-	mockMgr := &mockSessionManager{
-		sessions: make(map[string]*PlayerSession),
-	}
+	mockMgr := new(mockSessionManager)
 
 	handler := &GatewayHandler{
 		sessionMgr: mockMgr,
@@ -158,13 +83,26 @@ func TestHandleHeartbeatInvalidMethod(t *testing.T) {
 }
 
 func TestHandleReconnect(t *testing.T) {
-	mockMgr := &mockSessionManager{
-		sessions: make(map[string]*PlayerSession),
-	}
+	mockMgr := new(mockSessionManager)
 
 	characterID := uuid.New()
-	session, _ := mockMgr.CreateSession(context.Background(), "player123", "127.0.0.1", "test-agent", &characterID)
-	mockMgr.DisconnectSession(context.Background(), session.Token)
+	session := &PlayerSession{
+		ID:             uuid.New(),
+		PlayerID:       "player123",
+		Token:          uuid.New().String(),
+		ReconnectToken: uuid.New().String(),
+		Status:         SessionStatusDisconnected,
+		IPAddress:      "127.0.0.1",
+		UserAgent:      "test-agent",
+		CharacterID:    &characterID,
+		CreatedAt:      time.Now(),
+		LastHeartbeat:  time.Now(),
+	}
+	reconnectedSession := *session
+	reconnectedSession.Status = SessionStatusActive
+	reconnectedSession.IPAddress = "192.168.1.1"
+	reconnectedSession.UserAgent = "new-agent"
+	mockMgr.On("ReconnectSession", mock.Anything, session.ReconnectToken, "192.168.1.1", "new-agent").Return(&reconnectedSession, nil)
 
 	handler := &GatewayHandler{
 		sessionMgr: mockMgr,
@@ -175,7 +113,7 @@ func TestHandleReconnect(t *testing.T) {
 	reqBody := map[string]string{
 		"reconnect_token": session.ReconnectToken,
 		"ip_address":      "192.168.1.1",
-		"user_agent":       "new-agent",
+		"user_agent":      "new-agent",
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("POST", "/session/reconnect", bytes.NewBuffer(body))
@@ -199,9 +137,8 @@ func TestHandleReconnect(t *testing.T) {
 }
 
 func TestHandleReconnectNotFound(t *testing.T) {
-	mockMgr := &mockSessionManager{
-		sessions: make(map[string]*PlayerSession),
-	}
+	mockMgr := new(mockSessionManager)
+	mockMgr.On("ReconnectSession", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 	handler := &GatewayHandler{
 		sessionMgr: mockMgr,
@@ -223,4 +160,3 @@ func TestHandleReconnectNotFound(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusNotFound, w.Code)
 	}
 }
-

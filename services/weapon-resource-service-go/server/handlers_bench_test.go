@@ -4,6 +4,9 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/google/uuid"
+	api "github.com/gc-lover/necpgame-monorepo/services/weapon-resource-service-go/pkg/api"
 )
 
 // BenchmarkAPIV1WeaponsResourcesWeaponIdGet benchmarks APIV1WeaponsResourcesWeaponIdGet handler
@@ -31,15 +34,18 @@ func BenchmarkAPIV1WeaponsResourcesWeaponIdConsumePost(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	req := &api.APIV1WeaponsResourcesWeaponIdConsumePostRequest{
+	req := &api.ConsumeResourceRequest{
 		// TODO: Fill request fields based on API spec
+	}
+	params := api.APIV1WeaponsResourcesWeaponIdConsumePostParams{
+		WeaponId: uuid.New(),
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.APIV1WeaponsResourcesWeaponIdConsumePost(ctx, req)
+		_, _ = handlers.APIV1WeaponsResourcesWeaponIdConsumePost(ctx, req, params)
 	}
 }
 
@@ -50,15 +56,18 @@ func BenchmarkAPIV1WeaponsResourcesWeaponIdCooldownPost(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	req := &api.APIV1WeaponsResourcesWeaponIdCooldownPostRequest{
+	req := &api.ApplyCooldownRequest{
 		// TODO: Fill request fields based on API spec
+	}
+	params := api.APIV1WeaponsResourcesWeaponIdCooldownPostParams{
+		WeaponId: uuid.New(),
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.APIV1WeaponsResourcesWeaponIdCooldownPost(ctx, req)
+		_, _ = handlers.APIV1WeaponsResourcesWeaponIdCooldownPost(ctx, req, params)
 	}
 }
 

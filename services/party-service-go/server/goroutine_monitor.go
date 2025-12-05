@@ -11,9 +11,10 @@ import (
 
 var (
 	// goroutineCount is a Prometheus gauge for current goroutine count
+	// Note: Using custom name to avoid conflict with standard go_goroutines metric
 	goroutineCount = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "go_goroutines",
-		Help: "Current number of goroutines",
+		Name: "necpgame_goroutines",
+		Help: "Current number of goroutines (custom metric)",
 	})
 )
 

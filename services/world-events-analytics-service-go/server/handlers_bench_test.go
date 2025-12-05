@@ -12,7 +12,8 @@ import (
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEventMetrics(b *testing.B) {
 	logger := GetLogger()
-	handlers := NewHandlers(logger)
+	service := NewService(nil, nil, logger)
+	handlers := NewHandlers(service, logger)
 
 	ctx := context.Background()
 	params := api.GetWorldEventMetricsParams{
@@ -30,7 +31,8 @@ func BenchmarkGetWorldEventMetrics(b *testing.B) {
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEventEngagement(b *testing.B) {
 	logger := GetLogger()
-	handlers := NewHandlers(logger)
+	service := NewService(nil, nil, logger)
+	handlers := NewHandlers(service, logger)
 
 	ctx := context.Background()
 	params := api.GetWorldEventEngagementParams{
@@ -48,7 +50,8 @@ func BenchmarkGetWorldEventEngagement(b *testing.B) {
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEventImpact(b *testing.B) {
 	logger := GetLogger()
-	handlers := NewHandlers(logger)
+	service := NewService(nil, nil, logger)
+	handlers := NewHandlers(service, logger)
 
 	ctx := context.Background()
 	params := api.GetWorldEventImpactParams{

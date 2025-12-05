@@ -113,7 +113,7 @@ func TestBanNotificationSubscriber_buildNotificationMessage(t *testing.T) {
 		Timestamp:   time.Now().Format(time.RFC3339),
 	}
 
-	message := subscriber.buildNotificationMessage(notification)
+	message := subscriber.buildNotificationMessage(notification, false)
 
 	var result map[string]interface{}
 	err := json.Unmarshal(message, &result)
@@ -143,7 +143,7 @@ func TestBanNotificationSubscriber_buildNotificationMessage_Minimal(t *testing.T
 		Timestamp:   time.Now().Format(time.RFC3339),
 	}
 
-	message := subscriber.buildNotificationMessage(notification)
+	message := subscriber.buildNotificationMessage(notification, false)
 
 	var result map[string]interface{}
 	err := json.Unmarshal(message, &result)

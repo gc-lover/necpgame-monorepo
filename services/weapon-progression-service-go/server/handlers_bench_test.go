@@ -4,6 +4,9 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/google/uuid"
+	api "github.com/gc-lover/necpgame-monorepo/services/weapon-progression-service-go/pkg/api"
 )
 
 // BenchmarkAPIV1WeaponsProgressionWeaponIdGet benchmarks APIV1WeaponsProgressionWeaponIdGet handler
@@ -31,15 +34,18 @@ func BenchmarkAPIV1WeaponsProgressionWeaponIdPost(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	req := &api.APIV1WeaponsProgressionWeaponIdPostRequest{
+	req := &api.UpgradeWeaponRequest{
 		// TODO: Fill request fields based on API spec
+	}
+	params := api.APIV1WeaponsProgressionWeaponIdPostParams{
+		WeaponId: uuid.New(),
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.APIV1WeaponsProgressionWeaponIdPost(ctx, req)
+		_, _ = handlers.APIV1WeaponsProgressionWeaponIdPost(ctx, req, params)
 	}
 }
 
