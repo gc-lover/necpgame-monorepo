@@ -61,6 +61,13 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	logger := log.New(os.Stdout, "[battle-pass] ", log.LstdFlags)
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for battle-pass service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Println("OK Goroutine monitor started")
+
 	srv := server.NewHTTPServer(addr, handlers, svc)
 
 	log.Printf("Starting battle-pass-service on %s", addr)
