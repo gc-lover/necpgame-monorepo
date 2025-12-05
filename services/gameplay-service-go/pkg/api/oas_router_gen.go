@@ -179,24 +179,58 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 					switch elem[0] {
-					case 'a': // Prefix: "activate"
+					case 'a': // Prefix: "a"
 
-						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+						if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleActivateComboRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
+							break
+						}
+						switch elem[0] {
+						case 'c': // Prefix: "ctivate"
+
+							if l := len("ctivate"); len(elem) >= l && elem[0:l] == "ctivate" {
+								elem = elem[l:]
+							} else {
+								break
 							}
 
-							return
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleActivateComboRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						case 'n': // Prefix: "nalytics"
+
+							if l := len("nalytics"); len(elem) >= l && elem[0:l] == "nalytics" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetComboAnalyticsRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
 						}
 
 					case 'c': // Prefix: "catalog"
@@ -214,6 +248,48 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								s.handleGetComboCatalogRequest([0]string{}, elemIsEscaped, w, r)
 							default:
 								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 'l': // Prefix: "loadout"
+
+						if l := len("loadout"); len(elem) >= l && elem[0:l] == "loadout" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetComboLoadoutRequest([0]string{}, elemIsEscaped, w, r)
+							case "POST":
+								s.handleUpdateComboLoadoutRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET,POST")
+							}
+
+							return
+						}
+
+					case 's': // Prefix: "score"
+
+						if l := len("score"); len(elem) >= l && elem[0:l] == "score" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleSubmitComboScoreRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
 							}
 
 							return
@@ -633,29 +709,68 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 					switch elem[0] {
-					case 'a': // Prefix: "activate"
+					case 'a': // Prefix: "a"
 
-						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+						if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = ActivateComboOperation
-								r.summary = "Активировать комбо"
-								r.operationID = "activateCombo"
-								r.operationGroup = ""
-								r.pathPattern = "/gameplay/combat/combos/activate"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
+							break
+						}
+						switch elem[0] {
+						case 'c': // Prefix: "ctivate"
+
+							if l := len("ctivate"); len(elem) >= l && elem[0:l] == "ctivate" {
+								elem = elem[l:]
+							} else {
+								break
 							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = ActivateComboOperation
+									r.summary = "Активировать комбо"
+									r.operationID = "activateCombo"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/combos/activate"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'n': // Prefix: "nalytics"
+
+							if l := len("nalytics"); len(elem) >= l && elem[0:l] == "nalytics" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetComboAnalyticsOperation
+									r.summary = "Получить аналитику комбо"
+									r.operationID = "getComboAnalytics"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/combos/analytics"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
 						}
 
 					case 'c': // Prefix: "catalog"
@@ -675,6 +790,65 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								r.operationID = "getComboCatalog"
 								r.operationGroup = ""
 								r.pathPattern = "/gameplay/combat/combos/catalog"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'l': // Prefix: "loadout"
+
+						if l := len("loadout"); len(elem) >= l && elem[0:l] == "loadout" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetComboLoadoutOperation
+								r.summary = "Получить лоадаут комбо"
+								r.operationID = "getComboLoadout"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/combos/loadout"
+								r.args = args
+								r.count = 0
+								return r, true
+							case "POST":
+								r.name = UpdateComboLoadoutOperation
+								r.summary = "Обновить лоадаут комбо"
+								r.operationID = "updateComboLoadout"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/combos/loadout"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 's': // Prefix: "score"
+
+						if l := len("score"); len(elem) >= l && elem[0:l] == "score" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = SubmitComboScoreOperation
+								r.summary = "Отправить результаты scoring"
+								r.operationID = "submitComboScore"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/combos/score"
 								r.args = args
 								r.count = 0
 								return r, true

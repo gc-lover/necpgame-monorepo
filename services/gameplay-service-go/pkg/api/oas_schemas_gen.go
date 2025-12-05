@@ -749,6 +749,47 @@ type ActivateComboUnauthorized Error
 
 func (*ActivateComboUnauthorized) activateComboRes() {}
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/AnalyticsResponse
+type AnalyticsResponse struct {
+	PeriodStart OptDateTime      `json:"period_start"`
+	PeriodEnd   OptDateTime      `json:"period_end"`
+	Analytics   []ComboAnalytics `json:"analytics"`
+}
+
+// GetPeriodStart returns the value of PeriodStart.
+func (s *AnalyticsResponse) GetPeriodStart() OptDateTime {
+	return s.PeriodStart
+}
+
+// GetPeriodEnd returns the value of PeriodEnd.
+func (s *AnalyticsResponse) GetPeriodEnd() OptDateTime {
+	return s.PeriodEnd
+}
+
+// GetAnalytics returns the value of Analytics.
+func (s *AnalyticsResponse) GetAnalytics() []ComboAnalytics {
+	return s.Analytics
+}
+
+// SetPeriodStart sets the value of PeriodStart.
+func (s *AnalyticsResponse) SetPeriodStart(val OptDateTime) {
+	s.PeriodStart = val
+}
+
+// SetPeriodEnd sets the value of PeriodEnd.
+func (s *AnalyticsResponse) SetPeriodEnd(val OptDateTime) {
+	s.PeriodEnd = val
+}
+
+// SetAnalytics sets the value of Analytics.
+func (s *AnalyticsResponse) SetAnalytics(val []ComboAnalytics) {
+	s.Analytics = val
+}
+
+func (*AnalyticsResponse) getComboAnalyticsRes() {}
+
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -1159,6 +1200,130 @@ func (s *ComboActivationResponseBonusesApplied) SetSpecialEffects(val []string) 
 	s.SpecialEffects = val
 }
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/ComboAnalytics
+type ComboAnalytics struct {
+	ComboID         OptUUID            `json:"combo_id"`
+	AverageCategory OptComboComplexity `json:"average_category"`
+	// Наиболее используемые синергии.
+	MostUsedSynergies []ComboAnalyticsMostUsedSynergiesItem `json:"most_used_synergies"`
+	// Общее количество активаций.
+	TotalActivations OptInt `json:"total_activations"`
+	// Количество chain-комбо.
+	ChainComboCount OptInt `json:"chain_combo_count"`
+	// Процент успешных активаций.
+	SuccessRate OptFloat32 `json:"success_rate"`
+	// Средний score.
+	AverageScore OptFloat32 `json:"average_score"`
+}
+
+// GetComboID returns the value of ComboID.
+func (s *ComboAnalytics) GetComboID() OptUUID {
+	return s.ComboID
+}
+
+// GetAverageCategory returns the value of AverageCategory.
+func (s *ComboAnalytics) GetAverageCategory() OptComboComplexity {
+	return s.AverageCategory
+}
+
+// GetMostUsedSynergies returns the value of MostUsedSynergies.
+func (s *ComboAnalytics) GetMostUsedSynergies() []ComboAnalyticsMostUsedSynergiesItem {
+	return s.MostUsedSynergies
+}
+
+// GetTotalActivations returns the value of TotalActivations.
+func (s *ComboAnalytics) GetTotalActivations() OptInt {
+	return s.TotalActivations
+}
+
+// GetChainComboCount returns the value of ChainComboCount.
+func (s *ComboAnalytics) GetChainComboCount() OptInt {
+	return s.ChainComboCount
+}
+
+// GetSuccessRate returns the value of SuccessRate.
+func (s *ComboAnalytics) GetSuccessRate() OptFloat32 {
+	return s.SuccessRate
+}
+
+// GetAverageScore returns the value of AverageScore.
+func (s *ComboAnalytics) GetAverageScore() OptFloat32 {
+	return s.AverageScore
+}
+
+// SetComboID sets the value of ComboID.
+func (s *ComboAnalytics) SetComboID(val OptUUID) {
+	s.ComboID = val
+}
+
+// SetAverageCategory sets the value of AverageCategory.
+func (s *ComboAnalytics) SetAverageCategory(val OptComboComplexity) {
+	s.AverageCategory = val
+}
+
+// SetMostUsedSynergies sets the value of MostUsedSynergies.
+func (s *ComboAnalytics) SetMostUsedSynergies(val []ComboAnalyticsMostUsedSynergiesItem) {
+	s.MostUsedSynergies = val
+}
+
+// SetTotalActivations sets the value of TotalActivations.
+func (s *ComboAnalytics) SetTotalActivations(val OptInt) {
+	s.TotalActivations = val
+}
+
+// SetChainComboCount sets the value of ChainComboCount.
+func (s *ComboAnalytics) SetChainComboCount(val OptInt) {
+	s.ChainComboCount = val
+}
+
+// SetSuccessRate sets the value of SuccessRate.
+func (s *ComboAnalytics) SetSuccessRate(val OptFloat32) {
+	s.SuccessRate = val
+}
+
+// SetAverageScore sets the value of AverageScore.
+func (s *ComboAnalytics) SetAverageScore(val OptFloat32) {
+	s.AverageScore = val
+}
+
+type ComboAnalyticsMostUsedSynergiesItem struct {
+	SynergyID   OptUUID        `json:"synergy_id"`
+	SynergyType OptSynergyType `json:"synergy_type"`
+	UsageCount  OptInt         `json:"usage_count"`
+}
+
+// GetSynergyID returns the value of SynergyID.
+func (s *ComboAnalyticsMostUsedSynergiesItem) GetSynergyID() OptUUID {
+	return s.SynergyID
+}
+
+// GetSynergyType returns the value of SynergyType.
+func (s *ComboAnalyticsMostUsedSynergiesItem) GetSynergyType() OptSynergyType {
+	return s.SynergyType
+}
+
+// GetUsageCount returns the value of UsageCount.
+func (s *ComboAnalyticsMostUsedSynergiesItem) GetUsageCount() OptInt {
+	return s.UsageCount
+}
+
+// SetSynergyID sets the value of SynergyID.
+func (s *ComboAnalyticsMostUsedSynergiesItem) SetSynergyID(val OptUUID) {
+	s.SynergyID = val
+}
+
+// SetSynergyType sets the value of SynergyType.
+func (s *ComboAnalyticsMostUsedSynergiesItem) SetSynergyType(val OptSynergyType) {
+	s.SynergyType = val
+}
+
+// SetUsageCount sets the value of UsageCount.
+func (s *ComboAnalyticsMostUsedSynergiesItem) SetUsageCount(val OptInt) {
+	s.UsageCount = val
+}
+
 // Бонусы от комбо.
 type ComboBonuses struct {
 	DamageMultiplier  OptFloat32 `json:"damage_multiplier"`
@@ -1289,6 +1454,111 @@ func (s *ComboComplexity) UnmarshalText(data []byte) error {
 	}
 }
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/ComboLoadout
+type ComboLoadout struct {
+	ID          uuid.UUID   `json:"id"`
+	CharacterID uuid.UUID   `json:"character_id"`
+	CreatedAt   OptDateTime `json:"created_at"`
+	UpdatedAt   OptDateTime `json:"updated_at"`
+	// Настройки лоадаута.
+	Preferences OptComboLoadoutPreferences `json:"preferences"`
+	// ID активных комбо в лоадауте.
+	ActiveCombos []uuid.UUID `json:"active_combos"`
+}
+
+// GetID returns the value of ID.
+func (s *ComboLoadout) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetCharacterID returns the value of CharacterID.
+func (s *ComboLoadout) GetCharacterID() uuid.UUID {
+	return s.CharacterID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ComboLoadout) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *ComboLoadout) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
+}
+
+// GetPreferences returns the value of Preferences.
+func (s *ComboLoadout) GetPreferences() OptComboLoadoutPreferences {
+	return s.Preferences
+}
+
+// GetActiveCombos returns the value of ActiveCombos.
+func (s *ComboLoadout) GetActiveCombos() []uuid.UUID {
+	return s.ActiveCombos
+}
+
+// SetID sets the value of ID.
+func (s *ComboLoadout) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetCharacterID sets the value of CharacterID.
+func (s *ComboLoadout) SetCharacterID(val uuid.UUID) {
+	s.CharacterID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ComboLoadout) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *ComboLoadout) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
+}
+
+// SetPreferences sets the value of Preferences.
+func (s *ComboLoadout) SetPreferences(val OptComboLoadoutPreferences) {
+	s.Preferences = val
+}
+
+// SetActiveCombos sets the value of ActiveCombos.
+func (s *ComboLoadout) SetActiveCombos(val []uuid.UUID) {
+	s.ActiveCombos = val
+}
+
+func (*ComboLoadout) getComboLoadoutRes()    {}
+func (*ComboLoadout) updateComboLoadoutRes() {}
+
+// Настройки лоадаута.
+type ComboLoadoutPreferences struct {
+	// Автоматическая активация комбо.
+	AutoActivate OptBool `json:"auto_activate"`
+	// Порядок приоритета комбо.
+	PriorityOrder []uuid.UUID `json:"priority_order"`
+}
+
+// GetAutoActivate returns the value of AutoActivate.
+func (s *ComboLoadoutPreferences) GetAutoActivate() OptBool {
+	return s.AutoActivate
+}
+
+// GetPriorityOrder returns the value of PriorityOrder.
+func (s *ComboLoadoutPreferences) GetPriorityOrder() []uuid.UUID {
+	return s.PriorityOrder
+}
+
+// SetAutoActivate sets the value of AutoActivate.
+func (s *ComboLoadoutPreferences) SetAutoActivate(val OptBool) {
+	s.AutoActivate = val
+}
+
+// SetPriorityOrder sets the value of PriorityOrder.
+func (s *ComboLoadoutPreferences) SetPriorityOrder(val []uuid.UUID) {
+	s.PriorityOrder = val
+}
+
 // Требования для активации комбо.
 type ComboRequirements struct {
 	MinLevel          OptInt      `json:"min_level"`
@@ -1346,6 +1616,105 @@ func (s *ComboRequirements) SetMinParticipants(val OptInt) {
 // SetMaxParticipants sets the value of MaxParticipants.
 func (s *ComboRequirements) SetMaxParticipants(val OptInt) {
 	s.MaxParticipants = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small).
+// Expected memory: ~56 bytes/instance. Hot endpoint for scoring.
+// Ref: #/components/schemas/ComboScore
+type ComboScore struct {
+	ActivationID uuid.UUID       `json:"activation_id"`
+	Timestamp    OptDateTime     `json:"timestamp"`
+	Category     ComboComplexity `json:"category"`
+	// Сложность исполнения (0-100).
+	ExecutionDifficulty OptInt `json:"execution_difficulty"`
+	// Выданный урон.
+	DamageOutput OptInt `json:"damage_output"`
+	// Визуальный эффект (0-100).
+	VisualImpact OptInt `json:"visual_impact"`
+	// Координация команды (0-100, только для team комбо).
+	TeamCoordination OptNilInt `json:"team_coordination"`
+	// Общий score.
+	TotalScore int `json:"total_score"`
+}
+
+// GetActivationID returns the value of ActivationID.
+func (s *ComboScore) GetActivationID() uuid.UUID {
+	return s.ActivationID
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *ComboScore) GetTimestamp() OptDateTime {
+	return s.Timestamp
+}
+
+// GetCategory returns the value of Category.
+func (s *ComboScore) GetCategory() ComboComplexity {
+	return s.Category
+}
+
+// GetExecutionDifficulty returns the value of ExecutionDifficulty.
+func (s *ComboScore) GetExecutionDifficulty() OptInt {
+	return s.ExecutionDifficulty
+}
+
+// GetDamageOutput returns the value of DamageOutput.
+func (s *ComboScore) GetDamageOutput() OptInt {
+	return s.DamageOutput
+}
+
+// GetVisualImpact returns the value of VisualImpact.
+func (s *ComboScore) GetVisualImpact() OptInt {
+	return s.VisualImpact
+}
+
+// GetTeamCoordination returns the value of TeamCoordination.
+func (s *ComboScore) GetTeamCoordination() OptNilInt {
+	return s.TeamCoordination
+}
+
+// GetTotalScore returns the value of TotalScore.
+func (s *ComboScore) GetTotalScore() int {
+	return s.TotalScore
+}
+
+// SetActivationID sets the value of ActivationID.
+func (s *ComboScore) SetActivationID(val uuid.UUID) {
+	s.ActivationID = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *ComboScore) SetTimestamp(val OptDateTime) {
+	s.Timestamp = val
+}
+
+// SetCategory sets the value of Category.
+func (s *ComboScore) SetCategory(val ComboComplexity) {
+	s.Category = val
+}
+
+// SetExecutionDifficulty sets the value of ExecutionDifficulty.
+func (s *ComboScore) SetExecutionDifficulty(val OptInt) {
+	s.ExecutionDifficulty = val
+}
+
+// SetDamageOutput sets the value of DamageOutput.
+func (s *ComboScore) SetDamageOutput(val OptInt) {
+	s.DamageOutput = val
+}
+
+// SetVisualImpact sets the value of VisualImpact.
+func (s *ComboScore) SetVisualImpact(val OptInt) {
+	s.VisualImpact = val
+}
+
+// SetTeamCoordination sets the value of TeamCoordination.
+func (s *ComboScore) SetTeamCoordination(val OptNilInt) {
+	s.TeamCoordination = val
+}
+
+// SetTotalScore sets the value of TotalScore.
+func (s *ComboScore) SetTotalScore(val int) {
+	s.TotalScore = val
 }
 
 // Тип комбо.
@@ -1792,6 +2161,18 @@ type GetAvailableSynergiesUnauthorized Error
 
 func (*GetAvailableSynergiesUnauthorized) getAvailableSynergiesRes() {}
 
+type GetComboAnalyticsBadRequest Error
+
+func (*GetComboAnalyticsBadRequest) getComboAnalyticsRes() {}
+
+type GetComboAnalyticsInternalServerError Error
+
+func (*GetComboAnalyticsInternalServerError) getComboAnalyticsRes() {}
+
+type GetComboAnalyticsUnauthorized Error
+
+func (*GetComboAnalyticsUnauthorized) getComboAnalyticsRes() {}
+
 type GetComboCatalogBadRequest Error
 
 func (*GetComboCatalogBadRequest) getComboCatalogRes() {}
@@ -1803,6 +2184,18 @@ func (*GetComboCatalogInternalServerError) getComboCatalogRes() {}
 type GetComboCatalogUnauthorized Error
 
 func (*GetComboCatalogUnauthorized) getComboCatalogRes() {}
+
+type GetComboLoadoutInternalServerError Error
+
+func (*GetComboLoadoutInternalServerError) getComboLoadoutRes() {}
+
+type GetComboLoadoutNotFound Error
+
+func (*GetComboLoadoutNotFound) getComboLoadoutRes() {}
+
+type GetComboLoadoutUnauthorized Error
+
+func (*GetComboLoadoutUnauthorized) getComboLoadoutRes() {}
 
 type GetExtractZonesOK struct {
 	Zones []jx.Raw `json:"zones"`
@@ -2830,6 +3223,52 @@ func (o OptComboComplexity) Or(d ComboComplexity) ComboComplexity {
 	return d
 }
 
+// NewOptComboLoadoutPreferences returns new OptComboLoadoutPreferences with value set to v.
+func NewOptComboLoadoutPreferences(v ComboLoadoutPreferences) OptComboLoadoutPreferences {
+	return OptComboLoadoutPreferences{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptComboLoadoutPreferences is optional ComboLoadoutPreferences.
+type OptComboLoadoutPreferences struct {
+	Value ComboLoadoutPreferences
+	Set   bool
+}
+
+// IsSet returns true if OptComboLoadoutPreferences was set.
+func (o OptComboLoadoutPreferences) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptComboLoadoutPreferences) Reset() {
+	var v ComboLoadoutPreferences
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptComboLoadoutPreferences) SetTo(v ComboLoadoutPreferences) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptComboLoadoutPreferences) Get() (v ComboLoadoutPreferences, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptComboLoadoutPreferences) Or(d ComboLoadoutPreferences) ComboLoadoutPreferences {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptComboRequirements returns new OptComboRequirements with value set to v.
 func NewOptComboRequirements(v ComboRequirements) OptComboRequirements {
 	return OptComboRequirements{
@@ -3496,6 +3935,69 @@ func (o OptNilInt) Or(d int) int {
 	return d
 }
 
+// NewOptNilScoreSubmissionResponseRewards returns new OptNilScoreSubmissionResponseRewards with value set to v.
+func NewOptNilScoreSubmissionResponseRewards(v ScoreSubmissionResponseRewards) OptNilScoreSubmissionResponseRewards {
+	return OptNilScoreSubmissionResponseRewards{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilScoreSubmissionResponseRewards is optional nullable ScoreSubmissionResponseRewards.
+type OptNilScoreSubmissionResponseRewards struct {
+	Value ScoreSubmissionResponseRewards
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilScoreSubmissionResponseRewards was set.
+func (o OptNilScoreSubmissionResponseRewards) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilScoreSubmissionResponseRewards) Reset() {
+	var v ScoreSubmissionResponseRewards
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilScoreSubmissionResponseRewards) SetTo(v ScoreSubmissionResponseRewards) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilScoreSubmissionResponseRewards) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilScoreSubmissionResponseRewards) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v ScoreSubmissionResponseRewards
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilScoreSubmissionResponseRewards) Get() (v ScoreSubmissionResponseRewards, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilScoreSubmissionResponseRewards) Or(d ScoreSubmissionResponseRewards) ScoreSubmissionResponseRewards {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilString returns new OptNilString with value set to v.
 func NewOptNilString(v string) OptNilString {
 	return OptNilString{
@@ -4093,6 +4595,52 @@ func (o OptUUID) Get() (v uuid.UUID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptUpdateLoadoutRequestPreferences returns new OptUpdateLoadoutRequestPreferences with value set to v.
+func NewOptUpdateLoadoutRequestPreferences(v UpdateLoadoutRequestPreferences) OptUpdateLoadoutRequestPreferences {
+	return OptUpdateLoadoutRequestPreferences{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUpdateLoadoutRequestPreferences is optional UpdateLoadoutRequestPreferences.
+type OptUpdateLoadoutRequestPreferences struct {
+	Value UpdateLoadoutRequestPreferences
+	Set   bool
+}
+
+// IsSet returns true if OptUpdateLoadoutRequestPreferences was set.
+func (o OptUpdateLoadoutRequestPreferences) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUpdateLoadoutRequestPreferences) Reset() {
+	var v UpdateLoadoutRequestPreferences
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUpdateLoadoutRequestPreferences) SetTo(v UpdateLoadoutRequestPreferences) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUpdateLoadoutRequestPreferences) Get() (v UpdateLoadoutRequestPreferences, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUpdateLoadoutRequestPreferences) Or(d UpdateLoadoutRequestPreferences) UpdateLoadoutRequestPreferences {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -4736,6 +5284,85 @@ type SchemasSynergyRequirements struct{}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
+// Ref: #/components/schemas/ScoreSubmissionResponse
+type ScoreSubmissionResponse struct {
+	// Награды за score (если применимо).
+	Rewards OptNilScoreSubmissionResponseRewards `json:"rewards"`
+	Score   ComboScore                           `json:"score"`
+	Success bool                                 `json:"success"`
+}
+
+// GetRewards returns the value of Rewards.
+func (s *ScoreSubmissionResponse) GetRewards() OptNilScoreSubmissionResponseRewards {
+	return s.Rewards
+}
+
+// GetScore returns the value of Score.
+func (s *ScoreSubmissionResponse) GetScore() ComboScore {
+	return s.Score
+}
+
+// GetSuccess returns the value of Success.
+func (s *ScoreSubmissionResponse) GetSuccess() bool {
+	return s.Success
+}
+
+// SetRewards sets the value of Rewards.
+func (s *ScoreSubmissionResponse) SetRewards(val OptNilScoreSubmissionResponseRewards) {
+	s.Rewards = val
+}
+
+// SetScore sets the value of Score.
+func (s *ScoreSubmissionResponse) SetScore(val ComboScore) {
+	s.Score = val
+}
+
+// SetSuccess sets the value of Success.
+func (s *ScoreSubmissionResponse) SetSuccess(val bool) {
+	s.Success = val
+}
+
+func (*ScoreSubmissionResponse) submitComboScoreRes() {}
+
+// Награды за score (если применимо).
+type ScoreSubmissionResponseRewards struct {
+	Experience OptInt      `json:"experience"`
+	Currency   OptInt      `json:"currency"`
+	Items      []uuid.UUID `json:"items"`
+}
+
+// GetExperience returns the value of Experience.
+func (s *ScoreSubmissionResponseRewards) GetExperience() OptInt {
+	return s.Experience
+}
+
+// GetCurrency returns the value of Currency.
+func (s *ScoreSubmissionResponseRewards) GetCurrency() OptInt {
+	return s.Currency
+}
+
+// GetItems returns the value of Items.
+func (s *ScoreSubmissionResponseRewards) GetItems() []uuid.UUID {
+	return s.Items
+}
+
+// SetExperience sets the value of Experience.
+func (s *ScoreSubmissionResponseRewards) SetExperience(val OptInt) {
+	s.Experience = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *ScoreSubmissionResponseRewards) SetCurrency(val OptInt) {
+	s.Currency = val
+}
+
+// SetItems sets the value of Items.
+func (s *ScoreSubmissionResponseRewards) SetItems(val []uuid.UUID) {
+	s.Items = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/SessionEndResponse
 type SessionEndResponse struct {
 	SessionID  uuid.UUID     `json:"session_id"`
@@ -4985,6 +5612,81 @@ func (s *SessionType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+type SubmitComboScoreBadRequest Error
+
+func (*SubmitComboScoreBadRequest) submitComboScoreRes() {}
+
+type SubmitComboScoreInternalServerError Error
+
+func (*SubmitComboScoreInternalServerError) submitComboScoreRes() {}
+
+type SubmitComboScoreNotFound Error
+
+func (*SubmitComboScoreNotFound) submitComboScoreRes() {}
+
+type SubmitComboScoreUnauthorized Error
+
+func (*SubmitComboScoreUnauthorized) submitComboScoreRes() {}
+
+// Ref: #/components/schemas/SubmitScoreRequest
+type SubmitScoreRequest struct {
+	ActivationID        uuid.UUID `json:"activation_id"`
+	ExecutionDifficulty int       `json:"execution_difficulty"`
+	DamageOutput        int       `json:"damage_output"`
+	VisualImpact        int       `json:"visual_impact"`
+	TeamCoordination    OptNilInt `json:"team_coordination"`
+}
+
+// GetActivationID returns the value of ActivationID.
+func (s *SubmitScoreRequest) GetActivationID() uuid.UUID {
+	return s.ActivationID
+}
+
+// GetExecutionDifficulty returns the value of ExecutionDifficulty.
+func (s *SubmitScoreRequest) GetExecutionDifficulty() int {
+	return s.ExecutionDifficulty
+}
+
+// GetDamageOutput returns the value of DamageOutput.
+func (s *SubmitScoreRequest) GetDamageOutput() int {
+	return s.DamageOutput
+}
+
+// GetVisualImpact returns the value of VisualImpact.
+func (s *SubmitScoreRequest) GetVisualImpact() int {
+	return s.VisualImpact
+}
+
+// GetTeamCoordination returns the value of TeamCoordination.
+func (s *SubmitScoreRequest) GetTeamCoordination() OptNilInt {
+	return s.TeamCoordination
+}
+
+// SetActivationID sets the value of ActivationID.
+func (s *SubmitScoreRequest) SetActivationID(val uuid.UUID) {
+	s.ActivationID = val
+}
+
+// SetExecutionDifficulty sets the value of ExecutionDifficulty.
+func (s *SubmitScoreRequest) SetExecutionDifficulty(val int) {
+	s.ExecutionDifficulty = val
+}
+
+// SetDamageOutput sets the value of DamageOutput.
+func (s *SubmitScoreRequest) SetDamageOutput(val int) {
+	s.DamageOutput = val
+}
+
+// SetVisualImpact sets the value of VisualImpact.
+func (s *SubmitScoreRequest) SetVisualImpact(val int) {
+	s.VisualImpact = val
+}
+
+// SetTeamCoordination sets the value of TeamCoordination.
+func (s *SubmitScoreRequest) SetTeamCoordination(val OptNilInt) {
+	s.TeamCoordination = val
 }
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
@@ -5310,4 +6012,80 @@ func (s *SynergyType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+type UpdateComboLoadoutBadRequest Error
+
+func (*UpdateComboLoadoutBadRequest) updateComboLoadoutRes() {}
+
+type UpdateComboLoadoutInternalServerError Error
+
+func (*UpdateComboLoadoutInternalServerError) updateComboLoadoutRes() {}
+
+type UpdateComboLoadoutUnauthorized Error
+
+func (*UpdateComboLoadoutUnauthorized) updateComboLoadoutRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/UpdateLoadoutRequest
+type UpdateLoadoutRequest struct {
+	CharacterID  uuid.UUID                          `json:"character_id"`
+	Preferences  OptUpdateLoadoutRequestPreferences `json:"preferences"`
+	ActiveCombos []uuid.UUID                        `json:"active_combos"`
+}
+
+// GetCharacterID returns the value of CharacterID.
+func (s *UpdateLoadoutRequest) GetCharacterID() uuid.UUID {
+	return s.CharacterID
+}
+
+// GetPreferences returns the value of Preferences.
+func (s *UpdateLoadoutRequest) GetPreferences() OptUpdateLoadoutRequestPreferences {
+	return s.Preferences
+}
+
+// GetActiveCombos returns the value of ActiveCombos.
+func (s *UpdateLoadoutRequest) GetActiveCombos() []uuid.UUID {
+	return s.ActiveCombos
+}
+
+// SetCharacterID sets the value of CharacterID.
+func (s *UpdateLoadoutRequest) SetCharacterID(val uuid.UUID) {
+	s.CharacterID = val
+}
+
+// SetPreferences sets the value of Preferences.
+func (s *UpdateLoadoutRequest) SetPreferences(val OptUpdateLoadoutRequestPreferences) {
+	s.Preferences = val
+}
+
+// SetActiveCombos sets the value of ActiveCombos.
+func (s *UpdateLoadoutRequest) SetActiveCombos(val []uuid.UUID) {
+	s.ActiveCombos = val
+}
+
+type UpdateLoadoutRequestPreferences struct {
+	AutoActivate  OptBool     `json:"auto_activate"`
+	PriorityOrder []uuid.UUID `json:"priority_order"`
+}
+
+// GetAutoActivate returns the value of AutoActivate.
+func (s *UpdateLoadoutRequestPreferences) GetAutoActivate() OptBool {
+	return s.AutoActivate
+}
+
+// GetPriorityOrder returns the value of PriorityOrder.
+func (s *UpdateLoadoutRequestPreferences) GetPriorityOrder() []uuid.UUID {
+	return s.PriorityOrder
+}
+
+// SetAutoActivate sets the value of AutoActivate.
+func (s *UpdateLoadoutRequestPreferences) SetAutoActivate(val OptBool) {
+	s.AutoActivate = val
+}
+
+// SetPriorityOrder sets the value of PriorityOrder.
+func (s *UpdateLoadoutRequestPreferences) SetPriorityOrder(val []uuid.UUID) {
+	s.PriorityOrder = val
 }

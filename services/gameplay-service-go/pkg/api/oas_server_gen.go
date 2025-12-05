@@ -66,12 +66,24 @@ type Handler interface {
 	//
 	// GET /gameplay/combat/sessions/{sessionId}
 	GetCombatSession(ctx context.Context, params GetCombatSessionParams) (GetCombatSessionRes, error)
+	// GetComboAnalytics implements getComboAnalytics operation.
+	//
+	// Получить аналитику комбо.
+	//
+	// GET /gameplay/combat/combos/analytics
+	GetComboAnalytics(ctx context.Context, params GetComboAnalyticsParams) (GetComboAnalyticsRes, error)
 	// GetComboCatalog implements getComboCatalog operation.
 	//
 	// Получить каталог комбо.
 	//
 	// GET /gameplay/combat/combos/catalog
 	GetComboCatalog(ctx context.Context, params GetComboCatalogParams) (GetComboCatalogRes, error)
+	// GetComboLoadout implements getComboLoadout operation.
+	//
+	// Получить лоадаут комбо.
+	//
+	// GET /gameplay/combat/combos/loadout
+	GetComboLoadout(ctx context.Context, params GetComboLoadoutParams) (GetComboLoadoutRes, error)
 	// GetExtractZones implements getExtractZones operation.
 	//
 	// Получить зоны экстракции.
@@ -108,6 +120,18 @@ type Handler interface {
 	//
 	// GET /gameplay/combat/sessions
 	ListCombatSessions(ctx context.Context, params ListCombatSessionsParams) (*SessionListResponse, error)
+	// SubmitComboScore implements submitComboScore operation.
+	//
+	// Отправить результаты scoring.
+	//
+	// POST /gameplay/combat/combos/score
+	SubmitComboScore(ctx context.Context, req *SubmitScoreRequest) (SubmitComboScoreRes, error)
+	// UpdateComboLoadout implements updateComboLoadout operation.
+	//
+	// Обновить лоадаут комбо.
+	//
+	// POST /gameplay/combat/combos/loadout
+	UpdateComboLoadout(ctx context.Context, req *UpdateLoadoutRequest) (UpdateComboLoadoutRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

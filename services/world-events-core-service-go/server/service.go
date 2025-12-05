@@ -274,12 +274,17 @@ func (s *service) ActivateEvent(ctx context.Context, id uuid.UUID, activatedBy s
 		return err
 	}
 
-	// TODO: RecordActivation
-	_ = &EventActivation{
+	// Record activation
+	activation := &EventActivation{
 		EventID:     id,
 		ActivatedAt: now,
 		ActivatedBy: activatedBy,
 		Reason:      "manual activation",
+	}
+	err = s.repo.RecordActivation(ctx, activation)
+	if err != nil {
+		s.logger.Error("Failed to record activation", zap.Error(err))
+		// Don't fail the activation if recording fails
 	}
 
 	// Publish Kafka event
@@ -341,8 +346,11 @@ func (s *service) AnnounceEvent(ctx context.Context, id uuid.UUID, announcedBy, 
 		Message:      message,
 		Channels:     channels,
 	}
-	// TODO: RecordAnnouncement
-	_ = announcement
+	err = s.repo.RecordAnnouncement(ctx, announcement)
+	if err != nil {
+		s.logger.Error("Failed to record announcement", zap.Error(err))
+		// Don't fail the announcement if recording fails
+	}
 
 	// Publish Kafka event
 	s.publishKafkaEvent(ctx, "world.event.announced", map[string]interface{}{

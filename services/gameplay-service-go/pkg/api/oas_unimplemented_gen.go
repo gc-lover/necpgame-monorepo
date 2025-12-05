@@ -95,12 +95,30 @@ func (UnimplementedHandler) GetCombatSession(ctx context.Context, params GetComb
 	return r, ht.ErrNotImplemented
 }
 
+// GetComboAnalytics implements getComboAnalytics operation.
+//
+// Получить аналитику комбо.
+//
+// GET /gameplay/combat/combos/analytics
+func (UnimplementedHandler) GetComboAnalytics(ctx context.Context, params GetComboAnalyticsParams) (r GetComboAnalyticsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetComboCatalog implements getComboCatalog operation.
 //
 // Получить каталог комбо.
 //
 // GET /gameplay/combat/combos/catalog
 func (UnimplementedHandler) GetComboCatalog(ctx context.Context, params GetComboCatalogParams) (r GetComboCatalogRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetComboLoadout implements getComboLoadout operation.
+//
+// Получить лоадаут комбо.
+//
+// GET /gameplay/combat/combos/loadout
+func (UnimplementedHandler) GetComboLoadout(ctx context.Context, params GetComboLoadoutParams) (r GetComboLoadoutRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -155,5 +173,23 @@ func (UnimplementedHandler) GetStealthStatus(ctx context.Context, params GetStea
 //
 // GET /gameplay/combat/sessions
 func (UnimplementedHandler) ListCombatSessions(ctx context.Context, params ListCombatSessionsParams) (r *SessionListResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SubmitComboScore implements submitComboScore operation.
+//
+// Отправить результаты scoring.
+//
+// POST /gameplay/combat/combos/score
+func (UnimplementedHandler) SubmitComboScore(ctx context.Context, req *SubmitScoreRequest) (r SubmitComboScoreRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateComboLoadout implements updateComboLoadout operation.
+//
+// Обновить лоадаут комбо.
+//
+// POST /gameplay/combat/combos/loadout
+func (UnimplementedHandler) UpdateComboLoadout(ctx context.Context, req *UpdateLoadoutRequest) (r UpdateComboLoadoutRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

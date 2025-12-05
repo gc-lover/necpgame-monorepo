@@ -149,8 +149,13 @@ func (s *TradeService) GetActiveTrades(ctx context.Context, characterID uuid.UUI
 		return nil, err
 	}
 
-	sessionsJSON, _ := json.Marshal(sessions)
-	s.cache.Set(ctx, cacheKey, sessionsJSON, 30*time.Second)
+	sessionsJSON, err := json.Marshal(sessions)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal trade sessions JSON")
+		// Continue without cache if marshal fails
+	} else {
+		s.cache.Set(ctx, cacheKey, sessionsJSON, 30*time.Second)
+	}
 
 	return sessions, nil
 }
@@ -360,7 +365,7 @@ func (s *TradeService) GetTradeHistory(ctx context.Context, characterID uuid.UUI
 		var response models.TradeHistoryListResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
-		} else if err != nil {
+		} else {
 			s.logger.WithError(err).Error("Failed to unmarshal cached trade history JSON")
 			// Continue without cache if unmarshal fails
 		}
@@ -381,8 +386,13 @@ func (s *TradeService) GetTradeHistory(ctx context.Context, characterID uuid.UUI
 		Total:   total,
 	}
 
-	responseJSON, _ := json.Marshal(response)
-	s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal trade history response JSON")
+		// Continue without cache if marshal fails
+	} else {
+		s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	}
 
 	return response, nil
 }

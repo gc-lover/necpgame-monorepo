@@ -33,8 +33,16 @@ type GetCombatSessionRes interface {
 	getCombatSessionRes()
 }
 
+type GetComboAnalyticsRes interface {
+	getComboAnalyticsRes()
+}
+
 type GetComboCatalogRes interface {
 	getComboCatalogRes()
+}
+
+type GetComboLoadoutRes interface {
+	getComboLoadoutRes()
 }
 
 type GetExtractZonesRes interface {
@@ -55,4 +63,12 @@ type GetLoadoutsRes interface {
 
 type GetStealthStatusRes interface {
 	getStealthStatusRes()
+}
+
+type SubmitComboScoreRes interface {
+	submitComboScoreRes()
+}
+
+type UpdateComboLoadoutRes interface {
+	updateComboLoadoutRes()
 }

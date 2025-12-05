@@ -308,9 +308,16 @@ func (r *Repository) GetHierarchy(ctx context.Context, factionId string) ([]api.
 		member.AppointedBy = api.NewOptUUID(appointedBy)
 		member.AppointedAt = api.NewOptDateTime(appointedAt)
 		member.Role = api.NewOptHierarchyRole(api.HierarchyRole(role))
-		// TODO: Parse permissions JSON from database
+		// Parse permissions JSON from database
 		if len(permissions) > 0 {
-			// Parse JSON permissions if needed
+			var perms api.HierarchyMemberPermissions
+			if err := perms.UnmarshalJSON(permissions); err == nil {
+				member.Permissions = api.NewOptHierarchyMemberPermissions(perms)
+			} else {
+				// If parsing fails, set empty permissions
+				member.Permissions = api.OptHierarchyMemberPermissions{}
+			}
+		} else {
 			member.Permissions = api.OptHierarchyMemberPermissions{}
 		}
 		members = append(members, member)
