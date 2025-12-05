@@ -43,6 +43,10 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HT
 		partyRepo := NewPartyRepository(db)
 		partyService := NewPartyService(partyRepo)
 		handlers.SetPartyService(partyService)
+		
+		// Initialize Friend service
+		friendService := NewFriendService(db, logger)
+		handlers.SetFriendService(friendService)
 	}
 	
 	// Create security handler
@@ -71,6 +75,11 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HT
 			r.Post("/{orderId}/cancel", orderHandlers.CancelPlayerOrder)
 		})
 	}
+
+	// Issue: #1490 - Register chat command handlers
+	chatCommandService := NewChatCommandService(logger)
+	chatCommandHandlers := NewChatCommandHandlers(chatCommandService, logger)
+	router.Post("/api/v1/social/chat/commands/execute", chatCommandHandlers.ExecuteChatCommand)
 
 	// Health check (outside ogen routes)
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
