@@ -19,7 +19,7 @@ type HTTPServer struct {
 	service Service
 }
 
-func NewHTTPServer(addr string, service Service) *HTTPServer {
+func NewHTTPServer(addr string, service Service, jwtValidator *JwtValidator) *HTTPServer {
 	router := chi.NewRouter()
 
 	router.Use(chiMiddleware.RequestID)
@@ -29,7 +29,7 @@ func NewHTTPServer(addr string, service Service) *HTTPServer {
 	router.Use(corsMiddleware)
 
 	handlers := NewHandlers(service)
-	secHandler := &SecurityHandler{}
+	secHandler := NewSecurityHandler(jwtValidator)
 
 	ogenServer, err := api.NewServer(handlers, secHandler)
 	if err != nil {

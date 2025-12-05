@@ -14,6 +14,7 @@ import (
 )
 
 // getPlayerIDFromContext extracts player ID from context (from JWT token)
+// Issue: #151 - JWT validation integrated
 func getPlayerIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	// Try different context keys used in different services
 	if playerID, ok := ctx.Value("player_id").(uuid.UUID); ok {
@@ -28,7 +29,6 @@ func getPlayerIDFromContext(ctx context.Context) (uuid.UUID, error) {
 			return playerID, nil
 		}
 	}
-	// TODO: Implement proper JWT extraction (Issue: Auth integration)
 	return uuid.Nil, fmt.Errorf("player_id not found in context")
 }
 
