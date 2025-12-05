@@ -150,6 +150,10 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 
 		if match {
 			notificationMessage := bns.buildNotificationMessage(notification, isRemoved)
+			if notificationMessage == nil {
+				bns.logger.WithField("character_id", notification.CharacterID).Error("Failed to build ban notification message, skipping send")
+				break
+			}
 			
 			clientConn.mu.Lock()
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))

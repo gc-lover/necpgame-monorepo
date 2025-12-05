@@ -146,6 +146,10 @@ func (ns *NotificationSubscriber) sendNotification(notification NotificationEven
 
 		if match {
 			notificationMessage := ns.buildNotificationMessage(notification)
+			if notificationMessage == nil {
+				ns.logger.WithField("account_id", notification.AccountID).Error("Failed to build notification message, skipping send")
+				break
+			}
 			
 			clientConn.mu.Lock()
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))

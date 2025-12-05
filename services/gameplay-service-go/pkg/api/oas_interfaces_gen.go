@@ -21,6 +21,18 @@ type GetAbilityCatalogRes interface {
 	getAbilityCatalogRes()
 }
 
+type GetActiveAffixesRes interface {
+	getActiveAffixesRes()
+}
+
+type GetAffixRes interface {
+	getAffixRes()
+}
+
+type GetAffixRotationHistoryRes interface {
+	getAffixRotationHistoryRes()
+}
+
 type GetArenaSessionsRes interface {
 	getArenaSessionsRes()
 }
@@ -57,6 +69,10 @@ type GetInstalledImplantsRes interface {
 	getInstalledImplantsRes()
 }
 
+type GetInstanceAffixesRes interface {
+	getInstanceAffixesRes()
+}
+
 type GetLoadoutsRes interface {
 	getLoadoutsRes()
 }
@@ -67,6 +83,10 @@ type GetStealthStatusRes interface {
 
 type SubmitComboScoreRes interface {
 	submitComboScoreRes()
+}
+
+type TriggerAffixRotationRes interface {
+	triggerAffixRotationRes()
 }
 
 type UpdateComboLoadoutRes interface {

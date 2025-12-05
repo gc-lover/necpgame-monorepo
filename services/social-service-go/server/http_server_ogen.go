@@ -22,6 +22,9 @@ type HTTPServerOgen struct {
 
 // NewHTTPServerOgen creates new HTTP server with ogen
 func NewHTTPServerOgen(addr string, logger *logrus.Logger) *HTTPServerOgen {
+	// Issue: #1380 - Initialize logger for utils package
+	SetLogger(logger)
+	
 	router := chi.NewRouter()
 
 	// Middleware

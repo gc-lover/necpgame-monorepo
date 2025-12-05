@@ -64,6 +64,30 @@ type Invoker interface {
 	//
 	// GET /gameplay/combat/abilities/catalog
 	GetAbilityCatalog(ctx context.Context, params GetAbilityCatalogParams) (GetAbilityCatalogRes, error)
+	// GetActiveAffixes invokes getActiveAffixes operation.
+	//
+	// Возвращает список аффиксов, активных в текущей
+	// неделе.
+	// Аффиксы ротируются еженедельно (понедельник 00:00 UTC).
+	//
+	// GET /gameplay/affixes/active
+	GetActiveAffixes(ctx context.Context) (GetActiveAffixesRes, error)
+	// GetAffix invokes getAffix operation.
+	//
+	// Возвращает детальную информацию об аффиксе по его ID.
+	// Включает описание механик, визуальные эффекты и
+	// модификаторы.
+	//
+	// GET /gameplay/affixes/{id}
+	GetAffix(ctx context.Context, params GetAffixParams) (GetAffixRes, error)
+	// GetAffixRotationHistory invokes getAffixRotationHistory operation.
+	//
+	// Возвращает историю еженедельных ротаций аффиксов.
+	// Поддерживает пагинацию для просмотра прошлых
+	// ротаций.
+	//
+	// GET /gameplay/affixes/rotation/history
+	GetAffixRotationHistory(ctx context.Context, params GetAffixRotationHistoryParams) (GetAffixRotationHistoryRes, error)
 	// GetArenaSessions invokes getArenaSessions operation.
 	//
 	// Получить ареновые сессии.
@@ -122,6 +146,14 @@ type Invoker interface {
 	//
 	// GET /gameplay/combat/implants
 	GetInstalledImplants(ctx context.Context, params GetInstalledImplantsParams) (GetInstalledImplantsRes, error)
+	// GetInstanceAffixes invokes getInstanceAffixes operation.
+	//
+	// Возвращает список аффиксов, примененных к
+	// конкретному инстансу рейда или подземелья.
+	// Каждый инстанс имеет 2-4 случайных аффикса из активных.
+	//
+	// GET /gameplay/instances/{instance_id}/affixes
+	GetInstanceAffixes(ctx context.Context, params GetInstanceAffixesParams) (GetInstanceAffixesRes, error)
 	// GetLoadouts invokes getLoadouts operation.
 	//
 	// Получить лоадауты персонажа.
@@ -146,6 +178,16 @@ type Invoker interface {
 	//
 	// POST /gameplay/combat/combos/score
 	SubmitComboScore(ctx context.Context, request *SubmitScoreRequest) (SubmitComboScoreRes, error)
+	// TriggerAffixRotation invokes triggerAffixRotation operation.
+	//
+	// Принудительно запускает ротацию аффиксов для
+	// следующей недели.
+	// Доступно только администраторам.
+	// Обычно ротация происходит автоматически каждую
+	// неделю (понедельник 00:00 UTC).
+	//
+	// POST /gameplay/affixes/rotation/trigger
+	TriggerAffixRotation(ctx context.Context, request OptTriggerRotationRequest) (TriggerAffixRotationRes, error)
 	// UpdateComboLoadout invokes updateComboLoadout operation.
 	//
 	// Обновить лоадаут комбо.
@@ -878,6 +920,403 @@ func (c *Client) sendGetAbilityCatalog(ctx context.Context, params GetAbilityCat
 
 	stage = "DecodeResponse"
 	result, err := decodeGetAbilityCatalogResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetActiveAffixes invokes getActiveAffixes operation.
+//
+// Возвращает список аффиксов, активных в текущей
+// неделе.
+// Аффиксы ротируются еженедельно (понедельник 00:00 UTC).
+//
+// GET /gameplay/affixes/active
+func (c *Client) GetActiveAffixes(ctx context.Context) (GetActiveAffixesRes, error) {
+	res, err := c.sendGetActiveAffixes(ctx)
+	return res, err
+}
+
+func (c *Client) sendGetActiveAffixes(ctx context.Context) (res GetActiveAffixesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getActiveAffixes"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/gameplay/affixes/active"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetActiveAffixesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/gameplay/affixes/active"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetActiveAffixesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetActiveAffixesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetAffix invokes getAffix operation.
+//
+// Возвращает детальную информацию об аффиксе по его ID.
+// Включает описание механик, визуальные эффекты и
+// модификаторы.
+//
+// GET /gameplay/affixes/{id}
+func (c *Client) GetAffix(ctx context.Context, params GetAffixParams) (GetAffixRes, error) {
+	res, err := c.sendGetAffix(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetAffix(ctx context.Context, params GetAffixParams) (res GetAffixRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getAffix"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/gameplay/affixes/{id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetAffixOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/gameplay/affixes/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetAffixOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetAffixResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetAffixRotationHistory invokes getAffixRotationHistory operation.
+//
+// Возвращает историю еженедельных ротаций аффиксов.
+// Поддерживает пагинацию для просмотра прошлых
+// ротаций.
+//
+// GET /gameplay/affixes/rotation/history
+func (c *Client) GetAffixRotationHistory(ctx context.Context, params GetAffixRotationHistoryParams) (GetAffixRotationHistoryRes, error) {
+	res, err := c.sendGetAffixRotationHistory(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetAffixRotationHistory(ctx context.Context, params GetAffixRotationHistoryParams) (res GetAffixRotationHistoryRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getAffixRotationHistory"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/gameplay/affixes/rotation/history"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetAffixRotationHistoryOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/gameplay/affixes/rotation/history"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "limit" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Limit.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "offset" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Offset.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "weeks_back" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "weeks_back",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.WeeksBack.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetAffixRotationHistoryOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetAffixRotationHistoryResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -2182,6 +2621,133 @@ func (c *Client) sendGetInstalledImplants(ctx context.Context, params GetInstall
 	return result, nil
 }
 
+// GetInstanceAffixes invokes getInstanceAffixes operation.
+//
+// Возвращает список аффиксов, примененных к
+// конкретному инстансу рейда или подземелья.
+// Каждый инстанс имеет 2-4 случайных аффикса из активных.
+//
+// GET /gameplay/instances/{instance_id}/affixes
+func (c *Client) GetInstanceAffixes(ctx context.Context, params GetInstanceAffixesParams) (GetInstanceAffixesRes, error) {
+	res, err := c.sendGetInstanceAffixes(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetInstanceAffixes(ctx context.Context, params GetInstanceAffixesParams) (res GetInstanceAffixesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getInstanceAffixes"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/gameplay/instances/{instance_id}/affixes"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetInstanceAffixesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/gameplay/instances/"
+	{
+		// Encode "instance_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "instance_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.InstanceID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/affixes"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetInstanceAffixesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetInstanceAffixesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // GetLoadouts invokes getLoadouts operation.
 //
 // Получить лоадауты персонажа.
@@ -2710,6 +3276,119 @@ func (c *Client) sendSubmitComboScore(ctx context.Context, request *SubmitScoreR
 
 	stage = "DecodeResponse"
 	result, err := decodeSubmitComboScoreResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// TriggerAffixRotation invokes triggerAffixRotation operation.
+//
+// Принудительно запускает ротацию аффиксов для
+// следующей недели.
+// Доступно только администраторам.
+// Обычно ротация происходит автоматически каждую
+// неделю (понедельник 00:00 UTC).
+//
+// POST /gameplay/affixes/rotation/trigger
+func (c *Client) TriggerAffixRotation(ctx context.Context, request OptTriggerRotationRequest) (TriggerAffixRotationRes, error) {
+	res, err := c.sendTriggerAffixRotation(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendTriggerAffixRotation(ctx context.Context, request OptTriggerRotationRequest) (res TriggerAffixRotationRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("triggerAffixRotation"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/gameplay/affixes/rotation/trigger"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, TriggerAffixRotationOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/gameplay/affixes/rotation/trigger"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeTriggerAffixRotationRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, TriggerAffixRotationOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeTriggerAffixRotationResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
