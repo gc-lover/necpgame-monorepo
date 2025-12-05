@@ -14,6 +14,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const DBTimeout = 50 * time.Millisecond
+
 // OrderHandlers handles order-related HTTP requests
 type OrderHandlers struct {
 	service OrderServiceInterface
