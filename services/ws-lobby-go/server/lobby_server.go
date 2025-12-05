@@ -292,6 +292,7 @@ func (c *Client) writePump() {
 				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
 					logger := GetLogger()
 					logger.WithError(err).Error("Failed to write WebSocket close message")
+					RecordWebSocketError("close")
 				}
 				return
 			}
