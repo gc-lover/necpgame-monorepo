@@ -7,7 +7,7 @@ RUN apk add --no-cache make nodejs npm git ca-certificates tzdata
 COPY services/clan-war-service-go/go.mod services/clan-war-service-go/go.sum ./
 RUN go mod download
 
-RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+RUN go install github.com/ogen-go/ogen/cmd/ogen@latest || true
 
 COPY services/clan-war-service-go ./services/clan-war-service-go
 COPY proto ./proto

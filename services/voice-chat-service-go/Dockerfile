@@ -7,7 +7,7 @@ RUN apk add --no-cache make nodejs npm git ca-certificates tzdata
 COPY services/voice-chat-service-go/go.mod services/voice-chat-service-go/go.sum ./
 RUN go mod download
 
-RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+RUN go install github.com/ogen-go/ogen/cmd/ogen@latest || true
 
 COPY services/voice-chat-service-go ./services/voice-chat-service-go
 COPY proto ./proto
