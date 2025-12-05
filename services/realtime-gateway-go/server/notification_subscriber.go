@@ -172,6 +172,7 @@ func (ns *NotificationSubscriber) sendNotification(notification NotificationEven
 	}
 }
 
+// Issue: #1407 - Error handling: returns nil on marshal error, caller checks and skips send
 func (ns *NotificationSubscriber) buildNotificationMessage(notification NotificationEvent) []byte {
 	response := map[string]interface{}{
 		"type":            "notification",
