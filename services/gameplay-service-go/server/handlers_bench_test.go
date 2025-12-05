@@ -13,7 +13,7 @@ import (
 // Target: <100μs per operation, minimal allocs
 func BenchmarkActivateAbility(b *testing.B) {
 	logger := logrus.New()
-	handlers := NewHandlers(logger)
+	handlers := NewHandlers(logger, nil)
 
 	ctx := context.Background()
 	b.ReportAllocs()
@@ -30,7 +30,7 @@ func BenchmarkActivateAbility(b *testing.B) {
 // Target: <100μs per operation, minimal allocs
 func BenchmarkActivateCombo(b *testing.B) {
 	logger := logrus.New()
-	handlers := NewHandlers(logger)
+	handlers := NewHandlers(logger, nil)
 
 	ctx := context.Background()
 	b.ReportAllocs()
@@ -47,7 +47,7 @@ func BenchmarkActivateCombo(b *testing.B) {
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCreateCombatSession(b *testing.B) {
 	logger := logrus.New()
-	handlers := NewHandlers(logger)
+	handlers := NewHandlers(logger, nil)
 
 	ctx := context.Background()
 	req := &api.CreateSessionRequest{

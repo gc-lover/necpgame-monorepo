@@ -1,10 +1,11 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Issue: #1601 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
 	"time"
 
+	api "github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,7 +13,7 @@ const (
 	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
 )
 
-// IntegrationHandlers implements handlers for stock integration service
+// IntegrationHandlers implements api.Handler interface for stock integration service
 type IntegrationHandlers struct {
 	logger *logrus.Logger
 }
@@ -22,13 +23,32 @@ func NewIntegrationHandlers(logger *logrus.Logger) *IntegrationHandlers {
 	return &IntegrationHandlers{logger: logger}
 }
 
-// HealthCheck returns health status
-func (h *IntegrationHandlers) HealthCheck(ctx context.Context) (map[string]string, error) {
+// GetStockEconomyImpact implements GET /economy/stock-impact
+func (h *IntegrationHandlers) GetStockEconomyImpact(ctx context.Context, params api.GetStockEconomyImpactParams) (api.GetStockEconomyImpactRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	return map[string]string{
-		"status": "ok",
-	}, nil
+	period := "week"
+	if params.Period.Set && params.Period.Value != nil {
+		period = string(*params.Period.Value)
+	}
+
+	// TODO: Implement actual business logic
+	response := &api.GetStockEconomyImpactOK{
+		Period:          api.OptString{Value: period, Set: true},
+		TradingVolume:   api.OptFloat64{Value: 0.0, Set: true},
+		MarketCapChange: api.OptFloat64{Value: 0.0, Set: true},
+		ResourcePriceImpacts: api.OptStockEconomyImpactResourcePriceImpactsArray{Value: []api.StockEconomyImpactResourcePriceImpactsItem{}, Set: true},
+		CurrencyRateImpacts:  api.OptStockEconomyImpactCurrencyRateImpactsArray{Value: []api.StockEconomyImpactCurrencyRateImpactsItem{}, Set: true},
+		EconomicIndicators: api.OptStockEconomyImpactEconomicIndicators{
+			Value: api.StockEconomyImpactEconomicIndicators{
+				GdpImpact:      api.OptFloat64{Value: 0.0, Set: true},
+				InflationImpact: api.OptFloat64{Value: 0.0, Set: true},
+			},
+			Set: true,
+		},
+	}
+
+	return response, nil
 }
 

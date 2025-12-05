@@ -44,6 +44,30 @@ type Handler interface {
 	//
 	// GET /gameplay/combat/abilities/catalog
 	GetAbilityCatalog(ctx context.Context, params GetAbilityCatalogParams) (GetAbilityCatalogRes, error)
+	// GetActiveAffixes implements getActiveAffixes operation.
+	//
+	// Возвращает список аффиксов, активных в текущей
+	// неделе.
+	// Аффиксы ротируются еженедельно (понедельник 00:00 UTC).
+	//
+	// GET /gameplay/affixes/active
+	GetActiveAffixes(ctx context.Context) (GetActiveAffixesRes, error)
+	// GetAffix implements getAffix operation.
+	//
+	// Возвращает детальную информацию об аффиксе по его ID.
+	// Включает описание механик, визуальные эффекты и
+	// модификаторы.
+	//
+	// GET /gameplay/affixes/{id}
+	GetAffix(ctx context.Context, params GetAffixParams) (GetAffixRes, error)
+	// GetAffixRotationHistory implements getAffixRotationHistory operation.
+	//
+	// Возвращает историю еженедельных ротаций аффиксов.
+	// Поддерживает пагинацию для просмотра прошлых
+	// ротаций.
+	//
+	// GET /gameplay/affixes/rotation/history
+	GetAffixRotationHistory(ctx context.Context, params GetAffixRotationHistoryParams) (GetAffixRotationHistoryRes, error)
 	// GetArenaSessions implements getArenaSessions operation.
 	//
 	// Получить ареновые сессии.
@@ -102,6 +126,14 @@ type Handler interface {
 	//
 	// GET /gameplay/combat/implants
 	GetInstalledImplants(ctx context.Context, params GetInstalledImplantsParams) (GetInstalledImplantsRes, error)
+	// GetInstanceAffixes implements getInstanceAffixes operation.
+	//
+	// Возвращает список аффиксов, примененных к
+	// конкретному инстансу рейда или подземелья.
+	// Каждый инстанс имеет 2-4 случайных аффикса из активных.
+	//
+	// GET /gameplay/instances/{instance_id}/affixes
+	GetInstanceAffixes(ctx context.Context, params GetInstanceAffixesParams) (GetInstanceAffixesRes, error)
 	// GetLoadouts implements getLoadouts operation.
 	//
 	// Получить лоадауты персонажа.
@@ -126,6 +158,16 @@ type Handler interface {
 	//
 	// POST /gameplay/combat/combos/score
 	SubmitComboScore(ctx context.Context, req *SubmitScoreRequest) (SubmitComboScoreRes, error)
+	// TriggerAffixRotation implements triggerAffixRotation operation.
+	//
+	// Принудительно запускает ротацию аффиксов для
+	// следующей недели.
+	// Доступно только администраторам.
+	// Обычно ротация происходит автоматически каждую
+	// неделю (понедельник 00:00 UTC).
+	//
+	// POST /gameplay/affixes/rotation/trigger
+	TriggerAffixRotation(ctx context.Context, req OptTriggerRotationRequest) (TriggerAffixRotationRes, error)
 	// UpdateComboLoadout implements updateComboLoadout operation.
 	//
 	// Обновить лоадаут комбо.

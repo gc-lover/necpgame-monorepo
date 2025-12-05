@@ -61,24 +61,150 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'a': // Prefix: "arena/sessions"
+			case 'a': // Prefix: "a"
 
-				if l := len("arena/sessions"); len(elem) >= l && elem[0:l] == "arena/sessions" {
+				if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					// Leaf node.
-					switch r.Method {
-					case "GET":
-						s.handleGetArenaSessionsRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "GET")
+					break
+				}
+				switch elem[0] {
+				case 'f': // Prefix: "ffixes/"
+
+					if l := len("ffixes/"); len(elem) >= l && elem[0:l] == "ffixes/" {
+						elem = elem[l:]
+					} else {
+						break
 					}
 
-					return
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "active"
+						origElem := elem
+						if l := len("active"); len(elem) >= l && elem[0:l] == "active" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetActiveAffixesRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+						elem = origElem
+					case 'r': // Prefix: "rotation/"
+						origElem := elem
+						if l := len("rotation/"); len(elem) >= l && elem[0:l] == "rotation/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'h': // Prefix: "history"
+
+							if l := len("history"); len(elem) >= l && elem[0:l] == "history" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetAffixRotationHistoryRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						case 't': // Prefix: "trigger"
+
+							if l := len("trigger"); len(elem) >= l && elem[0:l] == "trigger" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleTriggerAffixRotationRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						}
+
+						elem = origElem
+					}
+					// Param: "id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleGetAffixRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+
+				case 'r': // Prefix: "rena/sessions"
+
+					if l := len("rena/sessions"); len(elem) >= l && elem[0:l] == "rena/sessions" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleGetArenaSessionsRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+
 				}
 
 			case 'c': // Prefix: "combat/"
@@ -451,6 +577,51 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
+			case 'i': // Prefix: "instances/"
+
+				if l := len("instances/"); len(elem) >= l && elem[0:l] == "instances/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "instance_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/affixes"
+
+					if l := len("/affixes"); len(elem) >= l && elem[0:l] == "/affixes" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleGetInstanceAffixesRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+
+				}
+
 			case 'l': // Prefix: "loadouts"
 
 				if l := len("loadouts"); len(elem) >= l && elem[0:l] == "loadouts" {
@@ -571,29 +742,173 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'a': // Prefix: "arena/sessions"
+			case 'a': // Prefix: "a"
 
-				if l := len("arena/sessions"); len(elem) >= l && elem[0:l] == "arena/sessions" {
+				if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					// Leaf node.
-					switch method {
-					case "GET":
-						r.name = GetArenaSessionsOperation
-						r.summary = "Получить ареновые сессии"
-						r.operationID = "getArenaSessions"
-						r.operationGroup = ""
-						r.pathPattern = "/gameplay/arena/sessions"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
+					break
+				}
+				switch elem[0] {
+				case 'f': // Prefix: "ffixes/"
+
+					if l := len("ffixes/"); len(elem) >= l && elem[0:l] == "ffixes/" {
+						elem = elem[l:]
+					} else {
+						break
 					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "active"
+						origElem := elem
+						if l := len("active"); len(elem) >= l && elem[0:l] == "active" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetActiveAffixesOperation
+								r.summary = "Получить список активных аффиксов"
+								r.operationID = "getActiveAffixes"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/affixes/active"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					case 'r': // Prefix: "rotation/"
+						origElem := elem
+						if l := len("rotation/"); len(elem) >= l && elem[0:l] == "rotation/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'h': // Prefix: "history"
+
+							if l := len("history"); len(elem) >= l && elem[0:l] == "history" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetAffixRotationHistoryOperation
+									r.summary = "Получить историю ротаций аффиксов"
+									r.operationID = "getAffixRotationHistory"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/affixes/rotation/history"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 't': // Prefix: "trigger"
+
+							if l := len("trigger"); len(elem) >= l && elem[0:l] == "trigger" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = TriggerAffixRotationOperation
+									r.summary = "Запустить ротацию аффиксов (admin)"
+									r.operationID = "triggerAffixRotation"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/affixes/rotation/trigger"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+						elem = origElem
+					}
+					// Param: "id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = GetAffixOperation
+							r.summary = "Получить информацию об аффиксе"
+							r.operationID = "getAffix"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/affixes/{id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
+				case 'r': // Prefix: "rena/sessions"
+
+					if l := len("rena/sessions"); len(elem) >= l && elem[0:l] == "rena/sessions" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = GetArenaSessionsOperation
+							r.summary = "Получить ареновые сессии"
+							r.operationID = "getArenaSessions"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/arena/sessions"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
 				}
 
 			case 'c': // Prefix: "combat/"
@@ -1051,6 +1366,54 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					default:
 						return
 					}
+				}
+
+			case 'i': // Prefix: "instances/"
+
+				if l := len("instances/"); len(elem) >= l && elem[0:l] == "instances/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "instance_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/affixes"
+
+					if l := len("/affixes"); len(elem) >= l && elem[0:l] == "/affixes" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = GetInstanceAffixesOperation
+							r.summary = "Получить аффиксы инстанса"
+							r.operationID = "getInstanceAffixes"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/instances/{instance_id}/affixes"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
 				}
 
 			case 'l': // Prefix: "loadouts"

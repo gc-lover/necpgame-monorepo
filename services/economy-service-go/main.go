@@ -64,6 +64,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(350) // Max 350 goroutines for economy service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 	
 	engramCreationRepo := server.NewEngramCreationRepository(dbPool)
 	engramCreationService := server.NewEngramCreationService(engramCreationRepo, redisClient)

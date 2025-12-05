@@ -213,6 +213,7 @@ func (s *LobbyServer) removeClientFromRoom(client *Client) {
 	}
 }
 
+// Issue: #1399 - Fixed race condition: deletion now under mutex lock
 func (s *LobbyServer) broadcastToRoom(roomName string, message []byte) {
 	s.mu.RLock()
 	room, exists := s.rooms[roomName]
@@ -222,16 +223,29 @@ func (s *LobbyServer) broadcastToRoom(roomName string, message []byte) {
 		return
 	}
 
+	// Collect clients to remove (under RLock)
+	var clientsToRemove []*Client
 	room.mu.RLock()
 	for client := range room.clients {
 		select {
 		case client.send <- message:
+			// Successfully sent
 		default:
-			close(client.send)
-			delete(room.clients, client)
+			// Channel full or closed - mark for removal
+			clientsToRemove = append(clientsToRemove, client)
 		}
 	}
 	room.mu.RUnlock()
+
+	// Remove clients under write lock (Issue: #1399)
+	if len(clientsToRemove) > 0 {
+		room.mu.Lock()
+		for _, client := range clientsToRemove {
+			close(client.send)
+			delete(room.clients, client)
+		}
+		room.mu.Unlock()
+	}
 }
 
 func (c *Client) readPump() {
@@ -261,11 +275,13 @@ func (c *Client) readPump() {
 	}
 }
 
+// Issue: #1398 - Fixed error handling: remove client from room on write errors
 func (c *Client) writePump() {
 	ticker := time.NewTicker(54 * time.Second)
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
+		c.server.removeClientFromRoom(c)
 	}()
 
 	for {
@@ -298,12 +314,14 @@ func (c *Client) writePump() {
 			if err != nil {
 				logger := GetLogger()
 				logger.WithError(err).Error("Failed to get WebSocket writer")
+				RecordWebSocketError("write")
 				return
 			}
 			
 			if _, err := w.Write(message); err != nil {
 				logger := GetLogger()
 				logger.WithError(err).Error("Failed to write WebSocket message")
+				RecordWebSocketError("write")
 				w.Close()
 				return
 			}
@@ -315,6 +333,7 @@ func (c *Client) writePump() {
 					if _, err := w.Write([]byte{'\n'}); err != nil {
 						logger := GetLogger()
 						logger.WithError(err).Error("Failed to write WebSocket newline")
+						RecordWebSocketError("write")
 						w.Close()
 						return
 					}
@@ -322,6 +341,7 @@ func (c *Client) writePump() {
 				if _, err := w.Write(nextMsg); err != nil {
 					logger := GetLogger()
 					logger.WithError(err).Error("Failed to write WebSocket next message")
+					RecordWebSocketError("write")
 					w.Close()
 					return
 				}
@@ -330,6 +350,7 @@ func (c *Client) writePump() {
 			if err := w.Close(); err != nil {
 				logger := GetLogger()
 				logger.WithError(err).Error("Failed to close WebSocket writer")
+				RecordWebSocketError("write")
 				return
 			}
 		case <-ticker.C:
@@ -337,6 +358,7 @@ func (c *Client) writePump() {
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				logger := GetLogger()
 				logger.WithError(err).Error("Failed to write WebSocket ping message")
+				RecordWebSocketError("ping")
 				return
 			}
 		}

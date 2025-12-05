@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-faster/jx"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
@@ -24,6 +25,8 @@ const (
 type Handlers struct {
 	logger *logrus.Logger
 	comboService ComboServiceInterface
+	combatSessionService CombatSessionServiceInterface
+	affixService AffixServiceInterface
 
 	// Memory pooling for hot path structs (zero allocations target!)
 	sessionListResponsePool sync.Pool
@@ -35,7 +38,8 @@ type Handlers struct {
 }
 
 // NewHandlers creates new handlers with memory pooling
-func NewHandlers(logger *logrus.Logger) *Handlers {
+// Issue: #1525 - Initialize comboService if db is provided
+func NewHandlers(logger *logrus.Logger, db *pgxpool.Pool) *Handlers {
 	h := &Handlers{logger: logger}
 
 	// Initialize memory pools (zero allocations target!)
@@ -70,6 +74,15 @@ func NewHandlers(logger *logrus.Logger) *Handlers {
 		},
 	}
 
+	// Issue: #1525 - Initialize comboService if db is provided
+	// Issue: #1607 - Initialize combatSessionService if db is provided
+	// Issue: #1515 - Initialize affixService if db is provided
+	if db != nil {
+		h.comboService = NewComboService(db)
+		h.combatSessionService = NewCombatSessionService(db)
+		h.affixService = NewAffixService(db)
+	}
+
 	return h
 }
 
@@ -92,21 +105,39 @@ func (h *Handlers) ActivateCombo(ctx context.Context, req *api.ActivateComboRequ
 }
 
 // CreateCombatSession implements POST /gameplay/combat/sessions
+// Issue: #1607
 func (h *Handlers) CreateCombatSession(ctx context.Context, req *api.CreateSessionRequest) (api.CreateCombatSessionRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement logic
-	return &api.CreateCombatSessionBadRequest{}, nil
+	if h.combatSessionService == nil {
+		return &api.CreateCombatSessionBadRequest{}, nil
+	}
+
+	session, err := h.combatSessionService.CreateSession(ctx, req)
+	if err != nil {
+		return &api.CreateCombatSessionBadRequest{}, nil
+	}
+
+	return session, nil
 }
 
 // EndCombatSession implements DELETE /gameplay/combat/sessions/{sessionId}
+// Issue: #1607
 func (h *Handlers) EndCombatSession(ctx context.Context, params api.EndCombatSessionParams) (api.EndCombatSessionRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement logic
-	return &api.SessionEndResponse{}, nil
+	if h.combatSessionService == nil {
+		return &api.Error{}, nil
+	}
+
+	response, err := h.combatSessionService.EndSession(ctx, params.SessionId)
+	if err != nil {
+		return &api.Error{}, nil
+	}
+
+	return response, nil
 }
 
 // GetAbilityCatalog implements GET /gameplay/combat/abilities/catalog
@@ -137,12 +168,21 @@ func (h *Handlers) GetAvailableSynergies(ctx context.Context, params api.GetAvai
 }
 
 // GetCombatSession implements GET /gameplay/combat/sessions/{sessionId}
+// Issue: #1607
 func (h *Handlers) GetCombatSession(ctx context.Context, params api.GetCombatSessionParams) (api.GetCombatSessionRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement logic
-	return &api.CombatSessionResponse{}, nil
+	if h.combatSessionService == nil {
+		return &api.Error{}, nil
+	}
+
+	session, err := h.combatSessionService.GetSession(ctx, params.SessionId)
+	if err != nil {
+		return &api.Error{}, nil
+	}
+
+	return session, nil
 }
 
 // GetComboCatalog implements GET /gameplay/combat/combos/catalog
@@ -205,13 +245,31 @@ func (h *Handlers) ListCombatSessions(ctx context.Context, params api.ListCombat
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement logic
+	if h.combatSessionService == nil {
+		return &api.SessionListResponse{}, nil
+	}
 
-	// Issue: #1607 - Use memory pooling
-	result := h.sessionListResponsePool.Get().(*api.SessionListResponse)
-	// Note: Not returning to pool - struct is returned to caller
+	limit := 20
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+	}
 
-	return result, nil
+	offset := 0
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
+	}
+
+	var status *api.SessionStatus
+	if params.Status.IsSet() {
+		status = &params.Status.Value
+	}
+
+	var sessionType *api.SessionType
+	if params.SessionType.IsSet() {
+		sessionType = &params.SessionType.Value
+	}
+
+	return h.combatSessionService.ListSessions(ctx, status, sessionType, limit, offset)
 }
 
 // GetComboLoadout implements GET /gameplay/combat/combos/loadout
@@ -350,4 +408,134 @@ func (h *Handlers) GetComboAnalytics(ctx context.Context, params api.GetComboAna
 	}
 
 	return convertAnalyticsResponseToAPI(response), nil
+}
+
+// GetActiveAffixes implements GET /gameplay/affixes/active
+// Issue: #1515
+func (h *Handlers) GetActiveAffixes(ctx context.Context) (api.GetActiveAffixesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.affixService == nil {
+		return &api.GetActiveAffixesInternalServerError{}, nil
+	}
+
+	response, err := h.affixService.GetActiveAffixes(ctx)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get active affixes")
+		return &api.GetActiveAffixesInternalServerError{}, nil
+	}
+
+	return convertActiveAffixesResponseToAPI(response), nil
+}
+
+// GetAffix implements GET /gameplay/affixes/{id}
+// Issue: #1515
+func (h *Handlers) GetAffix(ctx context.Context, params api.GetAffixParams) (api.GetAffixRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.affixService == nil {
+		return &api.GetAffixInternalServerError{}, nil
+	}
+
+	affix, err := h.affixService.GetAffix(ctx, params.ID)
+	if err != nil {
+		if err.Error() == "affix not found" {
+			return &api.GetAffixNotFound{}, nil
+		}
+		h.logger.WithError(err).Error("Failed to get affix")
+		return &api.GetAffixInternalServerError{}, nil
+	}
+
+	return convertAffixToAPI(affix), nil
+}
+
+// GetInstanceAffixes implements GET /gameplay/instances/{instance_id}/affixes
+// Issue: #1515
+func (h *Handlers) GetInstanceAffixes(ctx context.Context, params api.GetInstanceAffixesParams) (api.GetInstanceAffixesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.affixService == nil {
+		return &api.GetInstanceAffixesInternalServerError{}, nil
+	}
+
+	response, err := h.affixService.GetInstanceAffixes(ctx, params.InstanceID)
+	if err != nil {
+		if err.Error() == "instance not found" {
+			return &api.GetInstanceAffixesNotFound{}, nil
+		}
+		h.logger.WithError(err).Error("Failed to get instance affixes")
+		return &api.GetInstanceAffixesInternalServerError{}, nil
+	}
+
+	return convertInstanceAffixesResponseToAPI(response), nil
+}
+
+// GetAffixRotationHistory implements GET /gameplay/affixes/rotation/history
+// Issue: #1515
+func (h *Handlers) GetAffixRotationHistory(ctx context.Context, params api.GetAffixRotationHistoryParams) (api.GetAffixRotationHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.affixService == nil {
+		return &api.GetAffixRotationHistoryInternalServerError{}, nil
+	}
+
+	weeksBack := 4
+	if params.WeeksBack.IsSet() {
+		weeksBack = params.WeeksBack.Value
+	}
+
+	limit := 20
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+	}
+
+	offset := 0
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
+	}
+
+	response, err := h.affixService.GetRotationHistory(ctx, weeksBack, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get rotation history")
+		return &api.GetAffixRotationHistoryInternalServerError{}, nil
+	}
+
+	return convertRotationHistoryResponseToAPI(response), nil
+}
+
+// TriggerAffixRotation implements POST /gameplay/affixes/rotation/trigger
+// Issue: #1515
+func (h *Handlers) TriggerAffixRotation(ctx context.Context, req api.OptTriggerRotationRequest) (api.TriggerAffixRotationRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.affixService == nil {
+		return &api.TriggerAffixRotationInternalServerError{}, nil
+	}
+
+	force := false
+	var customAffixes []uuid.UUID
+
+	if req.IsSet() {
+		if req.Value.Force.IsSet() {
+			force = req.Value.Force.Value
+		}
+		customAffixes = req.Value.CustomAffixes
+	}
+
+	rotation, err := h.affixService.TriggerRotation(ctx, force, customAffixes)
+	if err != nil {
+		if err.Error() == "active rotation exists" {
+			return &api.TriggerAffixRotationBadRequest{}, nil
+		}
+		h.logger.WithError(err).Error("Failed to trigger rotation")
+		return &api.TriggerAffixRotationInternalServerError{}, nil
+	}
+
+	apiRotation := convertRotationToAPI(rotation)
+	return &apiRotation, nil
 }

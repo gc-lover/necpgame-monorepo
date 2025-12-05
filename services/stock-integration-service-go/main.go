@@ -1,4 +1,4 @@
-// Issue: #151, #1584
+// Issue: #1601
 package main
 
 import (
@@ -10,60 +10,28 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
-	logger.Info("Mail Service (Go) starting...")
+	logger := server.GetLogger()
+	logger.Info("Stock Integration Service (Go) starting...")
 
-	addr := getEnv("ADDR", "0.0.0.0:8086")
-	metricsAddr := getEnv("METRICS_ADDR", ":9096")
+	addr := getEnv("ADDR", "0.0.0.0:8095")
+	metricsAddr := getEnv("METRICS_ADDR", ":9095")
 
-	// Initialize database
-	dbConnStr := getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
-	db, err := server.NewPostgresDB(dbConnStr)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to connect to database")
-	}
-	defer db.Close()
-	
-	// Initialize repository
-	repository := server.NewPostgresRepository(db)
-	
-	// Initialize JWT validator
-	issuer := getEnv("JWT_ISSUER", "http://localhost:8080/realms/necpgame")
-	jwksURL := getEnv("JWT_JWKS_URL", "http://localhost:8080/realms/necpgame/protocol/openid-connect/certs")
-	authEnabled := getEnv("AUTH_ENABLED", "true") == "true"
-	
-	var jwtValidator *server.JwtValidator
-	if authEnabled {
-		jwtValidator = server.NewJwtValidator(issuer, jwksURL, logger)
-	}
-	
-	// Initialize service
-	mailService := server.NewMailService(repository)
-	httpServer := server.NewHTTPServer(addr, mailService, jwtValidator)
+	httpServer := server.NewHTTPServer(addr)
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6429")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6085")
 		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
-
-	// Issue: #1585 - Runtime Goroutine Monitoring
-	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for mail service
-	go monitor.Start()
-	defer monitor.Stop()
-	logger.Info("OK Goroutine monitor started")
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
@@ -82,12 +50,16 @@ func main() {
 		}
 	}()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-sigChan
 		logger.Info("Shutting down server...")
+		cancel()
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
@@ -96,7 +68,7 @@ func main() {
 	}()
 
 	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
+	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
 		logger.WithError(err).Fatal("Server error")
 	}
 
@@ -109,3 +81,4 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+

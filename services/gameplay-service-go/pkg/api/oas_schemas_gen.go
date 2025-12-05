@@ -751,6 +751,656 @@ func (*ActivateComboUnauthorized) activateComboRes() {}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
+// Ref: #/components/schemas/ActiveAffixesResponse
+type ActiveAffixesResponse struct {
+	// Начало текущей недели ротации.
+	WeekStart OptDateTime `json:"week_start"`
+	// Конец текущей недели ротации.
+	WeekEnd OptDateTime `json:"week_end"`
+	// Сезонный аффикс (если есть).
+	SeasonalAffix OptNilAffixSummary `json:"seasonal_affix"`
+	// Список активных аффиксов на текущей неделе.
+	ActiveAffixes []AffixSummary `json:"active_affixes"`
+}
+
+// GetWeekStart returns the value of WeekStart.
+func (s *ActiveAffixesResponse) GetWeekStart() OptDateTime {
+	return s.WeekStart
+}
+
+// GetWeekEnd returns the value of WeekEnd.
+func (s *ActiveAffixesResponse) GetWeekEnd() OptDateTime {
+	return s.WeekEnd
+}
+
+// GetSeasonalAffix returns the value of SeasonalAffix.
+func (s *ActiveAffixesResponse) GetSeasonalAffix() OptNilAffixSummary {
+	return s.SeasonalAffix
+}
+
+// GetActiveAffixes returns the value of ActiveAffixes.
+func (s *ActiveAffixesResponse) GetActiveAffixes() []AffixSummary {
+	return s.ActiveAffixes
+}
+
+// SetWeekStart sets the value of WeekStart.
+func (s *ActiveAffixesResponse) SetWeekStart(val OptDateTime) {
+	s.WeekStart = val
+}
+
+// SetWeekEnd sets the value of WeekEnd.
+func (s *ActiveAffixesResponse) SetWeekEnd(val OptDateTime) {
+	s.WeekEnd = val
+}
+
+// SetSeasonalAffix sets the value of SeasonalAffix.
+func (s *ActiveAffixesResponse) SetSeasonalAffix(val OptNilAffixSummary) {
+	s.SeasonalAffix = val
+}
+
+// SetActiveAffixes sets the value of ActiveAffixes.
+func (s *ActiveAffixesResponse) SetActiveAffixes(val []AffixSummary) {
+	s.ActiveAffixes = val
+}
+
+func (*ActiveAffixesResponse) getActiveAffixesRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/Affix
+type Affix struct {
+	// Уникальный идентификатор аффикса.
+	ID OptUUID `json:"id"`
+	// Название аффикса.
+	Name OptString `json:"name"`
+	// Описание механики аффикса.
+	Description OptString `json:"description"`
+	// Категория аффикса.
+	Category OptAffixCategory `json:"category"`
+	// Дата создания аффикса.
+	CreatedAt OptDateTime `json:"created_at"`
+	// Детальные механики аффикса.
+	Mechanics OptAffixMechanics `json:"mechanics"`
+	// Визуальные эффекты аффикса.
+	VisualEffects OptAffixVisualEffects `json:"visual_effects"`
+	// Модификатор наград (1.0 = базовые награды, 1.25 = +25%).
+	RewardModifier OptFloat32 `json:"reward_modifier"`
+	// Модификатор сложности (1.0 = базовая сложность, 1.15 = +15%).
+	DifficultyModifier OptFloat32 `json:"difficulty_modifier"`
+}
+
+// GetID returns the value of ID.
+func (s *Affix) GetID() OptUUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *Affix) GetName() OptString {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *Affix) GetDescription() OptString {
+	return s.Description
+}
+
+// GetCategory returns the value of Category.
+func (s *Affix) GetCategory() OptAffixCategory {
+	return s.Category
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Affix) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetMechanics returns the value of Mechanics.
+func (s *Affix) GetMechanics() OptAffixMechanics {
+	return s.Mechanics
+}
+
+// GetVisualEffects returns the value of VisualEffects.
+func (s *Affix) GetVisualEffects() OptAffixVisualEffects {
+	return s.VisualEffects
+}
+
+// GetRewardModifier returns the value of RewardModifier.
+func (s *Affix) GetRewardModifier() OptFloat32 {
+	return s.RewardModifier
+}
+
+// GetDifficultyModifier returns the value of DifficultyModifier.
+func (s *Affix) GetDifficultyModifier() OptFloat32 {
+	return s.DifficultyModifier
+}
+
+// SetID sets the value of ID.
+func (s *Affix) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *Affix) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Affix) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetCategory sets the value of Category.
+func (s *Affix) SetCategory(val OptAffixCategory) {
+	s.Category = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Affix) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetMechanics sets the value of Mechanics.
+func (s *Affix) SetMechanics(val OptAffixMechanics) {
+	s.Mechanics = val
+}
+
+// SetVisualEffects sets the value of VisualEffects.
+func (s *Affix) SetVisualEffects(val OptAffixVisualEffects) {
+	s.VisualEffects = val
+}
+
+// SetRewardModifier sets the value of RewardModifier.
+func (s *Affix) SetRewardModifier(val OptFloat32) {
+	s.RewardModifier = val
+}
+
+// SetDifficultyModifier sets the value of DifficultyModifier.
+func (s *Affix) SetDifficultyModifier(val OptFloat32) {
+	s.DifficultyModifier = val
+}
+
+func (*Affix) getAffixRes() {}
+
+// Категория аффикса.
+type AffixCategory string
+
+const (
+	AffixCategoryCombat        AffixCategory = "combat"
+	AffixCategoryEnvironmental AffixCategory = "environmental"
+	AffixCategoryDebuff        AffixCategory = "debuff"
+	AffixCategoryDefensive     AffixCategory = "defensive"
+)
+
+// AllValues returns all AffixCategory values.
+func (AffixCategory) AllValues() []AffixCategory {
+	return []AffixCategory{
+		AffixCategoryCombat,
+		AffixCategoryEnvironmental,
+		AffixCategoryDebuff,
+		AffixCategoryDefensive,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AffixCategory) MarshalText() ([]byte, error) {
+	switch s {
+	case AffixCategoryCombat:
+		return []byte(s), nil
+	case AffixCategoryEnvironmental:
+		return []byte(s), nil
+	case AffixCategoryDebuff:
+		return []byte(s), nil
+	case AffixCategoryDefensive:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AffixCategory) UnmarshalText(data []byte) error {
+	switch AffixCategory(data) {
+	case AffixCategoryCombat:
+		*s = AffixCategoryCombat
+		return nil
+	case AffixCategoryEnvironmental:
+		*s = AffixCategoryEnvironmental
+		return nil
+	case AffixCategoryDebuff:
+		*s = AffixCategoryDebuff
+		return nil
+	case AffixCategoryDefensive:
+		*s = AffixCategoryDefensive
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Детальные механики аффикса.
+type AffixMechanics struct {
+	// Условие срабатывания.
+	Trigger OptString `json:"trigger"`
+	// Тип эффекта.
+	EffectType OptString `json:"effect_type"`
+	// Радиус эффекта в метрах.
+	Radius OptFloat32 `json:"radius"`
+	// Процент урона.
+	DamagePercent OptInt `json:"damage_percent"`
+	// Тип урона.
+	DamageType      OptString `json:"damage_type"`
+	AdditionalProps AffixMechanicsAdditional
+}
+
+// GetTrigger returns the value of Trigger.
+func (s *AffixMechanics) GetTrigger() OptString {
+	return s.Trigger
+}
+
+// GetEffectType returns the value of EffectType.
+func (s *AffixMechanics) GetEffectType() OptString {
+	return s.EffectType
+}
+
+// GetRadius returns the value of Radius.
+func (s *AffixMechanics) GetRadius() OptFloat32 {
+	return s.Radius
+}
+
+// GetDamagePercent returns the value of DamagePercent.
+func (s *AffixMechanics) GetDamagePercent() OptInt {
+	return s.DamagePercent
+}
+
+// GetDamageType returns the value of DamageType.
+func (s *AffixMechanics) GetDamageType() OptString {
+	return s.DamageType
+}
+
+// GetAdditionalProps returns the value of AdditionalProps.
+func (s *AffixMechanics) GetAdditionalProps() AffixMechanicsAdditional {
+	return s.AdditionalProps
+}
+
+// SetTrigger sets the value of Trigger.
+func (s *AffixMechanics) SetTrigger(val OptString) {
+	s.Trigger = val
+}
+
+// SetEffectType sets the value of EffectType.
+func (s *AffixMechanics) SetEffectType(val OptString) {
+	s.EffectType = val
+}
+
+// SetRadius sets the value of Radius.
+func (s *AffixMechanics) SetRadius(val OptFloat32) {
+	s.Radius = val
+}
+
+// SetDamagePercent sets the value of DamagePercent.
+func (s *AffixMechanics) SetDamagePercent(val OptInt) {
+	s.DamagePercent = val
+}
+
+// SetDamageType sets the value of DamageType.
+func (s *AffixMechanics) SetDamageType(val OptString) {
+	s.DamageType = val
+}
+
+// SetAdditionalProps sets the value of AdditionalProps.
+func (s *AffixMechanics) SetAdditionalProps(val AffixMechanicsAdditional) {
+	s.AdditionalProps = val
+}
+
+type AffixMechanicsAdditional map[string]jx.Raw
+
+func (s *AffixMechanicsAdditional) init() AffixMechanicsAdditional {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/AffixRotation
+type AffixRotation struct {
+	// ID ротации.
+	ID OptUUID `json:"id"`
+	// Начало недели.
+	WeekStart OptDateTime `json:"week_start"`
+	// Конец недели.
+	WeekEnd OptDateTime `json:"week_end"`
+	// Дата создания ротации.
+	CreatedAt OptDateTime `json:"created_at"`
+	// Сезонный аффикс.
+	SeasonalAffix OptNilAffixSummary `json:"seasonal_affix"`
+	// Активные аффиксы на неделе.
+	ActiveAffixes []AffixSummary `json:"active_affixes"`
+}
+
+// GetID returns the value of ID.
+func (s *AffixRotation) GetID() OptUUID {
+	return s.ID
+}
+
+// GetWeekStart returns the value of WeekStart.
+func (s *AffixRotation) GetWeekStart() OptDateTime {
+	return s.WeekStart
+}
+
+// GetWeekEnd returns the value of WeekEnd.
+func (s *AffixRotation) GetWeekEnd() OptDateTime {
+	return s.WeekEnd
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *AffixRotation) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetSeasonalAffix returns the value of SeasonalAffix.
+func (s *AffixRotation) GetSeasonalAffix() OptNilAffixSummary {
+	return s.SeasonalAffix
+}
+
+// GetActiveAffixes returns the value of ActiveAffixes.
+func (s *AffixRotation) GetActiveAffixes() []AffixSummary {
+	return s.ActiveAffixes
+}
+
+// SetID sets the value of ID.
+func (s *AffixRotation) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetWeekStart sets the value of WeekStart.
+func (s *AffixRotation) SetWeekStart(val OptDateTime) {
+	s.WeekStart = val
+}
+
+// SetWeekEnd sets the value of WeekEnd.
+func (s *AffixRotation) SetWeekEnd(val OptDateTime) {
+	s.WeekEnd = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *AffixRotation) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetSeasonalAffix sets the value of SeasonalAffix.
+func (s *AffixRotation) SetSeasonalAffix(val OptNilAffixSummary) {
+	s.SeasonalAffix = val
+}
+
+// SetActiveAffixes sets the value of ActiveAffixes.
+func (s *AffixRotation) SetActiveAffixes(val []AffixSummary) {
+	s.ActiveAffixes = val
+}
+
+func (*AffixRotation) triggerAffixRotationRes() {}
+
+// Merged schema.
+// Ref: #/components/schemas/AffixRotationHistoryResponse
+type AffixRotationHistoryResponse struct {
+	// Merged property.
+	Items []AffixRotation `json:"items"`
+	// Общее количество элементов.
+	Total int `json:"total"`
+	// Количество элементов на странице.
+	Limit OptInt `json:"limit"`
+	// Смещение для пагинации.
+	Offset OptInt `json:"offset"`
+	// Есть ли еще элементы.
+	HasMore OptBool `json:"has_more"`
+}
+
+// GetItems returns the value of Items.
+func (s *AffixRotationHistoryResponse) GetItems() []AffixRotation {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *AffixRotationHistoryResponse) GetTotal() int {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *AffixRotationHistoryResponse) GetLimit() OptInt {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *AffixRotationHistoryResponse) GetOffset() OptInt {
+	return s.Offset
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *AffixRotationHistoryResponse) GetHasMore() OptBool {
+	return s.HasMore
+}
+
+// SetItems sets the value of Items.
+func (s *AffixRotationHistoryResponse) SetItems(val []AffixRotation) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *AffixRotationHistoryResponse) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *AffixRotationHistoryResponse) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *AffixRotationHistoryResponse) SetOffset(val OptInt) {
+	s.Offset = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *AffixRotationHistoryResponse) SetHasMore(val OptBool) {
+	s.HasMore = val
+}
+
+func (*AffixRotationHistoryResponse) getAffixRotationHistoryRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/AffixSummary
+type AffixSummary struct {
+	ID                 OptUUID                 `json:"id"`
+	Name               OptString               `json:"name"`
+	Description        OptString               `json:"description"`
+	Category           OptAffixSummaryCategory `json:"category"`
+	RewardModifier     OptFloat32              `json:"reward_modifier"`
+	DifficultyModifier OptFloat32              `json:"difficulty_modifier"`
+}
+
+// GetID returns the value of ID.
+func (s *AffixSummary) GetID() OptUUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *AffixSummary) GetName() OptString {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *AffixSummary) GetDescription() OptString {
+	return s.Description
+}
+
+// GetCategory returns the value of Category.
+func (s *AffixSummary) GetCategory() OptAffixSummaryCategory {
+	return s.Category
+}
+
+// GetRewardModifier returns the value of RewardModifier.
+func (s *AffixSummary) GetRewardModifier() OptFloat32 {
+	return s.RewardModifier
+}
+
+// GetDifficultyModifier returns the value of DifficultyModifier.
+func (s *AffixSummary) GetDifficultyModifier() OptFloat32 {
+	return s.DifficultyModifier
+}
+
+// SetID sets the value of ID.
+func (s *AffixSummary) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *AffixSummary) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *AffixSummary) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetCategory sets the value of Category.
+func (s *AffixSummary) SetCategory(val OptAffixSummaryCategory) {
+	s.Category = val
+}
+
+// SetRewardModifier sets the value of RewardModifier.
+func (s *AffixSummary) SetRewardModifier(val OptFloat32) {
+	s.RewardModifier = val
+}
+
+// SetDifficultyModifier sets the value of DifficultyModifier.
+func (s *AffixSummary) SetDifficultyModifier(val OptFloat32) {
+	s.DifficultyModifier = val
+}
+
+type AffixSummaryCategory string
+
+const (
+	AffixSummaryCategoryCombat        AffixSummaryCategory = "combat"
+	AffixSummaryCategoryEnvironmental AffixSummaryCategory = "environmental"
+	AffixSummaryCategoryDebuff        AffixSummaryCategory = "debuff"
+	AffixSummaryCategoryDefensive     AffixSummaryCategory = "defensive"
+)
+
+// AllValues returns all AffixSummaryCategory values.
+func (AffixSummaryCategory) AllValues() []AffixSummaryCategory {
+	return []AffixSummaryCategory{
+		AffixSummaryCategoryCombat,
+		AffixSummaryCategoryEnvironmental,
+		AffixSummaryCategoryDebuff,
+		AffixSummaryCategoryDefensive,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AffixSummaryCategory) MarshalText() ([]byte, error) {
+	switch s {
+	case AffixSummaryCategoryCombat:
+		return []byte(s), nil
+	case AffixSummaryCategoryEnvironmental:
+		return []byte(s), nil
+	case AffixSummaryCategoryDebuff:
+		return []byte(s), nil
+	case AffixSummaryCategoryDefensive:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AffixSummaryCategory) UnmarshalText(data []byte) error {
+	switch AffixSummaryCategory(data) {
+	case AffixSummaryCategoryCombat:
+		*s = AffixSummaryCategoryCombat
+		return nil
+	case AffixSummaryCategoryEnvironmental:
+		*s = AffixSummaryCategoryEnvironmental
+		return nil
+	case AffixSummaryCategoryDebuff:
+		*s = AffixSummaryCategoryDebuff
+		return nil
+	case AffixSummaryCategoryDefensive:
+		*s = AffixSummaryCategoryDefensive
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Визуальные эффекты аффикса.
+type AffixVisualEffects struct {
+	// ID частиц взрыва.
+	ExplosionParticle OptString `json:"explosion_particle"`
+	// ID звукового эффекта.
+	SoundEffect OptString `json:"sound_effect"`
+	// Тряска экрана.
+	ScreenShake     OptBool `json:"screen_shake"`
+	AdditionalProps AffixVisualEffectsAdditional
+}
+
+// GetExplosionParticle returns the value of ExplosionParticle.
+func (s *AffixVisualEffects) GetExplosionParticle() OptString {
+	return s.ExplosionParticle
+}
+
+// GetSoundEffect returns the value of SoundEffect.
+func (s *AffixVisualEffects) GetSoundEffect() OptString {
+	return s.SoundEffect
+}
+
+// GetScreenShake returns the value of ScreenShake.
+func (s *AffixVisualEffects) GetScreenShake() OptBool {
+	return s.ScreenShake
+}
+
+// GetAdditionalProps returns the value of AdditionalProps.
+func (s *AffixVisualEffects) GetAdditionalProps() AffixVisualEffectsAdditional {
+	return s.AdditionalProps
+}
+
+// SetExplosionParticle sets the value of ExplosionParticle.
+func (s *AffixVisualEffects) SetExplosionParticle(val OptString) {
+	s.ExplosionParticle = val
+}
+
+// SetSoundEffect sets the value of SoundEffect.
+func (s *AffixVisualEffects) SetSoundEffect(val OptString) {
+	s.SoundEffect = val
+}
+
+// SetScreenShake sets the value of ScreenShake.
+func (s *AffixVisualEffects) SetScreenShake(val OptBool) {
+	s.ScreenShake = val
+}
+
+// SetAdditionalProps sets the value of AdditionalProps.
+func (s *AffixVisualEffects) SetAdditionalProps(val AffixVisualEffectsAdditional) {
+	s.AdditionalProps = val
+}
+
+type AffixVisualEffectsAdditional map[string]jx.Raw
+
+func (s *AffixVisualEffectsAdditional) init() AffixVisualEffectsAdditional {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/AnalyticsResponse
 type AnalyticsResponse struct {
 	PeriodStart OptDateTime      `json:"period_start"`
@@ -2021,6 +2671,34 @@ type GetAbilityCatalogUnauthorized Error
 
 func (*GetAbilityCatalogUnauthorized) getAbilityCatalogRes() {}
 
+type GetActiveAffixesInternalServerError Error
+
+func (*GetActiveAffixesInternalServerError) getActiveAffixesRes() {}
+
+type GetActiveAffixesUnauthorized Error
+
+func (*GetActiveAffixesUnauthorized) getActiveAffixesRes() {}
+
+type GetAffixInternalServerError Error
+
+func (*GetAffixInternalServerError) getAffixRes() {}
+
+type GetAffixNotFound Error
+
+func (*GetAffixNotFound) getAffixRes() {}
+
+type GetAffixRotationHistoryInternalServerError Error
+
+func (*GetAffixRotationHistoryInternalServerError) getAffixRotationHistoryRes() {}
+
+type GetAffixRotationHistoryUnauthorized Error
+
+func (*GetAffixRotationHistoryUnauthorized) getAffixRotationHistoryRes() {}
+
+type GetAffixUnauthorized Error
+
+func (*GetAffixUnauthorized) getAffixRes() {}
+
 type GetArenaSessionsOK struct {
 	Sessions []jx.Raw `json:"sessions"`
 }
@@ -2252,6 +2930,22 @@ func (*GetInstalledImplantsOK) getInstalledImplantsRes() {}
 type GetInstalledImplantsUnauthorized Error
 
 func (*GetInstalledImplantsUnauthorized) getInstalledImplantsRes() {}
+
+type GetInstanceAffixesForbidden Error
+
+func (*GetInstanceAffixesForbidden) getInstanceAffixesRes() {}
+
+type GetInstanceAffixesInternalServerError Error
+
+func (*GetInstanceAffixesInternalServerError) getInstanceAffixesRes() {}
+
+type GetInstanceAffixesNotFound Error
+
+func (*GetInstanceAffixesNotFound) getInstanceAffixesRes() {}
+
+type GetInstanceAffixesUnauthorized Error
+
+func (*GetInstanceAffixesUnauthorized) getInstanceAffixesRes() {}
 
 type GetLoadoutsOK struct {
 	Loadouts []jx.Raw `json:"loadouts"`
@@ -2671,6 +3365,74 @@ func (s *ImplantSlotType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/InstanceAffixesResponse
+type InstanceAffixesResponse struct {
+	// ID инстанса.
+	InstanceID OptUUID `json:"instance_id"`
+	// Время применения аффиксов.
+	AppliedAt OptDateTime `json:"applied_at"`
+	// Список аффиксов инстанса (2-4 аффикса).
+	Affixes []AffixSummary `json:"affixes"`
+	// Общий модификатор наград (произведение всех
+	// модификаторов).
+	TotalRewardModifier OptFloat32 `json:"total_reward_modifier"`
+	// Общий модификатор сложности (произведение всех
+	// модификаторов).
+	TotalDifficultyModifier OptFloat32 `json:"total_difficulty_modifier"`
+}
+
+// GetInstanceID returns the value of InstanceID.
+func (s *InstanceAffixesResponse) GetInstanceID() OptUUID {
+	return s.InstanceID
+}
+
+// GetAppliedAt returns the value of AppliedAt.
+func (s *InstanceAffixesResponse) GetAppliedAt() OptDateTime {
+	return s.AppliedAt
+}
+
+// GetAffixes returns the value of Affixes.
+func (s *InstanceAffixesResponse) GetAffixes() []AffixSummary {
+	return s.Affixes
+}
+
+// GetTotalRewardModifier returns the value of TotalRewardModifier.
+func (s *InstanceAffixesResponse) GetTotalRewardModifier() OptFloat32 {
+	return s.TotalRewardModifier
+}
+
+// GetTotalDifficultyModifier returns the value of TotalDifficultyModifier.
+func (s *InstanceAffixesResponse) GetTotalDifficultyModifier() OptFloat32 {
+	return s.TotalDifficultyModifier
+}
+
+// SetInstanceID sets the value of InstanceID.
+func (s *InstanceAffixesResponse) SetInstanceID(val OptUUID) {
+	s.InstanceID = val
+}
+
+// SetAppliedAt sets the value of AppliedAt.
+func (s *InstanceAffixesResponse) SetAppliedAt(val OptDateTime) {
+	s.AppliedAt = val
+}
+
+// SetAffixes sets the value of Affixes.
+func (s *InstanceAffixesResponse) SetAffixes(val []AffixSummary) {
+	s.Affixes = val
+}
+
+// SetTotalRewardModifier sets the value of TotalRewardModifier.
+func (s *InstanceAffixesResponse) SetTotalRewardModifier(val OptFloat32) {
+	s.TotalRewardModifier = val
+}
+
+// SetTotalDifficultyModifier sets the value of TotalDifficultyModifier.
+func (s *InstanceAffixesResponse) SetTotalDifficultyModifier(val OptFloat32) {
+	s.TotalDifficultyModifier = val
+}
+
+func (*InstanceAffixesResponse) getInstanceAffixesRes() {}
+
 // NewOptAbilityModifiers returns new OptAbilityModifiers with value set to v.
 func NewOptAbilityModifiers(v AbilityModifiers) OptAbilityModifiers {
 	return OptAbilityModifiers{
@@ -2987,6 +3749,190 @@ func (o OptActivateComboRequestContext) Get() (v ActivateComboRequestContext, ok
 
 // Or returns value if set, or given parameter if does not.
 func (o OptActivateComboRequestContext) Or(d ActivateComboRequestContext) ActivateComboRequestContext {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAffixCategory returns new OptAffixCategory with value set to v.
+func NewOptAffixCategory(v AffixCategory) OptAffixCategory {
+	return OptAffixCategory{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAffixCategory is optional AffixCategory.
+type OptAffixCategory struct {
+	Value AffixCategory
+	Set   bool
+}
+
+// IsSet returns true if OptAffixCategory was set.
+func (o OptAffixCategory) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAffixCategory) Reset() {
+	var v AffixCategory
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAffixCategory) SetTo(v AffixCategory) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAffixCategory) Get() (v AffixCategory, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAffixCategory) Or(d AffixCategory) AffixCategory {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAffixMechanics returns new OptAffixMechanics with value set to v.
+func NewOptAffixMechanics(v AffixMechanics) OptAffixMechanics {
+	return OptAffixMechanics{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAffixMechanics is optional AffixMechanics.
+type OptAffixMechanics struct {
+	Value AffixMechanics
+	Set   bool
+}
+
+// IsSet returns true if OptAffixMechanics was set.
+func (o OptAffixMechanics) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAffixMechanics) Reset() {
+	var v AffixMechanics
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAffixMechanics) SetTo(v AffixMechanics) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAffixMechanics) Get() (v AffixMechanics, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAffixMechanics) Or(d AffixMechanics) AffixMechanics {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAffixSummaryCategory returns new OptAffixSummaryCategory with value set to v.
+func NewOptAffixSummaryCategory(v AffixSummaryCategory) OptAffixSummaryCategory {
+	return OptAffixSummaryCategory{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAffixSummaryCategory is optional AffixSummaryCategory.
+type OptAffixSummaryCategory struct {
+	Value AffixSummaryCategory
+	Set   bool
+}
+
+// IsSet returns true if OptAffixSummaryCategory was set.
+func (o OptAffixSummaryCategory) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAffixSummaryCategory) Reset() {
+	var v AffixSummaryCategory
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAffixSummaryCategory) SetTo(v AffixSummaryCategory) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAffixSummaryCategory) Get() (v AffixSummaryCategory, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAffixSummaryCategory) Or(d AffixSummaryCategory) AffixSummaryCategory {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAffixVisualEffects returns new OptAffixVisualEffects with value set to v.
+func NewOptAffixVisualEffects(v AffixVisualEffects) OptAffixVisualEffects {
+	return OptAffixVisualEffects{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAffixVisualEffects is optional AffixVisualEffects.
+type OptAffixVisualEffects struct {
+	Value AffixVisualEffects
+	Set   bool
+}
+
+// IsSet returns true if OptAffixVisualEffects was set.
+func (o OptAffixVisualEffects) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAffixVisualEffects) Reset() {
+	var v AffixVisualEffects
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAffixVisualEffects) SetTo(v AffixVisualEffects) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAffixVisualEffects) Get() (v AffixVisualEffects, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAffixVisualEffects) Or(d AffixVisualEffects) AffixVisualEffects {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -3740,6 +4686,69 @@ func (o OptNilAbilityActivationRequestPosition) Get() (v AbilityActivationReques
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilAbilityActivationRequestPosition) Or(d AbilityActivationRequestPosition) AbilityActivationRequestPosition {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilAffixSummary returns new OptNilAffixSummary with value set to v.
+func NewOptNilAffixSummary(v AffixSummary) OptNilAffixSummary {
+	return OptNilAffixSummary{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilAffixSummary is optional nullable AffixSummary.
+type OptNilAffixSummary struct {
+	Value AffixSummary
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilAffixSummary was set.
+func (o OptNilAffixSummary) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilAffixSummary) Reset() {
+	var v AffixSummary
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilAffixSummary) SetTo(v AffixSummary) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilAffixSummary) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilAffixSummary) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v AffixSummary
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilAffixSummary) Get() (v AffixSummary, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilAffixSummary) Or(d AffixSummary) AffixSummary {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -4549,6 +5558,52 @@ func (o OptSynergyType) Get() (v SynergyType, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSynergyType) Or(d SynergyType) SynergyType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTriggerRotationRequest returns new OptTriggerRotationRequest with value set to v.
+func NewOptTriggerRotationRequest(v TriggerRotationRequest) OptTriggerRotationRequest {
+	return OptTriggerRotationRequest{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTriggerRotationRequest is optional TriggerRotationRequest.
+type OptTriggerRotationRequest struct {
+	Value TriggerRotationRequest
+	Set   bool
+}
+
+// IsSet returns true if OptTriggerRotationRequest was set.
+func (o OptTriggerRotationRequest) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTriggerRotationRequest) Reset() {
+	var v TriggerRotationRequest
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTriggerRotationRequest) SetTo(v TriggerRotationRequest) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTriggerRotationRequest) Get() (v TriggerRotationRequest, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTriggerRotationRequest) Or(d TriggerRotationRequest) TriggerRotationRequest {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -6012,6 +7067,54 @@ func (s *SynergyType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+type TriggerAffixRotationBadRequest Error
+
+func (*TriggerAffixRotationBadRequest) triggerAffixRotationRes() {}
+
+type TriggerAffixRotationForbidden Error
+
+func (*TriggerAffixRotationForbidden) triggerAffixRotationRes() {}
+
+type TriggerAffixRotationInternalServerError Error
+
+func (*TriggerAffixRotationInternalServerError) triggerAffixRotationRes() {}
+
+type TriggerAffixRotationUnauthorized Error
+
+func (*TriggerAffixRotationUnauthorized) triggerAffixRotationRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/TriggerRotationRequest
+type TriggerRotationRequest struct {
+	// Кастомный список аффиксов (опционально, иначе
+	// случайный выбор).
+	CustomAffixes []uuid.UUID `json:"custom_affixes"`
+	// Принудительно запустить ротацию даже если уже есть
+	// активная.
+	Force OptBool `json:"force"`
+}
+
+// GetCustomAffixes returns the value of CustomAffixes.
+func (s *TriggerRotationRequest) GetCustomAffixes() []uuid.UUID {
+	return s.CustomAffixes
+}
+
+// GetForce returns the value of Force.
+func (s *TriggerRotationRequest) GetForce() OptBool {
+	return s.Force
+}
+
+// SetCustomAffixes sets the value of CustomAffixes.
+func (s *TriggerRotationRequest) SetCustomAffixes(val []uuid.UUID) {
+	s.CustomAffixes = val
+}
+
+// SetForce sets the value of Force.
+func (s *TriggerRotationRequest) SetForce(val OptBool) {
+	s.Force = val
 }
 
 type UpdateComboLoadoutBadRequest Error

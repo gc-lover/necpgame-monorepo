@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -19,8 +20,8 @@ type HTTPServer struct {
 	logger *logrus.Logger
 }
 
-func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewHandlers(logger)
+func NewHTTPServer(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HTTPServer {
+	handlers := NewHandlers(logger, db)
 
 	router := chi.NewRouter()
 

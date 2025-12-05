@@ -1,4 +1,4 @@
-// Issue: #1584
+// Issue: #1584, #1525
 package main
 
 import (
@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/server"
 	"github.com/sirupsen/logrus"
 )
@@ -27,7 +28,29 @@ func main() {
 	addr := ":" + port
 	logger.WithField("address", addr).Info("Starting Gameplay Service")
 
-	httpServer := server.NewHTTPServer(addr, logger)
+	// Issue: #1525 - Initialize database connection pool
+	var db *pgxpool.Pool
+	dbURL := getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
+	if dbURL != "" {
+		config, err := pgxpool.ParseConfig(dbURL)
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to parse database URL")
+		}
+		// Performance: Issue #1605 - DB Connection Pool configuration
+		config.MaxConns = 25
+		config.MinConns = 5
+		config.MaxConnLifetime = 5 * time.Minute
+		config.MaxConnIdleTime = 10 * time.Minute
+
+		db, err = pgxpool.NewWithConfig(context.Background(), config)
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to connect to database")
+		}
+		defer db.Close()
+		logger.Info("Database connection pool initialized")
+	}
+
+	httpServer := server.NewHTTPServer(addr, logger, db)
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
@@ -38,6 +61,19 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(300, logger) // Max 300 goroutines for gameplay service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
+	// Issue: #1515 - Start affix rotation scheduler (weekly rotation on Monday 00:00 UTC)
+	affixScheduler := server.NewAffixScheduler(db, logger)
+	if affixScheduler != nil {
+		affixScheduler.Start()
+		defer affixScheduler.Stop()
+	}
 
 	go func() {
 		logger.Info("HTTP server listening on ", addr)

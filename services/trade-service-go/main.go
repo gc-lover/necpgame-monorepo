@@ -33,6 +33,13 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	logger := server.GetLogger()
+	monitor := server.NewGoroutineMonitor(300) // Max 300 goroutines for trade service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
 	go func() {
 		if err := httpServer.Start(); err != nil {
 			log.Fatal(err)

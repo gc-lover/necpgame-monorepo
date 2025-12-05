@@ -64,6 +64,39 @@ func (UnimplementedHandler) GetAbilityCatalog(ctx context.Context, params GetAbi
 	return r, ht.ErrNotImplemented
 }
 
+// GetActiveAffixes implements getActiveAffixes operation.
+//
+// Возвращает список аффиксов, активных в текущей
+// неделе.
+// Аффиксы ротируются еженедельно (понедельник 00:00 UTC).
+//
+// GET /gameplay/affixes/active
+func (UnimplementedHandler) GetActiveAffixes(ctx context.Context) (r GetActiveAffixesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAffix implements getAffix operation.
+//
+// Возвращает детальную информацию об аффиксе по его ID.
+// Включает описание механик, визуальные эффекты и
+// модификаторы.
+//
+// GET /gameplay/affixes/{id}
+func (UnimplementedHandler) GetAffix(ctx context.Context, params GetAffixParams) (r GetAffixRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAffixRotationHistory implements getAffixRotationHistory operation.
+//
+// Возвращает историю еженедельных ротаций аффиксов.
+// Поддерживает пагинацию для просмотра прошлых
+// ротаций.
+//
+// GET /gameplay/affixes/rotation/history
+func (UnimplementedHandler) GetAffixRotationHistory(ctx context.Context, params GetAffixRotationHistoryParams) (r GetAffixRotationHistoryRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetArenaSessions implements getArenaSessions operation.
 //
 // Получить ареновые сессии.
@@ -149,6 +182,17 @@ func (UnimplementedHandler) GetInstalledImplants(ctx context.Context, params Get
 	return r, ht.ErrNotImplemented
 }
 
+// GetInstanceAffixes implements getInstanceAffixes operation.
+//
+// Возвращает список аффиксов, примененных к
+// конкретному инстансу рейда или подземелья.
+// Каждый инстанс имеет 2-4 случайных аффикса из активных.
+//
+// GET /gameplay/instances/{instance_id}/affixes
+func (UnimplementedHandler) GetInstanceAffixes(ctx context.Context, params GetInstanceAffixesParams) (r GetInstanceAffixesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetLoadouts implements getLoadouts operation.
 //
 // Получить лоадауты персонажа.
@@ -182,6 +226,19 @@ func (UnimplementedHandler) ListCombatSessions(ctx context.Context, params ListC
 //
 // POST /gameplay/combat/combos/score
 func (UnimplementedHandler) SubmitComboScore(ctx context.Context, req *SubmitScoreRequest) (r SubmitComboScoreRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TriggerAffixRotation implements triggerAffixRotation operation.
+//
+// Принудительно запускает ротацию аффиксов для
+// следующей недели.
+// Доступно только администраторам.
+// Обычно ротация происходит автоматически каждую
+// неделю (понедельник 00:00 UTC).
+//
+// POST /gameplay/affixes/rotation/trigger
+func (UnimplementedHandler) TriggerAffixRotation(ctx context.Context, req OptTriggerRotationRequest) (r TriggerAffixRotationRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

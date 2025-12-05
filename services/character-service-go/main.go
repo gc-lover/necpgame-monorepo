@@ -61,6 +61,12 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(400) // Max 400 goroutines for character service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
 	// OPTIMIZATION: Issue #1593 - ogen migration for 90% faster performance
 	httpServer := server.NewHTTPServerOgen(addr, characterService)
 

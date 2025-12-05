@@ -32,6 +32,12 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(300, logger) // Max 300 goroutines for social service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
 	httpServer := server.NewHTTPServerOgen(addr, logger)
 
 	sigChan := make(chan os.Signal, 1)
