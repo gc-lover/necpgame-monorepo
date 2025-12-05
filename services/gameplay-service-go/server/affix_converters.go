@@ -17,7 +17,7 @@ func convertActiveAffixesResponseToAPI(resp *models.ActiveAffixesResponse) *api.
 
 	if resp.SeasonalAffix != nil {
 		seasonal := convertAffixSummaryToAPI(*resp.SeasonalAffix)
-		result.SeasonalAffix.SetTo(seasonal)
+		result.SeasonalAffix = api.NewOptNilAffixSummary(seasonal)
 	}
 
 	return result
@@ -36,35 +36,35 @@ func convertAffixToAPI(affix *models.Affix) *api.Affix {
 	if affix.Mechanics != nil {
 		mechanics := api.AffixMechanics{}
 		if trigger, ok := affix.Mechanics["trigger"].(string); ok {
-			mechanics.Trigger.SetTo(trigger)
+			mechanics.Trigger = api.NewOptString(trigger)
 		}
 		if effectType, ok := affix.Mechanics["effect_type"].(string); ok {
-			mechanics.EffectType.SetTo(effectType)
+			mechanics.EffectType = api.NewOptString(effectType)
 		}
 		if radius, ok := affix.Mechanics["radius"].(float64); ok {
-			mechanics.Radius.SetTo(float32(radius))
+			mechanics.Radius = api.NewOptFloat32(float32(radius))
 		}
 		if damagePercent, ok := affix.Mechanics["damage_percent"].(float64); ok {
-			mechanics.DamagePercent.SetTo(int(damagePercent))
+			mechanics.DamagePercent = api.NewOptInt(int(damagePercent))
 		}
 		if damageType, ok := affix.Mechanics["damage_type"].(string); ok {
-			mechanics.DamageType.SetTo(damageType)
+			mechanics.DamageType = api.NewOptString(damageType)
 		}
-		result.Mechanics.SetTo(mechanics)
+		result.Mechanics = api.NewOptAffixMechanics(mechanics)
 	}
 
 	if affix.VisualEffects != nil {
 		visual := api.AffixVisualEffects{}
 		if explosion, ok := affix.VisualEffects["explosion_particle"].(string); ok {
-			visual.ExplosionParticle.SetTo(explosion)
+			visual.ExplosionParticle = api.NewOptString(explosion)
 		}
 		if sound, ok := affix.VisualEffects["sound_effect"].(string); ok {
-			visual.SoundEffect.SetTo(sound)
+			visual.SoundEffect = api.NewOptString(sound)
 		}
 		if screenShake, ok := affix.VisualEffects["screen_shake"].(bool); ok {
-			visual.ScreenShake.SetTo(screenShake)
+			visual.ScreenShake = api.NewOptBool(screenShake)
 		}
-		result.VisualEffects.SetTo(visual)
+		result.VisualEffects = api.NewOptAffixVisualEffects(visual)
 	}
 
 	return result
@@ -72,21 +72,21 @@ func convertAffixToAPI(affix *models.Affix) *api.Affix {
 
 func convertAffixSummaryToAPI(summary models.AffixSummary) api.AffixSummary {
 	result := api.AffixSummary{}
-	result.ID.SetTo(summary.ID)
-	result.Name.SetTo(summary.Name)
-	result.Category.SetTo(api.AffixSummaryCategory(summary.Category))
-	result.Description.SetTo(summary.Description)
-	result.RewardModifier.SetTo(float32(summary.RewardModifier))
-	result.DifficultyModifier.SetTo(float32(summary.DifficultyModifier))
+	result.ID = api.NewOptUUID(summary.ID)
+	result.Name = api.NewOptString(summary.Name)
+	result.Category = api.NewOptAffixSummaryCategory(api.AffixSummaryCategory(summary.Category))
+	result.Description = api.NewOptString(summary.Description)
+	result.RewardModifier = api.NewOptFloat32(float32(summary.RewardModifier))
+	result.DifficultyModifier = api.NewOptFloat32(float32(summary.DifficultyModifier))
 	return result
 }
 
 func convertInstanceAffixesResponseToAPI(resp *models.InstanceAffixesResponse) *api.InstanceAffixesResponse {
 	result := &api.InstanceAffixesResponse{}
-	result.InstanceID.SetTo(resp.InstanceID)
-	result.AppliedAt.SetTo(resp.AppliedAt)
-	result.TotalRewardModifier.SetTo(float32(resp.TotalRewardModifier))
-	result.TotalDifficultyModifier.SetTo(float32(resp.TotalDifficultyModifier))
+	result.InstanceID = api.NewOptUUID(resp.InstanceID)
+	result.AppliedAt = api.NewOptDateTime(resp.AppliedAt)
+	result.TotalRewardModifier = api.NewOptFloat32(float32(resp.TotalRewardModifier))
+	result.TotalDifficultyModifier = api.NewOptFloat32(float32(resp.TotalDifficultyModifier))
 
 	for _, affix := range resp.Affixes {
 		result.Affixes = append(result.Affixes, convertAffixSummaryToAPI(affix))
@@ -99,8 +99,8 @@ func convertRotationHistoryResponseToAPI(resp *models.AffixRotationHistoryRespon
 	result := &api.AffixRotationHistoryResponse{
 		Total: resp.Total,
 	}
-	result.Limit.SetTo(resp.Limit)
-	result.Offset.SetTo(resp.Offset)
+	result.Limit = api.NewOptInt(resp.Limit)
+	result.Offset = api.NewOptInt(resp.Offset)
 
 	for _, rotation := range resp.Items {
 		result.Items = append(result.Items, convertRotationToAPI(&rotation))
@@ -111,10 +111,10 @@ func convertRotationHistoryResponseToAPI(resp *models.AffixRotationHistoryRespon
 
 func convertRotationToAPI(rotation *models.AffixRotation) api.AffixRotation {
 	result := api.AffixRotation{}
-	result.ID.SetTo(rotation.ID)
-	result.WeekStart.SetTo(rotation.WeekStart)
-	result.WeekEnd.SetTo(rotation.WeekEnd)
-	result.CreatedAt.SetTo(rotation.CreatedAt)
+	result.ID = api.NewOptUUID(rotation.ID)
+	result.WeekStart = api.NewOptDateTime(rotation.WeekStart)
+	result.WeekEnd = api.NewOptDateTime(rotation.WeekEnd)
+	result.CreatedAt = api.NewOptDateTime(rotation.CreatedAt)
 
 	for _, affix := range rotation.ActiveAffixes {
 		result.ActiveAffixes = append(result.ActiveAffixes, convertAffixSummaryToAPI(affix))
@@ -122,7 +122,7 @@ func convertRotationToAPI(rotation *models.AffixRotation) api.AffixRotation {
 
 	if rotation.SeasonalAffix != nil {
 		seasonal := convertAffixSummaryToAPI(*rotation.SeasonalAffix)
-		result.SeasonalAffix.SetTo(seasonal)
+		result.SeasonalAffix = api.NewOptNilAffixSummary(seasonal)
 	}
 
 	return result

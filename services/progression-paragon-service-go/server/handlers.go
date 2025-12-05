@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -85,12 +86,27 @@ func (h *ParagonHandlers) GetParagonLevels(ctx context.Context, params api.GetPa
 
 // DistributeParagonPoints - TYPED response!
 // Issue: #1607 - Uses memory pooling for zero allocations
+// Issue: #1516 - Validation and error handling
 func (h *ParagonHandlers) DistributeParagonPoints(ctx context.Context, req *api.DistributeParagonPointsRequest, params api.DistributeParagonPointsParams) (api.DistributeParagonPointsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Issue: #1516 - Validate request
+	if req == nil || len(req.Allocations) == 0 {
+		return &api.DistributeParagonPointsBadRequest{
+			Error:   http.StatusText(http.StatusBadRequest),
+			Message: "allocations are required",
+		}, nil
+	}
+
 	allocations := make([]ParagonAllocation, len(req.Allocations))
 	for i, a := range req.Allocations {
+		if a.Points <= 0 {
+			return &api.DistributeParagonPointsBadRequest{
+				Error:   http.StatusText(http.StatusBadRequest),
+				Message: "points must be positive",
+			}, nil
+		}
 		allocations[i] = ParagonAllocation{
 			StatType:        string(a.StatType),
 			PointsAllocated: a.Points,
@@ -99,8 +115,18 @@ func (h *ParagonHandlers) DistributeParagonPoints(ctx context.Context, req *api.
 
 	levels, err := h.service.DistributeParagonPoints(ctx, params.CharacterID, allocations)
 	if err != nil {
+		// Issue: #1516 - Check for validation errors (BadRequest)
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "invalid stat_type") || strings.Contains(errMsg, "points must be positive") || 
+		   strings.Contains(errMsg, "not enough paragon points") || strings.Contains(errMsg, "not found") {
+			h.logger.WithError(err).Warn("Validation error in distribute paragon points")
+			return &api.DistributeParagonPointsBadRequest{
+				Error:   http.StatusText(http.StatusBadRequest),
+				Message: errMsg,
+			}, nil
+		}
+		
 		h.logger.WithError(err).Error("Failed to distribute paragon points")
-		// Error responses are rare, no pooling needed
 		return &api.DistributeParagonPointsInternalServerError{
 			Error:   http.StatusText(http.StatusInternalServerError),
 			Message: "failed to distribute paragon points",
