@@ -180,6 +180,7 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 	}
 }
 
+// Issue: #1407 - Error handling: returns nil on marshal error, caller checks and skips send
 func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanNotification, isRemoved bool) []byte {
 	notificationType := "ban_notification"
 	if isRemoved {
