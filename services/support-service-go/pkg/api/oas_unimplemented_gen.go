@@ -31,12 +31,30 @@ func (UnimplementedHandler) CreateTicket(ctx context.Context, req *CreateTicketR
 	return r, ht.ErrNotImplemented
 }
 
+// GetSLAViolations implements getSLAViolations operation.
+//
+// Получить нарушения SLA.
+//
+// GET /support/sla/violations
+func (UnimplementedHandler) GetSLAViolations(ctx context.Context, params GetSLAViolationsParams) (r GetSLAViolationsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetTicket implements getTicket operation.
 //
 // Получить тикет.
 //
 // GET /support/tickets/{ticket_id}
 func (UnimplementedHandler) GetTicket(ctx context.Context, params GetTicketParams) (r GetTicketRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetTicketSLA implements getTicketSLA operation.
+//
+// Получить статус SLA тикета.
+//
+// GET /support/tickets/{ticket_id}/sla
+func (UnimplementedHandler) GetTicketSLA(ctx context.Context, params GetTicketSLAParams) (r GetTicketSLARes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

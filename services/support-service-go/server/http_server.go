@@ -57,8 +57,8 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService
 	router.Use(server.corsMiddleware)
 	router.Use(middleware.Recoverer)
 
-	// Initialize ogen handlers and security handler
-	ogenHandlers := NewHandlers(ticketService)
+	// Issue: #1489 - Initialize ogen handlers with SLA service
+	ogenHandlers := NewHandlers(ticketService, slaService)
 	ogenSecurity := NewSecurityHandler(jwtValidator, authEnabled)
 
 	// Create ogen server
@@ -68,13 +68,6 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService
 	}
 
 	router.Mount("/api/v1/support", ogenServer)
-
-	// SLA handlers (still using direct handlers for now)
-	slaHandlers := NewSLAHandlers(slaService)
-	router.Route("/api/v1/support", func(r chi.Router) {
-		r.Get("/tickets/{ticket_id}/sla", slaHandlers.getTicketSLA)
-		r.Get("/sla/violations", slaHandlers.getSLAViolations)
-	})
 
 	router.HandleFunc("/health", server.healthCheck)
 

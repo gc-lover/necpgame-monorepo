@@ -6,9 +6,11 @@ package api
 type OperationName = string
 
 const (
-	CloseTicketOperation  OperationName = "CloseTicket"
-	CreateTicketOperation OperationName = "CreateTicket"
-	GetTicketOperation    OperationName = "GetTicket"
-	GetTicketsOperation   OperationName = "GetTickets"
-	UpdateTicketOperation OperationName = "UpdateTicket"
+	CloseTicketOperation      OperationName = "CloseTicket"
+	CreateTicketOperation     OperationName = "CreateTicket"
+	GetSLAViolationsOperation OperationName = "GetSLAViolations"
+	GetTicketOperation        OperationName = "GetTicket"
+	GetTicketSLAOperation     OperationName = "GetTicketSLA"
+	GetTicketsOperation       OperationName = "GetTickets"
+	UpdateTicketOperation     OperationName = "UpdateTicket"
 )

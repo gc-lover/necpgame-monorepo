@@ -25,26 +25,26 @@ func TestOrderHandlers_CreatePlayerOrder(t *testing.T) {
 	userID := uuid.New()
 	deadline := time.Now().Add(24 * time.Hour)
 	req := models.CreatePlayerOrderRequest{
-		OrderType:   models.OrderTypeCombat,
-		Title:       "Test Order",
-		Description: "Test Description",
-		Reward:      map[string]interface{}{"currency": 1000},
+		OrderType:    models.OrderTypeCombat,
+		Title:        "Test Order",
+		Description:  "Test Description",
+		Reward:       map[string]interface{}{"currency": 1000},
 		Requirements: map[string]interface{}{"level": 10},
-		Deadline:    &deadline,
+		Deadline:     &deadline,
 	}
 
 	expectedOrder := &models.PlayerOrder{
 		ID:           uuid.New(),
-		CustomerID:  userID,
-		OrderType:   req.OrderType,
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      models.OrderStatusOpen,
-		Reward:      req.Reward,
+		CustomerID:   userID,
+		OrderType:    req.OrderType,
+		Title:        req.Title,
+		Description:  req.Description,
+		Status:       models.OrderStatusOpen,
+		Reward:       req.Reward,
 		Requirements: req.Requirements,
-		Deadline:    &deadline,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Deadline:     &deadline,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	mockService.On("CreatePlayerOrder", mock.Anything, userID, mock.MatchedBy(func(r *models.CreatePlayerOrderRequest) bool {
@@ -71,12 +71,12 @@ func TestOrderHandlers_GetPlayerOrders(t *testing.T) {
 	expectedResponse := &models.PlayerOrdersResponse{
 		Orders: []models.PlayerOrder{
 			{
-				ID:          uuid.New(),
-				OrderType:  models.OrderTypeCombat,
-				Title:      "Test Order",
-				Status:     models.OrderStatusOpen,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
+				ID:        uuid.New(),
+				OrderType: models.OrderTypeCombat,
+				Title:     "Test Order",
+				Status:    models.OrderStatusOpen,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			},
 		},
 		Total: 1,
@@ -100,12 +100,12 @@ func TestOrderHandlers_GetPlayerOrder(t *testing.T) {
 
 	orderID := uuid.New()
 	expectedOrder := &models.PlayerOrder{
-		ID:          orderID,
-		OrderType:   models.OrderTypeCombat,
-		Title:       "Test Order",
-		Status:      models.OrderStatusOpen,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        orderID,
+		OrderType: models.OrderTypeCombat,
+		Title:     "Test Order",
+		Status:    models.OrderStatusOpen,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.On("GetPlayerOrder", mock.Anything, orderID).Return(expectedOrder, nil)
@@ -121,6 +121,175 @@ func TestOrderHandlers_GetPlayerOrder(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	mockService.AssertExpectations(t)
+}
+
+// TestOrderHandlers_AcceptPlayerOrder tests order acceptance
+func TestOrderHandlers_AcceptPlayerOrder(t *testing.T) {
+	mockService := new(mockOrderService)
+	handlers := NewOrderHandlers(mockService, GetLogger())
+
+	userID := uuid.New()
+	orderID := uuid.New()
+	expectedOrder := &models.PlayerOrder{
+		ID:         orderID,
+		OrderType:  models.OrderTypeCombat,
+		Title:      "Test Order",
+		Status:     models.OrderStatusAccepted,
+		ExecutorID: &userID,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+
+	mockService.On("AcceptPlayerOrder", mock.Anything, orderID, userID).Return(expectedOrder, nil)
+
+	router := chi.NewRouter()
+	router.Post("/{orderId}/accept", handlers.AcceptPlayerOrder)
+
+	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/accept", nil)
+	httpReq = httpReq.WithContext(context.WithValue(httpReq.Context(), "user_id", userID.String()))
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, httpReq)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	mockService.AssertExpectations(t)
+}
+
+// TestOrderHandlers_StartPlayerOrder tests order start
+func TestOrderHandlers_StartPlayerOrder(t *testing.T) {
+	mockService := new(mockOrderService)
+	handlers := NewOrderHandlers(mockService, GetLogger())
+
+	orderID := uuid.New()
+	expectedOrder := &models.PlayerOrder{
+		ID:        orderID,
+		OrderType: models.OrderTypeCombat,
+		Title:     "Test Order",
+		Status:    models.OrderStatusInProgress,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockService.On("StartPlayerOrder", mock.Anything, orderID).Return(expectedOrder, nil)
+
+	router := chi.NewRouter()
+	router.Post("/{orderId}/start", handlers.StartPlayerOrder)
+
+	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/start", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, httpReq)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	mockService.AssertExpectations(t)
+}
+
+// TestOrderHandlers_CompletePlayerOrder tests order completion
+func TestOrderHandlers_CompletePlayerOrder(t *testing.T) {
+	mockService := new(mockOrderService)
+	handlers := NewOrderHandlers(mockService, GetLogger())
+
+	orderID := uuid.New()
+	req := models.CompletePlayerOrderRequest{
+		Success:  true,
+		Evidence: []string{"screenshot1.jpg", "screenshot2.jpg"},
+	}
+
+	expectedOrder := &models.PlayerOrder{
+		ID:        orderID,
+		OrderType: models.OrderTypeCombat,
+		Title:     "Test Order",
+		Status:    models.OrderStatusCompleted,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockService.On("CompletePlayerOrder", mock.Anything, orderID, mock.MatchedBy(func(r *models.CompletePlayerOrderRequest) bool {
+		return r.Success == req.Success && len(r.Evidence) == len(req.Evidence)
+	})).Return(expectedOrder, nil)
+
+	body, _ := json.Marshal(req)
+	router := chi.NewRouter()
+	router.Post("/{orderId}/complete", handlers.CompletePlayerOrder)
+
+	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/complete", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, httpReq)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	mockService.AssertExpectations(t)
+}
+
+// TestOrderHandlers_CancelPlayerOrder tests order cancellation
+func TestOrderHandlers_CancelPlayerOrder(t *testing.T) {
+	mockService := new(mockOrderService)
+	handlers := NewOrderHandlers(mockService, GetLogger())
+
+	orderID := uuid.New()
+	expectedOrder := &models.PlayerOrder{
+		ID:        orderID,
+		OrderType: models.OrderTypeCombat,
+		Title:     "Test Order",
+		Status:    models.OrderStatusCancelled,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockService.On("CancelPlayerOrder", mock.Anything, orderID).Return(expectedOrder, nil)
+
+	router := chi.NewRouter()
+	router.Post("/{orderId}/cancel", handlers.CancelPlayerOrder)
+
+	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/cancel", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, httpReq)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	mockService.AssertExpectations(t)
+}
+
+// TestOrderHandlers_CreatePlayerOrder_Unauthorized tests unauthorized order creation
+func TestOrderHandlers_CreatePlayerOrder_Unauthorized(t *testing.T) {
+	mockService := new(mockOrderService)
+	handlers := NewOrderHandlers(mockService, GetLogger())
+
+	req := models.CreatePlayerOrderRequest{
+		OrderType:   models.OrderTypeCombat,
+		Title:       "Test Order",
+		Description: "Test Description",
+	}
+
+	body, _ := json.Marshal(req)
+	httpReq := httptest.NewRequest("POST", "/api/v1/social/orders/create", bytes.NewReader(body))
+	// No user_id in context
+	w := httptest.NewRecorder()
+
+	handlers.CreatePlayerOrder(w, httpReq)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+// TestOrderHandlers_CreatePlayerOrder_InvalidRequest tests invalid request
+func TestOrderHandlers_CreatePlayerOrder_InvalidRequest(t *testing.T) {
+	mockService := new(mockOrderService)
+	handlers := NewOrderHandlers(mockService, GetLogger())
+
+	userID := uuid.New()
+	req := models.CreatePlayerOrderRequest{
+		OrderType: models.OrderTypeCombat,
+		// Missing Title and Description
+	}
+
+	body, _ := json.Marshal(req)
+	httpReq := httptest.NewRequest("POST", "/api/v1/social/orders/create", bytes.NewReader(body))
+	httpReq = httpReq.WithContext(context.WithValue(httpReq.Context(), "user_id", userID.String()))
+	w := httptest.NewRecorder()
+
+	handlers.CreatePlayerOrder(w, httpReq)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 // mockOrderService is a mock for OrderServiceInterface
@@ -183,4 +352,3 @@ func (m *mockOrderService) CancelPlayerOrder(ctx context.Context, orderID uuid.U
 	}
 	return args.Get(0).(*models.PlayerOrder), args.Error(1)
 }
-

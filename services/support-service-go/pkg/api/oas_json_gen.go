@@ -813,6 +813,82 @@ func (s *ErrorDetails) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes GetSLAViolationsInternalServerError as json.
+func (s *GetSLAViolationsInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetSLAViolationsInternalServerError from json.
+func (s *GetSLAViolationsInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSLAViolationsInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetSLAViolationsInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSLAViolationsInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSLAViolationsInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetSLAViolationsUnauthorized as json.
+func (s *GetSLAViolationsUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetSLAViolationsUnauthorized from json.
+func (s *GetSLAViolationsUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSLAViolationsUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetSLAViolationsUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSLAViolationsUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSLAViolationsUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes GetTicketInternalServerError as json.
 func (s *GetTicketInternalServerError) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
@@ -885,6 +961,120 @@ func (s *GetTicketNotFound) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *GetTicketNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTicketSLAInternalServerError as json.
+func (s *GetTicketSLAInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTicketSLAInternalServerError from json.
+func (s *GetTicketSLAInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTicketSLAInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTicketSLAInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTicketSLAInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTicketSLAInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTicketSLANotFound as json.
+func (s *GetTicketSLANotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTicketSLANotFound from json.
+func (s *GetTicketSLANotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTicketSLANotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTicketSLANotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTicketSLANotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTicketSLANotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTicketSLAUnauthorized as json.
+func (s *GetTicketSLAUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTicketSLAUnauthorized from json.
+func (s *GetTicketSLAUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTicketSLAUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTicketSLAUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTicketSLAUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTicketSLAUnauthorized) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1141,6 +1331,57 @@ func (s *OptInt) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes bool as json.
+func (o OptNilBool) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Bool(bool(o.Value))
+}
+
+// Decode decodes bool from json.
+func (o *OptNilBool) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilBool to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v bool
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	v, err := d.Bool()
+	if err != nil {
+		return err
+	}
+	o.Value = bool(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilBool) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilBool) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes time.Time as json.
 func (o OptNilDateTime) Encode(e *jx.Encoder, format func(*jx.Encoder, time.Time)) {
 	if !o.Set {
@@ -1238,6 +1479,57 @@ func (s OptNilErrorDetails) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptNilErrorDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes int as json.
+func (o OptNilInt) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Int(int(o.Value))
+}
+
+// Decode decodes int from json.
+func (o *OptNilInt) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilInt to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v int
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	v, err := d.Int()
+	if err != nil {
+		return err
+	}
+	o.Value = int(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilInt) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilInt) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1344,6 +1636,72 @@ func (s *OptNilUUID) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes SLAViolationPriority as json.
+func (o OptSLAViolationPriority) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes SLAViolationPriority from json.
+func (o *OptSLAViolationPriority) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptSLAViolationPriority to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptSLAViolationPriority) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptSLAViolationPriority) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SLAViolationViolationType as json.
+func (o OptSLAViolationViolationType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes SLAViolationViolationType from json.
+func (o *OptSLAViolationViolationType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptSLAViolationViolationType to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptSLAViolationViolationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptSLAViolationViolationType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes string as json.
 func (o OptString) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -1441,6 +1799,39 @@ func (s OptTicketPriority) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptTicketPriority) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TicketSLAStatusPriority as json.
+func (o OptTicketSLAStatusPriority) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TicketSLAStatusPriority from json.
+func (o *OptTicketSLAStatusPriority) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTicketSLAStatusPriority to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTicketSLAStatusPriority) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTicketSLAStatusPriority) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1547,6 +1938,431 @@ func (s *OptUpdateTicketRequestCategory) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *SLAViolation) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SLAViolation) encodeFields(e *jx.Encoder) {
+	{
+		if s.TicketID.Set {
+			e.FieldStart("ticket_id")
+			s.TicketID.Encode(e)
+		}
+	}
+	{
+		if s.TicketNumber.Set {
+			e.FieldStart("ticket_number")
+			s.TicketNumber.Encode(e)
+		}
+	}
+	{
+		if s.Priority.Set {
+			e.FieldStart("priority")
+			s.Priority.Encode(e)
+		}
+	}
+	{
+		if s.ViolationType.Set {
+			e.FieldStart("violation_type")
+			s.ViolationType.Encode(e)
+		}
+	}
+	{
+		if s.TargetTime.Set {
+			e.FieldStart("target_time")
+			s.TargetTime.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.ActualTime.Set {
+			e.FieldStart("actual_time")
+			s.ActualTime.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.ViolationDurationSeconds.Set {
+			e.FieldStart("violation_duration_seconds")
+			s.ViolationDurationSeconds.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSLAViolation = [7]string{
+	0: "ticket_id",
+	1: "ticket_number",
+	2: "priority",
+	3: "violation_type",
+	4: "target_time",
+	5: "actual_time",
+	6: "violation_duration_seconds",
+}
+
+// Decode decodes SLAViolation from json.
+func (s *SLAViolation) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SLAViolation to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "ticket_id":
+			if err := func() error {
+				s.TicketID.Reset()
+				if err := s.TicketID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"ticket_id\"")
+			}
+		case "ticket_number":
+			if err := func() error {
+				s.TicketNumber.Reset()
+				if err := s.TicketNumber.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"ticket_number\"")
+			}
+		case "priority":
+			if err := func() error {
+				s.Priority.Reset()
+				if err := s.Priority.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"priority\"")
+			}
+		case "violation_type":
+			if err := func() error {
+				s.ViolationType.Reset()
+				if err := s.ViolationType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"violation_type\"")
+			}
+		case "target_time":
+			if err := func() error {
+				s.TargetTime.Reset()
+				if err := s.TargetTime.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"target_time\"")
+			}
+		case "actual_time":
+			if err := func() error {
+				s.ActualTime.Reset()
+				if err := s.ActualTime.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"actual_time\"")
+			}
+		case "violation_duration_seconds":
+			if err := func() error {
+				s.ViolationDurationSeconds.Reset()
+				if err := s.ViolationDurationSeconds.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"violation_duration_seconds\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SLAViolation")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SLAViolation) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SLAViolation) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SLAViolationPriority as json.
+func (s SLAViolationPriority) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes SLAViolationPriority from json.
+func (s *SLAViolationPriority) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SLAViolationPriority to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch SLAViolationPriority(v) {
+	case SLAViolationPriorityLOW:
+		*s = SLAViolationPriorityLOW
+	case SLAViolationPriorityNORMAL:
+		*s = SLAViolationPriorityNORMAL
+	case SLAViolationPriorityHIGH:
+		*s = SLAViolationPriorityHIGH
+	case SLAViolationPriorityURGENT:
+		*s = SLAViolationPriorityURGENT
+	case SLAViolationPriorityCRITICAL:
+		*s = SLAViolationPriorityCRITICAL
+	default:
+		*s = SLAViolationPriority(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s SLAViolationPriority) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SLAViolationPriority) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SLAViolationViolationType as json.
+func (s SLAViolationViolationType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes SLAViolationViolationType from json.
+func (s *SLAViolationViolationType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SLAViolationViolationType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch SLAViolationViolationType(v) {
+	case SLAViolationViolationTypeFIRSTRESPONSE:
+		*s = SLAViolationViolationTypeFIRSTRESPONSE
+	case SLAViolationViolationTypeRESOLUTION:
+		*s = SLAViolationViolationTypeRESOLUTION
+	default:
+		*s = SLAViolationViolationType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s SLAViolationViolationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SLAViolationViolationType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SLAViolationsResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SLAViolationsResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("items")
+		e.ArrStart()
+		for _, elem := range s.Items {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("total")
+		e.Int(s.Total)
+	}
+	{
+		if s.Limit.Set {
+			e.FieldStart("limit")
+			s.Limit.Encode(e)
+		}
+	}
+	{
+		if s.Offset.Set {
+			e.FieldStart("offset")
+			s.Offset.Encode(e)
+		}
+	}
+	{
+		if s.HasMore.Set {
+			e.FieldStart("has_more")
+			s.HasMore.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSLAViolationsResponse = [5]string{
+	0: "items",
+	1: "total",
+	2: "limit",
+	3: "offset",
+	4: "has_more",
+}
+
+// Decode decodes SLAViolationsResponse from json.
+func (s *SLAViolationsResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SLAViolationsResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "items":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Items = make([]SLAViolation, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SLAViolation
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Items = append(s.Items, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"items\"")
+			}
+		case "total":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int()
+				s.Total = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total\"")
+			}
+		case "limit":
+			if err := func() error {
+				s.Limit.Reset()
+				if err := s.Limit.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"limit\"")
+			}
+		case "offset":
+			if err := func() error {
+				s.Offset.Reset()
+				if err := s.Offset.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"offset\"")
+			}
+		case "has_more":
+			if err := func() error {
+				s.HasMore.Reset()
+				if err := s.HasMore.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"has_more\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SLAViolationsResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfSLAViolationsResponse) {
+					name = jsonFieldsNameOfSLAViolationsResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SLAViolationsResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SLAViolationsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *SupportTicket) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -1562,39 +2378,21 @@ func (s *SupportTicket) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.TicketNumber.Set {
-			e.FieldStart("ticket_number")
-			s.TicketNumber.Encode(e)
-		}
-	}
-	{
 		if s.PlayerID.Set {
 			e.FieldStart("player_id")
 			s.PlayerID.Encode(e)
 		}
 	}
 	{
-		if s.Category.Set {
-			e.FieldStart("category")
-			s.Category.Encode(e)
-		}
-	}
-	{
-		if s.Priority.Set {
-			e.FieldStart("priority")
-			s.Priority.Encode(e)
-		}
-	}
-	{
-		if s.Status.Set {
-			e.FieldStart("status")
-			s.Status.Encode(e)
-		}
-	}
-	{
 		if s.AssignedAgentID.Set {
 			e.FieldStart("assigned_agent_id")
 			s.AssignedAgentID.Encode(e)
+		}
+	}
+	{
+		if s.TicketNumber.Set {
+			e.FieldStart("ticket_number")
+			s.TicketNumber.Encode(e)
 		}
 	}
 	{
@@ -1607,6 +2405,12 @@ func (s *SupportTicket) encodeFields(e *jx.Encoder) {
 		if s.Description.Set {
 			e.FieldStart("description")
 			s.Description.Encode(e)
+		}
+	}
+	{
+		if s.Category.Set {
+			e.FieldStart("category")
+			s.Category.Encode(e)
 		}
 	}
 	{
@@ -1645,24 +2449,36 @@ func (s *SupportTicket) encodeFields(e *jx.Encoder) {
 			s.UpdatedAt.Encode(e, json.EncodeDateTime)
 		}
 	}
+	{
+		if s.Priority.Set {
+			e.FieldStart("priority")
+			s.Priority.Encode(e)
+		}
+	}
+	{
+		if s.Status.Set {
+			e.FieldStart("status")
+			s.Status.Encode(e)
+		}
+	}
 }
 
 var jsonFieldsNameOfSupportTicket = [15]string{
 	0:  "id",
-	1:  "ticket_number",
-	2:  "player_id",
-	3:  "category",
-	4:  "priority",
-	5:  "status",
-	6:  "assigned_agent_id",
-	7:  "subject",
-	8:  "description",
-	9:  "created_at",
-	10: "assigned_at",
-	11: "first_response_at",
-	12: "resolved_at",
-	13: "closed_at",
-	14: "updated_at",
+	1:  "player_id",
+	2:  "assigned_agent_id",
+	3:  "ticket_number",
+	4:  "subject",
+	5:  "description",
+	6:  "category",
+	7:  "created_at",
+	8:  "assigned_at",
+	9:  "first_response_at",
+	10: "resolved_at",
+	11: "closed_at",
+	12: "updated_at",
+	13: "priority",
+	14: "status",
 }
 
 // Decode decodes SupportTicket from json.
@@ -1684,16 +2500,6 @@ func (s *SupportTicket) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
-		case "ticket_number":
-			if err := func() error {
-				s.TicketNumber.Reset()
-				if err := s.TicketNumber.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"ticket_number\"")
-			}
 		case "player_id":
 			if err := func() error {
 				s.PlayerID.Reset()
@@ -1704,36 +2510,6 @@ func (s *SupportTicket) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"player_id\"")
 			}
-		case "category":
-			if err := func() error {
-				s.Category.Reset()
-				if err := s.Category.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"category\"")
-			}
-		case "priority":
-			if err := func() error {
-				s.Priority.Reset()
-				if err := s.Priority.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"priority\"")
-			}
-		case "status":
-			if err := func() error {
-				s.Status.Reset()
-				if err := s.Status.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"status\"")
-			}
 		case "assigned_agent_id":
 			if err := func() error {
 				s.AssignedAgentID.Reset()
@@ -1743,6 +2519,16 @@ func (s *SupportTicket) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"assigned_agent_id\"")
+			}
+		case "ticket_number":
+			if err := func() error {
+				s.TicketNumber.Reset()
+				if err := s.TicketNumber.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"ticket_number\"")
 			}
 		case "subject":
 			if err := func() error {
@@ -1763,6 +2549,16 @@ func (s *SupportTicket) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "category":
+			if err := func() error {
+				s.Category.Reset()
+				if err := s.Category.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"category\"")
 			}
 		case "created_at":
 			if err := func() error {
@@ -1823,6 +2619,26 @@ func (s *SupportTicket) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"updated_at\"")
+			}
+		case "priority":
+			if err := func() error {
+				s.Priority.Reset()
+				if err := s.Priority.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"priority\"")
+			}
+		case "status":
+			if err := func() error {
+				s.Status.Reset()
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
 			}
 		default:
 			return d.Skip()
@@ -1940,6 +2756,268 @@ func (s TicketPriority) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *TicketPriority) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TicketSLAStatus) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TicketSLAStatus) encodeFields(e *jx.Encoder) {
+	{
+		if s.TicketID.Set {
+			e.FieldStart("ticket_id")
+			s.TicketID.Encode(e)
+		}
+	}
+	{
+		if s.Priority.Set {
+			e.FieldStart("priority")
+			s.Priority.Encode(e)
+		}
+	}
+	{
+		if s.FirstResponseTarget.Set {
+			e.FieldStart("first_response_target")
+			s.FirstResponseTarget.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.FirstResponseActual.Set {
+			e.FieldStart("first_response_actual")
+			s.FirstResponseActual.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.ResolutionTarget.Set {
+			e.FieldStart("resolution_target")
+			s.ResolutionTarget.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.ResolutionActual.Set {
+			e.FieldStart("resolution_actual")
+			s.ResolutionActual.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.TimeUntilFirstResponseTarget.Set {
+			e.FieldStart("time_until_first_response_target")
+			s.TimeUntilFirstResponseTarget.Encode(e)
+		}
+	}
+	{
+		if s.TimeUntilResolutionTarget.Set {
+			e.FieldStart("time_until_resolution_target")
+			s.TimeUntilResolutionTarget.Encode(e)
+		}
+	}
+	{
+		if s.FirstResponseSLAMet.Set {
+			e.FieldStart("first_response_sla_met")
+			s.FirstResponseSLAMet.Encode(e)
+		}
+	}
+	{
+		if s.ResolutionSLAMet.Set {
+			e.FieldStart("resolution_sla_met")
+			s.ResolutionSLAMet.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTicketSLAStatus = [10]string{
+	0: "ticket_id",
+	1: "priority",
+	2: "first_response_target",
+	3: "first_response_actual",
+	4: "resolution_target",
+	5: "resolution_actual",
+	6: "time_until_first_response_target",
+	7: "time_until_resolution_target",
+	8: "first_response_sla_met",
+	9: "resolution_sla_met",
+}
+
+// Decode decodes TicketSLAStatus from json.
+func (s *TicketSLAStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TicketSLAStatus to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "ticket_id":
+			if err := func() error {
+				s.TicketID.Reset()
+				if err := s.TicketID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"ticket_id\"")
+			}
+		case "priority":
+			if err := func() error {
+				s.Priority.Reset()
+				if err := s.Priority.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"priority\"")
+			}
+		case "first_response_target":
+			if err := func() error {
+				s.FirstResponseTarget.Reset()
+				if err := s.FirstResponseTarget.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"first_response_target\"")
+			}
+		case "first_response_actual":
+			if err := func() error {
+				s.FirstResponseActual.Reset()
+				if err := s.FirstResponseActual.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"first_response_actual\"")
+			}
+		case "resolution_target":
+			if err := func() error {
+				s.ResolutionTarget.Reset()
+				if err := s.ResolutionTarget.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"resolution_target\"")
+			}
+		case "resolution_actual":
+			if err := func() error {
+				s.ResolutionActual.Reset()
+				if err := s.ResolutionActual.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"resolution_actual\"")
+			}
+		case "time_until_first_response_target":
+			if err := func() error {
+				s.TimeUntilFirstResponseTarget.Reset()
+				if err := s.TimeUntilFirstResponseTarget.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"time_until_first_response_target\"")
+			}
+		case "time_until_resolution_target":
+			if err := func() error {
+				s.TimeUntilResolutionTarget.Reset()
+				if err := s.TimeUntilResolutionTarget.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"time_until_resolution_target\"")
+			}
+		case "first_response_sla_met":
+			if err := func() error {
+				s.FirstResponseSLAMet.Reset()
+				if err := s.FirstResponseSLAMet.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"first_response_sla_met\"")
+			}
+		case "resolution_sla_met":
+			if err := func() error {
+				s.ResolutionSLAMet.Reset()
+				if err := s.ResolutionSLAMet.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"resolution_sla_met\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TicketSLAStatus")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TicketSLAStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TicketSLAStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TicketSLAStatusPriority as json.
+func (s TicketSLAStatusPriority) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TicketSLAStatusPriority from json.
+func (s *TicketSLAStatusPriority) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TicketSLAStatusPriority to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TicketSLAStatusPriority(v) {
+	case TicketSLAStatusPriorityLOW:
+		*s = TicketSLAStatusPriorityLOW
+	case TicketSLAStatusPriorityNORMAL:
+		*s = TicketSLAStatusPriorityNORMAL
+	case TicketSLAStatusPriorityHIGH:
+		*s = TicketSLAStatusPriorityHIGH
+	case TicketSLAStatusPriorityURGENT:
+		*s = TicketSLAStatusPriorityURGENT
+	case TicketSLAStatusPriorityCRITICAL:
+		*s = TicketSLAStatusPriorityCRITICAL
+	default:
+		*s = TicketSLAStatusPriority(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TicketSLAStatusPriority) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TicketSLAStatusPriority) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2292,18 +3370,6 @@ func (s *UpdateTicketRequest) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *UpdateTicketRequest) encodeFields(e *jx.Encoder) {
 	{
-		if s.Status.Set {
-			e.FieldStart("status")
-			s.Status.Encode(e)
-		}
-	}
-	{
-		if s.Priority.Set {
-			e.FieldStart("priority")
-			s.Priority.Encode(e)
-		}
-	}
-	{
 		if s.AssignedAgentID.Set {
 			e.FieldStart("assigned_agent_id")
 			s.AssignedAgentID.Encode(e)
@@ -2315,13 +3381,25 @@ func (s *UpdateTicketRequest) encodeFields(e *jx.Encoder) {
 			s.Category.Encode(e)
 		}
 	}
+	{
+		if s.Priority.Set {
+			e.FieldStart("priority")
+			s.Priority.Encode(e)
+		}
+	}
+	{
+		if s.Status.Set {
+			e.FieldStart("status")
+			s.Status.Encode(e)
+		}
+	}
 }
 
 var jsonFieldsNameOfUpdateTicketRequest = [4]string{
-	0: "status",
-	1: "priority",
-	2: "assigned_agent_id",
-	3: "category",
+	0: "assigned_agent_id",
+	1: "category",
+	2: "priority",
+	3: "status",
 }
 
 // Decode decodes UpdateTicketRequest from json.
@@ -2333,26 +3411,6 @@ func (s *UpdateTicketRequest) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "status":
-			if err := func() error {
-				s.Status.Reset()
-				if err := s.Status.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"status\"")
-			}
-		case "priority":
-			if err := func() error {
-				s.Priority.Reset()
-				if err := s.Priority.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"priority\"")
-			}
 		case "assigned_agent_id":
 			if err := func() error {
 				s.AssignedAgentID.Reset()
@@ -2372,6 +3430,26 @@ func (s *UpdateTicketRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"category\"")
+			}
+		case "priority":
+			if err := func() error {
+				s.Priority.Reset()
+				if err := s.Priority.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"priority\"")
+			}
+		case "status":
+			if err := func() error {
+				s.Status.Reset()
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
 			}
 		default:
 			return d.Skip()

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -40,7 +41,9 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.corsMiddleware)
 
 	handlers := NewIntegrationHandlers(server.logger)
-	secHandler := &SecurityHandler{}
+	// Issue: #1601 - Initialize security handler with auth enabled from env
+	authEnabled := getEnv("AUTH_ENABLED", "false") == "true"
+	secHandler := NewSecurityHandler(authEnabled)
 
 	ogenServer, err := api.NewServer(handlers, secHandler)
 	if err != nil {
@@ -150,5 +153,12 @@ type statusRecorder struct {
 func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
