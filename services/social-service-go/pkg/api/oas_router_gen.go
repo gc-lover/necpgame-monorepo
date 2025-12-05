@@ -49,105 +49,269 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/social/friends"
+		case '/': // Prefix: "/social/"
 
-			if l := len("/social/friends"); len(elem) >= l && elem[0:l] == "/social/friends" {
+			if l := len("/social/"); len(elem) >= l && elem[0:l] == "/social/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch r.Method {
-				case "GET":
-					s.handleGetFriendsRequest([0]string{}, elemIsEscaped, w, r)
-				default:
-					s.notAllowed(w, r, "GET")
-				}
-
-				return
+				break
 			}
 			switch elem[0] {
-			case '/': // Prefix: "/"
+			case 'f': // Prefix: "friends"
 
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				if l := len("friends"); len(elem) >= l && elem[0:l] == "friends" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case 'c': // Prefix: "count"
-					origElem := elem
-					if l := len("count"); len(elem) >= l && elem[0:l] == "count" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "GET":
-							s.handleGetFriendsCountRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "GET")
-						}
-
-						return
-					}
-
-					elem = origElem
-				case 'o': // Prefix: "online"
-					origElem := elem
-					if l := len("online"); len(elem) >= l && elem[0:l] == "online" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "GET":
-							s.handleGetOnlineFriendsRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "GET")
-						}
-
-						return
-					}
-
-					elem = origElem
-				}
-				// Param: "friend_id"
-				// Leaf parameter, slashes are prohibited
-				idx := strings.IndexByte(elem, '/')
-				if idx >= 0 {
-					break
-				}
-				args[0] = elem
-				elem = ""
-
-				if len(elem) == 0 {
-					// Leaf node.
 					switch r.Method {
-					case "DELETE":
-						s.handleRemoveFriendRequest([1]string{
-							args[0],
-						}, elemIsEscaped, w, r)
 					case "GET":
-						s.handleGetFriendRequest([1]string{
-							args[0],
-						}, elemIsEscaped, w, r)
+						s.handleGetFriendsRequest([0]string{}, elemIsEscaped, w, r)
 					default:
-						s.notAllowed(w, r, "DELETE,GET")
+						s.notAllowed(w, r, "GET")
 					}
 
 					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'c': // Prefix: "count"
+						origElem := elem
+						if l := len("count"); len(elem) >= l && elem[0:l] == "count" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetFriendsCountRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+						elem = origElem
+					case 'o': // Prefix: "online"
+						origElem := elem
+						if l := len("online"); len(elem) >= l && elem[0:l] == "online" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetOnlineFriendsRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+						elem = origElem
+					}
+					// Param: "friend_id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "DELETE":
+							s.handleRemoveFriendRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "GET":
+							s.handleGetFriendRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "DELETE,GET")
+						}
+
+						return
+					}
+
+				}
+
+			case 'p': // Prefix: "party"
+
+				if l := len("party"); len(elem) >= l && elem[0:l] == "party" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleGetPartyRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleCreatePartyRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET,POST")
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'p': // Prefix: "player/"
+						origElem := elem
+						if l := len("player/"); len(elem) >= l && elem[0:l] == "player/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "accountId"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetPlayerPartyRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+						elem = origElem
+					}
+					// Param: "partyId"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "GET":
+							s.handleGetPartyByIdRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'l': // Prefix: "leader"
+
+							if l := len("leader"); len(elem) >= l && elem[0:l] == "leader" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetPartyLeaderRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						case 't': // Prefix: "transfer-leadership"
+
+							if l := len("transfer-leadership"); len(elem) >= l && elem[0:l] == "transfer-leadership" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleTransferPartyLeadershipRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						}
+
+					}
+
 				}
 
 			}
@@ -238,128 +402,316 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/social/friends"
+		case '/': // Prefix: "/social/"
 
-			if l := len("/social/friends"); len(elem) >= l && elem[0:l] == "/social/friends" {
+			if l := len("/social/"); len(elem) >= l && elem[0:l] == "/social/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch method {
-				case "GET":
-					r.name = GetFriendsOperation
-					r.summary = "Получить список друзей"
-					r.operationID = "getFriends"
-					r.operationGroup = ""
-					r.pathPattern = "/social/friends"
-					r.args = args
-					r.count = 0
-					return r, true
-				default:
-					return
-				}
+				break
 			}
 			switch elem[0] {
-			case '/': // Prefix: "/"
+			case 'f': // Prefix: "friends"
 
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				if l := len("friends"); len(elem) >= l && elem[0:l] == "friends" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case 'c': // Prefix: "count"
-					origElem := elem
-					if l := len("count"); len(elem) >= l && elem[0:l] == "count" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "GET":
-							r.name = GetFriendsCountOperation
-							r.summary = "Получить количество друзей"
-							r.operationID = "getFriendsCount"
-							r.operationGroup = ""
-							r.pathPattern = "/social/friends/count"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-					elem = origElem
-				case 'o': // Prefix: "online"
-					origElem := elem
-					if l := len("online"); len(elem) >= l && elem[0:l] == "online" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "GET":
-							r.name = GetOnlineFriendsOperation
-							r.summary = "Получить список онлайн друзей"
-							r.operationID = "getOnlineFriends"
-							r.operationGroup = ""
-							r.pathPattern = "/social/friends/online"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-					elem = origElem
-				}
-				// Param: "friend_id"
-				// Leaf parameter, slashes are prohibited
-				idx := strings.IndexByte(elem, '/')
-				if idx >= 0 {
-					break
-				}
-				args[0] = elem
-				elem = ""
-
-				if len(elem) == 0 {
-					// Leaf node.
 					switch method {
-					case "DELETE":
-						r.name = RemoveFriendOperation
-						r.summary = "Удалить друга"
-						r.operationID = "removeFriend"
-						r.operationGroup = ""
-						r.pathPattern = "/social/friends/{friend_id}"
-						r.args = args
-						r.count = 1
-						return r, true
 					case "GET":
-						r.name = GetFriendOperation
-						r.summary = "Получить информацию о друге"
-						r.operationID = "getFriend"
+						r.name = GetFriendsOperation
+						r.summary = "Получить список друзей"
+						r.operationID = "getFriends"
 						r.operationGroup = ""
-						r.pathPattern = "/social/friends/{friend_id}"
+						r.pathPattern = "/social/friends"
 						r.args = args
-						r.count = 1
+						r.count = 0
 						return r, true
 					default:
 						return
 					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'c': // Prefix: "count"
+						origElem := elem
+						if l := len("count"); len(elem) >= l && elem[0:l] == "count" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetFriendsCountOperation
+								r.summary = "Получить количество друзей"
+								r.operationID = "getFriendsCount"
+								r.operationGroup = ""
+								r.pathPattern = "/social/friends/count"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					case 'o': // Prefix: "online"
+						origElem := elem
+						if l := len("online"); len(elem) >= l && elem[0:l] == "online" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetOnlineFriendsOperation
+								r.summary = "Получить список онлайн друзей"
+								r.operationID = "getOnlineFriends"
+								r.operationGroup = ""
+								r.pathPattern = "/social/friends/online"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					}
+					// Param: "friend_id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "DELETE":
+							r.name = RemoveFriendOperation
+							r.summary = "Удалить друга"
+							r.operationID = "removeFriend"
+							r.operationGroup = ""
+							r.pathPattern = "/social/friends/{friend_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "GET":
+							r.name = GetFriendOperation
+							r.summary = "Получить информацию о друге"
+							r.operationID = "getFriend"
+							r.operationGroup = ""
+							r.pathPattern = "/social/friends/{friend_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
+				}
+
+			case 'p': // Prefix: "party"
+
+				if l := len("party"); len(elem) >= l && elem[0:l] == "party" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = GetPartyOperation
+						r.summary = "Получить информацию о группе"
+						r.operationID = "getParty"
+						r.operationGroup = ""
+						r.pathPattern = "/social/party"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = CreatePartyOperation
+						r.summary = "Создать группу"
+						r.operationID = "createParty"
+						r.operationGroup = ""
+						r.pathPattern = "/social/party"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'p': // Prefix: "player/"
+						origElem := elem
+						if l := len("player/"); len(elem) >= l && elem[0:l] == "player/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "accountId"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetPlayerPartyOperation
+								r.summary = "Получить группу игрока"
+								r.operationID = "getPlayerParty"
+								r.operationGroup = ""
+								r.pathPattern = "/social/party/player/{accountId}"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					}
+					// Param: "partyId"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							r.name = GetPartyByIdOperation
+							r.summary = "Получить группу по ID"
+							r.operationID = "getPartyById"
+							r.operationGroup = ""
+							r.pathPattern = "/social/party/{partyId}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'l': // Prefix: "leader"
+
+							if l := len("leader"); len(elem) >= l && elem[0:l] == "leader" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetPartyLeaderOperation
+									r.summary = "Получить лидера группы"
+									r.operationID = "getPartyLeader"
+									r.operationGroup = ""
+									r.pathPattern = "/social/party/{partyId}/leader"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 't': // Prefix: "transfer-leadership"
+
+							if l := len("transfer-leadership"); len(elem) >= l && elem[0:l] == "transfer-leadership" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = TransferPartyLeadershipOperation
+									r.summary = "Передать лидерство"
+									r.operationID = "transferPartyLeadership"
+									r.operationGroup = ""
+									r.pathPattern = "/social/party/{partyId}/transfer-leadership"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					}
+
 				}
 
 			}

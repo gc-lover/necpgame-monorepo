@@ -34,11 +34,17 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	GetFriendOperation:        []string{},
-	GetFriendsOperation:       []string{},
-	GetFriendsCountOperation:  []string{},
-	GetOnlineFriendsOperation: []string{},
-	RemoveFriendOperation:     []string{},
+	CreatePartyOperation:             []string{},
+	GetFriendOperation:               []string{},
+	GetFriendsOperation:              []string{},
+	GetFriendsCountOperation:         []string{},
+	GetOnlineFriendsOperation:        []string{},
+	GetPartyOperation:                []string{},
+	GetPartyByIdOperation:            []string{},
+	GetPartyLeaderOperation:          []string{},
+	GetPlayerPartyOperation:          []string{},
+	RemoveFriendOperation:            []string{},
+	TransferPartyLeadershipOperation: []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

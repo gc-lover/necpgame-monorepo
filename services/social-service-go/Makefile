@@ -1,6 +1,6 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
 
-SERVICE_NAME := social-friends-core-service
+SERVICE_NAME := social-service
 OGEN := ogen
 REDOCLY_CLI := npx -y @redocly/cli
 

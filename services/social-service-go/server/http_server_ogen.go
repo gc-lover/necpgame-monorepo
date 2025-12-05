@@ -9,8 +9,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/sirupsen/logrus"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/social-service-go/pkg/api"
+	"github.com/sirupsen/logrus"
 )
 
 // HTTPServerOgen wraps ogen-based HTTP server
@@ -21,7 +22,7 @@ type HTTPServerOgen struct {
 }
 
 // NewHTTPServerOgen creates new HTTP server with ogen
-func NewHTTPServerOgen(addr string, logger *logrus.Logger) *HTTPServerOgen {
+func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HTTPServerOgen {
 	// Issue: #1380 - Initialize logger for utils package
 	SetLogger(logger)
 	
@@ -35,7 +36,14 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger) *HTTPServerOgen {
 	router.Use(middleware.Timeout(60 * time.Second))
 
 	// Create ogen handlers
-	handlers := NewSocialHandlersOgen(logger)
+	handlers := NewSocialHandlersOgen(logger, db)
+	
+	// Issue: #1488 - Initialize Party service if DB is available
+	if db != nil {
+		partyRepo := NewPartyRepository(db)
+		partyService := NewPartyService(partyRepo)
+		handlers.SetPartyService(partyService)
+	}
 	
 	// Create security handler
 	security := NewSecurityHandler()
@@ -48,6 +56,21 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger) *HTTPServerOgen {
 
 	// Mount ogen routes
 	router.Mount("/api/v1", srv)
+
+	// Issue: #1509 - Register order handlers
+	if db != nil {
+		orderService := NewOrderService(db, logger)
+		orderHandlers := NewOrderHandlers(orderService, logger)
+		router.Route("/api/v1/social/orders", func(r chi.Router) {
+			r.Post("/create", orderHandlers.CreatePlayerOrder)
+			r.Get("/", orderHandlers.GetPlayerOrders)
+			r.Get("/{orderId}", orderHandlers.GetPlayerOrder)
+			r.Post("/{orderId}/accept", orderHandlers.AcceptPlayerOrder)
+			r.Post("/{orderId}/start", orderHandlers.StartPlayerOrder)
+			r.Post("/{orderId}/complete", orderHandlers.CompletePlayerOrder)
+			r.Post("/{orderId}/cancel", orderHandlers.CancelPlayerOrder)
+		})
+	}
 
 	// Health check (outside ogen routes)
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {

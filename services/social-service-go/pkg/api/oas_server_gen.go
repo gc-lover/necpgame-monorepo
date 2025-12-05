@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// CreateParty implements createParty operation.
+	//
+	// Создать группу.
+	//
+	// POST /social/party
+	CreateParty(ctx context.Context, req *CreatePartyRequest) (CreatePartyRes, error)
 	// GetFriend implements getFriend operation.
 	//
 	// Получить информацию о друге.
@@ -32,12 +38,42 @@ type Handler interface {
 	//
 	// GET /social/friends/online
 	GetOnlineFriends(ctx context.Context, params GetOnlineFriendsParams) (GetOnlineFriendsRes, error)
+	// GetParty implements getParty operation.
+	//
+	// Получить информацию о группе.
+	//
+	// GET /social/party
+	GetParty(ctx context.Context, params GetPartyParams) (GetPartyRes, error)
+	// GetPartyById implements getPartyById operation.
+	//
+	// Получить группу по ID.
+	//
+	// GET /social/party/{partyId}
+	GetPartyById(ctx context.Context, params GetPartyByIdParams) (GetPartyByIdRes, error)
+	// GetPartyLeader implements getPartyLeader operation.
+	//
+	// Получить лидера группы.
+	//
+	// GET /social/party/{partyId}/leader
+	GetPartyLeader(ctx context.Context, params GetPartyLeaderParams) (GetPartyLeaderRes, error)
+	// GetPlayerParty implements getPlayerParty operation.
+	//
+	// Получить группу игрока.
+	//
+	// GET /social/party/player/{accountId}
+	GetPlayerParty(ctx context.Context, params GetPlayerPartyParams) (GetPlayerPartyRes, error)
 	// RemoveFriend implements removeFriend operation.
 	//
 	// Удалить друга.
 	//
 	// DELETE /social/friends/{friend_id}
 	RemoveFriend(ctx context.Context, params RemoveFriendParams) (RemoveFriendRes, error)
+	// TransferPartyLeadership implements transferPartyLeadership operation.
+	//
+	// Передать лидерство.
+	//
+	// POST /social/party/{partyId}/transfer-leadership
+	TransferPartyLeadership(ctx context.Context, req *TransferLeadershipRequest, params TransferPartyLeadershipParams) (TransferPartyLeadershipRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

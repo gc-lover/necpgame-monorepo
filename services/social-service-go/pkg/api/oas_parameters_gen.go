@@ -491,6 +491,265 @@ func decodeGetOnlineFriendsParams(args [0]string, argsEscaped bool, r *http.Requ
 	return params, nil
 }
 
+// GetPartyParams is parameters of getParty operation.
+type GetPartyParams struct {
+	PartyID OptUUID `json:",omitempty,omitzero"`
+}
+
+func unpackGetPartyParams(packed middleware.Parameters) (params GetPartyParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "party_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PartyID = v.(OptUUID)
+		}
+	}
+	return params
+}
+
+func decodeGetPartyParams(args [0]string, argsEscaped bool, r *http.Request) (params GetPartyParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: party_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "party_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPartyIDVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPartyIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PartyID.SetTo(paramsDotPartyIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "party_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetPartyByIdParams is parameters of getPartyById operation.
+type GetPartyByIdParams struct {
+	PartyId uuid.UUID
+}
+
+func unpackGetPartyByIdParams(packed middleware.Parameters) (params GetPartyByIdParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "partyId",
+			In:   "path",
+		}
+		params.PartyId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetPartyByIdParams(args [1]string, argsEscaped bool, r *http.Request) (params GetPartyByIdParams, _ error) {
+	// Decode path: partyId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "partyId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PartyId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "partyId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetPartyLeaderParams is parameters of getPartyLeader operation.
+type GetPartyLeaderParams struct {
+	PartyId uuid.UUID
+}
+
+func unpackGetPartyLeaderParams(packed middleware.Parameters) (params GetPartyLeaderParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "partyId",
+			In:   "path",
+		}
+		params.PartyId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetPartyLeaderParams(args [1]string, argsEscaped bool, r *http.Request) (params GetPartyLeaderParams, _ error) {
+	// Decode path: partyId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "partyId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PartyId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "partyId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetPlayerPartyParams is parameters of getPlayerParty operation.
+type GetPlayerPartyParams struct {
+	AccountId uuid.UUID
+}
+
+func unpackGetPlayerPartyParams(packed middleware.Parameters) (params GetPlayerPartyParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "accountId",
+			In:   "path",
+		}
+		params.AccountId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetPlayerPartyParams(args [1]string, argsEscaped bool, r *http.Request) (params GetPlayerPartyParams, _ error) {
+	// Decode path: accountId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "accountId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.AccountId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "accountId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // RemoveFriendParams is parameters of removeFriend operation.
 type RemoveFriendParams struct {
 	// Идентификатор друга.
@@ -550,6 +809,71 @@ func decodeRemoveFriendParams(args [1]string, argsEscaped bool, r *http.Request)
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "friend_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// TransferPartyLeadershipParams is parameters of transferPartyLeadership operation.
+type TransferPartyLeadershipParams struct {
+	PartyId uuid.UUID
+}
+
+func unpackTransferPartyLeadershipParams(packed middleware.Parameters) (params TransferPartyLeadershipParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "partyId",
+			In:   "path",
+		}
+		params.PartyId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeTransferPartyLeadershipParams(args [1]string, argsEscaped bool, r *http.Request) (params TransferPartyLeadershipParams, _ error) {
+	// Decode path: partyId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "partyId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PartyId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "partyId",
 			In:   "path",
 			Err:  err,
 		}

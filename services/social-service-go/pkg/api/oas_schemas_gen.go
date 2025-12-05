@@ -35,6 +35,101 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
+type CreatePartyBadRequest Error
+
+func (*CreatePartyBadRequest) createPartyRes() {}
+
+type CreatePartyInternalServerError Error
+
+func (*CreatePartyInternalServerError) createPartyRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small).
+// Expected memory savings: 30-50%.
+// Ref: #/components/schemas/CreatePartyRequest
+type CreatePartyRequest struct {
+	LootMode OptCreatePartyRequestLootMode `json:"loot_mode"`
+	MaxSize  OptInt                        `json:"max_size"`
+}
+
+// GetLootMode returns the value of LootMode.
+func (s *CreatePartyRequest) GetLootMode() OptCreatePartyRequestLootMode {
+	return s.LootMode
+}
+
+// GetMaxSize returns the value of MaxSize.
+func (s *CreatePartyRequest) GetMaxSize() OptInt {
+	return s.MaxSize
+}
+
+// SetLootMode sets the value of LootMode.
+func (s *CreatePartyRequest) SetLootMode(val OptCreatePartyRequestLootMode) {
+	s.LootMode = val
+}
+
+// SetMaxSize sets the value of MaxSize.
+func (s *CreatePartyRequest) SetMaxSize(val OptInt) {
+	s.MaxSize = val
+}
+
+type CreatePartyRequestLootMode string
+
+const (
+	CreatePartyRequestLootModeFreeForAll      CreatePartyRequestLootMode = "free_for_all"
+	CreatePartyRequestLootModeRoundRobin      CreatePartyRequestLootMode = "round_robin"
+	CreatePartyRequestLootModeNeedBeforeGreed CreatePartyRequestLootMode = "need_before_greed"
+	CreatePartyRequestLootModeMasterLooter    CreatePartyRequestLootMode = "master_looter"
+)
+
+// AllValues returns all CreatePartyRequestLootMode values.
+func (CreatePartyRequestLootMode) AllValues() []CreatePartyRequestLootMode {
+	return []CreatePartyRequestLootMode{
+		CreatePartyRequestLootModeFreeForAll,
+		CreatePartyRequestLootModeRoundRobin,
+		CreatePartyRequestLootModeNeedBeforeGreed,
+		CreatePartyRequestLootModeMasterLooter,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreatePartyRequestLootMode) MarshalText() ([]byte, error) {
+	switch s {
+	case CreatePartyRequestLootModeFreeForAll:
+		return []byte(s), nil
+	case CreatePartyRequestLootModeRoundRobin:
+		return []byte(s), nil
+	case CreatePartyRequestLootModeNeedBeforeGreed:
+		return []byte(s), nil
+	case CreatePartyRequestLootModeMasterLooter:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreatePartyRequestLootMode) UnmarshalText(data []byte) error {
+	switch CreatePartyRequestLootMode(data) {
+	case CreatePartyRequestLootModeFreeForAll:
+		*s = CreatePartyRequestLootModeFreeForAll
+		return nil
+	case CreatePartyRequestLootModeRoundRobin:
+		*s = CreatePartyRequestLootModeRoundRobin
+		return nil
+	case CreatePartyRequestLootModeNeedBeforeGreed:
+		*s = CreatePartyRequestLootModeNeedBeforeGreed
+		return nil
+	case CreatePartyRequestLootModeMasterLooter:
+		*s = CreatePartyRequestLootModeMasterLooter
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CreatePartyUnauthorized Error
+
+func (*CreatePartyUnauthorized) createPartyRes() {}
+
 // Ref: #/components/schemas/Error
 type Error struct {
 	// Тип ошибки.
@@ -130,6 +225,9 @@ func (s *FriendListResponse) SetTotal(val OptInt) {
 func (*FriendListResponse) getFriendsRes()       {}
 func (*FriendListResponse) getOnlineFriendsRes() {}
 
+// BACKEND NOTE: Hot path (friend count queries, 500+ RPS).
+// Fields ordered for struct alignment (large → small).
+// Expected memory: ~8 bytes/instance.
 // Ref: #/components/schemas/FriendsCountResponse
 type FriendsCountResponse struct {
 	Count       OptInt `json:"count"`
@@ -327,6 +425,54 @@ type GetOnlineFriendsUnauthorized Error
 
 func (*GetOnlineFriendsUnauthorized) getOnlineFriendsRes() {}
 
+type GetPartyByIdInternalServerError Error
+
+func (*GetPartyByIdInternalServerError) getPartyByIdRes() {}
+
+type GetPartyByIdNotFound Error
+
+func (*GetPartyByIdNotFound) getPartyByIdRes() {}
+
+type GetPartyByIdUnauthorized Error
+
+func (*GetPartyByIdUnauthorized) getPartyByIdRes() {}
+
+type GetPartyInternalServerError Error
+
+func (*GetPartyInternalServerError) getPartyRes() {}
+
+type GetPartyLeaderInternalServerError Error
+
+func (*GetPartyLeaderInternalServerError) getPartyLeaderRes() {}
+
+type GetPartyLeaderNotFound Error
+
+func (*GetPartyLeaderNotFound) getPartyLeaderRes() {}
+
+type GetPartyLeaderUnauthorized Error
+
+func (*GetPartyLeaderUnauthorized) getPartyLeaderRes() {}
+
+type GetPartyNotFound Error
+
+func (*GetPartyNotFound) getPartyRes() {}
+
+type GetPartyUnauthorized Error
+
+func (*GetPartyUnauthorized) getPartyRes() {}
+
+type GetPlayerPartyInternalServerError Error
+
+func (*GetPlayerPartyInternalServerError) getPlayerPartyRes() {}
+
+type GetPlayerPartyNotFound Error
+
+func (*GetPlayerPartyNotFound) getPlayerPartyRes() {}
+
+type GetPlayerPartyUnauthorized Error
+
+func (*GetPlayerPartyUnauthorized) getPlayerPartyRes() {}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -367,6 +513,52 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCreatePartyRequestLootMode returns new OptCreatePartyRequestLootMode with value set to v.
+func NewOptCreatePartyRequestLootMode(v CreatePartyRequestLootMode) OptCreatePartyRequestLootMode {
+	return OptCreatePartyRequestLootMode{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCreatePartyRequestLootMode is optional CreatePartyRequestLootMode.
+type OptCreatePartyRequestLootMode struct {
+	Value CreatePartyRequestLootMode
+	Set   bool
+}
+
+// IsSet returns true if OptCreatePartyRequestLootMode was set.
+func (o OptCreatePartyRequestLootMode) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCreatePartyRequestLootMode) Reset() {
+	var v CreatePartyRequestLootMode
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCreatePartyRequestLootMode) SetTo(v CreatePartyRequestLootMode) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCreatePartyRequestLootMode) Get() (v CreatePartyRequestLootMode, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCreatePartyRequestLootMode) Or(d CreatePartyRequestLootMode) CreatePartyRequestLootMode {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -637,6 +829,98 @@ func (o OptNilString) Or(d string) string {
 	return d
 }
 
+// NewOptPartyLootMode returns new OptPartyLootMode with value set to v.
+func NewOptPartyLootMode(v PartyLootMode) OptPartyLootMode {
+	return OptPartyLootMode{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPartyLootMode is optional PartyLootMode.
+type OptPartyLootMode struct {
+	Value PartyLootMode
+	Set   bool
+}
+
+// IsSet returns true if OptPartyLootMode was set.
+func (o OptPartyLootMode) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPartyLootMode) Reset() {
+	var v PartyLootMode
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPartyLootMode) SetTo(v PartyLootMode) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPartyLootMode) Get() (v PartyLootMode, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPartyLootMode) Or(d PartyLootMode) PartyLootMode {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptPartyMemberRole returns new OptPartyMemberRole with value set to v.
+func NewOptPartyMemberRole(v PartyMemberRole) OptPartyMemberRole {
+	return OptPartyMemberRole{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPartyMemberRole is optional PartyMemberRole.
+type OptPartyMemberRole struct {
+	Value PartyMemberRole
+	Set   bool
+}
+
+// IsSet returns true if OptPartyMemberRole was set.
+func (o OptPartyMemberRole) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPartyMemberRole) Reset() {
+	var v PartyMemberRole
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPartyMemberRole) SetTo(v PartyMemberRole) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPartyMemberRole) Get() (v PartyMemberRole, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPartyMemberRole) Or(d PartyMemberRole) PartyMemberRole {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -729,6 +1013,233 @@ func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
 	return d
 }
 
+// BACKEND NOTE: Party data (frequent queries).
+// Fields ordered for struct alignment (large → small).
+// Expected memory: ~96 bytes/instance.
+// Ref: #/components/schemas/Party
+type Party struct {
+	ID        OptUUID          `json:"id"`
+	LeaderID  OptUUID          `json:"leader_id"`
+	Members   []PartyMember    `json:"members"`
+	CreatedAt OptDateTime      `json:"created_at"`
+	UpdatedAt OptDateTime      `json:"updated_at"`
+	LootMode  OptPartyLootMode `json:"loot_mode"`
+	MaxSize   OptInt           `json:"max_size"`
+}
+
+// GetID returns the value of ID.
+func (s *Party) GetID() OptUUID {
+	return s.ID
+}
+
+// GetLeaderID returns the value of LeaderID.
+func (s *Party) GetLeaderID() OptUUID {
+	return s.LeaderID
+}
+
+// GetMembers returns the value of Members.
+func (s *Party) GetMembers() []PartyMember {
+	return s.Members
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Party) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *Party) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
+}
+
+// GetLootMode returns the value of LootMode.
+func (s *Party) GetLootMode() OptPartyLootMode {
+	return s.LootMode
+}
+
+// GetMaxSize returns the value of MaxSize.
+func (s *Party) GetMaxSize() OptInt {
+	return s.MaxSize
+}
+
+// SetID sets the value of ID.
+func (s *Party) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetLeaderID sets the value of LeaderID.
+func (s *Party) SetLeaderID(val OptUUID) {
+	s.LeaderID = val
+}
+
+// SetMembers sets the value of Members.
+func (s *Party) SetMembers(val []PartyMember) {
+	s.Members = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Party) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *Party) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
+}
+
+// SetLootMode sets the value of LootMode.
+func (s *Party) SetLootMode(val OptPartyLootMode) {
+	s.LootMode = val
+}
+
+// SetMaxSize sets the value of MaxSize.
+func (s *Party) SetMaxSize(val OptInt) {
+	s.MaxSize = val
+}
+
+func (*Party) createPartyRes()             {}
+func (*Party) getPartyByIdRes()            {}
+func (*Party) getPartyRes()                {}
+func (*Party) getPlayerPartyRes()          {}
+func (*Party) transferPartyLeadershipRes() {}
+
+type PartyLootMode string
+
+const (
+	PartyLootModeFreeForAll      PartyLootMode = "free_for_all"
+	PartyLootModeRoundRobin      PartyLootMode = "round_robin"
+	PartyLootModeNeedBeforeGreed PartyLootMode = "need_before_greed"
+	PartyLootModeMasterLooter    PartyLootMode = "master_looter"
+)
+
+// AllValues returns all PartyLootMode values.
+func (PartyLootMode) AllValues() []PartyLootMode {
+	return []PartyLootMode{
+		PartyLootModeFreeForAll,
+		PartyLootModeRoundRobin,
+		PartyLootModeNeedBeforeGreed,
+		PartyLootModeMasterLooter,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PartyLootMode) MarshalText() ([]byte, error) {
+	switch s {
+	case PartyLootModeFreeForAll:
+		return []byte(s), nil
+	case PartyLootModeRoundRobin:
+		return []byte(s), nil
+	case PartyLootModeNeedBeforeGreed:
+		return []byte(s), nil
+	case PartyLootModeMasterLooter:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PartyLootMode) UnmarshalText(data []byte) error {
+	switch PartyLootMode(data) {
+	case PartyLootModeFreeForAll:
+		*s = PartyLootModeFreeForAll
+		return nil
+	case PartyLootModeRoundRobin:
+		*s = PartyLootModeRoundRobin
+		return nil
+	case PartyLootModeNeedBeforeGreed:
+		*s = PartyLootModeNeedBeforeGreed
+		return nil
+	case PartyLootModeMasterLooter:
+		*s = PartyLootModeMasterLooter
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Party member data.
+// Fields ordered for struct alignment (large → small).
+// Ref: #/components/schemas/PartyMember
+type PartyMember struct {
+	CharacterID OptUUID            `json:"character_id"`
+	JoinedAt    OptDateTime        `json:"joined_at"`
+	Role        OptPartyMemberRole `json:"role"`
+}
+
+// GetCharacterID returns the value of CharacterID.
+func (s *PartyMember) GetCharacterID() OptUUID {
+	return s.CharacterID
+}
+
+// GetJoinedAt returns the value of JoinedAt.
+func (s *PartyMember) GetJoinedAt() OptDateTime {
+	return s.JoinedAt
+}
+
+// GetRole returns the value of Role.
+func (s *PartyMember) GetRole() OptPartyMemberRole {
+	return s.Role
+}
+
+// SetCharacterID sets the value of CharacterID.
+func (s *PartyMember) SetCharacterID(val OptUUID) {
+	s.CharacterID = val
+}
+
+// SetJoinedAt sets the value of JoinedAt.
+func (s *PartyMember) SetJoinedAt(val OptDateTime) {
+	s.JoinedAt = val
+}
+
+// SetRole sets the value of Role.
+func (s *PartyMember) SetRole(val OptPartyMemberRole) {
+	s.Role = val
+}
+
+func (*PartyMember) getPartyLeaderRes() {}
+
+type PartyMemberRole string
+
+const (
+	PartyMemberRoleLeader PartyMemberRole = "leader"
+	PartyMemberRoleMember PartyMemberRole = "member"
+)
+
+// AllValues returns all PartyMemberRole values.
+func (PartyMemberRole) AllValues() []PartyMemberRole {
+	return []PartyMemberRole{
+		PartyMemberRoleLeader,
+		PartyMemberRoleMember,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PartyMemberRole) MarshalText() ([]byte, error) {
+	switch s {
+	case PartyMemberRoleLeader:
+		return []byte(s), nil
+	case PartyMemberRoleMember:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PartyMemberRole) UnmarshalText(data []byte) error {
+	switch PartyMemberRole(data) {
+	case PartyMemberRoleLeader:
+		*s = PartyMemberRoleLeader
+		return nil
+	case PartyMemberRoleMember:
+		*s = PartyMemberRoleMember
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type RemoveFriendInternalServerError Error
 
 func (*RemoveFriendInternalServerError) removeFriendRes() {}
@@ -758,3 +1269,34 @@ func (s *StatusResponse) SetStatus(val OptString) {
 }
 
 func (*StatusResponse) removeFriendRes() {}
+
+// Ref: #/components/schemas/TransferLeadershipRequest
+type TransferLeadershipRequest struct {
+	NewLeaderID uuid.UUID `json:"new_leader_id"`
+}
+
+// GetNewLeaderID returns the value of NewLeaderID.
+func (s *TransferLeadershipRequest) GetNewLeaderID() uuid.UUID {
+	return s.NewLeaderID
+}
+
+// SetNewLeaderID sets the value of NewLeaderID.
+func (s *TransferLeadershipRequest) SetNewLeaderID(val uuid.UUID) {
+	s.NewLeaderID = val
+}
+
+type TransferPartyLeadershipBadRequest Error
+
+func (*TransferPartyLeadershipBadRequest) transferPartyLeadershipRes() {}
+
+type TransferPartyLeadershipInternalServerError Error
+
+func (*TransferPartyLeadershipInternalServerError) transferPartyLeadershipRes() {}
+
+type TransferPartyLeadershipNotFound Error
+
+func (*TransferPartyLeadershipNotFound) transferPartyLeadershipRes() {}
+
+type TransferPartyLeadershipUnauthorized Error
+
+func (*TransferPartyLeadershipUnauthorized) transferPartyLeadershipRes() {}
