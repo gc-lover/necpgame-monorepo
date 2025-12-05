@@ -1307,6 +1307,120 @@ func (s *GetPlayerProgressNotFound) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes GetSeasonChallengesInternalServerError as json.
+func (s *GetSeasonChallengesInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetSeasonChallengesInternalServerError from json.
+func (s *GetSeasonChallengesInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSeasonChallengesInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetSeasonChallengesInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSeasonChallengesInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSeasonChallengesInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetSeasonChallengesNotFound as json.
+func (s *GetSeasonChallengesNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetSeasonChallengesNotFound from json.
+func (s *GetSeasonChallengesNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSeasonChallengesNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetSeasonChallengesNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSeasonChallengesNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSeasonChallengesNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetSeasonChallengesUnauthorized as json.
+func (s *GetSeasonChallengesUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetSeasonChallengesUnauthorized from json.
+func (s *GetSeasonChallengesUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSeasonChallengesUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetSeasonChallengesUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSeasonChallengesUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSeasonChallengesUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes GetWeeklyChallengesInternalServerError as json.
 func (s *GetWeeklyChallengesInternalServerError) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
@@ -1748,6 +1862,41 @@ func (s *OptString) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes uuid.UUID as json.
+func (o OptUUID) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	json.EncodeUUID(e, o.Value)
+}
+
+// Decode decodes uuid.UUID from json.
+func (o *OptUUID) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptUUID to nil")
+	}
+	o.Set = true
+	v, err := json.DecodeUUID(d)
+	if err != nil {
+		return err
+	}
+	o.Value = v
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptUUID) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptUUID) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
 func (s *PlayerProgress) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -1766,33 +1915,15 @@ func (s *PlayerProgress) encodeFields(e *jx.Encoder) {
 		json.EncodeUUID(e, s.SeasonID)
 	}
 	{
-		if s.Season.Set {
-			e.FieldStart("season")
-			s.Season.Encode(e)
-		}
-	}
-	{
-		e.FieldStart("current_level")
-		e.Int(s.CurrentLevel)
-	}
-	{
-		e.FieldStart("current_xp")
-		e.Int(s.CurrentXp)
-	}
-	{
-		if s.XpToNextLevel.Set {
-			e.FieldStart("xp_to_next_level")
-			s.XpToNextLevel.Encode(e)
-		}
-	}
-	{
-		e.FieldStart("has_premium")
-		e.Bool(s.HasPremium)
-	}
-	{
 		if s.PremiumPurchasedAt.Set {
 			e.FieldStart("premium_purchased_at")
 			s.PremiumPurchasedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Season.Set {
+			e.FieldStart("season")
+			s.Season.Encode(e)
 		}
 	}
 	{
@@ -1816,25 +1947,43 @@ func (s *PlayerProgress) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		e.FieldStart("current_level")
+		e.Int(s.CurrentLevel)
+	}
+	{
+		e.FieldStart("current_xp")
+		e.Int(s.CurrentXp)
+	}
+	{
+		if s.XpToNextLevel.Set {
+			e.FieldStart("xp_to_next_level")
+			s.XpToNextLevel.Encode(e)
+		}
+	}
+	{
 		if s.UnclaimedRewardsCount.Set {
 			e.FieldStart("unclaimed_rewards_count")
 			s.UnclaimedRewardsCount.Encode(e)
 		}
+	}
+	{
+		e.FieldStart("has_premium")
+		e.Bool(s.HasPremium)
 	}
 }
 
 var jsonFieldsNameOfPlayerProgress = [11]string{
 	0:  "player_id",
 	1:  "season_id",
-	2:  "season",
-	3:  "current_level",
-	4:  "current_xp",
-	5:  "xp_to_next_level",
-	6:  "has_premium",
-	7:  "premium_purchased_at",
-	8:  "claimed_levels_free",
-	9:  "claimed_levels_premium",
-	10: "unclaimed_rewards_count",
+	2:  "premium_purchased_at",
+	3:  "season",
+	4:  "claimed_levels_free",
+	5:  "claimed_levels_premium",
+	6:  "current_level",
+	7:  "current_xp",
+	8:  "xp_to_next_level",
+	9:  "unclaimed_rewards_count",
+	10: "has_premium",
 }
 
 // Decode decodes PlayerProgress from json.
@@ -1870,62 +2019,6 @@ func (s *PlayerProgress) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"season_id\"")
 			}
-		case "season":
-			if err := func() error {
-				s.Season.Reset()
-				if err := s.Season.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"season\"")
-			}
-		case "current_level":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Int()
-				s.CurrentLevel = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"current_level\"")
-			}
-		case "current_xp":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
-				v, err := d.Int()
-				s.CurrentXp = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"current_xp\"")
-			}
-		case "xp_to_next_level":
-			if err := func() error {
-				s.XpToNextLevel.Reset()
-				if err := s.XpToNextLevel.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"xp_to_next_level\"")
-			}
-		case "has_premium":
-			requiredBitSet[0] |= 1 << 6
-			if err := func() error {
-				v, err := d.Bool()
-				s.HasPremium = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"has_premium\"")
-			}
 		case "premium_purchased_at":
 			if err := func() error {
 				s.PremiumPurchasedAt.Reset()
@@ -1935,6 +2028,16 @@ func (s *PlayerProgress) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"premium_purchased_at\"")
+			}
+		case "season":
+			if err := func() error {
+				s.Season.Reset()
+				if err := s.Season.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"season\"")
 			}
 		case "claimed_levels_free":
 			if err := func() error {
@@ -1974,6 +2077,40 @@ func (s *PlayerProgress) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"claimed_levels_premium\"")
 			}
+		case "current_level":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Int()
+				s.CurrentLevel = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"current_level\"")
+			}
+		case "current_xp":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				v, err := d.Int()
+				s.CurrentXp = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"current_xp\"")
+			}
+		case "xp_to_next_level":
+			if err := func() error {
+				s.XpToNextLevel.Reset()
+				if err := s.XpToNextLevel.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"xp_to_next_level\"")
+			}
 		case "unclaimed_rewards_count":
 			if err := func() error {
 				s.UnclaimedRewardsCount.Reset()
@@ -1983,6 +2120,18 @@ func (s *PlayerProgress) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"unclaimed_rewards_count\"")
+			}
+		case "has_premium":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.HasPremium = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"has_premium\"")
 			}
 		default:
 			return d.Skip()
@@ -1994,8 +2143,8 @@ func (s *PlayerProgress) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b01011011,
-		0b00000000,
+		0b11000011,
+		0b00000100,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -2314,20 +2463,20 @@ func (s *Reward) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Reward) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("level")
-		e.Int(s.Level)
-	}
-	{
-		e.FieldStart("track")
-		s.Track.Encode(e)
-	}
-	{
 		e.FieldStart("reward_type")
 		s.RewardType.Encode(e)
 	}
 	{
 		e.FieldStart("reward_data")
 		s.RewardData.Encode(e)
+	}
+	{
+		e.FieldStart("track")
+		s.Track.Encode(e)
+	}
+	{
+		e.FieldStart("level")
+		e.Int(s.Level)
 	}
 	{
 		if s.Claimed.Set {
@@ -2338,10 +2487,10 @@ func (s *Reward) encodeFields(e *jx.Encoder) {
 }
 
 var jsonFieldsNameOfReward = [5]string{
-	0: "level",
-	1: "track",
-	2: "reward_type",
-	3: "reward_data",
+	0: "reward_type",
+	1: "reward_data",
+	2: "track",
+	3: "level",
 	4: "claimed",
 }
 
@@ -2354,30 +2503,8 @@ func (s *Reward) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "level":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int()
-				s.Level = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"level\"")
-			}
-		case "track":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				if err := s.Track.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"track\"")
-			}
 		case "reward_type":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				if err := s.RewardType.Decode(d); err != nil {
 					return err
@@ -2387,7 +2514,7 @@ func (s *Reward) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"reward_type\"")
 			}
 		case "reward_data":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.RewardData.Decode(d); err != nil {
 					return err
@@ -2395,6 +2522,28 @@ func (s *Reward) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"reward_data\"")
+			}
+		case "track":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Track.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"track\"")
+			}
+		case "level":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int()
+				s.Level = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"level\"")
 			}
 		case "claimed":
 			if err := func() error {
@@ -2632,8 +2781,14 @@ func (s *Season) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("season_number")
-		e.Int(s.SeasonNumber)
+		if s.Theme.Set {
+			e.FieldStart("theme")
+			s.Theme.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
 	}
 	{
 		e.FieldStart("start_date")
@@ -2644,18 +2799,12 @@ func (s *Season) encodeFields(e *jx.Encoder) {
 		json.EncodeDateTime(e, s.EndDate)
 	}
 	{
+		e.FieldStart("season_number")
+		e.Int(s.SeasonNumber)
+	}
+	{
 		e.FieldStart("max_level")
 		e.Int(s.MaxLevel)
-	}
-	{
-		if s.Theme.Set {
-			e.FieldStart("theme")
-			s.Theme.Encode(e)
-		}
-	}
-	{
-		e.FieldStart("status")
-		s.Status.Encode(e)
 	}
 }
 
@@ -2663,12 +2812,12 @@ var jsonFieldsNameOfSeason = [9]string{
 	0: "id",
 	1: "name",
 	2: "description",
-	3: "season_number",
-	4: "start_date",
-	5: "end_date",
-	6: "max_level",
-	7: "theme",
-	8: "status",
+	3: "theme",
+	4: "status",
+	5: "start_date",
+	6: "end_date",
+	7: "season_number",
+	8: "max_level",
 }
 
 // Decode decodes Season from json.
@@ -2715,54 +2864,6 @@ func (s *Season) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
-		case "season_number":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Int()
-				s.SeasonNumber = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"season_number\"")
-			}
-		case "start_date":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
-				v, err := json.DecodeDateTime(d)
-				s.StartDate = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"start_date\"")
-			}
-		case "end_date":
-			requiredBitSet[0] |= 1 << 5
-			if err := func() error {
-				v, err := json.DecodeDateTime(d)
-				s.EndDate = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"end_date\"")
-			}
-		case "max_level":
-			requiredBitSet[0] |= 1 << 6
-			if err := func() error {
-				v, err := d.Int()
-				s.MaxLevel = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"max_level\"")
-			}
 		case "theme":
 			if err := func() error {
 				s.Theme.Reset()
@@ -2774,7 +2875,7 @@ func (s *Season) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"theme\"")
 			}
 		case "status":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.Status.Decode(d); err != nil {
 					return err
@@ -2782,6 +2883,54 @@ func (s *Season) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "start_date":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.StartDate = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"start_date\"")
+			}
+		case "end_date":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.EndDate = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"end_date\"")
+			}
+		case "season_number":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				v, err := d.Int()
+				s.SeasonNumber = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"season_number\"")
+			}
+		case "max_level":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int()
+				s.MaxLevel = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"max_level\"")
 			}
 		default:
 			return d.Skip()
@@ -2793,7 +2942,7 @@ func (s *Season) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b01111011,
+		0b11110011,
 		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -2836,6 +2985,131 @@ func (s *Season) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *Season) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SeasonChallengesResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SeasonChallengesResponse) encodeFields(e *jx.Encoder) {
+	{
+		if s.PlayerID.Set {
+			e.FieldStart("player_id")
+			s.PlayerID.Encode(e)
+		}
+	}
+	{
+		if s.SeasonID.Set {
+			e.FieldStart("season_id")
+			s.SeasonID.Encode(e)
+		}
+	}
+	{
+		if s.Challenges != nil {
+			e.FieldStart("challenges")
+			e.ArrStart()
+			for _, elem := range s.Challenges {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Total.Set {
+			e.FieldStart("total")
+			s.Total.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSeasonChallengesResponse = [4]string{
+	0: "player_id",
+	1: "season_id",
+	2: "challenges",
+	3: "total",
+}
+
+// Decode decodes SeasonChallengesResponse from json.
+func (s *SeasonChallengesResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SeasonChallengesResponse to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "player_id":
+			if err := func() error {
+				s.PlayerID.Reset()
+				if err := s.PlayerID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_id\"")
+			}
+		case "season_id":
+			if err := func() error {
+				s.SeasonID.Reset()
+				if err := s.SeasonID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"season_id\"")
+			}
+		case "challenges":
+			if err := func() error {
+				s.Challenges = make([]WeeklyChallenge, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem WeeklyChallenge
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Challenges = append(s.Challenges, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"challenges\"")
+			}
+		case "total":
+			if err := func() error {
+				s.Total.Reset()
+				if err := s.Total.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SeasonChallengesResponse")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SeasonChallengesResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SeasonChallengesResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2916,6 +3190,18 @@ func (s *WeeklyChallenge) encodeFields(e *jx.Encoder) {
 		e.Int(s.XpReward)
 	}
 	{
+		if s.StartDate.Set {
+			e.FieldStart("start_date")
+			s.StartDate.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.EndDate.Set {
+			e.FieldStart("end_date")
+			s.EndDate.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
 		if s.CurrentProgress.Set {
 			e.FieldStart("current_progress")
 			s.CurrentProgress.Encode(e)
@@ -2933,18 +3219,6 @@ func (s *WeeklyChallenge) encodeFields(e *jx.Encoder) {
 			s.ClaimedAt.Encode(e, json.EncodeDateTime)
 		}
 	}
-	{
-		if s.StartDate.Set {
-			e.FieldStart("start_date")
-			s.StartDate.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.EndDate.Set {
-			e.FieldStart("end_date")
-			s.EndDate.Encode(e, json.EncodeDateTime)
-		}
-	}
 }
 
 var jsonFieldsNameOfWeeklyChallenge = [11]string{
@@ -2954,11 +3228,11 @@ var jsonFieldsNameOfWeeklyChallenge = [11]string{
 	3:  "objective_type",
 	4:  "objective_count",
 	5:  "xp_reward",
-	6:  "current_progress",
-	7:  "completed_at",
-	8:  "claimed_at",
-	9:  "start_date",
-	10: "end_date",
+	6:  "start_date",
+	7:  "end_date",
+	8:  "current_progress",
+	9:  "completed_at",
+	10: "claimed_at",
 }
 
 // Decode decodes WeeklyChallenge from json.
@@ -3040,6 +3314,26 @@ func (s *WeeklyChallenge) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"xp_reward\"")
 			}
+		case "start_date":
+			if err := func() error {
+				s.StartDate.Reset()
+				if err := s.StartDate.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"start_date\"")
+			}
+		case "end_date":
+			if err := func() error {
+				s.EndDate.Reset()
+				if err := s.EndDate.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"end_date\"")
+			}
 		case "current_progress":
 			if err := func() error {
 				s.CurrentProgress.Reset()
@@ -3069,26 +3363,6 @@ func (s *WeeklyChallenge) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"claimed_at\"")
-			}
-		case "start_date":
-			if err := func() error {
-				s.StartDate.Reset()
-				if err := s.StartDate.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"start_date\"")
-			}
-		case "end_date":
-			if err := func() error {
-				s.EndDate.Reset()
-				if err := s.EndDate.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"end_date\"")
 			}
 		default:
 			return d.Skip()
@@ -3173,10 +3447,6 @@ func (s *WeeklyChallengeObjectiveType) Decode(d *jx.Decoder) error {
 		*s = WeeklyChallengeObjectiveTypePlayMatches
 	case WeeklyChallengeObjectiveTypeDealDamage:
 		*s = WeeklyChallengeObjectiveTypeDealDamage
-	case WeeklyChallengeObjectiveTypeCollectItems:
-		*s = WeeklyChallengeObjectiveTypeCollectItems
-	case WeeklyChallengeObjectiveTypeWinMatches:
-		*s = WeeklyChallengeObjectiveTypeWinMatches
 	default:
 		*s = WeeklyChallengeObjectiveType(v)
 	}

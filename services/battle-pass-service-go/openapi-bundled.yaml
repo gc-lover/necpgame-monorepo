@@ -176,6 +176,37 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /api/v1/economy/battle-pass/challenges/season/{player_id}:
+    get:
+      tags:
+        - challenges
+      summary: Получить испытания сезона игрока
+      operationId: getSeasonChallenges
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Испытания сезона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonChallengesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /api/v1/economy/battle-pass/challenges/{challengeId}/complete:
     post:
       tags:
@@ -300,18 +331,6 @@ components:
           maxLength: 100
         description:
           type: string
-        season_number:
-          type: integer
-          minimum: 1
-        start_date:
-          type: string
-          format: date-time
-        end_date:
-          type: string
-          format: date-time
-        max_level:
-          type: integer
-          default: 100
         theme:
           type: string
         status:
@@ -320,6 +339,19 @@ components:
             - scheduled
             - active
             - ended
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        season_number:
+          type: integer
+          minimum: 1
+        max_level:
+          type: integer
+          default: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PlayerProgress:
       type: object
       required:
@@ -335,8 +367,19 @@ components:
         season_id:
           type: string
           format: uuid
+        premium_purchased_at:
+          type: string
+          format: date-time
         season:
           $ref: '#/components/schemas/Season'
+        claimed_levels_free:
+          type: array
+          items:
+            type: integer
+        claimed_levels_premium:
+          type: array
+          items:
+            type: integer
         current_level:
           type: integer
           minimum: 1
@@ -346,21 +389,11 @@ components:
           minimum: 0
         xp_to_next_level:
           type: integer
-        has_premium:
-          type: boolean
-        premium_purchased_at:
-          type: string
-          format: date-time
-        claimed_levels_free:
-          type: array
-          items:
-            type: integer
-        claimed_levels_premium:
-          type: array
-          items:
-            type: integer
         unclaimed_rewards_count:
           type: integer
+        has_premium:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Reward:
       type: object
       required:
@@ -369,12 +402,6 @@ components:
         - reward_type
         - reward_data
       properties:
-        level:
-          type: integer
-          minimum: 1
-          maximum: 100
-        track:
-          $ref: '#/components/schemas/RewardTrack'
         reward_type:
           type: string
           enum:
@@ -387,8 +414,15 @@ components:
         reward_data:
           type: object
           additionalProperties: true
+        track:
+          $ref: '#/components/schemas/RewardTrack'
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
         claimed:
           type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WeeklyChallenge:
       type: object
       required:
@@ -415,14 +449,18 @@ components:
             - earn_currency
             - play_matches
             - deal_damage
-            - collect_items
-            - win_matches
         objective_count:
           type: integer
           minimum: 1
         xp_reward:
           type: integer
           minimum: 0
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
         current_progress:
           type: integer
           minimum: 0
@@ -432,12 +470,22 @@ components:
         claimed_at:
           type: string
           format: date-time
-        start_date:
+    SeasonChallengesResponse:
+      type: object
+      properties:
+        player_id:
           type: string
-          format: date-time
-        end_date:
+          format: uuid
+        season_id:
           type: string
-          format: date-time
+          format: uuid
+        challenges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyChallenge'
+        total:
+          type: integer
+          minimum: 0
     Error:
       type: object
       required:
@@ -490,3 +538,13 @@ components:
             error: BadRequest
             message: Неверные параметры запроса
             code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED

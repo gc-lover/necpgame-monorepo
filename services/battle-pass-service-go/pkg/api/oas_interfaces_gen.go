@@ -21,6 +21,10 @@ type GetPlayerProgressRes interface {
 	getPlayerProgressRes()
 }
 
+type GetSeasonChallengesRes interface {
+	getSeasonChallengesRes()
+}
+
 type GetWeeklyChallengesRes interface {
 	getWeeklyChallengesRes()
 }

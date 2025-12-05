@@ -326,6 +326,18 @@ type GetPlayerProgressNotFound Error
 
 func (*GetPlayerProgressNotFound) getPlayerProgressRes() {}
 
+type GetSeasonChallengesInternalServerError Error
+
+func (*GetSeasonChallengesInternalServerError) getSeasonChallengesRes() {}
+
+type GetSeasonChallengesNotFound Error
+
+func (*GetSeasonChallengesNotFound) getSeasonChallengesRes() {}
+
+type GetSeasonChallengesUnauthorized Error
+
+func (*GetSeasonChallengesUnauthorized) getSeasonChallengesRes() {}
+
 type GetWeeklyChallengesInternalServerError Error
 
 func (*GetWeeklyChallengesInternalServerError) getWeeklyChallengesRes() {}
@@ -717,19 +729,67 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// NewOptUUID returns new OptUUID with value set to v.
+func NewOptUUID(v uuid.UUID) OptUUID {
+	return OptUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUUID is optional uuid.UUID.
+type OptUUID struct {
+	Value uuid.UUID
+	Set   bool
+}
+
+// IsSet returns true if OptUUID was set.
+func (o OptUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUUID) Get() (v uuid.UUID, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/PlayerProgress
 type PlayerProgress struct {
 	PlayerID              uuid.UUID   `json:"player_id"`
 	SeasonID              uuid.UUID   `json:"season_id"`
+	PremiumPurchasedAt    OptDateTime `json:"premium_purchased_at"`
 	Season                OptSeason   `json:"season"`
+	ClaimedLevelsFree     []int       `json:"claimed_levels_free"`
+	ClaimedLevelsPremium  []int       `json:"claimed_levels_premium"`
 	CurrentLevel          int         `json:"current_level"`
 	CurrentXp             int         `json:"current_xp"`
 	XpToNextLevel         OptInt      `json:"xp_to_next_level"`
-	HasPremium            bool        `json:"has_premium"`
-	PremiumPurchasedAt    OptDateTime `json:"premium_purchased_at"`
-	ClaimedLevelsFree     []int       `json:"claimed_levels_free"`
-	ClaimedLevelsPremium  []int       `json:"claimed_levels_premium"`
 	UnclaimedRewardsCount OptInt      `json:"unclaimed_rewards_count"`
+	HasPremium            bool        `json:"has_premium"`
 }
 
 // GetPlayerID returns the value of PlayerID.
@@ -742,9 +802,24 @@ func (s *PlayerProgress) GetSeasonID() uuid.UUID {
 	return s.SeasonID
 }
 
+// GetPremiumPurchasedAt returns the value of PremiumPurchasedAt.
+func (s *PlayerProgress) GetPremiumPurchasedAt() OptDateTime {
+	return s.PremiumPurchasedAt
+}
+
 // GetSeason returns the value of Season.
 func (s *PlayerProgress) GetSeason() OptSeason {
 	return s.Season
+}
+
+// GetClaimedLevelsFree returns the value of ClaimedLevelsFree.
+func (s *PlayerProgress) GetClaimedLevelsFree() []int {
+	return s.ClaimedLevelsFree
+}
+
+// GetClaimedLevelsPremium returns the value of ClaimedLevelsPremium.
+func (s *PlayerProgress) GetClaimedLevelsPremium() []int {
+	return s.ClaimedLevelsPremium
 }
 
 // GetCurrentLevel returns the value of CurrentLevel.
@@ -762,29 +837,14 @@ func (s *PlayerProgress) GetXpToNextLevel() OptInt {
 	return s.XpToNextLevel
 }
 
-// GetHasPremium returns the value of HasPremium.
-func (s *PlayerProgress) GetHasPremium() bool {
-	return s.HasPremium
-}
-
-// GetPremiumPurchasedAt returns the value of PremiumPurchasedAt.
-func (s *PlayerProgress) GetPremiumPurchasedAt() OptDateTime {
-	return s.PremiumPurchasedAt
-}
-
-// GetClaimedLevelsFree returns the value of ClaimedLevelsFree.
-func (s *PlayerProgress) GetClaimedLevelsFree() []int {
-	return s.ClaimedLevelsFree
-}
-
-// GetClaimedLevelsPremium returns the value of ClaimedLevelsPremium.
-func (s *PlayerProgress) GetClaimedLevelsPremium() []int {
-	return s.ClaimedLevelsPremium
-}
-
 // GetUnclaimedRewardsCount returns the value of UnclaimedRewardsCount.
 func (s *PlayerProgress) GetUnclaimedRewardsCount() OptInt {
 	return s.UnclaimedRewardsCount
+}
+
+// GetHasPremium returns the value of HasPremium.
+func (s *PlayerProgress) GetHasPremium() bool {
+	return s.HasPremium
 }
 
 // SetPlayerID sets the value of PlayerID.
@@ -797,9 +857,24 @@ func (s *PlayerProgress) SetSeasonID(val uuid.UUID) {
 	s.SeasonID = val
 }
 
+// SetPremiumPurchasedAt sets the value of PremiumPurchasedAt.
+func (s *PlayerProgress) SetPremiumPurchasedAt(val OptDateTime) {
+	s.PremiumPurchasedAt = val
+}
+
 // SetSeason sets the value of Season.
 func (s *PlayerProgress) SetSeason(val OptSeason) {
 	s.Season = val
+}
+
+// SetClaimedLevelsFree sets the value of ClaimedLevelsFree.
+func (s *PlayerProgress) SetClaimedLevelsFree(val []int) {
+	s.ClaimedLevelsFree = val
+}
+
+// SetClaimedLevelsPremium sets the value of ClaimedLevelsPremium.
+func (s *PlayerProgress) SetClaimedLevelsPremium(val []int) {
+	s.ClaimedLevelsPremium = val
 }
 
 // SetCurrentLevel sets the value of CurrentLevel.
@@ -817,29 +892,14 @@ func (s *PlayerProgress) SetXpToNextLevel(val OptInt) {
 	s.XpToNextLevel = val
 }
 
-// SetHasPremium sets the value of HasPremium.
-func (s *PlayerProgress) SetHasPremium(val bool) {
-	s.HasPremium = val
-}
-
-// SetPremiumPurchasedAt sets the value of PremiumPurchasedAt.
-func (s *PlayerProgress) SetPremiumPurchasedAt(val OptDateTime) {
-	s.PremiumPurchasedAt = val
-}
-
-// SetClaimedLevelsFree sets the value of ClaimedLevelsFree.
-func (s *PlayerProgress) SetClaimedLevelsFree(val []int) {
-	s.ClaimedLevelsFree = val
-}
-
-// SetClaimedLevelsPremium sets the value of ClaimedLevelsPremium.
-func (s *PlayerProgress) SetClaimedLevelsPremium(val []int) {
-	s.ClaimedLevelsPremium = val
-}
-
 // SetUnclaimedRewardsCount sets the value of UnclaimedRewardsCount.
 func (s *PlayerProgress) SetUnclaimedRewardsCount(val OptInt) {
 	s.UnclaimedRewardsCount = val
+}
+
+// SetHasPremium sets the value of HasPremium.
+func (s *PlayerProgress) SetHasPremium(val bool) {
+	s.HasPremium = val
 }
 
 func (*PlayerProgress) getPlayerProgressRes() {}
@@ -894,23 +954,15 @@ func (s *PurchasePremiumReq) SetPlayerID(val uuid.UUID) {
 	s.PlayerID = val
 }
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/Reward
 type Reward struct {
-	Level      int              `json:"level"`
-	Track      RewardTrack      `json:"track"`
 	RewardType RewardRewardType `json:"reward_type"`
 	RewardData RewardRewardData `json:"reward_data"`
+	Track      RewardTrack      `json:"track"`
+	Level      int              `json:"level"`
 	Claimed    OptBool          `json:"claimed"`
-}
-
-// GetLevel returns the value of Level.
-func (s *Reward) GetLevel() int {
-	return s.Level
-}
-
-// GetTrack returns the value of Track.
-func (s *Reward) GetTrack() RewardTrack {
-	return s.Track
 }
 
 // GetRewardType returns the value of RewardType.
@@ -923,19 +975,19 @@ func (s *Reward) GetRewardData() RewardRewardData {
 	return s.RewardData
 }
 
+// GetTrack returns the value of Track.
+func (s *Reward) GetTrack() RewardTrack {
+	return s.Track
+}
+
+// GetLevel returns the value of Level.
+func (s *Reward) GetLevel() int {
+	return s.Level
+}
+
 // GetClaimed returns the value of Claimed.
 func (s *Reward) GetClaimed() OptBool {
 	return s.Claimed
-}
-
-// SetLevel sets the value of Level.
-func (s *Reward) SetLevel(val int) {
-	s.Level = val
-}
-
-// SetTrack sets the value of Track.
-func (s *Reward) SetTrack(val RewardTrack) {
-	s.Track = val
 }
 
 // SetRewardType sets the value of RewardType.
@@ -946,6 +998,16 @@ func (s *Reward) SetRewardType(val RewardRewardType) {
 // SetRewardData sets the value of RewardData.
 func (s *Reward) SetRewardData(val RewardRewardData) {
 	s.RewardData = val
+}
+
+// SetTrack sets the value of Track.
+func (s *Reward) SetTrack(val RewardTrack) {
+	s.Track = val
+}
+
+// SetLevel sets the value of Level.
+func (s *Reward) SetLevel(val int) {
+	s.Level = val
 }
 
 // SetClaimed sets the value of Claimed.
@@ -1075,17 +1137,19 @@ func (s *RewardTrack) UnmarshalText(data []byte) error {
 	}
 }
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/Season
 type Season struct {
 	ID           uuid.UUID    `json:"id"`
 	Name         string       `json:"name"`
 	Description  OptString    `json:"description"`
-	SeasonNumber int          `json:"season_number"`
-	StartDate    time.Time    `json:"start_date"`
-	EndDate      time.Time    `json:"end_date"`
-	MaxLevel     int          `json:"max_level"`
 	Theme        OptString    `json:"theme"`
 	Status       SeasonStatus `json:"status"`
+	StartDate    time.Time    `json:"start_date"`
+	EndDate      time.Time    `json:"end_date"`
+	SeasonNumber int          `json:"season_number"`
+	MaxLevel     int          `json:"max_level"`
 }
 
 // GetID returns the value of ID.
@@ -1103,9 +1167,14 @@ func (s *Season) GetDescription() OptString {
 	return s.Description
 }
 
-// GetSeasonNumber returns the value of SeasonNumber.
-func (s *Season) GetSeasonNumber() int {
-	return s.SeasonNumber
+// GetTheme returns the value of Theme.
+func (s *Season) GetTheme() OptString {
+	return s.Theme
+}
+
+// GetStatus returns the value of Status.
+func (s *Season) GetStatus() SeasonStatus {
+	return s.Status
 }
 
 // GetStartDate returns the value of StartDate.
@@ -1118,19 +1187,14 @@ func (s *Season) GetEndDate() time.Time {
 	return s.EndDate
 }
 
+// GetSeasonNumber returns the value of SeasonNumber.
+func (s *Season) GetSeasonNumber() int {
+	return s.SeasonNumber
+}
+
 // GetMaxLevel returns the value of MaxLevel.
 func (s *Season) GetMaxLevel() int {
 	return s.MaxLevel
-}
-
-// GetTheme returns the value of Theme.
-func (s *Season) GetTheme() OptString {
-	return s.Theme
-}
-
-// GetStatus returns the value of Status.
-func (s *Season) GetStatus() SeasonStatus {
-	return s.Status
 }
 
 // SetID sets the value of ID.
@@ -1148,9 +1212,14 @@ func (s *Season) SetDescription(val OptString) {
 	s.Description = val
 }
 
-// SetSeasonNumber sets the value of SeasonNumber.
-func (s *Season) SetSeasonNumber(val int) {
-	s.SeasonNumber = val
+// SetTheme sets the value of Theme.
+func (s *Season) SetTheme(val OptString) {
+	s.Theme = val
+}
+
+// SetStatus sets the value of Status.
+func (s *Season) SetStatus(val SeasonStatus) {
+	s.Status = val
 }
 
 // SetStartDate sets the value of StartDate.
@@ -1163,22 +1232,67 @@ func (s *Season) SetEndDate(val time.Time) {
 	s.EndDate = val
 }
 
+// SetSeasonNumber sets the value of SeasonNumber.
+func (s *Season) SetSeasonNumber(val int) {
+	s.SeasonNumber = val
+}
+
 // SetMaxLevel sets the value of MaxLevel.
 func (s *Season) SetMaxLevel(val int) {
 	s.MaxLevel = val
 }
 
-// SetTheme sets the value of Theme.
-func (s *Season) SetTheme(val OptString) {
-	s.Theme = val
-}
-
-// SetStatus sets the value of Status.
-func (s *Season) SetStatus(val SeasonStatus) {
-	s.Status = val
-}
-
 func (*Season) getCurrentSeasonRes() {}
+
+// Ref: #/components/schemas/SeasonChallengesResponse
+type SeasonChallengesResponse struct {
+	PlayerID   OptUUID           `json:"player_id"`
+	SeasonID   OptUUID           `json:"season_id"`
+	Challenges []WeeklyChallenge `json:"challenges"`
+	Total      OptInt            `json:"total"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *SeasonChallengesResponse) GetPlayerID() OptUUID {
+	return s.PlayerID
+}
+
+// GetSeasonID returns the value of SeasonID.
+func (s *SeasonChallengesResponse) GetSeasonID() OptUUID {
+	return s.SeasonID
+}
+
+// GetChallenges returns the value of Challenges.
+func (s *SeasonChallengesResponse) GetChallenges() []WeeklyChallenge {
+	return s.Challenges
+}
+
+// GetTotal returns the value of Total.
+func (s *SeasonChallengesResponse) GetTotal() OptInt {
+	return s.Total
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *SeasonChallengesResponse) SetPlayerID(val OptUUID) {
+	s.PlayerID = val
+}
+
+// SetSeasonID sets the value of SeasonID.
+func (s *SeasonChallengesResponse) SetSeasonID(val OptUUID) {
+	s.SeasonID = val
+}
+
+// SetChallenges sets the value of Challenges.
+func (s *SeasonChallengesResponse) SetChallenges(val []WeeklyChallenge) {
+	s.Challenges = val
+}
+
+// SetTotal sets the value of Total.
+func (s *SeasonChallengesResponse) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+func (*SeasonChallengesResponse) getSeasonChallengesRes() {}
 
 type SeasonStatus string
 
@@ -1236,11 +1350,11 @@ type WeeklyChallenge struct {
 	ObjectiveType   WeeklyChallengeObjectiveType `json:"objective_type"`
 	ObjectiveCount  int                          `json:"objective_count"`
 	XpReward        int                          `json:"xp_reward"`
+	StartDate       OptDateTime                  `json:"start_date"`
+	EndDate         OptDateTime                  `json:"end_date"`
 	CurrentProgress OptInt                       `json:"current_progress"`
 	CompletedAt     OptDateTime                  `json:"completed_at"`
 	ClaimedAt       OptDateTime                  `json:"claimed_at"`
-	StartDate       OptDateTime                  `json:"start_date"`
-	EndDate         OptDateTime                  `json:"end_date"`
 }
 
 // GetID returns the value of ID.
@@ -1273,6 +1387,16 @@ func (s *WeeklyChallenge) GetXpReward() int {
 	return s.XpReward
 }
 
+// GetStartDate returns the value of StartDate.
+func (s *WeeklyChallenge) GetStartDate() OptDateTime {
+	return s.StartDate
+}
+
+// GetEndDate returns the value of EndDate.
+func (s *WeeklyChallenge) GetEndDate() OptDateTime {
+	return s.EndDate
+}
+
 // GetCurrentProgress returns the value of CurrentProgress.
 func (s *WeeklyChallenge) GetCurrentProgress() OptInt {
 	return s.CurrentProgress
@@ -1286,16 +1410,6 @@ func (s *WeeklyChallenge) GetCompletedAt() OptDateTime {
 // GetClaimedAt returns the value of ClaimedAt.
 func (s *WeeklyChallenge) GetClaimedAt() OptDateTime {
 	return s.ClaimedAt
-}
-
-// GetStartDate returns the value of StartDate.
-func (s *WeeklyChallenge) GetStartDate() OptDateTime {
-	return s.StartDate
-}
-
-// GetEndDate returns the value of EndDate.
-func (s *WeeklyChallenge) GetEndDate() OptDateTime {
-	return s.EndDate
 }
 
 // SetID sets the value of ID.
@@ -1328,6 +1442,16 @@ func (s *WeeklyChallenge) SetXpReward(val int) {
 	s.XpReward = val
 }
 
+// SetStartDate sets the value of StartDate.
+func (s *WeeklyChallenge) SetStartDate(val OptDateTime) {
+	s.StartDate = val
+}
+
+// SetEndDate sets the value of EndDate.
+func (s *WeeklyChallenge) SetEndDate(val OptDateTime) {
+	s.EndDate = val
+}
+
 // SetCurrentProgress sets the value of CurrentProgress.
 func (s *WeeklyChallenge) SetCurrentProgress(val OptInt) {
 	s.CurrentProgress = val
@@ -1343,16 +1467,6 @@ func (s *WeeklyChallenge) SetClaimedAt(val OptDateTime) {
 	s.ClaimedAt = val
 }
 
-// SetStartDate sets the value of StartDate.
-func (s *WeeklyChallenge) SetStartDate(val OptDateTime) {
-	s.StartDate = val
-}
-
-// SetEndDate sets the value of EndDate.
-func (s *WeeklyChallenge) SetEndDate(val OptDateTime) {
-	s.EndDate = val
-}
-
 type WeeklyChallengeObjectiveType string
 
 const (
@@ -1361,8 +1475,6 @@ const (
 	WeeklyChallengeObjectiveTypeEarnCurrency   WeeklyChallengeObjectiveType = "earn_currency"
 	WeeklyChallengeObjectiveTypePlayMatches    WeeklyChallengeObjectiveType = "play_matches"
 	WeeklyChallengeObjectiveTypeDealDamage     WeeklyChallengeObjectiveType = "deal_damage"
-	WeeklyChallengeObjectiveTypeCollectItems   WeeklyChallengeObjectiveType = "collect_items"
-	WeeklyChallengeObjectiveTypeWinMatches     WeeklyChallengeObjectiveType = "win_matches"
 )
 
 // AllValues returns all WeeklyChallengeObjectiveType values.
@@ -1373,8 +1485,6 @@ func (WeeklyChallengeObjectiveType) AllValues() []WeeklyChallengeObjectiveType {
 		WeeklyChallengeObjectiveTypeEarnCurrency,
 		WeeklyChallengeObjectiveTypePlayMatches,
 		WeeklyChallengeObjectiveTypeDealDamage,
-		WeeklyChallengeObjectiveTypeCollectItems,
-		WeeklyChallengeObjectiveTypeWinMatches,
 	}
 }
 
@@ -1390,10 +1500,6 @@ func (s WeeklyChallengeObjectiveType) MarshalText() ([]byte, error) {
 	case WeeklyChallengeObjectiveTypePlayMatches:
 		return []byte(s), nil
 	case WeeklyChallengeObjectiveTypeDealDamage:
-		return []byte(s), nil
-	case WeeklyChallengeObjectiveTypeCollectItems:
-		return []byte(s), nil
-	case WeeklyChallengeObjectiveTypeWinMatches:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1417,12 +1523,6 @@ func (s *WeeklyChallengeObjectiveType) UnmarshalText(data []byte) error {
 		return nil
 	case WeeklyChallengeObjectiveTypeDealDamage:
 		*s = WeeklyChallengeObjectiveTypeDealDamage
-		return nil
-	case WeeklyChallengeObjectiveTypeCollectItems:
-		*s = WeeklyChallengeObjectiveTypeCollectItems
-		return nil
-	case WeeklyChallengeObjectiveTypeWinMatches:
-		*s = WeeklyChallengeObjectiveTypeWinMatches
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

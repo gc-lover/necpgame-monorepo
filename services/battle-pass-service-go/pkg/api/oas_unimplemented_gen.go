@@ -59,6 +59,15 @@ func (UnimplementedHandler) GetPlayerProgress(ctx context.Context, params GetPla
 	return r, ht.ErrNotImplemented
 }
 
+// GetSeasonChallenges implements getSeasonChallenges operation.
+//
+// Получить испытания сезона игрока.
+//
+// GET /api/v1/economy/battle-pass/challenges/season/{player_id}
+func (UnimplementedHandler) GetSeasonChallenges(ctx context.Context, params GetSeasonChallengesParams) (r GetSeasonChallengesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetWeeklyChallenges implements getWeeklyChallenges operation.
 //
 // Получить еженедельные челленджи.

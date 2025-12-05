@@ -59,6 +59,12 @@ type Invoker interface {
 	//
 	// GET /api/v1/economy/battle-pass/progress
 	GetPlayerProgress(ctx context.Context, params GetPlayerProgressParams) (GetPlayerProgressRes, error)
+	// GetSeasonChallenges invokes getSeasonChallenges operation.
+	//
+	// Получить испытания сезона игрока.
+	//
+	// GET /api/v1/economy/battle-pass/challenges/season/{player_id}
+	GetSeasonChallenges(ctx context.Context, params GetSeasonChallengesParams) (GetSeasonChallengesRes, error)
 	// GetWeeklyChallenges invokes getWeeklyChallenges operation.
 	//
 	// Получить еженедельные челленджи.
@@ -688,6 +694,151 @@ func (c *Client) sendGetPlayerProgress(ctx context.Context, params GetPlayerProg
 
 	stage = "DecodeResponse"
 	result, err := decodeGetPlayerProgressResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetSeasonChallenges invokes getSeasonChallenges operation.
+//
+// Получить испытания сезона игрока.
+//
+// GET /api/v1/economy/battle-pass/challenges/season/{player_id}
+func (c *Client) GetSeasonChallenges(ctx context.Context, params GetSeasonChallengesParams) (GetSeasonChallengesRes, error) {
+	res, err := c.sendGetSeasonChallenges(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetSeasonChallenges(ctx context.Context, params GetSeasonChallengesParams) (res GetSeasonChallengesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getSeasonChallenges"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/economy/battle-pass/challenges/season/{player_id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetSeasonChallengesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/api/v1/economy/battle-pass/challenges/season/"
+	{
+		// Encode "player_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "player_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.PlayerID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "season_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "season_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.SeasonID.Get(); ok {
+				return e.EncodeValue(conv.UUIDToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetSeasonChallengesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetSeasonChallengesResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

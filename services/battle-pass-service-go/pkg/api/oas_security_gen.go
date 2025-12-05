@@ -39,6 +39,7 @@ var operationRolesBearerAuth = map[string][]string{
 	CompleteChallengeOperation:   []string{},
 	GetCurrentSeasonOperation:    []string{},
 	GetPlayerProgressOperation:   []string{},
+	GetSeasonChallengesOperation: []string{},
 	GetWeeklyChallengesOperation: []string{},
 	PurchasePremiumOperation:     []string{},
 }

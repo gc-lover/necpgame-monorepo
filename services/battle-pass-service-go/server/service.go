@@ -206,8 +206,18 @@ func (s *Service) GetWeeklyChallenges(ctx context.Context, playerId string) ([]a
 	return challenges, nil
 }
 
+// GetSeasonChallenges returns season challenges for a player
+// Issue: #1514
+func (s *Service) GetSeasonChallenges(ctx context.Context, playerId string, seasonID api.OptUUID) (*api.SeasonChallengesResponse, error) {
+	response, err := s.repo.GetSeasonChallenges(ctx, playerId, seasonID)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
 // CompleteChallenge completes a challenge
-// Issue: #1607 - Uses memory pooling for zero allocations
+// Issue: #1514 - Uses body with CompleteChallengeRequest (already implemented)
 func (s *Service) CompleteChallenge(ctx context.Context, playerId, challengeId string) (map[string]interface{}, error) {
 	// Check if challenge exists and not completed
 	challenge, err := s.repo.GetPlayerChallenge(ctx, playerId, challengeId)
