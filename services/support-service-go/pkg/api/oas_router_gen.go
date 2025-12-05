@@ -49,81 +49,151 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/support/tickets"
+		case '/': // Prefix: "/support/"
 
-			if l := len("/support/tickets"); len(elem) >= l && elem[0:l] == "/support/tickets" {
+			if l := len("/support/"); len(elem) >= l && elem[0:l] == "/support/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch r.Method {
-				case "GET":
-					s.handleGetTicketsRequest([0]string{}, elemIsEscaped, w, r)
-				case "POST":
-					s.handleCreateTicketRequest([0]string{}, elemIsEscaped, w, r)
-				default:
-					s.notAllowed(w, r, "GET,POST")
-				}
-
-				return
+				break
 			}
 			switch elem[0] {
-			case '/': // Prefix: "/"
+			case 's': // Prefix: "sla/violations"
 
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				if l := len("sla/violations"); len(elem) >= l && elem[0:l] == "sla/violations" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
-				// Param: "ticket_id"
-				// Match until "/"
-				idx := strings.IndexByte(elem, '/')
-				if idx < 0 {
-					idx = len(elem)
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetSLAViolationsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
 				}
-				args[0] = elem[:idx]
-				elem = elem[idx:]
+
+			case 't': // Prefix: "tickets"
+
+				if l := len("tickets"); len(elem) >= l && elem[0:l] == "tickets" {
+					elem = elem[l:]
+				} else {
+					break
+				}
 
 				if len(elem) == 0 {
 					switch r.Method {
 					case "GET":
-						s.handleGetTicketRequest([1]string{
-							args[0],
-						}, elemIsEscaped, w, r)
-					case "PUT":
-						s.handleUpdateTicketRequest([1]string{
-							args[0],
-						}, elemIsEscaped, w, r)
+						s.handleGetTicketsRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleCreateTicketRequest([0]string{}, elemIsEscaped, w, r)
 					default:
-						s.notAllowed(w, r, "GET,PUT")
+						s.notAllowed(w, r, "GET,POST")
 					}
 
 					return
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/close"
+				case '/': // Prefix: "/"
 
-					if l := len("/close"); len(elem) >= l && elem[0:l] == "/close" {
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
+					// Param: "ticket_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
 					if len(elem) == 0 {
-						// Leaf node.
 						switch r.Method {
-						case "POST":
-							s.handleCloseTicketRequest([1]string{
+						case "GET":
+							s.handleGetTicketRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "PUT":
+							s.handleUpdateTicketRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
-							s.notAllowed(w, r, "POST")
+							s.notAllowed(w, r, "GET,PUT")
 						}
 
 						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'c': // Prefix: "close"
+
+							if l := len("close"); len(elem) >= l && elem[0:l] == "close" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleCloseTicketRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						case 's': // Prefix: "sla"
+
+							if l := len("sla"); len(elem) >= l && elem[0:l] == "sla" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetTicketSLARequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						}
+
 					}
 
 				}
@@ -216,104 +286,182 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/support/tickets"
+		case '/': // Prefix: "/support/"
 
-			if l := len("/support/tickets"); len(elem) >= l && elem[0:l] == "/support/tickets" {
+			if l := len("/support/"); len(elem) >= l && elem[0:l] == "/support/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch method {
-				case "GET":
-					r.name = GetTicketsOperation
-					r.summary = "Получить список тикетов"
-					r.operationID = "getTickets"
-					r.operationGroup = ""
-					r.pathPattern = "/support/tickets"
-					r.args = args
-					r.count = 0
-					return r, true
-				case "POST":
-					r.name = CreateTicketOperation
-					r.summary = "Создать тикет поддержки"
-					r.operationID = "createTicket"
-					r.operationGroup = ""
-					r.pathPattern = "/support/tickets"
-					r.args = args
-					r.count = 0
-					return r, true
-				default:
-					return
-				}
+				break
 			}
 			switch elem[0] {
-			case '/': // Prefix: "/"
+			case 's': // Prefix: "sla/violations"
 
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				if l := len("sla/violations"); len(elem) >= l && elem[0:l] == "sla/violations" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
-				// Param: "ticket_id"
-				// Match until "/"
-				idx := strings.IndexByte(elem, '/')
-				if idx < 0 {
-					idx = len(elem)
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetSLAViolationsOperation
+						r.summary = "Получить нарушения SLA"
+						r.operationID = "getSLAViolations"
+						r.operationGroup = ""
+						r.pathPattern = "/support/sla/violations"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
-				args[0] = elem[:idx]
-				elem = elem[idx:]
+
+			case 't': // Prefix: "tickets"
+
+				if l := len("tickets"); len(elem) >= l && elem[0:l] == "tickets" {
+					elem = elem[l:]
+				} else {
+					break
+				}
 
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						r.name = GetTicketOperation
-						r.summary = "Получить тикет"
-						r.operationID = "getTicket"
+						r.name = GetTicketsOperation
+						r.summary = "Получить список тикетов"
+						r.operationID = "getTickets"
 						r.operationGroup = ""
-						r.pathPattern = "/support/tickets/{ticket_id}"
+						r.pathPattern = "/support/tickets"
 						r.args = args
-						r.count = 1
+						r.count = 0
 						return r, true
-					case "PUT":
-						r.name = UpdateTicketOperation
-						r.summary = "Обновить тикет"
-						r.operationID = "updateTicket"
+					case "POST":
+						r.name = CreateTicketOperation
+						r.summary = "Создать тикет поддержки"
+						r.operationID = "createTicket"
 						r.operationGroup = ""
-						r.pathPattern = "/support/tickets/{ticket_id}"
+						r.pathPattern = "/support/tickets"
 						r.args = args
-						r.count = 1
+						r.count = 0
 						return r, true
 					default:
 						return
 					}
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/close"
+				case '/': // Prefix: "/"
 
-					if l := len("/close"); len(elem) >= l && elem[0:l] == "/close" {
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
+					// Param: "ticket_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
 					if len(elem) == 0 {
-						// Leaf node.
 						switch method {
-						case "POST":
-							r.name = CloseTicketOperation
-							r.summary = "Закрыть тикет"
-							r.operationID = "closeTicket"
+						case "GET":
+							r.name = GetTicketOperation
+							r.summary = "Получить тикет"
+							r.operationID = "getTicket"
 							r.operationGroup = ""
-							r.pathPattern = "/support/tickets/{ticket_id}/close"
+							r.pathPattern = "/support/tickets/{ticket_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "PUT":
+							r.name = UpdateTicketOperation
+							r.summary = "Обновить тикет"
+							r.operationID = "updateTicket"
+							r.operationGroup = ""
+							r.pathPattern = "/support/tickets/{ticket_id}"
 							r.args = args
 							r.count = 1
 							return r, true
 						default:
 							return
 						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'c': // Prefix: "close"
+
+							if l := len("close"); len(elem) >= l && elem[0:l] == "close" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = CloseTicketOperation
+									r.summary = "Закрыть тикет"
+									r.operationID = "closeTicket"
+									r.operationGroup = ""
+									r.pathPattern = "/support/tickets/{ticket_id}/close"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 's': // Prefix: "sla"
+
+							if l := len("sla"); len(elem) >= l && elem[0:l] == "sla" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetTicketSLAOperation
+									r.summary = "Получить статус SLA тикета"
+									r.operationID = "getTicketSLA"
+									r.operationGroup = ""
+									r.pathPattern = "/support/tickets/{ticket_id}/sla"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
 					}
 
 				}

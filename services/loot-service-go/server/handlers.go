@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	api "github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
@@ -42,10 +43,31 @@ func NewHandlers(logger *logrus.Logger) *Handlers {
 
 // DistributeLoot - TYPED response!
 func (h *Handlers) DistributeLoot(ctx context.Context, req *api.DistributeLootRequest) (api.DistributeLootRes, error) {
-	_, cancel := context.WithTimeout(ctx, DBTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Basic validation and logging
+	if req == nil {
+		h.logger.Error("DistributeLoot: nil request")
+		return &api.DistributeLootResponse{}, nil
+	}
+
+	if len(req.Items) == 0 {
+		h.logger.Warn("DistributeLoot: empty items")
+	}
+
+	if len(req.PlayerIds) == 0 {
+		h.logger.Warn("DistributeLoot: empty player_ids")
+	}
+
 	// TODO: Implement business logic
+	// For now, return success response with empty data
+	h.logger.WithFields(logrus.Fields{
+		"distribution_mode": req.DistributionMode,
+		"items_count": len(req.Items),
+		"players_count": len(req.PlayerIds),
+	}).Info("DistributeLoot request received (not implemented)")
+
 	return &api.DistributeLootResponse{
 		// Response fields will be set when implemented
 	}, nil
@@ -53,10 +75,31 @@ func (h *Handlers) DistributeLoot(ctx context.Context, req *api.DistributeLootRe
 
 // GenerateLoot - TYPED response!
 func (h *Handlers) GenerateLoot(ctx context.Context, req *api.GenerateLootRequest) (api.GenerateLootRes, error) {
-	_, cancel := context.WithTimeout(ctx, DBTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Basic validation and logging
+	if req == nil {
+		h.logger.Error("GenerateLoot: nil request")
+		return &api.GenerateLootResponse{}, nil
+	}
+
+	if req.SourceID == "" {
+		h.logger.Warn("GenerateLoot: empty source_id")
+	}
+
+	if req.PlayerID == uuid.Nil {
+		h.logger.Warn("GenerateLoot: empty player_id")
+	}
+
 	// TODO: Implement business logic
+	// For now, return success response with empty data
+	h.logger.WithFields(logrus.Fields{
+		"source_type": req.SourceType,
+		"source_id": req.SourceID,
+		"player_id": req.PlayerID,
+	}).Info("GenerateLoot request received (not implemented)")
+
 	return &api.GenerateLootResponse{
 		// Response fields will be set when implemented
 	}, nil
@@ -88,10 +131,18 @@ func (h *Handlers) GetPlayerLootHistory(ctx context.Context, params api.GetPlaye
 
 // GetRollStatus - TYPED response!
 func (h *Handlers) GetRollStatus(ctx context.Context, params api.GetRollStatusParams) (api.GetRollStatusRes, error) {
-	_, cancel := context.WithTimeout(ctx, DBTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Basic validation and logging
+	if params.RollID == uuid.Nil {
+		h.logger.Warn("GetRollStatus: empty roll_id")
+	}
+
 	// TODO: Implement business logic
+	// For now, return success response with empty data
+	h.logger.WithField("roll_id", params.RollID).Info("GetRollStatus request received (not implemented)")
+
 	return &api.RollStatusResponse{
 		// Response fields will be set when implemented
 	}, nil
@@ -122,21 +173,37 @@ func (h *Handlers) GetWorldDrops(ctx context.Context, params api.GetWorldDropsPa
 
 // PassRoll - TYPED response!
 func (h *Handlers) PassRoll(ctx context.Context, params api.PassRollParams) (api.PassRollRes, error) {
-	_, cancel := context.WithTimeout(ctx, DBTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Basic validation and logging
+	if params.RollID == uuid.Nil {
+		h.logger.Warn("PassRoll: empty roll_id")
+	}
+
 	// TODO: Implement business logic
+	// For now, return success response
+	h.logger.WithField("roll_id", params.RollID).Info("PassRoll request received (not implemented)")
+
 	return &api.SuccessResponse{
-		// Response fields will be set when implemented
+		Status: api.NewOptString("success"),
 	}, nil
 }
 
 // PickupWorldDrop - TYPED response!
 func (h *Handlers) PickupWorldDrop(ctx context.Context, params api.PickupWorldDropParams) (api.PickupWorldDropRes, error) {
-	_, cancel := context.WithTimeout(ctx, DBTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Basic validation and logging
+	if params.DropID == uuid.Nil {
+		h.logger.Warn("PickupWorldDrop: empty drop_id")
+	}
+
 	// TODO: Implement business logic
+	// For now, return success response with empty data
+	h.logger.WithField("drop_id", params.DropID).Info("PickupWorldDrop request received (not implemented)")
+
 	return &api.PickupDropResponse{
 		// Response fields will be set when implemented
 	}, nil
@@ -144,10 +211,26 @@ func (h *Handlers) PickupWorldDrop(ctx context.Context, params api.PickupWorldDr
 
 // RollForItem - TYPED response!
 func (h *Handlers) RollForItem(ctx context.Context, req *api.RollRequest, params api.RollForItemParams) (api.RollForItemRes, error) {
-	_, cancel := context.WithTimeout(ctx, DBTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
+	// Basic validation and logging
+	if req == nil {
+		h.logger.Error("RollForItem: nil request")
+		return &api.RollResponse{}, nil
+	}
+
+	if req.ItemID == uuid.Nil {
+		h.logger.Warn("RollForItem: empty item_id in request")
+	}
+
 	// TODO: Implement business logic
+	// For now, return success response with empty data
+	h.logger.WithFields(logrus.Fields{
+		"item_id": req.ItemID,
+		"roll_type": req.RollType,
+	}).Info("RollForItem request received (not implemented)")
+
 	return &api.RollResponse{
 		// Response fields will be set when implemented
 	}, nil

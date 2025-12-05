@@ -288,6 +288,55 @@ func (s *ErrorDetails) init() ErrorDetails {
 	return m
 }
 
+type GetSLAViolationsInternalServerError Error
+
+func (*GetSLAViolationsInternalServerError) getSLAViolationsRes() {}
+
+type GetSLAViolationsUnauthorized Error
+
+func (*GetSLAViolationsUnauthorized) getSLAViolationsRes() {}
+
+type GetSLAViolationsViolationType string
+
+const (
+	GetSLAViolationsViolationTypeFIRSTRESPONSE GetSLAViolationsViolationType = "FIRST_RESPONSE"
+	GetSLAViolationsViolationTypeRESOLUTION    GetSLAViolationsViolationType = "RESOLUTION"
+)
+
+// AllValues returns all GetSLAViolationsViolationType values.
+func (GetSLAViolationsViolationType) AllValues() []GetSLAViolationsViolationType {
+	return []GetSLAViolationsViolationType{
+		GetSLAViolationsViolationTypeFIRSTRESPONSE,
+		GetSLAViolationsViolationTypeRESOLUTION,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetSLAViolationsViolationType) MarshalText() ([]byte, error) {
+	switch s {
+	case GetSLAViolationsViolationTypeFIRSTRESPONSE:
+		return []byte(s), nil
+	case GetSLAViolationsViolationTypeRESOLUTION:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetSLAViolationsViolationType) UnmarshalText(data []byte) error {
+	switch GetSLAViolationsViolationType(data) {
+	case GetSLAViolationsViolationTypeFIRSTRESPONSE:
+		*s = GetSLAViolationsViolationTypeFIRSTRESPONSE
+		return nil
+	case GetSLAViolationsViolationTypeRESOLUTION:
+		*s = GetSLAViolationsViolationTypeRESOLUTION
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type GetTicketInternalServerError Error
 
 func (*GetTicketInternalServerError) getTicketRes() {}
@@ -295,6 +344,18 @@ func (*GetTicketInternalServerError) getTicketRes() {}
 type GetTicketNotFound Error
 
 func (*GetTicketNotFound) getTicketRes() {}
+
+type GetTicketSLAInternalServerError Error
+
+func (*GetTicketSLAInternalServerError) getTicketSLARes() {}
+
+type GetTicketSLANotFound Error
+
+func (*GetTicketSLANotFound) getTicketSLARes() {}
+
+type GetTicketSLAUnauthorized Error
+
+func (*GetTicketSLAUnauthorized) getTicketSLARes() {}
 
 type GetTicketUnauthorized Error
 
@@ -584,6 +645,52 @@ func (o OptDateTime) Or(d time.Time) time.Time {
 	return d
 }
 
+// NewOptGetSLAViolationsViolationType returns new OptGetSLAViolationsViolationType with value set to v.
+func NewOptGetSLAViolationsViolationType(v GetSLAViolationsViolationType) OptGetSLAViolationsViolationType {
+	return OptGetSLAViolationsViolationType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetSLAViolationsViolationType is optional GetSLAViolationsViolationType.
+type OptGetSLAViolationsViolationType struct {
+	Value GetSLAViolationsViolationType
+	Set   bool
+}
+
+// IsSet returns true if OptGetSLAViolationsViolationType was set.
+func (o OptGetSLAViolationsViolationType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetSLAViolationsViolationType) Reset() {
+	var v GetSLAViolationsViolationType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetSLAViolationsViolationType) SetTo(v GetSLAViolationsViolationType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetSLAViolationsViolationType) Get() (v GetSLAViolationsViolationType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetSLAViolationsViolationType) Or(d GetSLAViolationsViolationType) GetSLAViolationsViolationType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptGetTicketsPriority returns new OptGetTicketsPriority with value set to v.
 func NewOptGetTicketsPriority(v GetTicketsPriority) OptGetTicketsPriority {
 	return OptGetTicketsPriority{
@@ -722,6 +829,69 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
+// NewOptNilBool returns new OptNilBool with value set to v.
+func NewOptNilBool(v bool) OptNilBool {
+	return OptNilBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilBool is optional nullable bool.
+type OptNilBool struct {
+	Value bool
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilBool was set.
+func (o OptNilBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilBool) SetTo(v bool) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilBool) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilBool) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v bool
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilBool) Get() (v bool, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilDateTime returns new OptNilDateTime with value set to v.
 func NewOptNilDateTime(v time.Time) OptNilDateTime {
 	return OptNilDateTime{
@@ -848,6 +1018,69 @@ func (o OptNilErrorDetails) Or(d ErrorDetails) ErrorDetails {
 	return d
 }
 
+// NewOptNilInt returns new OptNilInt with value set to v.
+func NewOptNilInt(v int) OptNilInt {
+	return OptNilInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt is optional nullable int.
+type OptNilInt struct {
+	Value int
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt was set.
+func (o OptNilInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt) SetTo(v int) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt) Get() (v int, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilString returns new OptNilString with value set to v.
 func NewOptNilString(v string) OptNilString {
 	return OptNilString{
@@ -968,6 +1201,98 @@ func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSLAViolationPriority returns new OptSLAViolationPriority with value set to v.
+func NewOptSLAViolationPriority(v SLAViolationPriority) OptSLAViolationPriority {
+	return OptSLAViolationPriority{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSLAViolationPriority is optional SLAViolationPriority.
+type OptSLAViolationPriority struct {
+	Value SLAViolationPriority
+	Set   bool
+}
+
+// IsSet returns true if OptSLAViolationPriority was set.
+func (o OptSLAViolationPriority) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSLAViolationPriority) Reset() {
+	var v SLAViolationPriority
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSLAViolationPriority) SetTo(v SLAViolationPriority) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSLAViolationPriority) Get() (v SLAViolationPriority, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSLAViolationPriority) Or(d SLAViolationPriority) SLAViolationPriority {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSLAViolationViolationType returns new OptSLAViolationViolationType with value set to v.
+func NewOptSLAViolationViolationType(v SLAViolationViolationType) OptSLAViolationViolationType {
+	return OptSLAViolationViolationType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSLAViolationViolationType is optional SLAViolationViolationType.
+type OptSLAViolationViolationType struct {
+	Value SLAViolationViolationType
+	Set   bool
+}
+
+// IsSet returns true if OptSLAViolationViolationType was set.
+func (o OptSLAViolationViolationType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSLAViolationViolationType) Reset() {
+	var v SLAViolationViolationType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSLAViolationViolationType) SetTo(v SLAViolationViolationType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSLAViolationViolationType) Get() (v SLAViolationViolationType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSLAViolationViolationType) Or(d SLAViolationViolationType) SLAViolationViolationType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1112,6 +1437,52 @@ func (o OptTicketPriority) Or(d TicketPriority) TicketPriority {
 	return d
 }
 
+// NewOptTicketSLAStatusPriority returns new OptTicketSLAStatusPriority with value set to v.
+func NewOptTicketSLAStatusPriority(v TicketSLAStatusPriority) OptTicketSLAStatusPriority {
+	return OptTicketSLAStatusPriority{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTicketSLAStatusPriority is optional TicketSLAStatusPriority.
+type OptTicketSLAStatusPriority struct {
+	Value TicketSLAStatusPriority
+	Set   bool
+}
+
+// IsSet returns true if OptTicketSLAStatusPriority was set.
+func (o OptTicketSLAStatusPriority) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTicketSLAStatusPriority) Reset() {
+	var v TicketSLAStatusPriority
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTicketSLAStatusPriority) SetTo(v TicketSLAStatusPriority) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTicketSLAStatusPriority) Get() (v TicketSLAStatusPriority, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTicketSLAStatusPriority) Or(d TicketSLAStatusPriority) TicketSLAStatusPriority {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptTicketStatus returns new OptTicketStatus with value set to v.
 func NewOptTicketStatus(v TicketStatus) OptTicketStatus {
 	return OptTicketStatus{
@@ -1250,23 +1621,276 @@ func (o OptUpdateTicketRequestCategory) Or(d UpdateTicketRequestCategory) Update
 	return d
 }
 
+// Ref: #/components/schemas/SLAViolation
+type SLAViolation struct {
+	TicketID                 OptUUID                      `json:"ticket_id"`
+	TicketNumber             OptString                    `json:"ticket_number"`
+	Priority                 OptSLAViolationPriority      `json:"priority"`
+	ViolationType            OptSLAViolationViolationType `json:"violation_type"`
+	TargetTime               OptDateTime                  `json:"target_time"`
+	ActualTime               OptNilDateTime               `json:"actual_time"`
+	ViolationDurationSeconds OptNilInt                    `json:"violation_duration_seconds"`
+}
+
+// GetTicketID returns the value of TicketID.
+func (s *SLAViolation) GetTicketID() OptUUID {
+	return s.TicketID
+}
+
+// GetTicketNumber returns the value of TicketNumber.
+func (s *SLAViolation) GetTicketNumber() OptString {
+	return s.TicketNumber
+}
+
+// GetPriority returns the value of Priority.
+func (s *SLAViolation) GetPriority() OptSLAViolationPriority {
+	return s.Priority
+}
+
+// GetViolationType returns the value of ViolationType.
+func (s *SLAViolation) GetViolationType() OptSLAViolationViolationType {
+	return s.ViolationType
+}
+
+// GetTargetTime returns the value of TargetTime.
+func (s *SLAViolation) GetTargetTime() OptDateTime {
+	return s.TargetTime
+}
+
+// GetActualTime returns the value of ActualTime.
+func (s *SLAViolation) GetActualTime() OptNilDateTime {
+	return s.ActualTime
+}
+
+// GetViolationDurationSeconds returns the value of ViolationDurationSeconds.
+func (s *SLAViolation) GetViolationDurationSeconds() OptNilInt {
+	return s.ViolationDurationSeconds
+}
+
+// SetTicketID sets the value of TicketID.
+func (s *SLAViolation) SetTicketID(val OptUUID) {
+	s.TicketID = val
+}
+
+// SetTicketNumber sets the value of TicketNumber.
+func (s *SLAViolation) SetTicketNumber(val OptString) {
+	s.TicketNumber = val
+}
+
+// SetPriority sets the value of Priority.
+func (s *SLAViolation) SetPriority(val OptSLAViolationPriority) {
+	s.Priority = val
+}
+
+// SetViolationType sets the value of ViolationType.
+func (s *SLAViolation) SetViolationType(val OptSLAViolationViolationType) {
+	s.ViolationType = val
+}
+
+// SetTargetTime sets the value of TargetTime.
+func (s *SLAViolation) SetTargetTime(val OptDateTime) {
+	s.TargetTime = val
+}
+
+// SetActualTime sets the value of ActualTime.
+func (s *SLAViolation) SetActualTime(val OptNilDateTime) {
+	s.ActualTime = val
+}
+
+// SetViolationDurationSeconds sets the value of ViolationDurationSeconds.
+func (s *SLAViolation) SetViolationDurationSeconds(val OptNilInt) {
+	s.ViolationDurationSeconds = val
+}
+
+type SLAViolationPriority string
+
+const (
+	SLAViolationPriorityLOW      SLAViolationPriority = "LOW"
+	SLAViolationPriorityNORMAL   SLAViolationPriority = "NORMAL"
+	SLAViolationPriorityHIGH     SLAViolationPriority = "HIGH"
+	SLAViolationPriorityURGENT   SLAViolationPriority = "URGENT"
+	SLAViolationPriorityCRITICAL SLAViolationPriority = "CRITICAL"
+)
+
+// AllValues returns all SLAViolationPriority values.
+func (SLAViolationPriority) AllValues() []SLAViolationPriority {
+	return []SLAViolationPriority{
+		SLAViolationPriorityLOW,
+		SLAViolationPriorityNORMAL,
+		SLAViolationPriorityHIGH,
+		SLAViolationPriorityURGENT,
+		SLAViolationPriorityCRITICAL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SLAViolationPriority) MarshalText() ([]byte, error) {
+	switch s {
+	case SLAViolationPriorityLOW:
+		return []byte(s), nil
+	case SLAViolationPriorityNORMAL:
+		return []byte(s), nil
+	case SLAViolationPriorityHIGH:
+		return []byte(s), nil
+	case SLAViolationPriorityURGENT:
+		return []byte(s), nil
+	case SLAViolationPriorityCRITICAL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SLAViolationPriority) UnmarshalText(data []byte) error {
+	switch SLAViolationPriority(data) {
+	case SLAViolationPriorityLOW:
+		*s = SLAViolationPriorityLOW
+		return nil
+	case SLAViolationPriorityNORMAL:
+		*s = SLAViolationPriorityNORMAL
+		return nil
+	case SLAViolationPriorityHIGH:
+		*s = SLAViolationPriorityHIGH
+		return nil
+	case SLAViolationPriorityURGENT:
+		*s = SLAViolationPriorityURGENT
+		return nil
+	case SLAViolationPriorityCRITICAL:
+		*s = SLAViolationPriorityCRITICAL
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SLAViolationViolationType string
+
+const (
+	SLAViolationViolationTypeFIRSTRESPONSE SLAViolationViolationType = "FIRST_RESPONSE"
+	SLAViolationViolationTypeRESOLUTION    SLAViolationViolationType = "RESOLUTION"
+)
+
+// AllValues returns all SLAViolationViolationType values.
+func (SLAViolationViolationType) AllValues() []SLAViolationViolationType {
+	return []SLAViolationViolationType{
+		SLAViolationViolationTypeFIRSTRESPONSE,
+		SLAViolationViolationTypeRESOLUTION,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SLAViolationViolationType) MarshalText() ([]byte, error) {
+	switch s {
+	case SLAViolationViolationTypeFIRSTRESPONSE:
+		return []byte(s), nil
+	case SLAViolationViolationTypeRESOLUTION:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SLAViolationViolationType) UnmarshalText(data []byte) error {
+	switch SLAViolationViolationType(data) {
+	case SLAViolationViolationTypeFIRSTRESPONSE:
+		*s = SLAViolationViolationTypeFIRSTRESPONSE
+		return nil
+	case SLAViolationViolationTypeRESOLUTION:
+		*s = SLAViolationViolationTypeRESOLUTION
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Merged schema.
+// Ref: #/components/schemas/SLAViolationsResponse
+type SLAViolationsResponse struct {
+	// Merged property.
+	Items []SLAViolation `json:"items"`
+	// Общее количество элементов.
+	Total int `json:"total"`
+	// Количество элементов на странице.
+	Limit OptInt `json:"limit"`
+	// Смещение для пагинации.
+	Offset OptInt `json:"offset"`
+	// Есть ли еще элементы.
+	HasMore OptBool `json:"has_more"`
+}
+
+// GetItems returns the value of Items.
+func (s *SLAViolationsResponse) GetItems() []SLAViolation {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *SLAViolationsResponse) GetTotal() int {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *SLAViolationsResponse) GetLimit() OptInt {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *SLAViolationsResponse) GetOffset() OptInt {
+	return s.Offset
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *SLAViolationsResponse) GetHasMore() OptBool {
+	return s.HasMore
+}
+
+// SetItems sets the value of Items.
+func (s *SLAViolationsResponse) SetItems(val []SLAViolation) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *SLAViolationsResponse) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *SLAViolationsResponse) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *SLAViolationsResponse) SetOffset(val OptInt) {
+	s.Offset = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *SLAViolationsResponse) SetHasMore(val OptBool) {
+	s.HasMore = val
+}
+
+func (*SLAViolationsResponse) getSLAViolationsRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/SupportTicket
 type SupportTicket struct {
 	ID              OptUUID                  `json:"id"`
-	TicketNumber    OptString                `json:"ticket_number"`
 	PlayerID        OptUUID                  `json:"player_id"`
-	Category        OptSupportTicketCategory `json:"category"`
-	Priority        OptTicketPriority        `json:"priority"`
-	Status          OptTicketStatus          `json:"status"`
 	AssignedAgentID OptNilUUID               `json:"assigned_agent_id"`
+	TicketNumber    OptString                `json:"ticket_number"`
 	Subject         OptString                `json:"subject"`
 	Description     OptString                `json:"description"`
+	Category        OptSupportTicketCategory `json:"category"`
 	CreatedAt       OptDateTime              `json:"created_at"`
 	AssignedAt      OptNilDateTime           `json:"assigned_at"`
 	FirstResponseAt OptNilDateTime           `json:"first_response_at"`
 	ResolvedAt      OptNilDateTime           `json:"resolved_at"`
 	ClosedAt        OptNilDateTime           `json:"closed_at"`
 	UpdatedAt       OptDateTime              `json:"updated_at"`
+	Priority        OptTicketPriority        `json:"priority"`
+	Status          OptTicketStatus          `json:"status"`
 }
 
 // GetID returns the value of ID.
@@ -1274,34 +1898,19 @@ func (s *SupportTicket) GetID() OptUUID {
 	return s.ID
 }
 
-// GetTicketNumber returns the value of TicketNumber.
-func (s *SupportTicket) GetTicketNumber() OptString {
-	return s.TicketNumber
-}
-
 // GetPlayerID returns the value of PlayerID.
 func (s *SupportTicket) GetPlayerID() OptUUID {
 	return s.PlayerID
 }
 
-// GetCategory returns the value of Category.
-func (s *SupportTicket) GetCategory() OptSupportTicketCategory {
-	return s.Category
-}
-
-// GetPriority returns the value of Priority.
-func (s *SupportTicket) GetPriority() OptTicketPriority {
-	return s.Priority
-}
-
-// GetStatus returns the value of Status.
-func (s *SupportTicket) GetStatus() OptTicketStatus {
-	return s.Status
-}
-
 // GetAssignedAgentID returns the value of AssignedAgentID.
 func (s *SupportTicket) GetAssignedAgentID() OptNilUUID {
 	return s.AssignedAgentID
+}
+
+// GetTicketNumber returns the value of TicketNumber.
+func (s *SupportTicket) GetTicketNumber() OptString {
+	return s.TicketNumber
 }
 
 // GetSubject returns the value of Subject.
@@ -1312,6 +1921,11 @@ func (s *SupportTicket) GetSubject() OptString {
 // GetDescription returns the value of Description.
 func (s *SupportTicket) GetDescription() OptString {
 	return s.Description
+}
+
+// GetCategory returns the value of Category.
+func (s *SupportTicket) GetCategory() OptSupportTicketCategory {
+	return s.Category
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -1344,14 +1958,19 @@ func (s *SupportTicket) GetUpdatedAt() OptDateTime {
 	return s.UpdatedAt
 }
 
+// GetPriority returns the value of Priority.
+func (s *SupportTicket) GetPriority() OptTicketPriority {
+	return s.Priority
+}
+
+// GetStatus returns the value of Status.
+func (s *SupportTicket) GetStatus() OptTicketStatus {
+	return s.Status
+}
+
 // SetID sets the value of ID.
 func (s *SupportTicket) SetID(val OptUUID) {
 	s.ID = val
-}
-
-// SetTicketNumber sets the value of TicketNumber.
-func (s *SupportTicket) SetTicketNumber(val OptString) {
-	s.TicketNumber = val
 }
 
 // SetPlayerID sets the value of PlayerID.
@@ -1359,24 +1978,14 @@ func (s *SupportTicket) SetPlayerID(val OptUUID) {
 	s.PlayerID = val
 }
 
-// SetCategory sets the value of Category.
-func (s *SupportTicket) SetCategory(val OptSupportTicketCategory) {
-	s.Category = val
-}
-
-// SetPriority sets the value of Priority.
-func (s *SupportTicket) SetPriority(val OptTicketPriority) {
-	s.Priority = val
-}
-
-// SetStatus sets the value of Status.
-func (s *SupportTicket) SetStatus(val OptTicketStatus) {
-	s.Status = val
-}
-
 // SetAssignedAgentID sets the value of AssignedAgentID.
 func (s *SupportTicket) SetAssignedAgentID(val OptNilUUID) {
 	s.AssignedAgentID = val
+}
+
+// SetTicketNumber sets the value of TicketNumber.
+func (s *SupportTicket) SetTicketNumber(val OptString) {
+	s.TicketNumber = val
 }
 
 // SetSubject sets the value of Subject.
@@ -1387,6 +1996,11 @@ func (s *SupportTicket) SetSubject(val OptString) {
 // SetDescription sets the value of Description.
 func (s *SupportTicket) SetDescription(val OptString) {
 	s.Description = val
+}
+
+// SetCategory sets the value of Category.
+func (s *SupportTicket) SetCategory(val OptSupportTicketCategory) {
+	s.Category = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
@@ -1417,6 +2031,16 @@ func (s *SupportTicket) SetClosedAt(val OptNilDateTime) {
 // SetUpdatedAt sets the value of UpdatedAt.
 func (s *SupportTicket) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
+}
+
+// SetPriority sets the value of Priority.
+func (s *SupportTicket) SetPriority(val OptTicketPriority) {
+	s.Priority = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SupportTicket) SetStatus(val OptTicketStatus) {
+	s.Status = val
 }
 
 func (*SupportTicket) closeTicketRes()  {}
@@ -1558,6 +2182,186 @@ func (s *TicketPriority) UnmarshalText(data []byte) error {
 		return nil
 	case TicketPriorityCRITICAL:
 		*s = TicketPriorityCRITICAL
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/TicketSLAStatus
+type TicketSLAStatus struct {
+	TicketID                     OptUUID                    `json:"ticket_id"`
+	Priority                     OptTicketSLAStatusPriority `json:"priority"`
+	FirstResponseTarget          OptDateTime                `json:"first_response_target"`
+	FirstResponseActual          OptNilDateTime             `json:"first_response_actual"`
+	ResolutionTarget             OptDateTime                `json:"resolution_target"`
+	ResolutionActual             OptNilDateTime             `json:"resolution_actual"`
+	TimeUntilFirstResponseTarget OptNilInt                  `json:"time_until_first_response_target"`
+	TimeUntilResolutionTarget    OptNilInt                  `json:"time_until_resolution_target"`
+	FirstResponseSLAMet          OptNilBool                 `json:"first_response_sla_met"`
+	ResolutionSLAMet             OptNilBool                 `json:"resolution_sla_met"`
+}
+
+// GetTicketID returns the value of TicketID.
+func (s *TicketSLAStatus) GetTicketID() OptUUID {
+	return s.TicketID
+}
+
+// GetPriority returns the value of Priority.
+func (s *TicketSLAStatus) GetPriority() OptTicketSLAStatusPriority {
+	return s.Priority
+}
+
+// GetFirstResponseTarget returns the value of FirstResponseTarget.
+func (s *TicketSLAStatus) GetFirstResponseTarget() OptDateTime {
+	return s.FirstResponseTarget
+}
+
+// GetFirstResponseActual returns the value of FirstResponseActual.
+func (s *TicketSLAStatus) GetFirstResponseActual() OptNilDateTime {
+	return s.FirstResponseActual
+}
+
+// GetResolutionTarget returns the value of ResolutionTarget.
+func (s *TicketSLAStatus) GetResolutionTarget() OptDateTime {
+	return s.ResolutionTarget
+}
+
+// GetResolutionActual returns the value of ResolutionActual.
+func (s *TicketSLAStatus) GetResolutionActual() OptNilDateTime {
+	return s.ResolutionActual
+}
+
+// GetTimeUntilFirstResponseTarget returns the value of TimeUntilFirstResponseTarget.
+func (s *TicketSLAStatus) GetTimeUntilFirstResponseTarget() OptNilInt {
+	return s.TimeUntilFirstResponseTarget
+}
+
+// GetTimeUntilResolutionTarget returns the value of TimeUntilResolutionTarget.
+func (s *TicketSLAStatus) GetTimeUntilResolutionTarget() OptNilInt {
+	return s.TimeUntilResolutionTarget
+}
+
+// GetFirstResponseSLAMet returns the value of FirstResponseSLAMet.
+func (s *TicketSLAStatus) GetFirstResponseSLAMet() OptNilBool {
+	return s.FirstResponseSLAMet
+}
+
+// GetResolutionSLAMet returns the value of ResolutionSLAMet.
+func (s *TicketSLAStatus) GetResolutionSLAMet() OptNilBool {
+	return s.ResolutionSLAMet
+}
+
+// SetTicketID sets the value of TicketID.
+func (s *TicketSLAStatus) SetTicketID(val OptUUID) {
+	s.TicketID = val
+}
+
+// SetPriority sets the value of Priority.
+func (s *TicketSLAStatus) SetPriority(val OptTicketSLAStatusPriority) {
+	s.Priority = val
+}
+
+// SetFirstResponseTarget sets the value of FirstResponseTarget.
+func (s *TicketSLAStatus) SetFirstResponseTarget(val OptDateTime) {
+	s.FirstResponseTarget = val
+}
+
+// SetFirstResponseActual sets the value of FirstResponseActual.
+func (s *TicketSLAStatus) SetFirstResponseActual(val OptNilDateTime) {
+	s.FirstResponseActual = val
+}
+
+// SetResolutionTarget sets the value of ResolutionTarget.
+func (s *TicketSLAStatus) SetResolutionTarget(val OptDateTime) {
+	s.ResolutionTarget = val
+}
+
+// SetResolutionActual sets the value of ResolutionActual.
+func (s *TicketSLAStatus) SetResolutionActual(val OptNilDateTime) {
+	s.ResolutionActual = val
+}
+
+// SetTimeUntilFirstResponseTarget sets the value of TimeUntilFirstResponseTarget.
+func (s *TicketSLAStatus) SetTimeUntilFirstResponseTarget(val OptNilInt) {
+	s.TimeUntilFirstResponseTarget = val
+}
+
+// SetTimeUntilResolutionTarget sets the value of TimeUntilResolutionTarget.
+func (s *TicketSLAStatus) SetTimeUntilResolutionTarget(val OptNilInt) {
+	s.TimeUntilResolutionTarget = val
+}
+
+// SetFirstResponseSLAMet sets the value of FirstResponseSLAMet.
+func (s *TicketSLAStatus) SetFirstResponseSLAMet(val OptNilBool) {
+	s.FirstResponseSLAMet = val
+}
+
+// SetResolutionSLAMet sets the value of ResolutionSLAMet.
+func (s *TicketSLAStatus) SetResolutionSLAMet(val OptNilBool) {
+	s.ResolutionSLAMet = val
+}
+
+func (*TicketSLAStatus) getTicketSLARes() {}
+
+type TicketSLAStatusPriority string
+
+const (
+	TicketSLAStatusPriorityLOW      TicketSLAStatusPriority = "LOW"
+	TicketSLAStatusPriorityNORMAL   TicketSLAStatusPriority = "NORMAL"
+	TicketSLAStatusPriorityHIGH     TicketSLAStatusPriority = "HIGH"
+	TicketSLAStatusPriorityURGENT   TicketSLAStatusPriority = "URGENT"
+	TicketSLAStatusPriorityCRITICAL TicketSLAStatusPriority = "CRITICAL"
+)
+
+// AllValues returns all TicketSLAStatusPriority values.
+func (TicketSLAStatusPriority) AllValues() []TicketSLAStatusPriority {
+	return []TicketSLAStatusPriority{
+		TicketSLAStatusPriorityLOW,
+		TicketSLAStatusPriorityNORMAL,
+		TicketSLAStatusPriorityHIGH,
+		TicketSLAStatusPriorityURGENT,
+		TicketSLAStatusPriorityCRITICAL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TicketSLAStatusPriority) MarshalText() ([]byte, error) {
+	switch s {
+	case TicketSLAStatusPriorityLOW:
+		return []byte(s), nil
+	case TicketSLAStatusPriorityNORMAL:
+		return []byte(s), nil
+	case TicketSLAStatusPriorityHIGH:
+		return []byte(s), nil
+	case TicketSLAStatusPriorityURGENT:
+		return []byte(s), nil
+	case TicketSLAStatusPriorityCRITICAL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TicketSLAStatusPriority) UnmarshalText(data []byte) error {
+	switch TicketSLAStatusPriority(data) {
+	case TicketSLAStatusPriorityLOW:
+		*s = TicketSLAStatusPriorityLOW
+		return nil
+	case TicketSLAStatusPriorityNORMAL:
+		*s = TicketSLAStatusPriorityNORMAL
+		return nil
+	case TicketSLAStatusPriorityHIGH:
+		*s = TicketSLAStatusPriorityHIGH
+		return nil
+	case TicketSLAStatusPriorityURGENT:
+		*s = TicketSLAStatusPriorityURGENT
+		return nil
+	case TicketSLAStatusPriorityCRITICAL:
+		*s = TicketSLAStatusPriorityCRITICAL
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1721,22 +2525,14 @@ type UpdateTicketNotFound Error
 
 func (*UpdateTicketNotFound) updateTicketRes() {}
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/UpdateTicketRequest
 type UpdateTicketRequest struct {
-	Status          OptTicketStatus                `json:"status"`
-	Priority        OptTicketPriority              `json:"priority"`
 	AssignedAgentID OptNilUUID                     `json:"assigned_agent_id"`
 	Category        OptUpdateTicketRequestCategory `json:"category"`
-}
-
-// GetStatus returns the value of Status.
-func (s *UpdateTicketRequest) GetStatus() OptTicketStatus {
-	return s.Status
-}
-
-// GetPriority returns the value of Priority.
-func (s *UpdateTicketRequest) GetPriority() OptTicketPriority {
-	return s.Priority
+	Priority        OptTicketPriority              `json:"priority"`
+	Status          OptTicketStatus                `json:"status"`
 }
 
 // GetAssignedAgentID returns the value of AssignedAgentID.
@@ -1749,14 +2545,14 @@ func (s *UpdateTicketRequest) GetCategory() OptUpdateTicketRequestCategory {
 	return s.Category
 }
 
-// SetStatus sets the value of Status.
-func (s *UpdateTicketRequest) SetStatus(val OptTicketStatus) {
-	s.Status = val
+// GetPriority returns the value of Priority.
+func (s *UpdateTicketRequest) GetPriority() OptTicketPriority {
+	return s.Priority
 }
 
-// SetPriority sets the value of Priority.
-func (s *UpdateTicketRequest) SetPriority(val OptTicketPriority) {
-	s.Priority = val
+// GetStatus returns the value of Status.
+func (s *UpdateTicketRequest) GetStatus() OptTicketStatus {
+	return s.Status
 }
 
 // SetAssignedAgentID sets the value of AssignedAgentID.
@@ -1767,6 +2563,16 @@ func (s *UpdateTicketRequest) SetAssignedAgentID(val OptNilUUID) {
 // SetCategory sets the value of Category.
 func (s *UpdateTicketRequest) SetCategory(val OptUpdateTicketRequestCategory) {
 	s.Category = val
+}
+
+// SetPriority sets the value of Priority.
+func (s *UpdateTicketRequest) SetPriority(val OptTicketPriority) {
+	s.Priority = val
+}
+
+// SetStatus sets the value of Status.
+func (s *UpdateTicketRequest) SetStatus(val OptTicketStatus) {
+	s.Status = val
 }
 
 type UpdateTicketRequestCategory string

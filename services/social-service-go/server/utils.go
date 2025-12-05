@@ -20,6 +20,11 @@ func SetLogger(l *logrus.Logger) {
 	logger = l
 }
 
+// GetLogger returns the logger for utils package
+func GetLogger() *logrus.Logger {
+	return logger
+}
+
 // getCharacterIDFromContext извлекает ID персонажа из контекста
 func getCharacterIDFromContext(ctx context.Context) string {
 	if id, ok := ctx.Value(characterIDKey).(string); ok {

@@ -9,8 +9,16 @@ type CreateTicketRes interface {
 	createTicketRes()
 }
 
+type GetSLAViolationsRes interface {
+	getSLAViolationsRes()
+}
+
 type GetTicketRes interface {
 	getTicketRes()
+}
+
+type GetTicketSLARes interface {
+	getTicketSLARes()
 }
 
 type GetTicketsRes interface {

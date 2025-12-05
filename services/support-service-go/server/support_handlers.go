@@ -18,18 +18,23 @@ const (
 )
 
 // Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+// Issue: #1489 - SLA handlers
 type Handlers struct {
 	ticketService TicketServiceInterface
+	slaService    SLAServiceInterface
 	logger        *logrus.Logger
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	supportTicketPool  sync.Pool
-	ticketsResponsePool sync.Pool
+	supportTicketPool      sync.Pool
+	ticketsResponsePool    sync.Pool
+	ticketSLAStatusPool    sync.Pool
+	slaViolationsPool     sync.Pool
 }
 
-func NewHandlers(ticketService TicketServiceInterface) *Handlers {
+func NewHandlers(ticketService TicketServiceInterface, slaService SLAServiceInterface) *Handlers {
 	h := &Handlers{
 		ticketService: ticketService,
+		slaService:    slaService,
 		logger:        GetLogger(),
 	}
 
@@ -42,6 +47,16 @@ func NewHandlers(ticketService TicketServiceInterface) *Handlers {
 	h.ticketsResponsePool = sync.Pool{
 		New: func() interface{} {
 			return &supportapi.TicketsResponse{}
+		},
+	}
+	h.ticketSLAStatusPool = sync.Pool{
+		New: func() interface{} {
+			return &supportapi.TicketSLAStatus{}
+		},
+	}
+	h.slaViolationsPool = sync.Pool{
+		New: func() interface{} {
+			return &supportapi.SLAViolationsResponse{}
 		},
 	}
 
@@ -245,4 +260,78 @@ func (h *Handlers) CloseTicket(ctx context.Context, req *supportapi.CloseTicketR
 	// Note: Not returning to pool - struct is returned to caller
 	*apiTicket = convertSupportTicketToAPI(ticket)
 	return apiTicket, nil
+}
+
+// Issue: #1489 - GetTicketSLA implements getTicketSLA operation
+func (h *Handlers) GetTicketSLA(ctx context.Context, params supportapi.GetTicketSLAParams) (supportapi.GetTicketSLARes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	ticketID := params.TicketID
+	status, err := h.slaService.GetTicketSLAStatus(ctx, ticketID)
+	if err != nil {
+		if err.Error() == "ticket not found" {
+			return &supportapi.GetTicketSLANotFound{
+				Error:   "Not Found",
+				Message: "ticket not found",
+			}, nil
+		}
+		h.logger.WithError(err).Error("Failed to get ticket SLA status")
+		return &supportapi.GetTicketSLAInternalServerError{
+			Error:   "Internal Server Error",
+			Message: "failed to get ticket SLA status",
+		}, nil
+	}
+
+	// Issue: #1607 - Use memory pooling
+	apiStatus := h.ticketSLAStatusPool.Get().(*supportapi.TicketSLAStatus)
+	// Note: Not returning to pool - struct is returned to caller
+	*apiStatus = convertTicketSLAStatusToAPI(status)
+	return apiStatus, nil
+}
+
+// Issue: #1489 - GetSLAViolations implements getSLAViolations operation
+func (h *Handlers) GetSLAViolations(ctx context.Context, params supportapi.GetSLAViolationsParams) (supportapi.GetSLAViolationsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	var priority *string
+	if params.Priority.Set {
+		priorityStr := string(params.Priority.Value)
+		priority = &priorityStr
+	}
+
+	var violationType *string
+	if params.ViolationType.Set {
+		vtStr := string(params.ViolationType.Value)
+		violationType = &vtStr
+	}
+
+	limit := 50
+	offset := 0
+	if params.Limit.Set {
+		if params.Limit.Value > 100 {
+			limit = 100
+		} else if params.Limit.Value > 0 {
+			limit = params.Limit.Value
+		}
+	}
+	if params.Offset.Set {
+		offset = params.Offset.Value
+	}
+
+	response, err := h.slaService.GetSLAViolations(ctx, priority, violationType, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get SLA violations")
+		return &supportapi.GetSLAViolationsInternalServerError{
+			Error:   "Internal Server Error",
+			Message: "failed to get SLA violations",
+		}, nil
+	}
+
+	// Issue: #1607 - Use memory pooling
+	apiResponse := h.slaViolationsPool.Get().(*supportapi.SLAViolationsResponse)
+	// Note: Not returning to pool - struct is returned to caller
+	*apiResponse = convertSLAViolationsResponseToAPI(response)
+	return apiResponse, nil
 }

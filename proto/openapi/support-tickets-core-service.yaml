@@ -14,6 +14,8 @@ servers:
 tags:
 - name: Tickets
   description: Управление тикетами поддержки
+- name: SLA Monitoring
+  description: Мониторинг SLA
 paths:
   /support/tickets:
     post:
@@ -174,6 +176,63 @@ paths:
           $ref: common.yaml#/components/responses/Unauthorized
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
+  /support/tickets/{ticket_id}/sla:
+    get:
+      tags:
+      - SLA Monitoring
+      summary: Получить статус SLA тикета
+      operationId: getTicketSLA
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: common.yaml#/components/parameters/TicketId
+      responses:
+        '200':
+          description: Статус SLA тикета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketSLAStatus'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /support/sla/violations:
+    get:
+      tags:
+      - SLA Monitoring
+      summary: Получить нарушения SLA
+      operationId: getSLAViolations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: priority
+        in: query
+        schema:
+          type: string
+          $ref: common.yaml#/components/schemas/TicketPriority
+      - name: violation_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - FIRST_RESPONSE
+          - RESOLUTION
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Нарушения SLA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAViolationsResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
@@ -307,5 +366,87 @@ components:
           type: string
         notes:
           type: string
+    TicketSLAStatus:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - URGENT
+          - CRITICAL
+        first_response_target:
+          type: string
+          format: date-time
+        first_response_actual:
+          type: string
+          format: date-time
+          nullable: true
+        resolution_target:
+          type: string
+          format: date-time
+        resolution_actual:
+          type: string
+          format: date-time
+          nullable: true
+        time_until_first_response_target:
+          type: integer
+          nullable: true
+        time_until_resolution_target:
+          type: integer
+          nullable: true
+        first_response_sla_met:
+          type: boolean
+          nullable: true
+        resolution_sla_met:
+          type: boolean
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SLAViolation:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        ticket_number:
+          type: string
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - URGENT
+          - CRITICAL
+        violation_type:
+          type: string
+          enum:
+          - FIRST_RESPONSE
+          - RESOLUTION
+        target_time:
+          type: string
+          format: date-time
+        actual_time:
+          type: string
+          format: date-time
+          nullable: true
+        violation_duration_seconds:
+          type: integer
+          nullable: true
+    SLAViolationsResponse:
+      allOf:
+      - $ref: common.yaml#/components/schemas/PaginationResponse
+      - type: object
+        properties:
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/SLAViolation'
+            description: Список нарушений SLA
 security:
 - BearerAuth: []

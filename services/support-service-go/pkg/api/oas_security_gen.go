@@ -34,11 +34,13 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	CloseTicketOperation:  []string{},
-	CreateTicketOperation: []string{},
-	GetTicketOperation:    []string{},
-	GetTicketsOperation:   []string{},
-	UpdateTicketOperation: []string{},
+	CloseTicketOperation:      []string{},
+	CreateTicketOperation:     []string{},
+	GetSLAViolationsOperation: []string{},
+	GetTicketOperation:        []string{},
+	GetTicketSLAOperation:     []string{},
+	GetTicketsOperation:       []string{},
+	UpdateTicketOperation:     []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

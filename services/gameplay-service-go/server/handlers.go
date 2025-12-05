@@ -91,7 +91,25 @@ func (h *Handlers) ActivateAbility(ctx context.Context, req *api.AbilityActivati
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement logic
+	// Basic validation
+	if req == nil {
+		h.logger.Error("ActivateAbility: nil request")
+		return &api.ActivateAbilityBadRequest{}, nil
+	}
+
+	if req.AbilityID == uuid.Nil {
+		h.logger.Warn("ActivateAbility: empty ability_id")
+		return &api.ActivateAbilityBadRequest{}, nil
+	}
+
+	// TODO: Implement business logic
+	// For now, log request and return error (not implemented)
+	h.logger.WithFields(logrus.Fields{
+		"ability_id": req.AbilityID,
+		"target_id": req.TargetID,
+		"has_position": req.Position.Set,
+	}).Info("ActivateAbility request received (not implemented)")
+
 	return &api.ActivateAbilityInternalServerError{}, nil
 }
 
@@ -100,7 +118,31 @@ func (h *Handlers) ActivateCombo(ctx context.Context, req *api.ActivateComboRequ
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement logic
+	// Basic validation
+	if req == nil {
+		h.logger.Error("ActivateCombo: nil request")
+		return &api.ActivateComboBadRequest{}, nil
+	}
+
+	if req.CharacterID == uuid.Nil {
+		h.logger.Warn("ActivateCombo: empty character_id")
+		return &api.ActivateComboBadRequest{}, nil
+	}
+
+	if req.ComboID == uuid.Nil {
+		h.logger.Warn("ActivateCombo: empty combo_id")
+		return &api.ActivateComboBadRequest{}, nil
+	}
+
+	// TODO: Implement business logic
+	// For now, log request and return error (not implemented)
+	h.logger.WithFields(logrus.Fields{
+		"character_id": req.CharacterID,
+		"combo_id": req.ComboID,
+		"participants_count": len(req.Participants),
+		"has_context": req.Context.Set,
+	}).Info("ActivateCombo request received (not implemented)")
+
 	return &api.ActivateComboInternalServerError{}, nil
 }
 

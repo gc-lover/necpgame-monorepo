@@ -20,12 +20,24 @@ type Handler interface {
 	//
 	// POST /support/tickets
 	CreateTicket(ctx context.Context, req *CreateTicketRequest) (CreateTicketRes, error)
+	// GetSLAViolations implements getSLAViolations operation.
+	//
+	// Получить нарушения SLA.
+	//
+	// GET /support/sla/violations
+	GetSLAViolations(ctx context.Context, params GetSLAViolationsParams) (GetSLAViolationsRes, error)
 	// GetTicket implements getTicket operation.
 	//
 	// Получить тикет.
 	//
 	// GET /support/tickets/{ticket_id}
 	GetTicket(ctx context.Context, params GetTicketParams) (GetTicketRes, error)
+	// GetTicketSLA implements getTicketSLA operation.
+	//
+	// Получить статус SLA тикета.
+	//
+	// GET /support/tickets/{ticket_id}/sla
+	GetTicketSLA(ctx context.Context, params GetTicketSLAParams) (GetTicketSLARes, error)
 	// GetTickets implements getTickets operation.
 	//
 	// Получить список тикетов.

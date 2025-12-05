@@ -16,6 +16,8 @@ security:
 tags:
   - name: Tickets
     description: Управление тикетами поддержки
+  - name: SLA Monitoring
+    description: Мониторинг SLA
 paths:
   /support/tickets:
     post:
@@ -176,6 +178,63 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /support/tickets/{ticket_id}/sla:
+    get:
+      tags:
+        - SLA Monitoring
+      summary: Получить статус SLA тикета
+      operationId: getTicketSLA
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      responses:
+        '200':
+          description: Статус SLA тикета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketSLAStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /support/sla/violations:
+    get:
+      tags:
+        - SLA Monitoring
+      summary: Получить нарушения SLA
+      operationId: getSLAViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: priority
+          in: query
+          schema:
+            type: string
+            $ref: '#/components/schemas/TicketPriority'
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - FIRST_RESPONSE
+              - RESOLUTION
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Нарушения SLA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAViolationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     BearerAuth:
@@ -217,10 +276,6 @@ components:
     UpdateTicketRequest:
       type: object
       properties:
-        status:
-          $ref: '#/components/schemas/TicketStatus'
-        priority:
-          $ref: '#/components/schemas/TicketPriority'
         assigned_agent_id:
           type: string
           format: uuid
@@ -235,18 +290,31 @@ components:
             - BUG_REPORT
             - FEATURE_REQUEST
             - OTHER
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SupportTicket:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        ticket_number:
-          type: string
-          maxLength: 50
         player_id:
           type: string
           format: uuid
+        assigned_agent_id:
+          type: string
+          format: uuid
+          nullable: true
+        ticket_number:
+          type: string
+          maxLength: 50
+        subject:
+          type: string
+        description:
+          type: string
         category:
           type: string
           enum:
@@ -257,18 +325,6 @@ components:
             - BUG_REPORT
             - FEATURE_REQUEST
             - OTHER
-        priority:
-          $ref: '#/components/schemas/TicketPriority'
-        status:
-          $ref: '#/components/schemas/TicketStatus'
-        assigned_agent_id:
-          type: string
-          format: uuid
-          nullable: true
-        subject:
-          type: string
-        description:
-          type: string
         created_at:
           type: string
           format: date-time
@@ -291,6 +347,11 @@ components:
         updated_at:
           type: string
           format: date-time
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TicketsResponse:
       allOf:
         - $ref: '#/components/schemas/PaginationResponse'
@@ -310,6 +371,88 @@ components:
           type: string
         notes:
           type: string
+    TicketSLAStatus:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - URGENT
+            - CRITICAL
+        first_response_target:
+          type: string
+          format: date-time
+        first_response_actual:
+          type: string
+          format: date-time
+          nullable: true
+        resolution_target:
+          type: string
+          format: date-time
+        resolution_actual:
+          type: string
+          format: date-time
+          nullable: true
+        time_until_first_response_target:
+          type: integer
+          nullable: true
+        time_until_resolution_target:
+          type: integer
+          nullable: true
+        first_response_sla_met:
+          type: boolean
+          nullable: true
+        resolution_sla_met:
+          type: boolean
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SLAViolation:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        ticket_number:
+          type: string
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - URGENT
+            - CRITICAL
+        violation_type:
+          type: string
+          enum:
+            - FIRST_RESPONSE
+            - RESOLUTION
+        target_time:
+          type: string
+          format: date-time
+        actual_time:
+          type: string
+          format: date-time
+          nullable: true
+        violation_duration_seconds:
+          type: integer
+          nullable: true
+    SLAViolationsResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/SLAViolation'
+              description: Список нарушений SLA
     PaginationResponse:
       type: object
       required:

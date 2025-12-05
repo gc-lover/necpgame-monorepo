@@ -6,15 +6,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/necpgame/social-service-go/models"
 	"github.com/sirupsen/logrus"
 )
-
-const DBTimeout = 50 * time.Millisecond
 
 // OrderHandlers handles order-related HTTP requests
 type OrderHandlers struct {

@@ -19,6 +19,7 @@ type SocialHandlersOgen struct {
 	logger       *logrus.Logger
 	partyService PartyServiceInterface
 	orderService OrderServiceInterface
+	friendService FriendServiceInterface
 }
 
 // NewSocialHandlersOgen creates new ogen handlers
@@ -37,27 +38,74 @@ func (h *SocialHandlersOgen) SetPartyService(service PartyServiceInterface) {
 	h.partyService = service
 }
 
+// SetFriendService sets friend service (called from http_server_ogen.go after DB init)
+func (h *SocialHandlersOgen) SetFriendService(service FriendServiceInterface) {
+	h.friendService = service
+}
+
 // GetFriends implements getFriends operation
 // Hot path: 2k RPS - требует оптимизаций (caching, pooling)
 func (h *SocialHandlersOgen) GetFriends(ctx context.Context, params api.GetFriendsParams) (api.GetFriendsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
+	if h.friendService == nil {
+		h.logger.Error("Friend service not initialized")
+		return &api.FriendListResponse{
+			Friends: []api.Friendship{},
+			Total:   api.NewOptInt(0),
+		}, nil
+	}
+
+	characterIDStr := getCharacterIDFromContext(ctx)
+	characterID, err := uuid.Parse(characterIDStr)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to parse character ID")
+		return &api.FriendListResponse{
+			Friends: []api.Friendship{},
+			Total:   api.NewOptInt(0),
+		}, nil
+	}
+
+	onlineOnly := false
+	if params.OnlineOnly.IsSet() {
+		onlineOnly = params.OnlineOnly.Value
+	}
+
+	limit := 50
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+	}
+
+	offset := 0
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
+	}
+
 	h.logger.WithFields(logrus.Fields{
-		"online_only": params.OnlineOnly.Value,
-		"limit":       params.Limit.Value,
-		"offset":      params.Offset.Value,
+		"character_id": characterID,
+		"online_only":  onlineOnly,
+		"limit":        limit,
+		"offset":       offset,
 	}).Debug("GetFriends called")
 
-	// TODO: Implement with service layer
-	// - 3-tier caching (memory → Redis → DB)
-	// - Memory pooling for response objects
-	// - Batch DB queries if multiple requests
-	
-	// Mock response
+	result, err := h.friendService.GetFriends(ctx, characterID, onlineOnly, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get friends")
+		return &api.FriendListResponse{
+			Friends: []api.Friendship{},
+			Total:   api.NewOptInt(0),
+		}, nil
+	}
+
+	// Convert model to API response
 	response := &api.FriendListResponse{
-		Friends: []api.Friendship{},
-		Total:   api.NewOptInt(0),
+		Friends: make([]api.Friendship, len(result.Friends)),
+		Total:   api.NewOptInt(result.Total),
+	}
+
+	for i, f := range result.Friends {
+		response.Friends[i] = convertFriendshipToAPI(&f)
 	}
 
 	return response, nil
@@ -68,14 +116,36 @@ func (h *SocialHandlersOgen) GetFriend(ctx context.Context, params api.GetFriend
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
-	h.logger.WithField("friend_id", params.FriendID).Debug("GetFriend called")
+	if h.friendService == nil {
+		return &api.GetFriendNotFound{}, nil
+	}
 
-	// TODO: Implement with service layer
-	// - Check cache first
-	// - Single query to DB with covering index
-	
-	// Mock: Friend not found
-	return &api.GetFriendNotFound{}, nil
+	characterIDStr := getCharacterIDFromContext(ctx)
+	characterID, err := uuid.Parse(characterIDStr)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to parse character ID")
+		return &api.GetFriendNotFound{}, nil
+	}
+
+	friendID := params.FriendID
+
+	h.logger.WithFields(logrus.Fields{
+		"character_id": characterID,
+		"friend_id":    friendID,
+	}).Debug("GetFriend called")
+
+	friendship, err := h.friendService.GetFriend(ctx, characterID, friendID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get friend")
+		return &api.GetFriendNotFound{}, nil
+	}
+
+	if friendship == nil {
+		return &api.GetFriendNotFound{}, nil
+	}
+
+	response := convertFriendshipToAPI(friendship)
+	return &response, nil
 }
 
 // GetOnlineFriends implements getOnlineFriends operation
@@ -84,19 +154,56 @@ func (h *SocialHandlersOgen) GetOnlineFriends(ctx context.Context, params api.Ge
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
+	if h.friendService == nil {
+		return &api.FriendListResponse{
+			Friends: []api.Friendship{},
+			Total:   api.NewOptInt(0),
+		}, nil
+	}
+
+	characterIDStr := getCharacterIDFromContext(ctx)
+	characterID, err := uuid.Parse(characterIDStr)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to parse character ID")
+		return &api.FriendListResponse{
+			Friends: []api.Friendship{},
+			Total:   api.NewOptInt(0),
+		}, nil
+	}
+
+	limit := 50
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+	}
+
+	offset := 0
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
+	}
+
 	h.logger.WithFields(logrus.Fields{
-		"limit":  params.Limit.Value,
-		"offset": params.Offset.Value,
+		"character_id": characterID,
+		"limit":        limit,
+		"offset":       offset,
 	}).Debug("GetOnlineFriends called")
 
-	// TODO: Implement with service layer
-	// - Redis ZSET for online users (sorted by last_seen)
-	// - No DB queries for online check
-	// - Memory pooling
-	
+	result, err := h.friendService.GetOnlineFriends(ctx, characterID, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get online friends")
+		return &api.FriendListResponse{
+			Friends: []api.Friendship{},
+			Total:   api.NewOptInt(0),
+		}, nil
+	}
+
+	// Convert model to API response
 	response := &api.FriendListResponse{
-		Friends: []api.Friendship{},
-		Total:   api.NewOptInt(0),
+		Friends: make([]api.Friendship, len(result.Friends)),
+		Total:   api.NewOptInt(result.Total),
+	}
+
+	for i, f := range result.Friends {
+		response.Friends[i] = convertFriendshipToAPI(&f)
 	}
 
 	return response, nil
@@ -107,14 +214,33 @@ func (h *SocialHandlersOgen) GetFriendsCount(ctx context.Context) (api.GetFriend
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
-	h.logger.Debug("GetFriendsCount called")
+	if h.friendService == nil {
+		return &api.FriendsCountResponse{
+			Count: api.NewOptInt(0),
+		}, nil
+	}
 
-	// TODO: Implement with service layer
-	// - Cache count in Redis (5 min TTL)
-	// - Update on friend add/remove
-	
+	characterIDStr := getCharacterIDFromContext(ctx)
+	characterID, err := uuid.Parse(characterIDStr)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to parse character ID")
+		return &api.FriendsCountResponse{
+			Count: api.NewOptInt(0),
+		}, nil
+	}
+
+	h.logger.WithField("character_id", characterID).Debug("GetFriendsCount called")
+
+	count, err := h.friendService.GetFriendsCount(ctx, characterID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to get friends count")
+		return &api.FriendsCountResponse{
+			Count: api.NewOptInt(0),
+		}, nil
+	}
+
 	response := &api.FriendsCountResponse{
-		Count: api.NewOptInt(0),
+		Count: api.NewOptInt(count),
 	}
 
 	return response, nil
@@ -125,13 +251,36 @@ func (h *SocialHandlersOgen) RemoveFriend(ctx context.Context, params api.Remove
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithField("friend_id", params.FriendID).Info("RemoveFriend called")
+	if h.friendService == nil {
+		return &api.StatusResponse{
+			Status: api.NewOptString("error"),
+		}, nil
+	}
 
-	// TODO: Implement with service layer
-	// - Transaction for consistency
-	// - Invalidate cache
-	// - Notify other player via WebSocket
-	
+	characterIDStr := getCharacterIDFromContext(ctx)
+	characterID, err := uuid.Parse(characterIDStr)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to parse character ID")
+		return &api.StatusResponse{
+			Status: api.NewOptString("error"),
+		}, nil
+	}
+
+	friendID := params.FriendID
+
+	h.logger.WithFields(logrus.Fields{
+		"character_id": characterID,
+		"friend_id":    friendID,
+	}).Info("RemoveFriend called")
+
+	err = h.friendService.RemoveFriend(ctx, characterID, friendID)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to remove friend")
+		return &api.StatusResponse{
+			Status: api.NewOptString("error"),
+		}, nil
+	}
+
 	response := &api.StatusResponse{
 		Status: api.NewOptString("removed"),
 	}
@@ -268,7 +417,8 @@ func (h *SocialHandlersOgen) GetPartyLeader(ctx context.Context, params api.GetP
 	}
 
 	response := convertPartyMemberToAPI(leader)
-	return response, nil
+	// Return pointer to PartyMember (required by GetPartyLeaderRes interface)
+	return &response, nil
 }
 
 // GetPlayerParty implements getPlayerParty operation
@@ -391,6 +541,33 @@ func convertRoleToAPI(role models.PartyRole) api.PartyMemberRole {
 		return api.PartyMemberRoleMember
 	default:
 		return api.PartyMemberRoleMember
+	}
+}
+
+// convertFriendshipToAPI converts model Friendship to API Friendship
+func convertFriendshipToAPI(f *models.Friendship) api.Friendship {
+	return api.Friendship{
+		ID:          api.NewOptUUID(f.ID),
+		CharacterAID: api.NewOptUUID(f.CharacterAID),
+		CharacterBID: api.NewOptUUID(f.CharacterBID),
+		InitiatorID: api.NewOptUUID(f.InitiatorID),
+		Status:     api.NewOptFriendshipStatus(convertFriendshipStatusToAPI(f.Status)),
+		CreatedAt:   api.NewOptDateTime(f.CreatedAt),
+		UpdatedAt:   api.NewOptDateTime(f.UpdatedAt),
+	}
+}
+
+// convertFriendshipStatusToAPI converts model FriendshipStatus to API FriendshipStatus
+func convertFriendshipStatusToAPI(status models.FriendshipStatus) api.FriendshipStatus {
+	switch status {
+	case models.FriendshipStatusPending:
+		return api.FriendshipStatusPending
+	case models.FriendshipStatusAccepted:
+		return api.FriendshipStatusAccepted
+	case models.FriendshipStatusBlocked:
+		return api.FriendshipStatusBlocked
+	default:
+		return api.FriendshipStatusPending
 	}
 }
 
