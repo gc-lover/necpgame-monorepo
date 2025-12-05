@@ -145,6 +145,9 @@ func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interfa
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		s.logger.WithError(err).Error("Failed to encode JSON response")
+		// If encoding fails after WriteHeader, we can't change status code
+		// Log error and return - client will receive partial/empty response
+		return
 	}
 }
 

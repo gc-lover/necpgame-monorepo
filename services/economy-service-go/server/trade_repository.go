@@ -149,13 +149,13 @@ func (r *TradeRepository) GetTradeSessionsBatch(ctx context.Context, sessionIDs 
 		if len(initiatorOfferJSON) > 0 {
 			if err := json.Unmarshal(initiatorOfferJSON, &session.InitiatorOffer); err != nil {
 				r.logger.WithError(err).Error("Failed to unmarshal initiator offer JSON")
-				session.InitiatorOffer = models.TradeOffer{}
+				return nil, err
 			}
 		}
 		if len(recipientOfferJSON) > 0 {
 			if err := json.Unmarshal(recipientOfferJSON, &session.RecipientOffer); err != nil {
 				r.logger.WithError(err).Error("Failed to unmarshal recipient offer JSON")
-				session.RecipientOffer = models.TradeOffer{}
+				return nil, err
 			}
 		}
 

@@ -24,8 +24,19 @@ func main() {
 	addr := getEnv("ADDR", "0.0.0.0:8086")
 	metricsAddr := getEnv("METRICS_ADDR", ":9096")
 
+	// Initialize database
+	dbConnStr := getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
+	db, err := server.NewPostgresDB(dbConnStr)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to connect to database")
+	}
+	defer db.Close()
+	
+	// Initialize repository
+	repository := server.NewPostgresRepository(db)
+	
 	// Initialize service
-	mailService := server.NewMailService(nil) // TODO: Add repository
+	mailService := server.NewMailService(repository)
 	httpServer := server.NewHTTPServer(addr, mailService)
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling

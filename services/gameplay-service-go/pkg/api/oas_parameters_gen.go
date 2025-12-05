@@ -5,6 +5,7 @@ package api
 import (
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/google/uuid"
@@ -988,6 +989,387 @@ func decodeGetCombatSessionParams(args [1]string, argsEscaped bool, r *http.Requ
 	return params, nil
 }
 
+// GetComboAnalyticsParams is parameters of getComboAnalytics operation.
+type GetComboAnalyticsParams struct {
+	ComboID     OptUUID     `json:",omitempty,omitzero"`
+	CharacterID OptUUID     `json:",omitempty,omitzero"`
+	PeriodStart OptDateTime `json:",omitempty,omitzero"`
+	PeriodEnd   OptDateTime `json:",omitempty,omitzero"`
+	// Количество элементов на странице.
+	Limit OptInt `json:",omitempty,omitzero"`
+	// Смещение для пагинации.
+	Offset OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackGetComboAnalyticsParams(packed middleware.Parameters) (params GetComboAnalyticsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "combo_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ComboID = v.(OptUUID)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "character_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.CharacterID = v.(OptUUID)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "period_start",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PeriodStart = v.(OptDateTime)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "period_end",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PeriodEnd = v.(OptDateTime)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "offset",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Offset = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeGetComboAnalyticsParams(args [0]string, argsEscaped bool, r *http.Request) (params GetComboAnalyticsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: combo_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "combo_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotComboIDVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotComboIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ComboID.SetTo(paramsDotComboIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "combo_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: character_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCharacterIDVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCharacterIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.CharacterID.SetTo(paramsDotCharacterIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "character_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: period_start.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "period_start",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPeriodStartVal time.Time
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToDateTime(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPeriodStartVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PeriodStart.SetTo(paramsDotPeriodStartVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "period_start",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: period_end.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "period_end",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPeriodEndVal time.Time
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToDateTime(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPeriodEndVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PeriodEnd.SetTo(paramsDotPeriodEndVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "period_end",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: limit.
+	{
+		val := int(50)
+		params.Limit.SetTo(val)
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotLimitVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Limit.SetTo(paramsDotLimitVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Limit.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: offset.
+	{
+		val := int(0)
+		params.Offset.SetTo(val)
+	}
+	// Decode query: offset.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOffsetVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOffsetVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Offset.SetTo(paramsDotOffsetVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Offset.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           0,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "offset",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetComboCatalogParams is parameters of getComboCatalog operation.
 type GetComboCatalogParams struct {
 	ComboType  OptComboType       `json:",omitempty,omitzero"`
@@ -1290,6 +1672,63 @@ func decodeGetComboCatalogParams(args [0]string, argsEscaped bool, r *http.Reque
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "offset",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetComboLoadoutParams is parameters of getComboLoadout operation.
+type GetComboLoadoutParams struct {
+	CharacterID uuid.UUID
+}
+
+func unpackGetComboLoadoutParams(packed middleware.Parameters) (params GetComboLoadoutParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "character_id",
+			In:   "query",
+		}
+		params.CharacterID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetComboLoadoutParams(args [0]string, argsEscaped bool, r *http.Request) (params GetComboLoadoutParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: character_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.CharacterID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "character_id",
 			In:   "query",
 			Err:  err,
 		}

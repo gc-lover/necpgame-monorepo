@@ -42,13 +42,17 @@ var operationRolesBearerAuth = map[string][]string{
 	GetArenaSessionsOperation:      []string{},
 	GetAvailableSynergiesOperation: []string{},
 	GetCombatSessionOperation:      []string{},
+	GetComboAnalyticsOperation:     []string{},
 	GetComboCatalogOperation:       []string{},
+	GetComboLoadoutOperation:       []string{},
 	GetExtractZonesOperation:       []string{},
 	GetFreerunRoutesOperation:      []string{},
 	GetInstalledImplantsOperation:  []string{},
 	GetLoadoutsOperation:           []string{},
 	GetStealthStatusOperation:      []string{},
 	ListCombatSessionsOperation:    []string{},
+	SubmitComboScoreOperation:      []string{},
+	UpdateComboLoadoutOperation:    []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
