@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// CreateParty implements createParty operation.
+//
+// Создать группу.
+//
+// POST /social/party
+func (UnimplementedHandler) CreateParty(ctx context.Context, req *CreatePartyRequest) (r CreatePartyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetFriend implements getFriend operation.
 //
 // Получить информацию о друге.
@@ -49,11 +58,56 @@ func (UnimplementedHandler) GetOnlineFriends(ctx context.Context, params GetOnli
 	return r, ht.ErrNotImplemented
 }
 
+// GetParty implements getParty operation.
+//
+// Получить информацию о группе.
+//
+// GET /social/party
+func (UnimplementedHandler) GetParty(ctx context.Context, params GetPartyParams) (r GetPartyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPartyById implements getPartyById operation.
+//
+// Получить группу по ID.
+//
+// GET /social/party/{partyId}
+func (UnimplementedHandler) GetPartyById(ctx context.Context, params GetPartyByIdParams) (r GetPartyByIdRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPartyLeader implements getPartyLeader operation.
+//
+// Получить лидера группы.
+//
+// GET /social/party/{partyId}/leader
+func (UnimplementedHandler) GetPartyLeader(ctx context.Context, params GetPartyLeaderParams) (r GetPartyLeaderRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPlayerParty implements getPlayerParty operation.
+//
+// Получить группу игрока.
+//
+// GET /social/party/player/{accountId}
+func (UnimplementedHandler) GetPlayerParty(ctx context.Context, params GetPlayerPartyParams) (r GetPlayerPartyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // RemoveFriend implements removeFriend operation.
 //
 // Удалить друга.
 //
 // DELETE /social/friends/{friend_id}
 func (UnimplementedHandler) RemoveFriend(ctx context.Context, params RemoveFriendParams) (r RemoveFriendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TransferPartyLeadership implements transferPartyLeadership operation.
+//
+// Передать лидерство.
+//
+// POST /social/party/{partyId}/transfer-leadership
+func (UnimplementedHandler) TransferPartyLeadership(ctx context.Context, req *TransferLeadershipRequest, params TransferPartyLeadershipParams) (r TransferPartyLeadershipRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

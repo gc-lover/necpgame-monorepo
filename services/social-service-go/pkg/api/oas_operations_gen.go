@@ -6,9 +6,15 @@ package api
 type OperationName = string
 
 const (
-	GetFriendOperation        OperationName = "GetFriend"
-	GetFriendsOperation       OperationName = "GetFriends"
-	GetFriendsCountOperation  OperationName = "GetFriendsCount"
-	GetOnlineFriendsOperation OperationName = "GetOnlineFriends"
-	RemoveFriendOperation     OperationName = "RemoveFriend"
+	CreatePartyOperation             OperationName = "CreateParty"
+	GetFriendOperation               OperationName = "GetFriend"
+	GetFriendsOperation              OperationName = "GetFriends"
+	GetFriendsCountOperation         OperationName = "GetFriendsCount"
+	GetOnlineFriendsOperation        OperationName = "GetOnlineFriends"
+	GetPartyOperation                OperationName = "GetParty"
+	GetPartyByIdOperation            OperationName = "GetPartyById"
+	GetPartyLeaderOperation          OperationName = "GetPartyLeader"
+	GetPlayerPartyOperation          OperationName = "GetPlayerParty"
+	RemoveFriendOperation            OperationName = "RemoveFriend"
+	TransferPartyLeadershipOperation OperationName = "TransferPartyLeadership"
 )
