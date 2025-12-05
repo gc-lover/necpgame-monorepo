@@ -6,25 +6,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	api "github.com/necpgame/stock-futures-service-go/pkg/api"
 )
 
-// BenchmarkHandler benchmarks handler performance
+// BenchmarkListFuturesContracts benchmarks ListFuturesContracts handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkHandler(b *testing.B) {
-	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+func BenchmarkListFuturesContracts(b *testing.B) {
+	handlers := NewFuturesHandlers()
 
 	ctx := context.Background()
+	params := api.ListFuturesContractsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// TODO: Add actual handler call based on service API
-		// Example:
-		// _, _ = handlers.Get(ctx, api.GetParams{ID: uuid.New()})
-		_ = handlers
-		_ = ctx
+		_, _ = handlers.ListFuturesContracts(ctx, params)
 	}
 }

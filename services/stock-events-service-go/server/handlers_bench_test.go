@@ -6,14 +6,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
-// BenchmarkHandler benchmarks handler performance
+// BenchmarkHealthCheck benchmarks HealthCheck handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkHandler(b *testing.B) {
-	// Setup - adjust based on service structure
-	handlers := NewHandlers()
+func BenchmarkHealthCheck(b *testing.B) {
+	handlers := NewStockHandlers(logrus.New())
 
 	ctx := context.Background()
 
@@ -21,10 +20,6 @@ func BenchmarkHandler(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// TODO: Add actual handler call based on service API
-		// Example:
-		// _, _ = handlers.Get(ctx, api.GetParams{ID: uuid.New()})
-		_ = handlers
-		_ = ctx
+		_, _ = handlers.HealthCheck(ctx)
 	}
 }
