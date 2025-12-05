@@ -4,6 +4,8 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/social-reputation-core-service-go/pkg/api"
 )
 
 // BenchmarkGetReputation benchmarks GetReputation handler

@@ -246,3 +246,9 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 	}
 }
 
+
+
+
+
+
+

@@ -9,18 +9,18 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/social-chat-moderation-service-go/pkg/api"
 )
 
-// BenchmarkModerateMessage benchmarks ModerateMessage handler
+// BenchmarkReportChatMessage benchmarks ReportChatMessage handler
 // Target: <100μs per operation, minimal allocs
-func BenchmarkModerateMessage(b *testing.B) {
+func BenchmarkReportChatMessage(b *testing.B) {
 	handlers := NewChatModerationHandlers()
 
 	ctx := context.Background()
-	req := &api.ModerateMessageRequest{}
+	req := &api.ReportMessageRequest{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.ModerateMessage(ctx, req)
+		_, _ = handlers.ReportChatMessage(ctx, req)
 	}
 }

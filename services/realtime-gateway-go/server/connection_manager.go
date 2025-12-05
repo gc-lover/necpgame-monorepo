@@ -61,3 +61,9 @@ func (h *GatewayHandler) RemoveClientConnection(conn *websocket.Conn) {
 	SetActiveClients(float64(len(h.clientConns)))
 }
 
+
+
+
+
+
+

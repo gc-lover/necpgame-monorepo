@@ -77,7 +77,7 @@ func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator
 	router.Mount("/api/v1/admin", ogenServer)
 
 	// Legacy endpoints (keep for backward compatibility)
-	legacyRouter := server.router.(*mux.Router)
+	legacyRouter := mux.NewRouter()
 	legacyRouter.Use(server.loggingMiddleware)
 	legacyRouter.Use(server.metricsMiddleware)
 	legacyRouter.Use(server.corsMiddleware)
@@ -114,8 +114,8 @@ func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator
 	legacyRouter.HandleFunc("/health", server.healthCheck).Methods("GET")
 	legacyRouter.Handle("/metrics", promhttp.Handler())
 
-	// Mount legacy router to chi
-	router.Mount("/legacy", legacyRouter)
+	// Mount legacy router to chi (available at root for backward compatibility)
+	router.Mount("/", legacyRouter)
 
 	// Set router to chi router
 	server.router = router

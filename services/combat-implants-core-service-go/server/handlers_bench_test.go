@@ -33,7 +33,7 @@ func BenchmarkGetImplantById(b *testing.B) {
 
 	ctx := context.Background()
 	params := api.GetImplantByIdParams{
-		ID: uuid.New(),
+		ImplantID: uuid.New(),
 	}
 
 	b.ReportAllocs()

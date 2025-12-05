@@ -219,3 +219,9 @@ func (h *GatewayHandler) BroadcastToClientsParallel(data []byte) {
 	logger.WithField("success_count", successCount).WithField("total_clients", clientCount).WithField("duration_ms", duration*1000).Info("Broadcasted GameState to clients")
 }
 
+
+
+
+
+
+
