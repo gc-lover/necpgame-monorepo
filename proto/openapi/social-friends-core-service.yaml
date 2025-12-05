@@ -17,6 +17,8 @@ servers:
 tags:
   - name: Friends Core
     description: Основные операции с друзьями
+  - name: Party Core
+    description: Основные операции с группами
 
 paths:
   /social/friends:
@@ -139,6 +141,180 @@ paths:
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
+  /social/party:
+    post:
+      tags:
+        - Party Core
+      summary: Создать группу
+      operationId: createParty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartyRequest'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+    get:
+      tags:
+        - Party Core
+      summary: Получить информацию о группе
+      operationId: getParty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: party_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /social/party/{partyId}:
+    get:
+      tags:
+        - Party Core
+      summary: Получить группу по ID
+      operationId: getPartyById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Группа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /social/party/{partyId}/transfer-leadership:
+    post:
+      tags:
+        - Party Core
+      summary: Передать лидерство
+      operationId: transferPartyLeadership
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferLeadershipRequest'
+      responses:
+        '200':
+          description: Лидерство передано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /social/party/{partyId}/leader:
+    get:
+      tags:
+        - Party Core
+      summary: Получить лидера группы
+      operationId: getPartyLeader
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лидер группы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyMember'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /social/party/player/{accountId}:
+    get:
+      tags:
+        - Party Core
+      summary: Получить группу игрока
+      operationId: getPlayerParty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Группа игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -204,6 +380,83 @@ components:
           type: integer
         online_count:
           type: integer
+
+    Party:
+      type: object
+      description: |
+        BACKEND NOTE: Party data (frequent queries).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~96 bytes/instance.
+      properties:
+        # UUID fields first (16 bytes each)
+        id:
+          type: string
+          format: uuid
+        leader_id:
+          type: string
+          format: uuid
+        # Array (24 bytes: pointer + len + cap)
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyMember'
+        # String fields (16 bytes each)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        loot_mode:
+          type: string
+          enum: [free_for_all, round_robin, need_before_greed, master_looter]
+          default: free_for_all
+        # Integer last (4 bytes)
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+    CreatePartyRequest:
+      type: object
+      description: |
+        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.
+      properties:
+        loot_mode:
+          type: string
+          enum: [free_for_all, round_robin, need_before_greed, master_looter]
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+    PartyMember:
+      type: object
+      description: |
+        BACKEND NOTE: Party member data.
+        Fields ordered for struct alignment (large → small).
+      properties:
+        # UUID first (16 bytes)
+        character_id:
+          type: string
+          format: uuid
+        # String (16 bytes)
+        joined_at:
+          type: string
+          format: date-time
+        # String enum (16 bytes)
+        role:
+          type: string
+          enum: [leader, member]
+    TransferLeadershipRequest:
+      type: object
+      required:
+        - new_leader_id
+      properties:
+        new_leader_id:
+          type: string
+          format: uuid
 
 security:
   - BearerAuth: []

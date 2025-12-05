@@ -11,6 +11,7 @@ const (
 	CompleteChallengeOperation   OperationName = "CompleteChallenge"
 	GetCurrentSeasonOperation    OperationName = "GetCurrentSeason"
 	GetPlayerProgressOperation   OperationName = "GetPlayerProgress"
+	GetSeasonChallengesOperation OperationName = "GetSeasonChallenges"
 	GetWeeklyChallengesOperation OperationName = "GetWeeklyChallenges"
 	PurchasePremiumOperation     OperationName = "PurchasePremium"
 )

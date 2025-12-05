@@ -172,7 +172,34 @@ func (h *Handlers) GetWeeklyChallenges(ctx context.Context, params api.GetWeekly
 	}, nil
 }
 
+// GetSeasonChallenges implements getSeasonChallenges operation.
+// Issue: #1514
+func (h *Handlers) GetSeasonChallenges(ctx context.Context, params api.GetSeasonChallengesParams) (api.GetSeasonChallengesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	playerID := params.PlayerID
+	seasonID := params.SeasonID
+	
+	response, err := h.service.GetSeasonChallenges(ctx, playerID.String(), seasonID)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.GetSeasonChallengesNotFound{
+				Error:   "NotFound",
+				Message: "Season challenges not found",
+			}, nil
+		}
+		return &api.GetSeasonChallengesInternalServerError{
+			Error:   "InternalServerError",
+			Message: err.Error(),
+		}, nil
+	}
+
+	return response, nil
+}
+
 // CompleteChallenge implements completeChallenge operation.
+// Issue: #1514 - Uses body with CompleteChallengeRequest (already implemented)
 func (h *Handlers) CompleteChallenge(ctx context.Context, req *api.CompleteChallengeReq, params api.CompleteChallengeParams) (api.CompleteChallengeRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()

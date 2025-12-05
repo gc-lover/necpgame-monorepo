@@ -54,6 +54,13 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	logger := server.GetLogger()
+	monitor := server.NewGoroutineMonitor(300, logger) // Max 300 goroutines for achievement service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
 	log.Printf("OK Achievement Service on %s", addr)
 	httpServer.Start()
 }

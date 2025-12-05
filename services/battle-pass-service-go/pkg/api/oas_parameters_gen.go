@@ -137,6 +137,123 @@ func decodeGetPlayerProgressParams(args [0]string, argsEscaped bool, r *http.Req
 	return params, nil
 }
 
+// GetSeasonChallengesParams is parameters of getSeasonChallenges operation.
+type GetSeasonChallengesParams struct {
+	PlayerID uuid.UUID
+	SeasonID OptUUID `json:",omitempty,omitzero"`
+}
+
+func unpackGetSeasonChallengesParams(packed middleware.Parameters) (params GetSeasonChallengesParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "player_id",
+			In:   "path",
+		}
+		params.PlayerID = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "season_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.SeasonID = v.(OptUUID)
+		}
+	}
+	return params
+}
+
+func decodeGetSeasonChallengesParams(args [1]string, argsEscaped bool, r *http.Request) (params GetSeasonChallengesParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: player_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "player_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PlayerID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: season_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "season_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotSeasonIDVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotSeasonIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.SeasonID.SetTo(paramsDotSeasonIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "season_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetWeeklyChallengesParams is parameters of getWeeklyChallenges operation.
 type GetWeeklyChallengesParams struct {
 	PlayerID uuid.UUID

@@ -37,6 +37,12 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200) // Max 200 goroutines for chat service
+	go monitor.Start()
+	defer monitor.Stop()
+	log.Printf("OK Goroutine monitor started")
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 

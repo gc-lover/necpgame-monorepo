@@ -39,6 +39,12 @@ type Handler interface {
 	//
 	// GET /api/v1/economy/battle-pass/progress
 	GetPlayerProgress(ctx context.Context, params GetPlayerProgressParams) (GetPlayerProgressRes, error)
+	// GetSeasonChallenges implements getSeasonChallenges operation.
+	//
+	// Получить испытания сезона игрока.
+	//
+	// GET /api/v1/economy/battle-pass/challenges/season/{player_id}
+	GetSeasonChallenges(ctx context.Context, params GetSeasonChallengesParams) (GetSeasonChallengesRes, error)
 	// GetWeeklyChallenges implements getWeeklyChallenges operation.
 	//
 	// Получить еженедельные челленджи.
