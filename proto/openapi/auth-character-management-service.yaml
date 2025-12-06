@@ -1,0 +1,156 @@
+# Issue: #153
+
+openapi: 3.0.3
+info:
+  title: Auth & Character Management Service API
+  description: |
+    Объединенная спецификация для Auth, Character и Progression сервисов.
+    Агрегирует endpoints для аутентификации, управления персонажами и прогрессии.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Локальный сервер разработки (Auth Service)
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки (Character Service)
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки (Progression Service)
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Authentication
+    description: Аутентификация и авторизация
+  - name: Characters
+    description: Управление персонажами
+  - name: Progression
+    description: Прогрессия персонажей
+  - name: Sessions
+    description: Управление сессиями
+
+paths:
+  # Auth Service Endpoints
+  /auth/register:
+    $ref: "auth-registration-service.yaml#/paths/~1auth~1register"
+  
+  /auth/login:
+    $ref: "auth-login-service.yaml#/paths/~1auth~1login"
+  
+  /auth/logout:
+    $ref: "auth-login-service.yaml#/paths/~1auth~1logout"
+  
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Обновить токены
+      description: Обновление JWT и Refresh токенов
+      operationId: refreshTokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Токены обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/RefreshTokenResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /auth/password/forgot:
+    $ref: "auth-password-service.yaml#/paths/~1auth~1password~1forgot"
+  
+  /auth/password/reset:
+    $ref: "auth-password-service.yaml#/paths/~1auth~1password~1reset"
+  
+  /auth/roles:
+    $ref: "auth-roles-service.yaml#/paths/~1auth~1roles"
+  
+  /auth/roles/{role_id}/permissions:
+    $ref: "auth-roles-service.yaml#/paths/~1auth~1roles~1{role_id}~1permissions"
+  
+  /auth/oauth/{provider}/callback:
+    post:
+      tags:
+        - Authentication
+      summary: OAuth callback
+      description: Обработка OAuth callback от провайдера
+      operationId: oauthCallback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github, discord]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/OAuthCallbackRequest"
+      responses:
+        "200":
+          description: OAuth авторизация успешна
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/OAuthCallbackResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  # Character Service Endpoints
+  /players/{account_id}/characters:
+    $ref: "auth-character-management-character-paths.yaml#/paths/~1players~1{account_id}~1characters"
+  
+  /players/{account_id}/characters/{character_id}:
+    $ref: "auth-character-management-character-paths.yaml#/paths/~1players~1{account_id}~1characters~1{character_id}"
+  
+  /players/{account_id}/characters/{character_id}/restore:
+    $ref: "auth-character-management-character-paths.yaml#/paths/~1players~1{account_id}~1characters~1{character_id}~1restore"
+  
+  /players/{account_id}/switch:
+    $ref: "auth-character-management-character-paths.yaml#/paths/~1players~1{account_id}~1switch"
+  
+  /players/{account_id}/slots/purchase:
+    $ref: "auth-character-management-character-paths.yaml#/paths/~1players~1{account_id}~1slots~1purchase"
+  
+  /players/{account_id}/activity:
+    $ref: "auth-character-management-character-paths.yaml#/paths/~1players~1{account_id}~1activity"
+  
+  # Progression Service Endpoints
+  /gameplay/progression/experience:
+    $ref: "auth-character-management-progression-paths.yaml#/paths/~1gameplay~1progression~1experience"
+  
+  /gameplay/progression/skills:
+    $ref: "auth-character-management-progression-paths.yaml#/paths/~1gameplay~1progression~1skills"
+  
+  /gameplay/progression/attributes:
+    $ref: "auth-character-management-progression-paths.yaml#/paths/~1gameplay~1progression~1attributes"
+  
+  /gameplay/progression/{character_id}:
+    $ref: "auth-character-management-progression-paths.yaml#/paths/~1gameplay~1progression~1{character_id}"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+security:
+  - BearerAuth: []

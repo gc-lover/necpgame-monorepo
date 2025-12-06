@@ -1,0 +1,276 @@
+# Issue: #153
+
+paths:
+  /players/{account_id}/characters:
+    get:
+      tags:
+        - Characters
+      summary: Получить список персонажей
+      description: Возвращает список всех персонажей аккаунта
+      operationId: getCharacters
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список персонажей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  characters:
+                    type: array
+                    items:
+                      $ref: "auth-character-management-schemas.yaml#/components/schemas/Character"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Characters
+      summary: Создать персонажа
+      description: Создание нового персонажа для аккаунта
+      operationId: createCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/CreateCharacterRequest"
+      responses:
+        "201":
+          description: Персонаж создан
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/Character"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /players/{account_id}/characters/{character_id}:
+    delete:
+      tags:
+        - Characters
+      summary: Удалить персонажа
+      description: Мягкое удаление персонажа (можно восстановить)
+      operationId: deleteCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Персонаж удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  can_restore_until:
+                    type: string
+                    format: date-time
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /players/{account_id}/characters/{character_id}/restore:
+    post:
+      tags:
+        - Characters
+      summary: Восстановить персонажа
+      description: Восстановление удаленного персонажа
+      operationId: restoreCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Персонаж восстановлен
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/Character"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /players/{account_id}/switch:
+    post:
+      tags:
+        - Characters
+      summary: Переключить персонажа
+      description: Переключение активного персонажа
+      operationId: switchCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/SwitchCharacterRequest"
+      responses:
+        "200":
+          description: Персонаж переключен
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/SwitchCharacterResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /players/{account_id}/slots/purchase:
+    post:
+      tags:
+        - Characters
+      summary: Купить слот персонажа
+      description: Покупка дополнительного слота для персонажа
+      operationId: purchaseSlot
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/PurchaseSlotRequest"
+      responses:
+        "200":
+          description: Слот куплен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  total_slots:
+                    type: integer
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /players/{account_id}/activity:
+    get:
+      tags:
+        - Characters
+      summary: Получить аудит действий
+      description: Получение истории действий персонажей
+      operationId: getActivity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История действий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: "auth-character-management-schemas.yaml#/components/schemas/Activity"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
