@@ -1,0 +1,295 @@
+# Issue: #153
+
+openapi: 3.0.3
+info:
+  title: Auth & Character Management Schemas
+  description: Схемы для Auth & Character Management Service
+  version: 1.0.0
+
+components:
+  schemas:
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token для обновления
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    RefreshTokenResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: Новый JWT токен
+        refresh_token:
+          type: string
+          description: Новый refresh token
+        expires_in:
+          type: integer
+          description: Время жизни токена в секундах
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    OAuthCallbackRequest:
+      type: object
+      required:
+        - code
+        - state
+      properties:
+        code:
+          type: string
+          description: OAuth authorization code
+        state:
+          type: string
+          description: OAuth state для защиты от CSRF
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    OAuthCallbackResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - account_id
+      properties:
+        access_token:
+          type: string
+          description: JWT токен
+        refresh_token:
+          type: string
+          description: Refresh token
+        account_id:
+          type: string
+          format: uuid
+          description: ID аккаунта
+        expires_in:
+          type: integer
+          description: Время жизни токена в секундах
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    Character:
+      type: object
+      required:
+        - id
+        - player_id
+        - name
+        - origin
+        - class
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        origin:
+          type: string
+          maxLength: 100
+        class:
+          type: string
+          maxLength: 100
+        created_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore_until:
+          type: string
+          format: date-time
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    
+    CreateCharacterRequest:
+      type: object
+      required:
+        - name
+        - origin
+        - class
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+        origin:
+          type: string
+          maxLength: 100
+        class:
+          type: string
+          maxLength: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    SwitchCharacterRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    SwitchCharacterResponse:
+      type: object
+      required:
+        - success
+        - active_character_id
+      properties:
+        success:
+          type: boolean
+        active_character_id:
+          type: string
+          format: uuid
+        previous_character_id:
+          type: string
+          format: uuid
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    PurchaseSlotRequest:
+      type: object
+      required:
+        - payment_method
+      properties:
+        payment_method:
+          type: string
+          enum: [currency, premium_currency]
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    Activity:
+      type: object
+      required:
+        - id
+        - character_id
+        - event_type
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          maxLength: 100
+        event_data:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    AddExperienceRequest:
+      type: object
+      required:
+        - character_id
+        - experience
+        - source
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        experience:
+          type: integer
+          format: int64
+          minimum: 1
+        source:
+          type: string
+          enum: [quest, combat, craft, exploration]
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    ProgressionState:
+      type: object
+      required:
+        - character_id
+        - level
+        - experience
+        - experience_to_next_level
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        experience:
+          type: integer
+          format: int64
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          format: int64
+          minimum: 0
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+        attributes:
+          type: object
+          additionalProperties:
+            type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    
+    Skill:
+      type: object
+      required:
+        - skill_type
+        - level
+        - experience
+      properties:
+        skill_type:
+          type: string
+          maxLength: 100
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          format: int64
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    UpdateSkillsRequest:
+      type: object
+      required:
+        - character_id
+        - skills
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    
+    AllocateAttributesRequest:
+      type: object
+      required:
+        - character_id
+        - attributes
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+

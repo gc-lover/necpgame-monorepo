@@ -1,0 +1,120 @@
+# Issue: #153
+
+paths:
+  /gameplay/progression/experience:
+    post:
+      tags:
+        - Progression
+      summary: Начислить опыт
+      description: Начисление опыта персонажу
+      operationId: addExperience
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/AddExperienceRequest"
+      responses:
+        "200":
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/ProgressionState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /gameplay/progression/skills:
+    post:
+      tags:
+        - Progression
+      summary: Обновить навыки
+      description: Обновление навыков персонажа
+      operationId: updateSkills
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/UpdateSkillsRequest"
+      responses:
+        "200":
+          description: Навыки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/ProgressionState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /gameplay/progression/attributes:
+    post:
+      tags:
+        - Progression
+      summary: Распределить атрибуты
+      description: Распределение очков атрибутов
+      operationId: allocateAttributes
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "auth-character-management-schemas.yaml#/components/schemas/AllocateAttributesRequest"
+      responses:
+        "200":
+          description: Атрибуты распределены
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/ProgressionState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+  
+  /gameplay/progression/{character_id}:
+    get:
+      tags:
+        - Progression
+      summary: Получить состояние прогрессии
+      description: Получение текущего состояния прогрессии персонажа
+      operationId: getProgression
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние прогрессии
+          content:
+            application/json:
+              schema:
+                $ref: "auth-character-management-schemas.yaml#/components/schemas/ProgressionState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
