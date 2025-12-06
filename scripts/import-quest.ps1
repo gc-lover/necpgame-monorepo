@@ -29,14 +29,25 @@ try {
 
 # Convert YAML to JSON using Python
 Write-Host "Reading quest file: $QuestFile"
+$env:PYTHONIOENCODING = "utf-8"
 $jsonContent = python -c @"
 import yaml
 import json
 import sys
+from datetime import datetime, date
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, date):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
 
 with open(r'$QuestFile', 'r', encoding='utf-8') as f:
     data = yaml.safe_load(f)
-    print(json.dumps(data, ensure_ascii=False))
+    result = json.dumps(data, ensure_ascii=False, default=json_serial)
+    sys.stdout.buffer.write(result.encode('utf-8'))
 "@
 
 if ($LASTEXITCODE -ne 0) {
@@ -51,7 +62,8 @@ import sys
 
 with open(r'$QuestFile', 'r', encoding='utf-8') as f:
     data = yaml.safe_load(f)
-    print(data['metadata']['id'])
+    result = data['metadata']['id']
+    sys.stdout.buffer.write(result.encode('utf-8'))
 "@
 
 if ($LASTEXITCODE -ne 0) {

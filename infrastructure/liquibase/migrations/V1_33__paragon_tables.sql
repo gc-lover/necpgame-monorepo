@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS progression.paragon_levels (
   paragon_points_total INTEGER NOT NULL DEFAULT 0,
   paragon_points_spent INTEGER NOT NULL DEFAULT 0,
   paragon_points_available INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (character_id) REFERENCES character.characters(id) ON DELETE CASCADE
+  FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS progression.paragon_allocations (
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS progression.paragon_allocations (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   points_allocated INTEGER NOT NULL DEFAULT 0,
   UNIQUE(character_id, stat_type),
-  FOREIGN KEY (character_id) REFERENCES character.characters(id) ON DELETE CASCADE,
+  FOREIGN KEY (character_id) REFERENCES mvp_core.character(id) ON DELETE CASCADE,
   CHECK (stat_type IN ('strength', 'agility', 'intelligence', 'vitality', 'willpower', 'perception'))
 );
 
