@@ -159,6 +159,9 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := conn.WriteMessage(websocket.TextMessage, notificationMessage); err != nil {
 				bns.logger.WithError(err).WithField("character_id", notification.CharacterID).Error("Failed to send ban notification")
+				clientConn.mu.Unlock()
+				bns.handler.RemoveClientConnection(conn)
+				continue
 			} else {
 				action := "ban notification"
 				if isRemoved {

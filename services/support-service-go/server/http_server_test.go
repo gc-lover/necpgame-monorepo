@@ -251,7 +251,7 @@ func TestHTTPServer_CreateTicket(t *testing.T) {
 		ticketByNum: make(map[string]*models.SupportTicket),
 		responses:   make(map[uuid.UUID][]models.TicketResponse),
 	}
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	playerID := uuid.New()
 	reqBody := models.CreateTicketRequest{
@@ -306,7 +306,7 @@ func TestHTTPServer_GetTicket(t *testing.T) {
 	}
 
 	mockService.tickets[ticketID] = ticket
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets/"+ticketID.String(), nil)
 	w := httptest.NewRecorder()
@@ -333,7 +333,7 @@ func TestHTTPServer_GetTicketNotFound(t *testing.T) {
 		ticketByNum: make(map[string]*models.SupportTicket),
 		responses:   make(map[uuid.UUID][]models.TicketResponse),
 	}
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets/"+uuid.New().String(), nil)
 	w := httptest.NewRecorder()
@@ -376,7 +376,7 @@ func TestHTTPServer_GetTickets(t *testing.T) {
 
 	mockService.tickets[ticket1.ID] = ticket1
 	mockService.tickets[ticket2.ID] = ticket2
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets", nil)
 	ctx := context.WithValue(req.Context(), "user_id", playerID.String())
@@ -419,7 +419,7 @@ func TestHTTPServer_UpdateTicket(t *testing.T) {
 	}
 
 	mockService.tickets[ticketID] = ticket
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	newSubject := "Updated Subject"
 	reqBody := models.UpdateTicketRequest{
@@ -466,7 +466,7 @@ func TestHTTPServer_AssignTicket(t *testing.T) {
 	}
 
 	mockService.tickets[ticketID] = ticket
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	reqBody := models.AssignTicketRequest{
 		AgentID: agentID,
@@ -511,7 +511,7 @@ func TestHTTPServer_AddResponse(t *testing.T) {
 	}
 
 	mockService.tickets[ticketID] = ticket
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	reqBody := models.AddResponseRequest{
 		Message: "Test response message",
@@ -572,7 +572,7 @@ func TestHTTPServer_GetTicketDetail(t *testing.T) {
 
 	mockService.tickets[ticketID] = ticket
 	mockService.responses[ticketID] = []models.TicketResponse{response}
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets/"+ticketID.String()+"/detail", nil)
 	w := httptest.NewRecorder()
@@ -611,7 +611,7 @@ func TestHTTPServer_RateTicket(t *testing.T) {
 	}
 
 	mockService.tickets[ticketID] = ticket
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	reqBody := models.RateTicketRequest{
 		Rating: 5,
@@ -634,7 +634,7 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		ticketByNum: make(map[string]*models.SupportTicket),
 		responses:   make(map[uuid.UUID][]models.TicketResponse),
 	}
-	server := NewHTTPServer(":8080", mockService, nil, false)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()
