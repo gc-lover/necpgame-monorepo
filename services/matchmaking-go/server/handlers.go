@@ -19,13 +19,25 @@ const (
 	LeaderboardTimeout = 200 * time.Millisecond // Heavy query, but cached
 )
 
+// ServiceInterface defines the interface for matchmaking service
+// Issue: #140890235 - Used for testing with mocks
+type ServiceInterface interface {
+	EnterQueue(ctx context.Context, playerID uuid.UUID, req *api.EnterQueueRequest) (*api.QueueResponse, error)
+	GetQueueStatus(ctx context.Context, queueID uuid.UUID) (*api.QueueStatusResponse, error)
+	LeaveQueue(ctx context.Context, queueID uuid.UUID) (*api.LeaveQueueResponse, error)
+	GetPlayerRating(ctx context.Context, playerID uuid.UUID) (*api.PlayerRatingResponse, error)
+	GetLeaderboard(ctx context.Context, params api.GetLeaderboardParams) (*api.LeaderboardResponse, error)
+	AcceptMatch(ctx context.Context, matchID uuid.UUID) error
+	DeclineMatch(ctx context.Context, matchID uuid.UUID) error
+}
+
 // Handlers implements api.Handler interface (ogen typed handlers)
 type Handlers struct {
-	service *Service
+	service ServiceInterface
 }
 
 // NewHandlers creates new handlers with performance optimizations
-func NewHandlers(service *Service) *Handlers {
+func NewHandlers(service ServiceInterface) *Handlers {
 	return &Handlers{service: service}
 }
 

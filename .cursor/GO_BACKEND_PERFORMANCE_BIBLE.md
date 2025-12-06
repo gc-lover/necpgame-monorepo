@@ -172,8 +172,7 @@
 ## 🛠️ Связанные документы
 
 **ОБЯЗАТЕЛЬНО к прочтению:**
-- `.cursor/PERFORMANCE_ENFORCEMENT.md` - **СТРОГИЕ требования (BLOCKER system)**
-- `.cursor/OPTIMIZATION_FIRST_POLICY.md` - **новый подход к оптимизациям**
+- `.cursor/PERFORMANCE_ENFORCEMENT.md` - **СТРОГИЕ требования (BLOCKER system, Optimization-First Policy)**
 
 **Для Backend Agent:**
 - `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист валидации

@@ -101,7 +101,7 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 - ✅ НОВЫЕ сервисы → `ogen` (90% faster!)
 - 🔄 СУЩЕСТВУЮЩИЕ → мигрируй на `ogen` (#1590)
 
-**Гайд:** `.cursor/OGEN_MIGRATION_GUIDE.md`
+**Гайд:** `.cursor/ogen/README.md` и `.cursor/ogen/02-MIGRATION-STEPS.md`
 
 ## Performance Optimizations (для Backend)
 

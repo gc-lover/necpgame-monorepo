@@ -50,3 +50,7 @@ ENTRYPOINT ["/app/world-events-scheduler-service"]
 
 
 
+
+
+
+

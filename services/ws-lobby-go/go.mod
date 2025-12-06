@@ -1,4 +1,4 @@
-module github.com/necpgame/ws-lobby-go
+﻿module github.com/necpgame/ws-lobby-go
 
 go 1.23.0
 
@@ -7,7 +7,9 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
-)
+
+	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
+	)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -25,4 +27,7 @@ require (
 	golang.org/x/sys v0.35.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-)
+
+	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
+	)
+

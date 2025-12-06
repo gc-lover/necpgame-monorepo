@@ -40,7 +40,8 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	handlers := NewIntegrationHandlers(server.logger)
+	integrationService := NewIntegrationService(server.logger)
+	handlers := NewIntegrationHandlers(server.logger, integrationService)
 	// Issue: #1601 - Initialize security handler with auth enabled from env
 	authEnabled := getEnv("AUTH_ENABLED", "false") == "true"
 	secHandler := NewSecurityHandler(authEnabled)

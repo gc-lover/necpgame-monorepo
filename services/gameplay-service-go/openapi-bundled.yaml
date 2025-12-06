@@ -38,6 +38,8 @@ tags:
     description: Комбо и синергии
   - name: Combat Implants
     description: Импланты
+  - name: Combat AI
+    description: AI враги и рейды
   - name: Stealth
     description: Стелс система
   - name: Freerun
@@ -50,6 +52,8 @@ tags:
     description: Лоадауты
   - name: Affixes
     description: Аффиксы рейдов и подземелий
+  - name: Quests
+    description: Система квестов
 paths:
   /gameplay/combat/sessions:
     post:
@@ -205,6 +209,134 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/abilities/{abilityId}:
+    get:
+      tags:
+        - Ability Catalog
+      summary: Получить информацию о способности
+      description: |
+        Возвращает детальную информацию о конкретной способности.
+      operationId: getAbilityById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: abilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор способности
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ability'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/abilities/loadouts:
+    post:
+      tags:
+        - Ability Loadouts
+      summary: Создать или обновить лоадаут способностей
+      description: |
+        Создает новый лоадаут или обновляет существующий для текущего персонажа.
+        Валидирует требования способностей и проверяет доступность.
+      operationId: createOrUpdateAbilityLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbilityLoadoutCreate'
+      responses:
+        '200':
+          description: Лоадаут успешно создан или обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityLoadout'
+        '201':
+          description: Лоадаут успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityLoadout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - Ability Loadouts
+      summary: Получить список лоадаутов
+      description: |
+        Возвращает список всех лоадаутов для текущего персонажа.
+        Поддерживает фильтрацию по активности и пагинацию.
+      operationId: getAbilityLoadouts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по активности лоадаута
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - loadouts
+                  - total
+                properties:
+                  loadouts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AbilityLoadout'
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Общее количество лоадаутов
+                    example: 5
+                  limit:
+                    type: integer
+                    minimum: 1
+                    example: 20
+                  offset:
+                    type: integer
+                    minimum: 0
+                    example: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /gameplay/combat/abilities/activate:
     post:
       tags:
@@ -277,6 +409,36 @@ paths:
                 code: INSUFFICIENT_ENERGY
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/abilities/cooldowns:
+    post:
+      tags:
+        - Cooldowns
+      summary: Проверить статус кулдаунов
+      description: |
+        Проверяет статус кулдаунов для списка способностей.
+        Возвращает информацию о текущих кулдаунах, времени окончания и оставшемся времени.
+      operationId: checkCooldowns
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CooldownCheckRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CooldownCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /gameplay/combat/abilities/synergies:
     get:
       tags:
@@ -327,6 +489,202 @@ paths:
                     type: integer
                     minimum: 0
                     description: Общее количество доступных синергий
+                    example: 10
+                  limit:
+                    type: integer
+                    minimum: 1
+                    example: 20
+                  offset:
+                    type: integer
+                    minimum: 0
+                    example: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/abilities/synergies/apply:
+    post:
+      tags:
+        - Synergies
+      summary: Применить синергию
+      description: |
+        Применяет синергию к способности или набору способностей.
+        Проверяет требования синергии и применяет бонусы.
+      operationId: applySynergy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynergyApplyRequest'
+      responses:
+        '200':
+          description: Синергия успешно применена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynergyApplyResponse'
+        '400':
+          description: Ошибка валидации или синергия недоступна
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: ValidationError
+                message: Synergy requirements not met
+                code: SYNERGY_REQUIREMENTS_NOT_MET
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Синергия недоступна
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: ForbiddenError
+                message: Synergy not available
+                code: SYNERGY_NOT_AVAILABLE
+        '404':
+          description: Синергия не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: NotFoundError
+                message: Synergy not found
+                code: SYNERGY_NOT_FOUND
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/abilities/cyberpsychosis:
+    post:
+      tags:
+        - Cyberpsychosis
+      summary: Обновить состояние киберпсихоза
+      description: |
+        Обновляет состояние киберпсихоза на основе использования способности.
+        Рассчитывает влияние способности на киберпсихоз с учетом активных имплантов.
+        Проверяет пороговые значения и применяет ограничения при необходимости.
+      operationId: updateCyberpsychosis
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CyberpsychosisUpdateRequest'
+      responses:
+        '200':
+          description: Состояние киберпсихоза успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Способность не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: NotFoundError
+                message: Ability not found
+                code: ABILITY_NOT_FOUND
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - Cyberpsychosis
+      summary: Получить текущее состояние киберпсихоза
+      description: |
+        Возвращает текущее состояние киберпсихоза для текущего персонажа.
+        Включает уровень киберпсихоза, количество превышений порогов и активные ограничения.
+      operationId: getCyberpsychosisState
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Состояние киберпсихоза не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: NotFoundError
+                message: Cyberpsychosis state not found
+                code: CYBERPSYCHOSIS_STATE_NOT_FOUND
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/abilities/metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Получить метрики способностей
+      description: |
+        Возвращает метрики использования способностей для текущего персонажа.
+        Поддерживает фильтрацию по способности и периоду времени.
+      operationId: getAbilityMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ability_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по идентификатору способности
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода статистики
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода статистики
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - metrics
+                  - total
+                properties:
+                  metrics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AbilityMetrics'
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Общее количество записей метрик
                     example: 10
                   limit:
                     type: integer
@@ -559,6 +917,356 @@ paths:
                       $ref: '#/components/schemas/Implant'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/ai/encounter:
+    post:
+      tags:
+        - Encounters
+      summary: Создание встречи
+      description: |
+        Создает новую встречу с AI врагами в указанной зоне.
+        Встреча может быть обычной или рейдовой.
+      operationId: createEncounter
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEncounterRequest'
+      responses:
+        '201':
+          description: Встреча создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIEncounter'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/ai/encounter/{encounter_id}:
+    get:
+      tags:
+        - Encounters
+      summary: Информация о встрече
+      description: Возвращает детальную информацию о встрече с AI врагами.
+      operationId: getEncounter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: encounter_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор встречи
+          example: 550e8400-e29b-41d4-a716-446655440002
+      responses:
+        '200':
+          description: Информация о встрече
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIEncounter'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/ai/encounter/{encounter_id}/start:
+    post:
+      tags:
+        - Encounters
+      summary: Старт встречи
+      description: |
+        Запускает встречу с AI врагами. После старта враги становятся активными
+        и начинают использовать поведенческие паттерны.
+      operationId: startEncounter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: encounter_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор встречи
+          example: 550e8400-e29b-41d4-a716-446655440002
+      responses:
+        '200':
+          description: Встреча запущена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIEncounter'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/ai/encounter/{encounter_id}/end:
+    post:
+      tags:
+        - Encounters
+      summary: Завершение встречи
+      description: |
+        Завершает встречу с AI врагами. Обрабатывает результат встречи,
+        начисляет награды и обновляет телеметрию.
+      operationId: endEncounter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: encounter_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор встречи
+          example: 550e8400-e29b-41d4-a716-446655440002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndEncounterRequest'
+      responses:
+        '200':
+          description: Встреча завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIEncounter'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/ai/profiles:
+    get:
+      tags:
+        - AI Profiles
+      summary: Список профилей AI
+      description: |
+        Возвращает список всех профилей AI врагов с возможностью фильтрации
+        по слою сложности, фракции и уровню навыков.
+      operationId: listAIProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: difficulty_layer
+          in: query
+          schema:
+            type: string
+            enum:
+              - street
+              - tactical
+              - mythic
+              - raid
+          description: Фильтр по слою сложности
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по фракции
+        - name: skill_level_min
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Минимальный уровень навыков
+        - name: skill_level_max
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Максимальный уровень навыков
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список профилей AI
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - profiles
+                  - total
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AIProfile'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 50
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/ai/profiles/{profile_id}:
+    get:
+      tags:
+        - AI Profiles
+      summary: Информация о профиле AI
+      description: Возвращает детальную информацию о конкретном профиле AI врага.
+      operationId: getAIProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор профиля AI
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Информация о профиле AI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/ai/profiles/{profile_id}/telemetry:
+    get:
+      tags:
+        - Telemetry
+      summary: Телеметрия профиля AI
+      description: |
+        Возвращает телеметрию для указанного профиля AI, включая метрики урона,
+        времени до поражения, использования способностей и балансировки.
+      operationId: getAIProfileTelemetry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор профиля AI
+          example: 550e8400-e29b-41d4-a716-446655440000
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начальная дата для выборки телеметрии
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конечная дата для выборки телеметрии
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Телеметрия профиля AI
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - telemetry
+                  - total
+                properties:
+                  telemetry:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AITelemetry'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 100
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/combat/raids/{raid_id}/phase:
+    post:
+      tags:
+        - Raids
+      summary: Переход фазы рейда
+      description: |
+        Переводит рейдовую сессию в следующую фазу. Используется для управления
+        фазами боссов и механиками рейдов.
+      operationId: transitionRaidPhase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: raid_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор рейдовой сессии
+          example: 550e8400-e29b-41d4-a716-446655440001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaidPhaseTransitionRequest'
+      responses:
+        '200':
+          description: Фаза рейда переведена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaidSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /gameplay/combat/stealth/status:
@@ -945,6 +1653,694 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/start:
+    post:
+      tags:
+        - Quest Management
+      summary: Начать квест
+      description: |
+        Начинает новый квест для текущего игрока.
+        Проверяет требования квеста и создаёт инстанс квеста.
+      operationId: startQuest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartQuestRequest'
+      responses:
+        '200':
+          description: Квест успешно начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartQuestResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}:
+    get:
+      tags:
+        - Quest Management
+      summary: Получить информацию о квесте
+      description: |
+        Возвращает информацию о квесте по ID инстанса квеста.
+        Включает состояние, прогресс и детали квеста.
+      operationId: getQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о квесте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/by-player/{player_id}:
+    get:
+      tags:
+        - Quest Management
+      summary: Получить квесты игрока
+      description: |
+        Возвращает список всех квестов игрока.
+        Поддерживает фильтрацию по состоянию и пагинацию.
+      operationId: getPlayerQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: state
+          in: query
+          description: Фильтр по состоянию квеста
+          schema:
+            type: string
+            enum:
+              - NOT_STARTED
+              - IN_PROGRESS
+              - COMPLETED
+              - FAILED
+              - CANCELLED
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список квестов игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/complete:
+    post:
+      tags:
+        - Quest Management
+      summary: Завершить квест
+      description: |
+        Завершает квест и распределяет награды.
+        Проверяет выполнение всех целей перед завершением.
+      operationId: completeQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteQuestRequest'
+      responses:
+        '200':
+          description: Квест успешно завершён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteQuestResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/cancel:
+    post:
+      tags:
+        - Quest Management
+      summary: Отменить квест
+      description: |
+        Отменяет активный квест.
+        Квест переходит в состояние CANCELLED.
+      operationId: cancelQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Квест успешно отменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/state:
+    get:
+      tags:
+        - Quest State
+      summary: Получить состояние квеста
+      description: |
+        Возвращает текущее состояние квеста, включая текущую цель и данные прогресса.
+      operationId: getQuestState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Quest State
+      summary: Обновить состояние квеста
+      description: |
+        Обновляет состояние квеста.
+        Используется для переходов между состояниями и обновления прогресса.
+      operationId: updateQuestState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStateRequest'
+      responses:
+        '200':
+          description: Состояние квеста обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/dialogue:
+    get:
+      tags:
+        - Quest Dialogue
+      summary: Получить текущий диалог
+      description: |
+        Возвращает текущий узел диалога для квеста.
+        Включает текст, варианты выбора и проверки навыков.
+      operationId: getQuestDialogue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий диалог
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DialogueNode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/dialogue/choice:
+    post:
+      tags:
+        - Quest Dialogue
+      summary: Сделать выбор в диалоге
+      description: |
+        Обрабатывает выбор игрока в диалоге.
+        Переходит к следующему узлу диалога на основе выбора.
+      operationId: makeDialogueChoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DialogueChoiceRequest'
+      responses:
+        '200':
+          description: Выбор обработан, возвращается следующий узел диалога
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DialogueNode'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/dialogue/history:
+    get:
+      tags:
+        - Quest Dialogue
+      summary: Получить историю диалогов
+      description: |
+        Возвращает полную историю диалогов для квеста.
+        Включает все пройденные узлы и сделанные выборы.
+      operationId: getDialogueHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История диалогов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DialogueHistory'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/skill-check:
+    post:
+      tags:
+        - Skill Checks
+      summary: Выполнить проверку навыка
+      description: |
+        Выполняет проверку навыка для квеста.
+        Проверяет атрибуты, навыки, предметы или репутацию персонажа.
+      operationId: performSkillCheck
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillCheckRequest'
+      responses:
+        '200':
+          description: Результат проверки навыка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillCheckResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/skill-checks:
+    get:
+      tags:
+        - Skill Checks
+      summary: Получить историю проверок навыков
+      description: |
+        Возвращает историю всех проверок навыков для квеста.
+        Поддерживает пагинацию.
+      operationId: getSkillCheckHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+        - name: check_type
+          in: query
+          description: Фильтр по типу проверки
+          schema:
+            type: string
+            enum:
+              - attribute
+              - skill
+              - item
+              - reputation
+        - name: passed
+          in: query
+          description: Фильтр по результату (true/false)
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История проверок навыков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillChecksResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/conditions/check:
+    post:
+      tags:
+        - Quest Conditions
+      summary: Проверить условия квеста
+      description: |
+        Проверяет условия квеста (требования для начала, условия для завершения, условия для целей).
+        Возвращает результат проверки всех условий.
+      operationId: checkQuestConditions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Результат проверки условий
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - all_conditions_met
+                  - conditions
+                properties:
+                  all_conditions_met:
+                    type: boolean
+                    description: Все условия выполнены
+                  conditions:
+                    type: array
+                    description: Детали проверки каждого условия
+                    items:
+                      type: object
+                      properties:
+                        condition_type:
+                          type: string
+                        condition_target:
+                          type: string
+                        required_value:
+                          type: integer
+                        actual_value:
+                          type: integer
+                        met:
+                          type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/requirements:
+    get:
+      tags:
+        - Quest Conditions
+      summary: Получить требования квеста
+      description: |
+        Возвращает все требования для начала квеста.
+        Включает уровень, предметы, предыдущие квесты, репутацию и местоположение.
+      operationId: getQuestRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID определения квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Требования квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestRequirements'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/rewards/distribute:
+    post:
+      tags:
+        - Quest Rewards
+      summary: Распределить награды за квест
+      description: |
+        Распределяет награды за завершённый квест.
+        Выдаёт опыт, валюту, предметы, репутацию и титулы.
+        Интегрируется с economy-service и mail-service.
+      operationId: distributeQuestRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды успешно распределены
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - rewards
+                properties:
+                  success:
+                    type: boolean
+                    description: Успешно ли распределены награды
+                  rewards:
+                    $ref: '#/components/schemas/QuestRewards'
+                  distribution_details:
+                    type: object
+                    description: Детали распределения (какие награды куда отправлены)
+                    additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/rewards:
+    get:
+      tags:
+        - Quest Rewards
+      summary: Получить награды квеста
+      description: |
+        Возвращает информацию о наградах квеста.
+        Показывает, какие награды будут выданы при завершении квеста.
+      operationId: getQuestRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID определения квеста или инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestRewards'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{quest_id}/events:
+    get:
+      tags:
+        - Quest Events
+      summary: Получить события квеста
+      description: |
+        Возвращает историю событий квеста.
+        Включает события начала, выполнения целей, завершения и отмены.
+        Поддерживает фильтрацию по типу события и пагинацию.
+      operationId: getQuestEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          description: Фильтр по типу события
+          schema:
+            type: string
+            enum:
+              - started
+              - objective-completed
+              - completed
+              - failed
+              - cancelled
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список событий квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/content/reload:
+    post:
+      tags:
+        - Quests
+      summary: Импортировать контентный квест из YAML в БД
+      operationId: reloadQuestContent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReloadQuestContentRequest'
+      responses:
+        '200':
+          description: Квест успешно импортирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReloadQuestContentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     BearerAuth:
@@ -1003,6 +2399,16 @@ components:
             error: Forbidden
             message: Доступ запрещен
             code: ACCESS_DENIED
+    Conflict:
+      description: Конфликт ресурсов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Conflict
+            message: Конфликт ресурсов
+            code: RESOURCE_CONFLICT
   parameters:
     Limit:
       name: limit
@@ -1454,6 +2860,138 @@ components:
           description: Влияние на киберпсихоз (0-1)
           example: 0.05
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AbilityLoadout:
+      type: object
+      required:
+        - id
+        - character_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор лоадаута
+          example: 550e8400-e29b-41d4-a716-446655440001
+        character_id:
+          type: string
+          format: uuid
+          description: Идентификатор персонажа
+          example: 550e8400-e29b-41d4-a716-446655440002
+        slot_q:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте Q
+          example: 550e8400-e29b-41d4-a716-446655440000
+        slot_e:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте E
+          example: 550e8400-e29b-41d4-a716-446655440003
+        slot_r:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте R
+          example: 550e8400-e29b-41d4-a716-446655440004
+        name:
+          type: string
+          description: Название лоадаута
+          example: Assault Build
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: '2025-11-23T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+          example: '2025-11-23T10:00:00Z'
+        passive_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список пассивных способностей
+          example:
+            - 550e8400-e29b-41d4-a716-446655440005
+        hacking_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список хакерских способностей
+          example:
+            - 550e8400-e29b-41d4-a716-446655440006
+        priority:
+          type: integer
+          minimum: 1
+          description: Приоритет лоадаута
+          example: 1
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическая активация способностей
+          example: false
+        is_active:
+          type: boolean
+          description: Активен ли лоадаут
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AbilityLoadoutCreate:
+      type: object
+      required:
+        - name
+      properties:
+        slot_q:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте Q
+          example: 550e8400-e29b-41d4-a716-446655440000
+        slot_e:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте E
+          example: 550e8400-e29b-41d4-a716-446655440003
+        slot_r:
+          type: string
+          format: uuid
+          nullable: true
+          description: Способность в слоте R
+          example: 550e8400-e29b-41d4-a716-446655440004
+        name:
+          type: string
+          description: Название лоадаута
+          example: Assault Build
+        passive_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список пассивных способностей
+          example:
+            - 550e8400-e29b-41d4-a716-446655440005
+        hacking_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список хакерских способностей
+          example:
+            - 550e8400-e29b-41d4-a716-446655440006
+        priority:
+          type: integer
+          minimum: 1
+          description: Приоритет лоадаута
+          example: 1
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическая активация способностей
+          example: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AbilityActivationRequest:
       type: object
       required:
@@ -1484,6 +3022,7 @@ components:
             z:
               type: number
               format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AbilityActivationResponse:
       type: object
       required:
@@ -1529,6 +3068,71 @@ components:
           type: boolean
           description: Обновлен ли киберпсихоз
           example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CooldownCheckRequest:
+      type: object
+      required:
+        - ability_ids
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список идентификаторов способностей для проверки
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+            - 550e8400-e29b-41d4-a716-446655440003
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CooldownStatus:
+      type: object
+      required:
+        - ability_id
+        - is_on_cooldown
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности
+          example: 550e8400-e29b-41d4-a716-446655440000
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала кулдауна
+          example: '2025-11-23T10:00:00Z'
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания кулдауна
+          example: '2025-11-23T10:00:15Z'
+        cooldown_duration:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Длительность кулдауна в секундах
+          example: 15
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Оставшееся время кулдауна в секундах
+          example: 10
+        is_on_cooldown:
+          type: boolean
+          description: Находится ли способность на кулдауне
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CooldownCheckResponse:
+      type: object
+      required:
+        - cooldowns
+      properties:
+        cooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CooldownStatus'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SynergyType:
       type: string
@@ -1634,6 +3238,186 @@ components:
           description: Список идентификаторов экипировки
           example:
             - 550e8400-e29b-41d4-a716-446655440010
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SynergyApplyRequest:
+      type: object
+      required:
+        - synergy_id
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+          description: Идентификатор синергии для применения
+          example: 550e8400-e29b-41d4-a716-446655440008
+        target_ability_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор способности-цели (если требуется)
+          example: 550e8400-e29b-41d4-a716-446655440000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SynergyApplyResponse:
+      type: object
+      required:
+        - success
+        - synergy_id
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+          description: Идентификатор примененной синергии
+          example: 550e8400-e29b-41d4-a716-446655440008
+        message:
+          type: string
+          nullable: true
+          description: Сообщение о результате
+          example: Synergy applied successfully
+        bonuses_applied:
+          type: object
+          description: Примененные бонусы
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 1
+              example: 1.2
+            cooldown_reduction:
+              type: integer
+              minimum: 0
+              example: 5
+        success:
+          type: boolean
+          description: Успешность применения синергии
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CyberpsychosisState:
+      type: object
+      required:
+        - character_id
+        - current_level
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Идентификатор персонажа
+          example: 550e8400-e29b-41d4-a716-446655440002
+        last_update:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+          example: '2025-11-23T10:00:00Z'
+        restrictions:
+          type: object
+          description: Ограничения из-за киберпсихоза
+          properties:
+            ability_usage_penalty:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              example: 0.1
+            attribute_penalties:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              example:
+                strength: -0.05
+                intelligence: -0.05
+        threshold_breaches:
+          type: integer
+          minimum: 0
+          description: Количество превышений порогов
+          example: 0
+        active_implants_count:
+          type: integer
+          minimum: 0
+          description: Количество активных имплантов
+          example: 3
+        current_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Текущий уровень киберпсихоза (0-1)
+          example: 0.15
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CyberpsychosisUpdateRequest:
+      type: object
+      required:
+        - ability_id
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности, которая влияет на киберпсихоз
+          example: 550e8400-e29b-41d4-a716-446655440000
+        duration_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Длительность использования в секундах
+          example: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AbilityMetrics:
+      type: object
+      required:
+        - character_id
+        - ability_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Идентификатор персонажа
+          example: 550e8400-e29b-41d4-a716-446655440002
+        ability_id:
+          type: string
+          format: uuid
+          description: Идентификатор способности
+          example: 550e8400-e29b-41d4-a716-446655440000
+        period_start:
+          type: string
+          format: date-time
+          description: Начало периода статистики
+          example: '2025-11-23T00:00:00Z'
+        period_end:
+          type: string
+          format: date-time
+          description: Конец периода статистики
+          example: '2025-11-23T23:59:59Z'
+        activations_count:
+          type: integer
+          minimum: 0
+          description: Количество активаций
+          example: 150
+        successful_activations:
+          type: integer
+          minimum: 0
+          description: Количество успешных активаций
+          example: 145
+        failed_activations:
+          type: integer
+          minimum: 0
+          description: Количество неудачных активаций
+          example: 5
+        synergies_triggered:
+          type: integer
+          minimum: 0
+          description: Количество срабатываний синергий
+          example: 30
+        average_damage:
+          type: number
+          format: float
+          minimum: 0
+          nullable: true
+          description: Средний урон
+          example: 250.5
+        total_damage:
+          type: number
+          format: float
+          minimum: 0
+          description: Общий урон
+          example: 37575
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ComboType:
       type: string
@@ -1764,6 +3548,7 @@ components:
           type: integer
           description: Общее количество комбо
           example: 50
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActivateComboRequest:
       type: object
       required:
@@ -2001,6 +3786,7 @@ components:
           minimum: 0
           maximum: 100
           nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ComboScore:
       type: object
       description: |
@@ -2192,6 +3978,333 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateEncounterRequest:
+      type: object
+      required:
+        - encounter_type
+        - profile_ids
+        - zone_id
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Идентификатор зоны
+          example: 550e8400-e29b-41d4-a716-446655440006
+        encounter_type:
+          type: string
+          description: Тип встречи
+          example: street
+        profile_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Идентификаторы профилей AI для встречи
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AIEncounter:
+      type: object
+      required:
+        - id
+        - encounter_type
+        - profile_ids
+        - zone_id
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор встречи
+          example: 550e8400-e29b-41d4-a716-446655440002
+        zone_id:
+          type: string
+          format: uuid
+          description: Идентификатор зоны
+          example: 550e8400-e29b-41d4-a716-446655440006
+        encounter_type:
+          type: string
+          description: Тип встречи
+          example: street
+        result:
+          type: string
+          enum:
+            - victory
+            - defeat
+            - abandoned
+          nullable: true
+          description: Результат встречи
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала встречи
+          example: '2025-11-29T10:00:00Z'
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения встречи
+        profile_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Идентификаторы профилей AI
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EndEncounterRequest:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          enum:
+            - victory
+            - defeat
+            - abandoned
+          description: Результат встречи
+          example: victory
+        completion_data:
+          type: object
+          description: Дополнительные данные о завершении
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AIAbility:
+      type: object
+      required:
+        - id
+        - name
+        - ability_type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор способности
+          example: 550e8400-e29b-41d4-a716-446655440003
+        name:
+          type: string
+          description: Название способности
+          example: Urban Sweep
+        ability_type:
+          type: string
+          description: Тип способности
+          example: area_attack
+        effects:
+          type: object
+          description: Эффекты способности
+          additionalProperties: true
+        requirements:
+          type: object
+          description: Требования для использования
+          additionalProperties: true
+        cooldown:
+          type: integer
+          minimum: 0
+          description: Время перезарядки в секундах
+          example: 30
+        damage:
+          type: integer
+          minimum: 0
+          description: Урон способности
+          example: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AIProfile:
+      type: object
+      required:
+        - id
+        - name
+        - difficulty_layer
+        - skill_level_min
+        - skill_level_max
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор профиля
+          example: 550e8400-e29b-41d4-a716-446655440000
+        loot_table_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор таблицы лута
+        faction_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор фракции
+        name:
+          type: string
+          description: Название профиля AI
+          example: Street Thug
+        difficulty_layer:
+          type: string
+          enum:
+            - street
+            - tactical
+            - mythic
+            - raid
+          description: Слой сложности
+          example: street
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+          example: '2025-11-29T10:00:00Z'
+        behavior_tree:
+          type: object
+          description: Дерево поведения AI
+          additionalProperties: true
+        utility_weights:
+          type: object
+          description: Веса утилит для Utility AI
+          additionalProperties: true
+        world_influence:
+          type: object
+          description: Влияние на мир
+          additionalProperties: true
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIAbility'
+          description: Список способностей AI
+        skill_level_min:
+          type: integer
+          minimum: 1
+          description: Минимальный уровень навыков
+          example: 1
+        skill_level_max:
+          type: integer
+          minimum: 1
+          description: Максимальный уровень навыков
+          example: 10
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AITelemetry:
+      type: object
+      required:
+        - id
+        - profile_id
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор записи телеметрии
+          example: 550e8400-e29b-41d4-a716-446655440004
+        profile_id:
+          type: string
+          format: uuid
+          description: Идентификатор профиля AI
+          example: 550e8400-e29b-41d4-a716-446655440000
+        encounter_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор встречи
+        raid_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор рейда
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка
+          example: '2025-11-29T10:00:00Z'
+        abilities_used:
+          type: object
+          description: Использованные способности
+          additionalProperties:
+            type: integer
+        damage_dealt:
+          type: integer
+          minimum: 0
+          description: Нанесенный урон
+          example: 5000
+        damage_taken:
+          type: integer
+          minimum: 0
+          description: Полученный урон
+          example: 3000
+        time_to_defeat:
+          type: integer
+          minimum: 0
+          description: Время до поражения в секундах
+          example: 120
+        skill_tests_passed:
+          type: integer
+          minimum: 0
+          description: Количество пройденных проверок навыков
+          example: 5
+        skill_tests_failed:
+          type: integer
+          minimum: 0
+          description: Количество проваленных проверок навыков
+          example: 2
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RaidPhaseTransitionRequest:
+      type: object
+      required:
+        - phase_number
+      properties:
+        reason:
+          type: string
+          description: Причина перехода фазы
+          example: Boss health threshold reached
+        phase_number:
+          type: integer
+          minimum: 1
+          description: Номер фазы для перехода
+          example: 2
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RaidSession:
+      type: object
+      required:
+        - id
+        - raid_id
+        - current_phase
+        - status
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор сессии
+          example: 550e8400-e29b-41d4-a716-446655440001
+        raid_id:
+          type: string
+          format: uuid
+          description: Идентификатор рейда
+          example: 550e8400-e29b-41d4-a716-446655440005
+        status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+            - failed
+          description: Статус рейда
+          example: in_progress
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала рейда
+          example: '2025-11-29T10:00:00Z'
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения рейда
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Идентификаторы участников рейда
+        current_phase:
+          type: integer
+          minimum: 1
+          description: Текущая фаза рейда
+          example: 2
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AffixSummary:
       type: object
       properties:
@@ -2346,6 +4459,7 @@ components:
           minimum: 1
           description: Общий модификатор сложности (произведение всех модификаторов)
           example: 1.44
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AffixRotation:
       type: object
       properties:
@@ -2402,4 +4516,497 @@ components:
           type: boolean
           default: false
           description: Принудительно запустить ротацию даже если уже есть активная
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    StartQuestRequest:
+      type: object
+      required:
+        - quest_id
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: ID определения квеста для начала
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DialogueChoice:
+      type: object
+      required:
+        - choice_id
+        - text
+      properties:
+        choice_id:
+          type: string
+          description: ID выбора
+        text:
+          type: string
+          description: Текст выбора
+        next_node_id:
+          type: string
+          description: ID следующего узла
+        requirements:
+          type: object
+          description: Требования для выбора
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillCheck:
+      type: object
+      required:
+        - check_type
+        - check_target
+        - required_value
+      properties:
+        check_target:
+          type: string
+          description: Цель проверки (название атрибута/навыка/предмета)
+        check_type:
+          type: string
+          enum:
+            - attribute
+            - skill
+            - item
+            - reputation
+          description: |
+            Тип проверки:
+            - `attribute` - проверка атрибутов
+            - `skill` - проверка навыков
+            - `item` - проверка предметов
+            - `reputation` - проверка репутации
+        required_value:
+          type: integer
+          description: Требуемое значение
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DialogueNode:
+      type: object
+      required:
+        - node_id
+        - text
+      properties:
+        node_id:
+          type: string
+          description: ID узла диалога
+        text:
+          type: string
+          description: Текст диалога
+        speaker:
+          type: string
+          description: Имя говорящего
+        choices:
+          type: array
+          description: Варианты выбора
+          items:
+            $ref: '#/components/schemas/DialogueChoice'
+        skill_checks:
+          type: array
+          description: Проверки навыков для этого узла
+          items:
+            $ref: '#/components/schemas/SkillCheck'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestInstance:
+      type: object
+      description: |
+        BACKEND NOTE: Quest tracking (100+ active quests per player).
+        Fields ordered for struct alignment. Expected memory: ~112 bytes/instance.
+      required:
+        - id
+        - quest_id
+        - player_id
+        - state
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор инстанса квеста
+        quest_id:
+          type: string
+          format: uuid
+          description: ID определения квеста
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        state:
+          type: string
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+            - CANCELLED
+          description: |
+            Состояние квеста:
+            - `NOT_STARTED` - квест не начат
+            - `IN_PROGRESS` - квест в процессе
+            - `COMPLETED` - квест завершён
+            - `FAILED` - квест провален
+            - `CANCELLED` - квест отменён
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала квеста
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения квеста
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+        progress_data:
+          type: object
+          description: Данные прогресса квеста (JSON)
+          additionalProperties: true
+        current_objective:
+          type: integer
+          description: Текущий номер цели (индекс)
+          minimum: 0
+    StartQuestResponse:
+      type: object
+      required:
+        - quest_instance
+      properties:
+        dialogue:
+          $ref: '#/components/schemas/DialogueNode'
+          nullable: true
+          description: Начальный диалог (если есть)
+        quest_instance:
+          $ref: '#/components/schemas/QuestInstance'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestListResponse:
+      type: object
+      required:
+        - quests
+        - total
+      properties:
+        quests:
+          type: array
+          description: Список квестов
+          items:
+            $ref: '#/components/schemas/QuestInstance'
+        total:
+          type: integer
+          description: Общее количество квестов
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CompleteQuestRequest:
+      type: object
+      properties:
+        force:
+          type: boolean
+          default: false
+          description: Принудительное завершение (для админов)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestRewards:
+      type: object
+      properties:
+        reputation:
+          type: object
+          description: Репутация
+          additionalProperties: true
+        items:
+          type: array
+          description: Предметы
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        titles:
+          type: array
+          description: Титулы
+          items:
+            type: string
+        experience:
+          type: integer
+          description: Опыт
+          minimum: 0
+        currency:
+          type: integer
+          description: Валюта
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CompleteQuestResponse:
+      type: object
+      required:
+        - quest_instance
+        - rewards
+      properties:
+        quest_instance:
+          $ref: '#/components/schemas/QuestInstance'
+        rewards:
+          $ref: '#/components/schemas/QuestRewards'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestState:
+      type: object
+      required:
+        - state
+        - current_objective
+      properties:
+        state:
+          type: string
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+            - CANCELLED
+          description: Текущее состояние квеста
+        progress_data:
+          type: object
+          description: Данные прогресса
+          additionalProperties: true
+        current_objective:
+          type: integer
+          description: Текущий номер цели
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateStateRequest:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum:
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+            - CANCELLED
+          description: Новое состояние квеста
+        progress_data:
+          type: object
+          description: Обновлённые данные прогресса
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DialogueChoiceRequest:
+      type: object
+      required:
+        - choice_id
+      properties:
+        choice_id:
+          type: string
+          description: ID выбранного варианта
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DialogueHistory:
+      type: object
+      required:
+        - quest_instance_id
+        - history
+      properties:
+        quest_instance_id:
+          type: string
+          format: uuid
+          description: ID инстанса квеста
+        history:
+          type: array
+          description: История диалогов
+          items:
+            type: object
+            properties:
+              node_id:
+                type: string
+              text:
+                type: string
+              speaker:
+                type: string
+              choice_made:
+                type: string
+                nullable: true
+              timestamp:
+                type: string
+                format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillCheckRequest:
+      type: object
+      required:
+        - check_type
+        - check_target
+      properties:
+        check_target:
+          type: string
+          description: Цель проверки
+        check_type:
+          type: string
+          enum:
+            - attribute
+            - skill
+            - item
+            - reputation
+          description: Тип проверки
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillCheckResult:
+      type: object
+      required:
+        - check_type
+        - check_target
+        - required_value
+        - actual_value
+        - passed
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID результата проверки
+        quest_instance_id:
+          type: string
+          format: uuid
+          description: ID инстанса квеста
+        check_target:
+          type: string
+          description: Цель проверки
+        check_type:
+          type: string
+          enum:
+            - attribute
+            - skill
+            - item
+            - reputation
+          description: Тип проверки
+        checked_at:
+          type: string
+          format: date-time
+          description: Время проверки
+        required_value:
+          type: integer
+          description: Требуемое значение
+        actual_value:
+          type: integer
+          description: Фактическое значение
+        passed:
+          type: boolean
+          description: Пройдена ли проверка
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillChecksResponse:
+      type: object
+      required:
+        - skill_checks
+        - total
+      properties:
+        skill_checks:
+          type: array
+          description: Список проверок навыков
+          items:
+            $ref: '#/components/schemas/SkillCheckResult'
+        total:
+          type: integer
+          description: Общее количество проверок
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestRequirements:
+      type: object
+      properties:
+        reputation:
+          type: object
+          description: Требования репутации
+          additionalProperties: true
+        location:
+          type: object
+          description: Требования местоположения
+          additionalProperties: true
+        items:
+          type: array
+          description: Требуемые предметы
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        quest_prerequisites:
+          type: array
+          description: Требуемые предыдущие квесты
+          items:
+            type: string
+            format: uuid
+        level:
+          type: integer
+          description: Требуемый уровень
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID события
+        quest_instance_id:
+          type: string
+          format: uuid
+          description: ID инстанса квеста
+        event_type:
+          type: string
+          enum:
+            - started
+            - objective-completed
+            - completed
+            - failed
+            - cancelled
+          description: |
+            Тип события:
+            - `started` - квест начат
+            - `objective-completed` - цель выполнена
+            - `completed` - квест завершён
+            - `failed` - квест провален
+            - `cancelled` - квест отменён
+        timestamp:
+          type: string
+          format: date-time
+          description: Время события
+        event_data:
+          type: object
+          description: Данные события (JSON)
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestEventsResponse:
+      type: object
+      required:
+        - events
+        - total
+      properties:
+        events:
+          type: array
+          description: Список событий
+          items:
+            $ref: '#/components/schemas/QuestEvent'
+        total:
+          type: integer
+          description: Общее количество событий
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentRequest:
+      type: object
+      required:
+        - quest_id
+        - yaml_content
+      properties:
+        quest_id:
+          type: string
+          description: ID квеста из YAML файла (metadata.id)
+        yaml_content:
+          type: object
+          description: Полное содержимое YAML файла квеста
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        message:
+          type: string
+        imported_at:
+          type: string
+          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

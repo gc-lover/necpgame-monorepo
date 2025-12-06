@@ -1,0 +1,33 @@
+services:
+  postgres-test:
+    image: postgres:15
+    container_name: support-service-postgres-test
+    environment:
+      POSTGRES_DB: necpgame
+      POSTGRES_USER: necpgame
+      POSTGRES_PASSWORD: necpgame
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - ./test-schema.sql:/docker-entrypoint-initdb.d/01-test-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U necpgame"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+    tmpfs:
+      - /var/lib/postgresql/data  # In-memory for faster tests
+    command: ["postgres", "-c", "fsync=off", "-c", "synchronous_commit=off"]
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: support-service-redis-test
+    command: ["redis-server", "--appendonly", "no"]  # No persistence for tests
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+

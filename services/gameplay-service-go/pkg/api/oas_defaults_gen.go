@@ -3,6 +3,14 @@
 package api
 
 // setDefaults set default value of fields.
+func (s *CompleteQuestRequest) setDefaults() {
+	{
+		val := bool(false)
+		s.Force.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
 func (s *TriggerRotationRequest) setDefaults() {
 	{
 		val := bool(false)

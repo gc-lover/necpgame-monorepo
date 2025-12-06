@@ -13,6 +13,11 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 )
 
+// testContext creates a context with timeout for HTTP tests
+func httpTestContext(t *testing.T) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
+}
+
 type mockTicketService struct {
 	tickets      map[uuid.UUID]*models.SupportTicket
 	ticketByNum  map[string]*models.SupportTicket
@@ -246,6 +251,10 @@ func (m *mockTicketService) RateTicket(ctx context.Context, id uuid.UUID, rating
 }
 
 func TestHTTPServer_CreateTicket(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -254,17 +263,18 @@ func TestHTTPServer_CreateTicket(t *testing.T) {
 	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	playerID := uuid.New()
-	reqBody := models.CreateTicketRequest{
-		Category:    models.TicketCategoryTechnical,
-		Subject:     "Test Ticket",
-		Description: "Test Description",
-		Priority:    &[]models.TicketPriority{models.TicketPriorityHigh}[0],
+	// Use API format (uppercase enum values) for ogen
+	reqBody := map[string]interface{}{
+		"category":    "TECHNICAL",
+		"subject":     "Test Ticket",
+		"description": "Test Description",
+		"priority":    "HIGH",
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("POST", "/api/v1/support/tickets", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
-	ctx := context.WithValue(req.Context(), "user_id", playerID.String())
-	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", "Bearer test-token")
+	req = req.WithContext(context.WithValue(ctx, "user_id", playerID.String()))
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -284,6 +294,10 @@ func TestHTTPServer_CreateTicket(t *testing.T) {
 }
 
 func TestHTTPServer_GetTicket(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -309,6 +323,8 @@ func TestHTTPServer_GetTicket(t *testing.T) {
 	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets/"+ticketID.String(), nil)
+	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", "Bearer test-token")
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -328,6 +344,10 @@ func TestHTTPServer_GetTicket(t *testing.T) {
 }
 
 func TestHTTPServer_GetTicketNotFound(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -336,6 +356,8 @@ func TestHTTPServer_GetTicketNotFound(t *testing.T) {
 	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets/"+uuid.New().String(), nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	req = req.WithContext(context.WithValue(ctx, "user_id", uuid.New().String()))
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -346,6 +368,10 @@ func TestHTTPServer_GetTicketNotFound(t *testing.T) {
 }
 
 func TestHTTPServer_GetTickets(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -379,8 +405,8 @@ func TestHTTPServer_GetTickets(t *testing.T) {
 	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets", nil)
-	ctx := context.WithValue(req.Context(), "user_id", playerID.String())
-	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", "Bearer test-token")
+	req = req.WithContext(context.WithValue(ctx, "user_id", playerID.String()))
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -400,6 +426,10 @@ func TestHTTPServer_GetTickets(t *testing.T) {
 }
 
 func TestHTTPServer_UpdateTicket(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -422,13 +452,17 @@ func TestHTTPServer_UpdateTicket(t *testing.T) {
 	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	newSubject := "Updated Subject"
-	reqBody := models.UpdateTicketRequest{
-		Subject: &newSubject,
-		Status:  &[]models.TicketStatus{models.TicketStatusInProgress}[0],
+	// Use API format (uppercase enum values) for ogen
+	statusValue := "IN_PROGRESS"
+	reqBody := map[string]interface{}{
+		"subject": newSubject,
+		"status":  statusValue,
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("PUT", "/api/v1/support/tickets/"+ticketID.String(), bytes.NewBuffer(body))
+	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-token")
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -448,6 +482,10 @@ func TestHTTPServer_UpdateTicket(t *testing.T) {
 }
 
 func TestHTTPServer_AssignTicket(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -473,7 +511,9 @@ func TestHTTPServer_AssignTicket(t *testing.T) {
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("POST", "/api/v1/support/tickets/"+ticketID.String()+"/assign", bytes.NewBuffer(body))
+	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-token")
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -493,6 +533,10 @@ func TestHTTPServer_AssignTicket(t *testing.T) {
 }
 
 func TestHTTPServer_AddResponse(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -519,12 +563,13 @@ func TestHTTPServer_AddResponse(t *testing.T) {
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("POST", "/api/v1/support/tickets/"+ticketID.String()+"/responses", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-token")
 	claims := &Claims{
 		RealmAccess: struct {
 			Roles []string `json:"roles"`
 		}{Roles: []string{"player"}},
 	}
-	ctx := context.WithValue(req.Context(), "user_id", authorID.String())
+	ctx = context.WithValue(ctx, "user_id", authorID.String())
 	ctx = context.WithValue(ctx, "claims", claims)
 	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
@@ -546,6 +591,10 @@ func TestHTTPServer_AddResponse(t *testing.T) {
 }
 
 func TestHTTPServer_GetTicketDetail(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -575,6 +624,8 @@ func TestHTTPServer_GetTicketDetail(t *testing.T) {
 	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/api/v1/support/tickets/"+ticketID.String()+"/detail", nil)
+	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", "Bearer test-token")
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -594,6 +645,10 @@ func TestHTTPServer_GetTicketDetail(t *testing.T) {
 }
 
 func TestHTTPServer_RateTicket(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -618,7 +673,9 @@ func TestHTTPServer_RateTicket(t *testing.T) {
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("POST", "/api/v1/support/tickets/"+ticketID.String()+"/rate", bytes.NewBuffer(body))
+	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-token")
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)
@@ -629,6 +686,10 @@ func TestHTTPServer_RateTicket(t *testing.T) {
 }
 
 func TestHTTPServer_HealthCheck(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := httpTestContext(t)
+	defer cancel()
+
 	mockService := &mockTicketService{
 		tickets:     make(map[uuid.UUID]*models.SupportTicket),
 		ticketByNum: make(map[string]*models.SupportTicket),
@@ -637,6 +698,7 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 	server := NewHTTPServer(":8080", mockService, nil, nil, false)
 
 	req := httptest.NewRequest("GET", "/health", nil)
+	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
 
 	server.router.ServeHTTP(w, req)

@@ -410,26 +410,18 @@ func (s *LeaderboardEntry) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *LeaderboardEntry) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("rank")
-		e.Int(s.Rank)
-	}
-	{
 		e.FieldStart("player_id")
 		json.EncodeUUID(e, s.PlayerID)
-	}
-	{
-		e.FieldStart("player_name")
-		e.Str(s.PlayerName)
-	}
-	{
-		e.FieldStart("score")
-		e.Int(s.Score)
 	}
 	{
 		if s.FactionID.Set {
 			e.FieldStart("faction_id")
 			s.FactionID.Encode(e)
 		}
+	}
+	{
+		e.FieldStart("player_name")
+		e.Str(s.PlayerName)
 	}
 	{
 		if s.FactionName.Set {
@@ -443,16 +435,24 @@ func (s *LeaderboardEntry) encodeFields(e *jx.Encoder) {
 			s.UpdatedAt.Encode(e, json.EncodeDateTime)
 		}
 	}
+	{
+		e.FieldStart("rank")
+		e.Int(s.Rank)
+	}
+	{
+		e.FieldStart("score")
+		e.Int(s.Score)
+	}
 }
 
 var jsonFieldsNameOfLeaderboardEntry = [7]string{
-	0: "rank",
-	1: "player_id",
+	0: "player_id",
+	1: "faction_id",
 	2: "player_name",
-	3: "score",
-	4: "faction_id",
-	5: "faction_name",
-	6: "updated_at",
+	3: "faction_name",
+	4: "updated_at",
+	5: "rank",
+	6: "score",
 }
 
 // Decode decodes LeaderboardEntry from json.
@@ -464,20 +464,8 @@ func (s *LeaderboardEntry) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "rank":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int()
-				s.Rank = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"rank\"")
-			}
 		case "player_id":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := json.DecodeUUID(d)
 				s.PlayerID = v
@@ -487,6 +475,16 @@ func (s *LeaderboardEntry) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"player_id\"")
+			}
+		case "faction_id":
+			if err := func() error {
+				s.FactionID.Reset()
+				if err := s.FactionID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"faction_id\"")
 			}
 		case "player_name":
 			requiredBitSet[0] |= 1 << 2
@@ -499,28 +497,6 @@ func (s *LeaderboardEntry) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"player_name\"")
-			}
-		case "score":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Int()
-				s.Score = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"score\"")
-			}
-		case "faction_id":
-			if err := func() error {
-				s.FactionID.Reset()
-				if err := s.FactionID.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"faction_id\"")
 			}
 		case "faction_name":
 			if err := func() error {
@@ -542,6 +518,30 @@ func (s *LeaderboardEntry) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
+		case "rank":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Int()
+				s.Rank = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rank\"")
+			}
+		case "score":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Int()
+				s.Score = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"score\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -552,7 +552,7 @@ func (s *LeaderboardEntry) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001111,
+		0b01100101,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -1134,6 +1134,12 @@ func (s *PlayerRank) encodeFields(e *jx.Encoder) {
 		json.EncodeUUID(e, s.PlayerID)
 	}
 	{
+		if s.Percentile.Set {
+			e.FieldStart("percentile")
+			s.Percentile.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("global_rank")
 		e.Int(s.GlobalRank)
 	}
@@ -1145,20 +1151,14 @@ func (s *PlayerRank) encodeFields(e *jx.Encoder) {
 		e.FieldStart("score")
 		e.Int(s.Score)
 	}
-	{
-		if s.Percentile.Set {
-			e.FieldStart("percentile")
-			s.Percentile.Encode(e)
-		}
-	}
 }
 
 var jsonFieldsNameOfPlayerRank = [5]string{
 	0: "player_id",
-	1: "global_rank",
-	2: "faction_rank",
-	3: "score",
-	4: "percentile",
+	1: "percentile",
+	2: "global_rank",
+	3: "faction_rank",
+	4: "score",
 }
 
 // Decode decodes PlayerRank from json.
@@ -1182,8 +1182,18 @@ func (s *PlayerRank) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"player_id\"")
 			}
+		case "percentile":
+			if err := func() error {
+				s.Percentile.Reset()
+				if err := s.Percentile.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"percentile\"")
+			}
 		case "global_rank":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int()
 				s.GlobalRank = int(v)
@@ -1195,7 +1205,7 @@ func (s *PlayerRank) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"global_rank\"")
 			}
 		case "faction_rank":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				v, err := d.Int()
 				s.FactionRank = int(v)
@@ -1207,7 +1217,7 @@ func (s *PlayerRank) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"faction_rank\"")
 			}
 		case "score":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				v, err := d.Int()
 				s.Score = int(v)
@@ -1217,16 +1227,6 @@ func (s *PlayerRank) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"score\"")
-			}
-		case "percentile":
-			if err := func() error {
-				s.Percentile.Reset()
-				if err := s.Percentile.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"percentile\"")
 			}
 		default:
 			return d.Skip()
@@ -1238,7 +1238,7 @@ func (s *PlayerRank) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001111,
+		0b00011101,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

@@ -1,4 +1,4 @@
-// Issue: #44
+﻿// Issue: #44
 module github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go
 
 go 1.24.0
@@ -16,7 +16,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.1
-)
+
+	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
+	)
 
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -39,4 +41,7 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-)
+
+	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
+	)
+

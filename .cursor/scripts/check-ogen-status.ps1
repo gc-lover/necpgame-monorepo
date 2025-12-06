@@ -135,7 +135,7 @@ Write-Host ""
 Write-Host "🎯 Next Steps:" -ForegroundColor Cyan
 if ($OapiCount -gt 0) {
     Write-Host "  1. Review High Priority services (combat, movement, world)"
-    Write-Host "  2. See .cursor/OGEN_MIGRATION_GUIDE.md for migration steps"
+    Write-Host "  2. See .cursor/ogen/README.md for reference"
     Write-Host "  3. Track progress in GitHub Issues #1595-#1602"
     Write-Host "  4. Main tracker: Issue #1603"
 }

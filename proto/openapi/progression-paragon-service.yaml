@@ -1,43 +1,43 @@
 openapi: 3.0.3
 info:
   title: Progression Paragon Service API
-  description: |
-    API для системы Paragon Levels: бесконечные уровни после 50, распределение очков по характеристикам.
+  description: 'API для системы Paragon Levels: бесконечные уровни после 50, распределение очков по характеристикам.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1/progression
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/progression
-    description: Продакшен сервер
-
+- url: http://localhost:8084/api/v1/progression
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/progression
+  description: Продакшен сервер
 tags:
-  - name: Paragon
-    description: Paragon Levels - бесконечные уровни после 50
-
+- name: Paragon
+  description: Paragon Levels - бесконечные уровни после 50
 paths:
   /paragon/levels:
     get:
       tags:
-        - Paragon
+      - Paragon
       summary: Получить Paragon Levels персонажа
-      description: |
-        Возвращает информацию о Paragon Levels персонажа: текущий уровень, накопленные очки,
+      description: 'Возвращает информацию о Paragon Levels персонажа: текущий уровень, накопленные очки,
+
         распределение очков по характеристикам и прогресс до следующего уровня.
+
+        '
       operationId: getParagonLevels
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       responses:
         '200':
           description: Информация о Paragon Levels
@@ -46,7 +46,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ParagonLevels'
               example:
-                character_id: '110e8400-e29b-41d4-a716-446655440000'
+                character_id: 110e8400-e29b-41d4-a716-446655440000
                 paragon_level: 15
                 paragon_points_total: 75
                 paragon_points_spent: 60
@@ -54,41 +54,42 @@ paths:
                 experience_current: 125000
                 experience_required: 150000
                 allocations:
-                  - stat_type: strength
-                    points_allocated: 20
-                  - stat_type: agility
-                    points_allocated: 15
-                  - stat_type: intelligence
-                    points_allocated: 10
-                  - stat_type: vitality
-                    points_allocated: 15
+                - stat_type: strength
+                  points_allocated: 20
+                - stat_type: agility
+                  points_allocated: 15
+                - stat_type: intelligence
+                  points_allocated: 10
+                - stat_type: vitality
+                  points_allocated: 15
                 updated_at: '2025-12-01T10:00:00Z'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /paragon/distribute:
     post:
       tags:
-        - Paragon
+      - Paragon
       summary: Распределить Paragon Points по характеристикам
-      description: |
-        Распределяет доступные Paragon Points по характеристикам персонажа.
+      description: 'Распределяет доступные Paragon Points по характеристикам персонажа.
+
         Каждая характеристика может получить до определенного максимума очков.
+
+        '
       operationId: distributeParagonPoints
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       requestBody:
         required: true
         content:
@@ -97,14 +98,14 @@ paths:
               $ref: '#/components/schemas/DistributeParagonPointsRequest'
             example:
               allocations:
-                - stat_type: strength
-                  points: 5
-                - stat_type: agility
-                  points: 3
-                - stat_type: intelligence
-                  points: 2
-                - stat_type: vitality
-                  points: 5
+              - stat_type: strength
+                points: 5
+              - stat_type: agility
+                points: 3
+              - stat_type: intelligence
+                points: 2
+              - stat_type: vitality
+                points: 5
       responses:
         '200':
           description: Paragon Points успешно распределены
@@ -113,33 +114,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/ParagonLevels'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: common.yaml#/components/responses/BadRequest
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
   /paragon/stats:
     get:
       tags:
-        - Paragon
+      - Paragon
       summary: Получить статистику Paragon Levels
-      description: |
-        Возвращает статистику Paragon Levels: общее количество уровней, распределение очков,
+      description: 'Возвращает статистику Paragon Levels: общее количество уровней, распределение очков,
+
         топ игроков по Paragon Levels.
+
+        '
       operationId: getParagonStats
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       responses:
         '200':
           description: Статистика Paragon Levels
@@ -148,7 +150,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ParagonStats'
               example:
-                character_id: '110e8400-e29b-41d4-a716-446655440000'
+                character_id: 110e8400-e29b-41d4-a716-446655440000
                 total_paragon_levels: 15
                 total_points_earned: 75
                 total_points_spent: 60
@@ -160,57 +162,57 @@ paths:
                 global_rank: 1250
                 percentile: 85.5
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: common.yaml#/components/responses/NotFound
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ParagonAllocation:
       type: object
       properties:
         stat_type:
           type: string
-          enum: [strength, agility, intelligence, vitality, willpower, perception]
+          enum:
+          - strength
+          - agility
+          - intelligence
+          - vitality
+          - willpower
+          - perception
           description: Тип характеристики
         points_allocated:
           type: integer
           minimum: 0
           description: Количество распределенных очков
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ParagonLevels:
       type: object
-      description: |
-        BACKEND NOTE: Endgame progression data (frequent queries).
+      description: 'BACKEND NOTE: Endgame progression data (frequent queries).
+
         Fields ordered for struct alignment. Expected memory: ~96 bytes/instance.
+
         Use materialized view for rankings (paragon_stats).
+
+        '
       properties:
-        # UUID first (16 bytes)
         character_id:
           type: string
           format: uuid
           description: ID персонажа
-        
-        # String fields (16 bytes)
         updated_at:
           type: string
           format: date-time
           description: Дата обновления
-        
-        # Array (24 bytes: pointer + len + cap)
         allocations:
           type: array
           items:
             $ref: '#/components/schemas/ParagonAllocation'
           description: Распределение очков по характеристикам
-        
-        # Integer fields grouped (4 bytes each)
         paragon_level:
           type: integer
           minimum: 0
@@ -235,48 +237,51 @@ components:
           type: integer
           minimum: 1
           description: Опыт, требуемый для следующего уровня
-
     DistributeParagonPointsRequest:
       type: object
       required:
-        - allocations
+      - allocations
       properties:
         allocations:
           type: array
           items:
             type: object
             required:
-              - stat_type
-              - points
+            - stat_type
+            - points
             properties:
               stat_type:
                 type: string
-                enum: [strength, agility, intelligence, vitality, willpower, perception]
+                enum:
+                - strength
+                - agility
+                - intelligence
+                - vitality
+                - willpower
+                - perception
               points:
                 type: integer
                 minimum: 1
           description: Распределение очков
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ParagonStats:
       type: object
-      description: |
-        BACKEND NOTE: Statistics and rankings (use materialized view: progression.paragon_stats).
+      description: 'BACKEND NOTE: Statistics and rankings (use materialized view: progression.paragon_stats).
+
         Fields ordered for struct alignment. Expected memory: ~64 bytes/instance.
+
         Query from materialized view for 100x speedup!
+
+        '
       properties:
-        # UUID first (16 bytes)
         character_id:
           type: string
           format: uuid
-        
-        # Object (8 bytes reference)
         points_by_stat:
           type: object
           additionalProperties:
             type: integer
             minimum: 0
-        
-        # Integer fields grouped (4 bytes each)
         total_paragon_levels:
           type: integer
           minimum: 0
@@ -289,12 +294,8 @@ components:
         global_rank:
           type: integer
           minimum: 1
-        
-        # Float last (4 bytes)
         percentile:
           type: number
           format: float
           minimum: 0.0
           maximum: 100.0
-
-

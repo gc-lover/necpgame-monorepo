@@ -1,0 +1,74 @@
+# Issue: #230
+
+openapi: 3.0.3
+info:
+  title: Logistics Service API
+  description: |
+    API для логистики и перевозок: управление перевозками, маршрутами, расчет стоимости.
+    
+    **Основные модули:**
+    - Shipments - управление перевозками
+    - Routes - управление маршрутами
+    
+    **Performance:**
+    - Hot endpoints: POST /logistics/shipments, GET /logistics/routes
+    - Expected load: 500 RPS, P99 <100ms
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Shipments
+    description: Управление перевозками
+  - name: Routes
+    description: Управление маршрутами
+
+paths:
+  # Shipments - Issue: #230
+  /logistics/shipments/quote:
+    $ref: "logistics-shipments-service.yaml#/paths/~1logistics~1shipments~1quote"
+  
+  /logistics/shipments:
+    $ref: "logistics-shipments-service.yaml#/paths/~1logistics~1shipments"
+  
+  /logistics/shipments/{shipment_id}:
+    $ref: "logistics-shipments-service.yaml#/paths/~1logistics~1shipments~1{shipment_id}"
+  
+  /logistics/shipments/{shipment_id}/track:
+    $ref: "logistics-shipments-service.yaml#/paths/~1logistics~1shipments~1{shipment_id}~1track"
+  
+  # Routes - Issue: #230
+  /logistics/routes:
+    $ref: "logistics-routes-service.yaml#/paths/~1logistics~1routes"
+  
+  /logistics/routes/{route_id}:
+    $ref: "logistics-routes-service.yaml#/paths/~1logistics~1routes~1{route_id}"
+  
+  /logistics/routes/calculate:
+    $ref: "logistics-routes-service.yaml#/paths/~1logistics~1routes~1calculate"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  responses:
+    BadRequest:
+      $ref: "common.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "common.yaml#/components/responses/Unauthorized"
+    NotFound:
+      $ref: "common.yaml#/components/responses/NotFound"
+    InternalServerError:
+      $ref: "common.yaml#/components/responses/InternalServerError"
+
+security:
+  - BearerAuth: []
+

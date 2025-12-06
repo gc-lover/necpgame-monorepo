@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Voice Lobby Participants Service API
+  description: 'API для управления участниками голосовых лобби.
+
+
+    Система поддерживает:
+
+    - Получение списка участников
+
+    - Управление участниками (mute, deafen)
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+- url: http://localhost:8096/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
+tags:
+- name: Participants
+  description: Управление участниками лобби
+paths:
+  /voice-lobbies/{lobbyId}/participants:
+    get:
+      tags:
+      - Participants
+      summary: Участники лобби
+      operationId: getLobbyParticipants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: lobbyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LobbyParticipant'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    LobbyParticipant:
+      type: object
+      required:
+      - id
+      - lobby_id
+      - character_id
+      - role
+      - is_muted
+      - is_deafened
+      - joined_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID участника
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        subchannel_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID подканала
+        role:
+          type: string
+          enum:
+          - leader
+          - commander
+          - party_leader
+          - officer
+          - member
+          description: Роль участника
+        joined_at:
+          type: string
+          format: date-time
+          description: Время присоединения
+        left_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время выхода
+        is_muted:
+          type: boolean
+          description: Участник заглушен
+        is_deafened:
+          type: boolean
+          description: Участник оглушен
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~64 bytes/instance.'

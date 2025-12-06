@@ -9,16 +9,72 @@ type ActivateComboRes interface {
 	activateComboRes()
 }
 
+type ApplySynergyRes interface {
+	applySynergyRes()
+}
+
+type CancelQuestRes interface {
+	cancelQuestRes()
+}
+
+type CheckCooldownsRes interface {
+	checkCooldownsRes()
+}
+
+type CheckQuestConditionsRes interface {
+	checkQuestConditionsRes()
+}
+
+type CompleteQuestRes interface {
+	completeQuestRes()
+}
+
 type CreateCombatSessionRes interface {
 	createCombatSessionRes()
+}
+
+type CreateEncounterRes interface {
+	createEncounterRes()
+}
+
+type CreateOrUpdateAbilityLoadoutRes interface {
+	createOrUpdateAbilityLoadoutRes()
+}
+
+type DistributeQuestRewardsRes interface {
+	distributeQuestRewardsRes()
 }
 
 type EndCombatSessionRes interface {
 	endCombatSessionRes()
 }
 
+type EndEncounterRes interface {
+	endEncounterRes()
+}
+
+type GetAIProfileRes interface {
+	getAIProfileRes()
+}
+
+type GetAIProfileTelemetryRes interface {
+	getAIProfileTelemetryRes()
+}
+
+type GetAbilityByIdRes interface {
+	getAbilityByIdRes()
+}
+
 type GetAbilityCatalogRes interface {
 	getAbilityCatalogRes()
+}
+
+type GetAbilityLoadoutsRes interface {
+	getAbilityLoadoutsRes()
+}
+
+type GetAbilityMetricsRes interface {
+	getAbilityMetricsRes()
 }
 
 type GetActiveAffixesRes interface {
@@ -57,6 +113,18 @@ type GetComboLoadoutRes interface {
 	getComboLoadoutRes()
 }
 
+type GetCyberpsychosisStateRes interface {
+	getCyberpsychosisStateRes()
+}
+
+type GetDialogueHistoryRes interface {
+	getDialogueHistoryRes()
+}
+
+type GetEncounterRes interface {
+	getEncounterRes()
+}
+
 type GetExtractZonesRes interface {
 	getExtractZonesRes()
 }
@@ -77,12 +145,72 @@ type GetLoadoutsRes interface {
 	getLoadoutsRes()
 }
 
+type GetPlayerQuestsRes interface {
+	getPlayerQuestsRes()
+}
+
+type GetQuestDialogueRes interface {
+	getQuestDialogueRes()
+}
+
+type GetQuestEventsRes interface {
+	getQuestEventsRes()
+}
+
+type GetQuestRequirementsRes interface {
+	getQuestRequirementsRes()
+}
+
+type GetQuestRes interface {
+	getQuestRes()
+}
+
+type GetQuestRewardsRes interface {
+	getQuestRewardsRes()
+}
+
+type GetQuestStateRes interface {
+	getQuestStateRes()
+}
+
+type GetSkillCheckHistoryRes interface {
+	getSkillCheckHistoryRes()
+}
+
 type GetStealthStatusRes interface {
 	getStealthStatusRes()
 }
 
+type ListAIProfilesRes interface {
+	listAIProfilesRes()
+}
+
+type MakeDialogueChoiceRes interface {
+	makeDialogueChoiceRes()
+}
+
+type PerformSkillCheckRes interface {
+	performSkillCheckRes()
+}
+
+type ReloadQuestContentRes interface {
+	reloadQuestContentRes()
+}
+
+type StartEncounterRes interface {
+	startEncounterRes()
+}
+
+type StartQuestRes interface {
+	startQuestRes()
+}
+
 type SubmitComboScoreRes interface {
 	submitComboScoreRes()
+}
+
+type TransitionRaidPhaseRes interface {
+	transitionRaidPhaseRes()
 }
 
 type TriggerAffixRotationRes interface {
@@ -91,4 +219,12 @@ type TriggerAffixRotationRes interface {
 
 type UpdateComboLoadoutRes interface {
 	updateComboLoadoutRes()
+}
+
+type UpdateCyberpsychosisRes interface {
+	updateCyberpsychosisRes()
+}
+
+type UpdateQuestStateRes interface {
+	updateQuestStateRes()
 }

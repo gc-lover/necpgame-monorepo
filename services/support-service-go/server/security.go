@@ -26,6 +26,8 @@ func NewSecurityHandler(jwtValidator *JwtValidator, authEnabled bool) *SecurityH
 // HandleBearerAuth implements Bearer auth for ogen
 func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
 	if !s.authEnabled {
+		// If auth is disabled, preserve user_id from context if present (for testing)
+		// If no user_id in context, allow request to proceed (tests may set it later)
 		return ctx, nil
 	}
 

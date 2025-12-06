@@ -20,12 +20,16 @@ const (
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 // Issue: #1607 - Memory pooling for hot path
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 type Handlers struct {
 	service MovementServiceInterface
 
 	// Memory pooling for hot path structs (Level 2 optimization)
 	positionPool        sync.Pool
 	positionHistoryPool sync.Pool
+	
+	// Issue: #1587 - Anti-cheat validation
+	movementValidator *MovementValidator
 }
 
 // NewHandlers creates new handlers with memory pooling
@@ -43,6 +47,9 @@ func NewHandlers(service MovementServiceInterface) *Handlers {
 			return &api.PositionHistory{}
 		},
 	}
+
+	// Issue: #1587 - Anti-cheat validation
+	h.movementValidator = NewMovementValidator()
 
 	return h
 }
@@ -69,9 +76,28 @@ func (h *Handlers) GetPosition(ctx context.Context, params api.GetPositionParams
 }
 
 // SavePosition - TYPED response!
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 func (h *Handlers) SavePosition(ctx context.Context, req *api.SavePositionRequest, params api.SavePositionParams) (api.SavePositionRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
+
+	// Issue: #1587 - Validate movement before saving (anti-cheat: speed check)
+	newPos := Vec3{
+		X: float64(req.PositionX),
+		Y: float64(req.PositionY),
+		Z: float64(req.PositionZ),
+	}
+	
+	// Convert character ID to uint64 for validator
+	characterID := uint64(params.CharacterId.ID())
+	if err := h.movementValidator.ValidateMovement(characterID, newPos); err != nil {
+		// Return validation error
+		return &api.SavePositionBadRequest{
+			Error:   "BadRequest",
+			Message: "Invalid movement: " + err.Error(),
+			Code:    api.NewOptNilString("400"),
+		}, nil
+	}
 
 	modelReq := toModelSavePositionRequest(req)
 	position, err := h.service.SavePosition(ctx, params.CharacterId, modelReq)

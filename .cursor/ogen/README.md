@@ -17,18 +17,9 @@
 
 ## 📊 Current Status
 
-**Run this to see current progress:**
-```bash
-# Windows (PowerShell)
-.\.cursor\scripts\check-ogen-status.ps1
+**Status:** ✅ All services migrated to ogen (2025)
 
-# Linux/Mac
-./.cursor/scripts/check-ogen-status.sh
-```
-
-**Quick Stats:** 6/86 services migrated (7%)
-
-**See detailed status:** [`.cursor/OGEN_MIGRATION_STATUS.md`](..OGEN_MIGRATION_STATUS.md)
+**Note:** Migration scripts removed. Use this documentation as reference for working with ogen services.
 
 ---
 
@@ -39,10 +30,8 @@
 - **[02-MIGRATION-STEPS.md](02-MIGRATION-STEPS.md)** - Complete migration process
 - **[03-TROUBLESHOOTING.md](03-TROUBLESHOOTING.md)** - Common issues & solutions
 
-### Status & Tracking
-- **[OGEN_MIGRATION_STATUS.md](../OGEN_MIGRATION_STATUS.md)** - Detailed status (all 86 services)
-- **[OGEN_MIGRATION_SUMMARY.md](../OGEN_MIGRATION_SUMMARY.md)** - Quick summary
-- **[OGEN_MIGRATION_GUIDE.md](../OGEN_MIGRATION_GUIDE.md)** - Complete guide (legacy)
+### Reference
+- **[02-MIGRATION-STEPS.md](02-MIGRATION-STEPS.md)** - Complete migration guide
 
 ### Agent Rules
 - **[agent-backend.mdc](../rules/agent-backend.mdc)** - Backend agent responsibilities
@@ -50,19 +39,12 @@
 
 ---
 
-## 🔗 GitHub Issues
+## 📝 Migration Completed
 
-**Main Tracker:** [#1603](https://github.com/gc-lover/necpgame-monorepo/issues/1603)
-
-**By Priority:**
-- 🔴 [#1595](https://github.com/gc-lover/necpgame-monorepo/issues/1595) - Combat Services (18) - HIGH
-- 🔴 [#1596](https://github.com/gc-lover/necpgame-monorepo/issues/1596) - Movement & World (5) - HIGH
-- 🟡 [#1597](https://github.com/gc-lover/necpgame-monorepo/issues/1597) - Quest Services (5) - MEDIUM
-- 🟡 [#1598](https://github.com/gc-lover/necpgame-monorepo/issues/1598) - Chat & Social (9) - MEDIUM
-- 🟡 [#1599](https://github.com/gc-lover/necpgame-monorepo/issues/1599) - Core Gameplay (14) - MEDIUM
-- 🟢 [#1600](https://github.com/gc-lover/necpgame-monorepo/issues/1600) - Character Engram (5) - LOW
-- 🟢 [#1601](https://github.com/gc-lover/necpgame-monorepo/issues/1601) - Stock/Economy (12) - LOW
-- 🟢 [#1602](https://github.com/gc-lover/necpgame-monorepo/issues/1602) - Admin & Support (12) - LOW
+All services have been migrated to ogen. This documentation serves as reference for:
+- Understanding ogen architecture
+- Troubleshooting issues
+- Creating new services with ogen
 
 ---
 
@@ -99,77 +81,38 @@ ogen:          45ns/op,   0B/op, 0 allocs/op
 
 ---
 
-## 🛠️ Migration Workflow
+## 🛠️ Working with ogen Services
 
-### 1. Check Current Status
-```bash
-.\.cursor\scripts\check-ogen-status.ps1
-```
-
-### 2. Pick Service from High Priority
-See GitHub Issues #1595 (Combat) or #1596 (Movement)
-
-### 3. Read Guide
-- Quick: [01-OVERVIEW.md](01-OVERVIEW.md)
-- Detailed: [02-MIGRATION-STEPS.md](02-MIGRATION-STEPS.md)
-
-### 4. Migrate
+### Creating New Service
 ```bash
 cd services/{service}-go/
 
-# Update Makefile (copy from combat-combos-service-ogen-go)
+# Use Makefile template from 02-MIGRATION-STEPS.md
 # Generate
 make generate-api
 
-# Update handlers
+# Implement handlers (see reference: combat-combos-service-ogen-go)
 # Build & Test
 go build ./...
 go test ./...
 go test -bench=. -benchmem
 ```
 
-### 5. Validate
-- ✅ Build passes
-- ✅ Tests pass
-- ✅ Benchmark shows improvements
-- ✅ P99 <10ms (hot path)
-- ✅ 0 allocs/op (critical path)
-
-### 6. Commit & Update
-```bash
-git commit -m "[backend] feat: migrate {service} to ogen"
-
-# Update GitHub Issue checklist
-# Mark service as done
-```
+### Reference Implementation
+See `services/combat-combos-service-ogen-go/` for complete example.
 
 ---
 
-## 📝 Per-Service Checklist
+## 📝 New Service Checklist
 
-- [ ] Read migration guide
-- [ ] Update Makefile (ogen instead of oapi-codegen)
+- [ ] Use Makefile template (see 02-MIGRATION-STEPS.md)
 - [ ] Run `make generate-api`
-- [ ] Check generated files (<500 lines each)
-- [ ] Update handlers (implement ogen interfaces)
-- [ ] Update main.go (ogen server setup)
+- [ ] Implement handlers (typed responses, no interface{})
+- [ ] Implement SecurityHandler
 - [ ] Build: `go build ./...`
 - [ ] Test: `go test ./...`
 - [ ] Benchmark: `go test -bench=. -benchmem`
-- [ ] Validate performance gains
-- [ ] Update GitHub Issue checklist
-- [ ] Commit with proper format
-
----
-
-## 🔴 Priority Services (Start Here!)
-
-**Week 1 - High Priority:**
-1. Combat services (18) - Real-time critical
-2. Movement service (1) - >2000 RPS
-3. World services (4) - Event processing
-
-**See:** [GitHub Issues #1595](https://github.com/gc-lover/necpgame-monorepo/issues/1595), [#1596](https://github.com/gc-lover/necpgame-monorepo/issues/1596)
+- [ ] Validate: P99 <10ms, 0 allocs/op (hot path)
 
 ---
 
@@ -178,11 +121,8 @@ git commit -m "[backend] feat: migrate {service} to ogen"
 **Q: Which services should NOT use ogen?**
 A: Real-time game state (>1000 updates/sec), voice chat metadata, internal gRPC services. Use protobuf instead. See `.cursor/PROTOCOL_SELECTION_GUIDE.md`
 
-**Q: How long does migration take per service?**
-A: ~2 hours average. Simple services: 1 hour. Complex: 3-4 hours.
-
-**Q: Can I migrate multiple services in parallel?**
-A: Yes! Each service is independent. Coordinate via GitHub Issues.
+**Q: How to create new service with ogen?**
+A: Use 02-MIGRATION-STEPS.md and reference implementation.
 
 **Q: What if generated files are >500 lines?**
 A: This is OK for generated files (they're exempt). Split your SOURCE OpenAPI spec if it's >500 lines.
@@ -230,7 +170,6 @@ A: Run benchmarks before/after: `go test -bench=. -benchmem`. Compare ns/op and 
 
 ---
 
-**Last Updated:** 2025-12-03
-**Status:** 🚧 IN PROGRESS (6/86 migrated, 7%)
-**Next:** Focus on High Priority combat services (#1595)
+**Last Updated:** 2025
+**Status:** ✅ COMPLETED (All services migrated to ogen)
 

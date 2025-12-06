@@ -35,12 +35,98 @@ func (UnimplementedHandler) ActivateCombo(ctx context.Context, req *ActivateComb
 	return r, ht.ErrNotImplemented
 }
 
+// ApplySynergy implements applySynergy operation.
+//
+// Применяет синергию к способности или набору
+// способностей.
+// Проверяет требования синергии и применяет бонусы.
+//
+// POST /gameplay/combat/abilities/synergies/apply
+func (UnimplementedHandler) ApplySynergy(ctx context.Context, req *SynergyApplyRequest) (r ApplySynergyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CancelQuest implements cancelQuest operation.
+//
+// Отменяет активный квест.
+// Квест переходит в состояние CANCELLED.
+//
+// POST /gameplay/quests/{quest_id}/cancel
+func (UnimplementedHandler) CancelQuest(ctx context.Context, params CancelQuestParams) (r CancelQuestRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CheckCooldowns implements checkCooldowns operation.
+//
+// Проверяет статус кулдаунов для списка способностей.
+// Возвращает информацию о текущих кулдаунах, времени
+// окончания и оставшемся времени.
+//
+// POST /gameplay/combat/abilities/cooldowns
+func (UnimplementedHandler) CheckCooldowns(ctx context.Context, req *CooldownCheckRequest) (r CheckCooldownsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CheckQuestConditions implements checkQuestConditions operation.
+//
+// Проверяет условия квеста (требования для начала,
+// условия для завершения, условия для целей).
+// Возвращает результат проверки всех условий.
+//
+// POST /gameplay/quests/{quest_id}/conditions/check
+func (UnimplementedHandler) CheckQuestConditions(ctx context.Context, params CheckQuestConditionsParams) (r CheckQuestConditionsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CompleteQuest implements completeQuest operation.
+//
+// Завершает квест и распределяет награды.
+// Проверяет выполнение всех целей перед завершением.
+//
+// POST /gameplay/quests/{quest_id}/complete
+func (UnimplementedHandler) CompleteQuest(ctx context.Context, req OptCompleteQuestRequest, params CompleteQuestParams) (r CompleteQuestRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateCombatSession implements createCombatSession operation.
 //
 // Создать боевую сессию.
 //
 // POST /gameplay/combat/sessions
 func (UnimplementedHandler) CreateCombatSession(ctx context.Context, req *CreateSessionRequest) (r CreateCombatSessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateEncounter implements createEncounter operation.
+//
+// Создает новую встречу с AI врагами в указанной зоне.
+// Встреча может быть обычной или рейдовой.
+//
+// POST /gameplay/combat/ai/encounter
+func (UnimplementedHandler) CreateEncounter(ctx context.Context, req *CreateEncounterRequest) (r CreateEncounterRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateOrUpdateAbilityLoadout implements createOrUpdateAbilityLoadout operation.
+//
+// Создает новый лоадаут или обновляет существующий для
+// текущего персонажа.
+// Валидирует требования способностей и проверяет
+// доступность.
+//
+// POST /gameplay/combat/abilities/loadouts
+func (UnimplementedHandler) CreateOrUpdateAbilityLoadout(ctx context.Context, req *AbilityLoadoutCreate) (r CreateOrUpdateAbilityLoadoutRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// DistributeQuestRewards implements distributeQuestRewards operation.
+//
+// Распределяет награды за завершённый квест.
+// Выдаёт опыт, валюту, предметы, репутацию и титулы.
+// Интегрируется с economy-service и mail-service.
+//
+// POST /gameplay/quests/{quest_id}/rewards/distribute
+func (UnimplementedHandler) DistributeQuestRewards(ctx context.Context, params DistributeQuestRewardsParams) (r DistributeQuestRewardsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -53,6 +139,49 @@ func (UnimplementedHandler) EndCombatSession(ctx context.Context, params EndComb
 	return r, ht.ErrNotImplemented
 }
 
+// EndEncounter implements endEncounter operation.
+//
+// Завершает встречу с AI врагами. Обрабатывает
+// результат встречи,
+// начисляет награды и обновляет телеметрию.
+//
+// POST /gameplay/combat/ai/encounter/{encounter_id}/end
+func (UnimplementedHandler) EndEncounter(ctx context.Context, req *EndEncounterRequest, params EndEncounterParams) (r EndEncounterRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAIProfile implements getAIProfile operation.
+//
+// Возвращает детальную информацию о конкретном
+// профиле AI врага.
+//
+// GET /gameplay/combat/ai/profiles/{profile_id}
+func (UnimplementedHandler) GetAIProfile(ctx context.Context, params GetAIProfileParams) (r GetAIProfileRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAIProfileTelemetry implements getAIProfileTelemetry operation.
+//
+// Возвращает телеметрию для указанного профиля AI,
+// включая метрики урона,
+// времени до поражения, использования способностей и
+// балансировки.
+//
+// GET /gameplay/combat/ai/profiles/{profile_id}/telemetry
+func (UnimplementedHandler) GetAIProfileTelemetry(ctx context.Context, params GetAIProfileTelemetryParams) (r GetAIProfileTelemetryRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAbilityById implements getAbilityById operation.
+//
+// Возвращает детальную информацию о конкретной
+// способности.
+//
+// GET /gameplay/combat/abilities/{abilityId}
+func (UnimplementedHandler) GetAbilityById(ctx context.Context, params GetAbilityByIdParams) (r GetAbilityByIdRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetAbilityCatalog implements getAbilityCatalog operation.
 //
 // Возвращает каталог способностей с возможностью
@@ -61,6 +190,29 @@ func (UnimplementedHandler) EndCombatSession(ctx context.Context, params EndComb
 //
 // GET /gameplay/combat/abilities/catalog
 func (UnimplementedHandler) GetAbilityCatalog(ctx context.Context, params GetAbilityCatalogParams) (r GetAbilityCatalogRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAbilityLoadouts implements getAbilityLoadouts operation.
+//
+// Возвращает список всех лоадаутов для текущего
+// персонажа.
+// Поддерживает фильтрацию по активности и пагинацию.
+//
+// GET /gameplay/combat/abilities/loadouts
+func (UnimplementedHandler) GetAbilityLoadouts(ctx context.Context, params GetAbilityLoadoutsParams) (r GetAbilityLoadoutsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAbilityMetrics implements getAbilityMetrics operation.
+//
+// Возвращает метрики использования способностей для
+// текущего персонажа.
+// Поддерживает фильтрацию по способности и периоду
+// времени.
+//
+// GET /gameplay/combat/abilities/metrics
+func (UnimplementedHandler) GetAbilityMetrics(ctx context.Context, params GetAbilityMetricsParams) (r GetAbilityMetricsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -155,6 +307,38 @@ func (UnimplementedHandler) GetComboLoadout(ctx context.Context, params GetCombo
 	return r, ht.ErrNotImplemented
 }
 
+// GetCyberpsychosisState implements getCyberpsychosisState operation.
+//
+// Возвращает текущее состояние киберпсихоза для
+// текущего персонажа.
+// Включает уровень киберпсихоза, количество
+// превышений порогов и активные ограничения.
+//
+// GET /gameplay/combat/abilities/cyberpsychosis
+func (UnimplementedHandler) GetCyberpsychosisState(ctx context.Context) (r GetCyberpsychosisStateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetDialogueHistory implements getDialogueHistory operation.
+//
+// Возвращает полную историю диалогов для квеста.
+// Включает все пройденные узлы и сделанные выборы.
+//
+// GET /gameplay/quests/{quest_id}/dialogue/history
+func (UnimplementedHandler) GetDialogueHistory(ctx context.Context, params GetDialogueHistoryParams) (r GetDialogueHistoryRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetEncounter implements getEncounter operation.
+//
+// Возвращает детальную информацию о встрече с AI
+// врагами.
+//
+// GET /gameplay/combat/ai/encounter/{encounter_id}
+func (UnimplementedHandler) GetEncounter(ctx context.Context, params GetEncounterParams) (r GetEncounterRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetExtractZones implements getExtractZones operation.
 //
 // Получить зоны экстракции.
@@ -202,12 +386,107 @@ func (UnimplementedHandler) GetLoadouts(ctx context.Context, params GetLoadoutsP
 	return r, ht.ErrNotImplemented
 }
 
+// GetPlayerQuests implements getPlayerQuests operation.
+//
+// Возвращает список всех квестов игрока.
+// Поддерживает фильтрацию по состоянию и пагинацию.
+//
+// GET /gameplay/quests/by-player/{player_id}
+func (UnimplementedHandler) GetPlayerQuests(ctx context.Context, params GetPlayerQuestsParams) (r GetPlayerQuestsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetQuest implements getQuest operation.
+//
+// Возвращает информацию о квесте по ID инстанса квеста.
+// Включает состояние, прогресс и детали квеста.
+//
+// GET /gameplay/quests/{quest_id}
+func (UnimplementedHandler) GetQuest(ctx context.Context, params GetQuestParams) (r GetQuestRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetQuestDialogue implements getQuestDialogue operation.
+//
+// Возвращает текущий узел диалога для квеста.
+// Включает текст, варианты выбора и проверки навыков.
+//
+// GET /gameplay/quests/{quest_id}/dialogue
+func (UnimplementedHandler) GetQuestDialogue(ctx context.Context, params GetQuestDialogueParams) (r GetQuestDialogueRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetQuestEvents implements getQuestEvents operation.
+//
+// Возвращает историю событий квеста.
+// Включает события начала, выполнения целей,
+// завершения и отмены.
+// Поддерживает фильтрацию по типу события и пагинацию.
+//
+// GET /gameplay/quests/{quest_id}/events
+func (UnimplementedHandler) GetQuestEvents(ctx context.Context, params GetQuestEventsParams) (r GetQuestEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetQuestRequirements implements getQuestRequirements operation.
+//
+// Возвращает все требования для начала квеста.
+// Включает уровень, предметы, предыдущие квесты,
+// репутацию и местоположение.
+//
+// GET /gameplay/quests/{quest_id}/requirements
+func (UnimplementedHandler) GetQuestRequirements(ctx context.Context, params GetQuestRequirementsParams) (r GetQuestRequirementsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetQuestRewards implements getQuestRewards operation.
+//
+// Возвращает информацию о наградах квеста.
+// Показывает, какие награды будут выданы при
+// завершении квеста.
+//
+// GET /gameplay/quests/{quest_id}/rewards
+func (UnimplementedHandler) GetQuestRewards(ctx context.Context, params GetQuestRewardsParams) (r GetQuestRewardsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetQuestState implements getQuestState operation.
+//
+// Возвращает текущее состояние квеста, включая текущую
+// цель и данные прогресса.
+//
+// GET /gameplay/quests/{quest_id}/state
+func (UnimplementedHandler) GetQuestState(ctx context.Context, params GetQuestStateParams) (r GetQuestStateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetSkillCheckHistory implements getSkillCheckHistory operation.
+//
+// Возвращает историю всех проверок навыков для квеста.
+// Поддерживает пагинацию.
+//
+// GET /gameplay/quests/{quest_id}/skill-checks
+func (UnimplementedHandler) GetSkillCheckHistory(ctx context.Context, params GetSkillCheckHistoryParams) (r GetSkillCheckHistoryRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetStealthStatus implements getStealthStatus operation.
 //
 // Получить статус стелса.
 //
 // GET /gameplay/combat/stealth/status
 func (UnimplementedHandler) GetStealthStatus(ctx context.Context, params GetStealthStatusParams) (r GetStealthStatusRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListAIProfiles implements listAIProfiles operation.
+//
+// Возвращает список всех профилей AI врагов с
+// возможностью фильтрации
+// по слою сложности, фракции и уровню навыков.
+//
+// GET /gameplay/combat/ai/profiles
+func (UnimplementedHandler) ListAIProfiles(ctx context.Context, params ListAIProfilesParams) (r ListAIProfilesRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -220,12 +499,74 @@ func (UnimplementedHandler) ListCombatSessions(ctx context.Context, params ListC
 	return r, ht.ErrNotImplemented
 }
 
+// MakeDialogueChoice implements makeDialogueChoice operation.
+//
+// Обрабатывает выбор игрока в диалоге.
+// Переходит к следующему узлу диалога на основе выбора.
+//
+// POST /gameplay/quests/{quest_id}/dialogue/choice
+func (UnimplementedHandler) MakeDialogueChoice(ctx context.Context, req *DialogueChoiceRequest, params MakeDialogueChoiceParams) (r MakeDialogueChoiceRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PerformSkillCheck implements performSkillCheck operation.
+//
+// Выполняет проверку навыка для квеста.
+// Проверяет атрибуты, навыки, предметы или репутацию
+// персонажа.
+//
+// POST /gameplay/quests/{quest_id}/skill-check
+func (UnimplementedHandler) PerformSkillCheck(ctx context.Context, req *SkillCheckRequest, params PerformSkillCheckParams) (r PerformSkillCheckRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ReloadQuestContent implements reloadQuestContent operation.
+//
+// Импортировать контентный квест из YAML в БД.
+//
+// POST /gameplay/quests/content/reload
+func (UnimplementedHandler) ReloadQuestContent(ctx context.Context, req *ReloadQuestContentRequest) (r ReloadQuestContentRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// StartEncounter implements startEncounter operation.
+//
+// Запускает встречу с AI врагами. После старта враги
+// становятся активными
+// и начинают использовать поведенческие паттерны.
+//
+// POST /gameplay/combat/ai/encounter/{encounter_id}/start
+func (UnimplementedHandler) StartEncounter(ctx context.Context, params StartEncounterParams) (r StartEncounterRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// StartQuest implements startQuest operation.
+//
+// Начинает новый квест для текущего игрока.
+// Проверяет требования квеста и создаёт инстанс квеста.
+//
+// POST /gameplay/quests/start
+func (UnimplementedHandler) StartQuest(ctx context.Context, req *StartQuestRequest) (r StartQuestRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SubmitComboScore implements submitComboScore operation.
 //
 // Отправить результаты scoring.
 //
 // POST /gameplay/combat/combos/score
 func (UnimplementedHandler) SubmitComboScore(ctx context.Context, req *SubmitScoreRequest) (r SubmitComboScoreRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TransitionRaidPhase implements transitionRaidPhase operation.
+//
+// Переводит рейдовую сессию в следующую фазу.
+// Используется для управления
+// фазами боссов и механиками рейдов.
+//
+// POST /gameplay/combat/raids/{raid_id}/phase
+func (UnimplementedHandler) TransitionRaidPhase(ctx context.Context, req *RaidPhaseTransitionRequest, params TransitionRaidPhaseParams) (r TransitionRaidPhaseRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -248,5 +589,30 @@ func (UnimplementedHandler) TriggerAffixRotation(ctx context.Context, req OptTri
 //
 // POST /gameplay/combat/combos/loadout
 func (UnimplementedHandler) UpdateComboLoadout(ctx context.Context, req *UpdateLoadoutRequest) (r UpdateComboLoadoutRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateCyberpsychosis implements updateCyberpsychosis operation.
+//
+// Обновляет состояние киберпсихоза на основе
+// использования способности.
+// Рассчитывает влияние способности на киберпсихоз с
+// учетом активных имплантов.
+// Проверяет пороговые значения и применяет
+// ограничения при необходимости.
+//
+// POST /gameplay/combat/abilities/cyberpsychosis
+func (UnimplementedHandler) UpdateCyberpsychosis(ctx context.Context, req *CyberpsychosisUpdateRequest) (r UpdateCyberpsychosisRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateQuestState implements updateQuestState operation.
+//
+// Обновляет состояние квеста.
+// Используется для переходов между состояниями и
+// обновления прогресса.
+//
+// POST /gameplay/quests/{quest_id}/state
+func (UnimplementedHandler) UpdateQuestState(ctx context.Context, req *UpdateStateRequest, params UpdateQuestStateParams) (r UpdateQuestStateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

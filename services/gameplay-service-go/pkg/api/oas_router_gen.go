@@ -219,9 +219,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
-				case 'a': // Prefix: "abilities/"
+				case 'a': // Prefix: "a"
 
-					if l := len("abilities/"); len(elem) >= l && elem[0:l] == "abilities/" {
+					if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 						elem = elem[l:]
 					} else {
 						break
@@ -231,39 +231,219 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 					switch elem[0] {
-					case 'a': // Prefix: "activate"
+					case 'b': // Prefix: "bilities/"
 
-						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+						if l := len("bilities/"); len(elem) >= l && elem[0:l] == "bilities/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleActivateAbilityRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
-
-					case 'c': // Prefix: "catalog"
-
-						if l := len("catalog"); len(elem) >= l && elem[0:l] == "catalog" {
-							elem = elem[l:]
-						} else {
 							break
 						}
+						switch elem[0] {
+						case 'a': // Prefix: "activate"
+							origElem := elem
+							if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleActivateAbilityRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+							elem = origElem
+						case 'c': // Prefix: "c"
+							origElem := elem
+							if l := len("c"); len(elem) >= l && elem[0:l] == "c" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'a': // Prefix: "atalog"
+
+								if l := len("atalog"); len(elem) >= l && elem[0:l] == "atalog" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "GET":
+										s.handleGetAbilityCatalogRequest([0]string{}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "GET")
+									}
+
+									return
+								}
+
+							case 'o': // Prefix: "ooldowns"
+
+								if l := len("ooldowns"); len(elem) >= l && elem[0:l] == "ooldowns" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleCheckCooldownsRequest([0]string{}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							case 'y': // Prefix: "yberpsychosis"
+
+								if l := len("yberpsychosis"); len(elem) >= l && elem[0:l] == "yberpsychosis" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "GET":
+										s.handleGetCyberpsychosisStateRequest([0]string{}, elemIsEscaped, w, r)
+									case "POST":
+										s.handleUpdateCyberpsychosisRequest([0]string{}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "GET,POST")
+									}
+
+									return
+								}
+
+							}
+
+							elem = origElem
+						case 'l': // Prefix: "loadouts"
+							origElem := elem
+							if l := len("loadouts"); len(elem) >= l && elem[0:l] == "loadouts" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetAbilityLoadoutsRequest([0]string{}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleCreateOrUpdateAbilityLoadoutRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET,POST")
+								}
+
+								return
+							}
+
+							elem = origElem
+						case 'm': // Prefix: "metrics"
+							origElem := elem
+							if l := len("metrics"); len(elem) >= l && elem[0:l] == "metrics" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetAbilityMetricsRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+							elem = origElem
+						case 's': // Prefix: "synergies"
+							origElem := elem
+							if l := len("synergies"); len(elem) >= l && elem[0:l] == "synergies" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleGetAvailableSynergiesRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/apply"
+
+								if l := len("/apply"); len(elem) >= l && elem[0:l] == "/apply" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleApplySynergyRequest([0]string{}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							}
+
+							elem = origElem
+						}
+						// Param: "abilityId"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
 
 						if len(elem) == 0 {
 							// Leaf node.
 							switch r.Method {
 							case "GET":
-								s.handleGetAbilityCatalogRequest([0]string{}, elemIsEscaped, w, r)
+								s.handleGetAbilityByIdRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
 							default:
 								s.notAllowed(w, r, "GET")
 							}
@@ -271,24 +451,204 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
-					case 's': // Prefix: "synergies"
+					case 'i': // Prefix: "i/"
 
-						if l := len("synergies"); len(elem) >= l && elem[0:l] == "synergies" {
+						if l := len("i/"); len(elem) >= l && elem[0:l] == "i/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "GET":
-								s.handleGetAvailableSynergiesRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "GET")
+							break
+						}
+						switch elem[0] {
+						case 'e': // Prefix: "encounter"
+
+							if l := len("encounter"); len(elem) >= l && elem[0:l] == "encounter" {
+								elem = elem[l:]
+							} else {
+								break
 							}
 
-							return
+							if len(elem) == 0 {
+								switch r.Method {
+								case "POST":
+									s.handleCreateEncounterRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "encounter_id"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[0] = elem[:idx]
+								elem = elem[idx:]
+
+								if len(elem) == 0 {
+									switch r.Method {
+									case "GET":
+										s.handleGetEncounterRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "GET")
+									}
+
+									return
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										break
+									}
+									switch elem[0] {
+									case 'e': // Prefix: "end"
+
+										if l := len("end"); len(elem) >= l && elem[0:l] == "end" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "POST":
+												s.handleEndEncounterRequest([1]string{
+													args[0],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, "POST")
+											}
+
+											return
+										}
+
+									case 's': // Prefix: "start"
+
+										if l := len("start"); len(elem) >= l && elem[0:l] == "start" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "POST":
+												s.handleStartEncounterRequest([1]string{
+													args[0],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, "POST")
+											}
+
+											return
+										}
+
+									}
+
+								}
+
+							}
+
+						case 'p': // Prefix: "profiles"
+
+							if l := len("profiles"); len(elem) >= l && elem[0:l] == "profiles" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleListAIProfilesRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "profile_id"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[0] = elem[:idx]
+								elem = elem[idx:]
+
+								if len(elem) == 0 {
+									switch r.Method {
+									case "GET":
+										s.handleGetAIProfileRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "GET")
+									}
+
+									return
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/telemetry"
+
+									if l := len("/telemetry"); len(elem) >= l && elem[0:l] == "/telemetry" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch r.Method {
+										case "GET":
+											s.handleGetAIProfileTelemetryRequest([1]string{
+												args[0],
+											}, elemIsEscaped, w, r)
+										default:
+											s.notAllowed(w, r, "GET")
+										}
+
+										return
+									}
+
+								}
+
+							}
+
 						}
 
 					}
@@ -461,6 +821,51 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						}
 
 						return
+					}
+
+				case 'r': // Prefix: "raids/"
+
+					if l := len("raids/"); len(elem) >= l && elem[0:l] == "raids/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "raid_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/phase"
+
+						if l := len("/phase"); len(elem) >= l && elem[0:l] == "/phase" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleTransitionRaidPhaseRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
 					}
 
 				case 's': // Prefix: "s"
@@ -640,6 +1045,494 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					}
 
 					return
+				}
+
+			case 'q': // Prefix: "quests/"
+
+				if l := len("quests/"); len(elem) >= l && elem[0:l] == "quests/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'b': // Prefix: "by-player/"
+					origElem := elem
+					if l := len("by-player/"); len(elem) >= l && elem[0:l] == "by-player/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "player_id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleGetPlayerQuestsRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+
+					elem = origElem
+				case 'c': // Prefix: "content/reload"
+					origElem := elem
+					if l := len("content/reload"); len(elem) >= l && elem[0:l] == "content/reload" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleReloadQuestContentRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+					elem = origElem
+				case 's': // Prefix: "start"
+					origElem := elem
+					if l := len("start"); len(elem) >= l && elem[0:l] == "start" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleStartQuestRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+					elem = origElem
+				}
+				// Param: "quest_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleGetQuestRequest([1]string{
+							args[0],
+						}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'c': // Prefix: "c"
+
+						if l := len("c"); len(elem) >= l && elem[0:l] == "c" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'a': // Prefix: "ancel"
+
+							if l := len("ancel"); len(elem) >= l && elem[0:l] == "ancel" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleCancelQuestRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						case 'o': // Prefix: "o"
+
+							if l := len("o"); len(elem) >= l && elem[0:l] == "o" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'm': // Prefix: "mplete"
+
+								if l := len("mplete"); len(elem) >= l && elem[0:l] == "mplete" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleCompleteQuestRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							case 'n': // Prefix: "nditions/check"
+
+								if l := len("nditions/check"); len(elem) >= l && elem[0:l] == "nditions/check" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleCheckQuestConditionsRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							}
+
+						}
+
+					case 'd': // Prefix: "dialogue"
+
+						if l := len("dialogue"); len(elem) >= l && elem[0:l] == "dialogue" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch r.Method {
+							case "GET":
+								s.handleGetQuestDialogueRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'c': // Prefix: "choice"
+
+								if l := len("choice"); len(elem) >= l && elem[0:l] == "choice" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleMakeDialogueChoiceRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							case 'h': // Prefix: "history"
+
+								if l := len("history"); len(elem) >= l && elem[0:l] == "history" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "GET":
+										s.handleGetDialogueHistoryRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "GET")
+									}
+
+									return
+								}
+
+							}
+
+						}
+
+					case 'e': // Prefix: "events"
+
+						if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetQuestEventsRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 'r': // Prefix: "re"
+
+						if l := len("re"); len(elem) >= l && elem[0:l] == "re" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'q': // Prefix: "quirements"
+
+							if l := len("quirements"); len(elem) >= l && elem[0:l] == "quirements" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetQuestRequirementsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						case 'w': // Prefix: "wards"
+
+							if l := len("wards"); len(elem) >= l && elem[0:l] == "wards" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleGetQuestRewardsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/distribute"
+
+								if l := len("/distribute"); len(elem) >= l && elem[0:l] == "/distribute" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleDistributeQuestRewardsRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							}
+
+						}
+
+					case 's': // Prefix: "s"
+
+						if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'k': // Prefix: "kill-check"
+
+							if l := len("kill-check"); len(elem) >= l && elem[0:l] == "kill-check" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "POST":
+									s.handlePerformSkillCheckRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+							switch elem[0] {
+							case 's': // Prefix: "s"
+
+								if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "GET":
+										s.handleGetSkillCheckHistoryRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "GET")
+									}
+
+									return
+								}
+
+							}
+
+						case 't': // Prefix: "tate"
+
+							if l := len("tate"); len(elem) >= l && elem[0:l] == "tate" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetQuestStateRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleUpdateQuestStateRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET,POST")
+								}
+
+								return
+							}
+
+						}
+
+					}
+
 				}
 
 			}
@@ -923,9 +1816,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
-				case 'a': // Prefix: "abilities/"
+				case 'a': // Prefix: "a"
 
-					if l := len("abilities/"); len(elem) >= l && elem[0:l] == "abilities/" {
+					if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 						elem = elem[l:]
 					} else {
 						break
@@ -935,79 +1828,506 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 					switch elem[0] {
-					case 'a': // Prefix: "activate"
+					case 'b': // Prefix: "bilities/"
 
-						if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+						if l := len("bilities/"); len(elem) >= l && elem[0:l] == "bilities/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = ActivateAbilityOperation
-								r.summary = "Активировать способность"
-								r.operationID = "activateAbility"
-								r.operationGroup = ""
-								r.pathPattern = "/gameplay/combat/abilities/activate"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
-					case 'c': // Prefix: "catalog"
-
-						if l := len("catalog"); len(elem) >= l && elem[0:l] == "catalog" {
-							elem = elem[l:]
-						} else {
 							break
 						}
+						switch elem[0] {
+						case 'a': // Prefix: "activate"
+							origElem := elem
+							if l := len("activate"); len(elem) >= l && elem[0:l] == "activate" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = ActivateAbilityOperation
+									r.summary = "Активировать способность"
+									r.operationID = "activateAbility"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/abilities/activate"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+							elem = origElem
+						case 'c': // Prefix: "c"
+							origElem := elem
+							if l := len("c"); len(elem) >= l && elem[0:l] == "c" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'a': // Prefix: "atalog"
+
+								if l := len("atalog"); len(elem) >= l && elem[0:l] == "atalog" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "GET":
+										r.name = GetAbilityCatalogOperation
+										r.summary = "Получить каталог способностей"
+										r.operationID = "getAbilityCatalog"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/combat/abilities/catalog"
+										r.args = args
+										r.count = 0
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'o': // Prefix: "ooldowns"
+
+								if l := len("ooldowns"); len(elem) >= l && elem[0:l] == "ooldowns" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = CheckCooldownsOperation
+										r.summary = "Проверить статус кулдаунов"
+										r.operationID = "checkCooldowns"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/combat/abilities/cooldowns"
+										r.args = args
+										r.count = 0
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'y': // Prefix: "yberpsychosis"
+
+								if l := len("yberpsychosis"); len(elem) >= l && elem[0:l] == "yberpsychosis" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "GET":
+										r.name = GetCyberpsychosisStateOperation
+										r.summary = "Получить текущее состояние киберпсихоза"
+										r.operationID = "getCyberpsychosisState"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/combat/abilities/cyberpsychosis"
+										r.args = args
+										r.count = 0
+										return r, true
+									case "POST":
+										r.name = UpdateCyberpsychosisOperation
+										r.summary = "Обновить состояние киберпсихоза"
+										r.operationID = "updateCyberpsychosis"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/combat/abilities/cyberpsychosis"
+										r.args = args
+										r.count = 0
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+							elem = origElem
+						case 'l': // Prefix: "loadouts"
+							origElem := elem
+							if l := len("loadouts"); len(elem) >= l && elem[0:l] == "loadouts" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetAbilityLoadoutsOperation
+									r.summary = "Получить список лоадаутов"
+									r.operationID = "getAbilityLoadouts"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/abilities/loadouts"
+									r.args = args
+									r.count = 0
+									return r, true
+								case "POST":
+									r.name = CreateOrUpdateAbilityLoadoutOperation
+									r.summary = "Создать или обновить лоадаут способностей"
+									r.operationID = "createOrUpdateAbilityLoadout"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/abilities/loadouts"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+							elem = origElem
+						case 'm': // Prefix: "metrics"
+							origElem := elem
+							if l := len("metrics"); len(elem) >= l && elem[0:l] == "metrics" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetAbilityMetricsOperation
+									r.summary = "Получить метрики способностей"
+									r.operationID = "getAbilityMetrics"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/abilities/metrics"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+							elem = origElem
+						case 's': // Prefix: "synergies"
+							origElem := elem
+							if l := len("synergies"); len(elem) >= l && elem[0:l] == "synergies" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = GetAvailableSynergiesOperation
+									r.summary = "Получить доступные синергии"
+									r.operationID = "getAvailableSynergies"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/abilities/synergies"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/apply"
+
+								if l := len("/apply"); len(elem) >= l && elem[0:l] == "/apply" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = ApplySynergyOperation
+										r.summary = "Применить синергию"
+										r.operationID = "applySynergy"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/combat/abilities/synergies/apply"
+										r.args = args
+										r.count = 0
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+							elem = origElem
+						}
+						// Param: "abilityId"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
 
 						if len(elem) == 0 {
 							// Leaf node.
 							switch method {
 							case "GET":
-								r.name = GetAbilityCatalogOperation
-								r.summary = "Получить каталог способностей"
-								r.operationID = "getAbilityCatalog"
+								r.name = GetAbilityByIdOperation
+								r.summary = "Получить информацию о способности"
+								r.operationID = "getAbilityById"
 								r.operationGroup = ""
-								r.pathPattern = "/gameplay/combat/abilities/catalog"
+								r.pathPattern = "/gameplay/combat/abilities/{abilityId}"
 								r.args = args
-								r.count = 0
+								r.count = 1
 								return r, true
 							default:
 								return
 							}
 						}
 
-					case 's': // Prefix: "synergies"
+					case 'i': // Prefix: "i/"
 
-						if l := len("synergies"); len(elem) >= l && elem[0:l] == "synergies" {
+						if l := len("i/"); len(elem) >= l && elem[0:l] == "i/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "GET":
-								r.name = GetAvailableSynergiesOperation
-								r.summary = "Получить доступные синергии"
-								r.operationID = "getAvailableSynergies"
-								r.operationGroup = ""
-								r.pathPattern = "/gameplay/combat/abilities/synergies"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
+							break
+						}
+						switch elem[0] {
+						case 'e': // Prefix: "encounter"
+
+							if l := len("encounter"); len(elem) >= l && elem[0:l] == "encounter" {
+								elem = elem[l:]
+							} else {
+								break
 							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "POST":
+									r.name = CreateEncounterOperation
+									r.summary = "Создание встречи"
+									r.operationID = "createEncounter"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/ai/encounter"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "encounter_id"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[0] = elem[:idx]
+								elem = elem[idx:]
+
+								if len(elem) == 0 {
+									switch method {
+									case "GET":
+										r.name = GetEncounterOperation
+										r.summary = "Информация о встрече"
+										r.operationID = "getEncounter"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/combat/ai/encounter/{encounter_id}"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										break
+									}
+									switch elem[0] {
+									case 'e': // Prefix: "end"
+
+										if l := len("end"); len(elem) >= l && elem[0:l] == "end" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "POST":
+												r.name = EndEncounterOperation
+												r.summary = "Завершение встречи"
+												r.operationID = "endEncounter"
+												r.operationGroup = ""
+												r.pathPattern = "/gameplay/combat/ai/encounter/{encounter_id}/end"
+												r.args = args
+												r.count = 1
+												return r, true
+											default:
+												return
+											}
+										}
+
+									case 's': // Prefix: "start"
+
+										if l := len("start"); len(elem) >= l && elem[0:l] == "start" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "POST":
+												r.name = StartEncounterOperation
+												r.summary = "Старт встречи"
+												r.operationID = "startEncounter"
+												r.operationGroup = ""
+												r.pathPattern = "/gameplay/combat/ai/encounter/{encounter_id}/start"
+												r.args = args
+												r.count = 1
+												return r, true
+											default:
+												return
+											}
+										}
+
+									}
+
+								}
+
+							}
+
+						case 'p': // Prefix: "profiles"
+
+							if l := len("profiles"); len(elem) >= l && elem[0:l] == "profiles" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = ListAIProfilesOperation
+									r.summary = "Список профилей AI"
+									r.operationID = "listAIProfiles"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/combat/ai/profiles"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "profile_id"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[0] = elem[:idx]
+								elem = elem[idx:]
+
+								if len(elem) == 0 {
+									switch method {
+									case "GET":
+										r.name = GetAIProfileOperation
+										r.summary = "Информация о профиле AI"
+										r.operationID = "getAIProfile"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/combat/ai/profiles/{profile_id}"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/telemetry"
+
+									if l := len("/telemetry"); len(elem) >= l && elem[0:l] == "/telemetry" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch method {
+										case "GET":
+											r.name = GetAIProfileTelemetryOperation
+											r.summary = "Телеметрия профиля AI"
+											r.operationID = "getAIProfileTelemetry"
+											r.operationGroup = ""
+											r.pathPattern = "/gameplay/combat/ai/profiles/{profile_id}/telemetry"
+											r.args = args
+											r.count = 1
+											return r, true
+										default:
+											return
+										}
+									}
+
+								}
+
+							}
+
 						}
 
 					}
@@ -1222,6 +2542,54 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						default:
 							return
 						}
+					}
+
+				case 'r': // Prefix: "raids/"
+
+					if l := len("raids/"); len(elem) >= l && elem[0:l] == "raids/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "raid_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/phase"
+
+						if l := len("/phase"); len(elem) >= l && elem[0:l] == "/phase" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = TransitionRaidPhaseOperation
+								r.summary = "Переход фазы рейда"
+								r.operationID = "transitionRaidPhase"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/combat/raids/{raid_id}/phase"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
 					}
 
 				case 's': // Prefix: "s"
@@ -1439,6 +2807,554 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					default:
 						return
 					}
+				}
+
+			case 'q': // Prefix: "quests/"
+
+				if l := len("quests/"); len(elem) >= l && elem[0:l] == "quests/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'b': // Prefix: "by-player/"
+					origElem := elem
+					if l := len("by-player/"); len(elem) >= l && elem[0:l] == "by-player/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "player_id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = GetPlayerQuestsOperation
+							r.summary = "Получить квесты игрока"
+							r.operationID = "getPlayerQuests"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/quests/by-player/{player_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
+				case 'c': // Prefix: "content/reload"
+					origElem := elem
+					if l := len("content/reload"); len(elem) >= l && elem[0:l] == "content/reload" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = ReloadQuestContentOperation
+							r.summary = "Импортировать контентный квест из YAML в БД"
+							r.operationID = "reloadQuestContent"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/quests/content/reload"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
+				case 's': // Prefix: "start"
+					origElem := elem
+					if l := len("start"); len(elem) >= l && elem[0:l] == "start" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = StartQuestOperation
+							r.summary = "Начать квест"
+							r.operationID = "startQuest"
+							r.operationGroup = ""
+							r.pathPattern = "/gameplay/quests/start"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
+				}
+				// Param: "quest_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = GetQuestOperation
+						r.summary = "Получить информацию о квесте"
+						r.operationID = "getQuest"
+						r.operationGroup = ""
+						r.pathPattern = "/gameplay/quests/{quest_id}"
+						r.args = args
+						r.count = 1
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'c': // Prefix: "c"
+
+						if l := len("c"); len(elem) >= l && elem[0:l] == "c" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'a': // Prefix: "ancel"
+
+							if l := len("ancel"); len(elem) >= l && elem[0:l] == "ancel" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = CancelQuestOperation
+									r.summary = "Отменить квест"
+									r.operationID = "cancelQuest"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/quests/{quest_id}/cancel"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'o': // Prefix: "o"
+
+							if l := len("o"); len(elem) >= l && elem[0:l] == "o" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'm': // Prefix: "mplete"
+
+								if l := len("mplete"); len(elem) >= l && elem[0:l] == "mplete" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = CompleteQuestOperation
+										r.summary = "Завершить квест"
+										r.operationID = "completeQuest"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/quests/{quest_id}/complete"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'n': // Prefix: "nditions/check"
+
+								if l := len("nditions/check"); len(elem) >= l && elem[0:l] == "nditions/check" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = CheckQuestConditionsOperation
+										r.summary = "Проверить условия квеста"
+										r.operationID = "checkQuestConditions"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/quests/{quest_id}/conditions/check"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						}
+
+					case 'd': // Prefix: "dialogue"
+
+						if l := len("dialogue"); len(elem) >= l && elem[0:l] == "dialogue" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch method {
+							case "GET":
+								r.name = GetQuestDialogueOperation
+								r.summary = "Получить текущий диалог"
+								r.operationID = "getQuestDialogue"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/quests/{quest_id}/dialogue"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'c': // Prefix: "choice"
+
+								if l := len("choice"); len(elem) >= l && elem[0:l] == "choice" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = MakeDialogueChoiceOperation
+										r.summary = "Сделать выбор в диалоге"
+										r.operationID = "makeDialogueChoice"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/quests/{quest_id}/dialogue/choice"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'h': // Prefix: "history"
+
+								if l := len("history"); len(elem) >= l && elem[0:l] == "history" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "GET":
+										r.name = GetDialogueHistoryOperation
+										r.summary = "Получить историю диалогов"
+										r.operationID = "getDialogueHistory"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/quests/{quest_id}/dialogue/history"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						}
+
+					case 'e': // Prefix: "events"
+
+						if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetQuestEventsOperation
+								r.summary = "Получить события квеста"
+								r.operationID = "getQuestEvents"
+								r.operationGroup = ""
+								r.pathPattern = "/gameplay/quests/{quest_id}/events"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'r': // Prefix: "re"
+
+						if l := len("re"); len(elem) >= l && elem[0:l] == "re" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'q': // Prefix: "quirements"
+
+							if l := len("quirements"); len(elem) >= l && elem[0:l] == "quirements" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetQuestRequirementsOperation
+									r.summary = "Получить требования квеста"
+									r.operationID = "getQuestRequirements"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/quests/{quest_id}/requirements"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'w': // Prefix: "wards"
+
+							if l := len("wards"); len(elem) >= l && elem[0:l] == "wards" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = GetQuestRewardsOperation
+									r.summary = "Получить награды квеста"
+									r.operationID = "getQuestRewards"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/quests/{quest_id}/rewards"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/distribute"
+
+								if l := len("/distribute"); len(elem) >= l && elem[0:l] == "/distribute" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = DistributeQuestRewardsOperation
+										r.summary = "Распределить награды за квест"
+										r.operationID = "distributeQuestRewards"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/quests/{quest_id}/rewards/distribute"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						}
+
+					case 's': // Prefix: "s"
+
+						if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'k': // Prefix: "kill-check"
+
+							if l := len("kill-check"); len(elem) >= l && elem[0:l] == "kill-check" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "POST":
+									r.name = PerformSkillCheckOperation
+									r.summary = "Выполнить проверку навыка"
+									r.operationID = "performSkillCheck"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/quests/{quest_id}/skill-check"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case 's': // Prefix: "s"
+
+								if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "GET":
+										r.name = GetSkillCheckHistoryOperation
+										r.summary = "Получить историю проверок навыков"
+										r.operationID = "getSkillCheckHistory"
+										r.operationGroup = ""
+										r.pathPattern = "/gameplay/quests/{quest_id}/skill-checks"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						case 't': // Prefix: "tate"
+
+							if l := len("tate"); len(elem) >= l && elem[0:l] == "tate" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetQuestStateOperation
+									r.summary = "Получить состояние квеста"
+									r.operationID = "getQuestState"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/quests/{quest_id}/state"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = UpdateQuestStateOperation
+									r.summary = "Обновить состояние квеста"
+									r.operationID = "updateQuestState"
+									r.operationGroup = ""
+									r.pathPattern = "/gameplay/quests/{quest_id}/state"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					}
+
 				}
 
 			}

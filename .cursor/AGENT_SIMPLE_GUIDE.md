@@ -101,7 +101,7 @@ Todo → Idea Writer → UI/UX Designer → UE5 → QA → Release → Done
 
 **Для Backend Developer:**
 - Code gen: `ogen` (typed handlers, 90% faster)
-- Гайд: `.cursor/OGEN_MIGRATION_GUIDE.md`
+- Гайд: `.cursor/ogen/README.md`
 - Reference: `services/combat-combos-service-ogen-go/`
 
 ---

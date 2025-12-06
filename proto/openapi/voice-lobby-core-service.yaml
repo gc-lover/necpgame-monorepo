@@ -1,0 +1,530 @@
+# Issue: #338
+openapi: 3.0.3
+info:
+  title: Voice Lobby Core Service API
+  description: 'API для основных операций с голосовыми лобби.
+
+
+    Система поддерживает:
+
+    - Создание, обновление и удаление лобби
+
+    - Поиск и каталог лобби
+
+    - Присоединение и покидание лобби
+
+    - Управление участниками
+
+    - Интеграцию с party, guild и clan системами
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+- url: http://localhost:8096/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
+tags:
+- name: Voice Lobby
+  description: Управление голосовыми лобби
+- name: Participants
+  description: Управление участниками лобби
+paths:
+  /voice-lobbies:
+    get:
+      tags:
+      - Voice Lobby
+      summary: Список лобби
+      operationId: listLobbies
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: lobby_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - activity
+          - clan
+          - guild
+          - raid
+          - tournament
+      - name: is_public
+        in: query
+        schema:
+          type: boolean
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: region
+        in: query
+        schema:
+          type: string
+      - name: language
+        in: query
+        schema:
+          type: string
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceLobby'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    post:
+      tags:
+      - Voice Lobby
+      summary: Создание лобби
+      operationId: createLobby
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLobbyRequest'
+      responses:
+        '201':
+          description: Лобби создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobby'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /voice-lobbies/{lobbyId}:
+    parameters:
+    - name: lobbyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID лобби
+    get:
+      tags:
+      - Voice Lobby
+      summary: Информация о лобби
+      operationId: getLobby
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Информация о лобби
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobbyDetail'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+    put:
+      tags:
+      - Voice Lobby
+      summary: Обновление лобби
+      operationId: updateLobby
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLobbyRequest'
+      responses:
+        '200':
+          description: Лобби обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobby'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+    delete:
+      tags:
+      - Voice Lobby
+      summary: Удаление лобби
+      operationId: deleteLobby
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Лобби удалено
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /voice-lobbies/{lobbyId}/join:
+    post:
+      tags:
+      - Voice Lobby
+      summary: Присоединение к лобби
+      operationId: joinLobby
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: lobbyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinLobbyRequest'
+      responses:
+        '200':
+          description: Присоединение успешно
+          content:
+            application/json:
+              schema:
+                $ref: voice-lobby-participants-service.yaml#/components/schemas/LobbyParticipant
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+  /voice-lobbies/{lobbyId}/leave:
+    post:
+      tags:
+      - Voice Lobby
+      summary: Выход из лобби
+      operationId: leaveLobby
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: lobbyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /voice-lobbies/{characterId}/my-lobbies:
+    get:
+      tags:
+      - Voice Lobby
+      summary: Мои лобби
+      operationId: getMyLobbies
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: lobby_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - activity
+          - clan
+          - guild
+          - raid
+          - tournament
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список моих лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceLobby'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    VoiceLobby:
+      type: object
+      required:
+      - id
+      - type
+      - name
+      - owner_id
+      - max_participants
+      - max_subchannels
+      - is_public
+      - is_active
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID лобби
+        owner_id:
+          type: string
+          format: uuid
+          description: ID владельца
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID группы
+        guild_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID гильдии
+        clan_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID клана
+        name:
+          type: string
+          maxLength: 255
+          description: Название лобби
+        description:
+          type: string
+          nullable: true
+          description: Описание лобби
+        voice_provider_room_id:
+          type: string
+          nullable: true
+          description: ID комнаты в провайдере голосовой связи
+        region:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Регион
+        language:
+          type: string
+          nullable: true
+          maxLength: 10
+          description: Язык
+        type:
+          type: string
+          enum:
+          - activity
+          - clan
+          - guild
+          - raid
+          - tournament
+          description: Тип лобби
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время последнего обновления
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время закрытия
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Максимальное количество участников
+        max_subchannels:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: Максимальное количество подканалов
+        is_public:
+          type: boolean
+          description: Публичное лобби
+        is_active:
+          type: boolean
+          description: Активное лобби
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~120 bytes/instance.'
+    VoiceLobbyDetail:
+      allOf:
+      - $ref: '#/components/schemas/VoiceLobby'
+      - type: object
+        properties:
+          participant_count:
+            type: integer
+            description: Количество участников
+          subchannel_count:
+            type: integer
+            description: Количество подканалов
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~128 bytes/instance.'
+    CreateLobbyRequest:
+      type: object
+      required:
+      - type
+      - name
+      - max_participants
+      - max_subchannels
+      properties:
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID группы
+        guild_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID гильдии
+        clan_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID клана
+        name:
+          type: string
+          maxLength: 255
+          description: Название лобби
+        description:
+          type: string
+          nullable: true
+          description: Описание лобби
+        region:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Регион
+        language:
+          type: string
+          nullable: true
+          maxLength: 10
+          description: Язык
+        type:
+          type: string
+          enum:
+          - activity
+          - clan
+          - guild
+          - raid
+          - tournament
+          description: Тип лобби
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Максимальное количество участников
+        max_subchannels:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: Максимальное количество подканалов
+        is_public:
+          type: boolean
+          default: false
+          description: Публичное лобби
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~80 bytes/instance.'
+    UpdateLobbyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Название лобби
+        description:
+          type: string
+          nullable: true
+          description: Описание лобби
+        region:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Регион
+        language:
+          type: string
+          nullable: true
+          maxLength: 10
+          description: Язык
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Максимальное количество участников
+        max_subchannels:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: Максимальное количество подканалов
+        is_public:
+          type: boolean
+          description: Публичное лобби
+        is_active:
+          type: boolean
+          description: Активное лобби
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~64 bytes/instance.'
+    JoinLobbyRequest:
+      type: object
+      properties:
+        subchannel_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID подканала для присоединения
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~16 bytes/instance.'

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -12,9 +13,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func getTestDatabaseURL() string {
+	if url := os.Getenv("TEST_DATABASE_URL"); url != "" {
+		return url
+	}
+	if url := os.Getenv("DATABASE_URL"); url != "" {
+		return url
+	}
+	// Try test port first (Docker Compose test), then default
+	if url := os.Getenv("TEST_DB_PORT"); url != "" {
+		return "postgresql://necpgame:necpgame@localhost:" + url + "/necpgame?sslmode=disable"
+	}
+	return "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable"
+}
+
+// testContext creates a context with timeout for test operations
+func testContext(t *testing.T) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
+}
+
 func setupTestRepository(t *testing.T) (*TicketRepository, func()) {
-	dbURL := "postgres://user:pass@localhost:5432/test"
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	// Timeout for DB connection (5 seconds)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	dbURL := getTestDatabaseURL()
+	dbPool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		t.Skipf("Skipping test due to database connection: %v", err)
 		return nil, nil
@@ -23,15 +47,22 @@ func setupTestRepository(t *testing.T) (*TicketRepository, func()) {
 	repo := NewTicketRepository(dbPool)
 
 	cleanup := func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
 		dbPool.Close()
+		_ = ctx // avoid unused variable
 	}
 
 	return repo, cleanup
 }
 
 func TestNewTicketRepository(t *testing.T) {
-	dbURL := "postgres://user:pass@localhost:5432/test"
-	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	dbURL := getTestDatabaseURL()
+	dbPool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		t.Skipf("Skipping test due to database connection: %v", err)
 		return
@@ -45,14 +76,17 @@ func TestNewTicketRepository(t *testing.T) {
 }
 
 func TestTicketRepository_GetByID_NotFound(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	ticketID := uuid.New()
-	ctx := context.Background()
 	result, err := repo.GetByID(ctx, ticketID)
 
 	if err != nil {
@@ -65,14 +99,17 @@ func TestTicketRepository_GetByID_NotFound(t *testing.T) {
 }
 
 func TestTicketRepository_GetByNumber_NotFound(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	number := "TKT-20250101-0001"
-	ctx := context.Background()
 	result, err := repo.GetByNumber(ctx, number)
 
 	if err != nil {
@@ -85,11 +122,15 @@ func TestTicketRepository_GetByNumber_NotFound(t *testing.T) {
 }
 
 func TestTicketRepository_Create(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
@@ -105,7 +146,6 @@ func TestTicketRepository_Create(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	ctx := context.Background()
 	err := repo.Create(ctx, ticket)
 
 	if err != nil {
@@ -117,11 +157,15 @@ func TestTicketRepository_Create(t *testing.T) {
 }
 
 func TestTicketRepository_GetByID_Success(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
+
+	ctx, cancel := testContext(t)
+	defer cancel()
 
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
@@ -137,7 +181,6 @@ func TestTicketRepository_GetByID_Success(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	ctx := context.Background()
 	err := repo.Create(ctx, ticket)
 	if err != nil {
 		t.Skipf("Skipping test due to database error: failed to create ticket: %v", err)
@@ -157,14 +200,17 @@ func TestTicketRepository_GetByID_Success(t *testing.T) {
 }
 
 func TestTicketRepository_GetByPlayerID_Empty(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	playerID := uuid.New()
-	ctx := context.Background()
 	tickets, err := repo.GetByPlayerID(ctx, playerID, 10, 0)
 
 	if err != nil {
@@ -177,14 +223,17 @@ func TestTicketRepository_GetByPlayerID_Empty(t *testing.T) {
 }
 
 func TestTicketRepository_GetByAgentID_Empty(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	agentID := uuid.New()
-	ctx := context.Background()
 	tickets, err := repo.GetByAgentID(ctx, agentID, 10, 0)
 
 	if err != nil {
@@ -197,14 +246,17 @@ func TestTicketRepository_GetByAgentID_Empty(t *testing.T) {
 }
 
 func TestTicketRepository_GetByStatus_Empty(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	status := models.TicketStatusOpen
-	ctx := context.Background()
 	tickets, err := repo.GetByStatus(ctx, status, 10, 0)
 
 	if err != nil {
@@ -217,11 +269,15 @@ func TestTicketRepository_GetByStatus_Empty(t *testing.T) {
 }
 
 func TestTicketRepository_Update(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
+
+	ctx, cancel := testContext(t)
+	defer cancel()
 
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
@@ -237,7 +293,6 @@ func TestTicketRepository_Update(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	ctx := context.Background()
 	err := repo.Create(ctx, ticket)
 	if err != nil {
 		t.Skipf("Skipping test due to database error: failed to create ticket: %v", err)
@@ -267,14 +322,17 @@ func TestTicketRepository_Update(t *testing.T) {
 }
 
 func TestTicketRepository_CountByPlayerID(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	playerID := uuid.New()
-	ctx := context.Background()
 	count, err := repo.CountByPlayerID(ctx, playerID)
 
 	if err != nil {
@@ -287,14 +345,17 @@ func TestTicketRepository_CountByPlayerID(t *testing.T) {
 }
 
 func TestTicketRepository_CountByStatus(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	status := models.TicketStatusOpen
-	ctx := context.Background()
 	count, err := repo.CountByStatus(ctx, status)
 
 	if err != nil {
@@ -307,11 +368,15 @@ func TestTicketRepository_CountByStatus(t *testing.T) {
 }
 
 func TestTicketRepository_CreateResponse(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
+
+	ctx, cancel := testContext(t)
+	defer cancel()
 
 	ticketID := uuid.New()
 	authorID := uuid.New()
@@ -326,7 +391,6 @@ func TestTicketRepository_CreateResponse(t *testing.T) {
 		CreatedAt:   time.Now(),
 	}
 
-	ctx := context.Background()
 	err := repo.CreateResponse(ctx, response)
 
 	if err != nil {
@@ -338,14 +402,17 @@ func TestTicketRepository_CreateResponse(t *testing.T) {
 }
 
 func TestTicketRepository_GetResponsesByTicketID_Empty(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	ticketID := uuid.New()
-	ctx := context.Background()
 	responses, err := repo.GetResponsesByTicketID(ctx, ticketID)
 
 	if err != nil {
@@ -358,13 +425,16 @@ func TestTicketRepository_GetResponsesByTicketID_Empty(t *testing.T) {
 }
 
 func TestTicketRepository_GetNextTicketNumber(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
-	ctx := context.Background()
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	number, err := repo.GetNextTicketNumber(ctx)
 
 	if err != nil {
@@ -378,11 +448,15 @@ func TestTicketRepository_GetNextTicketNumber(t *testing.T) {
 }
 
 func TestTicketRepository_Create_DatabaseError(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
+
+	ctx, cancel := testContext(t)
+	defer cancel()
 
 	ticket := &models.SupportTicket{
 		ID:          uuid.Nil,
@@ -397,7 +471,6 @@ func TestTicketRepository_Create_DatabaseError(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	ctx := context.Background()
 	err := repo.Create(ctx, ticket)
 
 	if err == nil {
@@ -409,14 +482,17 @@ func TestTicketRepository_Create_DatabaseError(t *testing.T) {
 }
 
 func TestTicketRepository_GetByID_DatabaseError(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	ticketID := uuid.Nil
-	ctx := context.Background()
 	_, err := repo.GetByID(ctx, ticketID)
 
 	if err == nil {
@@ -428,11 +504,15 @@ func TestTicketRepository_GetByID_DatabaseError(t *testing.T) {
 }
 
 func TestTicketRepository_Update_NotFound(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
+
+	ctx, cancel := testContext(t)
+	defer cancel()
 
 	ticket := &models.SupportTicket{
 		ID:          uuid.New(),
@@ -447,7 +527,6 @@ func TestTicketRepository_Update_NotFound(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	ctx := context.Background()
 	err := repo.Update(ctx, ticket)
 
 	if err != nil {
@@ -459,14 +538,17 @@ func TestTicketRepository_Update_NotFound(t *testing.T) {
 }
 
 func TestTicketRepository_GetByPlayerID_Pagination(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	playerID := uuid.New()
-	ctx := context.Background()
 
 	for i := 0; i < 5; i++ {
 		ticket := &models.SupportTicket{
@@ -509,14 +591,17 @@ func TestTicketRepository_GetByPlayerID_Pagination(t *testing.T) {
 }
 
 func TestTicketRepository_GetByAgentID_Pagination(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
+	ctx, cancel := testContext(t)
+	defer cancel()
+
 	agentID := uuid.New()
-	ctx := context.Background()
 
 	tickets, err := repo.GetByAgentID(ctx, agentID, 2, 0)
 
@@ -540,13 +625,15 @@ func TestTicketRepository_GetByAgentID_Pagination(t *testing.T) {
 }
 
 func TestTicketRepository_GetByStatus_Pagination(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
 
-	ctx := context.Background()
+	ctx, cancel := testContext(t)
+	defer cancel()
 
 	tickets, err := repo.GetByStatus(ctx, models.TicketStatusOpen, 2, 0)
 
@@ -570,11 +657,15 @@ func TestTicketRepository_GetByStatus_Pagination(t *testing.T) {
 }
 
 func TestTicketRepository_GetResponsesByTicketID_WithResponses(t *testing.T) {
+	t.Parallel()
 	repo, cleanup := setupTestRepository(t)
 	if repo == nil {
 		return
 	}
 	defer cleanup()
+
+	ctx, cancel := testContext(t)
+	defer cancel()
 
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
@@ -590,7 +681,6 @@ func TestTicketRepository_GetResponsesByTicketID_WithResponses(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	ctx := context.Background()
 	err := repo.Create(ctx, ticket)
 	if err != nil {
 		t.Skipf("Skipping test due to database error: %v", err)

@@ -16,13 +16,15 @@ const (
 
 // ToolsHandlers implements api.Handler interface (ogen typed handlers)
 type ToolsHandlers struct {
-	logger *logrus.Logger
+	logger  *logrus.Logger
+	service ToolsServiceInterface
 }
 
 // NewToolsHandlers creates new handlers
-func NewToolsHandlers() *ToolsHandlers {
+func NewToolsHandlers(service ToolsServiceInterface) *ToolsHandlers {
 	return &ToolsHandlers{
-		logger: GetLogger(),
+		logger:  GetLogger(),
+		service: service,
 	}
 }
 
@@ -31,26 +33,39 @@ func (h *ToolsHandlers) CreateAlert(ctx context.Context, req *api.CreateAlertReq
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithFields(logrus.Fields{
-		"ticker":          req.Ticker,
-		"condition_type":  req.ConditionType,
-		"threshold":       req.Threshold,
-	}).Info("CreateAlert request")
+	if h.service == nil {
+		alertID := uuid.New()
+		now := time.Now()
+		return &api.Alert{
+			ID:            api.NewOptUUID(alertID),
+			PlayerID:      api.NewOptUUID(uuid.New()),
+			Ticker:        api.NewOptString(req.Ticker),
+			ConditionType: api.NewOptString(string(req.ConditionType)),
+			Threshold:     api.NewOptFloat64(req.Threshold),
+			IsActive:      api.NewOptBool(true),
+			TriggeredAt:   api.OptDateTime{},
+			CreatedAt:     api.NewOptDateTime(now),
+		}, nil
+	}
 
-	// TODO: Implement business logic
-	alertID := uuid.New()
-	now := time.Now()
+	alert, err := h.service.CreateAlert(ctx, req)
+	if err != nil {
+		h.logger.WithError(err).Error("CreateAlert: failed")
+		alertID := uuid.New()
+		now := time.Now()
+		return &api.Alert{
+			ID:            api.NewOptUUID(alertID),
+			PlayerID:      api.NewOptUUID(uuid.New()),
+			Ticker:        api.NewOptString(req.Ticker),
+			ConditionType: api.NewOptString(string(req.ConditionType)),
+			Threshold:     api.NewOptFloat64(req.Threshold),
+			IsActive:      api.NewOptBool(false),
+			TriggeredAt:   api.OptDateTime{},
+			CreatedAt:     api.NewOptDateTime(now),
+		}, nil
+	}
 
-	return &api.Alert{
-		ID:            api.NewOptUUID(alertID),
-		PlayerID:      api.NewOptUUID(uuid.New()), // Mock player ID
-		Ticker:        api.NewOptString(req.Ticker),
-		ConditionType: api.NewOptString(string(req.ConditionType)),
-		Threshold:     api.NewOptFloat64(req.Threshold),
-		IsActive:      api.NewOptBool(true),
-		TriggeredAt:   api.OptDateTime{},
-		CreatedAt:     api.NewOptDateTime(now),
-	}, nil
+	return alert, nil
 }
 
 // DeleteAlert implements deleteAlert operation.
@@ -58,9 +73,16 @@ func (h *ToolsHandlers) DeleteAlert(ctx context.Context, params api.DeleteAlertP
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithField("alert_id", params.AlertID).Info("DeleteAlert request")
+	if h.service == nil {
+		return &api.DeleteAlertNoContent{}, nil
+	}
 
-	// TODO: Implement business logic
+	err := h.service.DeleteAlert(ctx, params.AlertID)
+	if err != nil {
+		h.logger.WithError(err).Error("DeleteAlert: failed")
+		return &api.DeleteAlertNoContent{}, nil
+	}
+
 	return &api.DeleteAlertNoContent{}, nil
 }
 
@@ -69,12 +91,17 @@ func (h *ToolsHandlers) GetHeatmap(ctx context.Context, params api.GetHeatmapPar
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithFields(logrus.Fields{
-		"period": params.Period,
-	}).Info("GetHeatmap request")
+	if h.service == nil {
+		return &api.Heatmap{}, nil
+	}
 
-	// TODO: Implement business logic
-	return &api.Heatmap{}, nil
+	heatmap, err := h.service.GetHeatmap(ctx, string(params.Period))
+	if err != nil {
+		h.logger.WithError(err).Error("GetHeatmap: failed")
+		return &api.Heatmap{}, nil
+	}
+
+	return heatmap, nil
 }
 
 // GetMarketDashboard implements getMarketDashboard operation.
@@ -82,10 +109,17 @@ func (h *ToolsHandlers) GetMarketDashboard(ctx context.Context) (api.GetMarketDa
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.Info("GetMarketDashboard request")
+	if h.service == nil {
+		return &api.MarketDashboard{}, nil
+	}
 
-	// TODO: Implement business logic
-	return &api.MarketDashboard{}, nil
+	dashboard, err := h.service.GetMarketDashboard(ctx)
+	if err != nil {
+		h.logger.WithError(err).Error("GetMarketDashboard: failed")
+		return &api.MarketDashboard{}, nil
+	}
+
+	return dashboard, nil
 }
 
 // GetOrderBook implements getOrderBook operation.
@@ -93,10 +127,17 @@ func (h *ToolsHandlers) GetOrderBook(ctx context.Context, params api.GetOrderBoo
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithField("ticker", params.Ticker).Info("GetOrderBook request")
+	if h.service == nil {
+		return &api.OrderBook{}, nil
+	}
 
-	// TODO: Implement business logic
-	return &api.OrderBook{}, nil
+	orderBook, err := h.service.GetOrderBook(ctx, params.Ticker)
+	if err != nil {
+		h.logger.WithError(err).Error("GetOrderBook: failed")
+		return &api.OrderBook{}, nil
+	}
+
+	return orderBook, nil
 }
 
 // GetPortfolioDashboard implements getPortfolioDashboard operation.
@@ -104,10 +145,17 @@ func (h *ToolsHandlers) GetPortfolioDashboard(ctx context.Context) (api.GetPortf
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.Info("GetPortfolioDashboard request")
+	if h.service == nil {
+		return &api.PortfolioDashboard{}, nil
+	}
 
-	// TODO: Implement business logic
-	return &api.PortfolioDashboard{}, nil
+	dashboard, err := h.service.GetPortfolioDashboard(ctx)
+	if err != nil {
+		h.logger.WithError(err).Error("GetPortfolioDashboard: failed")
+		return &api.PortfolioDashboard{}, nil
+	}
+
+	return dashboard, nil
 }
 
 // ListAlerts implements listAlerts operation.
@@ -120,15 +168,6 @@ func (h *ToolsHandlers) ListAlerts(ctx context.Context, params api.ListAlertsPar
 		activeOnly = params.ActiveOnly.Value
 	}
 
-	h.logger.WithFields(logrus.Fields{
-		"active_only": activeOnly,
-		"limit":       params.Limit.Value,
-		"offset":      params.Offset.Value,
-	}).Info("ListAlerts request")
-
-	// TODO: Implement business logic
-	alerts := []api.Alert{}
-	total := 0
 	limit := 50
 	if params.Limit.IsSet() {
 		limit = params.Limit.Value
@@ -136,6 +175,34 @@ func (h *ToolsHandlers) ListAlerts(ctx context.Context, params api.ListAlertsPar
 	offset := 0
 	if params.Offset.IsSet() {
 		offset = params.Offset.Value
+	}
+
+	if h.service == nil {
+		alerts := []api.Alert{}
+		pagination := api.PaginationResponse{
+			Total:  0,
+			Limit:  api.NewOptInt(limit),
+			Offset: api.NewOptInt(offset),
+		}
+		return &api.ListAlertsOK{
+			Alerts:     alerts,
+			Pagination: api.NewOptPaginationResponse(pagination),
+		}, nil
+	}
+
+	alerts, total, err := h.service.ListAlerts(ctx, activeOnly, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("ListAlerts: failed")
+		alerts := []api.Alert{}
+		pagination := api.PaginationResponse{
+			Total:  0,
+			Limit:  api.NewOptInt(limit),
+			Offset: api.NewOptInt(offset),
+		}
+		return &api.ListAlertsOK{
+			Alerts:     alerts,
+			Pagination: api.NewOptPaginationResponse(pagination),
+		}, nil
 	}
 
 	pagination := api.PaginationResponse{

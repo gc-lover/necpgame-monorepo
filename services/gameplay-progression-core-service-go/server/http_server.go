@@ -34,8 +34,12 @@ func NewHTTPServer(addr string) *HTTPServer {
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
+	// Initialize service
+	logger := GetLogger()
+	service := NewProgressionService(logger)
+	
 	// Handlers
-	handlers := NewHandlers()
+	handlers := NewHandlers(service)
 	secHandler := &SecurityHandler{}
 
 	// ogen server

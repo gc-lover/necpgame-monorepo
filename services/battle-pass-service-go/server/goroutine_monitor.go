@@ -2,24 +2,29 @@
 package server
 
 import (
+	"context"
 	"log"
 	"runtime"
 	"time"
 )
 
 // GoroutineMonitor monitors goroutine count and detects leaks
+// Issue: #1585 - Uses context cancellation for proper cleanup
 type GoroutineMonitor struct {
 	maxGoroutines int
-	ctx           chan struct{}
 	logger        *log.Logger
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 // NewGoroutineMonitor creates a new goroutine monitor
 func NewGoroutineMonitor(max int, logger *log.Logger) *GoroutineMonitor {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &GoroutineMonitor{
 		maxGoroutines: max,
-		ctx:           make(chan struct{}),
 		logger:        logger,
+		ctx:           ctx,
+		cancel:        cancel,
 	}
 }
 
@@ -30,7 +35,7 @@ func (gm *GoroutineMonitor) Start() {
 
 	for {
 		select {
-		case <-gm.ctx:
+		case <-gm.ctx.Done():
 			return
 		case <-ticker.C:
 			count := runtime.NumGoroutine()
@@ -51,6 +56,6 @@ func (gm *GoroutineMonitor) Start() {
 
 // Stop stops monitoring
 func (gm *GoroutineMonitor) Stop() {
-	close(gm.ctx)
+	gm.cancel()
 }
 

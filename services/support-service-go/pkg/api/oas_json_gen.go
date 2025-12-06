@@ -365,10 +365,6 @@ func (s *CreateTicketRequest) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *CreateTicketRequest) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("player_id")
-		json.EncodeUUID(e, s.PlayerID)
-	}
-	{
 		e.FieldStart("subject")
 		e.Str(s.Subject)
 	}
@@ -390,12 +386,11 @@ func (s *CreateTicketRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCreateTicketRequest = [5]string{
-	0: "player_id",
-	1: "subject",
-	2: "description",
-	3: "category",
-	4: "priority",
+var jsonFieldsNameOfCreateTicketRequest = [4]string{
+	0: "subject",
+	1: "description",
+	2: "category",
+	3: "priority",
 }
 
 // Decode decodes CreateTicketRequest from json.
@@ -408,20 +403,8 @@ func (s *CreateTicketRequest) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "player_id":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.PlayerID = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"player_id\"")
-			}
 		case "subject":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
 				s.Subject = string(v)
@@ -433,7 +416,7 @@ func (s *CreateTicketRequest) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"subject\"")
 			}
 		case "description":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Str()
 				s.Description = string(v)
@@ -474,7 +457,7 @@ func (s *CreateTicketRequest) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -3393,13 +3376,20 @@ func (s *UpdateTicketRequest) encodeFields(e *jx.Encoder) {
 			s.Status.Encode(e)
 		}
 	}
+	{
+		if s.Subject.Set {
+			e.FieldStart("subject")
+			s.Subject.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfUpdateTicketRequest = [4]string{
+var jsonFieldsNameOfUpdateTicketRequest = [5]string{
 	0: "assigned_agent_id",
 	1: "category",
 	2: "priority",
 	3: "status",
+	4: "subject",
 }
 
 // Decode decodes UpdateTicketRequest from json.
@@ -3450,6 +3440,16 @@ func (s *UpdateTicketRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "subject":
+			if err := func() error {
+				s.Subject.Reset()
+				if err := s.Subject.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subject\"")
 			}
 		default:
 			return d.Skip()
