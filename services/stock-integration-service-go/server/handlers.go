@@ -29,8 +29,8 @@ func (h *IntegrationHandlers) GetStockEconomyImpact(ctx context.Context, params 
 	defer cancel()
 
 	period := "week"
-	if params.Period.Set && params.Period.Value != nil {
-		period = string(*params.Period.Value)
+	if params.Period.Set {
+		period = string(params.Period.Value)
 	}
 
 	// TODO: Implement actual business logic
@@ -38,10 +38,10 @@ func (h *IntegrationHandlers) GetStockEconomyImpact(ctx context.Context, params 
 		Period:          api.OptString{Value: period, Set: true},
 		TradingVolume:   api.OptFloat64{Value: 0.0, Set: true},
 		MarketCapChange: api.OptFloat64{Value: 0.0, Set: true},
-		ResourcePriceImpacts: api.OptStockEconomyImpactResourcePriceImpactsArray{Value: []api.StockEconomyImpactResourcePriceImpactsItem{}, Set: true},
-		CurrencyRateImpacts:  api.OptStockEconomyImpactCurrencyRateImpactsArray{Value: []api.StockEconomyImpactCurrencyRateImpactsItem{}, Set: true},
-		EconomicIndicators: api.OptStockEconomyImpactEconomicIndicators{
-			Value: api.StockEconomyImpactEconomicIndicators{
+		ResourcePriceImpacts: []api.GetStockEconomyImpactOKResourcePriceImpactsItem{},
+		CurrencyRateImpacts:  []api.GetStockEconomyImpactOKCurrencyRateImpactsItem{},
+		EconomicIndicators: api.OptGetStockEconomyImpactOKEconomicIndicators{
+			Value: api.GetStockEconomyImpactOKEconomicIndicators{
 				GdpImpact:      api.OptFloat64{Value: 0.0, Set: true},
 				InflationImpact: api.OptFloat64{Value: 0.0, Set: true},
 			},

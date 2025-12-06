@@ -238,6 +238,7 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 			if err := conn.WriteMessage(messageType, response); err != nil {
 				logger.WithError(err).Error("Failed to write response")
 				RecordError("websocket_write")
+				h.RemoveClientConnection(conn)
 				return err
 			}
 		}
@@ -245,6 +246,8 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	}
 }
+
+
 
 
 

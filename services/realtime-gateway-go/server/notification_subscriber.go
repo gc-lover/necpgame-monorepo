@@ -155,6 +155,9 @@ func (ns *NotificationSubscriber) sendNotification(notification NotificationEven
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := conn.WriteMessage(websocket.TextMessage, notificationMessage); err != nil {
 				ns.logger.WithError(err).WithField("account_id", notification.AccountID).Error("Failed to send notification")
+				clientConn.mu.Unlock()
+				ns.handler.RemoveClientConnection(conn)
+				continue
 			} else {
 				ns.logger.WithFields(logrus.Fields{
 					"account_id":      notification.AccountID,
