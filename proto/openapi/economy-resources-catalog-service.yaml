@@ -1,0 +1,333 @@
+# Issue: #140890239
+openapi: 3.0.3
+info:
+  title: Economy Resources Catalog Service API
+  description: |
+    API для расширенного каталога ресурсов и материалов.
+    
+    **Основные возможности:**
+    - Каталог ресурсов с фильтрацией (tier, rarity, category)
+    - Источники добычи ресурсов (loot, mining, processing, quest, vendor, dismantling, crafting, event)
+    - Применение ресурсов (weapon_crafting, armor_crafting, cyberware_crafting, consumable_crafting, mod_crafting, upgrade, trade, quest)
+    - Зоны добычи ресурсов (mining zones)
+    - История цен ресурсов
+    
+    **Performance:**
+    - Hot endpoints: GET /economy/resources/catalog
+    - Expected load: 500 RPS, P99 <50ms
+    - Cache: Redis 10min TTL
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Resources Catalog
+    description: Каталог ресурсов
+  - name: Resource Sources
+    description: Источники добычи ресурсов
+  - name: Resource Applications
+    description: Применение ресурсов
+  - name: Mining Zones
+    description: Зоны добычи ресурсов
+  - name: Price History
+    description: История цен ресурсов
+
+paths:
+  /economy/resources/catalog:
+    get:
+      tags:
+        - Resources Catalog
+      summary: Получить расширенный каталог ресурсов
+      description: |
+        Возвращает каталог ресурсов с расширенной информацией: tier, rarity, stack_size, weight, sources, applications.
+        Поддерживает фильтрацию по tier, rarity, category, tradeable.
+      operationId: getResourcesCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description: Фильтр по tier (1-5)
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum: [common, uncommon, rare, epic, legendary]
+          description: Фильтр по редкости
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [raw_materials, electronics, bio_chem, data_assets]
+          description: Фильтр по категории
+        - name: tradeable
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по возможности торговли
+        - name: stackable
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по возможности стекирования
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Каталог ресурсов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - resources
+                  - total
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: 'economy-resources-catalog-schemas.yaml#/components/schemas/ResourceCatalogItem'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 150
+                  limit:
+                    type: integer
+                    minimum: 1
+                    example: 20
+                  offset:
+                    type: integer
+                    minimum: 0
+                    example: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/{resource_id}/sources:
+    get:
+      tags:
+        - Resource Sources
+      summary: Получить источники добычи ресурса
+      description: |
+        Возвращает список источников добычи ресурса: loot, mining, processing, quest, vendor, dismantling, crafting, event.
+      operationId: getResourceSources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ресурса
+        - name: source_type
+          in: query
+          schema:
+            type: string
+            enum: [loot, mining, processing, quest, vendor, dismantling, crafting, event]
+          description: Фильтр по типу источника
+      responses:
+        '200':
+          description: Список источников добычи
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sources
+                properties:
+                  sources:
+                    type: array
+                    items:
+                      $ref: 'economy-resources-catalog-schemas.yaml#/components/schemas/ResourceSource'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/{resource_id}/applications:
+    get:
+      tags:
+        - Resource Applications
+      summary: Получить применение ресурса
+      description: |
+        Возвращает список применений ресурса: weapon_crafting, armor_crafting, cyberware_crafting, consumable_crafting, mod_crafting, upgrade, trade, quest.
+      operationId: getResourceApplications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ресурса
+        - name: application_type
+          in: query
+          schema:
+            type: string
+            enum: [weapon_crafting, armor_crafting, cyberware_crafting, consumable_crafting, mod_crafting, upgrade, trade, quest]
+          description: Фильтр по типу применения
+      responses:
+        '200':
+          description: Список применений ресурса
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - applications
+                properties:
+                  applications:
+                    type: array
+                    items:
+                      $ref: 'economy-resources-catalog-schemas.yaml#/components/schemas/ResourceApplication'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/{resource_id}/mining-zones:
+    get:
+      tags:
+        - Mining Zones
+      summary: Получить зоны добычи ресурса
+      description: |
+        Возвращает список зон добычи ресурса с информацией о spawn_rate, respawn_time, risk_level.
+      operationId: getResourceMiningZones
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ресурса
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по региону
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, very_high]
+          description: Фильтр по уровню риска
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Только активные зоны
+      responses:
+        '200':
+          description: Список зон добычи
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - zones
+                properties:
+                  zones:
+                    type: array
+                    items:
+                      $ref: 'economy-resources-catalog-schemas.yaml#/components/schemas/MiningZone'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/resources/{resource_id}/price-history:
+    get:
+      tags:
+        - Price History
+      summary: Получить историю цен ресурса
+      description: |
+        Возвращает историю цен ресурса с информацией о supply_factor, demand_factor, price_type.
+      operationId: getResourcePriceHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор ресурса
+        - name: price_type
+          in: query
+          schema:
+            type: string
+            enum: [base, current, vendor, player]
+          description: Фильтр по типу цены
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по региону
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 30
+          description: Количество дней истории
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История цен ресурса
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - history
+                  - total
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: 'economy-resources-catalog-schemas.yaml#/components/schemas/PriceHistoryEntry'
+                  total:
+                    type: integer
+                    minimum: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
