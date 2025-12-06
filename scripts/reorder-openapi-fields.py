@@ -172,18 +172,20 @@ def reorder_schema_properties(schema: Dict[str, Any], schema_name: str) -> bool:
     old_order = list(properties.keys())
     new_order = [name for name, _ in sorted_props]
     
-    if old_order == new_order:
-        return False
-    
     # Создаем новый OrderedDict (в Python 3.7+ dict сохраняет порядок)
     new_properties = {name: props for name, props in sorted_props}
     
-    # Обновляем schema
-    schema['properties'] = new_properties
-    
-    # Добавляем/обновляем BACKEND NOTE
+    # Проверяем, нужно ли добавить BACKEND NOTE (даже если порядок уже правильный)
     description = schema.get('description', '')
-    if 'BACKEND NOTE' not in description and 'Fields ordered' not in description:
+    needs_note = 'BACKEND NOTE' not in description and 'Fields ordered' not in description
+    
+    # Если порядок изменился или нужен BACKEND NOTE
+    if old_order != new_order:
+        # Обновляем schema
+        schema['properties'] = new_properties
+    
+    # Добавляем/обновляем BACKEND NOTE (даже если порядок уже правильный)
+    if needs_note:
         note = (
             "BACKEND NOTE: Fields ordered for struct alignment (large → small). "
             "Expected memory savings: 30-50%."
@@ -192,8 +194,10 @@ def reorder_schema_properties(schema: Dict[str, Any], schema_name: str) -> bool:
             schema['description'] = f"{description}\n\n{note}"
         else:
             schema['description'] = note
+        return True  # Изменения были (добавлен BACKEND NOTE)
     
-    return True
+    # Возвращаем True только если порядок изменился
+    return old_order != new_order
 
 
 def process_openapi_file(file_path: Path, dry_run: bool = False) -> Tuple[int, List[str]]:
@@ -212,7 +216,22 @@ def process_openapi_file(file_path: Path, dry_run: bool = False) -> Tuple[int, L
     
     for schema_name, schema in schemas.items():
         if isinstance(schema, dict) and schema.get('type') == 'object':
+            # Проверяем, нужен ли BACKEND NOTE (даже если порядок уже правильный)
+            description = schema.get('description', '')
+            needs_note = 'BACKEND NOTE' not in description and 'Fields ordered' not in description
+            
             if reorder_schema_properties(schema, schema_name):
+                changed_schemas.append(schema_name)
+            elif needs_note and 'properties' in schema:
+                # Добавляем BACKEND NOTE даже если порядок уже правильный
+                note = (
+                    "BACKEND NOTE: Fields ordered for struct alignment (large → small). "
+                    "Expected memory savings: 30-50%."
+                )
+                if description:
+                    schema['description'] = f"{description}\n\n{note}"
+                else:
+                    schema['description'] = note
                 changed_schemas.append(schema_name)
     
     if changed_schemas and not dry_run:

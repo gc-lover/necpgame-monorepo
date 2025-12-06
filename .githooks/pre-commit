@@ -111,6 +111,14 @@ if [ "$SKIP_TESTS" != "1" ]; then
       
       cd "$SERVICE_DIR" || continue
       
+      # Check if Docker Compose test file exists and Docker is available
+      USE_DOCKER=false
+      if command -v docker-compose >/dev/null 2>&1 || command -v docker >/dev/null 2>&1; then
+        if [ -f "docker-compose.test.yml" ]; then
+          USE_DOCKER=true
+        fi
+      fi
+      
       # Try Makefile test first, then fallback to go test
       # On Windows, make might not be available, so check first
       if [ -f "Makefile" ] && grep -q "^test:" Makefile && command -v make >/dev/null 2>&1; then
@@ -119,8 +127,38 @@ if [ "$SKIP_TESTS" != "1" ]; then
       else
         # Check if there are any test files
         if find . -name "*_test.go" -type f | grep -q .; then
-          TEST_OUTPUT=$(go test -v ./... 2>&1)
+          # If Docker is available, try to start test containers
+          if [ "$USE_DOCKER" = true ]; then
+            echo " (starting Docker containers...)" | tr -d '\n'
+            # Start containers in background
+            if command -v docker-compose >/dev/null 2>&1; then
+              docker-compose -f docker-compose.test.yml up -d >/dev/null 2>&1
+              sleep 3
+            elif command -v docker >/dev/null 2>&1; then
+              docker compose -f docker-compose.test.yml up -d >/dev/null 2>&1
+              sleep 3
+            fi
+            # Set environment variables for Docker test ports
+            export TEST_DATABASE_URL="postgresql://necpgame:necpgame@localhost:5433/necpgame?sslmode=disable"
+            export REDIS_ADDR="localhost:6380"
+          fi
+          
+          # Add timeout to prevent hanging tests (30 seconds)
+          TEST_OUTPUT=$(timeout 30s go test -v -timeout 30s ./... 2>&1 || echo "TIMEOUT: Tests exceeded 30 second limit")
           TEST_EXIT=$?
+          # If timeout command failed, check if it was due to timeout
+          if [ $TEST_EXIT -eq 124 ] || echo "$TEST_OUTPUT" | grep -qiE "timeout|TIMEOUT"; then
+            TEST_EXIT=1
+          fi
+          
+          # Cleanup Docker containers if we started them
+          if [ "$USE_DOCKER" = true ]; then
+            if command -v docker-compose >/dev/null 2>&1; then
+              docker-compose -f docker-compose.test.yml down -v >/dev/null 2>&1
+            elif command -v docker >/dev/null 2>&1; then
+              docker compose -f docker-compose.test.yml down -v >/dev/null 2>&1
+            fi
+          fi
         else
           echo " WARNING  (no tests)"
           cd - >/dev/null || continue
@@ -129,6 +167,8 @@ if [ "$SKIP_TESTS" != "1" ]; then
       fi
       
       if [ $TEST_EXIT -ne 0 ]; then
+        # Check if all tests were skipped (exit 0 but with skip messages)
+        # Skip tests return exit 0, so if exit != 0, there are real failures
         echo " ❌"
         FAILED_SERVICES+=("$service")
         
@@ -159,6 +199,8 @@ if [ "$SKIP_TESTS" != "1" ]; then
           FAILED_TEST_NAMES="no test files"
         elif echo "$TEST_OUTPUT" | grep -qiE "build.*failed|compilation.*error|undefined|cannot find|command not found"; then
           FAILED_TEST_NAMES="compilation/command error"
+        elif echo "$TEST_OUTPUT" | grep -qiE "timeout|context deadline exceeded|deadline exceeded"; then
+          FAILED_TEST_NAMES="test timeout (tests may have hung)"
         else
           FAILED_TEST_NAMES="unknown"
         fi
@@ -218,7 +260,12 @@ if [ "$SKIP_TESTS" != "1" ]; then
         
         FAILED_TESTS+=("$service:$FAILED_TEST_NAMES:$ERROR_SUMMARY")
       else
-        echo " OK"
+        # Check if tests were all skipped (exit 0 but output contains "SKIP")
+        if echo "$TEST_OUTPUT" | grep -qiE "skipping|skip:" && ! echo "$TEST_OUTPUT" | grep -qE -- "^[[:space:]]*--- FAIL:"; then
+          echo " WARNING  (tests skipped - DB/Redis may be unavailable)"
+        else
+          echo " OK"
+        fi
       fi
       
       cd - >/dev/null || continue

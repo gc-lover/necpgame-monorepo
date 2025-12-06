@@ -1,0 +1,610 @@
+# Issue: #140890244
+openapi: 3.0.3
+info:
+  title: Economy Model Type Service API
+  description: 'API для управления экономической моделью с конфигурацией рынков, правил доступа и ценообразования.
+
+
+    Система поддерживает:
+
+    - Управление конфигурацией экономической модели (player-driven, NPC-driven, hybrid)
+
+    - Управление типами рынков (global, regional, faction)
+
+    - Правила доступа к рынкам (reputation, level, quest, alliance)
+
+    - Конфигурацию ценообразования (player_control, npc_control, hybrid)
+
+    - Правила управления экономикой (price_control, supply_control, tax_control, access_control)
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+- url: http://localhost:8080/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
+tags:
+- name: Economy Model
+  description: Управление экономической моделью
+- name: Markets
+  description: Управление типами рынков
+- name: Access Rules
+  description: Правила доступа к рынкам
+- name: Pricing
+  description: Конфигурация ценообразования
+- name: Governance
+  description: Правила управления экономикой
+paths:
+  /economy/model/config:
+    get:
+      tags:
+      - Economy Model
+      summary: Получить конфигурацию экономической модели
+      operationId: getEconomyModelConfig
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Конфигурация экономической модели
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyModelConfig'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    put:
+      tags:
+      - Economy Model
+      summary: Обновить конфигурацию экономической модели
+      description: Только для администраторов
+      operationId: updateEconomyModelConfig
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomyModelConfig'
+      responses:
+        '200':
+          description: Обновленная конфигурация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyModelConfig'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/model/markets:
+    get:
+      tags:
+      - Markets
+      summary: Получить список рынков
+      operationId: getMarkets
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: region_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID региона
+      - name: faction_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID фракции
+      - name: market_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - global
+          - regional
+          - faction
+        description: Тип рынка
+      - name: is_global
+        in: query
+        schema:
+          type: boolean
+        description: Глобальный рынок
+      responses:
+        '200':
+          description: Список рынков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  markets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketType'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/model/markets/{marketId}/access-rules:
+    get:
+      tags:
+      - Access Rules
+      summary: Получить правила доступа к рынку
+      operationId: getMarketAccessRules
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: marketId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID рынка
+      responses:
+        '200':
+          description: Правила доступа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketAccessRule'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/model/markets/{marketId}/pricing-config:
+    get:
+      tags:
+      - Pricing
+      summary: Получить конфигурацию ценообразования
+      operationId: getPricingConfig
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: marketId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID рынка
+      - name: item_category
+        in: query
+        schema:
+          type: string
+        description: Категория предмета
+      - name: item_tier
+        in: query
+        schema:
+          type: integer
+          format: int32
+        description: Тиер предмета
+      responses:
+        '200':
+          description: Конфигурация ценообразования
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PricingModelConfig'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/model/governance-rules:
+    get:
+      tags:
+      - Governance
+      summary: Получить правила управления экономикой
+      operationId: getGovernanceRules
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: entity_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - faction
+          - region
+          - global
+        description: Тип сущности
+      - name: entity_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID сущности
+      - name: rule_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - price_control
+          - supply_control
+          - tax_control
+          - access_control
+        description: Тип правила
+      - name: rule_scope
+        in: query
+        schema:
+          type: string
+        description: Область действия правила
+      responses:
+        '200':
+          description: Правила управления
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EconomyGovernanceRule'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    post:
+      tags:
+      - Governance
+      summary: Создать правило управления
+      description: Только для администраторов
+      operationId: createGovernanceRule
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomyGovernanceRule'
+      responses:
+        '201':
+          description: Созданное правило
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyGovernanceRule'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    EconomyModelConfig:
+      type: object
+      required:
+      - id
+      - name
+      - model_type
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID конфигурации
+        name:
+          type: string
+          description: Название конфигурации
+        description:
+          type: string
+          nullable: true
+          description: Описание конфигурации
+        model_type:
+          type: string
+          enum:
+          - player_driven
+          - npc_driven
+          - hybrid
+          description: Тип экономической модели
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления
+        price_volatility_factor:
+          type: number
+          format: double
+          nullable: true
+          description: Фактор волатильности цен
+        demand_supply_impact:
+          type: number
+          format: double
+          nullable: true
+          description: Влияние спроса и предложения
+        base_supply_npc_controlled:
+          type: boolean
+          default: false
+          description: Базовое предложение контролируется NPC
+        strategic_markets_player_controlled:
+          type: boolean
+          default: false
+          description: Стратегические рынки контролируются игроками
+        regional_modifiers_faction_controlled:
+          type: boolean
+          default: false
+          description: Региональные модификаторы контролируются фракциями
+        rare_items_player_only:
+          type: boolean
+          default: false
+          description: Редкие предметы доступны только игрокам
+        is_active:
+          type: boolean
+          default: true
+          description: Активна ли конфигурация
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~72 bytes/instance.'
+    MarketType:
+      type: object
+      required:
+      - id
+      - name
+      - market_type
+      - is_global
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID рынка
+        region_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID региона (для regional рынков)
+        faction_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID фракции (для faction рынков)
+        name:
+          type: string
+          description: Название рынка
+        market_type:
+          type: string
+          enum:
+          - global
+          - regional
+          - faction
+          description: Тип рынка
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления
+        base_tax_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Базовая ставка налога
+        player_tax_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Ставка налога для игроков
+        npc_tax_rate:
+          type: number
+          format: double
+          nullable: true
+          description: Ставка налога для NPC
+        is_global:
+          type: boolean
+          default: false
+          description: Глобальный рынок
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~88 bytes/instance.'
+    MarketAccessRule:
+      type: object
+      required:
+      - id
+      - market_id
+      - access_type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID правила
+        market_id:
+          type: string
+          format: uuid
+          description: ID рынка
+        requirement_item_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID требуемого предмета
+        requirement_quest_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID требуемого квеста
+        access_type:
+          type: string
+          enum:
+          - reputation
+          - level
+          - quest
+          - alliance
+          description: Тип доступа
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления
+        requirement_value:
+          type: number
+          format: double
+          nullable: true
+          description: Требуемое значение (репутация, уровень)
+        is_active:
+          type: boolean
+          default: true
+          description: Активно ли правило
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~96 bytes/instance.'
+    PricingModelConfig:
+      type: object
+      required:
+      - id
+      - market_id
+      - control_type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID конфигурации
+        market_id:
+          type: string
+          format: uuid
+          description: ID рынка
+        item_category:
+          type: string
+          nullable: true
+          description: Категория предмета
+        control_type:
+          type: string
+          enum:
+          - player_control
+          - npc_control
+          - hybrid
+          description: Тип контроля
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления
+        demand_impact_factor:
+          type: number
+          format: double
+          nullable: true
+          description: Фактор влияния спроса
+        supply_impact_factor:
+          type: number
+          format: double
+          nullable: true
+          description: Фактор влияния предложения
+        event_impact_factor:
+          type: number
+          format: double
+          nullable: true
+          description: Фактор влияния событий
+        item_tier:
+          type: integer
+          format: int32
+          nullable: true
+          description: Тиер предмета
+        is_active:
+          type: boolean
+          default: true
+          description: Активна ли конфигурация
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~104 bytes/instance.'
+    EconomyGovernanceRule:
+      type: object
+      required:
+      - id
+      - entity_type
+      - rule_type
+      - priority
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID правила
+        entity_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID сущности
+        rule_scope:
+          type: string
+          nullable: true
+          description: Область действия правила
+        entity_type:
+          type: string
+          enum:
+          - faction
+          - region
+          - global
+          description: Тип сущности
+        rule_type:
+          type: string
+          enum:
+          - price_control
+          - supply_control
+          - tax_control
+          - access_control
+          description: Тип правила
+        effective_from:
+          type: string
+          format: date-time
+          nullable: true
+          description: Действует с
+        effective_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: Действует до
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления
+        priority:
+          type: integer
+          format: int32
+          description: Приоритет правила
+        is_active:
+          type: boolean
+          default: true
+          description: Активно ли правило
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~112 bytes/instance.'

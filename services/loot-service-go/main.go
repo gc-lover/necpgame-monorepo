@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
@@ -12,25 +11,30 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/loot-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
+	logger := server.GetLogger()
+	logger.Info("Loot Service (Go) starting...")
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6350")
-		logger.WithField("addr", pprofAddr).Info("Starting pprof server")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
-			logger.WithError(err).Error("pprof server error")
+			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
 
-	httpServer := server.NewHTTPServer(":8080", logger)
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for loot service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
+	lootService := server.NewLootService(logger)
+	httpServer := server.NewHTTPServer(":8080", logger, lootService)
 
 	go func() {
 		logger.Info("Starting HTTP server on :8080")
@@ -48,7 +52,7 @@ func main() {
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		logger.WithError(err).Error("Server forced to shutdown")
 	}
 
 	logger.Info("Server exited")

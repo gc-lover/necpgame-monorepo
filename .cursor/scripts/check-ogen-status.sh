@@ -103,7 +103,7 @@ echo ""
 echo "🎯 Next Steps:"
 if [ $OAPI_COUNT -gt 0 ]; then
     echo "  1. Review High Priority services (combat, movement, world)"
-    echo "  2. See .cursor/OGEN_MIGRATION_GUIDE.md for migration steps"
+    echo "  2. See .cursor/ogen/README.md for reference"
     echo "  3. Track progress in GitHub Issues #1595-#1602"
     echo "  4. Main tracker: Issue #1603"
 else

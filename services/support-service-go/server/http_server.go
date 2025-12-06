@@ -56,18 +56,32 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 	router.Use(middleware.Recoverer)
+	
+	// Issue: Test support - preserve user_id from context when auth is disabled
+	if !authEnabled {
+		router.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Preserve user_id from request context (for testing)
+				if userID := r.Context().Value("user_id"); userID != nil {
+					ctx := context.WithValue(r.Context(), "user_id", userID)
+					r = r.WithContext(ctx)
+				}
+				next.ServeHTTP(w, r)
+			})
+		})
+	}
 
 	// Issue: #1489 - Initialize ogen handlers with SLA service
 	ogenHandlers := NewHandlers(ticketService, slaService)
 	ogenSecurity := NewSecurityHandler(jwtValidator, authEnabled)
 
 	// Create ogen server
-	ogenServer, err := supportapi.NewServer(ogenHandlers, ogenSecurity)
+	ogenServer, err := supportapi.NewServer(ogenHandlers, ogenSecurity, supportapi.WithPathPrefix("/api/v1"))
 	if err != nil {
 		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	router.Mount("/api/v1/support", ogenServer)
+	router.Mount("/api/v1", ogenServer)
 
 	router.HandleFunc("/health", server.healthCheck)
 

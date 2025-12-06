@@ -18,7 +18,10 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewHandlers(logger)
+	// Initialize service
+	service := NewLeaderboardService(logger)
+	
+	handlers := NewHandlers(logger, service)
 	secHandler := &SecurityHandler{}
 
 	// Issue: #1588 - Load shedding for high RPS (leaderboard is hot path)

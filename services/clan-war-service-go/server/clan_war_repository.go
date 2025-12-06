@@ -366,7 +366,7 @@ func (r *ClanWarRepository) GetTerritoryByID(ctx context.Context, territoryID uu
 
 	if err := json.Unmarshal(resourcesJSON, &territory.Resources); err != nil {
 		r.logger.WithError(err).Error("Failed to unmarshal resources JSON")
-		territory.Resources = make(map[string]interface{})
+		return nil, fmt.Errorf("failed to unmarshal resources JSON: %w", err)
 	}
 
 	if ownerGuildID.Valid {
@@ -426,7 +426,8 @@ func (r *ClanWarRepository) ListTerritories(ctx context.Context, ownerGuildID *u
 		}
 
 		if err := json.Unmarshal(resourcesJSON, &territory.Resources); err != nil {
-			territory.Resources = make(map[string]interface{})
+			r.logger.WithError(err).Error("Failed to unmarshal resources JSON")
+			return nil, 0, fmt.Errorf("failed to unmarshal resources JSON: %w", err)
 		}
 
 		if ownerGuildID.Valid {

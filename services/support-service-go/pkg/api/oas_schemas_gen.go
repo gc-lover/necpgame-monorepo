@@ -87,16 +87,10 @@ func (*CreateTicketInternalServerError) createTicketRes() {}
 
 // Ref: #/components/schemas/CreateTicketRequest
 type CreateTicketRequest struct {
-	PlayerID    uuid.UUID                      `json:"player_id"`
 	Subject     string                         `json:"subject"`
 	Description string                         `json:"description"`
 	Category    OptCreateTicketRequestCategory `json:"category"`
 	Priority    OptTicketPriority              `json:"priority"`
-}
-
-// GetPlayerID returns the value of PlayerID.
-func (s *CreateTicketRequest) GetPlayerID() uuid.UUID {
-	return s.PlayerID
 }
 
 // GetSubject returns the value of Subject.
@@ -117,11 +111,6 @@ func (s *CreateTicketRequest) GetCategory() OptCreateTicketRequestCategory {
 // GetPriority returns the value of Priority.
 func (s *CreateTicketRequest) GetPriority() OptTicketPriority {
 	return s.Priority
-}
-
-// SetPlayerID sets the value of PlayerID.
-func (s *CreateTicketRequest) SetPlayerID(val uuid.UUID) {
-	s.PlayerID = val
 }
 
 // SetSubject sets the value of Subject.
@@ -2533,6 +2522,7 @@ type UpdateTicketRequest struct {
 	Category        OptUpdateTicketRequestCategory `json:"category"`
 	Priority        OptTicketPriority              `json:"priority"`
 	Status          OptTicketStatus                `json:"status"`
+	Subject         OptString                      `json:"subject"`
 }
 
 // GetAssignedAgentID returns the value of AssignedAgentID.
@@ -2555,6 +2545,11 @@ func (s *UpdateTicketRequest) GetStatus() OptTicketStatus {
 	return s.Status
 }
 
+// GetSubject returns the value of Subject.
+func (s *UpdateTicketRequest) GetSubject() OptString {
+	return s.Subject
+}
+
 // SetAssignedAgentID sets the value of AssignedAgentID.
 func (s *UpdateTicketRequest) SetAssignedAgentID(val OptNilUUID) {
 	s.AssignedAgentID = val
@@ -2573,6 +2568,11 @@ func (s *UpdateTicketRequest) SetPriority(val OptTicketPriority) {
 // SetStatus sets the value of Status.
 func (s *UpdateTicketRequest) SetStatus(val OptTicketStatus) {
 	s.Status = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *UpdateTicketRequest) SetSubject(val OptString) {
+	s.Subject = val
 }
 
 type UpdateTicketRequestCategory string

@@ -45,6 +45,13 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	logger := server.GetLogger()
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for weapon-resource service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
 	// Create and start HTTP server
 	srv := server.NewHTTPServer(addr, db)
 	log.Fatal(srv.Start())

@@ -1,4 +1,4 @@
-// Issue: #1595
+﻿// Issue: #1595
 module github.com/gc-lover/necpgame-monorepo/services/combat-extended-mechanics-service-go
 
 go 1.24.0
@@ -13,7 +13,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/goleak v1.3.0
-)
+
+	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
+	)
 
 require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
@@ -35,4 +37,7 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-)
+
+	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
+	)
+

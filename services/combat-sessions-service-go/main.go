@@ -22,7 +22,24 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8158")
 
-	httpServer := server.NewHTTPServer(addr, logger)
+	// Database connection
+	dbConnStr := getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
+	repo, err := server.NewPostgresRepository(dbConnStr)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to connect to database")
+	}
+	defer repo.Close()
+	logger.Info("OK Database connection established")
+
+	// Redis and Kafka addresses (optional - can be empty for basic functionality)
+	redisAddr := getEnv("REDIS_ADDR", "")
+	kafkaBrokers := getEnv("KAFKA_BROKERS", "")
+
+	// Initialize service
+	service := server.NewCombatSessionService(repo, redisAddr, kafkaBrokers)
+	logger.Info("OK Combat Session Service initialized")
+
+	httpServer := server.NewHTTPServer(addr, logger, service)
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {

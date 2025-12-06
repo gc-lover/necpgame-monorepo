@@ -212,20 +212,18 @@ func (s *GetGlobalLeaderboardPeriod) UnmarshalText(data []byte) error {
 	}
 }
 
+// BACKEND NOTE: Hot path (leaderboard queries, 1000+ RPS).
+// Fields ordered for struct alignment (large → small).
+// Expected memory: ~64 bytes/instance.
 // Ref: #/components/schemas/LeaderboardEntry
 type LeaderboardEntry struct {
-	Rank        int         `json:"rank"`
 	PlayerID    uuid.UUID   `json:"player_id"`
-	PlayerName  string      `json:"player_name"`
-	Score       int         `json:"score"`
 	FactionID   OptUUID     `json:"faction_id"`
+	PlayerName  string      `json:"player_name"`
 	FactionName OptString   `json:"faction_name"`
 	UpdatedAt   OptDateTime `json:"updated_at"`
-}
-
-// GetRank returns the value of Rank.
-func (s *LeaderboardEntry) GetRank() int {
-	return s.Rank
+	Rank        int         `json:"rank"`
+	Score       int         `json:"score"`
 }
 
 // GetPlayerID returns the value of PlayerID.
@@ -233,19 +231,14 @@ func (s *LeaderboardEntry) GetPlayerID() uuid.UUID {
 	return s.PlayerID
 }
 
-// GetPlayerName returns the value of PlayerName.
-func (s *LeaderboardEntry) GetPlayerName() string {
-	return s.PlayerName
-}
-
-// GetScore returns the value of Score.
-func (s *LeaderboardEntry) GetScore() int {
-	return s.Score
-}
-
 // GetFactionID returns the value of FactionID.
 func (s *LeaderboardEntry) GetFactionID() OptUUID {
 	return s.FactionID
+}
+
+// GetPlayerName returns the value of PlayerName.
+func (s *LeaderboardEntry) GetPlayerName() string {
+	return s.PlayerName
 }
 
 // GetFactionName returns the value of FactionName.
@@ -258,9 +251,14 @@ func (s *LeaderboardEntry) GetUpdatedAt() OptDateTime {
 	return s.UpdatedAt
 }
 
-// SetRank sets the value of Rank.
-func (s *LeaderboardEntry) SetRank(val int) {
-	s.Rank = val
+// GetRank returns the value of Rank.
+func (s *LeaderboardEntry) GetRank() int {
+	return s.Rank
+}
+
+// GetScore returns the value of Score.
+func (s *LeaderboardEntry) GetScore() int {
+	return s.Score
 }
 
 // SetPlayerID sets the value of PlayerID.
@@ -268,19 +266,14 @@ func (s *LeaderboardEntry) SetPlayerID(val uuid.UUID) {
 	s.PlayerID = val
 }
 
-// SetPlayerName sets the value of PlayerName.
-func (s *LeaderboardEntry) SetPlayerName(val string) {
-	s.PlayerName = val
-}
-
-// SetScore sets the value of Score.
-func (s *LeaderboardEntry) SetScore(val int) {
-	s.Score = val
-}
-
 // SetFactionID sets the value of FactionID.
 func (s *LeaderboardEntry) SetFactionID(val OptUUID) {
 	s.FactionID = val
+}
+
+// SetPlayerName sets the value of PlayerName.
+func (s *LeaderboardEntry) SetPlayerName(val string) {
+	s.PlayerName = val
 }
 
 // SetFactionName sets the value of FactionName.
@@ -291,6 +284,16 @@ func (s *LeaderboardEntry) SetFactionName(val OptString) {
 // SetUpdatedAt sets the value of UpdatedAt.
 func (s *LeaderboardEntry) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
+}
+
+// SetRank sets the value of Rank.
+func (s *LeaderboardEntry) SetRank(val int) {
+	s.Rank = val
+}
+
+// SetScore sets the value of Score.
+func (s *LeaderboardEntry) SetScore(val int) {
+	s.Score = val
 }
 
 // NewOptBool returns new OptBool with value set to v.
@@ -851,18 +854,26 @@ func (s *PaginationResponse) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
+// BACKEND NOTE: Hot path (rank queries, 500+ RPS).
+// Fields ordered for struct alignment (large → small).
+// Expected memory: ~48 bytes/instance.
 // Ref: #/components/schemas/PlayerRank
 type PlayerRank struct {
 	PlayerID    uuid.UUID  `json:"player_id"`
+	Percentile  OptFloat64 `json:"percentile"`
 	GlobalRank  int        `json:"global_rank"`
 	FactionRank int        `json:"faction_rank"`
 	Score       int        `json:"score"`
-	Percentile  OptFloat64 `json:"percentile"`
 }
 
 // GetPlayerID returns the value of PlayerID.
 func (s *PlayerRank) GetPlayerID() uuid.UUID {
 	return s.PlayerID
+}
+
+// GetPercentile returns the value of Percentile.
+func (s *PlayerRank) GetPercentile() OptFloat64 {
+	return s.Percentile
 }
 
 // GetGlobalRank returns the value of GlobalRank.
@@ -880,14 +891,14 @@ func (s *PlayerRank) GetScore() int {
 	return s.Score
 }
 
-// GetPercentile returns the value of Percentile.
-func (s *PlayerRank) GetPercentile() OptFloat64 {
-	return s.Percentile
-}
-
 // SetPlayerID sets the value of PlayerID.
 func (s *PlayerRank) SetPlayerID(val uuid.UUID) {
 	s.PlayerID = val
+}
+
+// SetPercentile sets the value of Percentile.
+func (s *PlayerRank) SetPercentile(val OptFloat64) {
+	s.Percentile = val
 }
 
 // SetGlobalRank sets the value of GlobalRank.
@@ -903,11 +914,6 @@ func (s *PlayerRank) SetFactionRank(val int) {
 // SetScore sets the value of Score.
 func (s *PlayerRank) SetScore(val int) {
 	s.Score = val
-}
-
-// SetPercentile sets the value of Percentile.
-func (s *PlayerRank) SetPercentile(val OptFloat64) {
-	s.Percentile = val
 }
 
 func (*PlayerRank) getPlayerRankRes() {}

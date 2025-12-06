@@ -15,13 +15,15 @@ const (
 
 // ChartsHandlers implements api.Handler interface (ogen typed handlers)
 type ChartsHandlers struct {
-	logger *logrus.Logger
+	logger  *logrus.Logger
+	service ChartsServiceInterface
 }
 
 // NewChartsHandlers creates new handlers
-func NewChartsHandlers() *ChartsHandlers {
+func NewChartsHandlers(service ChartsServiceInterface) *ChartsHandlers {
 	return &ChartsHandlers{
-		logger: GetLogger(),
+		logger:  GetLogger(),
+		service: service,
 	}
 }
 
@@ -30,17 +32,21 @@ func (h *ChartsHandlers) CompareCharts(ctx context.Context, params api.CompareCh
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithFields(logrus.Fields{
-		"tickers":  params.Tickers,
-		"interval": params.Interval,
-		"from":     params.From,
-		"to":       params.To,
-	}).Info("CompareCharts request")
+	if h.service == nil {
+		return &api.CompareChartsOK{
+			Charts: []api.Chart{},
+		}, nil
+	}
 
-	// TODO: Implement business logic
-	return &api.CompareChartsOK{
-		Charts: []api.Chart{},
-	}, nil
+	result, err := h.service.CompareCharts(ctx, params.Tickers, string(params.Interval), params.From, params.To)
+	if err != nil {
+		h.logger.WithError(err).Error("CompareCharts: failed")
+		return &api.CompareChartsOK{
+			Charts: []api.Chart{},
+		}, nil
+	}
+
+	return result, nil
 }
 
 // GetChart implements getChart operation.
@@ -48,16 +54,17 @@ func (h *ChartsHandlers) GetChart(ctx context.Context, params api.GetChartParams
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithFields(logrus.Fields{
-		"ticker":   params.Ticker,
-		"type":     params.Type,
-		"interval": params.Interval,
-		"from":     params.From,
-		"to":       params.To,
-	}).Info("GetChart request")
+	if h.service == nil {
+		return &api.Chart{}, nil
+	}
 
-	// TODO: Implement business logic
-	return &api.Chart{}, nil
+	chart, err := h.service.GetChart(ctx, params.Ticker, string(params.Type), string(params.Interval), params.From, params.To)
+	if err != nil {
+		h.logger.WithError(err).Error("GetChart: failed")
+		return &api.Chart{}, nil
+	}
+
+	return chart, nil
 }
 
 // GetIndicators implements getIndicators operation.
@@ -65,9 +72,16 @@ func (h *ChartsHandlers) GetIndicators(ctx context.Context, params api.GetIndica
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	h.logger.WithField("ticker", params.Ticker).Info("GetIndicators request")
+	if h.service == nil {
+		return &api.Indicators{}, nil
+	}
 
-	// TODO: Implement business logic
-	return &api.Indicators{}, nil
+	indicators, err := h.service.GetIndicators(ctx, params.Ticker)
+	if err != nil {
+		h.logger.WithError(err).Error("GetIndicators: failed")
+		return &api.Indicators{}, nil
+	}
+
+	return indicators, nil
 }
 

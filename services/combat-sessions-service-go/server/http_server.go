@@ -23,9 +23,9 @@ type HTTPServer struct {
 
 // NewHTTPServer creates new HTTP server WITHOUT chi
 // PERFORMANCE: Standard mux for health/metrics, OGEN router for API (already max speed)
-func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
+func NewHTTPServer(addr string, logger *logrus.Logger, service *CombatSessionService) *HTTPServer {
 	// OGEN server (fast static router - hot path)
-	handlers := NewHandlers()
+	handlers := NewHandlers(service)
 	secHandler := &SecurityHandler{}
 	ogenServer, err := api.NewServer(handlers, secHandler)
 	if err != nil {

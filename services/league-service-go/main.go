@@ -11,13 +11,11 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/league-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
+	logger := server.GetLogger()
+	logger.Info("League Service (Go) starting...")
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -38,6 +36,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for league service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	go func() {
 		logger.Info("HTTP server listening on ", addr)

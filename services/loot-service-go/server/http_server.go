@@ -19,8 +19,8 @@ type HTTPServer struct {
 	logger *logrus.Logger
 }
 
-func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	handlers := NewHandlers(logger)
+func NewHTTPServer(addr string, logger *logrus.Logger, service LootServiceInterface) *HTTPServer {
+	handlers := NewHandlers(logger, service)
 	secHandler := &SecurityHandler{}
 
 	router := chi.NewRouter()

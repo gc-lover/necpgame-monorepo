@@ -76,6 +76,12 @@ func main() {
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for feedback service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
 	metricsRouter := http.NewServeMux()
 	metricsRouter.Handle("/metrics", promhttp.Handler())
 	metricsServer := &http.Server{

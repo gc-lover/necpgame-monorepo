@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/projectile-core-service-go/pkg/api"
@@ -13,9 +14,11 @@ const DBTimeout = 50 * time.Millisecond
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 // Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 type Handlers struct {
-	service     *ProjectileService
-	loadShedder *LoadShedder
+	service            *ProjectileService
+	loadShedder        *LoadShedder
+	projectileValidator *ProjectileValidator
 }
 
 // NewHandlers creates new handlers
@@ -23,9 +26,13 @@ func NewHandlers(service *ProjectileService) *Handlers {
 	// Issue: #1588 - Resilience patterns for hot path service (2k+ RPS)
 	loadShedder := NewLoadShedder(1000) // Max 1000 concurrent requests
 	
+	// Issue: #1587 - Anti-cheat validation
+	projectileValidator := NewProjectileValidator()
+	
 	return &Handlers{
-		service:     service,
-		loadShedder: loadShedder,
+		service:             service,
+		loadShedder:         loadShedder,
+		projectileValidator: projectileValidator,
 	}
 }
 
@@ -78,6 +85,7 @@ func (h *Handlers) GetProjectileForm(ctx context.Context, params api.GetProjecti
 }
 
 // SpawnProjectile - TYPED response!
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 func (h *Handlers) SpawnProjectile(ctx context.Context, req *api.SpawnProjectileRequest) (api.SpawnProjectileRes, error) {
 	// Issue: #1588 - Load shedding (prevent overload)
 	if !h.loadShedder.Allow() {
@@ -92,6 +100,48 @@ func (h *Handlers) SpawnProjectile(ctx context.Context, req *api.SpawnProjectile
 
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
+
+	// Issue: #1587 - Validate projectile spawn (anti-cheat: rate, velocity, trajectory)
+	playerID := req.WeaponID // Use weapon_id as player identifier (TODO: get actual player_id from context)
+	
+	// Extract position from Origin
+	position := Vec3{
+		X: req.Origin.X,
+		Y: req.Origin.Y,
+		Z: req.Origin.Z,
+	}
+	
+	// Extract velocity from Direction and Velocity
+	velocityValue := float32(100.0) // Default velocity
+	if req.Velocity.IsSet() {
+		velocityValue = req.Velocity.Value
+	}
+	
+	// Calculate velocity vector from direction and magnitude
+	directionMagnitude := math.Sqrt(float64(req.Direction.X*req.Direction.X + req.Direction.Y*req.Direction.Y + req.Direction.Z*req.Direction.Z))
+	if directionMagnitude > 0 {
+		normalizedX := float32(req.Direction.X) / float32(directionMagnitude)
+		normalizedY := float32(req.Direction.Y) / float32(directionMagnitude)
+		normalizedZ := float32(req.Direction.Z) / float32(directionMagnitude)
+		
+		velocity := Vec3{
+			X: normalizedX * velocityValue,
+			Y: normalizedY * velocityValue,
+			Z: normalizedZ * velocityValue,
+		}
+		
+		// Calculate max range from velocity (simplified: horizontal projection)
+		maxRange := velocityValue * velocityValue / (2 * 9.8) // gravity = 9.8 m/s^2
+		
+		if err := h.projectileValidator.ValidateProjectileSpawn(playerID, position, velocity, maxRange); err != nil {
+			// Return validation error
+			return &api.SpawnProjectileBadRequest{
+				Error:   "BadRequest",
+				Message: "Invalid projectile: " + err.Error(),
+				Code:    api.NewOptNilString("400"),
+			}, nil
+		}
+	}
 
 	resp, err := h.service.SpawnProjectile(ctx, req)
 	if err != nil {

@@ -19,14 +19,19 @@ const (
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
-	logger             *logrus.Logger
+	logger  *logrus.Logger
+	service LootServiceInterface
+
 	lootHistoryPool    sync.Pool // Issue: #1607 - Memory pooling
 	worldDropsListPool sync.Pool // Issue: #1607 - Memory pooling
 }
 
 // NewHandlers creates new handlers
-func NewHandlers(logger *logrus.Logger) *Handlers {
-	h := &Handlers{logger: logger}
+func NewHandlers(logger *logrus.Logger, service LootServiceInterface) *Handlers {
+	h := &Handlers{
+		logger:  logger,
+		service: service,
+	}
 	// Issue: #1607 - Initialize memory pools for hot path responses
 	h.lootHistoryPool = sync.Pool{
 		New: func() interface{} {
@@ -60,17 +65,17 @@ func (h *Handlers) DistributeLoot(ctx context.Context, req *api.DistributeLootRe
 		h.logger.Warn("DistributeLoot: empty player_ids")
 	}
 
-	// TODO: Implement business logic
-	// For now, return success response with empty data
-	h.logger.WithFields(logrus.Fields{
-		"distribution_mode": req.DistributionMode,
-		"items_count": len(req.Items),
-		"players_count": len(req.PlayerIds),
-	}).Info("DistributeLoot request received (not implemented)")
+	if h.service == nil {
+		return &api.DistributeLootResponse{}, nil
+	}
 
-	return &api.DistributeLootResponse{
-		// Response fields will be set when implemented
-	}, nil
+	response, err := h.service.DistributeLoot(ctx, req)
+	if err != nil {
+		h.logger.WithError(err).Error("DistributeLoot: failed")
+		return &api.DistributeLootResponse{}, nil
+	}
+
+	return response, nil
 }
 
 // GenerateLoot - TYPED response!
@@ -92,17 +97,17 @@ func (h *Handlers) GenerateLoot(ctx context.Context, req *api.GenerateLootReques
 		h.logger.Warn("GenerateLoot: empty player_id")
 	}
 
-	// TODO: Implement business logic
-	// For now, return success response with empty data
-	h.logger.WithFields(logrus.Fields{
-		"source_type": req.SourceType,
-		"source_id": req.SourceID,
-		"player_id": req.PlayerID,
-	}).Info("GenerateLoot request received (not implemented)")
+	if h.service == nil {
+		return &api.GenerateLootResponse{}, nil
+	}
 
-	return &api.GenerateLootResponse{
-		// Response fields will be set when implemented
-	}, nil
+	response, err := h.service.GenerateLoot(ctx, req)
+	if err != nil {
+		h.logger.WithError(err).Error("GenerateLoot: failed")
+		return &api.GenerateLootResponse{}, nil
+	}
+
+	return response, nil
 }
 
 // GetPlayerLootHistory - TYPED response!
@@ -118,8 +123,34 @@ func (h *Handlers) GetPlayerLootHistory(ctx context.Context, params api.GetPlaye
 		h.lootHistoryPool.Put(resp)
 	}()
 
-	// TODO: Implement business logic
-	resp.History = []api.LootHistoryEntry{}
+	if h.service == nil {
+		resp.History = []api.LootHistoryEntry{}
+		result := &api.LootHistoryResponse{
+			History: resp.History,
+			Total:   resp.Total,
+		}
+		return result, nil
+	}
+
+	limit := 50
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+	}
+	offset := 0 // Offset not in params, using default
+
+	history, total, err := h.service.GetPlayerLootHistory(ctx, params.PlayerID, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("GetPlayerLootHistory: failed")
+		resp.History = []api.LootHistoryEntry{}
+		result := &api.LootHistoryResponse{
+			History: resp.History,
+			Total:   resp.Total,
+		}
+		return result, nil
+	}
+
+	resp.History = history
+	resp.Total = api.NewOptInt(total)
 
 	// Create copy to return (pooled struct stays in pool)
 	result := &api.LootHistoryResponse{
@@ -139,13 +170,17 @@ func (h *Handlers) GetRollStatus(ctx context.Context, params api.GetRollStatusPa
 		h.logger.Warn("GetRollStatus: empty roll_id")
 	}
 
-	// TODO: Implement business logic
-	// For now, return success response with empty data
-	h.logger.WithField("roll_id", params.RollID).Info("GetRollStatus request received (not implemented)")
+	if h.service == nil {
+		return &api.RollStatusResponse{}, nil
+	}
 
-	return &api.RollStatusResponse{
-		// Response fields will be set when implemented
-	}, nil
+	response, err := h.service.GetRollStatus(ctx, params.RollID)
+	if err != nil {
+		h.logger.WithError(err).Error("GetRollStatus: failed")
+		return &api.RollStatusResponse{}, nil
+	}
+
+	return response, nil
 }
 
 // GetWorldDrops - TYPED response!
@@ -161,8 +196,28 @@ func (h *Handlers) GetWorldDrops(ctx context.Context, params api.GetWorldDropsPa
 		h.worldDropsListPool.Put(resp)
 	}()
 
-	// TODO: Implement business logic
-	resp.Drops = []api.WorldDrop{}
+	if h.service == nil {
+		resp.Drops = []api.WorldDrop{}
+		result := &api.WorldDropsListResponse{
+			Drops: resp.Drops,
+		}
+		return result, nil
+	}
+
+	limit := 50  // Default limit
+	offset := 0  // Default offset
+
+	drops, err := h.service.GetWorldDrops(ctx, limit, offset)
+	if err != nil {
+		h.logger.WithError(err).Error("GetWorldDrops: failed")
+		resp.Drops = []api.WorldDrop{}
+		result := &api.WorldDropsListResponse{
+			Drops: resp.Drops,
+		}
+		return result, nil
+	}
+
+	resp.Drops = drops
 
 	// Create copy to return (pooled struct stays in pool)
 	result := &api.WorldDropsListResponse{
@@ -181,9 +236,19 @@ func (h *Handlers) PassRoll(ctx context.Context, params api.PassRollParams) (api
 		h.logger.Warn("PassRoll: empty roll_id")
 	}
 
-	// TODO: Implement business logic
-	// For now, return success response
-	h.logger.WithField("roll_id", params.RollID).Info("PassRoll request received (not implemented)")
+	if h.service == nil {
+		return &api.SuccessResponse{
+			Status: api.NewOptString("success"),
+		}, nil
+	}
+
+	err := h.service.PassRoll(ctx, params.RollID)
+	if err != nil {
+		h.logger.WithError(err).Error("PassRoll: failed")
+		return &api.SuccessResponse{
+			Status: api.NewOptString("error"),
+		}, nil
+	}
 
 	return &api.SuccessResponse{
 		Status: api.NewOptString("success"),
@@ -200,13 +265,17 @@ func (h *Handlers) PickupWorldDrop(ctx context.Context, params api.PickupWorldDr
 		h.logger.Warn("PickupWorldDrop: empty drop_id")
 	}
 
-	// TODO: Implement business logic
-	// For now, return success response with empty data
-	h.logger.WithField("drop_id", params.DropID).Info("PickupWorldDrop request received (not implemented)")
+	if h.service == nil {
+		return &api.PickupDropResponse{}, nil
+	}
 
-	return &api.PickupDropResponse{
-		// Response fields will be set when implemented
-	}, nil
+	response, err := h.service.PickupWorldDrop(ctx, params.DropID)
+	if err != nil {
+		h.logger.WithError(err).Error("PickupWorldDrop: failed")
+		return &api.PickupDropResponse{}, nil
+	}
+
+	return response, nil
 }
 
 // RollForItem - TYPED response!
@@ -224,14 +293,15 @@ func (h *Handlers) RollForItem(ctx context.Context, req *api.RollRequest, params
 		h.logger.Warn("RollForItem: empty item_id in request")
 	}
 
-	// TODO: Implement business logic
-	// For now, return success response with empty data
-	h.logger.WithFields(logrus.Fields{
-		"item_id": req.ItemID,
-		"roll_type": req.RollType,
-	}).Info("RollForItem request received (not implemented)")
+	if h.service == nil {
+		return &api.RollResponse{}, nil
+	}
 
-	return &api.RollResponse{
-		// Response fields will be set when implemented
-	}, nil
+	response, err := h.service.RollForItem(ctx, req)
+	if err != nil {
+		h.logger.WithError(err).Error("RollForItem: failed")
+		return &api.RollResponse{}, nil
+	}
+
+	return response, nil
 }

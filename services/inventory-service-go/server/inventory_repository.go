@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -142,7 +143,10 @@ func (r *InventoryRepository) AddItem(ctx context.Context, item *models.Inventor
 }
 
 func (r *InventoryRepository) UpdateItem(ctx context.Context, item *models.InventoryItem) error {
-	metadataJSON, _ := json.Marshal(item.Metadata)
+	metadataJSON, err := json.Marshal(item.Metadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata JSON: %w", err)
+	}
 	
 	_, err := r.db.Exec(ctx,
 		`UPDATE mvp_core.character_items

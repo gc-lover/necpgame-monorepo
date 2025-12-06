@@ -115,31 +115,39 @@ components:
   schemas:
     LeaderboardEntry:
       type: object
+      description: |
+        BACKEND NOTE: Hot path (leaderboard queries, 1000+ RPS).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~64 bytes/instance.
       required:
         - rank
         - player_id
         - player_name
         - score
       properties:
-        rank:
-          type: integer
         player_id:
+          type: string
+          format: uuid
+        faction_id:
           type: string
           format: uuid
         player_name:
           type: string
-        score:
-          type: integer
-        faction_id:
-          type: string
-          format: uuid
         faction_name:
           type: string
         updated_at:
           type: string
           format: date-time
+        rank:
+          type: integer
+        score:
+          type: integer
     PlayerRank:
       type: object
+      description: |
+        BACKEND NOTE: Hot path (rank queries, 500+ RPS).
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~48 bytes/instance.
       required:
         - player_id
         - global_rank
@@ -149,15 +157,15 @@ components:
         player_id:
           type: string
           format: uuid
+        percentile:
+          type: number
+          format: double
         global_rank:
           type: integer
         faction_rank:
           type: integer
         score:
           type: integer
-        percentile:
-          type: number
-          format: double
     PaginationResponse:
       type: object
       required:

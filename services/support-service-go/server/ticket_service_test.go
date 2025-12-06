@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -12,6 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+// serviceTestContext creates a context with timeout for service tests
+func serviceTestContext(t *testing.T) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
+}
 
 type mockTicketRepository struct {
 	mock.Mock
@@ -98,11 +104,25 @@ func (m *mockTicketRepository) GetNextTicketNumber(ctx context.Context) (string,
 func setupTestService(t *testing.T) (*TicketService, *mockTicketRepository, func()) {
 	mockRepo := new(mockTicketRepository)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Use test Redis port if available (Docker Compose test)
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		DB:   1,
+		Addr:         redisAddr,
+		DB:           1,
+		DialTimeout:  2 * time.Second,
+		ReadTimeout:  2 * time.Second,
+		WriteTimeout: 2 * time.Second,
 	})
-	redisClient.FlushDB(context.Background())
+	
+	// Try to flush, but don't fail if Redis is unavailable
+	_ = redisClient.FlushDB(ctx)
 
 	service := &TicketService{
 		repo:   mockRepo,
@@ -111,15 +131,22 @@ func setupTestService(t *testing.T) (*TicketService, *mockTicketRepository, func
 	}
 
 	cleanup := func() {
-		redisClient.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_ = redisClient.Close()
+		_ = ctx // avoid unused variable
 	}
 
 	return service, mockRepo, cleanup
 }
 
 func TestTicketService_CreateTicket_Success(t *testing.T) {
+	t.Parallel()
 	service, mockRepo, cleanup := setupTestService(t)
 	defer cleanup()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	playerID := uuid.New()
 	req := &models.CreateTicketRequest{
@@ -128,10 +155,10 @@ func TestTicketService_CreateTicket_Success(t *testing.T) {
 		Description: "Test Description",
 	}
 
-	mockRepo.On("GetNextTicketNumber", context.Background()).Return("TKT-20250101-0001", nil)
-	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.SupportTicket")).Return(nil)
+	mockRepo.On("GetNextTicketNumber", ctx).Return("TKT-20250101-0001", nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*models.SupportTicket")).Return(nil)
 
-	result, err := service.CreateTicket(context.Background(), playerID, req)
+	result, err := service.CreateTicket(ctx, playerID, req)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -142,8 +169,12 @@ func TestTicketService_CreateTicket_Success(t *testing.T) {
 }
 
 func TestTicketService_CreateTicket_GetNextTicketNumberError(t *testing.T) {
+	t.Parallel()
 	service, mockRepo, cleanup := setupTestService(t)
 	defer cleanup()
+
+	ctx, cancel := serviceTestContext(t)
+	defer cancel()
 
 	playerID := uuid.New()
 	req := &models.CreateTicketRequest{
@@ -153,9 +184,9 @@ func TestTicketService_CreateTicket_GetNextTicketNumberError(t *testing.T) {
 	}
 	expectedErr := errors.New("database error")
 
-	mockRepo.On("GetNextTicketNumber", context.Background()).Return("", expectedErr)
+	mockRepo.On("GetNextTicketNumber", ctx).Return("", expectedErr)
 
-	result, err := service.CreateTicket(context.Background(), playerID, req)
+	result, err := service.CreateTicket(ctx, playerID, req)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)

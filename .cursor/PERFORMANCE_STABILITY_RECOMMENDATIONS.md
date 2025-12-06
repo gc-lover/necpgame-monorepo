@@ -1,68 +1,44 @@
 # Рекомендации: Производительность и Стабильность
 
-## 🔍 Текущая ситуация
+## 🔍 OGEN vs CHI - Вывод
 
-### Hot Path (API routes - 99% трафика)
-- OK **OGEN router** - статический switch-case, ~50-100ns
-- OK **НЕ проходит через chi** - максимально быстро
-- OK **Typed handlers** - нет interface{} boxing
+**OGEN Router:**
+- Статический switch-case, ~50-100ns
+- НЕ проходит через chi (hot path максимально быстрый)
 
-### Cold Path (health/metrics - 1% трафика)
-- WARNING **chi router** - динамический, ~200-500ns
-- WARNING **Дублирование middleware** - chi.Logger + кастомный LoggingMiddleware
-- WARNING **Лишняя зависимость** - chi не нужен для ogen
+**CHI Router:**
+- Динамический, ~200-500ns
+- Используется только для health/metrics (cold path, 1% трафика)
 
-## ⚡ Проблемы производительности
+**Рекомендация:**
+- **Оставить CHI** - overhead минимальный (только на health/metrics)
+- OGEN routes уже максимально быстрые (не проходят через chi)
+- Удобные middleware (Logger, Recoverer, RequestID)
 
-1. **Дублирование middleware:**
-   ```go
-   router.Use(middleware.Logger)      // chi middleware
-   router.Use(LoggingMiddleware)      // кастомный (дублирует!)
-   ```
+**Или убрать CHI** если нужна максимальная производительность на health/metrics (gain: -10-20% latency, -50KB memory).
 
-2. **chi overhead на health/metrics:**
-   - Health checks: ~1 req/sec
-   - Metrics: ~1 req/15sec
-   - Overhead минимальный, но можно убрать
+**Вывод:** CHI можно убрать, но gain минимальный. OGEN routes уже максимально быстрые.
 
-3. **chi middleware может быть медленнее:**
-   - chi.Logger: форматирование строк
-   - Кастомный: структурированное логирование (быстрее)
+---
 
-## OK Рекомендация: Убрать CHI
-
-### Преимущества:
-1. **Меньше зависимостей** - проще поддержка
-2. **Нет дублирования** - один middleware chain
-3. **Стандартная библиотека** - стабильнее
-4. **Меньше кода** - проще понять
-
-### Реализация:
+## 📊 Реализация без CHI (опционально)
 
 ```go
-// Оптимизированный вариант БЕЗ chi
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
-    // OGEN server (fast router)
     handlers := NewHandlers(service)
     secHandler := &SecurityHandler{}
     ogenServer, _ := api.NewServer(handlers, secHandler)
     
-    // Standard mux (для health/metrics)
     mux := http.NewServeMux()
-    
-    // Middleware chain (один раз, без дублирования)
     handler := chainMiddleware(ogenServer,
-        recoveryMiddleware,      // panic recovery
-        requestIDMiddleware,      // request ID
-        loggingMiddleware,         // структурированное логирование
-        metricsMiddleware,         // метрики
-        corsMiddleware,            // CORS
+        recoveryMiddleware,
+        requestIDMiddleware,
+        loggingMiddleware,
+        metricsMiddleware,
+        corsMiddleware,
     )
     
-    // Mount OGEN (hot path - максимально быстро)
     mux.Handle("/api/v1/", handler)
-    
-    // Health/metrics (cold path - простой mux)
     mux.HandleFunc("/health", healthCheck)
     mux.HandleFunc("/metrics", metricsHandler)
     
@@ -77,7 +53,6 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
     }
 }
 
-// Chain middleware (простой и быстрый)
 func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
     for i := len(mws) - 1; i >= 0; i-- {
         h = mws[i](h)
@@ -85,34 +60,3 @@ func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) htt
     return h
 }
 ```
-
-## 📊 Ожидаемые улучшения
-
-### Производительность:
-- **Hot path:** без изменений (уже максимально быстро)
-- **Cold path:** -10-20% latency (убрали chi overhead)
-- **Memory:** -50KB на сервис (убрали chi из памяти)
-
-### Стабильность:
-- OK **Меньше зависимостей** - меньше точек отказа
-- OK **Стандартная библиотека** - лучше тестируется
-- OK **Проще код** - легче поддерживать
-
-## 🎯 План действий
-
-1. **Создать шаблон** без chi
-2. **Мигрировать сервисы** постепенно
-3. **Бенчмарки** до/после
-4. **Мониторинг** в production
-
-## WARNING Важно
-
-**OGEN routes (hot path) НЕ затронуты** - они уже максимально быстрые!
-
-Убираем chi только для:
-- Health/metrics endpoints
-- Middleware chain
-- Монтирования ogen server
-
-**Реальный impact:** минимальный на hot path, небольшой на cold path.
-

@@ -11,13 +11,11 @@ import (
 	"time"
 
 	"github.com/necpgame/referral-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
+	logger := server.GetLogger()
+	logger.Info("Referral Service (Go) starting...")
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -38,6 +36,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(150, logger) // Max 150 goroutines for referral service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	go func() {
 		logger.Info("HTTP server listening on ", addr)

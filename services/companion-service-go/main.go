@@ -11,14 +11,11 @@ import (
 	"time"
 
 	"github.com/necpgame/companion-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
-	logger.Info("Companion Service Service starting...")
+	logger := server.GetLogger()
+	logger.Info("Companion Service (Go) starting...")
 
 	addr := getEnv("ADDR", "0.0.0.0:8116")
 
@@ -33,6 +30,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(150, logger) // Max 150 goroutines for companion service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

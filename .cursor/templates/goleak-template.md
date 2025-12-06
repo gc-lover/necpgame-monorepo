@@ -14,56 +14,9 @@ require (
 
 **Файл:** `server/leak_test.go`
 
-```go
-// Issue: #1585 - Goroutine leak detection
-package server
+**Скопируй код из:** `.cursor/templates/goleak-template.go`
 
-import (
-	"testing"
-	"time"
-
-	"go.uber.org/goleak"
-)
-
-// TestMain verifies no goroutine leaks across ALL tests
-func TestMain(m *testing.M) {
-	goleak.VerifyTestMain(m,
-		// Ignore known persistent goroutines
-		goleak.IgnoreTopFunction("internal/poll.runtime_pollWait"),
-		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
-	)
-}
-
-// TestServiceNoLeaks verifies service lifecycle doesn't leak
-func TestServiceNoLeaks(t *testing.T) {
-	defer goleak.VerifyNone(t,
-		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
-	)
-	
-	// Test service Start/Stop
-	svc := NewService()
-	svc.Start()
-	time.Sleep(100 * time.Millisecond)
-	svc.Stop()
-	
-	// If goroutines leaked, test FAILS
-}
-
-// TestHandlerNoLeaks verifies HTTP handlers don't leak
-func TestHandlerNoLeaks(t *testing.T) {
-	defer goleak.VerifyNone(t,
-		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
-	)
-	
-	handler := NewHandler()
-	req := httptest.NewRequest("GET", "/api/test", nil)
-	w := httptest.NewRecorder()
-	
-	handler.ServeHTTP(w, req)
-	
-	// If goroutines leaked, test FAILS
-}
-```
+**Или используй из:** `.cursor/templates/backend-utils-templates.md` (раздел benchmarks_test.go)
 
 ## Runtime Goroutine Monitoring
 

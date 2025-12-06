@@ -2,11 +2,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"log"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/server"
@@ -14,6 +16,9 @@ import (
 )
 
 func main() {
+	logger := server.GetLogger()
+	logger.Info("Faction Core Service (Go) starting...")
+
 	// Database connection
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -22,7 +27,7 @@ func main() {
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		logger.WithError(err).Fatal("Failed to connect to database")
 	}
 	defer db.Close()
 
@@ -33,7 +38,7 @@ func main() {
 	db.SetConnMaxIdleTime(10 * time.Minute)
 
 	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
+		logger.WithError(err).Fatal("Failed to ping database")
 	}
 
 	// Create repository
@@ -54,19 +59,44 @@ func main() {
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6593")
-		log.Printf("pprof server starting on %s", pprofAddr)
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
-			log.Printf("pprof server error: %v", err)
+			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
 
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for faction-core service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
+
 	httpServer := server.NewHTTPServer(addr, handlers, svc)
 
-	log.Printf("Starting Faction Core Service on %s", addr)
-	if err := httpServer.Start(); err != nil {
-		log.Fatalf("Server failed: %v", err)
+	logger.WithField("addr", addr).Info("Starting Faction Core Service")
+	
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		if err := httpServer.Start(); err != nil {
+			logger.WithError(err).Fatal("Server failed")
+		}
+	}()
+
+	<-stop
+	logger.Info("Shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		logger.WithError(err).Error("Shutdown error")
 	}
+
+	logger.Info("Server stopped")
 }
 
 func getEnv(key, defaultValue string) string {

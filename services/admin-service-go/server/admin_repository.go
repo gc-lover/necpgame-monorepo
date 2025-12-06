@@ -26,7 +26,10 @@ func NewAdminRepository(db *pgxpool.Pool) *AdminRepository {
 }
 
 func (r *AdminRepository) CreateAuditLog(ctx context.Context, log *models.AdminAuditLog) error {
-	detailsJSON, _ := json.Marshal(log.Details)
+	detailsJSON, err := json.Marshal(log.Details)
+	if err != nil {
+		return fmt.Errorf("failed to marshal details JSON: %w", err)
+	}
 
 	query := `
 		INSERT INTO admin.admin_audit_log (
@@ -70,7 +73,7 @@ func (r *AdminRepository) GetAuditLog(ctx context.Context, logID uuid.UUID) (*mo
 	if len(detailsJSON) > 0 {
 		if err := json.Unmarshal(detailsJSON, &log.Details); err != nil {
 			r.logger.WithError(err).Error("Failed to unmarshal details JSON")
-			log.Details = make(map[string]interface{})
+			return nil, fmt.Errorf("failed to unmarshal details JSON: %w", err)
 		}
 	} else {
 		log.Details = make(map[string]interface{})
@@ -124,7 +127,10 @@ func (r *AdminRepository) ListAuditLogs(ctx context.Context, adminID *uuid.UUID,
 		}
 
 		if len(detailsJSON) > 0 {
-			json.Unmarshal(detailsJSON, &log.Details)
+			if err := json.Unmarshal(detailsJSON, &log.Details); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal details JSON")
+				return nil, fmt.Errorf("failed to unmarshal details JSON: %w", err)
+			}
 		} else {
 			log.Details = make(map[string]interface{})
 		}

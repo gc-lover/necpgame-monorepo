@@ -10,14 +10,11 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
-	logger.Info("Leaderboard Service Service starting...")
+	logger := server.GetLogger()
+	logger.Info("Leaderboard Service (Go) starting...")
 
 	addr := getEnv("ADDR", "0.0.0.0:8124")
 
@@ -31,6 +28,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for leaderboard service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

@@ -1,6 +1,12 @@
 // Issue: #1595
 // OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
 // PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
+//
+// WARNING ОПЦИОНАЛЬНО: См. `.cursor/PERFORMANCE_STABILITY_RECOMMENDATIONS.md`
+// Вывод: CHI можно оставить (overhead минимальный на health/metrics).
+// Этот шаблон для тех, кто хочет убрать chi для максимальной производительности.
+//
+// Gains: -10-20% latency на health/metrics, -50KB memory
 package server
 
 import (
@@ -8,7 +14,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/docker/docker/daemon/logger"
 	"github.com/gc-lover/necpgame-monorepo/services/{service-name}/pkg/api"
+	"github.com/google/uuid"
 )
 
 // HTTPServer represents HTTP server (no chi dependency)
@@ -34,10 +42,10 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	// Middleware chain (no duplication, optimized)
 	apiHandler := chainMiddleware(ogenServer,
 		recoveryMiddleware,  // panic recovery
-		requestIDMiddleware,  // request ID
-		loggingMiddleware,    // structured logging
-		metricsMiddleware,    // metrics
-		corsMiddleware,       // CORS
+		requestIDMiddleware, // request ID
+		loggingMiddleware,   // structured logging
+		metricsMiddleware,   // metrics
+		corsMiddleware,      // CORS
 	)
 
 	// Mount OGEN (hot path - maximum speed, static router)
@@ -171,4 +179,3 @@ func generateRequestID() string {
 	// Simple UUID generation
 	return uuid.New().String()
 }
-

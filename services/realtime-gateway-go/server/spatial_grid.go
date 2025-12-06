@@ -37,11 +37,56 @@ func (sg *SpatialGrid) GetCellKey(pos Vec3) CellKey {
 }
 
 // Add adds a player to the grid
+// Issue: #1580 - Spatial partitioning for network optimization
 func (sg *SpatialGrid) Add(playerID string, pos Vec3) {
 	key := sg.GetCellKey(pos)
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
+	
+	// Remove from old cell if exists
+	for oldKey, players := range sg.cells {
+		for i, p := range players {
+			if p == playerID {
+				sg.cells[oldKey] = append(players[:i], players[i+1:]...)
+				if len(sg.cells[oldKey]) == 0 {
+					delete(sg.cells, oldKey)
+				}
+				break
+			}
+		}
+	}
+	
+	// Add to new cell
 	sg.cells[key] = append(sg.cells[key], playerID)
+}
+
+// Update updates player position in the grid
+func (sg *SpatialGrid) Update(playerID string, oldPos, newPos Vec3) {
+	oldKey := sg.GetCellKey(oldPos)
+	newKey := sg.GetCellKey(newPos)
+	
+	if oldKey == newKey {
+		return // Same cell, no update needed
+	}
+	
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+	
+	// Remove from old cell
+	if players, ok := sg.cells[oldKey]; ok {
+		for i, p := range players {
+			if p == playerID {
+				sg.cells[oldKey] = append(players[:i], players[i+1:]...)
+				if len(sg.cells[oldKey]) == 0 {
+					delete(sg.cells, oldKey)
+				}
+				break
+			}
+		}
+	}
+	
+	// Add to new cell
+	sg.cells[newKey] = append(sg.cells[newKey], playerID)
 }
 
 // Remove removes a player from the grid

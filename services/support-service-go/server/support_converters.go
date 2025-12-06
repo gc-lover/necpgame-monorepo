@@ -106,6 +106,10 @@ func convertUpdateTicketRequestFromAPI(req *supportapi.UpdateTicketRequest) *mod
 		result.Category = &category
 	}
 
+	if req.Subject.Set {
+		result.Subject = &req.Subject.Value
+	}
+
 	return result
 }
 

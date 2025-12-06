@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -38,8 +39,14 @@ func NewOrderRepository(db *pgxpool.Pool, logger *logrus.Logger) *OrderRepositor
 }
 
 func (r *OrderRepository) Create(ctx context.Context, order *models.PlayerOrder) error {
-	rewardJSON, _ := json.Marshal(order.Reward)
-	requirementsJSON, _ := json.Marshal(order.Requirements)
+	rewardJSON, err := json.Marshal(order.Reward)
+	if err != nil {
+		return fmt.Errorf("failed to marshal reward JSON: %w", err)
+	}
+	requirementsJSON, err := json.Marshal(order.Requirements)
+	if err != nil {
+		return fmt.Errorf("failed to marshal requirements JSON: %w", err)
+	}
 
 	query := `
 		INSERT INTO social.player_orders (
@@ -87,10 +94,16 @@ func (r *OrderRepository) GetByID(ctx context.Context, orderID uuid.UUID) (*mode
 
 	order.ExecutorID = executorID
 	if len(rewardJSON) > 0 {
-		json.Unmarshal(rewardJSON, &order.Reward)
+		if err := json.Unmarshal(rewardJSON, &order.Reward); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal reward JSON")
+			return nil, fmt.Errorf("failed to unmarshal reward JSON: %w", err)
+		}
 	}
 	if len(requirementsJSON) > 0 {
-		json.Unmarshal(requirementsJSON, &order.Requirements)
+		if err := json.Unmarshal(requirementsJSON, &order.Requirements); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal requirements JSON")
+			return nil, fmt.Errorf("failed to unmarshal requirements JSON: %w", err)
+		}
 	}
 
 	return &order, nil

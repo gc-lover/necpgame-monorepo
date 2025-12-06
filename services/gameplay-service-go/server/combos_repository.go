@@ -16,6 +16,7 @@ type ComboRepositoryInterface interface {
 	GetLoadout(ctx context.Context, characterID uuid.UUID) (*models.ComboLoadout, error)
 	SaveLoadout(ctx context.Context, loadout *models.ComboLoadout) (*models.ComboLoadout, error)
 	GetActivation(ctx context.Context, activationID uuid.UUID) (*models.ComboActivation, error)
+	SaveActivation(ctx context.Context, activation *models.ComboActivation) (*models.ComboActivation, error)
 	SaveScore(ctx context.Context, score *models.ComboScore) error
 	GetAnalytics(ctx context.Context, comboID, characterID *uuid.UUID, periodStart, periodEnd *time.Time, limit, offset int) ([]models.ComboAnalytics, error)
 }
@@ -90,6 +91,19 @@ func (r *ComboRepository) GetActivation(ctx context.Context, activationID uuid.U
 	}
 
 	return &activation, nil
+}
+
+func (r *ComboRepository) SaveActivation(ctx context.Context, activation *models.ComboActivation) (*models.ComboActivation, error) {
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO gameplay.combo_activations (id, combo_id, character_id, activated_at)
+		 VALUES ($1, $2, $3, $4)`,
+		activation.ID, activation.ComboID, activation.CharacterID, activation.ActivatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return activation, nil
 }
 
 func (r *ComboRepository) SaveScore(ctx context.Context, score *models.ComboScore) error {

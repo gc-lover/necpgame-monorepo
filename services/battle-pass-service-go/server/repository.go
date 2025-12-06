@@ -414,12 +414,6 @@ func (r *Repository) GetChallengeDetails(ctx context.Context, challengeId string
 	if endDate.Valid {
 		ch.EndDate = api.NewOptDateTime(endDate.Time)
 	}
-	if err == sql.ErrNoRows {
-		return nil, ErrNotFound
-	}
-	if err != nil {
-		return nil, err
-	}
 
 	return &ch, nil
 }

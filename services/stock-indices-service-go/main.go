@@ -11,14 +11,11 @@ import (
 	"time"
 
 	"github.com/necpgame/stock-indices-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
-	logger.Info("Stock  Indices  Service starting...")
+	logger := server.GetLogger()
+	logger.Info("Stock Indices Service (Go) starting...")
 
 	addr := getEnv("ADDR", "0.0.0.0:8149")
 
@@ -31,6 +28,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for stock-indices service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	httpServer := server.NewHTTPServer(addr, logger)
 

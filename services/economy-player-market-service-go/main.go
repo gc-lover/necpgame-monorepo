@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"log"
 	_ "net/http/pprof"
 	"net/http"
 	"os"
@@ -16,6 +15,9 @@ import (
 )
 
 func main() {
+	logger := server.GetLogger()
+	logger.Info("Economy Player Market Service (Go) starting...")
+
 	// Database connection
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -27,7 +29,7 @@ func main() {
 	// Configure DB pool (standard service - 25 connections)
 	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
-		log.Fatalf("Unable to parse DATABASE_URL: %v\n", err)
+		logger.WithError(err).Fatal("Unable to parse DATABASE_URL")
 	}
 	config.MaxConns = 25
 	config.MinConns = 5
@@ -36,32 +38,41 @@ func main() {
 	
 	dbpool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		logger.WithError(err).Fatal("Unable to connect to database")
 	}
 	defer dbpool.Close()
 
 	// Ping database
 	if err := dbpool.Ping(ctx); err != nil {
-		log.Fatalf("Unable to ping database: %v\n", err)
+		logger.WithError(err).Fatal("Unable to ping database")
 	}
 
-	log.Println("OK Connected to database successfully (pool: 25 connections)")
+	logger.Info("OK Connected to database successfully (pool: 25 connections)")
 
 	// pprof profiling endpoint
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6513")
-		log.Printf("🔧 pprof profiling on http://%s/debug/pprof", pprofAddr)
-		http.ListenAndServe(pprofAddr, nil)
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for economy-player-market service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	// Initialize service layers with ogen
 	httpServer := server.NewHTTPServerOgen(":8094")
 
 	// Start server
 	go func() {
-		log.Printf("Starting Player Market Service on :8094")
+		logger.WithField("addr", ":8094").Info("Starting Player Market Service")
 		if err := httpServer.Start(); err != nil {
-			log.Fatalf("Server failed: %v", err)
+			logger.WithError(err).Fatal("Server failed")
 		}
 	}()
 
@@ -70,15 +81,15 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	logger.Info("Shutting down server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		logger.WithError(err).Error("Server forced to shutdown")
 	}
 
-	log.Println("Server exited")
+	logger.Info("Server exited")
 }
 
 func getEnv(key, defaultValue string) string {

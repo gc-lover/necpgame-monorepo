@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/server"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -81,6 +82,13 @@ func main() {
 			logger.Error("pprof server failed", zap.Error(err))
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	logrusLogger := server.GetLogger()
+	monitor := server.NewGoroutineMonitor(200, logrusLogger) // Max 200 goroutines for world-events-analytics service
+	go monitor.Start()
+	defer monitor.Stop()
+	logrusLogger.Info("OK Goroutine monitor started")
 
 	// Start server
 	go func() {

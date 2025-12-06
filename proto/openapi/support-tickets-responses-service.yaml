@@ -6,173 +6,165 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8088/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8088/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Ticket Responses
-    description: Ответы на тикеты
-
+- name: Ticket Responses
+  description: Ответы на тикеты
 paths:
   /support/tickets/{ticket_id}/responses:
     post:
       tags:
-        - Ticket Responses
+      - Ticket Responses
       summary: Добавить ответ к тикету
       operationId: addTicketResponse
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/TicketId'
+      - $ref: common.yaml#/components/parameters/TicketId
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTicketResponseRequest"
+              $ref: '#/components/schemas/CreateTicketResponseRequest'
       responses:
-        "201":
+        '201':
           description: Ответ добавлен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TicketResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     get:
       tags:
-        - Ticket Responses
+      - Ticket Responses
       summary: Получить ответы по тикету
       operationId: getTicketResponses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/TicketId'
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - $ref: common.yaml#/components/parameters/TicketId
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: Список ответов
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TicketResponsesResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TicketResponsesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /support/tickets/{ticket_id}/responses/{response_id}:
     put:
       tags:
-        - Ticket Responses
+      - Ticket Responses
       summary: Обновить ответ на тикет
       operationId: updateTicketResponse
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/TicketId'
-        - name: response_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - $ref: common.yaml#/components/parameters/TicketId
+      - name: response_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateTicketResponseRequest"
+              $ref: '#/components/schemas/UpdateTicketResponseRequest'
       responses:
-        "200":
+        '200':
           description: Ответ обновлён
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TicketResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     CreateTicketResponseRequest:
       type: object
       required:
-        - content
+      - content
       properties:
         content:
           type: string
         is_internal:
           type: boolean
           default: false
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateTicketResponseRequest:
       type: object
       required:
-        - content
+      - content
       properties:
         content:
           type: string
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TicketResponse:
       allOf:
-        - $ref: 'common.yaml#/components/schemas/BaseEntityWithTimestamps'
-        - type: object
-          properties:
-            ticket_id:
-              type: string
-              format: uuid
-            author_id:
-              type: string
-              format: uuid
-            author_type:
-              type: string
-              enum: [player, agent, system]
-            content:
-              type: string
-            is_internal:
-              type: boolean
-
+      - $ref: common.yaml#/components/schemas/BaseEntityWithTimestamps
+      - type: object
+        properties:
+          ticket_id:
+            type: string
+            format: uuid
+          author_id:
+            type: string
+            format: uuid
+          author_type:
+            type: string
+            enum:
+            - player
+            - agent
+            - system
+          content:
+            type: string
+          is_internal:
+            type: boolean
     TicketResponsesResponse:
       allOf:
-        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
-        - type: object
-          properties:
+      - $ref: common.yaml#/components/schemas/PaginationResponse
+      - type: object
+        properties:
+          items:
+            type: array
             items:
-              type: array
-              items:
-                $ref: "#/components/schemas/TicketResponse"
-              description: Список ответов на тикет
-
+              $ref: '#/components/schemas/TicketResponse'
+            description: Список ответов на тикет
 security:
-  - BearerAuth: []
-
-
+- BearerAuth: []

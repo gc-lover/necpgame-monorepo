@@ -7,8 +7,28 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
 	"github.com/sony/gobreaker"
+)
+
+var (
+	// Issue: #1588 - Prometheus metrics for circuit breaker
+	circuitBreakerState = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "circuit_breaker_state",
+			Help: "Circuit breaker state (0=closed, 1=open, 2=half-open)",
+		},
+		[]string{"name"},
+	)
+	
+	requestsShedded = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "requests_shedded_total",
+			Help: "Total requests shedded due to overload",
+		},
+	)
 )
 
 // CircuitBreaker wraps DB operations with circuit breaker pattern
@@ -35,6 +55,16 @@ func NewCircuitBreaker(name string) *CircuitBreaker {
 				"from": from.String(),
 				"to":   to.String(),
 			}).Warn("Circuit breaker state changed")
+			
+			// Issue: #1588 - Update Prometheus metric
+			stateValue := 0.0
+			switch to {
+			case gobreaker.StateOpen:
+				stateValue = 1.0
+			case gobreaker.StateHalfOpen:
+				stateValue = 2.0
+			}
+			circuitBreakerState.WithLabelValues(name).Set(stateValue)
 		},
 	})
 	
@@ -63,6 +93,8 @@ func NewLoadShedder(maxConcurrent int) *LoadShedder {
 func (ls *LoadShedder) Allow() bool {
 	current := ls.current.Load()
 	if current >= ls.maxConcurrent {
+		// Issue: #1588 - Track shedded requests
+		requestsShedded.Inc()
 		return false
 	}
 	

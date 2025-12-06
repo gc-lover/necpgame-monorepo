@@ -2,11 +2,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"log"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -14,6 +16,9 @@ import (
 )
 
 func main() {
+	logger := server.GetLogger()
+	logger.Info("Matchmaking Service (Go) starting...")
+
 	// Database connection
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -22,7 +27,7 @@ func main() {
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		logger.WithError(err).Fatal("Failed to connect to database")
 	}
 	defer db.Close()
 
@@ -41,22 +46,46 @@ func main() {
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6191")
-		log.Printf("Starting pprof server on %s", pprofAddr)
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine, /debug/pprof/allocs
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
-			log.Printf("pprof server error: %v", err)
+			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(300, logger) // Max 300 goroutines for matchmaking service (hot path)
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	// HTTP Server
 	addr := getEnv("HTTP_ADDR", ":8090")
 
 	httpServer := server.NewHTTPServer(addr, service)
 
-	log.Printf("Starting Matchmaking Service on %s", addr)
-	if err := httpServer.Start(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		logger.WithField("addr", addr).Info("Starting Matchmaking Service")
+		if err := httpServer.Start(); err != nil {
+			logger.WithError(err).Fatal("Failed to start server")
+		}
+	}()
+
+	<-stop
+	logger.Info("Shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		logger.WithError(err).Error("Shutdown error")
 	}
+
+	logger.Info("Server stopped")
 }
 
 // getEnv gets environment variable with fallback

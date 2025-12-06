@@ -27,6 +27,8 @@ type Handlers struct {
 	comboService ComboServiceInterface
 	combatSessionService CombatSessionServiceInterface
 	affixService AffixServiceInterface
+	abilityService AbilityServiceInterface
+	questRepository QuestRepositoryInterface
 
 	// Memory pooling for hot path structs (zero allocations target!)
 	sessionListResponsePool sync.Pool
@@ -77,10 +79,14 @@ func NewHandlers(logger *logrus.Logger, db *pgxpool.Pool) *Handlers {
 	// Issue: #1525 - Initialize comboService if db is provided
 	// Issue: #1607 - Initialize combatSessionService if db is provided
 	// Issue: #1515 - Initialize affixService if db is provided
+	// Issue: #156 - Initialize abilityService if db is provided
+	// Issue: #50 - Initialize questRepository if db is provided
 	if db != nil {
 		h.comboService = NewComboService(db)
 		h.combatSessionService = NewCombatSessionService(db)
 		h.affixService = NewAffixService(db)
+		h.abilityService = NewAbilityService(db)
+		h.questRepository = NewQuestRepository(db)
 	}
 
 	return h
@@ -127,6 +133,165 @@ func (h *Handlers) ActivateAbility(ctx context.Context, req *api.AbilityActivati
 	}
 
 	return response, nil
+}
+
+// CreateOrUpdateAbilityLoadout implements POST /gameplay/combat/abilities/loadouts
+// Issue: #156
+func (h *Handlers) CreateOrUpdateAbilityLoadout(ctx context.Context, req *api.AbilityLoadoutCreate) (api.CreateOrUpdateAbilityLoadoutRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		h.logger.Error("CreateOrUpdateAbilityLoadout: abilityService not initialized")
+		return &api.CreateOrUpdateAbilityLoadoutInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	characterID := uuid.Nil // Placeholder
+
+	loadout, err := h.abilityService.UpdateLoadout(ctx, characterID, req)
+	if err != nil {
+		h.logger.WithError(err).Error("CreateOrUpdateAbilityLoadout: failed")
+		return &api.CreateOrUpdateAbilityLoadoutInternalServerError{}, nil
+	}
+
+	return &api.CreateOrUpdateAbilityLoadoutOK{
+		ID:              loadout.ID,
+		CharacterID:     loadout.CharacterID,
+		SlotQ:           loadout.SlotQ,
+		SlotE:           loadout.SlotE,
+		SlotR:           loadout.SlotR,
+		PassiveAbilities: loadout.PassiveAbilities,
+		HackingAbilities: loadout.HackingAbilities,
+		AutoCastEnabled: loadout.AutoCastEnabled,
+		CreatedAt:       loadout.CreatedAt,
+		UpdatedAt:       loadout.UpdatedAt,
+	}, nil
+}
+
+// GetAbilityById implements GET /gameplay/combat/abilities/{abilityId}
+// Issue: #156
+func (h *Handlers) GetAbilityById(ctx context.Context, params api.GetAbilityByIdParams) (api.GetAbilityByIdRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		h.logger.Error("GetAbilityById: abilityService not initialized")
+		return &api.GetAbilityByIdInternalServerError{}, nil
+	}
+
+	ability, err := h.abilityService.GetAbility(ctx, params.AbilityId)
+	if err != nil {
+		if err.Error() == "ability not found" {
+			return &api.GetAbilityByIdNotFound{}, nil
+		}
+		h.logger.WithError(err).Error("GetAbilityById: failed")
+		return &api.GetAbilityByIdInternalServerError{}, nil
+	}
+
+	return ability, nil
+}
+
+// GetAbilityLoadouts implements GET /gameplay/combat/abilities/loadouts
+// Issue: #156
+func (h *Handlers) GetAbilityLoadouts(ctx context.Context, params api.GetAbilityLoadoutsParams) (api.GetAbilityLoadoutsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		h.logger.Error("GetAbilityLoadouts: abilityService not initialized")
+		return &api.GetAbilityLoadoutsInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	characterID := uuid.Nil // Placeholder
+
+	loadout, err := h.abilityService.GetLoadout(ctx, characterID)
+	if err != nil {
+		if err.Error() == "loadout not found" {
+		return &api.GetAbilityLoadoutsOK{
+			Loadouts: []api.AbilityLoadout{},
+			Total:    0,
+			Limit:    api.NewOptInt(1),
+			Offset:   api.NewOptInt(0),
+		}, nil
+		}
+		h.logger.WithError(err).Error("GetAbilityLoadouts: failed")
+		return &api.GetAbilityLoadoutsInternalServerError{}, nil
+	}
+
+	return &api.GetAbilityLoadoutsOK{
+		Loadouts: []api.AbilityLoadout{*loadout},
+		Total:    1,
+		Limit:    api.NewOptInt(1),
+		Offset:   api.NewOptInt(0),
+	}, nil
+}
+
+// GetCyberpsychosisState implements GET /gameplay/combat/abilities/cyberpsychosis
+// Issue: #156
+func (h *Handlers) GetCyberpsychosisState(ctx context.Context) (api.GetCyberpsychosisStateRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		h.logger.Error("GetCyberpsychosisState: abilityService not initialized")
+		return &api.GetCyberpsychosisStateInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	characterID := uuid.Nil // Placeholder
+
+	state, err := h.abilityService.GetCyberpsychosisState(ctx, characterID)
+	if err != nil {
+		h.logger.WithError(err).Error("GetCyberpsychosisState failed")
+		return &api.GetCyberpsychosisStateInternalServerError{}, nil
+	}
+
+	return state, nil
+}
+
+// GetAbilityMetrics implements GET /gameplay/combat/abilities/metrics
+// Issue: #156
+func (h *Handlers) GetAbilityMetrics(ctx context.Context, params api.GetAbilityMetricsParams) (api.GetAbilityMetricsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		h.logger.Error("GetAbilityMetrics: abilityService not initialized")
+		return &api.GetAbilityMetricsInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	characterID := uuid.Nil // Placeholder
+
+	var abilityIDOpt api.OptUUID
+	if params.AbilityID.Set {
+		abilityIDOpt = api.NewOptUUID(params.AbilityID.Value)
+	}
+
+	var startTimeOpt api.OptDateTime
+	if params.PeriodStart.Set {
+		startTimeOpt = api.NewOptDateTime(params.PeriodStart.Value)
+	}
+
+	var endTimeOpt api.OptDateTime
+	if params.PeriodEnd.Set {
+		endTimeOpt = api.NewOptDateTime(params.PeriodEnd.Value)
+	}
+
+	metrics, err := h.abilityService.GetAbilityMetrics(ctx, characterID, abilityIDOpt, startTimeOpt, endTimeOpt)
+	if err != nil {
+		h.logger.WithError(err).Error("GetAbilityMetrics: failed")
+		return &api.GetAbilityMetricsInternalServerError{}, nil
+	}
+
+	return &api.GetAbilityMetricsOK{
+		Metrics: []api.AbilityMetrics{*metrics},
+		Total:   1,
+		Limit:   api.NewOptInt(1),
+		Offset:  api.NewOptInt(0),
+	}, nil
 }
 
 // ActivateCombo implements POST /gameplay/combat/combos/activate
@@ -223,6 +388,66 @@ func (h *Handlers) GetAvailableSynergies(ctx context.Context, params api.GetAvai
 
 	// TODO: Implement logic
 	return &api.GetAvailableSynergiesInternalServerError{}, nil
+}
+
+// ApplySynergy implements POST /gameplay/combat/abilities/synergies/apply
+// Issue: #156
+func (h *Handlers) ApplySynergy(ctx context.Context, req *api.SynergyApplyRequest) (api.ApplySynergyRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		h.logger.Error("ApplySynergy: abilityService not initialized")
+		return &api.ApplySynergyInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	characterID := uuid.Nil // Placeholder
+
+	response, err := h.abilityService.ApplySynergy(ctx, characterID, req)
+	if err != nil {
+		h.logger.WithError(err).Error("ApplySynergy: failed")
+		return &api.ApplySynergyInternalServerError{}, nil
+	}
+
+	return response, nil
+}
+
+// CheckCooldowns implements POST /gameplay/combat/abilities/cooldowns
+// Issue: #156
+func (h *Handlers) CheckCooldowns(ctx context.Context, req *api.CooldownCheckRequest) (api.CheckCooldownsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		return &api.CheckCooldownsInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	characterID := uuid.Nil // Placeholder
+
+	result, err := h.abilityService.GetCooldowns(ctx, characterID)
+	if err != nil {
+		h.logger.WithError(err).Error("CheckCooldowns: failed")
+		return &api.CheckCooldownsInternalServerError{}, nil
+	}
+
+	// Filter cooldowns by requested ability IDs if provided
+	if req != nil && len(req.AbilityIds) > 0 {
+		filtered := []api.CooldownStatus{}
+		requestedIDs := make(map[uuid.UUID]bool)
+		for _, id := range req.AbilityIds {
+			requestedIDs[id] = true
+		}
+		for _, cd := range result.Cooldowns {
+			if requestedIDs[cd.AbilityID] {
+				filtered = append(filtered, cd)
+			}
+		}
+		result.Cooldowns = filtered
+	}
+
+	return result, nil
 }
 
 // GetCombatSession implements GET /gameplay/combat/sessions/{sessionId}
@@ -596,4 +821,462 @@ func (h *Handlers) TriggerAffixRotation(ctx context.Context, req api.OptTriggerR
 
 	apiRotation := convertRotationToAPI(rotation)
 	return &apiRotation, nil
+}
+
+// CancelQuest implements POST /gameplay/quests/{quest_id}/cancel
+// Issue: #50
+func (h *Handlers) CancelQuest(ctx context.Context, params api.CancelQuestParams) (api.CancelQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("CancelQuest: questRepository not initialized")
+		return &api.CancelQuestInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	// characterID := uuid.Nil // Placeholder
+
+	// TODO: Implement actual quest cancellation logic
+	h.logger.WithField("quest_id", params.QuestID).Info("CancelQuest called (stub)")
+
+	// Return quest instance (200 OK)
+	// TODO: Get actual quest instance from repository
+	return &api.QuestInstance{
+		QuestID: params.QuestID,
+		State:   api.QuestInstanceStateCANCELLED,
+	}, nil
+}
+
+// CheckQuestConditions implements GET /gameplay/quests/{questId}/conditions
+// Issue: #50
+func (h *Handlers) CheckQuestConditions(ctx context.Context, params api.CheckQuestConditionsParams) (api.CheckQuestConditionsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("CheckQuestConditions: questRepository not initialized")
+		return &api.CheckQuestConditionsInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	// characterID := uuid.Nil // Placeholder
+
+	// TODO: Implement actual condition checking logic
+	h.logger.WithField("quest_id", params.QuestID).Info("CheckQuestConditions called (stub)")
+
+	return &api.CheckQuestConditionsOK{
+		AllConditionsMet: true,
+		Conditions:       []api.CheckQuestConditionsOKConditionsItem{},
+	}, nil
+}
+
+// CompleteQuest implements POST /gameplay/quests/{questId}/complete
+// Issue: #50
+func (h *Handlers) CompleteQuest(ctx context.Context, req api.OptCompleteQuestRequest, params api.CompleteQuestParams) (api.CompleteQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("CompleteQuest: questRepository not initialized")
+		return &api.CompleteQuestInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	// characterID := uuid.Nil // Placeholder
+
+	// TODO: Implement actual quest completion logic
+	h.logger.WithField("quest_id", params.QuestID).Info("CompleteQuest called (stub)")
+
+	return &api.CompleteQuestResponse{
+		QuestInstance: api.QuestInstance{
+			QuestID: params.QuestID,
+			State:   api.QuestInstanceStateCOMPLETED,
+		},
+		Rewards: api.QuestRewards{},
+	}, nil
+}
+
+// DistributeQuestRewards implements POST /gameplay/quests/{questId}/rewards/distribute
+// Issue: #50
+func (h *Handlers) DistributeQuestRewards(ctx context.Context, params api.DistributeQuestRewardsParams) (api.DistributeQuestRewardsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("DistributeQuestRewards: questRepository not initialized")
+		return &api.DistributeQuestRewardsInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	// characterID := uuid.Nil // Placeholder
+
+	// TODO: Implement actual reward distribution logic
+	// For now, return a basic response
+	return &api.DistributeQuestRewardsOK{
+		Success: true,
+		Rewards: api.QuestRewards{},
+	}, nil
+}
+
+// CreateEncounter implements POST /gameplay/combat/ai/encounter
+// Issue: #50
+func (h *Handlers) CreateEncounter(ctx context.Context, req *api.CreateEncounterRequest) (api.CreateEncounterRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement encounter creation logic
+	h.logger.Info("CreateEncounter called (stub)")
+
+	return &api.AIEncounter{
+		ID:            uuid.New(),
+		ZoneID:        uuid.New(),
+		EncounterType: "combat",
+		Result:        api.OptNilAIEncounterResult{},
+		StartedAt:     time.Now(),
+		CompletedAt:   api.NewOptNilDateTime(time.Now().Add(1 * time.Hour)),
+		ProfileIds:    []uuid.UUID{},
+	}, nil
+}
+
+// EndEncounter implements POST /gameplay/combat/ai/encounter/{encounterId}/end
+// Issue: #50
+func (h *Handlers) EndEncounter(ctx context.Context, req *api.EndEncounterRequest, params api.EndEncounterParams) (api.EndEncounterRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement encounter ending logic
+	h.logger.WithFields(map[string]interface{}{
+		"encounter_id": params.EncounterID,
+		"result":       req.Result,
+	}).Info("EndEncounter called (stub)")
+
+	// Return stub response (AIEncounter implements endEncounterRes)
+	// Convert EndEncounterRequestResult to AIEncounterResult
+	var result api.AIEncounterResult
+	switch req.Result {
+	case api.EndEncounterRequestResultVictory:
+		result = api.AIEncounterResultVictory
+	case api.EndEncounterRequestResultDefeat:
+		result = api.AIEncounterResultDefeat
+	case api.EndEncounterRequestResultAbandoned:
+		result = api.AIEncounterResultAbandoned
+	default:
+		result = api.AIEncounterResultAbandoned
+	}
+	return &api.AIEncounter{
+		ID:            params.EncounterID,
+		ZoneID:        uuid.New(),
+		EncounterType: "combat",
+		Result:        api.NewOptNilAIEncounterResult(result),
+		StartedAt:     time.Now().Add(-1 * time.Hour),
+		CompletedAt:   api.NewOptNilDateTime(time.Now()),
+		ProfileIds:    []uuid.UUID{},
+	}, nil
+}
+
+// GetAIProfile implements GET /gameplay/combat/ai/profiles/{profileId}
+// Issue: #50
+func (h *Handlers) GetAIProfile(ctx context.Context, params api.GetAIProfileParams) (api.GetAIProfileRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement AI profile retrieval logic
+	// For now, return a basic response
+	return &api.GetAIProfileNotFound{}, nil
+}
+
+// GetAIProfileTelemetry implements GET /gameplay/combat/ai/profiles/{profileId}/telemetry
+// Issue: #50
+func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, params api.GetAIProfileTelemetryParams) (api.GetAIProfileTelemetryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement AI profile telemetry retrieval logic
+	// For now, return a basic response
+	return &api.GetAIProfileTelemetryNotFound{}, nil
+}
+
+// GetDialogueHistory implements GET /gameplay/dialogue/history
+// Issue: #50
+func (h *Handlers) GetDialogueHistory(ctx context.Context, params api.GetDialogueHistoryParams) (api.GetDialogueHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement dialogue history retrieval logic
+	// For now, return a basic response
+	return &api.GetDialogueHistoryNotFound{}, nil
+}
+
+// GetEncounter implements GET /gameplay/combat/ai/encounter/{encounterId}
+// Issue: #50
+func (h *Handlers) GetEncounter(ctx context.Context, params api.GetEncounterParams) (api.GetEncounterRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement encounter retrieval logic
+	// For now, return a basic response
+	return &api.GetEncounterNotFound{}, nil
+}
+
+// GetPlayerQuests implements GET /gameplay/quests/by-player/{player_id}
+// Issue: #50
+func (h *Handlers) GetPlayerQuests(ctx context.Context, params api.GetPlayerQuestsParams) (api.GetPlayerQuestsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetPlayerQuests: questRepository not initialized")
+		return &api.GetPlayerQuestsInternalServerError{}, nil
+	}
+
+	// TODO: Implement quest retrieval logic
+	// For now, return a basic response
+	return &api.QuestListResponse{
+		Quests: []api.QuestInstance{},
+		Total:  0,
+	}, nil
+}
+
+// GetQuest implements GET /gameplay/quests/{quest_id}
+// Issue: #50
+func (h *Handlers) GetQuest(ctx context.Context, params api.GetQuestParams) (api.GetQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetQuest: questRepository not initialized")
+		return &api.GetQuestInternalServerError{}, nil
+	}
+
+	// TODO: Implement quest retrieval logic
+	// For now, return a basic response
+	return &api.GetQuestNotFound{}, nil
+}
+
+// GetQuestDialogue implements GET /gameplay/quests/{quest_id}/dialogue
+// Issue: #50
+func (h *Handlers) GetQuestDialogue(ctx context.Context, params api.GetQuestDialogueParams) (api.GetQuestDialogueRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetQuestDialogue: questRepository not initialized")
+		return &api.GetQuestDialogueInternalServerError{}, nil
+	}
+
+	// TODO: Implement dialogue retrieval logic
+	return &api.GetQuestDialogueNotFound{}, nil
+}
+
+// GetQuestEvents implements GET /gameplay/quests/{quest_id}/events
+// Issue: #50
+func (h *Handlers) GetQuestEvents(ctx context.Context, params api.GetQuestEventsParams) (api.GetQuestEventsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetQuestEvents: questRepository not initialized")
+		return &api.GetQuestEventsInternalServerError{}, nil
+	}
+
+	// TODO: Implement events retrieval logic
+	return &api.QuestEventsResponse{
+		Events: []api.QuestEvent{},
+		Total:  0,
+	}, nil
+}
+
+// GetQuestRequirements implements GET /gameplay/quests/{quest_id}/requirements
+// Issue: #50
+func (h *Handlers) GetQuestRequirements(ctx context.Context, params api.GetQuestRequirementsParams) (api.GetQuestRequirementsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetQuestRequirements: questRepository not initialized")
+		return &api.GetQuestRequirementsInternalServerError{}, nil
+	}
+
+	// TODO: Implement requirements retrieval logic
+	return &api.GetQuestRequirementsNotFound{}, nil
+}
+
+// GetQuestRewards implements GET /gameplay/quests/{quest_id}/rewards
+// Issue: #50
+func (h *Handlers) GetQuestRewards(ctx context.Context, params api.GetQuestRewardsParams) (api.GetQuestRewardsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetQuestRewards: questRepository not initialized")
+		return &api.GetQuestRewardsInternalServerError{}, nil
+	}
+
+	// TODO: Implement rewards retrieval logic
+	return &api.GetQuestRewardsNotFound{}, nil
+}
+
+// GetQuestState implements GET /gameplay/quests/{quest_id}/state
+// Issue: #50
+func (h *Handlers) GetQuestState(ctx context.Context, params api.GetQuestStateParams) (api.GetQuestStateRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetQuestState: questRepository not initialized")
+		return &api.GetQuestStateInternalServerError{}, nil
+	}
+
+	// TODO: Implement state retrieval logic
+	return &api.GetQuestStateNotFound{}, nil
+}
+
+// GetSkillCheckHistory implements GET /gameplay/quests/{quest_id}/skill-checks
+// Issue: #50
+func (h *Handlers) GetSkillCheckHistory(ctx context.Context, params api.GetSkillCheckHistoryParams) (api.GetSkillCheckHistoryRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("GetSkillCheckHistory: questRepository not initialized")
+		return &api.GetSkillCheckHistoryInternalServerError{}, nil
+	}
+
+	// TODO: Implement skill check history retrieval logic
+	return &api.SkillChecksResponse{
+		SkillChecks: []api.SkillCheckResult{},
+		Total:       0,
+	}, nil
+}
+
+// StartQuest implements POST /gameplay/quests/{quest_id}/start
+// Issue: #50
+func (h *Handlers) StartQuest(ctx context.Context, req *api.StartQuestRequest) (api.StartQuestRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("StartQuest: questRepository not initialized")
+		return &api.StartQuestInternalServerError{}, nil
+	}
+
+	// TODO: Implement quest start logic
+	return &api.StartQuestNotFound{}, nil
+}
+
+// ListAIProfiles implements GET /gameplay/combat/ai/profiles
+// Issue: #50
+func (h *Handlers) ListAIProfiles(ctx context.Context, params api.ListAIProfilesParams) (api.ListAIProfilesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement AI profiles list retrieval logic
+	return &api.ListAIProfilesOK{
+		Profiles: []api.AIProfile{},
+		Total:    0,
+	}, nil
+}
+
+// MakeDialogueChoice implements POST /gameplay/quests/{quest_id}/dialogue/choice
+// Issue: #50
+func (h *Handlers) MakeDialogueChoice(ctx context.Context, req *api.DialogueChoiceRequest, params api.MakeDialogueChoiceParams) (api.MakeDialogueChoiceRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement dialogue choice logic
+	return &api.MakeDialogueChoiceNotFound{}, nil
+}
+
+// PerformSkillCheck implements POST /gameplay/quests/{quest_id}/skill-checks
+// Issue: #50
+func (h *Handlers) PerformSkillCheck(ctx context.Context, req *api.SkillCheckRequest, params api.PerformSkillCheckParams) (api.PerformSkillCheckRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("PerformSkillCheck: questRepository not initialized")
+		return &api.PerformSkillCheckInternalServerError{}, nil
+	}
+
+	// TODO: Implement skill check logic
+	return &api.PerformSkillCheckNotFound{}, nil
+}
+
+// StartEncounter implements POST /gameplay/combat/ai/encounter/start
+// Issue: #50
+func (h *Handlers) StartEncounter(ctx context.Context, params api.StartEncounterParams) (api.StartEncounterRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement encounter start logic
+	return &api.StartEncounterNotFound{}, nil
+}
+
+// TransitionRaidPhase implements POST /gameplay/raids/{raid_id}/phases/{phase_id}/transition
+// Issue: #50
+func (h *Handlers) TransitionRaidPhase(ctx context.Context, req *api.RaidPhaseTransitionRequest, params api.TransitionRaidPhaseParams) (api.TransitionRaidPhaseRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// TODO: Implement raid phase transition logic
+	return &api.TransitionRaidPhaseNotFound{}, nil
+}
+
+// ReloadQuestContent implements POST /gameplay/quests/content/reload
+// Issue: #50
+func (h *Handlers) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestContentRequest) (api.ReloadQuestContentRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("ReloadQuestContent: questRepository not initialized")
+		return &api.ReloadQuestContentInternalServerError{}, nil
+	}
+
+	// TODO: Implement quest content reload logic
+	// This should import quest from YAML to DB
+	return &api.ReloadQuestContentResponse{
+		Message: api.NewOptString("Quest content reloaded successfully"),
+		ImportedAt: api.NewOptDateTime(time.Now()),
+	}, nil
+}
+
+// UpdateCyberpsychosis implements POST /gameplay/combat/abilities/cyberpsychosis/update
+// Issue: #156
+func (h *Handlers) UpdateCyberpsychosis(ctx context.Context, req *api.CyberpsychosisUpdateRequest) (api.UpdateCyberpsychosisRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.abilityService == nil {
+		h.logger.Error("UpdateCyberpsychosis: abilityService not initialized")
+		return &api.UpdateCyberpsychosisInternalServerError{}, nil
+	}
+
+	// TODO: Get characterID from context (from SecurityHandler)
+	characterID := uuid.Nil // Placeholder
+
+	// TODO: Implement cyberpsychosis update logic
+	state, err := h.abilityService.GetCyberpsychosisState(ctx, characterID)
+	if err != nil {
+		h.logger.WithError(err).Error("UpdateCyberpsychosis: failed")
+		return &api.UpdateCyberpsychosisInternalServerError{}, nil
+	}
+
+	return state, nil
+}
+
+// UpdateQuestState implements POST /gameplay/quests/{quest_id}/state/update
+// Issue: #50
+func (h *Handlers) UpdateQuestState(ctx context.Context, req *api.UpdateStateRequest, params api.UpdateQuestStateParams) (api.UpdateQuestStateRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if h.questRepository == nil {
+		h.logger.Error("UpdateQuestState: questRepository not initialized")
+		return &api.UpdateQuestStateInternalServerError{}, nil
+	}
+
+	// TODO: Implement quest state update logic
+	return &api.UpdateQuestStateNotFound{}, nil
 }

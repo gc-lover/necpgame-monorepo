@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-sessions-service-go/pkg/api"
@@ -14,17 +15,25 @@ const DBTimeout = 50 * time.Millisecond
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 // Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 type Handlers struct {
-	loadShedder *LoadShedder
+	service          *CombatSessionService
+	loadShedder      *LoadShedder
+	sessionValidator *SessionValidator
 }
 
 // NewHandlers creates new handlers
-func NewHandlers() *Handlers {
+func NewHandlers(service *CombatSessionService) *Handlers {
 	// Issue: #1588 - Resilience patterns for hot path service
 	loadShedder := NewLoadShedder(500) // Max 500 concurrent requests
 	
+	// Issue: #1587 - Anti-cheat validation
+	sessionValidator := NewSessionValidator()
+	
 	return &Handlers{
-		loadShedder: loadShedder,
+		service:          service,
+		loadShedder:      loadShedder,
+		sessionValidator: sessionValidator,
 	}
 }
 
@@ -40,30 +49,42 @@ func (h *Handlers) ListCombatSessions(ctx context.Context, params api.ListCombat
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement business logic
-	sessions := []api.CombatSession{}
+	if h.service == nil {
+		return []api.CombatSession{}, nil
+	}
+
+	sessions, err := h.service.ListSessions(ctx, params)
+	if err != nil {
+		return nil, err
+	}
 
 	return sessions, nil
 }
 
 // CreateCombatSession - TYPED response!
+// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 func (h *Handlers) CreateCombatSession(ctx context.Context, req *api.CreateSessionRequest) (*api.CombatSession, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement business logic
-	sessionID := uuid.New()
-	status := api.CombatSessionStatusActive
-
-	result := &api.CombatSession{
-		ID:          sessionID,
-		PlayerID:    req.PlayerID,
-		SessionType: string(req.SessionType),
-		Status:      status,
-		CreatedAt:   time.Now(),
+	// Issue: #1587 - Validate session creation (anti-cheat: prevent abuse)
+	// TODO: Get participant count from request when field is available
+	participantCount := 1 // Default: single player session
+	if err := h.sessionValidator.ValidateSessionCreation(participantCount, string(req.SessionType)); err != nil {
+		// Return validation error (will be handled by ogen)
+		return nil, err
 	}
 
-	return result, nil
+	if h.service == nil {
+		return nil, errors.New("service not initialized")
+	}
+
+	session, err := h.service.CreateSession(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
 // GetCombatSession - TYPED response!
@@ -71,20 +92,24 @@ func (h *Handlers) GetCombatSession(ctx context.Context, params api.GetCombatSes
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement business logic
-	playerID := uuid.New()
-	status := api.CombatSessionStatusActive
-
-	result := &api.CombatSession{
-		ID:          params.SessionID,
-		PlayerID:    playerID,
-		SessionType: "pvp",
-		Status:      status,
-		CreatedAt:   time.Now(),
-		EndedAt:     api.OptDateTime{},
+	if h.service == nil {
+		return &api.Error{
+			Error:   "ServiceNotInitialized",
+			Message: "Service not initialized",
+			Code:    api.NewOptNilString("500"),
+		}, nil
 	}
 
-	return result, nil
+	session, err := h.service.GetSession(ctx, params.SessionID.String())
+	if err != nil {
+		return &api.Error{
+			Error:   "NotFound",
+			Message: "Session not found",
+			Code:    api.NewOptNilString("404"),
+		}, nil
+	}
+
+	return session, nil
 }
 
 // EndCombatSession - TYPED response!
@@ -92,8 +117,25 @@ func (h *Handlers) EndCombatSession(ctx context.Context, params api.EndCombatSes
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	// TODO: Implement business logic
-	result := &api.EndCombatSessionOK{}
+	if h.service == nil {
+		return &api.Error{
+			Error:   "ServiceNotInitialized",
+			Message: "Service not initialized",
+			Code:    api.NewOptNilString("500"),
+		}, nil
+	}
 
-	return result, nil
+	// TODO: Get playerID from context (from SecurityHandler)
+	playerID := uuid.New().String()
+	
+	err := h.service.EndSession(ctx, params.SessionID.String(), playerID)
+	if err != nil {
+		return &api.Error{
+			Error:   "NotFound",
+			Message: "Session not found",
+			Code:    api.NewOptNilString("404"),
+		}, nil
+	}
+
+	return &api.EndCombatSessionOK{}, nil
 }

@@ -15,12 +15,16 @@ const (
 
 // IntegrationHandlers implements api.Handler interface for stock integration service
 type IntegrationHandlers struct {
-	logger *logrus.Logger
+	logger  *logrus.Logger
+	service IntegrationServiceInterface
 }
 
 // NewIntegrationHandlers creates new handlers
-func NewIntegrationHandlers(logger *logrus.Logger) *IntegrationHandlers {
-	return &IntegrationHandlers{logger: logger}
+func NewIntegrationHandlers(logger *logrus.Logger, service IntegrationServiceInterface) *IntegrationHandlers {
+	return &IntegrationHandlers{
+		logger:  logger,
+		service: service,
+	}
 }
 
 // GetStockEconomyImpact implements GET /economy/stock-impact
@@ -33,8 +37,28 @@ func (h *IntegrationHandlers) GetStockEconomyImpact(ctx context.Context, params 
 		period = string(params.Period.Value)
 	}
 
-	// TODO: Implement actual business logic
-	response := &api.GetStockEconomyImpactOK{
+	if h.service == nil {
+		response := &api.GetStockEconomyImpactOK{
+			Period:          api.OptString{Value: period, Set: true},
+			TradingVolume:   api.OptFloat64{Value: 0.0, Set: true},
+			MarketCapChange: api.OptFloat64{Value: 0.0, Set: true},
+			ResourcePriceImpacts: []api.GetStockEconomyImpactOKResourcePriceImpactsItem{},
+			CurrencyRateImpacts:  []api.GetStockEconomyImpactOKCurrencyRateImpactsItem{},
+			EconomicIndicators: api.OptGetStockEconomyImpactOKEconomicIndicators{
+				Value: api.GetStockEconomyImpactOKEconomicIndicators{
+					GdpImpact:      api.OptFloat64{Value: 0.0, Set: true},
+					InflationImpact: api.OptFloat64{Value: 0.0, Set: true},
+				},
+				Set: true,
+			},
+		}
+		return response, nil
+	}
+
+	response, err := h.service.GetStockEconomyImpact(ctx, period)
+	if err != nil {
+		h.logger.WithError(err).Error("GetStockEconomyImpact: failed")
+		response := &api.GetStockEconomyImpactOK{
 		Period:          api.OptString{Value: period, Set: true},
 		TradingVolume:   api.OptFloat64{Value: 0.0, Set: true},
 		MarketCapChange: api.OptFloat64{Value: 0.0, Set: true},
@@ -47,6 +71,8 @@ func (h *IntegrationHandlers) GetStockEconomyImpact(ctx context.Context, params 
 			},
 			Set: true,
 		},
+	}
+		return response, nil
 	}
 
 	return response, nil

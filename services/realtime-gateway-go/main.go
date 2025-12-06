@@ -30,6 +30,13 @@ func main() {
 
 	handler := server.NewGatewayHandler(tickRate, sessionMgr)
 	
+	// Issue: #1580 - UDP server for real-time game state (CRITICAL)
+	udpAddr := getEnv("UDP_ADDR", "0.0.0.0:18081")
+	udpServer, err := server.NewUDPServer(udpAddr, handler)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create UDP server")
+	}
+	
 	// OPTIMIZATION: Issue #1584 - pprof for real-time performance monitoring
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6856")
@@ -90,6 +97,13 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Issue: #1580 - Start UDP server for game state
+	if err := udpServer.Start(ctx); err != nil {
+		logger.WithError(err).Fatal("Failed to start UDP server")
+	}
+	defer udpServer.Stop()
+	logger.Info("OK UDP server started for real-time game state")
+
 	if sessionMgr != nil {
 		go func() {
 			ticker := time.NewTicker(5 * time.Minute)
@@ -131,6 +145,7 @@ func main() {
 		metricsServer.Shutdown(shutdownCtx)
 	}()
 
+	// WebSocket for lobby/chat/notifications (not game state)
 	if err := wsServer.Start(ctx); err != nil && err != http.ErrServerClosed {
 		logger.WithError(err).Fatal("Server error")
 	}

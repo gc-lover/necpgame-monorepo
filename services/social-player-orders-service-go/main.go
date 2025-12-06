@@ -11,13 +11,11 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
+	logger := server.GetLogger()
+	logger.Info("Social Player Orders Service (Go) starting...")
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -36,6 +34,12 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
+
+	// Issue: #1585 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for social-player-orders service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
 	httpServer := server.NewHTTPServer(addr, logger)
 

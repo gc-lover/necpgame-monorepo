@@ -17,6 +17,7 @@ type ComboServiceInterface interface {
 	UpdateLoadout(ctx context.Context, characterID uuid.UUID, req *models.UpdateLoadoutRequest) (*models.ComboLoadout, error)
 	SubmitScore(ctx context.Context, req *models.SubmitScoreRequest) (*models.ScoreSubmissionResponse, error)
 	GetAnalytics(ctx context.Context, comboID, characterID *uuid.UUID, periodStart, periodEnd *time.Time, limit, offset int) (*models.AnalyticsResponse, error)
+	ActivateCombo(ctx context.Context, characterID, comboID uuid.UUID, participants []uuid.UUID, context map[string]interface{}) (*models.ComboActivation, error)
 }
 
 type ComboService struct {
@@ -115,6 +116,19 @@ func (s *ComboService) GetAnalytics(ctx context.Context, comboID, characterID *u
 		PeriodStart: *periodStart,
 		PeriodEnd:   *periodEnd,
 	}, nil
+}
+
+// ActivateCombo activates a combo for a character
+func (s *ComboService) ActivateCombo(ctx context.Context, characterID, comboID uuid.UUID, participants []uuid.UUID, context map[string]interface{}) (*models.ComboActivation, error) {
+	// TODO: Validate combo exists and requirements are met
+	activation := &models.ComboActivation{
+		ID:          uuid.New(),
+		ComboID:     comboID,
+		CharacterID: characterID,
+		ActivatedAt: time.Now(),
+	}
+
+	return s.repo.SaveActivation(ctx, activation)
 }
 
 func calculateTotalScore(executionDifficulty, damageOutput, visualImpact int, teamCoordination *int) int {
