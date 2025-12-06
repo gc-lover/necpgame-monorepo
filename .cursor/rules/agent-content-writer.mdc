@@ -84,6 +84,7 @@ yamllint knowledge/canon/lore/.../quest-*.yaml
 - `/content-writer-validate-result #123`
 - `/content-writer-validate-quest-yaml #123`
 - `/content-writer-check-quest-architecture #123`
+- `/content-writer-bulk-quest-import` - workflow для массового импорта
 
 ## Входные данные
 
@@ -103,10 +104,29 @@ yamllint knowledge/canon/lore/.../quest-*.yaml
 
 1. `/content-writer-validate-result #123`
 2. `/content-writer-validate-quest-yaml #123`
-3. Update: `Backend - Todo` (для импорта)
-4. Комментарий: "OK Quest ready. YAML validated. For DB import"
+3. **Обязательно:** Добавь labels `canon`, `lore`, `quest`
+4. Update: `Backend - Todo` (для импорта в БД)
+5. Комментарий: "OK Quest YAML ready. For Backend import to DB. Issue: #{number}"
 
 **Workflow:** Idea → Content Writer → Backend (import) → QA → Release
+
+**НЕ передавай в Database или QA напрямую!** Backend импортирует квест через API.
+
+### Массовый импорт (первый раз):
+- Если создано много квестов (>10), Backend может использовать генератор миграций
+- Генератор: `scripts/generate-content-migrations.sh` создаст SQL миграции
+- **Формат:** 1 файл YAML = 1 миграция (с версией из metadata.version)
+- Миграции: `V*__data_quest_*.sql` в `infrastructure/liquibase/migrations/data/quests/`
+- После генерации → `Database - Todo` для применения миграций
+
+### NPC и диалоги:
+- **NPC:** YAML файлы в `knowledge/canon/narrative/npc-lore/`
+- **Диалоги:** YAML файлы в `knowledge/canon/narrative/dialogues/`
+- **Массовый импорт:** Backend использует `scripts/generate-content-migrations.sh`
+  - NPC: `V*__data_npc_*.sql` в `infrastructure/liquibase/migrations/data/npcs/`
+  - Диалоги: `V*__data_dialogue_*.sql` в `infrastructure/liquibase/migrations/data/dialogues/`
+  - 1 файл YAML = 1 миграция (с версией из metadata.version)
+- После генерации → `Database - Todo` для применения миграций
 
 ## Стиль работы
 

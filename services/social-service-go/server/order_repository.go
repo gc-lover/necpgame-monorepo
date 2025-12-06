@@ -56,7 +56,7 @@ func (r *OrderRepository) Create(ctx context.Context, order *models.PlayerOrder)
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		order.ID, order.CustomerID, order.ExecutorID, order.OrderType,
 		order.Title, order.Description, order.Status,
 		rewardJSON, requirementsJSON, order.Deadline,

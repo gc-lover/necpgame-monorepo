@@ -66,6 +66,8 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HT
 		orderService := NewOrderService(db, logger)
 		orderHandlers := NewOrderHandlers(orderService, logger)
 		router.Route("/api/v1/social/orders", func(r chi.Router) {
+			// Add auth middleware for order routes
+			r.Use(orderAuthMiddleware(logger))
 			r.Post("/create", orderHandlers.CreatePlayerOrder)
 			r.Get("/", orderHandlers.GetPlayerOrders)
 			r.Get("/{orderId}", orderHandlers.GetPlayerOrder)
@@ -119,5 +121,36 @@ func (s *HTTPServerOgen) Start() error {
 func (s *HTTPServerOgen) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down ogen HTTP server")
 	return s.server.Shutdown(ctx)
+}
+
+// Issue: #1509 - Auth middleware for order routes
+// Extracts user_id from Authorization header and adds to context
+func orderAuthMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// TODO: Implement proper JWT validation
+			// For now, extract user_id from token (mock implementation)
+			// In production, this should validate JWT and extract user_id from claims
+			// For development, we can use a simple mock
+			
+			// Mock: Extract user_id from token (in production, parse JWT)
+			// This is a temporary solution until JWT validation is implemented
+			userID := r.Header.Get("X-User-ID") // For development/testing
+			if userID == "" {
+				// Try to extract from Authorization header (mock)
+				// In production, this should parse JWT token
+				userID = "00000000-0000-0000-0000-000000000000" // Mock user ID
+			}
+
+			ctx := context.WithValue(r.Context(), "user_id", userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 

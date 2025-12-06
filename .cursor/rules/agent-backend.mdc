@@ -240,6 +240,7 @@ services/{service}-go/
 - `/backend-refactor-service {service}` - аудит existing
 - `/backend-check-openapi #123` - проверка спецификации
 - `/backend-migrate-to-ogen {service}` - **NEW!** Миграция на ogen
+- `/backend-import-quest-to-db` - импорт квеста в БД (одиночный или массовый)
 
 **Детали:** `.cursor/commands/backend-*.md`
 
@@ -261,12 +262,77 @@ services/{service}-go/
 - Тесты, миграции БД
 - **Issue в начале:** `// Issue: #123`
 
-## Контентные квесты
+## Контентные квесты (ОБЯЗАТЕЛЬНО!)
 
-**Labels `canon`, `lore`, `quest`:**
-1. Импорт YAML: `POST /api/v1/gameplay/quests/content/reload`
-2. Проверка импорта
-3. Update Status: `QA - Todo`
+**Labels `canon`, `lore`, `quest` от Content Writer:**
+
+### Workflow для одного квеста:
+1. **Проверь:** YAML файл в `knowledge/canon/lore/timeline-author/quests/.../quest-*.yaml`
+2. **Импорт:** `POST /api/v1/gameplay/quests/content/reload` (используй `scripts/import-quest.ps1` или `scripts/import-quest.sh`)
+3. **Валидация:** Проверь что квест загружен в `gameplay.quest_definitions` (SQL или API)
+4. **Передача:** `QA - Todo` для тестирования
+
+### Workflow для массового импорта (первый раз):
+1. **Генерация миграций:** Запусти `scripts/generate-content-migrations.sh` (или `.ps1`)
+   - Создаёт миграции: **1 файл YAML = 1 миграция** (с версией из metadata.version)
+   - Пример: `quest-001-willis-tower.yaml` → `V*__data_quest_..._v1_0_0.sql`
+   - Все миграции в `infrastructure/liquibase/migrations/data/quests/`
+2. **Проверь:** Сгенерированные миграции в `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql`
+3. **Передача:** `Database - Todo` для применения миграций
+4. **После миграции:** Все квесты уже в БД, передай в `QA - Todo` для тестирования
+
+### Обновления квестов (после первого импорта):
+- Используй API: `scripts/import-quest.ps1` или `scripts/import-quest.sh`
+- Или batch API (если реализован): `POST /api/v1/gameplay/quests/content/batch-reload`
+
+### Если миграции нет:
+- Передай в `Database - Todo` для создания миграции `quest_definitions`
+- После миграции → вернись к импорту
+
+### Комментарий при передаче:
+```markdown
+OK Quest imported to DB. Ready for QA testing.
+Quest ID: {quest_id}
+Issue: #{number}
+```
+
+## Контентные NPC и диалоги (ОБЯЗАТЕЛЬНО!)
+
+**Labels `canon`, `lore`, `npc`, `dialogue` от Content Writer:**
+
+### Workflow для массового импорта (первый раз):
+1. **Генерация миграций:** Запусти `scripts/generate-content-migrations.sh` (или `.ps1`)
+   - Создаёт миграции: **1 файл YAML = 1 миграция** (с версией из metadata.version)
+   - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql`
+   - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql`
+2. **Проверь:** Сгенерированные миграции в соответствующих папках
+3. **Передача:** `Database - Todo` для применения миграций
+4. **После миграции:** Все NPC и диалоги уже в БД, передай в `QA - Todo` для тестирования
+
+### Если таблиц нет:
+- Передай в `Database - Todo` для создания миграции `V1_89__narrative_npc_dialogue_tables.sql`
+- После миграции → вернись к генерации
+
+### Комментарий при передаче:
+```markdown
+OK NPC/Dialogue migrations generated. Ready for Database agent.
+NPC migrations: {count} files
+Dialogue migrations: {count} files
+Issue: #{number}
+```
+
+## Ballistics Metrics (combat shooting)
+
+**Таблицы:** `gameplay.ballistics_profiles`, `gameplay.shooting_telemetry`
+
+### Если таблиц нет:
+- Передай в `Database - Todo` для создания миграции `V1_5__ballistics_metrics_extension.sql`
+
+### Использование:
+- `ballistics_profiles`: Профили баллистики оружия (оптимальная/максимальная дальность, падение урона, конус отклонения, рикошеты)
+- `shooting_telemetry`: Телеметрия стрельбы (выстрелы, попадания, точность, TTK, контроль отдачи)
+
+**Связанные ISSUES:** #41, #1357
 
 ## Переход к следующему
 
@@ -275,8 +341,8 @@ services/{service}-go/
 2. `/backend-validate-optimizations #123` - **КРИТИЧНО!**
 3. Обе OK → передавай
 
-**Системная:** `Network - Todo` + PR  
-**Контент-квест:** `QA - Todo`
+**Системная задача:** `Network - Todo` + PR  
+**Контент-квест (labels `canon`/`lore`/`quest`):** `QA - Todo` (после импорта)
 
 **Комментарий:**
 ```markdown

@@ -195,12 +195,85 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 - `/database-validate-result #123`
 - `/database-refactor-schema {table}` - аудит таблицы
 - `/database-check-openapi #123`
+- `/database-apply-content-migration` - применить миграцию контентных квестов
+
+## Контентные квесты (если нужно)
+
+**Labels `canon`, `lore`, `quest`:**
+
+### Если таблица `quest_definitions` отсутствует:
+1. **Проверь:** Миграция `V1_46__quest_definitions_tables.sql` применена?
+2. **Если нет:** Примени миграцию или создай новую
+3. **Передача:** `Backend - Todo` для импорта квеста
+
+### Если миграция есть:
+- Передай сразу в `Backend - Todo` (миграция уже применена)
+
+### Массовый импорт квестов (первый раз):
+1. **Проверь:** Backend сгенерировал миграции через `scripts/generate-content-migrations.sh`
+2. **Миграции:** `V*__data_quest_*.sql` в `infrastructure/liquibase/migrations/data/quests/`
+   - 1 файл YAML = 1 миграция (с версией из metadata.version)
+   - Пример: `quest-001-willis-tower.yaml` → `V*__data_quest_..._v1_0_0.sql`
+3. **Примени:** `liquibase update` или через CI/CD
+4. **Валидация:** Проверь что квесты загружены (SQL: `SELECT COUNT(*) FROM gameplay.quest_definitions`)
+5. **Передача:** `QA - Todo` для тестирования
+
+### Комментарий при передаче:
+```markdown
+OK Content quests migrations applied. {count} quests imported.
+Migrations: V*__data_quest_*.sql (1 file = 1 migration)
+Issue: #{number}
+```
+
+## Контентные NPC и диалоги (если нужно)
+
+**Labels `canon`, `lore`, `npc`, `dialogue`:**
+
+### Если таблицы `npc_definitions` или `dialogue_nodes` отсутствуют:
+1. **Проверь:** Миграция `V1_89__narrative_npc_dialogue_tables.sql` применена?
+2. **Если нет:** Примени миграцию или создай новую
+3. **Передача:** `Backend - Todo` для импорта NPC/диалогов
+
+### Массовый импорт NPC и диалогов (первый раз):
+1. **Проверь:** Backend сгенерировал миграции через `scripts/generate-content-migrations.sh`
+2. **Миграции:** 
+   - NPC: `V*__data_npc_*.sql` в `infrastructure/liquibase/migrations/data/npcs/`
+   - Диалоги: `V*__data_dialogue_*.sql` в `infrastructure/liquibase/migrations/data/dialogues/`
+   - 1 файл YAML = 1 миграция (с версией из metadata.version)
+3. **Примени:** `liquibase update` или через CI/CD
+4. **Валидация:** Проверь что данные загружены (SQL: `SELECT COUNT(*) FROM narrative.npc_definitions`, `SELECT COUNT(*) FROM narrative.dialogue_nodes`)
+5. **Передача:** `QA - Todo` для тестирования
+
+### Комментарий при передаче:
+```markdown
+OK NPC/Dialogue migrations applied. {npc_count} NPCs, {dialogue_count} dialogues imported.
+Migrations: V*__data_npc_*.sql, V*__data_dialogue_*.sql
+Issue: #{number}
+```
+
+## Другие важные таблицы
+
+### Ballistics Metrics (combat shooting):
+- **Таблицы:** `gameplay.ballistics_profiles`, `gameplay.shooting_telemetry`
+- **Миграция:** `V1_5__ballistics_metrics_extension.sql`
+- **Использование:** Профили баллистики оружия, телеметрия стрельбы
+
+### Outbox Pattern (event-driven):
+- **Таблицы:** `mvp_meta.outbox`, `mvp_meta.event_log`
+- **Миграция:** `V1_90__mvp_meta_outbox_event_log_tables.sql`
+- **Использование:** Гарантированная доставка событий, журнал событий
+
+### Character Table (core):
+- **Таблица:** `mvp_core.character`
+- **Миграция:** `V1_91__mvp_core_character_table.sql`
+- **Использование:** Базовые данные персонажей
 
 ## Входные данные
 
 - Архитектура от Architect
 - OpenAPI от API Designer
 - Требования к производительности
+- Запросы на миграции для квестов
 
 ## Выходные данные
 
