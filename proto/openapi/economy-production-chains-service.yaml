@@ -1,3 +1,4 @@
+# Issue: #141889990
 openapi: 3.0.3
 info:
   title: Economy Production Chains Service API
@@ -303,219 +304,25 @@ components:
       $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ProductionChain:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        item_type:
-          type: string
-        item_tier:
-          type: string
-          enum:
-          - common
-          - uncommon
-          - rare
-          - epic
-          - legendary
-        base_cost:
-          type: number
-          description: Базовая стоимость производства
-        stages_count:
-          type: integer
-        estimated_time:
-          type: integer
-          description: Оценочное время производства в секундах
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/ProductionChain'
     ProductionChainDetails:
-      allOf:
-      - $ref: '#/components/schemas/ProductionChain'
-      - type: object
-        properties:
-          stages:
-            type: array
-            items:
-              $ref: '#/components/schemas/ProductionStage'
-          requirements:
-            type: object
-            properties:
-              licenses:
-                type: array
-                items:
-                  type: string
-                  format: uuid
-              stations:
-                type: array
-                items:
-                  type: string
-                  format: uuid
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/ProductionChainDetails'
     ProductionStage:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        stage_type:
-          type: string
-          enum:
-          - resource_extraction
-          - processing
-          - crafting
-        required_resources:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceRequirement'
-        failure_chance:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Вероятность провала этапа
-        stage_number:
-          type: integer
-        estimated_time:
-          type: integer
-          description: Оценочное время этапа в секундах
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/ProductionStage'
     ResourceRequirement:
-      type: object
-      properties:
-        resource_id:
-          type: string
-          format: uuid
-        resource_name:
-          type: string
-        quantity:
-          type: integer
-        optional:
-          type: boolean
-          default: false
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/ResourceRequirement'
     StartProductionRequest:
-      type: object
-      required:
-      - quantity
-      properties:
-        station_id:
-          type: string
-          format: uuid
-          description: ID станции для производства (опционально)
-        quantity:
-          type: integer
-          minimum: 1
-          description: Количество предметов для производства
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/StartProductionRequest'
     CreateProductionOrderRequest:
-      type: object
-      required:
-      - chain_id
-      - quantity
-      properties:
-        chain_id:
-          type: string
-          format: uuid
-        station_id:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-          minimum: 1
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/CreateProductionOrderRequest'
     CreateRushOrderRequest:
-      type: object
-      required:
-      - time_reduction
-      properties:
-        time_reduction:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Процент сокращения времени производства (1-100)
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/CreateRushOrderRequest'
     ProductionOrder:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        chain_id:
-          type: string
-          format: uuid
-        chain_name:
-          type: string
-        status:
-          type: string
-          enum:
-          - pending
-          - in_progress
-          - completed
-          - failed
-          - cancelled
-        started_at:
-          type: string
-          format: date-time
-        estimated_completion:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        quantity:
-          type: integer
-        current_stage:
-          type: integer
-        total_stages:
-          type: integer
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/ProductionOrder'
     ProductionOrderDetails:
-      allOf:
-      - $ref: '#/components/schemas/ProductionOrder'
-      - type: object
-        properties:
-          stages:
-            type: array
-            items:
-              $ref: '#/components/schemas/ProductionStageProgress'
-          station_id:
-            type: string
-            format: uuid
-          station_name:
-            type: string
-          total_cost:
-            type: number
-          rush_order:
-            type: boolean
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/ProductionOrderDetails'
     ProductionStageProgress:
-      type: object
-      properties:
-        stage_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-          - pending
-          - in_progress
-          - completed
-          - failed
-        started_at:
-          type: string
-          format: date-time
-        completed_at:
-          type: string
-          format: date-time
-        progress:
-          type: number
-          minimum: 0
-          maximum: 100
-        stage_number:
-          type: integer
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      $ref: 'economy-production-chains-schemas.yaml#/components/schemas/ProductionStageProgress'
   responses:
     BadRequest:
       $ref: common.yaml#/components/responses/BadRequest
