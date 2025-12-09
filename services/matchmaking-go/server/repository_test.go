@@ -1,125 +1,152 @@
-// Issue: #234 - Unit tests for matchmaking-go repository layer
-// Note: Repository tests require a real database connection or testcontainers
-// For now, we test structure validation and skip integration tests
 package server
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// TestRepository_NewRepository tests NewRepository function
-// Note: Requires real database connection
-func TestRepository_NewRepository(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
+func TestRepository_InsertAndGetQueueEntry(t *testing.T) {
+	repo, cleanup := newTestRepository(t)
+	defer cleanup()
 
-// TestRepository_InsertQueueEntry tests InsertQueueEntry
-// Note: Requires real database connection
-func TestRepository_InsertQueueEntry(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
+	truncateMatchmakingTables(t, repo.db)
 
-// TestRepository_GetQueueEntry tests GetQueueEntry
-// Note: Requires real database connection
-func TestRepository_GetQueueEntry(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-// TestRepository_UpdateQueueStatus tests UpdateQueueStatus
-// Note: Requires real database connection
-func TestRepository_UpdateQueueStatus(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
-
-// TestRepository_GetPlayerRating tests GetPlayerRating
-// Note: Requires real database connection
-func TestRepository_GetPlayerRating(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
-
-// TestRepository_GetPlayerRatings tests GetPlayerRatings
-// Note: Requires real database connection
-func TestRepository_GetPlayerRatings(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
-
-// TestRepository_GetLeaderboard tests GetLeaderboard
-// Note: Requires real database connection
-func TestRepository_GetLeaderboard(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
-
-// TestRepository_BatchInsertQueueEntries tests BatchInsertQueueEntries
-// Note: Requires real database connection
-func TestRepository_BatchInsertQueueEntries(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
-
-// TestRepository_Close tests Close method
-// Note: Requires real database connection
-func TestRepository_Close(t *testing.T) {
-	t.Skip("Requires database connection. Use testcontainers for integration tests.")
-}
-
-// TestQueueEntry_Structure tests QueueEntry structure
-func TestQueueEntry_Structure(t *testing.T) {
 	entry := &QueueEntry{
 		ID:           uuid.New(),
 		PlayerID:     uuid.New(),
 		ActivityType: "pvp_5v5",
 		Rating:       1500,
 		Status:       "waiting",
-		EnteredAt:    time.Now(),
+		EnteredAt:    time.Now().UTC(),
 	}
 
-	assert.NotEqual(t, uuid.Nil, entry.ID)
-	assert.NotEqual(t, uuid.Nil, entry.PlayerID)
-	assert.NotEmpty(t, entry.ActivityType)
-	assert.Greater(t, entry.Rating, 0)
-	assert.NotEmpty(t, entry.Status)
-	assert.False(t, entry.EnteredAt.IsZero())
+	err := repo.InsertQueueEntry(ctx, entry)
+	require.NoError(t, err)
+
+	stored, err := repo.GetQueueEntry(ctx, entry.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, entry.ID, stored.ID)
+	assert.Equal(t, entry.PlayerID, stored.PlayerID)
+	assert.Equal(t, entry.ActivityType, stored.ActivityType)
+	assert.Equal(t, entry.Status, stored.Status)
+
+	err = repo.UpdateQueueStatus(ctx, entry.ID, "matched")
+	require.NoError(t, err)
+
+	updated, err := repo.GetQueueEntry(ctx, entry.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "matched", updated.Status)
 }
 
-// TestPlayerRating_Structure tests PlayerRating structure
-func TestPlayerRating_Structure(t *testing.T) {
-	rating := &PlayerRating{
-		PlayerID:      uuid.New(),
-		ActivityType:  "pvp_5v5",
-		CurrentRating: 1500,
-		PeakRating:    1600,
-		Wins:          10,
-		Losses:        5,
-		Draws:         2,
-		CurrentStreak: 3,
-		Tier:          "gold",
-		League:        1,
+func TestRepository_GetPlayerRating_DefaultAndExisting(t *testing.T) {
+	repo, cleanup := newTestRepository(t)
+	defer cleanup()
+
+	truncateMatchmakingTables(t, repo.db)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	playerID := uuid.New()
+
+	rating, err := repo.GetPlayerRating(ctx, playerID, "pvp_5v5")
+	require.NoError(t, err)
+	assert.Equal(t, 1500, rating)
+
+	_, err = repo.db.ExecContext(ctx, `
+		INSERT INTO player_ratings (player_id, activity_type, current_rating, peak_rating, wins, losses, draws, current_streak, tier, league, season_id)
+		VALUES ($1, $2, 1800, 1900, 10, 2, 0, 5, 'diamond', 2, 'current')
+	`, playerID, "pvp_5v5")
+	require.NoError(t, err)
+
+	rating, err = repo.GetPlayerRating(ctx, playerID, "pvp_5v5")
+	require.NoError(t, err)
+	assert.Equal(t, 1800, rating)
+}
+
+func TestRepository_GetPlayerRatingsAndLeaderboard(t *testing.T) {
+	repo, cleanup := newTestRepository(t)
+	defer cleanup()
+
+	truncateMatchmakingTables(t, repo.db)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	playerA := uuid.New()
+	playerB := uuid.New()
+
+	_, err := repo.db.ExecContext(ctx, `
+		INSERT INTO players (id, username) VALUES ($1, 'Alpha'), ($2, 'Bravo');
+	`, playerA, playerB)
+	require.NoError(t, err)
+
+	_, err = repo.db.ExecContext(ctx, `
+		INSERT INTO player_ratings (player_id, activity_type, current_rating, peak_rating, wins, losses, draws, current_streak, tier, league, season_id)
+		VALUES 
+			($1, 'pvp_5v5', 2000, 2100, 20, 5, 0, 4, 'diamond', 3, 'current'),
+			($2, 'pvp_5v5', 1700, 1750, 12, 8, 1, 2, 'gold', 2, 'current');
+	`, playerA, playerB)
+	require.NoError(t, err)
+
+	ratings, err := repo.GetPlayerRatings(ctx, playerA)
+	require.NoError(t, err)
+	require.Len(t, ratings, 1)
+	assert.Equal(t, 2000, ratings[0].CurrentRating)
+	assert.Equal(t, "pvp_5v5", ratings[0].ActivityType)
+
+	leaderboard, err := repo.GetLeaderboard(ctx, "pvp_5v5", "current", 10)
+	require.NoError(t, err)
+	require.Len(t, leaderboard, 2)
+	assert.Equal(t, playerA, leaderboard[0].PlayerID)
+	assert.Equal(t, "Alpha", leaderboard[0].PlayerName)
+	assert.Equal(t, 2000, leaderboard[0].Rating)
+	assert.Equal(t, playerB, leaderboard[1].PlayerID)
+}
+
+func TestRepository_BatchInsertQueueEntries(t *testing.T) {
+	repo, cleanup := newTestRepository(t)
+	defer cleanup()
+
+	truncateMatchmakingTables(t, repo.db)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	now := time.Now().UTC()
+	entries := []*QueueEntry{
+		{
+			ID:           uuid.New(),
+			PlayerID:     uuid.New(),
+			ActivityType: "pvp_5v5",
+			Rating:       1500,
+			Status:       "waiting",
+			EnteredAt:    now,
+		},
+		{
+			ID:           uuid.New(),
+			PlayerID:     uuid.New(),
+			ActivityType: "pvp_5v5",
+			Rating:       1520,
+			Status:       "waiting",
+			EnteredAt:    now.Add(time.Second),
+		},
 	}
 
-	assert.NotEqual(t, uuid.Nil, rating.PlayerID)
-	assert.NotEmpty(t, rating.ActivityType)
-	assert.Greater(t, rating.CurrentRating, 0)
-	assert.GreaterOrEqual(t, rating.PeakRating, rating.CurrentRating)
+	err := repo.BatchInsertQueueEntries(ctx, entries)
+	require.NoError(t, err)
+
+	var count int
+	err = repo.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM matchmaking_queues`).Scan(&count)
+	require.NoError(t, err)
+	assert.Equal(t, 2, count)
 }
-
-// TestLeaderboardEntry_Structure tests LeaderboardEntry structure
-func TestLeaderboardEntry_Structure(t *testing.T) {
-	entry := &LeaderboardEntry{
-		Rank:       1,
-		PlayerID:   uuid.New(),
-		PlayerName: "Player1",
-		Rating:     2500,
-		Tier:       "grandmaster",
-		Wins:       100,
-		Losses:     20,
-	}
-
-	assert.Greater(t, entry.Rank, 0)
-	assert.NotEqual(t, uuid.Nil, entry.PlayerID)
-	assert.NotEmpty(t, entry.PlayerName)
-	assert.Greater(t, entry.Rating, 0)
-}
-

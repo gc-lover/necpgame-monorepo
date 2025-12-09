@@ -1,75 +1,165 @@
-// Issue: #234 - Unit tests for matchmaking-go service layer
-// Note: Service uses *Repository and *CacheManager (not interfaces)
-// For full testing, use testcontainers for integration tests
 package server
 
 import (
+	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
-// TestService_NewService tests NewService creation
-func TestService_NewService(t *testing.T) {
-	// This test requires real Repository and CacheManager
-	// For unit tests, we skip it
-	t.Skip("Requires real Repository and CacheManager. Use integration tests with testcontainers.")
-}
+func TestService_EnterQueue_PersistsAndCaches(t *testing.T) {
+	repo, repoCleanup := newTestRepository(t)
+	defer repoCleanup()
+	cache, cacheCleanup := newTestCache(t)
+	defer cacheCleanup()
+	truncateMatchmakingTables(t, repo.db)
 
-// TestService_EnterQueue_Validation tests EnterQueue input validation
-func TestService_EnterQueue_Validation(t *testing.T) {
+	service := NewService(repo, cache)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	playerID := uuid.New()
 	req := &api.EnterQueueRequest{
 		ActivityType: api.EnterQueueRequestActivityTypePvp5v5,
-		PreferredRoles: []api.EnterQueueRequestPreferredRolesItem{
-			api.EnterQueueRequestPreferredRolesItemDps,
-		},
 	}
 
-	assert.NotNil(t, req)
-	assert.Equal(t, api.EnterQueueRequestActivityTypePvp5v5, req.ActivityType)
-	assert.Len(t, req.PreferredRoles, 1)
+	resp, err := service.EnterQueue(ctx, playerID, req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.NotEqual(t, uuid.Nil, resp.QueueId)
+
+	entry, err := repo.GetQueueEntry(ctx, resp.QueueId)
+	require.NoError(t, err)
+	assert.Equal(t, "waiting", entry.Status)
+	assert.Equal(t, playerID, entry.PlayerID)
+
+	inQueue, err := cache.IsPlayerInQueue(ctx, playerID)
+	require.NoError(t, err)
+	assert.True(t, inQueue)
 }
 
-// TestService_GetQueueStatus_Validation tests GetQueueStatus input validation
-func TestService_GetQueueStatus_Validation(t *testing.T) {
+func TestService_GetQueueStatus_CacheAndDbFallback(t *testing.T) {
+	repo, repoCleanup := newTestRepository(t)
+	defer repoCleanup()
+	cache, cacheCleanup := newTestCache(t)
+	defer cacheCleanup()
+	truncateMatchmakingTables(t, repo.db)
+
+	service := NewService(repo, cache)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	queueID := uuid.New()
-	assert.NotEqual(t, uuid.Nil, queueID)
+	cached := &api.QueueStatusResponse{
+		QueueId:     queueID,
+		Status:      api.QueueStatusResponseStatusWaiting,
+		TimeInQueue: 5,
+		RatingRange: []int32{1400, 1600},
+	}
+	err := cache.CacheQueueStatus(ctx, queueID, cached, 30*time.Second)
+	require.NoError(t, err)
+
+	res, err := service.GetQueueStatus(ctx, queueID)
+	require.NoError(t, err)
+	assert.Equal(t, cached.QueueId, res.QueueId)
+	assert.Equal(t, cached.Status, res.Status)
+
+	// Cache miss -> fallback to DB
+	_, err = cache.client.Del(ctx, fmt.Sprintf("queue:status:%s", queueID)).Result()
+	require.NoError(t, err)
+
+	entry := &QueueEntry{
+		ID:           queueID,
+		PlayerID:     uuid.New(),
+		ActivityType: "pvp_5v5",
+		Rating:       1550,
+		Status:       "waiting",
+		EnteredAt:    time.Now().Add(-15 * time.Second).UTC(),
+	}
+	err = repo.InsertQueueEntry(ctx, entry)
+	require.NoError(t, err)
+
+	res, err = service.GetQueueStatus(ctx, queueID)
+	require.NoError(t, err)
+	assert.Equal(t, queueID, res.QueueId)
+	assert.Equal(t, api.QueueStatusResponseStatus("waiting"), res.Status)
+	assert.True(t, res.TimeInQueue >= 0)
 }
 
-// TestService_LeaveQueue_Validation tests LeaveQueue input validation
-func TestService_LeaveQueue_Validation(t *testing.T) {
-	queueID := uuid.New()
-	assert.NotEqual(t, uuid.Nil, queueID)
+func TestService_LeaveQueue_RemovesFromMatcher(t *testing.T) {
+	repo, repoCleanup := newTestRepository(t)
+	defer repoCleanup()
+	cache, cacheCleanup := newTestCache(t)
+	defer cacheCleanup()
+	truncateMatchmakingTables(t, repo.db)
+
+	service := NewService(repo, cache)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	entry := &QueueEntry{
+		ID:           uuid.New(),
+		PlayerID:     uuid.New(),
+		ActivityType: "pvp_5v5",
+		Rating:       1520,
+		Status:       "waiting",
+		EnteredAt:    time.Now().Add(-20 * time.Second).UTC(),
+	}
+	require.NoError(t, repo.InsertQueueEntry(ctx, entry))
+	service.matcher.AddToQueue(entry)
+
+	resp, err := service.LeaveQueue(ctx, entry.ID)
+	require.NoError(t, err)
+	assert.Equal(t, api.LeaveQueueResponseStatusCancelled, resp.Status)
+
+	updated, err := repo.GetQueueEntry(ctx, entry.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "cancelled", updated.Status)
+
+	size := service.matcher.GetQueueSize(entry.ActivityType, entry.Rating)
+	assert.Equal(t, 0, size)
 }
 
-// TestService_GetPlayerRating_Validation tests GetPlayerRating input validation
-func TestService_GetPlayerRating_Validation(t *testing.T) {
+func TestService_GetPlayerRating_ReturnsData(t *testing.T) {
+	repo, repoCleanup := newTestRepository(t)
+	defer repoCleanup()
+	cache, cacheCleanup := newTestCache(t)
+	defer cacheCleanup()
+	truncateMatchmakingTables(t, repo.db)
+
+	service := NewService(repo, cache)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	playerID := uuid.New()
-	assert.NotEqual(t, uuid.Nil, playerID)
+	_, err := repo.db.ExecContext(ctx, `
+		INSERT INTO player_ratings (player_id, activity_type, current_rating, peak_rating, wins, losses, draws, current_streak, tier, league, season_id)
+		VALUES ($1, 'pvp_5v5', 1750, 1800, 15, 3, 0, 4, 'platinum', 2, 'current')
+	`, playerID)
+	require.NoError(t, err)
+
+	res, err := service.GetPlayerRating(ctx, playerID)
+	require.NoError(t, err)
+	require.Len(t, res.Ratings, 1)
+	assert.Equal(t, int32(1750), res.Ratings[0].CurrentRating)
+	assert.Equal(t, "pvp_5v5", res.Ratings[0].ActivityType)
 }
 
-// TestService_GetLeaderboard_Validation tests GetLeaderboard input validation
-func TestService_GetLeaderboard_Validation(t *testing.T) {
-	params := api.GetLeaderboardParams{
-		ActivityType: api.GetLeaderboardActivityTypePvp5v5,
-		Limit:        api.NewOptInt(10),
-	}
-
-	assert.Equal(t, api.GetLeaderboardActivityTypePvp5v5, params.ActivityType)
-	assert.True(t, params.Limit.IsSet())
-	assert.Equal(t, 10, params.Limit.Value)
-}
-
-// TestCalculateWaitTime tests calculateWaitTime function
 func TestCalculateWaitTime(t *testing.T) {
 	tests := []struct {
-		name     string
+		name      string
 		queueSize int
-		expected int
+		expected  int
 	}{
 		{"small queue", 5, 30},
 		{"medium queue", 25, 60},
@@ -84,65 +174,3 @@ func TestCalculateWaitTime(t *testing.T) {
 		})
 	}
 }
-
-// TestQueueEntry_Validation tests QueueEntry structure validation
-func TestQueueEntry_Validation(t *testing.T) {
-	entry := &QueueEntry{
-		ID:           uuid.New(),
-		PlayerID:     uuid.New(),
-		ActivityType: "pvp_5v5",
-		Rating:       1500,
-		Status:       "waiting",
-		EnteredAt:    time.Now(),
-	}
-
-	assert.NotEqual(t, uuid.Nil, entry.ID)
-	assert.NotEqual(t, uuid.Nil, entry.PlayerID)
-	assert.NotEmpty(t, entry.ActivityType)
-	assert.Greater(t, entry.Rating, 0)
-	assert.NotEmpty(t, entry.Status)
-	assert.False(t, entry.EnteredAt.IsZero())
-}
-
-// TestPlayerRating_Validation tests PlayerRating structure validation
-func TestPlayerRating_Validation(t *testing.T) {
-	rating := &PlayerRating{
-		PlayerID:      uuid.New(),
-		ActivityType:  "pvp_5v5",
-		CurrentRating: 1500,
-		PeakRating:    1600,
-		Wins:          10,
-		Losses:        5,
-		Draws:         2,
-		CurrentStreak: 3,
-		Tier:          "gold",
-		League:        1,
-	}
-
-	assert.NotEqual(t, uuid.Nil, rating.PlayerID)
-	assert.NotEmpty(t, rating.ActivityType)
-	assert.Greater(t, rating.CurrentRating, 0)
-	assert.GreaterOrEqual(t, rating.PeakRating, rating.CurrentRating)
-	assert.GreaterOrEqual(t, rating.Wins, 0)
-	assert.GreaterOrEqual(t, rating.Losses, 0)
-}
-
-// TestLeaderboardEntry_Validation tests LeaderboardEntry structure validation
-func TestLeaderboardEntry_Validation(t *testing.T) {
-	entry := &LeaderboardEntry{
-		Rank:       1,
-		PlayerID:   uuid.New(),
-		PlayerName: "Player1",
-		Rating:     2500,
-		Tier:       "grandmaster",
-		Wins:       100,
-		Losses:     20,
-	}
-
-	assert.Greater(t, entry.Rank, 0)
-	assert.NotEqual(t, uuid.Nil, entry.PlayerID)
-	assert.NotEmpty(t, entry.PlayerName)
-	assert.Greater(t, entry.Rating, 0)
-	assert.NotEmpty(t, entry.Tier)
-}
-

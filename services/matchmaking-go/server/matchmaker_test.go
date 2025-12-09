@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,22 +13,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newRedisAddr(t *testing.T) (string, func()) {
+	t.Helper()
+
+	container, addr := startRedisContainer(t)
+	cleanup := func() {
+		_ = container.Terminate(context.Background())
+	}
+	return addr, cleanup
+}
+
 func setupTestMatchmaker(t *testing.T) (*Matchmaker, *redis.Client, func()) {
-	config := NewMatchmakerConfig("redis://localhost:6379", "pve8", 8)
+	addr, redisCleanup := newRedisAddr(t)
+	config := NewMatchmakerConfig(fmt.Sprintf("redis://%s/0", addr), "pve8", 8)
 	matchmaker := NewMatchmaker(config)
-	
+
 	testClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: addr,
 		DB:   1,
 	})
 
 	ctx := context.Background()
-	testClient.FlushDB(ctx)
+	require.NoError(t, testClient.FlushDB(ctx).Err())
 
 	cleanup := func() {
-		testClient.FlushDB(ctx)
-		testClient.Close()
-		matchmaker.Close()
+		_ = testClient.FlushDB(ctx).Err()
+		_ = testClient.Close()
+		_ = matchmaker.Close()
+		redisCleanup()
 	}
 
 	matchmaker.client = testClient
@@ -36,7 +49,10 @@ func setupTestMatchmaker(t *testing.T) (*Matchmaker, *redis.Client, func()) {
 }
 
 func TestNewMatchmaker(t *testing.T) {
-	config := NewMatchmakerConfig("redis://localhost:6379", "pve8", 8)
+	addr, cleanup := newRedisAddr(t)
+	defer cleanup()
+
+	config := NewMatchmakerConfig(fmt.Sprintf("redis://%s/0", addr), "pve8", 8)
 	matchmaker := NewMatchmaker(config)
 	defer matchmaker.Close()
 
@@ -83,7 +99,7 @@ func TestPopTickets_MultipleTickets(t *testing.T) {
 
 	ctx := context.Background()
 	queueKey := redisKeys.queue("pve8")
-	
+
 	var expectedTickets []string
 	for i := 0; i < 5; i++ {
 		ticketID := uuid.New().String()
@@ -105,7 +121,7 @@ func TestPopTickets_PartialCount(t *testing.T) {
 
 	ctx := context.Background()
 	queueKey := redisKeys.queue("pve8")
-	
+
 	for i := 0; i < 3; i++ {
 		client.RPush(ctx, queueKey, uuid.New().String())
 	}
@@ -120,7 +136,7 @@ func TestAllocate_MatchCreated(t *testing.T) {
 
 	ctx := context.Background()
 	allocationsKey := redisKeys.allocations()
-	
+
 	tickets := []string{
 		uuid.New().String(),
 		uuid.New().String(),
@@ -248,15 +264,18 @@ func TestLoopOnce_MoreThanTeamSize(t *testing.T) {
 func TestRedisKeys(t *testing.T) {
 	assert.Equal(t, "mm:queue:pve8", redisKeys.queue("pve8"))
 	assert.Equal(t, "mm:queue:pvp4", redisKeys.queue("pvp4"))
-	
+
 	ticketID := uuid.New().String()
 	assert.Equal(t, "mm:ticket:"+ticketID, redisKeys.ticket(ticketID))
-	
+
 	assert.Equal(t, "mm:allocations", redisKeys.allocations())
 }
 
 func TestMatchmaker_Close(t *testing.T) {
-	config := NewMatchmakerConfig("redis://localhost:6379", "pve8", 8)
+	addr, cleanup := newRedisAddr(t)
+	defer cleanup()
+
+	config := NewMatchmakerConfig(fmt.Sprintf("redis://%s/0", addr), "pve8", 8)
 	matchmaker := NewMatchmaker(config)
 
 	err := matchmaker.Close()
@@ -299,7 +318,7 @@ func TestPopTickets_CountZero(t *testing.T) {
 
 	ctx := context.Background()
 	queueKey := redisKeys.queue("pve8")
-	
+
 	client.RPush(ctx, queueKey, uuid.New().String())
 
 	tickets := matchmaker.popTickets(ctx, 0)
@@ -315,7 +334,7 @@ func TestPopTickets_CountNegative(t *testing.T) {
 
 	ctx := context.Background()
 	queueKey := redisKeys.queue("pve8")
-	
+
 	client.RPush(ctx, queueKey, uuid.New().String())
 
 	tickets := matchmaker.popTickets(ctx, -1)
@@ -346,9 +365,9 @@ func TestLoopOnce_MultipleIterations(t *testing.T) {
 }
 
 func TestNewMatchmakerConfig(t *testing.T) {
-	config := NewMatchmakerConfig("redis://localhost:6379", "pvp4", 4)
-	
-	assert.Equal(t, "redis://localhost:6379", config.RedisUrl)
+	config := NewMatchmakerConfig("redis://localhost:6379/0", "pvp4", 4)
+
+	assert.Equal(t, "redis://localhost:6379/0", config.RedisUrl)
 	assert.Equal(t, "pvp4", config.Mode)
 	assert.Equal(t, 4, config.TeamSize)
 }
@@ -372,7 +391,7 @@ func TestAllocate_DifferentModes(t *testing.T) {
 
 			ctx := context.Background()
 			allocationsKey := redisKeys.allocations()
-			
+
 			tickets := make([]string, cfg.teamSize)
 			for i := 0; i < cfg.teamSize; i++ {
 				tickets[i] = uuid.New().String()
@@ -386,4 +405,3 @@ func TestAllocate_DifferentModes(t *testing.T) {
 		})
 	}
 }
-
