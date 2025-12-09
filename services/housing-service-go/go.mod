@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/housing-service-go
+module github.com/necpgame/housing-service-go
 
 go 1.24.0
 
@@ -49,4 +49,3 @@ require (
 
 	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
 	)
-
