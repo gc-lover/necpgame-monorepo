@@ -15,7 +15,7 @@ Workflow для массового импорта квестов при перв
 **Content Writer:**
 - Создает/обновляет квесты в YAML
 - Валидирует YAML: `/content-writer-validate-quest-yaml #123`
-- Передает в `Backend - Todo` с labels `canon`, `lore`, `quest`
+- Передает: Status `Todo`, Agent `Backend` (labels `canon`, `lore`, `quest`)
 
 **Комментарий:**
 ```markdown
@@ -29,7 +29,7 @@ Issue: #{number}
 **Backend:**
 - Запускает генератор: `scripts/generate-content-migrations.sh` (или `.ps1`)
 - Проверяет сгенерированную миграцию
-- Передает в `Database - Todo`
+- Передает: Status `Todo`, Agent `DB`
 
 **Комментарий:**
 ```markdown
@@ -43,7 +43,7 @@ Issue: #{number}
 **Database:**
 - Применяет миграцию: `liquibase update` или прямой SQL
 - Проверяет импорт: `SELECT COUNT(*) FROM gameplay.quest_definitions;`
-- Передает в `QA - Todo`
+- Передает: Status `Todo`, Agent `QA`
 
 **Комментарий:**
 ```markdown
@@ -57,7 +57,7 @@ Issue: #{number}
 **QA:**
 - Тестирует импортированные квесты
 - Проверяет доступность через API
-- Передает в `Release - Todo` или закрывает Issue
+- Передает: Status `Todo`, Agent `Release` или закрывает Issue
 
 ## Альтернатива: API Batch Import
 
@@ -65,7 +65,7 @@ Issue: #{number}
 
 1. **Backend** реализует batch endpoint: `POST /api/v1/gameplay/quests/content/batch-reload`
 2. **Backend** использует: `scripts/import-quests-batch.sh` (если есть)
-3. Прямо в `QA - Todo`
+3. Передает: Status `Todo`, Agent `QA`
 
 ## Связанные команды
 

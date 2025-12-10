@@ -13,7 +13,7 @@
 - Отсутствует лор/контекст (для game-design задач)
 
 **Если проблема:**
-- Update Status to `Idea Writer - Returned`
+- Update: Status `Returned`, Agent `Idea`
 
 ### 2. Это не системная задача
 
@@ -22,7 +22,7 @@
 - `canon`, `lore`, `quest` → это контент-квест напрямую
 
 **Если проблема:**
-- Update Status to `UI/UX - Todo` или `Content Writer - Todo`
+- Update: Status `Todo`, Agent `UI/UX` или `Content`
 
 ### 3. Задача уже реализована
 
@@ -46,10 +46,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'ec26fd29'  // STATUS_OPTIONS['Idea Writer - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '8c3f5f11' }, // Agent: Idea
+  ]
 });
 
 // 2. Добавить комментарий с причиной
@@ -68,7 +68,7 @@ mcp_github_add_issue_comment({
         '- Clear requirements and acceptance criteria\n' +
         '- Game mechanics description (for game features)\n\n' +
         '**Correct agent:** Idea Writer\n\n' +
-        '**Status updated:** `Idea Writer - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: Idea)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -82,10 +82,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '49689997'  // STATUS_OPTIONS['UI/UX - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '98c65039' }, // Agent: UI/UX
+  ]
 });
 
 // 2. Добавить комментарий
@@ -98,7 +98,7 @@ mcp_github_add_issue_comment({
         '- This is UI/UX task (labels: ui, ux, client)\n' +
         '- No architecture needed, only UI design\n\n' +
         '**Correct agent:** UI/UX Designer\n\n' +
-        '**Status updated:** `UI/UX - Todo`\n\n' +
+        '**Status updated:** Todo (Agent: UI/UX)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -112,10 +112,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'c62b60d3'  // STATUS_OPTIONS['Content Writer - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: 'd3cae8d8' }, // Agent: Content
+  ]
 });
 
 // 2. Добавить комментарий
@@ -129,7 +129,7 @@ mcp_github_add_issue_comment({
         '- Quest system architecture already exists\n' +
         '- Content Writer will create YAML quest file\n\n' +
         '**Correct agent:** Content Writer\n\n' +
-        '**Status updated:** `Content Writer - Todo`\n\n' +
+        '**Status updated:** Todo (Agent: Content)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -138,12 +138,15 @@ mcp_github_add_issue_comment({
 
 ```javascript
 const STATUS_IDS = {
-  // Возврат
-  'Idea Writer - Returned': 'ec26fd29',
-  
-  // Переадресация
-  'UI/UX - Todo': '49689997',
-  'Content Writer - Todo': 'c62b60d3'
+  Status: {
+    Todo: 'f75ad846',
+    Returned: 'c01c12e9',
+  },
+  Agent: {
+    Idea: '8c3f5f11',
+    'UI/UX': '98c65039',
+    Content: 'd3cae8d8',
+  }
 };
 ```
 

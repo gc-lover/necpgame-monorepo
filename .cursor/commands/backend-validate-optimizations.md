@@ -125,7 +125,7 @@ OK **Optimization validation passed**
 **Service type:** Game Server
 **Optimization level:** 3 (Game Servers)
 
-Ready for handoff to Network Engineer.
+Готово к передаче (Status `Todo`, Agent `Network` или `QA` для контент-квестов).
 ```
 
 **Если проблемы:**
@@ -150,7 +150,7 @@ WARNING **Optimization validation FAILED**
 - Ring buffer for event processing
 
 **Action:** Fix BLOCKER issues before handoff.
-**Status:** Keep `Backend - In Progress`
+**Status:** Keep Status `In Progress`, Agent `Backend`
 ```
 
 ## Чек-лист по типам сервисов
@@ -213,8 +213,11 @@ echo "OK Validation complete"
 
 1. Запусти `/backend-validate-optimizations #123`
 2. Получи отчет
-3. Если BLOCKER → исправь и повтори
-4. Если OK → передавай задачу с отчетом в комментарии
+3. Если BLOCKER → исправь и повтори (оставь Status `In Progress`, Agent `Backend`)
+4. Если OK → передай:
+   - Системная задача → Status `Todo`, Agent `Network`
+   - Контент-квест → Status `Todo`, Agent `QA`
+   - Остальное → Status `Todo`, Agent по workflow
 
 ## См. также
 

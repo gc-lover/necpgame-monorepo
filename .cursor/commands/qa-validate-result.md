@@ -70,10 +70,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'd48c0835'  // STATUS_OPTIONS['Game Balance - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '12e8fb71' }, // Agent: GameBalance
+  ]
 });
 
 mcp_github_add_issue_comment({
@@ -100,10 +100,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'ef037f05'  // STATUS_OPTIONS['Release - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: 'f5878f68' }, // Agent: Release
+  ]
 });
 
 mcp_github_add_issue_comment({
@@ -136,10 +136,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '40f37190'  // STATUS_OPTIONS['Backend - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '1fc13998' }, // Agent: Backend
+  ]
 });
 
 mcp_github_add_issue_comment({
@@ -157,7 +157,7 @@ mcp_github_add_issue_comment({
         '- Functional tests: 80% passed, 20% failed\n' +
         '- Integration tests: FAILED\n\n' +
         '**Correct agent:** Backend Developer\n\n' +
-        '**Status updated:** `Backend - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: Backend)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -170,10 +170,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '855f4872'  // STATUS_OPTIONS['UE5 - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '56920475' }, // Agent: UE5
+  ]
 });
 
 mcp_github_add_issue_comment({
@@ -188,25 +188,15 @@ mcp_github_add_issue_comment({
         '- Backend API: works OK\n' +
         '- Client integration: FAILED ❌\n\n' +
         '**Correct agent:** UE5 Developer\n\n' +
-        '**Status updated:** `UE5 - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: UE5)\n\n' +
         'Issue: #' + issue_number
 });
 ```
 
-## 📊 ID статусов
+## 📊 ID (Status/Agent)
 
-```javascript
-const STATUS_IDS = {
-  // Передача дальше
-  'Game Balance - Todo': 'd48c0835',
-  'Release - Todo': 'ef037f05',
-  
-  // Возврат
-  'Backend - Returned': '40f37190',
-  'UE5 - Returned': '855f4872',
-  'API Designer - Returned': 'd0352ed3'
-};
-```
+- Status: Todo `f75ad846`, In Progress `83d488e7`, Review `55060662`, Blocked `af634d5b`, Returned `c01c12e9`, Done `98236657`
+- Agent: Backend `1fc13998`, UE5 `56920475`, GameBalance `12e8fb71`, Release `f5878f68`, QA `3352c488`, API `6aa5d9af`, DB `1e745162`, Network `c60ebab1`, Security `12586c50`, DevOps `7e67a39b`, UI/UX `98c65039`, Content `d3cae8d8`, Idea `8c3f5f11`, Architect `d109c7f9`, Performance `d16ede50`
 
 ## 🐛 Создание Bug Issues
 

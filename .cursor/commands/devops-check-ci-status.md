@@ -52,9 +52,9 @@ CI отчёты автоматически создаются workflow `ci-monit
 
 ## Интеграция с Project
 
-Все CI отчёты автоматически добавляются в GitHub Project со статусом:
+Все CI отчёты автоматически добавляются в GitHub Project с полями:
 
-- "DevOps - Todo" (если существует)
-- "Backend - Todo" (fallback)
+- Status: `Todo`
+- Agent: `DevOps` (если нет — `Backend` как fallback)
 
 Агенты могут просматривать эти Issues в Project для мониторинга CI/CD статусов.

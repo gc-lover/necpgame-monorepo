@@ -1,14 +1,14 @@
 # 🎯 Простое руководство для агентов
 
-## 📋 Что такое Status?
+## 📋 Что такое Status и Agent?
 
-**Status показывает КТО должен работать с задачей прямо сейчас**
+- **Status** — стадия задачи: `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`.
+- **Agent** — кто отвечает сейчас: `Idea`, `Content`, `Backend`, `Architect`, `API`, `DB`, `QA`, `Performance`, `Security`, `Network`, `DevOps`, `UI/UX`, `UE5`, `GameBalance`, `Release`.
 
-```
-"Backend - Todo" = Задача ДЛЯ Backend агента (он должен взять)
-"Backend - In Progress" = Backend работает
-"QA - Todo" = Задача передана QA (Backend закончил)
-```
+Примеры:
+- `Status: Todo + Agent: Backend` → Backend должен взять.
+- `Status: In Progress + Agent: Backend` → Backend работает.
+- `Status: Todo + Agent: QA` → задача передана QA.
 
 ---
 
@@ -21,7 +21,7 @@ mcp_github_list_project_items({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
-  query: 'Status:"{МойАгент} - Todo"'  // Например: "Backend - Todo"
+  query: 'Agent:"{МойАгент}" Status:"Todo"'  // Например: Agent:"Backend"
 });
 ```
 
@@ -34,10 +34,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,  // из list_project_items
-  updated_field: {
-    id: 239690516,  // STATUS_FIELD_ID
-    value: '{id_опции}'  // из GITHUB_PROJECT_CONFIG.md
-  }
+  updated_field: [
+    { id: 239690516, value: '83d488e7' }, // Status: In Progress
+    { id: 243899542, value: '{id_моего_агента}' } // Agent: из GITHUB_PROJECT_CONFIG.md
+  ]
 });
 ```
 
@@ -50,16 +50,16 @@ mcp_github_update_project_item({
 ### 4️⃣ ЗАКОНЧИТЬ = Передать следующему
 
 ```javascript
-// Меняй In Progress → {СледующийАгент} - Todo
+// Меняй In Progress → Status: Todo + Agent: {СледующийАгент}
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '{id_следующего_агента}'  // из GITHUB_PROJECT_CONFIG.md
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '{id_следующего_агента}' } // Agent: next
+  ]
 });
 
 // ОБЯЗАТЕЛЬНО добавь комментарий
@@ -76,15 +76,16 @@ mcp_github_add_issue_comment({
 ## 🗺️ Карта передачи задач
 
 ```
-Системные задачи:
-Todo → Idea Writer → Architect → Database → API Designer → 
-Backend → Network → Security → DevOps → UE5 → QA → Release → Done
+Системные задачи (Agent поле):
+Idea → Architect → DB → API → Backend → Network → Security → DevOps → UE5 → QA → Release
 
-Контент-квесты (canon/lore/quest):
-Todo → Idea Writer → Content Writer → Backend (импорт) → QA → Release → Done
+Контент-квесты (Agent поле):
+Idea → Content → Backend (импорт) → QA → Release
 
-UI задачи:
-Todo → Idea Writer → UI/UX Designer → UE5 → QA → Release → Done
+UI задачи (Agent поле):
+Idea → UI/UX → UE5 → QA → Release
+
+Status всегда: Todo → In Progress → Review/Returned/Blocked → Todo (следующий агент) → Done
 ```
 
 ---
@@ -98,6 +99,7 @@ Todo → Idea Writer → UI/UX Designer → UE5 → QA → Release → Done
 - owner: `'gc-lover'`
 - project_number: `1`
 - status_field_id: `239690516`
+- agent_field_id: `243899542`
 
 **Для Backend Developer:**
 - Code gen: `ogen` (typed handlers, 90% faster)
@@ -110,9 +112,10 @@ Todo → Idea Writer → UI/UX Designer → UE5 → QA → Release → Done
 
 ### OK ДЕЛАЙ:
 1. **СРАЗУ** обновляй статус при взятии задачи (Todo → In Progress)
-2. **ВСЕГДА** добавляй комментарий при передаче задачи
-3. **ИСПОЛЬЗУЙ** константы из GITHUB_PROJECT_CONFIG.md
-4. **ПИШИ** номер Issue (#123) в комментариях, НЕ item_id
+2. **ВСЕГДА** обновляй Agent при передаче (назначай следующего)
+3. **ВСЕГДА** добавляй комментарий при передаче задачи
+4. **ИСПОЛЬЗУЙ** константы из GITHUB_PROJECT_CONFIG.md
+5. **ПИШИ** номер Issue (#123) в комментариях, НЕ item_id
 
 ### ❌ НЕ ДЕЛАЙ:
 1. Не работай без обновления статуса

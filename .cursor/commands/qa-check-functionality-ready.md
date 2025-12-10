@@ -4,7 +4,7 @@ Check if functionality is ready for QA.
 
 ## Check
 
-- [ ] Status is `QA - Todo` or `QA - In Progress`
+- [ ] Agent = `QA`, Status = `Todo` или `In Progress`
 - [ ] Backend ready (from Backend Developer)
 - [ ] Client ready (from UE5 Developer, if applicable)
 - [ ] NOT content quest (YAML) - if labels `canon`, `lore`, `quest` → return to Content Writer
@@ -12,28 +12,28 @@ Check if functionality is ready for QA.
 ## Return To
 
 **Content quest (YAML):**
-- ❌ Return to Content Writer, Update Status to `Content Writer - Returned`
+- ❌ Return to Content: Status `Returned`, Agent `Content`
 
 **Backend bugs:**
-- ❌ Return to Backend, Update Status to `Backend - Returned`
+- ❌ Return to Backend: Status `Returned`, Agent `Backend`
 
 **Client bugs:**
-- ❌ Return to UE5, Update Status to `UE5 - Returned`
+- ❌ Return to UE5: Status `Returned`, Agent `UE5`
 
 **Result:**
 - OK Ready → can start QA
-- ❌ Not ready → return to determined agent, Update Status accordingly
+- ❌ Not ready → return to determined agent, update Status/Agent accordingly
 
-**Update Status (if returning):**
+**Update fields (if returning):**
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516  // число,
-    value: '{option_id}'  // id опции 'Content Writer - Returned' из list_project_fields  // или 'Backend - Returned' или 'UE5 - Returned'
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' },        // Status: Returned
+    { id: 243899542, value: '{agent_id}' },      // Agent: Content/Backend/UE5
+  ]
 });
 ```

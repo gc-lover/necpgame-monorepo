@@ -81,21 +81,19 @@ make verify-api
 
 ## OK Если всё готово
 
-**Системная задача:**
+**Системная задача → Network:**
 ```javascript
-// Update Status to Network - Todo
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '944246f3'  // STATUS_OPTIONS['Network - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: 'c60ebab1' }, // Agent: Network
+  ]
 });
 
-// Добавить комментарий
 mcp_github_add_issue_comment({
   owner: 'gc-lover',
   repo: 'necpgame-monorepo',
@@ -109,21 +107,19 @@ mcp_github_add_issue_comment({
 });
 ```
 
-**Контент-квест (labels `canon`, `lore`, `quest`):**
+**Контент-квест (labels `canon`, `lore`, `quest`) → QA:**
 ```javascript
-// Update Status to QA - Todo
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '86ca422e'  // STATUS_OPTIONS['QA - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '3352c488' }, // Agent: QA
+  ]
 });
 
-// Добавить комментарий
 mcp_github_add_issue_comment({
   owner: 'gc-lover',
   repo: 'necpgame-monorepo',
@@ -145,7 +141,7 @@ mcp_github_add_issue_comment({
 **Причина:** OpenAPI спецификация слишком большая и не разбита на модули
 
 **Действие:**
-1. Верни задачу API Designer: Update Status to `API Designer - Returned`
+1. Верни задачу API: Status `Returned`, Agent `API`
 2. Укажи проблему в комментарии:
 
 ```javascript
@@ -169,11 +165,11 @@ mcp_github_add_issue_comment({
 
 ### Для других проблем:
 
-Оставь статус `Backend - In Progress` и продолжи работу.
+Оставь Status `In Progress`, Agent `Backend` и продолжи работу.
 
 ## 🔄 Review (опционально)
 
-Можешь поставить статус на `Backend - Review` для финальной проверки:
+Можешь поставить Status `Review`, Agent `Backend` для финальной проверки:
 
 ```javascript
 mcp_github_update_project_item({
@@ -181,10 +177,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '8b8c3ffb'  // STATUS_OPTIONS['Backend - Review']
-  }
+  updated_field: [
+    { id: 239690516, value: '55060662' }, // Status: Review
+    { id: 243899542, value: '1fc13998' }, // Agent: Backend
+  ]
 });
 ```
 

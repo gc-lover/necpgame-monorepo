@@ -99,7 +99,7 @@ mcp_github_list_project_items({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
-  query: 'Status:"Backend - In Progress" OR Status:"Backend - Todo"'
+  query: 'Agent:"Backend" (Status:"In Progress" OR Status:"Todo")'
 });
 
 // Подсчет

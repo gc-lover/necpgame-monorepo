@@ -10,24 +10,24 @@ Check idea readiness and determine task type for handoff.
 
 ## Task Type (determine by labels or content)
 
-- System task → Architect, Update Status to `Architect - Todo`
-- UI/UX (labels `ui`, `ux`, `client`) → UI/UX Designer, Update Status to `UI/UX - Todo`
-- Content quest (labels `canon`, `lore`, `quest`) → Content Writer, Update Status to `Content Writer - Todo`
+- System task → Architect: Status `Todo`, Agent `Architect`
+- UI/UX (labels `ui`, `ux`, `client`) → UI/UX Designer: Status `Todo`, Agent `UI/UX`
+- Content quest (labels `canon`, `lore`, `quest`) → Content Writer: Status `Todo`, Agent `Content`
 
 **Result:**
-- OK Ready → handoff to determined agent, update Status
+- OK Ready → handoff to determined agent (set Status `Todo`, Agent as выше)
 - ❌ Not ready → fix issues, don't handoff
 
-**Update Status:**
+**Update fields:**
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516  // число,
-    value: '{option_id}'  // id опции 'Architect - Todo' из list_project_fields  // или 'UI/UX - Todo' или 'Content Writer - Todo'
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '{agent_id}' }, // Architect/UI/UX/Content
+  ]
 });
 ```

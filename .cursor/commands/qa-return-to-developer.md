@@ -12,8 +12,7 @@
 - Data flow нарушен
 - Аутентификация не работает
 
-**Если проблема:**
-- Update Status to `Backend - Returned`
+- **Если проблема:** Update fields → Status `Returned`, Agent `Backend`
 - Создать Bug Issues для каждой проблемы
 
 ### 2. Функционал не работает (Client)
@@ -24,8 +23,7 @@
 - Интеграция с API не работает
 - Игровая механика broken
 
-**Если проблема:**
-- Update Status to `UE5 - Returned`
+- **Если проблема:** Update fields → Status `Returned`, Agent `UE5`
 - Создать Bug Issues
 
 ### 3. Функционал не готов
@@ -35,8 +33,7 @@
 - Не все features из Issue
 - Acceptance criteria не выполнены
 
-**Если проблема:**
-- Update Status to `Backend - Returned` или `UE5 - Returned`
+- **Если проблема:** Update fields → Status `Returned`, Agent `Backend` или `UE5`
 
 ### 4. Это контентный квест (YAML)
 
@@ -44,8 +41,7 @@
 - Labels: `canon`, `lore`, `quest`
 - Только YAML файл, нет реализации
 
-**Если проблема:**
-- Update Status to `Content Writer - Returned`
+- **Если проблема:** Update fields → Status `Returned`, Agent `Content`
 - QA не тестирует YAML напрямую
 
 ### 5. OpenAPI проблемы
@@ -55,8 +51,7 @@
 - Endpoints отсутствуют
 - Request/Response не соответствуют схеме
 
-**Если проблема:**
-- Update Status to `API Designer - Returned`
+- **Если проблема:** Update fields → Status `Returned`, Agent `API`
 - Указать несоответствия
 
 ## WARNING Как вернуть задачу
@@ -86,16 +81,16 @@ const bug_issue = await mcp_github_issue_write({
   labels: ['bug', 'backend', 'priority-high']
 });
 
-// 2. Обновить статус
+// 2. Обновить поля
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '40f37190'  // STATUS_OPTIONS['Backend - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '1fc13998' }, // Agent: Backend
+  ]
 });
 
 // 3. Добавить комментарий
@@ -115,7 +110,7 @@ mcp_github_add_issue_comment({
         '- These bugs block the release\n' +
         '- Backend must fix before re-submission to QA\n\n' +
         '**Correct agent:** Backend Developer\n\n' +
-        '**Status updated:** `Backend - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: Backend)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -150,16 +145,16 @@ const bug_issue = await mcp_github_issue_write({
   labels: ['bug', 'client', 'ue5', 'priority-high']
 });
 
-// 2. Обновить статус
+// 2. Обновить поля
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '855f4872'  // STATUS_OPTIONS['UE5 - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '56920475' }, // Agent: UE5
+  ]
 });
 
 // 3. Добавить комментарий
@@ -179,7 +174,7 @@ mcp_github_add_issue_comment({
         '- Crashes prevent further testing\n' +
         '- UE5 must fix critical bugs\n\n' +
         '**Correct agent:** UE5 Developer\n\n' +
-        '**Status updated:** `UE5 - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: UE5)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -187,16 +182,16 @@ mcp_github_add_issue_comment({
 ### Шаблон возврата к Content Writer
 
 ```javascript
-// Обновить статус
+// Обновить поля
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'f4a7797e'  // STATUS_OPTIONS['Content Writer - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: 'd3cae8d8' }, // Agent: Content
+  ]
 });
 
 // Добавить комментарий
@@ -215,7 +210,7 @@ mcp_github_add_issue_comment({
         '- YAML not imported to DB yet\n' +
         '- Backend needs to import first\n\n' +
         '**Correct agent:** Content Writer (to complete YAML)\n\n' +
-        '**Status updated:** `Content Writer - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: Content)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -223,16 +218,16 @@ mcp_github_add_issue_comment({
 ### Шаблон возврата к API Designer
 
 ```javascript
-// Обновить статус
+// Обновить поля
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'd0352ed3'  // STATUS_OPTIONS['API Designer - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '6aa5d9af' }, // Agent: API
+  ]
 });
 
 // Добавить комментарий
@@ -253,7 +248,7 @@ mcp_github_add_issue_comment({
         '- Update OpenAPI spec to match implementation\n' +
         '- OR fix implementation to match spec\n\n' +
         '**Correct agent:** API Designer\n\n' +
-        '**Status updated:** `API Designer - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: API)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -262,10 +257,15 @@ mcp_github_add_issue_comment({
 
 ```javascript
 const RETURN_STATUS_IDS = {
-  'Backend - Returned': '40f37190',
-  'UE5 - Returned': '855f4872',
-  'API Designer - Returned': 'd0352ed3',
-  'Content Writer - Returned': 'f4a7797e'
+  Status: {
+    Returned: 'c01c12e9',
+  },
+  Agent: {
+    Backend: '1fc13998',
+    UE5: '56920475',
+    API: '6aa5d9af',
+    Content: 'd3cae8d8',
+  }
 };
 ```
 

@@ -68,3 +68,6 @@ gh run watch {run_id}
 
 Для конкретного коммита можно получить связанные workflow runs через SHA коммита.
 
+## Интеграция с Project
+- Issues с отчетами по workflow добавляй в Project с полями: Status `Todo`, Agent `DevOps`.
+

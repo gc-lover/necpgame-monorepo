@@ -28,17 +28,18 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 ## Статус в Project
 
-- **Статусы:** `Database - Todo`, `Database - In Progress`, `Database - Blocked`, `Database - Review`, `Database - Returned`
+- **Status:** `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`
+- **Agent:** `DB`
 - **Метки (опц):** `database`
 
 ## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ:** `Status:"Database - Todo"`
-2. **ВЗЯТЬ:** Обнови на `Database - In Progress` (`91d49623`)
+1. **НАЙТИ:** `Agent:"DB" Status:"Todo"`
+2. **ВЗЯТЬ:** Status → `In Progress` (`83d488e7`), Agent → `DB` (`1e745162`)
 3. **РАБОТАТЬ:** Схемы, миграции, индексы
-4. **ПЕРЕДАТЬ:** `API Designer - Todo` (`3eddfee3`)
+4. **ПЕРЕДАТЬ:** Status → `Todo` (`f75ad846`), Agent → `API` (`6aa5d9af`)
 
 **Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
@@ -204,10 +205,10 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 ### Если таблица `quest_definitions` отсутствует:
 1. **Проверь:** Миграция `V1_46__quest_definitions_tables.sql` применена?
 2. **Если нет:** Примени миграцию или создай новую
-3. **Передача:** `Backend - Todo` для импорта квеста
+3. **Передача:** Status `Todo`, Agent `Backend` для импорта квеста
 
 ### Если миграция есть:
-- Передай сразу в `Backend - Todo` (миграция уже применена)
+- Передай сразу: Status `Todo`, Agent `Backend` (миграция уже применена)
 
 ### Массовый импорт квестов (первый раз):
 1. **Проверь:** Backend сгенерировал миграции через `scripts/generate-content-migrations.sh`
@@ -216,7 +217,7 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
    - Пример: `quest-001-willis-tower.yaml` → `V*__data_quest_..._v1_0_0.sql`
 3. **Примени:** `liquibase update` или через CI/CD
 4. **Валидация:** Проверь что квесты загружены (SQL: `SELECT COUNT(*) FROM gameplay.quest_definitions`)
-5. **Передача:** `QA - Todo` для тестирования
+5. **Передача:** Status `Todo`, Agent `QA` для тестирования
 
 ### Комментарий при передаче:
 ```markdown
@@ -232,7 +233,7 @@ Issue: #{number}
 ### Если таблицы `npc_definitions` или `dialogue_nodes` отсутствуют:
 1. **Проверь:** Миграция `V1_89__narrative_npc_dialogue_tables.sql` применена?
 2. **Если нет:** Примени миграцию или создай новую
-3. **Передача:** `Backend - Todo` для импорта NPC/диалогов
+3. **Передача:** Status `Todo`, Agent `Backend` для импорта NPC/диалогов
 
 ### Массовый импорт NPC и диалогов (первый раз):
 1. **Проверь:** Backend сгенерировал миграции через `scripts/generate-content-migrations.sh`
@@ -242,7 +243,7 @@ Issue: #{number}
    - 1 файл YAML = 1 миграция (с версией из metadata.version)
 3. **Примени:** `liquibase update` или через CI/CD
 4. **Валидация:** Проверь что данные загружены (SQL: `SELECT COUNT(*) FROM narrative.npc_definitions`, `SELECT COUNT(*) FROM narrative.dialogue_nodes`)
-5. **Передача:** `QA - Todo` для тестирования
+5. **Передача:** Status `Todo`, Agent `QA` для тестирования
 
 ### Комментарий при передаче:
 ```markdown
@@ -284,7 +285,7 @@ Issue: #{number}
 ## Переход к следующему
 
 1. `/database-validate-result #123`
-2. Update: `API Designer - Todo`
+2. Update: Status `Todo`, Agent `API`
 3. Комментарий с performance hints
 
 ```markdown

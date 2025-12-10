@@ -196,16 +196,16 @@ See: services/{service-name}-go/REFACTOR_PLAN.md
 // Добавить к Project
 const newIssue = await mcp_github_issue_write(...);
 
-// Установить статус Backend - Todo
+// Установить поля: Status Todo, Agent Backend
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '72d37d44'  // Backend - Todo
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '1fc13998' }, // Agent: Backend
+  ]
 });
 ```
 

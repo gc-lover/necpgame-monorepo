@@ -213,138 +213,76 @@ git clean -fdx              # ❌ Удаляет все неотслеживае
 - **Для всего остального:** используй номер Issue в формате `#123`
 - **Никогда не показывай пользователю `item_id`** - всегда используй номер Issue
 
-## Status Management
+## Status & Agent Management
 
 **ВАЖНО:** 
-- Конфигурация проекта и ID статусов - см. `.cursor/GITHUB_PROJECT_CONFIG.md`
-- Простое руководство - см. `.cursor/AGENT_SIMPLE_GUIDE.md`
+- Конфигурация проекта и ID опций — `.cursor/GITHUB_PROJECT_CONFIG.md`
+- Простое руководство — `.cursor/AGENT_SIMPLE_GUIDE.md`
 
-**Status field shows current task state:**
+**Status (стадия):** `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`  
+**Agent (ответственный):** `Idea`, `Content`, `Backend`, `Architect`, `API`, `DB`, `QA`, `Performance`, `Security`, `Network`, `DevOps`, `UI/UX`, `UE5`, `GameBalance`, `Release`
 
-1. **New task:** `Todo` (universal)
-2. **On handoff:** Set `{NextAgent} - Todo`
-3. **On start:** Change to `{MyAgent} - In Progress`
-4. **During work:** `{MyAgent} - Blocked`, `{MyAgent} - Review`, `{MyAgent} - Returned`
-5. **On finish:** Set `{NextAgent} - Todo` or `Done`
+**Как читать связку:**  
+`Status: Todo + Agent: Backend` → Backend должен взять.  
+`Status: In Progress + Agent: Backend` → Backend работает.  
+`Status: Todo + Agent: QA` → передано QA.
 
-**Format:** `{Agent Name} - {State}`
-- States: Todo, In Progress, Blocked, Review, Returned
-- Examples: `Architect - Todo`, `Backend - In Progress`, `QA - Blocked`
+**Первичный трекинг:** всегда через поля Status и Agent (не labels).
 
-**Primary tracking:** Use Project Status, not labels. Status determines agent and stage.
-
-**Обновление статуса:**
+**Обновление полей (API требует ID!):**
 ```javascript
-// GitHub API требует ID, не названия. Используй константы из GITHUB_PROJECT_CONFIG.md
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
-  item_id: project_item_id,  // из list_project_items (внутренний ID для API)
-  updated_field: {
-    id: 239690516,  // STATUS_FIELD_ID (число, не строка!)
-    value: '02b1119e'  // STATUS_OPTIONS['Architect - In Progress'] из GITHUB_PROJECT_CONFIG.md
-  }
+  item_id: project_item_id, // из list_project_items
+  updated_field: [
+    { id: 239690516, value: '83d488e7' }, // Status: In Progress
+    { id: 243899542, value: '{AGENT_ID}' } // Agent: из GITHUB_PROJECT_CONFIG.md
+  ]
 });
 ```
 
-**Важно:** 
-- GitHub API требует ID, не названия (это ограничение API)
-- `id` поля - число (239690516), не строка
-- `value` - id опции статуса из констант (см. GITHUB_PROJECT_CONFIG.md)
-- Если нужного статуса нет в константах → получить через `mcp_github_list_project_fields`
-- `item_id` получай из результата `list_project_items` (это внутренний ID для API, не номер Issue)
-- Всегда добавляй комментарий при передаче задачи другому агенту, используя номер Issue (например, `Issue: #123`), а не `item_id`
+**Обязательные точки обновления:**
+1. Старт работы: Status `Todo` → `In Progress`, Agent = {MyAgent}
+2. Передача дальше: Status `In Progress`/`Review` → `Todo`, Agent = {NextAgent}
+3. Возврат: Status → `Returned`, Agent = {CorrectAgent}
+4. Блокер: Status → `Blocked`, Agent = {MyAgent}
+5. Финал: Status → `Done`, Agent = {CurrentAgent} (если последний)
 
-**ОБЯЗАТЕЛЬНЫЕ моменты обновления статуса:**
-1. **При старте работы:** Todo → {MyAgent} - In Progress
-2. **При передаче задачи:** {MyAgent} - In Progress → {NextAgent} - Todo
-3. **При возврате задачи:** {MyAgent} - In Progress → {CorrectAgent} - Returned
-4. **При блокировке:** {MyAgent} - In Progress → {MyAgent} - Blocked
-5. **При завершении:** {MyAgent} - In Progress → Done (если это финальный этап)
-
-**Когда использовать статусы:**
-- **Blocked** - задача заблокирована внешними факторами (ожидание ответа, зависимость от другой задачи, технические проблемы)
-- **Review** - задача на внутренней проверке/ревизии перед передачей следующему агенту
-- **Returned** - задача возвращена предыдущему агенту из-за проблем или неготовности
-- **In Progress** - задача в активной работе
-- **Todo** - задача готова к началу работы
-
-**Обновление статуса при старте работы:**
-После выбора задачи из списка (через `find-tasks`), ОБЯЗАТЕЛЬНО обнови статус на `{MyAgent} - In Progress`:
-
-**ВАЖНО: Используй константы из `.cursor/GITHUB_PROJECT_CONFIG.md`!**
-
+**Поиск задач:**
 ```javascript
-// 1. Получить item_id из результата list_project_items
-const items = await mcp_github_list_project_items({
+mcp_github_list_project_items({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
-  query: 'Status:"{Agent} - Todo"'
-});
-const project_item_id = items.items[0].id;  // внутренний ID для API
-
-// 2. Использовать константы из GITHUB_PROJECT_CONFIG.md
-mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: project_item_id,
-  updated_field: {
-    id: 239690516,  // STATUS_FIELD_ID (число, не строка!)
-    value: 'cf5cf6bb'  // STATUS_OPTIONS['Content Writer - In Progress'] из GITHUB_PROJECT_CONFIG.md
-  }
+  query: 'Agent:"{MyAgent}" Status:"Todo"'
 });
 ```
 
-**Если нужного статуса нет в константах:**
+**Получить опции если не знаешь ID:**
 ```javascript
-// Получить через list_project_fields
 const fields = await mcp_github_list_project_fields({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1
 });
-const statusField = fields.fields.find(f => f.id === 239690516);
-const option = statusField.options.find(o => o.name === '{Agent} - In Progress');
-const optionId = option.id;  // использовать в value
+const status = fields.fields.find(f => f.id === 239690516);
+const agent = fields.fields.find(f => f.id === 243899542);
 ```
 
-**КРИТИЧЕСКИ ВАЖНО:**
-- ОБЯЗАТЕЛЬНО обновляй статус при старте работы (Todo → In Progress)
-- ОБЯЗАТЕЛЬНО обновляй статус при передаче задачи (In Progress → NextAgent - Todo)
-- ОБЯЗАТЕЛЬНО обновляй статус при возврате задачи (In Progress → CorrectAgent - Returned)
-- Используй константы из GITHUB_PROJECT_CONFIG.md, не плейсхолдеры!
-
-**Шаблон комментария при передаче задачи:**
-
+**Комментарий при передаче задачи:**
 ```markdown
 OK Ready. Handed off to {NextAgent}
 Issue: #{number}
 ```
 
-**КРИТИЧЕСКИ ВАЖНО:**
-- ❌ НЕ пиши длинные описания что сделано
-- ❌ НЕ создавай summary/отчеты
-- ❌ НЕ перечисляй все изменения
-- OK Только краткое подтверждение готовности
-- OK Только номер Issue
-
-**Примечание:** В комментариях всегда указывай номер Issue в формате `#{number}`, а не `item_id` (project_item_id).
-
-**Шаблон комментария при возврате задачи:**
+**Комментарий при возврате задачи:**
 ```markdown
 WARNING Returned: {reason}
 Correct agent: {Agent Name}
 Issue: #{number}
 ```
-
-**КРИТИЧЕСКИ ВАЖНО:**
-- ❌ НЕ пиши длинные объяснения
-- ❌ НЕ создавай списки проблем
-- OK Только причина и правильный агент
-- OK Максимум 1-2 предложения
 
 ## Label Management
 
@@ -357,15 +295,15 @@ Issue: #{number}
 - Standard: `bug`, `enhancement`, `documentation`
 
 **DO NOT use:**
-- `agent:*` labels (agent determined by Status)
-- `stage:*` labels (stage determined by Status)
+- `agent:*` labels (агент хранится в поле Agent)
+- `stage:*` labels (стадия хранится в поле Status)
 
 **On Start:**
-- Update Project `Status` to `{MyAgent} - In Progress`
+- Set `Status: In Progress`, `Agent: {MyAgent}`
 - Add functional labels if needed (optional)
 
 **On Finish:**
-- Update Project `Status` to `{NextAgent} - Todo` (or `Done`)
+- Set `Status: Todo`, `Agent: {NextAgent}` (или `Status: Done`, если финал)
 - Functional labels remain (optional)
 
 
@@ -385,7 +323,7 @@ Format: `[{agent}] {type}: {description}`
 ## Task Return
 
 **If task not ready:**
-1. Update Status to `{CorrectAgent} - Returned`
+1. Update fields: `Status: Returned`, `Agent: {CorrectAgent}`
 2. Add comment with reason
 
 ## Issue Tracking in Files
@@ -475,10 +413,10 @@ FROM golang:1.24-alpine
 
 **Labels: `canon`, `lore`, `quest`:**
 - Determine task type by labels or content
-- Transfer to Content Writer via Status: `Content Writer - Todo`
+- Transfer: Status `Todo`, Agent `Content`
 
 ## UI Tasks
 
 **Labels: `ui`, `ux`, `client`:**
 - Determine task type by labels or content
-- Transfer to UI/UX Designer via Status: `UI/UX - Todo`
+- Transfer: Status `Todo`, Agent `UI/UX`

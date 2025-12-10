@@ -23,7 +23,7 @@ ls proto/openapi/{service-name}/paths/
 ```
 
 **Если проблема:**
-- Update Status to `API Designer - Returned`
+- Update: Status `Returned`, Agent `API`
 - Указать что именно не так:
   - Файл отсутствует
   - Спецификация невалидна (ошибки линтера)
@@ -36,8 +36,7 @@ ls proto/openapi/{service-name}/paths/
 - Непонятно как реализовывать
 - Противоречия в требованиях
 
-**Если проблема:**
-- Update Status to `Architect - Returned`
+- Update: Status `Returned`, Agent `Architect`
 - Указать какой документ нужен
 
 ### 3. Это не задача для Backend
@@ -46,8 +45,7 @@ ls proto/openapi/{service-name}/paths/
 - `ui`, `ux`, `client` → это UI/UX задача
 - `canon`, `lore`, `quest` БЕЗ архитектуры → Content Writer
 
-**Если проблема:**
-- Update Status to правильному агенту
+- Update: Status `Todo`, Agent к нужному (UI/UX или Content)
 - Объяснить почему
 
 ### 4. Database миграции не готовы
@@ -56,8 +54,7 @@ ls proto/openapi/{service-name}/paths/
 - Нужны новые таблицы, но миграций нет
 - Миграции не применены
 
-**Если проблема:**
-- Update Status to `Database - Returned`
+- Update: Status `Returned`, Agent `DB`
 - Указать какие миграции нужны
 
 ## WARNING Как вернуть задачу
@@ -71,10 +68,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'd0352ed3'  // STATUS_OPTIONS['API Designer - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '6aa5d9af' }, // Agent: API
+  ]
 });
 
 // 2. Добавить комментарий с причиной
@@ -91,7 +88,7 @@ mcp_github_add_issue_comment({
         '- All endpoints described\n' +
         '- Request/Response schemas defined\n\n' +
         '**Correct agent:** API Designer\n\n' +
-        '**Status updated:** `API Designer - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: API)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -105,10 +102,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'd0352ed3'  // STATUS_OPTIONS['API Designer - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '6aa5d9af' }, // Agent: API
+  ]
 });
 
 // 2. Добавить комментарий с причиной
@@ -145,7 +142,7 @@ mcp_github_add_issue_comment({
         '- `.cursor/rules/agent-api-designer.mdc` (Splitting Large Specs)\n' +
         '- `.cursor/SOLID_CODE_GENERATION_GUIDE.md`\n\n' +
         '**Correct agent:** API Designer\n\n' +
-        '**Status updated:** `API Designer - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: API)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -159,10 +156,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '96c824c5'  // STATUS_OPTIONS['Architect - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: 'd109c7f9' }, // Agent: Architect
+  ]
 });
 
 // 2. Добавить комментарий
@@ -180,7 +177,7 @@ mcp_github_add_issue_comment({
         '- Components description\n' +
         '- API endpoints (high-level)\n\n' +
         '**Correct agent:** Architect\n\n' +
-        '**Status updated:** `Architect - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: Architect)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -194,10 +191,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '4272fcd7'  // STATUS_OPTIONS['Database - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '1e745162' }, // Agent: DB
+  ]
 });
 
 // 2. Добавить комментарий
@@ -214,7 +211,7 @@ mcp_github_add_issue_comment({
         '- Liquibase migration files in `infrastructure/liquibase/migrations/`\n' +
         '- Migrations applied to dev DB\n\n' +
         '**Correct agent:** Database Engineer\n\n' +
-        '**Status updated:** `Database - Returned`\n\n' +
+        '**Status updated:** Returned (Agent: DB)\n\n' +
         'Issue: #' + issue_number
 });
 ```
@@ -223,18 +220,23 @@ mcp_github_add_issue_comment({
 
 ```javascript
 const RETURN_STATUS_IDS = {
-  'Idea Writer - Returned': 'ec26fd29',
-  'Architect - Returned': '96c824c5',
-  'API Designer - Returned': 'd0352ed3',
-  'Database - Returned': '4272fcd7',
-  'Backend - Returned': '40f37190',  // если другой Backend agent
-  'Network - Returned': '1daf88e8',
-  'Security - Returned': 'cb38d85c',
-  'DevOps - Returned': '96b3e4b0',
-  'UE5 - Returned': '855f4872',
-  'UI/UX - Returned': '278add0a',
-  'Content Writer - Returned': 'f4a7797e',
-  'QA - Returned': '6ccc53b0'
+  Status: {
+    Returned: 'c01c12e9',
+  },
+  Agent: {
+    Idea: '8c3f5f11',
+    Architect: 'd109c7f9',
+    API: '6aa5d9af',
+    DB: '1e745162',
+    Backend: '1fc13998',
+    Network: 'c60ebab1',
+    Security: '12586c50',
+    DevOps: '7e67a39b',
+    UE5: '56920475',
+    'UI/UX': '98c65039',
+    Content: 'd3cae8d8',
+    QA: '3352c488',
+  }
 };
 ```
 

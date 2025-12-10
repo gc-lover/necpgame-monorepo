@@ -10,13 +10,13 @@ Show statistics for all agents.
      owner_type: 'user',
      owner: 'gc-lover',
      project_number: 1,
-     query: ''
+     query: '' // можно добавить фильтр, например: Agent:"Backend" OR Status:"In Progress"
    });
    ```
    **Note:** Для сбора статистики по всем задачам используй пустой query или фильтр по конкретным статусам. Не используй `is:issue` - `list_project_items` работает только с issues. Не указывай `fields` - вернутся все поля.
 
-2. Group by Status, count: total, open, done, in progress, returned
+2. Group by Status и Agent, count: total, in_progress, todo, review, blocked, returned, done
 
 3. Show table with progress percentage
 
-**Group by Status values, not labels.**
+**Group by Status values, not labels; Agent берите из поля Agent.**

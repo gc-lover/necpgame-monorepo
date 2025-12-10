@@ -4,7 +4,7 @@ Check if OpenAPI spec exists and is ready for code generation before starting.
 
 ## Check
 
-1. Verify Status is `Backend - Todo` or `Backend - In Progress`
+1. Verify Agent = `Backend`, Status = `Todo` или `In Progress`
 2. Check file: `proto/openapi/{service-name}.yaml`
 3. Validate: `npx -y @redocly/cli lint proto/openapi/{service-name}.yaml`
 4. **НОВАЯ ПРОВЕРКА:** Проверь размер спецификации
@@ -25,20 +25,20 @@ ls proto/openapi/{service-name}/
 
 **Result:**
 - OK Found, valid, <500 lines (or split) → can start
-- WARNING Found, valid, >500 lines (not split) → return to API Designer
-- ❌ Not found or invalid → return to API Designer
+- WARNING Found, valid, >500 lines (not split) → return to API (Status `Returned`, Agent `API`)
+- ❌ Not found or invalid → return to API (Status `Returned`, Agent `API`)
 
-**Update Status (if returning - spec >500 lines and not split):**
+**Update fields (if returning - spec >500 lines and not split):**
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'd0352ed3'  // STATUS_OPTIONS['API Designer - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '6aa5d9af' }, // Agent: API
+  ]
 });
 
 // Добавить комментарий
@@ -61,16 +61,16 @@ mcp_github_add_issue_comment({
 });
 ```
 
-**Update Status (if returning - not found or invalid):**
+**Update fields (if returning - not found or invalid):**
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'd0352ed3'  // STATUS_OPTIONS['API Designer - Returned']
-  }
+  updated_field: [
+    { id: 239690516, value: 'c01c12e9' }, // Status: Returned
+    { id: 243899542, value: '6aa5d9af' }, // Agent: API
+  ]
 });
 ```

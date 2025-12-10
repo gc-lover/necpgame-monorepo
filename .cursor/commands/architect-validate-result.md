@@ -112,10 +112,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '58644d24'  // STATUS_OPTIONS['Database - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '1e745162' }, // Agent: DB
+  ]
 });
 
 mcp_github_add_issue_comment({
@@ -140,10 +140,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '3eddfee3'  // STATUS_OPTIONS['API Designer - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '6aa5d9af' }, // Agent: API
+  ]
 });
 
 mcp_github_add_issue_comment({
@@ -168,10 +168,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '49689997'  // STATUS_OPTIONS['UI/UX - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '98c65039' }, // Agent: UI/UX
+  ]
 });
 ```
 
@@ -183,10 +183,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: 'c62b60d3'  // STATUS_OPTIONS['Content Writer - Todo']
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: 'd3cae8d8' }, // Agent: Content
+  ]
 });
 ```
 
@@ -194,7 +194,7 @@ mcp_github_update_project_item({
 
 **Исправь проблемы перед передачей!**
 
-Оставь статус `Architect - In Progress` и продолжи работу.
+Оставь Status `In Progress`, Agent `Architect` и продолжи работу.
 
 ## 🔄 Review (опционально)
 
@@ -206,10 +206,10 @@ mcp_github_update_project_item({
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516,
-    value: '2c2a7b69'  // STATUS_OPTIONS['Architect - Review']
-  }
+  updated_field: [
+    { id: 239690516, value: '55060662' }, // Status: Review
+    { id: 243899542, value: 'd109c7f9' }, // Agent: Architect
+  ]
 });
 ```
 

@@ -27,17 +27,18 @@ Backend Developer реализует Go сервисы по OpenAPI специф
 
 ## Статус в Project
 
-- **Статусы:** `Backend - Todo`, `Backend - In Progress`, `Backend - Blocked`, `Backend - Review`, `Backend - Returned`
+- **Status:** `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`
+- **Agent:** `Backend`
 - **Метки (опц):** `backend`, `protocol`, `infrastructure`
 
 ## Workflow
 
 ### 🔄 Простой алгоритм
 
-1. **НАЙТИ:** `Status:"Backend - Todo"`
-2. **ВЗЯТЬ:** Обнови статус на `Backend - In Progress` (`7bc9d20f`)
+1. **НАЙТИ:** `Agent:"Backend" Status:"Todo"`
+2. **ВЗЯТЬ:** Status → `In Progress` (`83d488e7`), Agent → `Backend` (`1fc13998`)
 3. **РАБОТАТЬ:** Код, тесты, оптимизации
-4. **ПЕРЕДАТЬ:** `Network - Todo` (`944246f3`) или `QA - Todo` (`86ca422e`)
+4. **ПЕРЕДАТЬ:** Status → `Todo` (`f75ad846`), Agent → `Network` (`c60ebab1`) или `QA` (`3352c488`)
 
 **Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
@@ -270,7 +271,7 @@ services/{service}-go/
 1. **Проверь:** YAML файл в `knowledge/canon/lore/timeline-author/quests/.../quest-*.yaml`
 2. **Импорт:** `POST /api/v1/gameplay/quests/content/reload` (используй `scripts/import-quest.ps1` или `scripts/import-quest.sh`)
 3. **Валидация:** Проверь что квест загружен в `gameplay.quest_definitions` (SQL или API)
-4. **Передача:** `QA - Todo` для тестирования
+4. **Передача:** Status `Todo`, Agent `QA` для тестирования
 
 ### Workflow для массового импорта (первый раз):
 1. **Генерация миграций:** Запусти `scripts/generate-content-migrations.sh` (или `.ps1`)
@@ -278,15 +279,15 @@ services/{service}-go/
    - Пример: `quest-001-willis-tower.yaml` → `V*__data_quest_..._v1_0_0.sql`
    - Все миграции в `infrastructure/liquibase/migrations/data/quests/`
 2. **Проверь:** Сгенерированные миграции в `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql`
-3. **Передача:** `Database - Todo` для применения миграций
-4. **После миграции:** Все квесты уже в БД, передай в `QA - Todo` для тестирования
+3. **Передача:** Status `Todo`, Agent `DB` для применения миграций
+4. **После миграции:** Все квесты уже в БД, передай: Status `Todo`, Agent `QA` для тестирования
 
 ### Обновления квестов (после первого импорта):
 - Используй API: `scripts/import-quest.ps1` или `scripts/import-quest.sh`
 - Или batch API (если реализован): `POST /api/v1/gameplay/quests/content/batch-reload`
 
 ### Если миграции нет:
-- Передай в `Database - Todo` для создания миграции `quest_definitions`
+- Передай: Status `Returned` или `Todo`, Agent `DB` для создания миграции `quest_definitions`
 - После миграции → вернись к импорту
 
 ### Комментарий при передаче:
@@ -306,11 +307,11 @@ Issue: #{number}
    - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql`
    - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql`
 2. **Проверь:** Сгенерированные миграции в соответствующих папках
-3. **Передача:** `Database - Todo` для применения миграций
-4. **После миграции:** Все NPC и диалоги уже в БД, передай в `QA - Todo` для тестирования
+3. **Передача:** Status `Todo`, Agent `DB` для применения миграций
+4. **После миграции:** Все NPC и диалоги уже в БД, передай: Status `Todo`, Agent `QA` для тестирования
 
 ### Если таблиц нет:
-- Передай в `Database - Todo` для создания миграции `V1_89__narrative_npc_dialogue_tables.sql`
+- Передай: Status `Returned` или `Todo`, Agent `DB` для создания миграции `V1_89__narrative_npc_dialogue_tables.sql`
 - После миграции → вернись к генерации
 
 ### Комментарий при передаче:
@@ -326,7 +327,7 @@ Issue: #{number}
 **Таблицы:** `gameplay.ballistics_profiles`, `gameplay.shooting_telemetry`
 
 ### Если таблиц нет:
-- Передай в `Database - Todo` для создания миграции `V1_5__ballistics_metrics_extension.sql`
+- Передай: Status `Returned` или `Todo`, Agent `DB` для создания миграции `V1_5__ballistics_metrics_extension.sql`
 
 ### Использование:
 - `ballistics_profiles`: Профили баллистики оружия (оптимальная/максимальная дальность, падение урона, конус отклонения, рикошеты)
@@ -341,8 +342,8 @@ Issue: #{number}
 2. `/backend-validate-optimizations #123` - **КРИТИЧНО!**
 3. Обе OK → передавай
 
-**Системная задача:** `Network - Todo` + PR  
-**Контент-квест (labels `canon`/`lore`/`quest`):** `QA - Todo` (после импорта)
+**Системная задача:** Status `Todo`, Agent `Network` + PR  
+**Контент-квест (labels `canon`/`lore`/`quest`):** Status `Todo`, Agent `QA` (после импорта)
 
 **Комментарий:**
 ```markdown

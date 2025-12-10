@@ -4,7 +4,7 @@ Apply generated SQL migrations for content (quests, NPCs, dialogues).
 
 ## Steps
 
-1. Verify Status is `Database - In Progress`
+1. Verify Agent = `DB`, Status = `In Progress`
 2. **Check order:** Схемные миграции должны быть применены ПЕРЕД контентными:
    - `V1_46__quest_definitions_tables.sql` (для квестов)
    - `V1_89__narrative_npc_dialogue_tables.sql` (для NPC и диалогов)
@@ -28,19 +28,19 @@ Apply generated SQL migrations for content (quests, NPCs, dialogues).
    -- Dialogues
    SELECT COUNT(*) FROM narrative.dialogue_nodes;
    ```
-7. Handoff to QA: Update Status to `QA - Todo`
+7. Handoff to QA: Status `Todo`, Agent `QA`
 
-**Update Status:**
+**Update fields:**
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
-  updated_field: {
-    id: 239690516  // число,
-    value: '{option_id}'  // id опции 'QA - Todo' из list_project_fields
-  }
+  updated_field: [
+    { id: 239690516, value: 'f75ad846' }, // Status: Todo
+    { id: 243899542, value: '3352c488' }, // Agent: QA
+  ]
 });
 ```
 
