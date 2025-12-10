@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/stock-options-service-go
+module github.com/necpgame/stock-options-service-go
 
 go 1.24.0
 

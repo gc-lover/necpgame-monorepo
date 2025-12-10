@@ -1,4 +1,4 @@
-﻿module github.com/gc-lover/necpgame-monorepo/services/stock-protection-service-go
+module github.com/gc-lover/necpgame-monorepo/services/stock-protection-service-go
 
 go 1.24.0
 

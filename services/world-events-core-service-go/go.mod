@@ -1,4 +1,4 @@
-﻿// Issue: ogen migration
+// Issue: ogen migration
 module github.com/gc-lover/necpgame-monorepo/services/world-events-core-service-go
 
 go 1.24.0

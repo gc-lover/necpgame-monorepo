@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/character-engram-core-service-go
+module github.com/necpgame/character-engram-core-service-go
 
 go 1.24.0
 

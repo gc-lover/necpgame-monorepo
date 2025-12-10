@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/seasonal-challenges-service-go
+module github.com/necpgame/seasonal-challenges-service-go
 
 go 1.24.0
 

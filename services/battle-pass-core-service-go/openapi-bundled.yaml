@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Battle Pass Core Service API
+  description: API для основных операций с боевым пропуском
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Battle Pass
+    description: Управление боевым пропуском
+paths:
+  /battle-pass/current:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить текущий сезон боевого пропуска
+      operationId: getCurrentBattlePass
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Текущий сезон
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattlePassSeason'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /battle-pass/progress:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить прогресс игрока
+      operationId: getPlayerProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBattlePassProgress'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /battle-pass/progress/level/{level}:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить требования уровня
+      operationId: getLevelRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: level
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Требования уровня
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelRequirements'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /battle-pass/premium:
+    post:
+      tags:
+        - Battle Pass
+      summary: Купить премиум пропуск
+      operationId: purchasePremium
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchasePremiumRequest'
+      responses:
+        '200':
+          description: Премиум пропуск куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBattlePassProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    BattlePassSeason:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        max_level:
+          type: integer
+          default: 100
+        is_active:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerBattlePassProgress:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        premium_purchased_at:
+          type: string
+          format: date-time
+          nullable: true
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        xp:
+          type: integer
+          minimum: 0
+        xp_to_next_level:
+          type: integer
+          minimum: 0
+        has_premium:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PurchasePremiumRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LevelRequirements:
+      type: object
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        xp_required:
+          type: integer
+          minimum: 0
+        cumulative_xp:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS

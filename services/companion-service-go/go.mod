@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/companion-service-go
+module github.com/necpgame/companion-service-go
 
 go 1.24.0
 

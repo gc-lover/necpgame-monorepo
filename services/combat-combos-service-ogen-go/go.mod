@@ -1,4 +1,4 @@
-﻿module github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-ogen-go
+module github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-ogen-go
 
 go 1.24.0
 

@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/character-engram-historical-service-go
+module github.com/necpgame/character-engram-historical-service-go
 
 go 1.24.0
 

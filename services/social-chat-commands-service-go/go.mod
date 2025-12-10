@@ -1,4 +1,4 @@
-﻿module github.com/gc-lover/necpgame-monorepo/services/social-chat-commands-service-go
+module github.com/gc-lover/necpgame-monorepo/services/social-chat-commands-service-go
 
 go 1.24.0
 

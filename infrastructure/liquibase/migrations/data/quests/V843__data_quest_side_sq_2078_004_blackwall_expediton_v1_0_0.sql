@@ -1,0 +1,126 @@
+-- Issue: #52
+-- Import quest from: content\quests\side\SQ-2078-004-blackwall-expedition.yaml
+-- Version: 1.0.0
+-- Generated: 2025-12-08T20:02:00.000000
+
+BEGIN;
+
+-- Quest: content-quest-sq-2078-004-blackwall-expedition
+INSERT INTO gameplay.quest_definitions (
+    quest_id,
+    title,
+    description,
+    quest_type,
+    level_min,
+    level_max,
+    requirements,
+    objectives,
+    rewards,
+    branches,
+    content_data,
+    version,
+    is_active
+) VALUES (
+    'content-quest-sq-2078-004-blackwall-expedition',
+    'SQ-2078-004 — Экспедиция за заслон',
+    'Команда Netrunner/Solo проводит экспедицию за Blackwall, взаимодействует с rogue-AI и возвращает артефакты.',
+    'side',
+    42,
+    46,
+    '{"required_quests":[],"required_flags":[],"required_reputation":{},"required_items":[]}'::jsonb,
+    '[]'::jsonb,
+    '{"experience":null,"money":null,"reputation":{},"items":[],"unlocks":{"achievements":[],"flags":[]}}'::jsonb,
+    '[]'::jsonb,
+    '{
+      "metadata": {
+        "id": "content-quest-sq-2078-004-blackwall-expedition",
+        "title": "SQ-2078-004 — Экспедиция за заслон",
+        "document_type": "content",
+        "category": "quest-side",
+        "status": "approved",
+        "version": "1.0.0",
+        "last_updated": "2025-11-06T00:00:00Z",
+        "concept_approved": true,
+        "concept_reviewed_at": "2025-11-06T00:00:00Z",
+        "owners": [{"role": "content_lead", "contact": "content@necp.game"}],
+        "tags": ["side-quest", "blackwall", "cyber-expedition"],
+        "topics": ["netrunning", "high-risk"],
+        "related_systems": ["gameplay-service", "quest-service", "character-service", "hacking-service", "combat-service", "exploration-service"],
+        "related_documents": [
+          {"id": "canon-lore-blackwall-detailed-2023-2093", "relation": "references"}
+        ],
+        "source": "shared/docs/knowledge/content/quests/side/SQ-2078-004-blackwall-expedition.md",
+        "visibility": "internal",
+        "audience": ["content", "narrative", "security"],
+        "risk_level": "high"
+      },
+      "review": {
+        "chain": [{"role": "concept_director", "reviewer": "", "reviewed_at": "", "status": "pending"}],
+        "next_actions": []
+      },
+      "summary": {
+        "problem": "Описание «Экспедиция за заслон» находилось в Markdown и не было доступно автоматизации задач.",
+        "goal": "Формализовать высокорискованный квест за Blackwall в соответствии с шаблоном знаний.",
+        "essence": "Команда Netrunner/Solo проводит экспедицию за Blackwall, взаимодействует с rogue-AI и возвращает артефакты.",
+        "key_points": [
+          "26 узлов: подготовка, серия Hacking DC 26–30, встречи с AI (WILL DC 24), сделка или бой и эвакуация.",
+          "Репутация: +20 к Voodoo Boys и -20 к NetWatch, отражая конфликт интересов.",
+          "Награды: артефакты реальности (legendary), потенциальный AI-компаньон и 1500–3000 едди."
+        ]
+      },
+      "content": {
+        "sections": [
+          {
+            "id": "quest_brief",
+            "title": "Концепция квеста",
+            "body": "Voodoo Boys поручают экспедицию за Blackwall, чтобы добыть артефакты реальности для мета-судов. Игроки уровня 42–46 сочетают\\nнавыки Netrunner и Solo, действуя под постоянной угрозой NetWatch.",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "expedition_flow",
+            "title": "Узлы и проверки",
+            "body": "Структура охватывает брифинг, подготовку (group threshold 3), прохождение слоёв Blackwall с возрастающими DC 26→28→30,\\nвстречи с rogue-AI (WILL DC 24) и финальный перехват NetWatch с выбором стелс или боя (DC 26). Завершение зависит от\\nсделки с AI и успешной эвакуации.",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "rewards_reputation",
+            "title": "Репутация и добыча",
+            "body": "Успешное выполнение добавляет +20 репутации Voodoo Boys и уменьшает доверие NetWatch на 20 пунктов. Лут включает легендарные\\nартефакты реальности, потенциального AI-компаньона и 1500–3000 едди.",
+            "mechanics_links": [],
+            "assets": []
+          }
+        ]
+      },
+      "appendix": {"glossary": [], "references": [], "decisions": []},
+      "implementation": {
+        "needs_task": false,
+        "github_issue": 52,
+        "queue_reference": ["shared/trackers/queues/concept/queued.yaml"],
+        "blockers": []
+      },
+      "history": [
+        {"version": "1.0.0", "date": "2025-11-06", "author": "concept_director", "changes": "Структурирован квест «Экспедиция за заслон» с выделением ключевых проверок и наград."}
+      ],
+      "validation": {"checksum": "", "schema_version": "1.0"}
+    }'::jsonb,
+    1,
+    true
+) ON CONFLICT (quest_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    description = EXCLUDED.description,
+    quest_type = EXCLUDED.quest_type,
+    level_min = EXCLUDED.level_min,
+    level_max = EXCLUDED.level_max,
+    requirements = EXCLUDED.requirements,
+    objectives = EXCLUDED.objectives,
+    rewards = EXCLUDED.rewards,
+    branches = EXCLUDED.branches,
+    content_data = EXCLUDED.content_data,
+    updated_at = CURRENT_TIMESTAMP;
+
+COMMIT;
+
+-- Total imported: 1 quest
+

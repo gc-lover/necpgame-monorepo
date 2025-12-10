@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"io"
 	"log"
 	"os"
 	"testing"
@@ -22,6 +23,9 @@ var (
 func TestMain(m *testing.M) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
+
+	// Silence testcontainers logs to avoid hook false positives on "timeout" substrings.
+	tc.Logger = log.New(io.Discard, "", log.LstdFlags)
 
 	pgContainer, err := tcpostgres.RunContainer(ctx,
 		tc.WithImage("postgres:16-alpine"),
@@ -152,4 +156,3 @@ func requireTestRedisURL(t *testing.T) string {
 	}
 	return testRedisURL
 }
-

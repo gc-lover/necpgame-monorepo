@@ -1,4 +1,4 @@
-﻿// Issue: #1595 - ogen migration
+// Issue: #1595 - ogen migration
 module github.com/gc-lover/necpgame-monorepo/services/gameplay-weapon-special-mechanics-service-go
 
 go 1.24.0

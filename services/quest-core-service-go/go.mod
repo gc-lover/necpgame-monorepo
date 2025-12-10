@@ -1,4 +1,4 @@
-﻿// Issue: #1597
+// Issue: #1597
 module github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go
 
 go 1.24.0

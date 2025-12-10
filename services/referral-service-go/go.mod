@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/referral-service-go
+module github.com/necpgame/referral-service-go
 
 go 1.24.0
 

@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/realtime-gateway-go
+module github.com/necpgame/realtime-gateway-go
 
 go 1.24
 

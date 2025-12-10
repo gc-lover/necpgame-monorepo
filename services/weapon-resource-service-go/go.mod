@@ -1,4 +1,4 @@
-﻿// Issue: #1595
+// Issue: #1595
 module github.com/gc-lover/necpgame-monorepo/services/weapon-resource-service-go
 
 go 1.24.0

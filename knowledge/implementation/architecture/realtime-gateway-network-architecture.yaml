@@ -1,0 +1,538 @@
+metadata:
+  id: realtime-gateway-network-architecture
+  title: Архитектура сетевой системы realtime-gateway (UDP, Spatial Partitioning, Delta Compression)
+  document_type: architecture
+  category: network
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-06T22:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - network
+    - real-time
+    - udp
+    - spatial-partitioning
+    - delta-compression
+  related_systems:
+    - realtime-gateway
+    - combat-engine
+    - player-positioning
+    - network-layer
+  related_documents:
+    - id: realtime-gateway-issue-1580
+      relation: implements
+  github_issue: 1580
+  visibility: internal
+  audience:
+    - architect
+    - network-engineer
+    - backend
+    - gameplay
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру сетевой системы realtime-gateway с поддержкой
+    UDP протокола, пространственного разделения, дельта-компрессии и других оптимизаций
+    для обеспечения высокой производительности в real-time боевых сценариях с 100+ игроками.
+  goal: |
+    Создать архитектурную схему с определением компонентов, протоколов, потоков данных
+    и оптимизаций для сетевой системы realtime-gateway с целевыми показателями производительности.
+  essence: |
+    Полная сетевая архитектура realtime-gateway с UDP, пространственным разделением
+    и дельта-компрессией для масштабируемого real-time взаимодействия в MMOFPS.
+
+architecture:
+  overview: |
+    Архитектура сетевой системы realtime-gateway состоит из следующих компонентов:
+    1. UDP Server - обработка UDP соединений и пакетов
+    2. Spatial Grid Manager - управление пространственным разделением
+    3. Delta Compression Engine - механизм дельта-компрессии
+    4. Adaptive Tick Rate Controller - адаптивное управление частотой обновлений
+    5. Network Buffer Pool - пул буферов для оптимизации памяти
+    6. Coordinate Quantization System - квантование координат
+    7. Batch Network Writer - пакетная запись сетевых данных
+    8. Protobuf Message Handler - обработка protobuf сообщений
+    9. Session Management System - управление сессиями игроков
+    10. Network Telemetry Collector - сбор телеметрии сети
+
+  microservices:
+    - name: realtime-gateway-network
+      port: 18080
+      responsibility: |
+        Управление сетевыми коммуникациями в реальном времени:
+        - UDP сервер для игрового состояния
+        - Пространственное разделение игроков
+        - Дельта-компрессия обновлений состояния
+        - Адаптивная частота обновлений
+        - Оптимизации пропускной способности
+      components:
+        - udp-server: UDP сервер и обработка соединений
+        - spatial-grid-manager: управление пространственным разделением
+        - delta-compression-engine: механизм дельта-компрессии
+        - adaptive-tick-controller: адаптивное управление тикрейтом
+        - network-buffer-pool: пул сетевых буферов
+        - coordinate-quantization: квантование координат
+        - batch-network-writer: пакетная запись
+        - protobuf-handler: обработка protobuf
+        - session-manager: управление сессиями
+        - network-telemetry: сбор телеметрии
+      endpoints:
+        - udp://:18080 - основной UDP порт для игрового трафика
+        - POST /api/v1/realtime/status - статус сетевой системы
+        - GET /api/v1/realtime/metrics - метрики производительности
+        - POST /api/v1/realtime/session/join - присоединение к сессии
+        - POST /api/v1/realtime/session/leave - выход из сессии
+      websocket_channels:
+        - wss://api.necp.game/v1/realtime/lobby - лобби и чат (WebSocket)
+        - wss://api.necp.game/v1/realtime/admin - административные команды
+      events_published:
+        - network.player_joined: игрок присоединился
+        - network.player_left: игрок вышел
+        - network.spatial_updated: обновление пространственного разделения
+        - network.delta_compressed: дельта-компрессия применена
+        - network.tick_rate_adjusted: тикрейт изменен
+      events_subscribed:
+        - game.player_moved: движение игрока
+        - game.player_shot: выстрел игрока
+        - game.combat_started: начало боя
+        - game.round_ended: окончание раунда
+        - system.server_shutdown: выключение сервера
+
+  network_protocols:
+    udp_gamestate:
+      description: "UDP протокол для игрового состояния (позиции, выстрелы, действия)"
+      packet_structure: |
+        - Header (8 bytes): magic(4) + sequence(4)
+        - Player ID (4 bytes): uint32
+        - Timestamp (8 bytes): int64
+        - Change Mask (4 bytes): uint32 (битовая маска изменений)
+        - Position (6 bytes): quantized x,y,z (int16 each)
+        - Rotation (4 bytes): quantized yaw,pitch (int16 each)
+        - Health (1 byte): uint8 (0-255)
+        - Action Flags (1 byte): битовые флаги действий
+        - Total: ~32 bytes per update
+      optimizations:
+        - Coordinate quantization (float32 → int16, 12→6 bytes)
+        - Delta compression (only changed fields)
+        - Change masks (bitwise flags for updates)
+        - Batch updates (multiple players per packet)
+
+    websocket_lobby:
+      description: "WebSocket для лобби, чата и не-критичных обновлений"
+      message_types:
+        - chat_message: текстовые сообщения
+        - lobby_update: обновления лобби
+        - player_ready: готовность игрока
+        - match_found: найден матч
+        - system_notification: системные уведомления
+      advantages:
+        - Reliable delivery (TCP)
+        - Ordered messages
+        - Connection-oriented
+        - Firewall-friendly
+
+    hybrid_protocol:
+      description: "Гибридный подход: UDP для игры + WebSocket для всего остального"
+      traffic_distribution:
+        - UDP: 90% трафика (игровое состояние, позиционирование)
+        - WebSocket: 10% трафика (чат, лобби, системные сообщения)
+      benefits:
+        - Low latency for game state
+        - Reliability for critical messages
+        - Optimal bandwidth usage
+        - Firewall compatibility
+
+  spatial_partitioning:
+    grid_system:
+      description: "Система пространственного разделения на сетке"
+      parameters:
+        - cell_size: 50x50 метров (оптимально для 100м радиуса взаимодействия)
+        - max_players_per_cell: 32 (ограничение для производительности)
+        - grid_bounds: динамическое расширение по необходимости
+        - neighbor_search: 3x3 клетки (225x225м область видимости)
+      algorithms:
+        - player_to_cell_mapping: хэширование координат в индексы клеток
+        - neighbor_discovery: поиск соседних клеток для broadcast
+        - cell_migration: перенос игроков между клетками
+        - load_balancing: распределение нагрузки между клетками
+
+    interest_management:
+      description: "Управление интересами для оптимизации сетевого трафика"
+      radius_based:
+        - visibility_radius: 100 метров (основная область)
+        - extended_radius: 150 метров (буферная зона)
+        - fade_radius: 120-150 метров (постепенное исчезновение)
+      priority_based:
+        - high_priority: союзники, цели в прицеле
+        - medium_priority: игроки в радиусе видимости
+        - low_priority: отдаленные игроки
+        - no_interest: игроки за пределами зоны
+
+  delta_compression:
+    change_detection:
+      description: "Обнаружение изменений в состоянии игроков"
+      tracked_fields:
+        - position: x,y,z координаты
+        - rotation: yaw, pitch, roll
+        - velocity: скорость движения
+        - health: уровень здоровья
+        - weapon_state: состояние оружия
+        - action_flags: флаги действий
+      change_masks:
+        - position_changed: бит 0
+        - rotation_changed: бит 1
+        - velocity_changed: бит 2
+        - health_changed: бит 3
+        - weapon_changed: бит 4
+        - action_changed: бит 5
+
+    compression_algorithms:
+      description: "Алгоритмы компрессии дельта-обновлений"
+      coordinate_quantization:
+        - float32_to_int16: преобразование координат
+        - precision_loss: 0.01м точность (достаточно для игр)
+        - range_compression: -32768..32767 → 0..65535 для unsigned
+      delta_encoding:
+        - absolute_vs_delta: выбор между абсолютными и дельта значениями
+        - prediction_based: предсказание следующего состояния
+        - error_correction: коррекция ошибок предсказания
+      bit_packing:
+        - variable_length_encoding: кодирование переменной длины
+        - huffman_coding: статистическое сжатие
+        - run_length_encoding: сжатие повторяющихся значений
+
+  adaptive_tick_rate:
+    dynamic_adjustment:
+      description: "Динамическая адаптация частоты обновлений"
+      player_count_based:
+        - 0-50 игроков: 128 Hz (7.8ms)
+        - 51-200 игроков: 60 Hz (16.7ms)
+        - 201-500 игроков: 30 Hz (33.3ms)
+        - 500+ игроков: 20 Hz (50ms)
+      distance_based:
+        - close_range (<25m): 60 Hz минимум
+        - medium_range (25-75m): 30 Hz минимум
+        - long_range (75-150m): 15 Hz минимум
+        - extended_range (>150m): 5 Hz минимум
+      activity_based:
+        - high_activity: повышенная частота (combat, movement)
+        - low_activity: пониженная частота (idle, static)
+
+    quality_of_service:
+      description: "Гарантии качества обслуживания"
+      latency_targets:
+        - critical_updates: <25ms (позиции союзников)
+        - important_updates: <50ms (позиции врагов)
+        - background_updates: <100ms (далекие игроки)
+      reliability_levels:
+        - guaranteed: TCP/WebSocket для критичных сообщений
+        - best_effort: UDP с повторной передачей
+        - fire_and_forget: UDP без гарантий доставки
+
+  data_flows:
+    player_movement_flow: |
+      1. Player moves in game world
+      2. Coordinate quantization converts float32 to int16
+      3. Spatial Grid Manager determines cell membership
+      4. Delta Compression Engine calculates position delta
+      5. Change mask updated with position flag
+      6. Packet assembled with quantized coordinates
+      7. Network Buffer Pool provides buffer memory
+      8. UDP packet sent to relevant players in spatial area
+
+    combat_action_flow: |
+      1. Player performs combat action (shoot, reload, etc.)
+      2. Action validated by game logic
+      3. Delta Compression Engine detects action change
+      4. Change mask updated with action flag
+      5. Packet includes action data and timestamps
+      6. Batch Network Writer groups with other updates
+      7. UDP multicast to players in combat radius
+      8. WebSocket fallback for critical confirmations
+
+    spatial_reorganization_flow: |
+      1. Player crosses cell boundary
+      2. Spatial Grid Manager detects cell change
+      3. Interest management recalculates visible players
+      4. Subscription updates sent to affected players
+      5. Network connections updated for new cell
+      6. Old cell connections cleaned up
+      7. Telemetry logged for spatial metrics
+
+  data_consistency:
+    strategy: Eventual Consistency для игрового состояния, Strong Consistency для критичных действий
+    mechanisms:
+      - Sequence numbers для обнаружения потери пакетов
+      - Timestamp-based ordering для правильной последовательности
+      - Client-side prediction с server reconciliation
+      - Interest management для релевантности данных
+      - Spatial partitioning для масштабируемости
+
+  performance_optimizations:
+    memory_optimization:
+      buffer_pooling:
+        network_buffer_pool: size 10000, 1500-byte buffers (MTU size)
+        compression_buffer_pool: size 5000, reusable compression buffers
+        packet_assembly_pool: size 2000, packet assembly buffers
+
+      struct_alignment:
+        player_update_struct: [player_id(uint32), timestamp(int64), change_mask(uint32), position(int16,int16,int16)]
+        network_packet_struct: [header(uint32), sequence(uint32), data([]byte)]
+
+    computation_optimization:
+      spatial_hashing: O(1) lookup for cell membership
+      batch_processing: group updates per spatial cell
+      lazy_evaluation: calculate visibility on-demand
+      caching_strategy: cache quantized coordinates
+      vectorization: SIMD for coordinate operations
+
+    network_optimization:
+      packet_batching: combine multiple updates in single packet
+      header_compression: minimize per-packet overhead
+      connection_multiplexing: reuse connections efficiently
+      bandwidth_throttling: adaptive rate limiting
+      compression_enabled: LZ4 for large packets
+
+  tickrate_specification:
+    network_processing:
+      tickrate: 30-128 Hz адаптивно, Event-based для событий
+      network_load: |
+        - UDP game state: ~0.5-2 KB/sec per player (compressed)
+        - WebSocket lobby: ~0.1-0.5 KB/sec per player
+        - Spatial updates: ~0.05-0.2 KB/sec per player movement
+        - Delta compression: ~0.1-0.4 KB/sec per active player
+        - Total network traffic: ~1-3 KB/sec per player in combat
+      latency_requirements: < 25ms для позиций союзников, < 50ms для позиций врагов, < 100ms для фоновых обновлений
+
+  database_structure:
+    tables:
+      - name: network_sessions
+        description: Сессии сетевых подключений
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - session_start: TIMESTAMP
+          - session_end: TIMESTAMP
+          - udp_port: INTEGER
+          - ip_address: INET
+          - connection_quality: DECIMAL
+
+      - name: spatial_metrics
+        description: Метрики пространственного разделения
+        columns:
+          - id: UUID PRIMARY KEY
+          - timestamp: TIMESTAMP
+          - active_cells: INTEGER
+          - players_per_cell_avg: DECIMAL
+          - cell_migration_events: INTEGER
+          - spatial_recalculation_time: INTEGER
+
+      - name: network_telemetry
+        description: Телеметрия сетевых показателей
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - packet_loss_percentage: DECIMAL
+          - average_latency_ms: INTEGER
+          - bandwidth_up_kbps: INTEGER
+          - bandwidth_down_kbps: INTEGER
+          - timestamp: TIMESTAMP
+
+      - name: compression_stats
+        description: Статистика компрессии
+        columns:
+          - id: UUID PRIMARY KEY
+          - compression_ratio: DECIMAL
+          - original_bytes: BIGINT
+          - compressed_bytes: BIGINT
+          - compression_time_us: INTEGER
+          - timestamp: TIMESTAMP
+
+  integrations:
+    combat_system: |
+      - Получение событий выстрелов и попаданий
+      - Синхронизация состояния боя через UDP
+      - Расчет линий видимости через spatial partitioning
+      - Управление интересами игроков в бою
+
+    player_positioning: |
+      - Отслеживание позиций игроков
+      - Квантование координат для сетевой передачи
+      - Определение областей видимости
+      - Управление зонами интересов
+
+    game_state: |
+      - Синхронизация игрового состояния
+      - Распространение обновлений через spatial cells
+      - Управление консистентностью состояния
+      - Обработка отключений и переподключений
+
+    monitoring_system: |
+      - Сбор метрик сетевой производительности
+      - Мониторинг packet loss и latency
+      - Анализ пропускной способности
+      - Отчеты о качестве соединений
+
+technical_specification:
+  subtasks:
+    - id: udp-server-implementation
+      title: Реализация UDP сервера
+      description: |
+        Реализация UDP Server с обработкой соединений, packet parsing
+        и интеграцией с protobuf для игрового состояния.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: spatial-grid-manager
+      title: Реализация менеджера пространственной сетки
+      description: |
+        Реализация Spatial Grid Manager с хэшированием позиций,
+        управлением клетками и оптимизацией поиска соседей.
+      dependencies: [udp-server-implementation]
+      estimated_effort: 4 days
+
+    - id: delta-compression-engine
+      title: Реализация движка дельта-компрессии
+      description: |
+        Реализация Delta Compression Engine с обнаружением изменений,
+        квантованием координат и эффективной компрессией.
+      dependencies: [udp-server-implementation]
+      estimated_effort: 4 days
+
+    - id: adaptive-tick-controller
+      title: Реализация адаптивного контроллера тикрейта
+      description: |
+        Реализация Adaptive Tick Rate Controller с динамическим
+        регулированием частоты обновлений на основе нагрузки.
+      dependencies: [spatial-grid-manager, delta-compression-engine]
+      estimated_effort: 3 days
+
+    - id: network-buffer-pool
+      title: Реализация пула сетевых буферов
+      description: |
+        Реализация Network Buffer Pool с управлением памятью,
+        переиспользованием буферов и оптимизацией аллокаций.
+      dependencies: [udp-server-implementation]
+      estimated_effort: 2 days
+
+    - id: coordinate-quantization
+      title: Реализация системы квантования координат
+      description: |
+        Реализация Coordinate Quantization System с преобразованием
+        float32 в int16 и управлением точностью.
+      dependencies: [delta-compression-engine]
+      estimated_effort: 2 days
+
+    - id: batch-network-writer
+      title: Реализация пакетного сетевого писателя
+      description: |
+        Реализация Batch Network Writer с группировкой обновлений,
+        оптимизацией системных вызовов и управлением очередями.
+      dependencies: [udp-server-implementation]
+      estimated_effort: 3 days
+
+    - id: protobuf-handler
+      title: Реализация обработчика protobuf сообщений
+      description: |
+        Реализация Protobuf Message Handler с генерацией кода,
+        сериализацией/десериализацией и валидацией сообщений.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: session-management
+      title: Реализация системы управления сессиями
+      description: |
+        Реализация Session Management System с аутентификацией,
+        управлением подключениями и обработкой отключений.
+      dependencies: [udp-server-implementation]
+      estimated_effort: 3 days
+
+    - id: network-telemetry
+      title: Реализация системы телеметрии сети
+      description: |
+        Реализация Network Telemetry Collector с сбором метрик,
+        анализом производительности и отчетностью.
+      dependencies: [udp-server-implementation]
+      estimated_effort: 3 days
+
+    - id: database-network-schema
+      title: Создание схемы БД для сетевых метрик
+      description: |
+        Создание таблиц для сессий, метрик пространственного разделения,
+        телеметрии сети и статистики компрессии.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> UDP[UDP Server<br/>18080]
+        Client --> WS[WebSocket Server<br/>Lobby/Chat]
+
+        UDP --> US[UDP Server]
+        WS --> WSS[WebSocket Server]
+
+        US --> SGM[Spatial Grid Manager]
+        US --> DCE[Delta Compression Engine]
+        US --> ATRC[Adaptive Tick Controller]
+        US --> NBP[Network Buffer Pool]
+        US --> CQS[Coordinate Quantization]
+        US --> BNW[Batch Network Writer]
+        US --> PMH[Protobuf Handler]
+        US --> SMS[Session Manager]
+        US --> NTC[Network Telemetry]
+
+        SGM --> DCE
+        DCE --> CQS
+        DCE --> BNW
+        ATRC --> SGM
+
+        US --> Combat[Combat System]
+        US --> Position[Player Positioning]
+        US --> GameState[Game State]
+        US --> Monitoring[Monitoring System]
+
+        US --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> Analytics[Analytics Service]
+
+        US --> DB[(Network DB)]
+    ```
+
+  network_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant US as UDP Server
+        participant SGM as Spatial Grid Manager
+        participant DCE as Delta Compression Engine
+        participant BNW as Batch Network Writer
+
+        P->>US: Move/position update
+        US->>SGM: Get spatial cell
+        SGM->>US: Return cell + neighbors
+        US->>DCE: Calculate deltas
+        DCE->>US: Return compressed update
+        US->>BNW: Batch with other updates
+        BNW->>P: Send compressed packet
+    ```
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-06
+    author: Architect Agent
+    changes: |
+      Создана полная сетевая архитектура realtime-gateway:
+      - Определены компоненты UDP сервера, spatial partitioning, delta compression
+      - Спроектирована гибридная система UDP+WebSocket
+      - Определены протоколы с packet structure и optimizations
+      - Спроектированы системы пространственного разделения и interest management
+      - Добавлены алгоритмы delta compression с coordinate quantization
+      - Создан adaptive tick rate controller с QoS guarantees
+      - Определены потоки данных и интеграции с игровыми системами
+      - Добавлены оптимизации производительности и спецификации тикрейта
+      - Создан план подзадач и диаграммы архитектуры
+      - Определена структура БД для сетевых метрик

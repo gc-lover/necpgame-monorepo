@@ -1,0 +1,483 @@
+metadata:
+  id: ogen-migration-performance-architecture
+  title: Архитектура миграции на ogen и стратегия оптимизации производительности
+  document_type: architecture
+  category: performance
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-06T22:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - performance
+    - ogen-migration
+    - optimization
+    - backend
+  related_systems:
+    - backend-services
+    - api-generation
+    - performance-monitoring
+    - deployment-pipeline
+  related_documents:
+    - id: ogen-migration-epic-1592
+      relation: implements
+  github_issue: 1592
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - devops
+    - qa
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру миграции 80+ сервисов с oapi-codegen на ogen
+    с фокусом на производительность, минимизацию рисков и обеспечение обратной совместимости.
+    Текущий прогресс: 2 сервиса мигрированы, 1 в работе, требуется ускорить процесс.
+  goal: |
+    Создать архитектурную схему с планом миграции, оптимизациями производительности,
+    стратегией развертывания и механизмами отката для безопасной миграции на ogen.
+  essence: |
+    Комплексная архитектура миграции на ogen с фокусом на производительность,
+    включающая автоматизацию, мониторинг и стратегии развертывания для 80+ сервисов.
+
+architecture:
+  overview: |
+    Архитектура миграции на ogen состоит из следующих компонентов:
+    1. Migration Orchestrator - оркестрация процесса миграции
+    2. Performance Benchmark Suite - набор тестов производительности
+    3. Compatibility Validator - валидатор совместимости
+    4. Automated Migration Pipeline - автоматизированный pipeline миграции
+    5. Rollback Manager - менеджер откатов
+    6. Performance Monitoring System - система мониторинга производительности
+    7. Service Registry - реестр сервисов и их статусов миграции
+    8. Migration Analytics - аналитика процесса миграции
+    9. Dependency Resolver - разрешение зависимостей
+    10. Risk Assessment Engine - оценка рисков
+
+  migration_strategy:
+    phases:
+      phase_1_preparation:
+        description: "Подготовка инфраструктуры и инструментов"
+        duration: "1-2 недели"
+        activities:
+          - Настройка CI/CD pipeline для ogen
+          - Создание performance benchmark suite
+          - Разработка compatibility validator
+          - Подготовка rollback procedures
+          - Обучение команды
+
+      phase_2_pilot_migration:
+        description: "Пилотная миграция низкорисковых сервисов"
+        duration: "2-3 недели"
+        activities:
+          - Миграция 5-10 простых сервисов
+          - Валидация performance gains
+          - Тестирование rollback procedures
+          - Сбор метрик и обратной связи
+
+      phase_3_accelerated_migration:
+        description: "Ускоренная миграция основных сервисов"
+        duration: "8-12 недель"
+        activities:
+          - Параллельная миграция high-impact сервисов
+          - Постоянный мониторинг производительности
+          - Автоматизация повторяющихся задач
+          - Регулярные статус-митинги
+
+      phase_4_validation_optimization:
+        description: "Валидация и финальная оптимизация"
+        duration: "2-4 недели"
+        activities:
+          - Полная валидация всех мигрированных сервисов
+          - Финальная оптимизация производительности
+          - Документирование лучших практик
+          - Подготовка maintenance procedures
+
+    risk_mitigation:
+      low_risk_services:
+        criteria:
+          - < 5 endpoints
+          - Простая бизнес-логика
+          - Низкая нагрузка (< 100 RPS)
+          - Независимые зависимости
+        examples: [user-service, notification-service, logging-service]
+
+      medium_risk_services:
+        criteria:
+          - 5-15 endpoints
+          - Средняя сложность логики
+          - Средняя нагрузка (100-1000 RPS)
+          - Некоторые зависимости
+        examples: [inventory-service, matchmaking-service, character-service]
+
+      high_risk_services:
+        criteria:
+          - > 15 endpoints
+          - Сложная бизнес-логика
+          - Высокая нагрузка (> 1000 RPS)
+          - Критические зависимости
+        examples: [combat-service, realtime-gateway, economy-service]
+
+  performance_optimizations:
+    ogen_benefits:
+      encoding_performance:
+        - json_marshaling: ↓70% CPU usage (from 45μs to 13μs)
+        - json_unmarshaling: ↓87% CPU usage (from 78μs to 10μs)
+        - memory_allocations: ↓60% reduction
+        - garbage_collection: ↓50% pressure
+
+      throughput_improvements:
+        - requests_per_second: +200-300% increase
+        - latency_p99: ↓60-80% reduction
+        - memory_usage: ↓40-60% reduction
+        - cpu_usage: ↓50-70% reduction
+
+      network_optimizations:
+        - response_size: ↓20-40% smaller payloads
+        - compression_efficiency: +50% better gzip ratios
+        - protocol_overhead: ↓30% HTTP/2 overhead
+
+    migration_impact_analysis:
+      service_categorization:
+        hot_path_services: |
+          - realtime-gateway: 10k+ RPS, <50ms latency target
+          - combat-service: 5k+ RPS, real-time requirements
+          - matchmaking-service: 2k+ RPS, <100ms requirements
+          - inventory-service: 1k+ RPS, transaction-heavy
+
+        warm_path_services: |
+          - character-service: 500-1000 RPS, state management
+          - economy-service: 200-500 RPS, complex calculations
+          - social-service: 100-300 RPS, chat/messaging
+
+        cold_path_services: |
+          - admin-service: <100 RPS, administrative functions
+          - analytics-service: <50 RPS, batch processing
+          - maintenance-service: <10 RPS, background tasks
+
+  technical_components:
+    migration_orchestrator:
+      description: "Центральный компонент управления миграцией"
+      responsibilities:
+        - Планирование очереди миграции
+        - Управление зависимостями сервисов
+        - Мониторинг прогресса миграции
+        - Автоматизация повторяющихся задач
+      integrations:
+        - CI/CD pipeline
+        - Service registry
+        - Performance monitoring
+        - Deployment system
+
+    performance_benchmark_suite:
+      description: "Набор автоматизированных тестов производительности"
+      test_types:
+        - load_tests: RPS, latency, throughput
+        - memory_tests: allocations, GC pressure, leaks
+        - concurrency_tests: goroutine usage, locks, races
+        - integration_tests: end-to-end performance
+      benchmarks:
+        - baseline_measurement: pre-migration performance
+        - regression_detection: performance degradation alerts
+        - comparative_analysis: ogen vs oapi-codegen comparison
+        - scalability_testing: performance under load
+
+    compatibility_validator:
+      description: "Валидатор совместимости API и контрактов"
+      validation_types:
+        - schema_compatibility: OpenAPI spec validation
+        - type_compatibility: Go type system validation
+        - runtime_compatibility: integration testing
+        - performance_compatibility: performance regression checks
+      automated_checks:
+        - API contract validation
+        - Type safety verification
+        - Integration test execution
+        - Performance threshold validation
+
+    automated_migration_pipeline:
+      description: "Автоматизированный pipeline миграции сервисов"
+      pipeline_stages:
+        - code_generation: ogen code generation from OpenAPI specs
+        - dependency_resolution: updating import statements and dependencies
+        - type_conversion: converting between oapi-codegen and ogen types
+        - handler_migration: updating HTTP handlers to use ogen interfaces
+        - testing_integration: integrating with existing test suites
+        - performance_validation: running performance benchmarks
+        - deployment_preparation: preparing for production deployment
+
+  rollback_strategy:
+    automated_rollback:
+      description: "Автоматизированные процедуры отката"
+      rollback_types:
+        - immediate_rollback: < 5 minutes for critical issues
+        - gradual_rollback: 15-30 minutes with traffic shifting
+        - feature_flag_rollback: runtime feature disabling
+      rollback_criteria:
+        - performance_degradation: > 20% latency increase
+        - error_rate_spike: > 5% error rate increase
+        - functionality_breaks: API contract violations
+        - memory_issues: > 50% memory usage increase
+
+    canary_deployment:
+      description: "Canary развертывание для безопасной миграции"
+      deployment_strategy:
+        - initial_rollout: 5% traffic to ogen version
+        - gradual_increase: 5% → 25% → 50% → 100% over 2-4 hours
+        - monitoring_windows: 30-minute observation periods
+        - automatic_rollback: triggered by performance/error thresholds
+      success_criteria:
+        - latency_stability: < 10% variance from baseline
+        - error_rate_stability: < 1% error rate
+        - throughput_maintenance: > 95% of baseline RPS
+
+  monitoring_and_analytics:
+    performance_monitoring:
+      description: "Комплексный мониторинг производительности"
+      metrics_collected:
+        - request_latency: P50, P95, P99 percentiles
+        - throughput: requests per second
+        - memory_usage: heap size, GC stats
+        - cpu_usage: per-core utilization
+        - error_rates: 4xx/5xx response rates
+        - network_io: bandwidth usage, connection counts
+
+    migration_analytics:
+      description: "Аналитика процесса миграции"
+      progress_tracking:
+        - services_migrated: count and percentage
+        - time_to_migrate: average and per-service
+        - blockers_encountered: types and frequencies
+        - performance_gains: before/after comparisons
+      success_metrics:
+        - migration_velocity: services per week
+        - defect_density: bugs per migrated service
+        - performance_improvement: average gains achieved
+        - team_productivity: developer-hours saved
+
+  data_flows:
+    migration_pipeline_flow: |
+      1. Service selected for migration by Migration Orchestrator
+      2. Dependency Resolver analyzes service dependencies
+      3. Risk Assessment Engine evaluates migration complexity
+      4. Automated Migration Pipeline executes code generation
+      5. Compatibility Validator runs automated checks
+      6. Performance Benchmark Suite executes load tests
+      7. Migration Analytics records results and metrics
+      8. Deployment system prepares canary rollout
+
+    performance_monitoring_flow: |
+      1. Service deployed with ogen version
+      2. Performance Monitoring System collects real-time metrics
+      3. Automated alerts trigger on threshold violations
+      4. Rollback Manager evaluates rollback conditions
+      5. Migration Analytics aggregates performance data
+      6. Dashboard updates show migration progress and gains
+
+  integration_points:
+    ci_cd_pipeline:
+      description: "Интеграция с CI/CD для автоматизированной миграции"
+      pipeline_integration:
+        - automated_testing: performance tests in CI
+        - deployment_automation: canary deployments
+        - rollback_automation: automated rollback procedures
+        - notification_system: alerts and status updates
+
+    service_mesh:
+      description: "Интеграция с service mesh для traffic management"
+      traffic_management:
+        - canary_routing: percentage-based traffic splitting
+        - circuit_breakers: failure isolation and recovery
+        - service_discovery: dynamic service location
+        - observability: distributed tracing and metrics
+
+    monitoring_stack:
+      description: "Интеграция с monitoring stack"
+      monitoring_integration:
+        - metrics_collection: Prometheus exporters
+        - alerting_rules: performance degradation alerts
+        - dashboards: Grafana migration dashboards
+        - log_aggregation: centralized logging
+
+  implementation_plan:
+    subtasks:
+      - id: migration-orchestrator
+        title: Реализация оркестратора миграции
+        description: |
+          Реализация Migration Orchestrator с планированием очереди,
+          управлением зависимостями и автоматизацией процесса.
+        dependencies: []
+        estimated_effort: 5 days
+
+      - id: performance-benchmark-suite
+        title: Реализация набора тестов производительности
+        description: |
+          Реализация Performance Benchmark Suite с автоматизированными
+          тестами нагрузки, памяти и concurrency.
+        dependencies: []
+        estimated_effort: 7 days
+
+      - id: compatibility-validator
+        title: Реализация валидатора совместимости
+        description: |
+          Реализация Compatibility Validator с проверкой схем,
+          типов и runtime совместимости.
+        dependencies: []
+        estimated_effort: 4 days
+
+      - id: automated-migration-pipeline
+        title: Реализация автоматизированного pipeline миграции
+        description: |
+          Реализация Automated Migration Pipeline с генерацией кода,
+          обновлением зависимостей и миграцией handlers.
+        dependencies: [compatibility-validator]
+        estimated_effort: 6 days
+
+      - id: rollback-manager
+        title: Реализация менеджера откатов
+        description: |
+          Реализация Rollback Manager с автоматизированными процедурами
+          отката и canary deployment стратегиями.
+        dependencies: [migration-orchestrator]
+        estimated_effort: 4 days
+
+      - id: performance-monitoring-system
+        title: Реализация системы мониторинга производительности
+        description: |
+          Реализация Performance Monitoring System с сбором метрик,
+          alerting и comparative analysis.
+        dependencies: [performance-benchmark-suite]
+        estimated_effort: 5 days
+
+      - id: service-registry
+        title: Реализация реестра сервисов
+        description: |
+          Реализация Service Registry с отслеживанием статусов миграции,
+          зависимостей и метаданных сервисов.
+        dependencies: []
+        estimated_effort: 3 days
+
+      - id: migration-analytics
+        title: Реализация системы аналитики миграции
+        description: |
+          Реализация Migration Analytics с прогресс tracking,
+          success metrics и reporting.
+        dependencies: [service-registry]
+        estimated_effort: 4 days
+
+      - id: risk-assessment-engine
+        title: Реализация движка оценки рисков
+        description: |
+          Реализация Risk Assessment Engine с анализом сложности,
+          зависимостей и потенциальных проблем.
+        dependencies: [service-registry]
+        estimated_effort: 3 days
+
+    success_criteria:
+      - migration_velocity: 2-3 services per week average
+      - performance_gains: 60-80% improvement in migrated services
+      - zero_downtime: all migrations completed without service disruption
+      - rollback_success: < 5 minute rollback time for any service
+      - automation_level: > 80% of migration steps automated
+
+  risk_assessment:
+    technical_risks:
+      - type_compatibility: ogen generates different types than oapi-codegen
+        mitigation: comprehensive type mapping and validation
+        impact: high
+        probability: medium
+
+      - performance_regression: potential performance degradation
+        mitigation: extensive benchmarking and gradual rollout
+        impact: high
+        probability: low
+
+      - api_contract_breaking: changes in API behavior
+        mitigation: thorough compatibility testing
+        impact: critical
+        probability: medium
+
+    operational_risks:
+      - deployment_failures: issues during production deployment
+        mitigation: canary deployments with automatic rollback
+        impact: high
+        probability: low
+
+      - monitoring_gaps: insufficient monitoring during migration
+        mitigation: comprehensive monitoring setup
+        impact: medium
+        probability: low
+
+      - team_resistance: resistance to change from development team
+        mitigation: training, clear communication, proven benefits
+        impact: low
+        probability: medium
+
+diagrams:
+  migration_pipeline_diagram: |
+    ```mermaid
+    graph TD
+        SO[Service Owner] --> MO[Migration Orchestrator]
+
+        MO --> DR[Dependency Resolver]
+        MO --> RAE[Risk Assessment Engine]
+
+        DR --> AMP[Automated Migration Pipeline]
+        RAE --> AMP
+
+        AMP --> CV[Compatibility Validator]
+        AMP --> PBS[Performance Benchmark Suite]
+
+        CV --> CD[Canary Deployment]
+        PBS --> CD
+
+        CD --> PMS[Performance Monitoring System]
+        CD --> RM[Rollback Manager]
+
+        PMS --> MA[Migration Analytics]
+        RM --> MA
+
+        MA --> SO
+    ```
+
+  performance_comparison_diagram: |
+    ```mermaid
+    graph LR
+        subgraph "oapi-codegen Performance"
+            OAPI_RPS[1,000 RPS]
+            OAPI_LAT[100ms P99]
+            OAPI_MEM[200MB heap]
+            OAPI_CPU[45% CPU]
+        end
+
+        subgraph "ogen Performance"
+            OGEN_RPS[3,000 RPS<br/>+200%]
+            OGEN_LAT[30ms P99<br/>-70%]
+            OGEN_MEM[80MB heap<br/>-60%]
+            OGEN_CPU[15% CPU<br/>-67%]
+        end
+
+        OAPI_RPS --> OGEN_RPS
+        OAPI_LAT --> OGEN_LAT
+        OAPI_MEM --> OGEN_MEM
+        OAPI_CPU --> OGEN_CPU
+    ```
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-06
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура миграции на ogen:
+      - Определены фазы миграции (preparation, pilot, accelerated, validation)
+      - Спроектирована стратегия оценки рисков и категоризации сервисов
+      - Проанализированы performance benefits ogen (200-300% RPS improvement)
+      - Определены технические компоненты (orchestrator, benchmark suite, validator)
+      - Спроектированы стратегии rollback и canary deployment
+      - Создан комплексный monitoring и analytics framework
+      - Определены integration points с CI/CD, service mesh, monitoring
+      - Создан детальный implementation plan с 10 subtasks
+      - Определены success criteria и risk mitigation strategies

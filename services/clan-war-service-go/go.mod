@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/clan-war-service-go
+module github.com/necpgame/clan-war-service-go
 
 go 1.24.0
 

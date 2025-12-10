@@ -1,0 +1,407 @@
+metadata:
+  id: weapon-advanced-mechanics-architecture
+  title: Архитектура системы дополнительных механик оружия
+  document_type: architecture
+  category: combat
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-06T21:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - weapons
+    - mechanics
+    - advanced
+  related_systems:
+    - weapon-system
+    - combat-engine
+    - projectile-system
+    - effect-system
+  related_documents:
+    - id: weapon-special-mechanics-working
+      relation: implements
+  github_issue: 1556
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы дополнительных механик оружия,
+    включающую разделение снарядов, рикошеты, замедление и маркировку целей.
+    Система должна обеспечивать высокую производительность и интеграцию с боевой системой.
+  goal: |
+    Создать архитектурную схему с определением компонентов, API, потоков данных
+    и оптимизаций для системы дополнительных механик оружия.
+  essence: |
+    Полная архитектура дополнительных механик оружия с поддержкой расширенных
+    тактических возможностей и высокой производительностью.
+
+architecture:
+  overview: |
+    Архитектура системы дополнительных механик оружия состоит из следующих компонентов:
+    1. Projectile Split Manager - управление разделением снарядов
+    2. Ricochet Calculator - расчет траекторий рикошетов
+    3. Slowdown Effect Applier - применение эффектов замедления
+    4. Target Marker - система маркировки целей
+    5. Advanced Mechanics Processor - обработка всех механик
+    6. Mechanics Telemetry Collector - сбор метрик и телеметрии
+
+  microservices:
+    - name: weapon-mechanics-service
+      port: 8101
+      responsibility: |
+        Обработка дополнительных механик оружия:
+        - Разделение снарядов
+        - Расчет рикошетов
+        - Применение замедления
+        - Маркировка целей
+        - Сбор телеметрии
+      components:
+        - projectile-split-manager: управление разделением снарядов
+        - ricochet-calculator: расчет траекторий рикошетов
+        - slowdown-effect-applier: применение эффектов замедления
+        - target-marker: система маркировки целей
+        - advanced-mechanics-processor: обработка всех механик
+        - mechanics-telemetry-collector: сбор метрик
+      endpoints:
+        - POST /api/v1/weapon-mechanics/projectile/split - разделение снаряда
+        - POST /api/v1/weapon-mechanics/ricochet/calculate - расчет рикошета
+        - POST /api/v1/weapon-mechanics/slowdown/apply - применение замедления
+        - POST /api/v1/weapon-mechanics/target/mark - маркировка цели
+        - GET /api/v1/weapon-mechanics/{characterId}/active - активные механики
+      websocket_channels:
+        - wss://api.necp.game/v1/weapon-mechanics/{characterId} - обновления механик
+      events_published:
+        - weapon.projectile_split: разделение снаряда
+        - weapon.ricochet_calculated: расчет рикошета
+        - weapon.slowdown_applied: применение замедления
+        - weapon.target_marked: маркировка цели
+        - weapon.mechanics_processed: обработка механики
+      events_subscribed:
+        - weapon.fired: выстрел оружия
+        - projectile.hit: попадание снаряда
+        - target.damaged: повреждение цели
+        - combat.round_end: окончание раунда
+
+  mechanics_types:
+    projectile_split:
+      description: "Разделение снарядов на несколько частей"
+      types:
+        - temporal_split: разделение по времени (с задержкой)
+        - spatial_split: разделение в пространстве (в разных направлениях)
+        - conditional_split: разделение при определенных условиях
+      stats:
+        - split_count: количество частей
+        - split_delay: задержка разделения
+        - split_angle: угол разделения
+        - damage_reduction: снижение урона на часть
+
+    ricochet_mechanics:
+      description: "Расширенная система рикошетов"
+      types:
+        - surface_ricochet: рикошет от поверхностей
+        - target_ricochet: рикошет между целями
+        - smart_ricochet: умный выбор траектории
+        - chain_ricochet: цепная реакция рикошетов
+      stats:
+        - max_ricochets: максимальное количество рикошетов
+        - ricochet_damage: урон при рикошете (%)
+        - ricochet_range: дальность рикошета
+        - surface_types: типы поверхностей для рикошета
+
+    slowdown_effects:
+      description: "Эффекты замедления движения и атак"
+      types:
+        - movement_slowdown: замедление движения
+        - attack_slowdown: замедление атак
+        - stacking_slowdown: накопление эффекта
+        - area_slowdown: замедление в области
+      stats:
+        - slowdown_percentage: процент замедления
+        - slowdown_duration: длительность эффекта
+        - slowdown_radius: радиус действия
+        - stacking_limit: лимит накопления
+
+    target_marking:
+      description: "Система маркировки целей"
+      types:
+        - damage_boost_mark: увеличение урона по отмеченной цели
+        - tracking_mark: отслеживание цели
+        - reveal_mark: раскрытие невидимых целей
+        - synergy_mark: синергия с союзниками
+      stats:
+        - mark_duration: длительность маркировки
+        - damage_multiplier: множитель урона
+        - tracking_range: дальность отслеживания
+        - mark_limit: лимит одновременных меток
+
+  data_flows:
+    projectile_split_flow: |
+      1. Weapon fires projectile with split mechanics
+      2. Projectile Split Manager receives projectile data
+      3. Split conditions are evaluated (distance, time, hit)
+      4. Split Manager creates child projectiles
+      5. Child projectiles inherit parent properties with modifications
+      6. Advanced Mechanics Processor updates projectile registry
+      7. Event weapon.projectile_split is published
+
+    ricochet_calculation_flow: |
+      1. Projectile hits surface/target
+      2. Ricochet Calculator evaluates ricochet conditions
+      3. Surface analysis determines reflection angle
+      4. Trajectory calculation for new path
+      5. Damage and velocity modifications applied
+      6. Projectile updated with new trajectory
+      7. Event weapon.ricochet_calculated is published
+
+    slowdown_application_flow: |
+      1. Projectile with slowdown effect hits target
+      2. Slowdown Effect Applier evaluates effect parameters
+      3. Target stats modified (movement speed, attack speed)
+      4. Effect duration timer started
+      5. Visual effects applied to target
+      6. Event weapon.slowdown_applied is published
+
+    target_marking_flow: |
+      1. Weapon ability activates marking
+      2. Target Marker validates marking conditions
+      3. Target marked with specified properties
+      4. Mark duration timer started
+      5. Visual marker applied to target
+      6. Event weapon.target_marked is published
+
+  data_consistency:
+    strategy: Eventual Consistency для механик, Strong Consistency для критичных операций
+    mechanisms:
+      - Event Sourcing для всех изменений состояния механик
+      - Versioning для предотвращения конфликтов
+      - Validation перед применением эффектов
+      - Saga Pattern для комплексных механик (split + ricochet + slowdown)
+
+  performance_optimizations:
+    memory_optimization:
+      object_pooling:
+        projectile_pool: size 10000, reuse projectile objects
+        effect_pool: size 5000, reuse effect instances
+        marker_pool: size 1000, reuse marker objects
+
+      struct_alignment:
+        projectile_struct: [id(uuid), position(vec3), velocity(vec3), mechanics_flags(uint32)]
+        effect_struct: [target_id(uuid), effect_type(uint16), duration(int32), strength(float32)]
+        marker_struct: [target_id(uuid), mark_type(uint16), duration(int32), multiplier(float32)]
+
+    computation_optimization:
+      spatial_partitioning: grid-based projectile tracking for collision detection
+      batch_processing: group similar mechanics operations
+      lazy_evaluation: calculate complex trajectories on-demand
+      caching: cache ricochet calculations for common surface types
+
+    network_optimization:
+      delta_compression: send only changed mechanics state
+      interest_management: send mechanics updates only to affected players
+      batch_events: group multiple mechanics events into single message
+
+  tickrate_specification:
+    mechanics_processing:
+      tickrate: 60 Hz для активных механик, Event-based для активации
+      network_load: |
+        - Projectile split events: ~0.5-2 KB/sec per active mechanic
+        - Ricochet calculations: ~0.1-0.5 KB/sec per projectile
+        - Slowdown updates: ~0.2-1 KB/sec per affected target
+        - Target marking: ~0.1-0.3 KB/sec per mark
+        - Total mechanics traffic: ~1-4 KB/sec per player in combat
+      latency_requirements: < 50ms для применения эффектов, < 100ms для расчетов
+
+  database_structure:
+    tables:
+      - name: weapon_mechanics_definitions
+        description: Определения механик оружия
+        columns:
+          - id: UUID PRIMARY KEY
+          - mechanic_type: ENUM (split, ricochet, slowdown, marking)
+          - mechanic_subtype: VARCHAR(50)
+          - parameters: JSONB
+          - compatibility_rules: JSONB
+          - performance_cost: JSONB
+
+      - name: active_weapon_mechanics
+        description: Активные механики в бою
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - weapon_instance_id: UUID FOREIGN KEY
+          - mechanic_type: VARCHAR(50)
+          - mechanic_data: JSONB
+          - activated_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+
+      - name: mechanics_telemetry
+        description: Телеметрия механик
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_type: VARCHAR(50)
+          - character_id: UUID FOREIGN KEY
+          - weapon_id: UUID FOREIGN KEY
+          - mechanic_type: VARCHAR(50)
+          - performance_metrics: JSONB
+          - created_at: TIMESTAMP
+
+  integrations:
+    combat_service: |
+      - Получение событий выстрелов и попаданий
+      - Применение эффектов к целям
+      - Синхронизация состояния механик
+      - Расчет урона с учетом механик
+
+    projectile_system: |
+      - Создание дочерних снарядов при разделении
+      - Обновление траекторий при рикошетах
+      - Управление временем жизни снарядов
+      - Оптимизация рендеринга снарядов
+
+    effect_system: |
+      - Применение визуальных эффектов замедления
+      - Управление маркерами целей
+      - Синхронизация эффектов между клиентами
+      - Управление длительностью эффектов
+
+    character_service: |
+      - Проверка доступности механик для персонажа
+      - Обновление статистики использования
+      - Валидация уровней и требований
+      - Управление инвентарем оружия
+
+technical_specification:
+  subtasks:
+    - id: projectile-split-manager
+      title: Реализация менеджера разделения снарядов
+      description: |
+        Реализация Projectile Split Manager с логикой разделения,
+        созданием дочерних снарядов и управлением параметрами.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: ricochet-calculator
+      title: Реализация калькулятора рикошетов
+      description: |
+        Реализация Ricochet Calculator с расчетом траекторий,
+        анализом поверхностей и оптимизацией производительности.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: slowdown-effect-applier
+      title: Реализация применения эффектов замедления
+      description: |
+        Реализация Slowdown Effect Applier с модификацией статов целей,
+        управлением длительностью и визуальными эффектами.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: target-marker
+      title: Реализация системы маркировки целей
+      description: |
+        Реализация Target Marker с логиком маркировки,
+        управлением длительностью и синергиями.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: advanced-mechanics-processor
+      title: Реализация процессора механик
+      description: |
+        Реализация Advanced Mechanics Processor с координацией всех механик,
+        оптимизацией и телеметрией.
+      dependencies: [projectile-split-manager, ricochet-calculator, slowdown-effect-applier, target-marker]
+      estimated_effort: 4 days
+
+    - id: mechanics-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Mechanics Telemetry Collector с логированием,
+        метриками и аналитикой производительности.
+      dependencies: [advanced-mechanics-processor]
+      estimated_effort: 2 days
+
+    - id: database-schema-mechanics
+      title: Создание схемы БД для механик
+      description: |
+        Создание таблиц для определений механик, активных эффектов
+        и телеметрии с индексами и миграциями.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+
+        Gateway --> WeaponMechanicsService[Weapon Mechanics Service<br/>8101]
+
+        WeaponMechanicsService --> PSM[Projectile Split Manager]
+        WeaponMechanicsService --> RC[Ricochet Calculator]
+        WeaponMechanicsService --> SEA[Slowdown Effect Applier]
+        WeaponMechanicsService --> TM[Target Marker]
+        WeaponMechanicsService --> AMP[Advanced Mechanics Processor]
+        WeaponMechanicsService --> MTC[Mechanics Telemetry Collector]
+
+        PSM --> AMP
+        RC --> AMP
+        SEA --> AMP
+        TM --> AMP
+
+        WeaponMechanicsService --> CombatService[Combat Service]
+        WeaponMechanicsService --> ProjectileSystem[Projectile System]
+        WeaponMechanicsService --> EffectSystem[Effect System]
+        WeaponMechanicsService --> CharacterService[Character Service]
+
+        WeaponMechanicsService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+
+        WeaponMechanicsService --> DB[(Weapon Mechanics DB)]
+    ```
+
+  mechanics_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant W as Weapon
+        participant PSM as Projectile Split Manager
+        participant RC as Ricochet Calculator
+        participant SEA as Slowdown Effect Applier
+        participant TM as Target Marker
+        participant AMP as Advanced Mechanics Processor
+
+        W->>PSM: Fire projectile with split mechanics
+        PSM->>PSM: Evaluate split conditions
+        PSM->>AMP: Create child projectiles
+        AMP->>RC: Check ricochet conditions
+
+        RC->>RC: Calculate new trajectory
+        RC->>AMP: Update projectile path
+
+        AMP->>SEA: Apply slowdown on hit
+        SEA->>SEA: Modify target stats
+
+        AMP->>TM: Mark target if applicable
+        TM->>TM: Apply visual marker
+    ```
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-06
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы дополнительных механик оружия:
+      - Определены компоненты (Projectile Split Manager, Ricochet Calculator, Slowdown Effect Applier, Target Marker, Advanced Mechanics Processor, Mechanics Telemetry Collector)
+      - Спроектированы типы механик (разделение, рикошеты, замедление, маркировка)
+      - Определены API endpoints и WebSocket каналы
+      - Спроектированы потоки данных и интеграции
+      - Добавлены оптимизации производительности и спецификации тикрейта
+      - Создан план подзадач и диаграммы архитектуры
+      - Определена структура БД для механик

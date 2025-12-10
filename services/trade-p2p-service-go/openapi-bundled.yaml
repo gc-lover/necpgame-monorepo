@@ -1,0 +1,491 @@
+openapi: 3.0.3
+info:
+  title: P2P Trade Service API
+  description: |
+    API для прямого обмена предметами и валютой между игроками.
+
+    Функциональность:
+    - Инициация торговли между игроками
+    - Управление предложениями
+    - Двухстороннее подтверждение
+    - Атомарная передача предметов
+    - Антифрод защита
+  version: 1.0.0
+servers:
+  - url: https://api.necp.game/api/v1
+  - url: http://localhost:8085/api/v1
+security:
+  - BearerAuth: []
+tags:
+  - name: Trade Sessions
+  - name: Trade Offers
+  - name: Trade History
+paths:
+  /economy/trade/initiate:
+    post:
+      summary: Инициировать торговлю
+      operationId: initiateTrade
+      tags:
+        - Trade Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_player_id
+              properties:
+                target_player_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Торговля инициирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Ограничения (расстояние, лимиты)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /economy/trade/sessions/{sessionId}:
+    parameters:
+      - $ref: '#/components/parameters/TradeSessionId'
+    get:
+      summary: Получить торговую сессию
+      operationId: getTradeSession
+      tags:
+        - Trade Sessions
+      responses:
+        '200':
+          description: Состояние торговли
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Отменить торговлю
+      operationId: cancelTradeSession
+      tags:
+        - Trade Sessions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 200
+      responses:
+        '200':
+          description: Торговля отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+  /economy/trade/sessions/{sessionId}/offer:
+    parameters:
+      - $ref: '#/components/parameters/TradeSessionId'
+    post:
+      summary: Добавить предложение
+      operationId: addTradeOffer
+      tags:
+        - Trade Offers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TradeOfferRequest'
+      responses:
+        '200':
+          description: Предложение добавлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Не владелец предметов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Изменить предложение
+      operationId: updateTradeOffer
+      tags:
+        - Trade Offers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TradeOfferRequest'
+      responses:
+        '200':
+          description: Предложение изменено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+    delete:
+      summary: Удалить предложение
+      operationId: removeTradeOffer
+      tags:
+        - Trade Offers
+      responses:
+        '200':
+          description: Предложение удалено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+  /economy/trade/sessions/{sessionId}/confirm:
+    parameters:
+      - $ref: '#/components/parameters/TradeSessionId'
+    post:
+      summary: Подтвердить предложение
+      operationId: confirmTrade
+      tags:
+        - Trade Sessions
+      responses:
+        '200':
+          description: Подтверждено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+        '400':
+          description: Предложения не готовы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /economy/trade/sessions/{sessionId}/complete:
+    parameters:
+      - $ref: '#/components/parameters/TradeSessionId'
+    post:
+      summary: Завершить торговлю
+      description: Завершение сделки (требуется двойное подтверждение)
+      operationId: completeTrade
+      tags:
+        - Trade Sessions
+      responses:
+        '200':
+          description: Торговля завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeCompleteResponse'
+        '400':
+          description: Не все подтвердили
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Ошибка передачи (rollback)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /economy/trade/history:
+    get:
+      summary: История торговли
+      operationId: getTradeHistory
+      tags:
+        - Trade History
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - pagination
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeHistory'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  parameters:
+    TradeSessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации
+  schemas:
+    TradeStatus:
+      type: string
+      enum:
+        - pending
+        - offering
+        - confirmed
+        - completed
+        - cancelled
+        - expired
+    TradeOfferRequest:
+      type: object
+      properties:
+        currency:
+          type: object
+          properties:
+            eurodollars:
+              type: integer
+              minimum: 0
+            cryptos:
+              type: integer
+              minimum: 0
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - item_id
+              - quantity
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TradeOffer:
+      allOf:
+        - $ref: '#/components/schemas/TradeOfferRequest'
+    TradeSessionResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntityWithTimestamps'
+        - type: object
+          required:
+            - initiator_id
+            - target_id
+            - status
+          properties:
+            initiator_id:
+              type: string
+              format: uuid
+            target_id:
+              type: string
+              format: uuid
+            zone_id:
+              type: string
+            status:
+              $ref: '#/components/schemas/TradeStatus'
+            initiator_offer:
+              $ref: '#/components/schemas/TradeOffer'
+              nullable: true
+            target_offer:
+              $ref: '#/components/schemas/TradeOffer'
+              nullable: true
+            initiator_confirmed:
+              type: boolean
+            target_confirmed:
+              type: boolean
+            expires_at:
+              type: string
+              format: date-time
+    TradeCompleteResponse:
+      type: object
+      required:
+        - session_id
+        - status
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        completed_at:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/TradeStatus'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TradeHistory:
+      type: object
+      required:
+        - id
+        - session_id
+        - player1_id
+        - player2_id
+        - completed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        player1_id:
+          type: string
+          format: uuid
+        player2_id:
+          type: string
+          format: uuid
+        zone_id:
+          type: string
+        completed_at:
+          type: string
+          format: date-time
+        player1_currency:
+          type: object
+        player2_currency:
+          type: object
+        player1_items:
+          type: array
+          items:
+            type: object
+        player2_items:
+          type: array
+          items:
+            type: object
+        suspicious_flag:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    BaseEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор
+    TimestampFields:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          description: Дата истечения
+          nullable: true
+    BaseEntityWithTimestamps:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/TimestampFields'
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          description: Статус операции
+    PaginationResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          description: Список элементов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество элементов
+        limit:
+          type: integer
+          minimum: 1
+          description: Количество элементов на странице
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение для пагинации
+        has_more:
+          type: boolean
+          description: Есть ли еще элементы
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND

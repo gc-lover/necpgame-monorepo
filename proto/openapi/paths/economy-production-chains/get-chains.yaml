@@ -1,0 +1,51 @@
+# Issue: #141889990
+get:
+  tags:
+    - Production Chains
+  summary: Получить список производственных цепочек
+  description: |
+    Возвращает список доступных производственных цепочек с фильтрацией по тиру и типу предмета.
+  operationId: getProductionChains
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: item_tier
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [common, uncommon, rare, epic, legendary]
+      description: Фильтр по тиру предмета
+    - name: item_type
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Фильтр по типу предмета
+    - $ref: ../../common.yaml#/components/parameters/Limit
+    - $ref: ../../common.yaml#/components/parameters/Offset
+  responses:
+    '200':
+      description: Список производственных цепочек
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              chains:
+                type: array
+                items:
+                  $ref: '../../economy-production-chains-schemas.yaml#/components/schemas/ProductionChain'
+              total:
+                type: integer
+    '401':
+      $ref: ../../common.yaml#/components/responses/Unauthorized
+    '500':
+      $ref: ../../common.yaml#/components/responses/InternalServerError
+
+
+
+
+
+
+

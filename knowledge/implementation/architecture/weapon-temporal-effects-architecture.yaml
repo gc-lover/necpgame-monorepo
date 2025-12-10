@@ -1,0 +1,478 @@
+metadata:
+  id: weapon-temporal-effects-architecture
+  title: Архитектура системы временных эффектов оружия
+  document_type: architecture
+  category: combat
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-06T21:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - weapons
+    - temporal
+    - effects
+    - time
+  related_systems:
+    - weapon-system
+    - combat-engine
+    - effect-system
+    - character-system
+  related_documents:
+    - id: weapon-special-mechanics-working
+      relation: implements
+  github_issue: 1557
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы временных эффектов оружия,
+    включающую вампиризм, ускорение и замедление времени с накоплением
+    эффектов при убийствах и сложными механиками баланса.
+  goal: |
+    Создать архитектурную схему с определением компонентов, API, потоков данных
+    и оптимизаций для системы временных эффектов оружия.
+  essence: |
+    Полная архитектура временных эффектов оружия с поддержкой комплексных
+    механик времени и высокой производительностью в PvP/PvE сценариях.
+
+architecture:
+  overview: |
+    Архитектура системы временных эффектов оружия состоит из следующих компонентов:
+    1. Temporal Effect Manager - управление временными эффектами
+    2. Vampirism Processor - обработка вампирических эффектов
+    3. Acceleration Processor - обработка эффектов ускорения
+    4. Time Slowdown Processor - обработка замедления времени
+    5. Kill Streak Tracker - отслеживание серий убийств
+    6. Temporal Balance Calculator - расчет баланса эффектов
+    7. Effect Duration Manager - управление длительностью эффектов
+    8. Temporal Visual Effects - визуализация временных эффектов
+    9. Temporal Audio Manager - управление звуковыми эффектами
+    10. Temporal Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: temporal-effects-service
+      port: 8103
+      responsibility: |
+        Обработка временных эффектов оружия:
+        - Управление вампирическими эффектами
+        - Управление эффектами ускорения
+        - Управление замедлением времени
+        - Отслеживание серий убийств
+        - Расчет баланса эффектов
+        - Сбор телеметрии
+      components:
+        - temporal-effect-manager: управление временными эффектами
+        - vampirism-processor: обработка вампиризма
+        - acceleration-processor: обработка ускорения
+        - time-slowdown-processor: обработка замедления
+        - kill-streak-tracker: отслеживание убийств
+        - temporal-balance-calculator: расчет баланса
+        - effect-duration-manager: управление длительностью
+        - temporal-visual-effects: визуализация
+        - temporal-audio-manager: звуковые эффекты
+        - temporal-telemetry-collector: телеметрия
+      endpoints:
+        - POST /api/v1/temporal-effects/apply - применение временного эффекта
+        - POST /api/v1/temporal-effects/kill-streak - обновление серии убийств
+        - GET /api/v1/temporal-effects/{characterId}/active - активные эффекты
+        - POST /api/v1/temporal-effects/balance/calculate - расчет баланса
+        - GET /api/v1/temporal-effects/duration/manage - управление длительностью
+      websocket_channels:
+        - wss://api.necp.game/v1/temporal-effects/{characterId} - обновления эффектов
+      events_published:
+        - temporal.effect_applied: применение эффекта
+        - temporal.kill_streak_updated: обновление серии убийств
+        - temporal.balance_adjusted: корректировка баланса
+        - temporal.effect_expired: истечение эффекта
+        - temporal.threshold_reached: достижение порога
+      events_subscribed:
+        - weapon.fired: выстрел оружия
+        - combat.enemy_killed: убийство врага
+        - combat.damage_dealt: нанесение урона
+        - character.damaged: получение урона персонажем
+        - combat.round_end: окончание раунда
+
+  temporal_types:
+    vampirism_effects:
+      description: "Вампирические эффекты с восстановлением здоровья"
+      mechanics:
+        - life_steal: восстановление % от нанесенного урона
+        - kill_heal: дополнительное лечение при убийстве
+        - blood_charge: накопление 'крови' для мощных атак
+        - lifesteal_amplification: усиление при серии убийств
+        - vampiric_aura: лечение союзников в радиусе
+      stats:
+        - lifesteal_percentage: процент восстанавливаемого здоровья
+        - kill_heal_amount: количество HP за убийство
+        - blood_charge_capacity: максимум накопленной крови
+        - amplification_multiplier: множитель усиления
+
+    acceleration_effects:
+      description: "Эффекты ускорения стрельбы и атаки"
+      mechanics:
+        - fire_rate_boost: увеличение скорости стрельбы
+        - reload_speed_boost: ускорение перезарядки
+        - movement_speed_boost: увеличение скорости движения
+        - attack_speed_boost: ускорение атак ближнего боя
+        - stacking_acceleration: накопление эффекта при убийствах
+      stats:
+        - fire_rate_multiplier: множитель скорости стрельбы
+        - reload_speed_multiplier: множитель скорости перезарядки
+        - movement_speed_bonus: бонус к скорости движения
+        - stacking_limit: максимум стаков ускорения
+
+    time_slowdown_effects:
+      description: "Эффекты замедления времени для целей"
+      mechanics:
+        - target_movement_slow: замедление движения цели
+        - target_attack_slow: замедление атак цели
+        - critical_chance_boost: увеличение шанса крита при замедлении
+        - time_dilation_field: поле замедления в радиусе
+        - slowdown_stacking: накопление замедления
+      stats:
+        - slowdown_percentage: процент замедления
+        - critical_chance_bonus: бонус к шансу крита
+        - field_radius: радиус поля замедления
+        - max_stacks: максимум стаков замедления
+
+  kill_streak_mechanics:
+    streak_tracking:
+      - consecutive_kills: последовательные убийства без смерти
+      - time_window: временное окно для поддержания серии (30 сек)
+      - streak_multipliers: множители эффектов по уровням серии
+      - streak_rewards: дополнительные награды за серии
+
+    streak_levels:
+      - double_kill: 2 убийства (базовый бонус)
+      - triple_kill: 3 убийства (усиление эффектов)
+      - multi_kill: 4+ убийства (максимальное усиление)
+      - killing_spree: 5+ убийства (экстра эффекты)
+      - rampage: 10+ убийства (легендарные бонусы)
+
+    balance_considerations:
+      - diminishing_returns: уменьшение эффективности с длиной серии
+      - counter_play: возможности прервать серию противника
+      - team_balance: влияние на командную игру
+      - solo_vs_team: разные правила для соло и командных режимов
+
+  data_flows:
+    vampirism_activation: |
+      1. Weapon with vampirism effect deals damage
+      2. Vampirism Processor receives damage event
+      3. Lifesteal percentage calculated from damage dealt
+      4. Health restored to attacker character
+      5. Blood charge accumulated if applicable
+      6. Kill Streak Tracker updated on enemy death
+      7. Event temporal.effect_applied published
+
+    acceleration_buildup: |
+      1. Player achieves kill in combat
+      2. Kill Streak Tracker increments streak counter
+      3. Acceleration Processor applies stacking bonuses
+      4. Character stats updated with acceleration modifiers
+      5. Visual effects applied to show acceleration state
+      6. Event temporal.kill_streak_updated published
+
+    time_slowdown_application: |
+      1. Weapon with time slowdown hits target
+      2. Time Slowdown Processor evaluates effect parameters
+      3. Target movement/attack speed reduced
+      4. Critical chance bonus applied to attacker
+      5. Effect duration timer started
+      6. Event temporal.effect_applied published
+
+  data_consistency:
+    strategy: Strong Consistency для эффектов, Eventual Consistency для статистики серий
+    mechanisms:
+      - ACID транзакции для применения эффектов и восстановления здоровья
+      - Optimistic locking для предотвращения конфликтов серий убийств
+      - Event Sourcing для аудита временных эффектов
+      - Saga Pattern для комплексных эффектов с несколькими целями
+
+  performance_optimizations:
+    memory_optimization:
+      effect_pooling:
+        temporal_effect_pool: size 8000, reuse effect instances
+        streak_tracker_pool: size 2000, reuse streak trackers
+        balance_calculator_pool: size 1000, reuse calculators
+
+      struct_alignment:
+        temporal_effect_struct: [effect_id(uuid), character_id(uuid), effect_type(uint16), strength(float32), duration(int32)]
+        kill_streak_struct: [character_id(uuid), current_streak(uint16), max_streak(uint16), last_kill_time(int64)]
+
+    computation_optimization:
+      batch_updates: group multiple effect updates per character
+      lazy_evaluation: calculate complex streaks on-demand
+      effect_caching: cache frequently used effect calculations
+      spatial_optimization: quick lookup for area effects
+
+    network_optimization:
+      effect_compression: compress temporal effect updates
+      prediction_enabled: client-side prediction for common effects
+      delta_streaming: send only changed effect states
+      priority_queue: high-priority effects sent first
+
+  tickrate_specification:
+    temporal_processing:
+      tickrate: 30-60 Hz для активных эффектов, Event-based для активации
+      network_load: |
+        - Effect application: ~0.2-0.8 KB/sec per active effect
+        - Kill streak updates: ~0.1-0.3 KB/sec per kill
+        - Balance calculations: ~0.05-0.2 KB/sec per adjustment
+        - Duration updates: ~0.1-0.4 KB/sec per expiring effect
+        - Total temporal traffic: ~0.8-2 KB/sec per player in combat
+      latency_requirements: < 25ms для применения эффектов, < 50ms для расчетов баланса
+
+  database_structure:
+    tables:
+      - name: temporal_effects_definitions
+        description: Определения временных эффектов
+        columns:
+          - id: UUID PRIMARY KEY
+          - effect_type: ENUM (vampirism, acceleration, time_slowdown)
+          - effect_name: VARCHAR(100)
+          - parameters: JSONB
+          - balance_rules: JSONB
+          - visual_effects: JSONB
+          - created_at: TIMESTAMP
+
+      - name: active_temporal_effects
+        description: Активные временные эффекты
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - effect_id: UUID FOREIGN KEY
+          - strength: DECIMAL
+          - duration_remaining: INTEGER
+          - stacks: INTEGER
+          - applied_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+
+      - name: kill_streaks
+        description: Серии убийств игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - current_streak: INTEGER
+          - max_streak: INTEGER
+          - last_kill_time: TIMESTAMP
+          - streak_start_time: TIMESTAMP
+          - total_kills_in_streak: INTEGER
+
+      - name: temporal_balance_history
+        description: История корректировок баланса
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - effect_type: VARCHAR(50)
+          - original_strength: DECIMAL
+          - adjusted_strength: DECIMAL
+          - reason: VARCHAR(100)
+          - adjusted_at: TIMESTAMP
+
+      - name: temporal_telemetry
+        description: Телеметрия временных эффектов
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_type: VARCHAR(50)
+          - character_id: UUID FOREIGN KEY
+          - target_id: UUID FOREIGN KEY
+          - effect_type: VARCHAR(20)
+          - value: DECIMAL
+          - duration: INTEGER
+          - created_at: TIMESTAMP
+
+  integrations:
+    combat_service: |
+      - Получение событий убийств и повреждений
+      - Применение временных эффектов к целям/игрокам
+      - Синхронизация состояния эффектов в бою
+      - Расчет модификаторов скорости и урона
+
+    character_service: |
+      - Управление здоровьем персонажа (вампиризм)
+      - Обновление статов персонажа (ускорение)
+      - Получение данных о персонаже для баланса
+      - Синхронизация эффектов между сессиями
+
+    damage_system: |
+      - Расчет вампирического восстановления
+      - Применение модификаторов крита от замедления
+      - Интеграция с базовым уроном
+      - Обработка специальных типов урона
+
+    effect_system: |
+      - Управление визуальными эффектами времени
+      - Синхронизация эффектов между клиентами
+      - Управление длительностью и стаками
+      - Аудио эффекты для временных изменений
+
+technical_specification:
+  subtasks:
+    - id: temporal-effect-manager
+      title: Реализация менеджера временных эффектов
+      description: |
+        Реализация Temporal Effect Manager с маршрутизацией эффектов
+        и координацией всех компонентов системы.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: vampirism-processor
+      title: Реализация процессора вампирических эффектов
+      description: |
+        Реализация Vampirism Processor с логикой восстановления здоровья,
+        накопления крови и интеграцией с системой здоровья.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 3 days
+
+    - id: acceleration-processor
+      title: Реализация процессора эффектов ускорения
+      description: |
+        Реализация Acceleration Processor с модификацией статов скорости,
+        управлением стаками и визуальными эффектами.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 3 days
+
+    - id: time-slowdown-processor
+      title: Реализация процессора замедления времени
+      description: |
+        Реализация Time Slowdown Processor с замедлением целей,
+        расчетом критов и управлением областями эффектов.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 3 days
+
+    - id: kill-streak-tracker
+      title: Реализация трекера серий убийств
+      description: |
+        Реализация Kill Streak Tracker с отслеживанием последовательных убийств,
+        расчетом бонусов и управлением таймерами.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 3 days
+
+    - id: temporal-balance-calculator
+      title: Реализация калькулятора баланса
+      description: |
+        Реализация Temporal Balance Calculator с правилами баланса
+        для PvP/PvE и автоматической корректировкой.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 4 days
+
+    - id: effect-duration-manager
+      title: Реализация менеджера длительности эффектов
+      description: |
+        Реализация Effect Duration Manager с управлением таймерами,
+        истечением эффектов и уведомлениями.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 2 days
+
+    - id: temporal-visual-effects
+      title: Реализация визуальных эффектов времени
+      description: |
+        Реализация Temporal Visual Effects с управлением эффектами
+        замедления, ускорения и вампиризма.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 2 days
+
+    - id: temporal-audio-manager
+      title: Реализация аудио менеджера
+      description: |
+        Реализация Temporal Audio Manager с звуковыми эффектами
+        для временных изменений и серий убийств.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 2 days
+
+    - id: temporal-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Temporal Telemetry Collector с логированием
+        использования эффектов и аналитикой баланса.
+      dependencies: [temporal-effect-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema-temporal
+      title: Создание схемы БД для временных эффектов
+      description: |
+        Создание таблиц для эффектов, серий убийств и телеметрии
+        с индексами и миграциями.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+
+        Gateway --> TemporalEffectsService[Temporal Effects Service<br/>8103]
+
+        TemporalEffectsService --> TEM[Temporal Effect Manager]
+        TemporalEffectsService --> VP[Vampirism Processor]
+        TemporalEffectsService --> AP[Acceleration Processor]
+        TemporalEffectsService --> TSP[Time Slowdown Processor]
+        TemporalEffectsService --> KST[Kill Streak Tracker]
+        TemporalEffectsService --> TBC[Temporal Balance Calculator]
+        TemporalEffectsService --> EDM[Effect Duration Manager]
+        TemporalEffectsService --> TVE[Temporal Visual Effects]
+        TemporalEffectsService --> TAM[Temporal Audio Manager]
+        TemporalEffectsService --> TTC[Temporal Telemetry Collector]
+
+        TEM --> VP
+        TEM --> AP
+        TEM --> TSP
+        TEM --> KST
+        TEM --> TBC
+        TEM --> EDM
+        TEM --> TVE
+        TEM --> TAM
+
+        TemporalEffectsService --> CombatService[Combat Service]
+        TemporalEffectsService --> CharacterService[Character Service]
+        TemporalEffectsService --> DamageSystem[Damage System]
+        TemporalEffectsService --> EffectSystem[Effect System]
+
+        TemporalEffectsService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+
+        TemporalEffectsService --> DB[(Temporal Effects DB)]
+    ```
+
+  temporal_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant W as Weapon
+        participant TEM as Temporal Effect Manager
+        participant Processor as Effect Processor
+        participant KST as Kill Streak Tracker
+        participant TBC as Balance Calculator
+
+        W->>TEM: Damage dealt/kill achieved
+        TEM->>Processor: Route to appropriate processor
+        Processor->>KST: Update kill streak if applicable
+        KST->>Processor: Return streak multiplier
+        Processor->>TBC: Check balance requirements
+        TBC->>Processor: Apply balance adjustments
+        Processor->>TEM: Effect applied successfully
+    ```
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-06
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы временных эффектов оружия:
+      - Определены компоненты для всех типов эффектов (вампиризм, ускорение, замедление времени)
+      - Спроектирована система серий убийств и баланса эффектов
+      - Определены API endpoints и WebSocket каналы
+      - Спроектированы потоки данных и интеграции с системами
+      - Добавлены оптимизации производительности и спецификации тикрейта
+      - Создан план подзадач и диаграммы архитектуры
+      - Определена структура БД для эффектов и серий убийств

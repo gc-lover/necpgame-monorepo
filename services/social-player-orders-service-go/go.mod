@@ -1,4 +1,4 @@
-﻿// Issue: #81
+// Issue: #81
 module github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go
 
 go 1.24.0

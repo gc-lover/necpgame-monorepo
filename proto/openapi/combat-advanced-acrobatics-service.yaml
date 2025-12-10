@@ -1,0 +1,330 @@
+# Issue: #1511
+openapi: 3.0.3
+info:
+  title: Combat Advanced Acrobatics API
+  version: 1.0.0
+  description: |
+    Endpoints for advanced acrobatics (Air Dash, Wall Kick, Vault) and state tracking.
+servers:
+  - url: https://api.necp.game
+    description: Production
+  - url: http://localhost:8083
+    description: Local development
+tags:
+  - name: acrobatics
+    description: Advanced acrobatics actions and state
+paths:
+  /api/v1/gameplay/combat/acrobatics/air-dash:
+    post:
+      tags: [acrobatics]
+      operationId: performAirDash
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AirDashRequest'
+      responses:
+        '200':
+          description: Air Dash executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AirDashState'
+  /api/v1/gameplay/combat/acrobatics/air-dash/available:
+    get:
+      tags: [acrobatics]
+      operationId: getAirDashAvailability
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Availability state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AirDashState'
+  /api/v1/gameplay/combat/acrobatics/air-dash/charges:
+    get:
+      tags: [acrobatics]
+      operationId: getAirDashCharges
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Current and max charges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AirDashState'
+  /api/v1/gameplay/combat/acrobatics/wall-kick:
+    post:
+      tags: [acrobatics]
+      operationId: performWallKick
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WallKickRequest'
+      responses:
+        '200':
+          description: Wall Kick executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WallKickState'
+  /api/v1/gameplay/combat/acrobatics/wall-kick/available:
+    get:
+      tags: [acrobatics]
+      operationId: getWallKickAvailability
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Availability state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WallKickState'
+  /api/v1/gameplay/combat/acrobatics/vault:
+    post:
+      tags: [acrobatics]
+      operationId: performVault
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VaultRequest'
+      responses:
+        '200':
+          description: Vault executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultState'
+  /api/v1/gameplay/combat/acrobatics/vault/obstacles:
+    get:
+      tags: [acrobatics]
+      operationId: listVaultObstacles
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Obstacles available for vault
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Obstacle'
+  /api/v1/gameplay/combat/acrobatics/advanced/state:
+    get:
+      tags: [acrobatics]
+      operationId: getAdvancedAcrobaticsState
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Current advanced acrobatics state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvancedAcrobaticsState'
+components:
+  securitySchemes:
+    $ref: common.yaml#/components/securitySchemes
+  parameters:
+    CharacterId:
+      name: character_id
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Vector3:
+      type: object
+      description: 3D vector, ordered for struct alignment.
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+    AirDashRequest:
+      type: object
+      required: [character_id, direction]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        direction:
+          $ref: '#/components/schemas/Vector3'
+        stamina_cost:
+          type: integer
+          format: int32
+          minimum: 0
+        allow_attack_during_dash:
+          type: boolean
+    AirDashState:
+      type: object
+      required: [character_id, current_charges, max_charges]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_charges:
+          type: integer
+          format: int32
+          minimum: 0
+        max_charges:
+          type: integer
+          format: int32
+          minimum: 0
+        cooldown_until:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+        last_used_position:
+          $ref: '#/components/schemas/Vector3'
+        last_used_direction:
+          $ref: '#/components/schemas/Vector3'
+        stamina_consumed:
+          type: integer
+          format: int32
+          minimum: 0
+    WallKickRequest:
+      type: object
+      required: [character_id, direction]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        direction:
+          $ref: '#/components/schemas/Vector3'
+        chain_count:
+          type: integer
+          format: int32
+          minimum: 0
+    WallKickState:
+      type: object
+      required: [character_id, is_available, chain_count, max_chain_count]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        is_available:
+          type: boolean
+        chain_count:
+          type: integer
+          format: int32
+        max_chain_count:
+          type: integer
+          format: int32
+        last_used_at:
+          type: string
+          format: date-time
+        last_used_position:
+          $ref: '#/components/schemas/Vector3'
+        last_used_direction:
+          $ref: '#/components/schemas/Vector3'
+        stamina_consumed:
+          type: integer
+          format: int32
+          minimum: 0
+    VaultRequest:
+      type: object
+      required: [character_id]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        obstacle_id:
+          type: string
+          format: uuid
+        manual_mode:
+          type: boolean
+        direction:
+          $ref: '#/components/schemas/Vector3'
+    VaultState:
+      type: object
+      required: [character_id, is_active]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        is_active:
+          type: boolean
+        obstacle_id:
+          type: string
+          format: uuid
+        start_position:
+          $ref: '#/components/schemas/Vector3'
+        current_position:
+          $ref: '#/components/schemas/Vector3'
+        direction:
+          $ref: '#/components/schemas/Vector3'
+        stamina_consumed:
+          type: integer
+          format: int32
+          minimum: 0
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+    Obstacle:
+      type: object
+      required: [id, obstacle_type, position]
+      properties:
+        id:
+          type: string
+          format: uuid
+        obstacle_type:
+          type: string
+          enum: [barrier, fence, wall, crate]
+        position:
+          $ref: '#/components/schemas/Vector3'
+        dimensions:
+          $ref: '#/components/schemas/Vector3'
+        material:
+          type: string
+        is_suitable_for_vault:
+          type: boolean
+        detected_at:
+          type: string
+          format: date-time
+    AdvancedAcrobaticsState:
+      type: object
+      required: [character_id]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        air_dash:
+          $ref: '#/components/schemas/AirDashState'
+        wall_kick:
+          $ref: '#/components/schemas/WallKickState'
+        vault:
+          $ref: '#/components/schemas/VaultState'
+security:
+  - BearerAuth: []
+

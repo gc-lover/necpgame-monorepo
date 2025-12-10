@@ -1,0 +1,462 @@
+metadata:
+  id: weapon-interactions-synergies-architecture
+  title: Архитектура системы взаимодействий и синергий оружия
+  document_type: architecture
+  category: combat
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-06T23:55:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - weapons
+    - interactions
+    - synergies
+    - environmental
+    - implants
+  related_systems:
+    - weapon-system
+    - environment-system
+    - implant-system
+    - physics-system
+  related_documents:
+    - id: weapon-special-mechanics-working
+      relation: implements
+  github_issue: 1573
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - physics
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы взаимодействий и синергий оружия,
+    включающую комбинации оружия, синергии с имплантами и окружением,
+    цепные реакции и динамические боевые сценарии.
+  goal: |
+    Создать архитектурную схему с определением компонентов, API, потоков данных
+    и оптимизаций для комплексной системы взаимодействий оружия с миром.
+  essence: |
+    Полная архитектура взаимодействий оружия с поддержкой сложных синергий,
+    цепных реакций и адаптивных боевых механик в динамической среде.
+
+architecture:
+  microservices:
+    - name: weapon-interactions-service
+      port: 8108
+      responsibility: |
+        Управление взаимодействиями и синергиями оружия:
+        - Расчет комбинаций между оружием и окружением
+        - Синергии с имплантами и модификаторами
+        - Обработка цепных реакций и эффектов
+        - Физическое взаимодействие с окружением
+        - Динамические изменения боевых сценариев
+        - Анализ и оптимизация взаимодействий
+      components:
+        - synergy-calculator: расчет синергии
+        - environment-interaction: взаимодействие с окружением
+        - implant-synergy: синергия с имплантами
+        - chain-reaction-engine: движок цепных реакций
+        - physics-integration: интеграция с физикой
+        - interaction-telemetry: телеметрия взаимодействий
+        - dynamic-scenario-manager: менеджер динамических сценариев
+      endpoints:
+        - POST /api/v1/weapon-interactions/synergy/calculate - расчет синергии
+        - GET /api/v1/weapon-interactions/environment/{position} - данные окружения
+        - POST /api/v1/weapon-interactions/implant/check - проверка имплантов
+        - POST /api/v1/weapon-interactions/chain/start - запуск цепной реакции
+        - GET /api/v1/weapon-interactions/scenario/{area} - сценарий области
+        - POST /api/v1/weapon-interactions/physics/simulate - симуляция физики
+      websocket_channels:
+        - wss://api.necp.game/v1/weapon-interactions/{characterId} - обновления взаимодействий
+      events_published:
+        - weapon.synergy.activated: синергия активирована
+        - weapon.interaction.environment: взаимодействие с окружением
+        - weapon.chain_reaction.started: цепная реакция начата
+        - weapon.scenario.changed: сценарий изменен
+      events_subscribed:
+        - weapon.fired: оружие выстрелило
+        - environment.changed: окружение изменилось
+        - implant.activated: имплант активирован
+        - physics.collision: физическое столкновение
+        - character.moved: персонаж перемещен
+
+  synergy_system:
+    weapon_combinations:
+      description: "Комбинации между различными типами оружия"
+      categories:
+        - elemental_combinations: комбинации элементов (огонь + лед, электричество + вода)
+        - physical_combinations: физические комбинации (взрыв + разрушение, рикошет + множественные цели)
+        - temporal_combinations: временные комбинации (замедление + критический урон, ускорение + уклонение)
+        - spatial_combinations: пространственные комбинации (телепортация + позиционирование, гравитация + траектория)
+      mechanics:
+        - synergy_multipliers: множители синергии
+        - effect_stacking: стакинг эффектов
+        - combination_bonuses: бонусы комбинаций
+        - unique_interactions: уникальные взаимодействия
+
+    implant_synergies:
+      description: "Синергии между оружием и имплантами"
+      categories:
+        - cybernetic_synergies: кибернетические синергии (импланты + кибер-оружие)
+        - neural_synergies: нейронные синергии (мозговые импланты + умное оружие)
+        - physical_synergies: физические синергии (мышечные импланты + тяжелое оружие)
+        - sensory_synergies: сенсорные синергии (глазные импланты + прицельное оружие)
+      mechanics:
+        - implant_buffing: усиление имплантов оружием
+        - weapon_enhancement: улучшение оружия имплантами
+        - ability_unlocking: разблокировка способностей
+        - stat_synergies: синергия статов
+
+    environmental_synergies:
+      description: "Синергии с элементами окружения"
+      categories:
+        - surface_synergies: синергии с поверхностями (металл + молния, дерево + огонь)
+        - liquid_synergies: синергии с жидкостями (вода + электричество, кислота + органика)
+        - atmospheric_synergies: синергии с атмосферой (ветер + траектория, давление + взрывы)
+        - structural_synergies: синергии со структурами (стены + проникновение, потолки + гравитация)
+      mechanics:
+        - environmental_bonuses: бонусы от окружения
+        - interaction_modifiers: модификаторы взаимодействия
+        - area_effects: эффекты области
+        - dynamic_changes: динамические изменения
+
+  chain_reactions:
+    reaction_types:
+      description: "Типы цепных реакций"
+      categories:
+        - damage_chains: цепи урона (взрывы вызывают другие взрывы)
+        - elemental_spread: распространение элементов (огонь распространяется, электричество прыгает)
+        - environmental_cascades: каскады окружения (разрушение вызывает обвалы)
+        - ability_chains: цепи способностей (одна способность вызывает другую)
+      mechanics:
+        - trigger_conditions: условия запуска
+        - propagation_rules: правила распространения
+        - intensity_scaling: масштабирование интенсивности
+        - termination_conditions: условия завершения
+
+    reaction_engine:
+      description: "Движок обработки цепных реакций"
+      components:
+        - trigger_detector: детектор триггеров
+        - propagation_calculator: калькулятор распространения
+        - effect_applier: применитель эффектов
+        - termination_handler: обработчик завершения
+      mechanics:
+        - real_time_processing: обработка в реальном времени
+        - physics_integration: интеграция с физикой
+        - performance_limits: ограничения производительности
+        - safety_mechanisms: механизмы безопасности
+
+  environmental_interactions:
+    surface_interactions:
+      description: "Взаимодействие с поверхностями"
+      mechanics:
+        - material_detection: обнаружение материалов
+        - interaction_calculation: расчет взаимодействия
+        - effect_modification: модификация эффектов
+        - visual_feedback: визуальная обратная связь
+
+    physics_integration:
+      description: "Интеграция с физической симуляцией"
+      mechanics:
+        - collision_detection: обнаружение столкновений
+        - force_application: применение сил
+        - trajectory_modification: модификация траекторий
+        - destruction_simulation: симуляция разрушения
+
+    dynamic_scenario_management:
+      description: "Управление динамическими сценариями"
+      mechanics:
+        - scenario_detection: обнаружение сценариев
+        - opportunity_calculation: расчет возможностей
+        - player_guidance: руководство игроком
+        - adaptive_difficulty: адаптивная сложность
+
+  data_flows:
+    synergy_calculation_flow: |
+      1. Weapon combination detected (multiple weapons used)
+      2. Synergy Calculator analyzes weapon types and effects
+      3. Implant Synergy checks active implants
+      4. Environmental Synergy evaluates surroundings
+      5. Combined synergy bonuses calculated
+      6. Effects applied to weapon performance
+      7. Event weapon.synergy.activated published
+      8. Telemetry data collected for analysis
+
+    chain_reaction_flow: |
+      1. Initial weapon effect triggers chain reaction
+      2. Chain Reaction Engine identifies propagation targets
+      3. Physics Integration calculates force vectors
+      4. Environmental Interactions modify effects
+      5. Subsequent reactions triggered in sequence
+      6. Termination conditions checked continuously
+      7. Final effects applied to affected entities
+      8. Event weapon.chain_reaction.completed published
+
+    environmental_interaction_flow: |
+      1. Weapon effect interacts with environment
+      2. Environment Interaction detects material properties
+      3. Physics Integration simulates interaction
+      4. Dynamic Scenario Manager updates tactical options
+      5. Player receives visual/audio feedback
+      6. Weapon behavior modified based on interaction
+      7. Event weapon.interaction.environment published
+
+  performance_optimizations:
+    memory_optimization:
+      interaction_pooling:
+        synergy_state_pool: size 5000, reuse synergy calculation objects
+        reaction_chain_pool: size 2000, reuse chain reaction state objects
+        environmental_data_pool: size 10000, reuse environmental interaction objects
+
+      struct_alignment:
+        interaction_struct: [weapon_id(uuid), target_type(uint8), environmental_factors(map), synergy_multipliers([]float32), timestamp(int64)]
+        chain_reaction_struct: [chain_id(uuid), triggers([]uuid), effects_applied([]effect), propagation_radius(float32), intensity(float32)]
+
+    computation_optimization:
+      spatial_indexing: spatial partitioning for environmental interactions
+      caching_strategy: cache synergy calculations and environmental data
+      batch_processing: group interaction calculations per area
+      lazy_evaluation: calculate complex synergies on-demand
+
+    network_optimization:
+      interaction_delta: send only changed interaction states
+      synergy_compression: compress complex synergy data
+      environmental_streaming: stream environmental data by relevance
+      prediction_support: client-side interaction prediction
+
+  tickrate_specification:
+    interaction_processing:
+      tickrate: 20-60 Hz для активных взаимодействий, Event-based для синергии
+      network_load: |
+        - Interaction updates: ~0.3-1.2 KB/sec per active interaction
+        - Synergy calculations: ~0.1-0.4 KB/sec per synergy event
+        - Chain reactions: ~0.2-0.8 KB/sec per reaction chain
+        - Environmental data: ~0.5-2.0 KB/sec per area update
+        - Total interactions traffic: ~1.0-4.0 KB/sec per player in dynamic areas
+      latency_requirements: < 30ms для взаимодействий, < 50ms для синергии
+
+  database_structure:
+    tables:
+      - name: weapon_synergies
+        description: Определения синергий оружия
+        columns:
+          - id: UUID PRIMARY KEY
+          - synergy_type: ENUM (weapon_weapon, weapon_implant, weapon_environment)
+          - primary_weapon: VARCHAR(100)
+          - secondary_element: VARCHAR(100)
+          - synergy_multiplier: FLOAT
+          - effect_modifiers: JSONB
+          - activation_conditions: JSONB
+
+      - name: environmental_materials
+        description: Материалы окружения для взаимодействий
+        columns:
+          - id: UUID PRIMARY KEY
+          - material_type: VARCHAR(50)
+          - interaction_properties: JSONB
+          - destruction_threshold: FLOAT
+          - conductivity_factor: FLOAT
+          - flammability_rating: INTEGER
+
+      - name: chain_reactions
+        description: Цепные реакции и их параметры
+        columns:
+          - id: UUID PRIMARY KEY
+          - reaction_type: VARCHAR(50)
+          - trigger_conditions: JSONB
+          - propagation_rules: JSONB
+          - effect_chain: JSONB
+          - termination_rules: JSONB
+
+      - name: interaction_telemetry
+        description: Телеметрия взаимодействий
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - weapon_id: UUID FOREIGN KEY
+          - interaction_type: VARCHAR(50)
+          - synergy_activated: BOOLEAN
+          - environmental_factors: JSONB
+          - outcome_metrics: JSONB
+          - timestamp: TIMESTAMP
+
+      - name: dynamic_scenarios
+        description: Динамические боевые сценарии
+        columns:
+          - id: UUID PRIMARY KEY
+          - area_id: UUID FOREIGN KEY
+          - scenario_type: VARCHAR(50)
+          - tactical_opportunities: JSONB
+          - environmental_changes: JSONB
+          - player_guidance: JSONB
+          - active_until: TIMESTAMP
+
+  integrations:
+    weapon_system: |
+      - Синхронизация эффектов оружия с синергиями
+      - Применение модификаторов от взаимодействий
+      - Управление цепными реакциями
+      - Обработка комбинаций оружия
+
+    environment_system: |
+      - Получение данных о материалах и поверхностях
+      - Синхронизация изменений окружения
+      - Управление динамическими сценариями
+      - Обработка физических взаимодействий
+
+    implant_system: |
+      - Проверка активных имплантов для синергии
+      - Синхронизация эффектов имплантов
+      - Управление нейронными связями
+      - Обработка кибернетических улучшений
+
+    physics_system: |
+      - Симуляция физических взаимодействий
+      - Расчет траекторий и столкновений
+      - Обработка сил и разрушений
+      - Управление цепными реакциями
+
+technical_specification:
+  subtasks:
+    - id: synergy-calculator-implementation
+      title: Реализация Synergy Calculator
+      description: |
+        Реализация калькулятора синергии с поддержкой комбинаций оружия,
+        имплантов и окружения с комплексными расчетами эффектов.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: environment-interaction-engine
+      title: Реализация Environment Interaction Engine
+      description: |
+        Реализация движка взаимодействия с окружением с поддержкой материалов,
+        поверхностей и динамических изменений окружения.
+      dependencies: [synergy-calculator-implementation]
+      estimated_effort: 6 days
+
+    - id: chain-reaction-engine
+      title: Реализация Chain Reaction Engine
+      description: |
+        Реализация движка цепных реакций с поддержкой распространения,
+        интенсивности и безопасного завершения реакций.
+      dependencies: [environment-interaction-engine]
+      estimated_effort: 5 days
+
+    - id: implant-synergy-integration
+      title: Реализация Implant Synergy Integration
+      description: |
+        Реализация интеграции синергии с имплантами с поддержкой различных
+        типов имплантов и их эффектов на оружие.
+      dependencies: [synergy-calculator-implementation]
+      estimated_effort: 4 days
+
+    - id: physics-integration-module
+      title: Реализация Physics Integration Module
+      description: |
+        Реализация модуля интеграции с физикой для обработки столкновений,
+        сил и разрушений в реальном времени.
+      dependencies: [chain-reaction-engine]
+      estimated_effort: 5 days
+
+    - id: dynamic-scenario-manager
+      title: Реализация Dynamic Scenario Manager
+      description: |
+        Реализация менеджера динамических сценариев с обнаружением возможностей,
+        руководством игроком и адаптивной сложностью.
+      dependencies: [environment-interaction-engine]
+      estimated_effort: 4 days
+
+    - id: interaction-telemetry-system
+      title: Реализация Interaction Telemetry System
+      description: |
+        Реализация системы телеметрии взаимодействий с сбором данных,
+        анализом паттернов и оптимизацией производительности.
+      dependencies: [synergy-calculator-implementation]
+      estimated_effort: 3 days
+
+    - id: database-interactions-schema
+      title: Создание схемы БД для взаимодействий
+      description: |
+        Создание таблиц для синергий, материалов, цепных реакций
+        и телеметрии с индексами и оптимизациями.
+      dependencies: []
+      estimated_effort: 4 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+
+        Gateway --> WeaponInteractionsService[Weapon Interactions Service<br/>8108]
+
+        WeaponInteractionsService --> SC[Synergy Calculator]
+        WeaponInteractionsService --> EI[Environment Interaction]
+        WeaponInteractionsService --> IS[Implant Synergy]
+        WeaponInteractionsService --> CRE[Chain Reaction Engine]
+        WeaponInteractionsService --> PI[Physics Integration]
+        WeaponInteractionsService --> IT[Interaction Telemetry]
+        WeaponInteractionsService --> DSM[Dynamic Scenario Manager]
+
+        SC --> EI
+        SC --> IS
+        EI --> CRE
+        CRE --> PI
+        EI --> DSM
+        SC --> IT
+        EI --> IT
+        CRE --> IT
+
+        WeaponInteractionsService --> WeaponSystem[Weapon System]
+        WeaponInteractionsService --> EnvironmentSystem[Environment System]
+        WeaponInteractionsService --> ImplantSystem[Implant System]
+        WeaponInteractionsService --> PhysicsSystem[Physics System]
+
+        WeaponInteractionsService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> Analytics[Analytics Service]
+
+        WeaponInteractionsService --> DB[(Interactions DB)]
+    ```
+
+  synergy_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant W as Weapon System
+        participant SC as Synergy Calculator
+        participant EI as Environment Interaction
+        participant IS as Implant Synergy
+        participant CRE as Chain Reaction Engine
+
+        W->>SC: Weapon combination detected
+        SC->>EI: Check environmental factors
+        SC->>IS: Check implant synergies
+        EI->>SC: Environmental bonuses
+        IS->>SC: Implant synergies
+        SC->>CRE: Check for chain reactions
+        CRE->>SC: Reaction modifiers
+        SC->>W: Apply synergy effects
+    ```
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-06
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы взаимодействий и синергий оружия:
+      - Определены компоненты для синергии, взаимодействий и цепных реакций
+      - Спроектирована микросервисная архитектура с weapon-interactions-service
+      - Детализированы системы синергии (оружие+оружие, оружие+импланты, оружие+окружение)
+      - Спроектирован движок цепных реакций с распространением и интенсивностью
+      - Создана система взаимодействия с окружением и физикой
+      - Добавлены API endpoints, WebSocket каналы и события
+      - Спроектированы потоки данных для синергии, реакций и взаимодействий
+      - Добавлены оптимизации производительности (spatial indexing, caching)
+      - Создана структура БД с таблицами для синергий, материалов и телеметрии
+      - Определены интеграции с weapon, environment, implant и physics системами

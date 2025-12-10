@@ -1,0 +1,224 @@
+# Issue: #1547
+metadata:
+  id: quest-engram-chips-004-personality-conflict
+  title: 'Конфликт личностей'
+  document_type: canon
+  category: system-quest
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-06T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-29T15:17:19Z
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - engram-chips
+    - conflict
+    - management
+    - system
+    - narrative
+  topics:
+    - engram-system
+    - character-progression
+    - conflict-resolution
+    - psychology
+  related_systems:
+    - gameplay-service
+    - character-service
+    - narrative-service
+    - quest-service
+  related_documents:
+    - id: engram-chips-system-concept
+      relation: references
+  source: knowledge/analysis/tasks/ideas/engram-chips-system-quests-concept.md
+  visibility: internal
+  audience:
+    - content
+    - narrative
+    - gameplay
+  risk_level: medium
+review:
+  chain:
+    - role: content_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Игроку нужно решить конфликт между энграммами, но нет структурированного квеста для управления конфликтами и выбора между энграммами.
+  goal: Создать квест на решение конфликта между энграммами с выбором между энграммами и последствиями выбора.
+  essence: Игрок сталкивается с конфликтом между энграммами, которые борются за контроль или влияние. Игрок должен выбрать между энграммами, разрешить конфликт и принять последствия своего выбора.
+  key_points:
+    - Требует управления несколькими энграммами одновременно
+    - Предоставляет выбор между энграммами с последствиями
+    - Создает атмосферу Cyberpunk 2077 с философией конфликтов и выбора
+    - Влияет на дальнейшее развитие персонажа и доступные квесты
+quest_definition:
+  quest_type: side
+  level_min: 25
+  level_max: null
+  requirements:
+    required_quests:
+      - quest-engram-chips-001-first-engram
+    required_flags:
+      - first_engram_created
+      - engram_management_unlocked
+    required_reputation: {}
+    required_items:
+      - engram_chip
+  objectives:
+    - id: detect_conflict
+      text: "Обнаружить конфликт между энграммами. Заметить признаки конфликта: противоречивые советы, конфликтующие желания, борьбу за контроль. Конфликт может быть обнаружен через мониторинг системы энграмм или через симптомы у игрока"
+      type: investigate
+      target: engram_conflict_detection
+      count: 1
+      optional: false
+    - id: analyze_conflict
+      text: "Проанализировать природу конфликта: причины конфликта, заинтересованные энграммы, возможные последствия. Понять, почему энграммы конфликтуют и что можно сделать для разрешения конфликта"
+      type: investigate
+      target: engram_conflict_analysis
+      count: 1
+      optional: false
+    - id: consult_expert
+      text: "Проконсультироваться с экспертом по энграммам о способах разрешения конфликта. Эксперт может предложить различные варианты решения: выбор одной энграммы, балансировку влияния, временное отключение одной из энграмм"
+      type: interact
+      target: engram_expert_consultation
+      count: 1
+      optional: false
+    - id: make_choice
+      text: "Принять решение о разрешении конфликта: выбрать одну из энграмм, попытаться сбалансировать влияние или найти компромисс. Выбор определяет дальнейшее развитие персонажа и доступные квесты"
+      type: perform
+      target: conflict_resolution_choice
+      count: 1
+      optional: false
+    - id: resolve_conflict
+      text: "Разрешить конфликт в соответствии с выбранным решением. Применить выбранный метод разрешения конфликта: выбор энграммы, балансировку влияния или компромисс. Процесс может быть сложным и требовать времени"
+      type: perform
+      target: conflict_resolution
+      count: 1
+      optional: false
+    - id: deal_with_consequences
+      text: "Справиться с последствиями выбора: потеря влияния одной из энграмм, изменение баланса, новые возможности или ограничения. Понимать, что выбор имеет долгосрочные последствия"
+      type: perform
+      target: consequences_management
+      count: 1
+      optional: false
+  rewards:
+    experience: 6000
+    currency: 1500
+    items: []
+    reputation:
+      engram_masters: 40
+    flags:
+      - conflict_resolution_experience
+      - advanced_conflict_management_unlocked
+  branches:
+    - id: choose_first_engram
+      unlock_condition:
+        type: choice
+        choice_id: conflict_resolution
+        value: choose_first
+      consequences:
+        reputation:
+          engram_masters: 20
+        flags:
+          - first_engram_dominant
+          - second_engram_suppressed
+        unlocked_content:
+          - quest_type: side
+            category: engram-single-management
+            location: night_city
+    - id: choose_second_engram
+      unlock_condition:
+        type: choice
+        choice_id: conflict_resolution
+        value: choose_second
+      consequences:
+        reputation:
+          engram_masters: 20
+        flags:
+          - second_engram_dominant
+          - first_engram_suppressed
+        unlocked_content:
+          - quest_type: side
+            category: engram-single-management
+            location: night_city
+    - id: balance_influence
+      unlock_condition:
+        type: choice
+        choice_id: conflict_resolution
+        value: balance
+      consequences:
+        reputation:
+          engram_masters: 30
+        flags:
+          - balanced_engram_management
+          - multi_engram_quests_unlocked
+        unlocked_content:
+          - quest_type: side
+            category: engram-balance-management
+            location: night_city
+content:
+  sections:
+    - id: introduction
+      title: Обнаружение конфликта
+      body: |
+        Игрок обнаруживает конфликт между энграммами, которые борются за контроль или влияние. Конфликт может проявляться через противоречивые советы, конфликтующие желания или борьбу за контроль. Игрок должен понять природу конфликта и найти способ его разрешения.
+      mechanics_links: []
+      assets: []
+    - id: analysis
+      title: Анализ конфликта
+      body: |
+        Игрок анализирует природу конфликта: причины конфликта, заинтересованные энграммы, возможные последствия. Он понимает, почему энграммы конфликтуют и что можно сделать для разрешения конфликта. Это важный момент, который определяет дальнейшие действия игрока.
+      mechanics_links: []
+      assets: []
+    - id: consultation
+      title: Консультация с экспертом
+      body: |
+        Игрок консультируется с экспертом по энграммам о способах разрешения конфликта. Эксперт может предложить различные варианты решения: выбор одной энграммы, балансировку влияния, временное отключение одной из энграмм. Игрок получает информацию о последствиях каждого варианта.
+      mechanics_links: []
+      assets: []
+    - id: choice
+      title: Принятие решения
+      body: |
+        Игрок принимает решение о разрешении конфликта: выбирает одну из энграмм, пытается сбалансировать влияние или находит компромисс. Выбор определяет дальнейшее развитие персонажа и доступные квесты. Это важный момент, который влияет на всю дальнейшую игру.
+      mechanics_links: []
+      assets: []
+    - id: resolution
+      title: Разрешение конфликта
+      body: |
+        Игрок разрешает конфликт в соответствии с выбранным решением. Процесс может быть сложным и требовать времени. Игрок применяет выбранный метод разрешения конфликта и видит результаты своих действий.
+      mechanics_links: []
+      assets: []
+    - id: consequences
+      title: Последствия выбора
+      body: |
+        Игрок справляется с последствиями выбора: потерей влияния одной из энграмм, изменением баланса, новыми возможностями или ограничениями. Он понимает, что выбор имеет долгосрочные последствия и влияет на дальнейшее развитие персонажа.
+      mechanics_links: []
+      assets: []
+    - id: rewards
+      title: Награды и последствия
+      body: |
+        После завершения квеста игрок получает опыт разрешения конфликтов, доступ к продвинутым функциям управления конфликтами и репутацию с фракциями. В зависимости от выбранного метода разрешения конфликта игрок получает дополнительные награды и открывает доступ к соответствующим квестам управления энграммами.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - knowledge/mechanics/progression/engram-chips-system-concept.md
+  decisions: []
+implementation:
+  github_issue: 1547
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-12-06
+    author: content_writer
+    changes: 'Создан YAML файл квеста "Конфликт личностей" на основе концепции от Idea Writer. Квест позволяет игроку решить конфликт между энграммами с выбором между энграммами и последствиями выбора.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

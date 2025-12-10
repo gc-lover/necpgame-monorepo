@@ -1,4 +1,4 @@
-﻿module github.com/necpgame/maintenance-service-go
+module github.com/necpgame/maintenance-service-go
 
 go 1.24.0
 

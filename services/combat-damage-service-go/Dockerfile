@@ -6,6 +6,7 @@ RUN apk add --no-cache make git ca-certificates tzdata
 
 COPY services/combat-damage-service-go/go.mod services/combat-damage-service-go/go.sum ./
 RUN go mod download
+RUN go mod tidy
 
 COPY services/combat-damage-service-go ./services/combat-damage-service-go
 
@@ -35,3 +36,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:9090/metrics || exit 1
 
 ENTRYPOINT ["/app/combat-damage-service"]
+

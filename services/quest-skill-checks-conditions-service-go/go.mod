@@ -1,4 +1,4 @@
-﻿module github.com/gc-lover/necpgame-monorepo/services/quest-skill-checks-conditions-service-go
+module github.com/gc-lover/necpgame-monorepo/services/quest-skill-checks-conditions-service-go
 
 go 1.24.0
 

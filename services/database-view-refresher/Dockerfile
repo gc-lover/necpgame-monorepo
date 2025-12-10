@@ -7,7 +7,8 @@ WORKDIR /app
 
 # Copy go modules
 COPY go.mod go.sum* ./
-RUN go mod download || true
+RUN go mod download
+RUN go mod tidy || true
 
 # Copy source
 COPY . .
@@ -30,5 +31,6 @@ RUN adduser -D -u 1000 appuser
 USER appuser
 
 ENTRYPOINT ["/app/view-refresher"]
+
 
 

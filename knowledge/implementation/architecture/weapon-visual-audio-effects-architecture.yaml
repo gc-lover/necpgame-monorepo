@@ -1,0 +1,492 @@
+metadata:
+  id: weapon-visual-audio-effects-architecture
+  title: Архитектура системы визуальных и звуковых эффектов оружия
+  document_type: architecture
+  category: combat
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-07T00:05:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - weapons
+    - visual-effects
+    - audio-effects
+    - particles
+    - sound-design
+  related_systems:
+    - weapon-system
+    - client-system
+    - audio-system
+    - particle-system
+  related_documents:
+    - id: weapon-special-mechanics-working
+      relation: implements
+  github_issue: 1577
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - client
+    - audio
+    - vfx
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы визуальных и звуковых эффектов оружия,
+    включающую частицы, анимации, звуки, эффекты разрушения и обратную связь
+    для создания атмосферы и улучшения игрового опыта.
+  goal: |
+    Создать архитектурную схему с определением компонентов, API, потоков данных
+    и оптимизаций для комплексной системы визуальных и звуковых эффектов.
+  essence: |
+    Полная архитектура эффектов оружия с поддержкой процедурной генерации,
+    адаптивного качества и интеграции с игровым движком для иммерсивного опыта.
+
+architecture:
+  microservices:
+    - name: weapon-effects-service
+      port: 8109
+      responsibility: |
+        Управление визуальными и звуковыми эффектами оружия:
+        - Генерация и управление частицами эффектов
+        - Обработка звуковых событий и аудио эффектов
+        - Синхронизация эффектов с действиями оружия
+        - Адаптивное качество эффектов
+        - Оптимизация производительности эффектов
+        - Анализ и телеметрия использования эффектов
+      components:
+        - particle-engine: движок частиц
+        - audio-engine: аудио движок
+        - effect-synchronizer: синхронизатор эффектов
+        - quality-manager: менеджер качества
+        - performance-optimizer: оптимизатор производительности
+        - effects-telemetry: телеметрия эффектов
+        - procedural-generator: процедурный генератор
+      endpoints:
+        - POST /api/v1/weapon-effects/particle/spawn - спавн частиц
+        - POST /api/v1/weapon-effects/audio/play - воспроизведение звука
+        - POST /api/v1/weapon-effects/sync/{weaponId} - синхронизация эффектов
+        - GET /api/v1/weapon-effects/quality/settings - настройки качества
+        - POST /api/v1/weapon-effects/procedural/generate - генерация эффектов
+        - GET /api/v1/weapon-effects/telemetry/{weaponId} - телеметрия
+      websocket_channels:
+        - wss://api.necp.game/v1/weapon-effects/{characterId} - обновления эффектов
+      events_published:
+        - weapon.effect.spawned: эффект создан
+        - weapon.audio.played: звук воспроизведен
+        - weapon.effect.quality_changed: качество изменено
+        - weapon.effect.performance_optimized: производительность оптимизирована
+      events_subscribed:
+        - weapon.fired: оружие выстрелило
+        - weapon.hit: попадание оружием
+        - weapon.destroyed: оружие уничтожено
+        - client.quality_changed: качество клиента изменено
+        - performance.throttled: производительность ограничена
+
+  visual_effects_system:
+    particle_effects:
+      description: "Система частиц для визуальных эффектов"
+      categories:
+        - elemental_particles: частицы элементов (огонь, лед, электричество, яд)
+        - physical_particles: физические частицы (искры, дым, пыль, обломки)
+        - energy_particles: энергетические частицы (плазма, лазер, молнии)
+        - destruction_particles: частицы разрушения (взрывы, осколки, обвалы)
+      mechanics:
+        - particle_lifecycle: жизненный цикл частиц
+        - particle_properties: свойства частиц (размер, цвет, скорость)
+        - particle_interaction: взаимодействие частиц
+        - particle_optimization: оптимизация частиц
+
+    animation_system:
+      description: "Система анимаций для оружия и эффектов"
+      categories:
+        - weapon_animations: анимации оружия (выстрел, перезарядка, разрушение)
+        - character_animations: анимации персонажа (реакции на эффекты)
+        - environmental_animations: анимации окружения (разрушение, деформация)
+        - ui_animations: UI анимации (эффекты интерфейса)
+      mechanics:
+        - animation_states: состояния анимаций
+        - animation_blending: смешивание анимаций
+        - animation_events: события анимаций
+        - animation_optimization: оптимизация анимаций
+
+    destruction_effects:
+      description: "Эффекты разрушения и повреждений"
+      categories:
+        - surface_destruction: разрушение поверхностей
+        - object_destruction: разрушение объектов
+        - character_destruction: разрушение персонажей
+        - environmental_destruction: разрушение окружения
+      mechanics:
+        - destruction_physics: физика разрушения
+        - destruction_visuals: визуализация разрушения
+        - destruction_audio: звуки разрушения
+        - destruction_optimization: оптимизация разрушения
+
+  audio_effects_system:
+    weapon_sounds:
+      description: "Звуковые эффекты оружия"
+      categories:
+        - firing_sounds: звуки выстрелов (по типам оружия)
+        - impact_sounds: звуки попаданий (по материалам)
+        - reload_sounds: звуки перезарядки
+        - destruction_sounds: звуки разрушения
+      mechanics:
+        - sound_variation: вариации звуков
+        - sound_spatialization: пространственные звуки
+        - sound_layering: многослойные звуки
+        - sound_optimization: оптимизация звуков
+
+    environmental_audio:
+      description: "Аудио эффекты окружения"
+      categories:
+        - ambient_sounds: фоновые звуки
+        - interaction_sounds: звуки взаимодействия
+        - weather_sounds: погодные звуки
+        - destruction_sounds: звуки разрушения
+      mechanics:
+        - audio_occlusion: окклюзия звука
+        - audio_reverb: реверберация
+        - audio_doppler: эффект Доплера
+        - audio_adaptation: адаптация звука
+
+    procedural_audio:
+      description: "Процедурная генерация звука"
+      categories:
+        - dynamic_sounds: динамические звуки
+        - adaptive_sounds: адаптивные звуки
+        - layered_sounds: многослойные звуки
+        - interactive_sounds: интерактивные звуки
+      mechanics:
+        - audio_synthesis: синтез звука
+        - audio_modulation: модуляция звука
+        - audio_filtering: фильтрация звука
+        - audio_analysis: анализ звука
+
+  feedback_system:
+    haptic_feedback:
+      description: "Тактильная обратная связь"
+      mechanics:
+        - vibration_patterns: паттерны вибрации
+        - intensity_scaling: масштабирование интенсивности
+        - device_adaptation: адаптация к устройствам
+        - feedback_optimization: оптимизация обратной связи
+
+    visual_feedback:
+      description: "Визуальная обратная связь"
+      mechanics:
+        - screen_effects: эффекты экрана (shake, flash, blur)
+        - ui_feedback: UI обратная связь
+        - environmental_feedback: обратная связь окружения
+        - performance_feedback: обратная связь производительности
+
+    combined_feedback:
+      description: "Комбинированная обратная связь"
+      mechanics:
+        - multisensory_experience: мультисенсорный опыт
+        - adaptive_intensity: адаптивная интенсивность
+        - player_preferences: предпочтения игрока
+        - accessibility_support: поддержка доступности
+
+  quality_and_performance:
+    adaptive_quality:
+      description: "Адаптивное качество эффектов"
+      mechanics:
+        - quality_levels: уровни качества (Low, Medium, High, Ultra)
+        - performance_monitoring: мониторинг производительности
+        - automatic_adjustment: автоматическая корректировка
+        - quality_preferences: предпочтения качества
+
+    performance_optimization:
+      description: "Оптимизация производительности"
+      mechanics:
+        - effect_culling: отсечение эффектов
+        - lod_system: система LOD для эффектов
+        - pooling_system: система пулинга
+        - batching_system: система батчинга
+
+    resource_management:
+      description: "Управление ресурсами эффектов"
+      mechanics:
+        - memory_management: управление памятью
+        - texture_compression: сжатие текстур
+        - audio_compression: сжатие аудио
+        - asset_streaming: стриминг ассетов
+
+  data_flows:
+    effect_trigger_flow: |
+      1. Weapon action triggers effect (fire, hit, destroy)
+      2. Effect Synchronizer identifies required effects
+      3. Quality Manager checks performance and quality settings
+      4. Particle Engine spawns visual particles
+      5. Audio Engine plays sound effects
+      6. Effect synchronization sent to client
+      7. Client renders effects with local optimization
+      8. Event weapon.effect.spawned published
+
+    procedural_generation_flow: |
+      1. Weapon effect requires procedural generation
+      2. Procedural Generator analyzes weapon parameters
+      3. Visual parameters calculated (color, size, count)
+      4. Audio parameters synthesized (pitch, volume, reverb)
+      5. Effect template created and cached
+      6. Effect spawned with generated parameters
+      7. Telemetry collected for future optimization
+
+    quality_adaptation_flow: |
+      1. Performance monitoring detects frame rate drop
+      2. Quality Manager analyzes active effects
+      3. Quality level automatically reduced
+      4. Effect parameters adjusted (particle count, audio quality)
+      5. Client notified of quality change
+      6. Effects continue with reduced quality
+      7. Event weapon.effect.quality_changed published
+
+  performance_optimizations:
+    memory_optimization:
+      effect_pooling:
+        particle_pool: size 50000, reuse particle objects
+        audio_source_pool: size 1000, reuse audio sources
+        effect_template_pool: size 5000, reuse effect templates
+
+      struct_alignment:
+        effect_struct: [effect_id(uuid), type(uint8), parameters(effect_params), position(vec3), lifetime(float32), quality_level(uint8)]
+        particle_struct: [position(vec3), velocity(vec3), color(rgba), size(float32), lifetime(float32), texture_id(uint16)]
+
+    computation_optimization:
+      spatial_culling: frustum and occlusion culling for effects
+      effect_batching: batch similar effects for GPU optimization
+      lod_system: level of detail for particle systems
+      predictive_spawning: predict and pre-spawn common effects
+
+    network_optimization:
+      effect_compression: compress effect parameters for network transmission
+      delta_sync: send only changed effect states
+      interest_management: send effects only to relevant clients
+      prediction_support: client-side effect prediction and interpolation
+
+  tickrate_specification:
+    effect_processing:
+      tickrate: 30-120 Hz для активных эффектов, Event-based для триггеров
+      network_load: |
+        - Effect synchronization: ~0.2-0.8 KB/sec per active effect
+        - Particle updates: ~0.5-2.0 KB/sec per particle system
+        - Audio events: ~0.1-0.4 KB/sec per audio source
+        - Quality changes: ~0.05-0.2 KB/sec per adjustment
+        - Total effects traffic: ~1.0-3.5 KB/sec per player with active effects
+      latency_requirements: < 20ms для триггеров эффектов, < 50ms для синхронизации
+
+  database_structure:
+    tables:
+      - name: weapon_effect_definitions
+        description: Определения эффектов оружия
+        columns:
+          - id: UUID PRIMARY KEY
+          - weapon_type: VARCHAR(50)
+          - effect_type: ENUM (visual, audio, combined)
+          - effect_category: VARCHAR(50)
+          - base_parameters: JSONB
+          - quality_variants: JSONB
+          - procedural_rules: JSONB
+
+      - name: effect_performance_metrics
+        description: Метрики производительности эффектов
+        columns:
+          - id: UUID PRIMARY KEY
+          - effect_id: UUID FOREIGN KEY
+          - quality_level: INTEGER
+          - particle_count: INTEGER
+          - memory_usage: BIGINT
+          - cpu_usage: FLOAT
+          - gpu_usage: FLOAT
+          - measured_at: TIMESTAMP
+
+      - name: effect_telemetry
+        description: Телеметрия использования эффектов
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - weapon_id: UUID FOREIGN KEY
+          - effect_id: UUID FOREIGN KEY
+          - spawn_count: INTEGER
+          - total_lifetime: FLOAT
+          - quality_level: INTEGER
+          - performance_impact: JSONB
+          - created_at: TIMESTAMP
+
+      - name: procedural_effect_cache
+        description: Кэш процедурных эффектов
+        columns:
+          - id: UUID PRIMARY KEY
+          - weapon_parameters_hash: VARCHAR(64)
+          - generated_effect: JSONB
+          - usage_count: INTEGER
+          - last_used: TIMESTAMP
+          - performance_rating: FLOAT
+
+  integrations:
+    weapon_system: |
+      - Синхронизация эффектов с действиями оружия
+      - Получение параметров для генерации эффектов
+      - Управление качеством эффектов
+      - Обработка модификаторов эффектов
+
+    client_system: |
+      - Рендеринг визуальных эффектов
+      - Воспроизведение звуковых эффектов
+      - Управление качеством эффектов
+      - Обработка обратной связи
+
+    audio_system: |
+      - Управление аудио источниками
+      - Пространственная обработка звука
+      - Адаптивное качество аудио
+      - Синхронизация с визуальными эффектами
+
+    particle_system: |
+      - Генерация и управление частицами
+      - Оптимизация рендеринга частиц
+      - LOD система для частиц
+      - Физика частиц
+
+technical_specification:
+  subtasks:
+    - id: particle-engine-implementation
+      title: Реализация Particle Engine
+      description: |
+        Реализация движка частиц с поддержкой различных типов эффектов,
+        оптимизацией производительности и адаптивным качеством.
+      dependencies: []
+      estimated_effort: 6 days
+
+    - id: audio-engine-integration
+      title: Реализация Audio Engine Integration
+      description: |
+        Реализация интеграции с аудио движком с поддержкой пространственных звуков,
+        процедурной генерации и адаптивного качества.
+      dependencies: [particle-engine-implementation]
+      estimated_effort: 5 days
+
+    - id: effect-synchronizer
+      title: Реализация Effect Synchronizer
+      description: |
+        Реализация синхронизатора эффектов с поддержкой сетевой синхронизации,
+        предикшена и оптимизации трафика.
+      dependencies: [particle-engine-implementation, audio-engine-integration]
+      estimated_effort: 4 days
+
+    - id: quality-manager
+      title: Реализация Quality Manager
+      description: |
+        Реализация менеджера качества с автоматической адаптацией,
+        мониторингом производительности и пользовательскими настройками.
+      dependencies: [effect-synchronizer]
+      estimated_effort: 4 days
+
+    - id: procedural-generator
+      title: Реализация Procedural Generator
+      description: |
+        Реализация процедурного генератора эффектов с анализом параметров оружия,
+        генерацией визуальных и звуковых эффектов.
+      dependencies: [particle-engine-implementation, audio-engine-integration]
+      estimated_effort: 5 days
+
+    - id: performance-optimizer
+      title: Реализация Performance Optimizer
+      description: |
+        Реализация оптимизатора производительности с LOD системой,
+        пулингом ресурсов и динамической адаптацией.
+      dependencies: [quality-manager]
+      estimated_effort: 4 days
+
+    - id: effects-telemetry-system
+      title: Реализация Effects Telemetry System
+      description: |
+        Реализация системы телеметрии эффектов с сбором метрик,
+        анализом производительности и оптимизацией.
+      dependencies: [effect-synchronizer]
+      estimated_effort: 3 days
+
+    - id: database-effects-schema
+      title: Создание схемы БД для эффектов
+      description: |
+        Создание таблиц для определений эффектов, метрик производительности
+        и телеметрии с индексами и оптимизациями.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+
+        Gateway --> WeaponEffectsService[Weapon Effects Service<br/>8109]
+
+        WeaponEffectsService --> PE[Particle Engine]
+        WeaponEffectsService --> AE[Audio Engine]
+        WeaponEffectsService --> ES[Effect Synchronizer]
+        WeaponEffectsService --> QM[Quality Manager]
+        WeaponEffectsService --> PO[Performance Optimizer]
+        WeaponEffectsService --> ET[Effects Telemetry]
+        WeaponEffectsService --> PG[Procedural Generator]
+
+        PE --> ES
+        AE --> ES
+        ES --> QM
+        QM --> PO
+        PE --> PG
+        AE --> PG
+        ES --> ET
+        QM --> ET
+
+        WeaponEffectsService --> WeaponSystem[Weapon System]
+        WeaponEffectsService --> ClientSystem[Client System]
+        WeaponEffectsService --> AudioSystem[Audio System]
+        WeaponEffectsService --> ParticleSystem[Particle System]
+
+        WeaponEffectsService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> Analytics[Analytics Service]
+
+        WeaponEffectsService --> DB[(Effects DB)]
+    ```
+
+  effect_lifecycle_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant WS as Weapon System
+        participant ES as Effect Synchronizer
+        participant PE as Particle Engine
+        participant AE as Audio Engine
+        participant C as Client
+
+        WS->>ES: Weapon action triggered
+        ES->>PE: Spawn visual effects
+        ES->>AE: Play audio effects
+        PE->>ES: Effect spawned
+        AE->>ES: Audio playing
+        ES->>C: Synchronize effects
+        C->>C: Render effects locally
+        C->>ES: Effect completed
+    ```
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-07
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы визуальных и звуковых эффектов оружия:
+      - Определены компоненты для частиц, аудио, синхронизации и качества
+      - Спроектирована микросервисная архитектура с weapon-effects-service
+      - Детализированы системы визуальных эффектов (частицы, анимации, разрушения)
+      - Спроектирована система аудио эффектов (оружие, окружение, процедурное)
+      - Создана система обратной связи (haptic, visual, combined)
+      - Добавлены системы качества и оптимизации производительности
+      - Спроектированы потоки данных для триггеров, генерации и адаптации
+      - Добавлены оптимизации производительности и спецификации тикрейта
+      - Создана структура БД с таблицами для эффектов, метрик и телеметрии
+      - Определены интеграции с weapon, client, audio и particle системами
