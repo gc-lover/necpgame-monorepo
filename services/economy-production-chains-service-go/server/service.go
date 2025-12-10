@@ -3,10 +3,10 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -52,7 +52,7 @@ func (s *Service) HandleGetChains(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) HandleGetChainDetails(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "chain_id")
+	id := extractID(r.URL.Path, "/api/v1/production/chains/")
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	chain, ok := s.chains[id]
@@ -64,7 +64,7 @@ func (s *Service) HandleGetChainDetails(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Service) HandleStartProductionChain(w http.ResponseWriter, r *http.Request) {
-	chainID := chi.URLParam(r, "chain_id")
+	chainID := strings.TrimSuffix(extractID(r.URL.Path, "/api/v1/production/chains/"), "/start")
 	var req StartProductionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Quantity < 1 {
 		http.Error(w, "invalid request", http.StatusBadRequest)
@@ -85,7 +85,7 @@ func (s *Service) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) HandleGetOrder(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "order_id")
+	id := extractID(r.URL.Path, "/api/v1/production/orders/")
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	order, ok := s.orders[id]
@@ -97,7 +97,7 @@ func (s *Service) HandleGetOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) HandleCancelOrder(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "order_id")
+	id := extractID(r.URL.Path, "/api/v1/production/orders/")
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.orders[id]; !ok {
@@ -109,7 +109,7 @@ func (s *Service) HandleCancelOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) HandleCreateRushOrder(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "order_id")
+	id := strings.TrimSuffix(extractID(r.URL.Path, "/api/v1/production/orders/"), "/rush")
 	var req CreateRushOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.TimeReduction < 1 {
 		http.Error(w, "invalid request", http.StatusBadRequest)
@@ -132,6 +132,13 @@ func (s *Service) HandleCreateRushOrder(w http.ResponseWriter, r *http.Request) 
 }
 
 // Helpers
+
+func extractID(path, prefix string) string {
+	if strings.HasPrefix(path, prefix) {
+		return strings.TrimPrefix(path, prefix)
+	}
+	return ""
+}
 
 func (s *Service) createOrder(chainID string, qty int, stationID string, rush bool) ProductionOrderDetails {
 	s.mu.Lock()

@@ -5,32 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-skill-checks-conditions-service-go/pkg/api"
 )
 
 func NewHTTPServer(addr string) *http.Server {
-	r := chi.NewRouter()
-
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(LoggerMiddleware)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
-
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	})
+	mux := http.NewServeMux()
 
 	// ogen handlers
 	handlers := &Handlers{}
@@ -43,11 +22,16 @@ func NewHTTPServer(addr string) *http.Server {
 	}
 
 	// Mount ogen server under /api/v1
-	r.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = LoggerMiddleware(handler)
+	handler = corsMiddleware(handler)
+	handler = http.TimeoutHandler(handler, 60*time.Second, "request timed out")
+
+	mux.Handle("/api/v1", handler)
 
 	return &http.Server{
 		Addr:         addr,
-		Handler:      r,
+		Handler:      mux,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -57,22 +41,45 @@ func NewHTTPServer(addr string) *http.Server {
 func LoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		// Simple wrapper without chi dependency
+		rec := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
 
-		next.ServeHTTP(ww, r)
+		next.ServeHTTP(rec, r)
 
 		duration := time.Since(start)
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(ww.Status()))
+		RecordRequest(r.Method, r.URL.Path, http.StatusText(rec.status))
 		RecordRequestDuration(r.Method, r.URL.Path, duration.Seconds())
 
 		logger := GetLogger()
 		logger.WithFields(map[string]interface{}{
-			"method":     r.Method,
-			"path":       r.URL.Path,
-			"status":     ww.Status(),
-			"duration":   duration.Milliseconds(),
-			"request_id": middleware.GetReqID(r.Context()),
+			"method":   r.Method,
+			"path":     r.URL.Path,
+			"status":   rec.status,
+			"duration": duration.Milliseconds(),
 		}).Info("HTTP request")
+	})
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	r.status = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }
 

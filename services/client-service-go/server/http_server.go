@@ -6,37 +6,32 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	api "github.com/necpgame/client-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *http.ServeMux
 	logger *logrus.Logger
 	server *http.Server
 }
 
 func NewHTTPServer(addr string, weaponEffectsService WeaponEffectsServiceInterface) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-
 	server := &HTTPServer{
 		addr:   addr,
-		router: router,
+		router: http.NewServeMux(),
 		logger: GetLogger(),
 	}
 
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
+	// Middleware chain applied per handler
+	handlerChain := func(h http.Handler) http.Handler {
+		h = server.loggingMiddleware(h)
+		h = server.metricsMiddleware(h)
+		h = server.corsMiddleware(h)
+		h = http.TimeoutHandler(h, 60*time.Second, "request timed out")
+		return h
+	}
 
 	if weaponEffectsService != nil {
 		// Handlers (реализация api.Handler из handlers.go)
@@ -51,11 +46,10 @@ func NewHTTPServer(addr string, weaponEffectsService WeaponEffectsServiceInterfa
 			panic(err)
 		}
 
-		// Mount ogen server under /api/v1
-		router.Mount("/api/v1", ogenServer)
+		server.router.Handle("/api/v1", handlerChain(ogenServer))
 	}
 
-	router.Get("/health", server.healthCheck)
+	server.router.Handle("/health", handlerChain(http.HandlerFunc(server.healthCheck)))
 
 	return server
 }

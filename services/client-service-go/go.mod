@@ -3,7 +3,6 @@ module github.com/necpgame/client-service-go
 go 1.24.0
 
 require (
-	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
 	github.com/google/uuid v1.6.0

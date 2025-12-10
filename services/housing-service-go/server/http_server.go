@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	housingapi "github.com/necpgame/housing-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -15,23 +13,13 @@ import (
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *http.ServeMux
 	server *http.Server
 	logger *logrus.Logger
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-
-	// Custom middlewares
-	router.Use(loggingMiddleware(logger))
-	router.Use(corsMiddleware)
+	mux := http.NewServeMux()
 
 	// Register ogen handlers
 	ogenHandlers := NewHandlers(logger)
@@ -40,16 +28,21 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 		logger.Fatalf("Failed to create ogen server: %v", err)
 	}
 
-	router.Mount("/", ogenServer)
+	// Wrap ogen server with custom middlewares
+	var handler http.Handler = ogenServer
+	handler = loggingMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+	handler = http.TimeoutHandler(handler, 60*time.Second, "request timed out")
 
-	router.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/", handler)
+	mux.Handle("/metrics", promhttp.Handler())
 
 	return &HTTPServer{
 		addr:   addr,
-		router: router,
+		router: mux,
 		server: &http.Server{
 			Addr:         addr,
-			Handler:      router,
+			Handler:      mux,
 			ReadTimeout:  15 * time.Second,
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,

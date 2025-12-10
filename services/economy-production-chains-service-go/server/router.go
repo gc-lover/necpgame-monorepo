@@ -3,33 +3,50 @@ package server
 import (
 	"net/http"
 	"time"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 // NewRouter wires HTTP routes to handlers with sane defaults.
 func NewRouter(svc *Service) http.Handler {
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(3 * time.Second))
+	mux := http.NewServeMux()
 
-	r.Get("/api/v1/production/chains", svc.HandleGetChains)
-	r.Get("/api/v1/production/chains/{chain_id}", svc.HandleGetChainDetails)
-	r.Post("/api/v1/production/chains/{chain_id}/start", svc.HandleStartProductionChain)
+	mux.HandleFunc("/api/v1/production/chains", svc.HandleGetChains)
+	mux.HandleFunc("/api/v1/production/chains/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			svc.HandleGetChainDetails(w, r)
+			return
+		}
+		if r.Method == http.MethodPost && r.URL.Path[len("/api/v1/production/chains/"):] != "" && r.URL.Path[len(r.URL.Path)-6:] == "/start" {
+			svc.HandleStartProductionChain(w, r)
+			return
+		}
+		http.NotFound(w, r)
+	})
 
-	r.Post("/api/v1/production/orders", svc.HandleCreateOrder)
-	r.Get("/api/v1/production/orders/{order_id}", svc.HandleGetOrder)
-	r.Delete("/api/v1/production/orders/{order_id}", svc.HandleCancelOrder)
-	r.Post("/api/v1/production/orders/{order_id}/rush", svc.HandleCreateRushOrder)
+	mux.HandleFunc("/api/v1/production/orders", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			svc.HandleCreateOrder(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 
-	return r
+	mux.HandleFunc("/api/v1/production/orders/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			svc.HandleGetOrder(w, r)
+		case http.MethodDelete:
+			svc.HandleCancelOrder(w, r)
+		case http.MethodPost:
+			if len(r.URL.Path) >= len("/api/v1/production/orders/")+4 && r.URL.Path[len(r.URL.Path)-5:] == "/rush" {
+				svc.HandleCreateRushOrder(w, r)
+				return
+			}
+			http.NotFound(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+
+	return http.TimeoutHandler(mux, 3*time.Second, "request timed out")
 }
-
-
-
-
-
-
-

@@ -5,7 +5,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	api "github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
 	"go.uber.org/zap"
 )
@@ -17,10 +16,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(CORSMiddleware())
-	router.Use(LoggingMiddleware(logger))
+	mux := http.NewServeMux()
 
 	secHandler := &SecurityHandler{}
 	ogenServer, err := api.NewServer(handlers, secHandler)
@@ -28,9 +24,13 @@ func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPSer
 		logger.Fatal("Failed to create ogen server", zap.Error(err))
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = CORSMiddleware()(handler)
+	handler = LoggingMiddleware(logger)(handler)
 
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/api/v1", handler)
+
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
@@ -39,7 +39,7 @@ func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPSer
 		addr: addr,
 		server: &http.Server{
 			Addr:    addr,
-			Handler: router,
+			Handler: mux,
 		},
 		logger: logger,
 	}

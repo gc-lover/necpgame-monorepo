@@ -17,6 +17,9 @@
 "golang.org/x/time/rate"                  // Rate limiting
 ```
 
+### API/HTTP Stack
+- OGEN as the default HTTP/codegen stack. Do **not** add `github.com/go-chi/chi` to new services; keep/remove chi only for legacy code when unavoidable.
+
 ## Performance:
 ```go
 "github.com/bytedance/sonic"              // Fast JSON
