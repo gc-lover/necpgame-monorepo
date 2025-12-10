@@ -115,7 +115,7 @@ func (r *MovementRepository) GetPositionHistory(ctx context.Context, characterID
 	}
 	defer rows.Close()
 
-	var history []models.PositionHistory
+	history := make([]models.PositionHistory, 0, limit)
 	for rows.Next() {
 		var h models.PositionHistory
 		err := rows.Scan(&h.ID, &h.CharacterID, &h.PositionX, &h.PositionY, &h.PositionZ, &h.Yaw,

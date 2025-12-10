@@ -12,7 +12,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 type mockMovementRepository struct {
@@ -49,18 +48,17 @@ func (m *mockMovementRepository) SavePositionHistory(ctx context.Context, charac
 }
 
 func TestNewMovementService(t *testing.T) {
+	dbURL := requireTestDBURL(t)
+	redisURL := requireTestRedisURL(t)
+
 	service, err := NewMovementService(
-		"postgres://user:pass@localhost:5432/test",
-		"redis://localhost:6379",
+		dbURL,
+		redisURL,
 		"ws://localhost:8080/gateway",
 		1*time.Second,
 	)
 
-	if err != nil {
-		t.Skipf("Skipping test due to database connection: %v", err)
-		return
-	}
-
+	assert.NoError(t, err)
 	assert.NotNil(t, service)
 	assert.NotNil(t, service.repo)
 	assert.NotNil(t, service.cache)
@@ -95,7 +93,7 @@ func TestMovementService_GetPosition(t *testing.T) {
 	ctx := context.Background()
 	pos, err := service.GetPosition(ctx, characterID)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, pos)
 	assert.Equal(t, expectedPos.CharacterID, pos.CharacterID)
 	assert.Equal(t, expectedPos.PositionX, pos.PositionX)
@@ -122,11 +120,8 @@ func TestMovementService_GetPosition_NotFound(t *testing.T) {
 
 func TestMovementService_SavePosition(t *testing.T) {
 	mockRepo := new(mockMovementRepository)
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
-	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return
-	}
+	redisOpts, err := redis.ParseURL(requireTestRedisURL(t))
+	assert.NoError(t, err)
 	redisClient := redis.NewClient(redisOpts)
 
 	service := &MovementService{
@@ -163,7 +158,7 @@ func TestMovementService_SavePosition(t *testing.T) {
 	ctx := context.Background()
 	pos, err := service.SavePosition(ctx, characterID, req)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, pos)
 	assert.Equal(t, expectedPos.CharacterID, pos.CharacterID)
 	assert.Equal(t, expectedPos.PositionX, pos.PositionX)
@@ -172,11 +167,8 @@ func TestMovementService_SavePosition(t *testing.T) {
 
 func TestMovementService_SavePosition_InvalidCoordinates(t *testing.T) {
 	mockRepo := new(mockMovementRepository)
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
-	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return
-	}
+	redisOpts, err := redis.ParseURL(requireTestRedisURL(t))
+	assert.NoError(t, err)
 	redisClient := redis.NewClient(redisOpts)
 
 	service := &MovementService{
@@ -207,18 +199,15 @@ func TestMovementService_SavePosition_InvalidCoordinates(t *testing.T) {
 	ctx := context.Background()
 	pos, err := service.SavePosition(ctx, characterID, req)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, pos)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestMovementService_SavePosition_DatabaseError(t *testing.T) {
 	mockRepo := new(mockMovementRepository)
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
-	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return
-	}
+	redisOpts, err := redis.ParseURL(requireTestRedisURL(t))
+	assert.NoError(t, err)
 	redisClient := redis.NewClient(redisOpts)
 
 	service := &MovementService{
@@ -277,7 +266,7 @@ func TestMovementService_GetPositionHistory(t *testing.T) {
 	ctx := context.Background()
 	history, err := service.GetPositionHistory(ctx, characterID, 10)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, history)
 	assert.Len(t, history, 2)
 	mockRepo.AssertExpectations(t)
@@ -296,7 +285,7 @@ func TestMovementService_GetPositionHistory_Empty(t *testing.T) {
 	ctx := context.Background()
 	history, err := service.GetPositionHistory(ctx, characterID, 10)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, history)
 	assert.Len(t, history, 0)
 	mockRepo.AssertExpectations(t)
@@ -322,11 +311,8 @@ func TestMovementService_GetPositionHistory_DatabaseError(t *testing.T) {
 
 func TestMovementService_SaveAllPositions(t *testing.T) {
 	mockRepo := new(mockMovementRepository)
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
-	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return
-	}
+	redisOpts, err := redis.ParseURL(requireTestRedisURL(t))
+	assert.NoError(t, err)
 	redisClient := redis.NewClient(redisOpts)
 
 	service := &MovementService{
@@ -446,11 +432,8 @@ func TestMovementService_Shutdown(t *testing.T) {
 // Issue: #309
 func TestMovementService_SavePosition_ConcurrentUpdates(t *testing.T) {
 	mockRepo := new(mockMovementRepository)
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
-	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return
-	}
+	redisOpts, err := redis.ParseURL(requireTestRedisURL(t))
+	assert.NoError(t, err)
 	redisClient := redis.NewClient(redisOpts)
 
 	service := &MovementService{
@@ -551,9 +534,9 @@ func TestMovementService_GetPosition_MultipleCharacters(t *testing.T) {
 	pos2, err2 := service.GetPosition(ctx, characterID2)
 	pos3, err3 := service.GetPosition(ctx, characterID3)
 
-	require.NoError(t, err1)
-	require.NoError(t, err2)
-	require.NoError(t, err3)
+	assert.NoError(t, err1)
+	assert.NoError(t, err2)
+	assert.NoError(t, err3)
 
 	assert.NotNil(t, pos1)
 	assert.NotNil(t, pos2)

@@ -13,12 +13,9 @@ import (
 )
 
 func setupTestRepository(t *testing.T) (*MovementRepository, func()) {
-	dbURL := "postgres://user:pass@localhost:5432/test"
+	dbURL := requireTestDBURL(t)
 	dbPool, err := pgxpool.New(context.Background(), dbURL)
-	if err != nil {
-		t.Skipf("Skipping test due to database connection: %v", err)
-		return nil, nil
-	}
+	require.NoError(t, err)
 
 	repo := NewMovementRepository(dbPool)
 
@@ -30,12 +27,9 @@ func setupTestRepository(t *testing.T) (*MovementRepository, func()) {
 }
 
 func TestNewMovementRepository(t *testing.T) {
-	dbURL := "postgres://user:pass@localhost:5432/test"
+	dbURL := requireTestDBURL(t)
 	dbPool, err := pgxpool.New(context.Background(), dbURL)
-	if err != nil {
-		t.Skipf("Skipping test due to database connection: %v", err)
-		return
-	}
+	require.NoError(t, err)
 	defer dbPool.Close()
 
 	repo := NewMovementRepository(dbPool)
@@ -57,12 +51,7 @@ func TestMovementRepository_GetPositionByCharacterID_NotFound(t *testing.T) {
 	ctx := context.Background()
 	pos, err := repo.GetPositionByCharacterID(ctx, characterID)
 
-	if err != nil {
-		t.Skipf("Skipping test due to database error: %v", err)
-		return
-	}
-
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Nil(t, pos)
 }
 
@@ -86,11 +75,6 @@ func TestMovementRepository_SavePosition(t *testing.T) {
 
 	ctx := context.Background()
 	pos, err := repo.SavePosition(ctx, characterID, req)
-
-	if err != nil {
-		t.Skipf("Skipping test due to database error: %v", err)
-		return
-	}
 
 	require.NoError(t, err)
 	assert.NotNil(t, pos)
