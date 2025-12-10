@@ -6,27 +6,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	api "github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HTTPServer struct {
 	addr    string
-	router  *chi.Mux
+	router  *http.ServeMux
 	server  *http.Server
 	service Service
 }
 
 func NewHTTPServer(addr string, service Service, jwtValidator *JwtValidator) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(chiMiddleware.RequestID)
-	router.Use(chiMiddleware.RealIP)
-	router.Use(chiMiddleware.Logger)
-	router.Use(chiMiddleware.Recoverer)
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	handlers := NewHandlers(service)
 	secHandler := NewSecurityHandler(jwtValidator)
@@ -36,9 +28,11 @@ func NewHTTPServer(addr string, service Service, jwtValidator *JwtValidator) *HT
 		panic(err)
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = corsMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheck)
+	router.HandleFunc("/health", healthCheck)
 
 	return &HTTPServer{
 		addr:   addr,

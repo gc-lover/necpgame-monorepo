@@ -5,6 +5,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
 )
@@ -42,6 +43,7 @@ func NewHTTPServerOgen(addr string, service InventoryServiceInterface) *HTTPServ
 
 	return &HTTPServerOgen{
 		addr:   addr,
+		router: router,
 		server: &http.Server{
 			Addr:    addr,
 			Handler: router,
@@ -100,10 +102,24 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 // MetricsMiddleware records request metrics
 func MetricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Add Prometheus metrics here
-		// requestDuration.WithLabelValues(r.URL.Path, r.Method).Observe(duration)
-		next.ServeHTTP(w, r)
+		start := time.Now()
+		rr := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rr, r)
+		duration := time.Since(start).Seconds()
+		endpoint := r.URL.Path
+		RecordRequest(r.Method, endpoint, http.StatusText(rr.status))
+		RecordRequestDuration(r.Method, endpoint, duration)
 	})
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rr *responseRecorder) WriteHeader(code int) {
+	rr.status = code
+	rr.ResponseWriter.WriteHeader(code)
 }
 
 

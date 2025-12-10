@@ -148,7 +148,7 @@ func (r *InventoryRepository) UpdateItem(ctx context.Context, item *models.Inven
 		return fmt.Errorf("failed to marshal metadata JSON: %w", err)
 	}
 	
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`UPDATE mvp_core.character_items
 		 SET slot_index = $1, stack_count = $2, is_equipped = $3, equip_slot = $4, metadata = $5, updated_at = $6
 		 WHERE id = $7`,
