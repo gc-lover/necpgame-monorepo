@@ -3,7 +3,6 @@ module github.com/gc-lover/necpgame-monorepo/services/inventory-service-go
 go 1.24.0
 
 require (
-	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
 	github.com/go-redis/redis/v8 v8.11.5

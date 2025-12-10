@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/social-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
@@ -26,14 +24,8 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HT
 	// Issue: #1380 - Initialize logger for utils package
 	SetLogger(logger)
 	
-	router := chi.NewRouter()
-
-	// Middleware
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router := http.NewServeMux()
+	var handler http.Handler
 
 	// Create ogen handlers
 	handlers := NewSocialHandlersOgen(logger, db)
@@ -59,50 +51,77 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HT
 	}
 
 	// Mount ogen routes
-	router.Mount("/api/v1", srv)
+	router.Handle("/api/v1/", srv)
 
 	// Issue: #1509 - Register order handlers
 	if db != nil {
 		orderService := NewOrderService(db, logger)
 		orderHandlers := NewOrderHandlers(orderService, logger)
-		router.Route("/api/v1/social/orders", func(r chi.Router) {
-			// Add auth middleware for order routes
-			r.Use(orderAuthMiddleware(logger))
-			r.Post("/create", orderHandlers.CreatePlayerOrder)
-			r.Get("/", orderHandlers.GetPlayerOrders)
-			r.Get("/{orderId}", orderHandlers.GetPlayerOrder)
-			r.Post("/{orderId}/accept", orderHandlers.AcceptPlayerOrder)
-			r.Post("/{orderId}/start", orderHandlers.StartPlayerOrder)
-			r.Post("/{orderId}/complete", orderHandlers.CompletePlayerOrder)
-			r.Post("/{orderId}/cancel", orderHandlers.CancelPlayerOrder)
-		})
+		router.Handle("/api/v1/social/orders/create", orderAuthMiddleware(logger)(http.HandlerFunc(orderHandlers.CreatePlayerOrder)))
+		router.Handle("/api/v1/social/orders", orderAuthMiddleware(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet && r.URL.Path == "/api/v1/social/orders" {
+				orderHandlers.GetPlayerOrders(w, r)
+				return
+			}
+			path := strings.TrimPrefix(r.URL.Path, "/api/v1/social/orders/")
+			if path == r.URL.Path {
+				http.NotFound(w, r)
+				return
+			}
+			orderID := path
+			switch r.Method {
+			case http.MethodGet:
+				r = r.WithContext(context.WithValue(r.Context(), "orderId", orderID))
+				orderHandlers.GetPlayerOrder(w, r)
+			case http.MethodPost:
+				switch {
+				case strings.HasSuffix(path, "/accept"):
+					orderHandlers.AcceptPlayerOrder(w, r.WithContext(context.WithValue(r.Context(), "orderId", strings.TrimSuffix(orderID, "/accept"))))
+				case strings.HasSuffix(path, "/start"):
+					orderHandlers.StartPlayerOrder(w, r.WithContext(context.WithValue(r.Context(), "orderId", strings.TrimSuffix(orderID, "/start"))))
+				case strings.HasSuffix(path, "/complete"):
+					orderHandlers.CompletePlayerOrder(w, r.WithContext(context.WithValue(r.Context(), "orderId", strings.TrimSuffix(orderID, "/complete"))))
+				case strings.HasSuffix(path, "/cancel"):
+					orderHandlers.CancelPlayerOrder(w, r.WithContext(context.WithValue(r.Context(), "orderId", strings.TrimSuffix(orderID, "/cancel"))))
+				default:
+					http.NotFound(w, r)
+				}
+			default:
+				http.NotFound(w, r)
+			}
+		})))
 	}
 
 	// Issue: #1490 - Register chat command handlers
 	chatCommandService := NewChatCommandService(logger)
 	chatCommandHandlers := NewChatCommandHandlers(chatCommandService, logger)
-	router.Post("/api/v1/social/chat/commands/execute", chatCommandHandlers.ExecuteChatCommand)
+	router.Handle("/api/v1/social/chat/commands/execute", http.HandlerFunc(chatCommandHandlers.ExecuteChatCommand))
 
 	// Health check (outside ogen routes)
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok","service":"social-service"}`))
-	})
+	}))
 
 	// Ready check
-	router.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/ready", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ready"}`))
-	})
+	}))
+
+	handler = srv
+	handler = loggingMiddleware(handler)
+	handler = recoverMiddleware(handler)
+	handler = timeoutMiddleware(handler, 60*time.Second)
 
 	return &HTTPServerOgen{
 		addr:   addr,
 		logger: logger,
 		server: &http.Server{
 			Addr:              addr,
-			Handler:           router,
+			Handler:           handler,
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       10 * time.Second,
 			WriteTimeout:      10 * time.Second,
@@ -121,6 +140,37 @@ func (s *HTTPServerOgen) Start() error {
 func (s *HTTPServerOgen) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down ogen HTTP server")
 	return s.server.Shutdown(ctx)
+}
+
+// chi-free middleware replacements
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logrus.WithFields(logrus.Fields{
+			"method": r.Method,
+			"path":   r.URL.Path,
+		}).Info("request")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func recoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				logrus.WithField("panic", rec).Error("recovered panic")
+				http.Error(w, "internal error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+func timeoutMiddleware(next http.Handler, d time.Duration) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), d)
+		defer cancel()
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // Issue: #1509 - Auth middleware for order routes

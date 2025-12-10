@@ -6,32 +6,20 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
 )
 
 // HTTPServerOgen represents ogen-based HTTP server
 type HTTPServerOgen struct {
 	addr   string
-	router chi.Router
+	router *http.ServeMux
 	server *http.Server
 }
 
 // NewHTTPServerOgen creates ogen-based HTTP server with typed handlers
 // PERFORMANCE: Uses ogen optimized JSON encoding (90% faster vs oapi-codegen)
 func NewHTTPServerOgen(addr string, service InventoryServiceInterface) *HTTPServerOgen {
-	router := chi.NewRouter()
-
-	// Built-in middleware
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-
-	// Custom middleware
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
+	router := http.NewServeMux()
 
 	// ogen typed handlers (no interface{} boxing!)
 	handlers := NewInventoryHandlersOgen(service)
@@ -43,16 +31,17 @@ func NewHTTPServerOgen(addr string, service InventoryServiceInterface) *HTTPServ
 		panic("Failed to create ogen server: " + err.Error())
 	}
 
-	// Mount ogen server
-	router.Mount("/api/v1", srv)
+	var handler http.Handler = srv
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/ready", readyCheck)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/ready", readyCheck)
 
 	return &HTTPServerOgen{
 		addr:   addr,
-		router: router,
 		server: &http.Server{
 			Addr:    addr,
 			Handler: router,

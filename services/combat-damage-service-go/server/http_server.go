@@ -5,8 +5,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
 )
 
@@ -14,26 +12,13 @@ import (
 type HTTPServer struct {
 	addr        string
 	server      *http.Server
-	router      chi.Router
+	router      *http.ServeMux
 	loadShedder *LoadShedder // Issue: #1588 - Resilience patterns
 }
 
 // NewHTTPServer creates new HTTP server
 func NewHTTPServer(addr string) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Built-in middleware
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-
-	// Issue: #1588 - Load shedding middleware (prevent overload)
-	loadShedder := NewLoadShedder(1500) // Max 1500 concurrent (3k RPS service)
-	router.Use(loadSheddingMiddleware(loadShedder))
-
-	// Custom middleware
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
+	router := http.NewServeMux()
 
 	// Handlers (реализация api.Handler из handlers.go)
 	handlers := NewHandlers()
@@ -46,11 +31,17 @@ func NewHTTPServer(addr string) *HTTPServer {
 	}
 
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	loadShedder := NewLoadShedder(1500) // Max 1500 concurrent (3k RPS service)
+	handler = loadSheddingMiddleware(loadShedder)(handler)
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	handler = recoverMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
 		addr:        addr,
@@ -99,4 +90,15 @@ func loadSheddingMiddleware(ls *LoadShedder) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func recoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				http.Error(w, "internal error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }

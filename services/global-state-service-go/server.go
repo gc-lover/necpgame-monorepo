@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -19,7 +17,7 @@ import (
 
 type server struct {
 	log         *logrus.Logger
-	router      chi.Router
+	router      *http.ServeMux
 	stateStore  stateStore
 	eventStore  eventStore
 	defaultAddr string
@@ -32,11 +30,7 @@ func newServer() *server {
 	state := newInMemoryStateStore()
 	events := newInMemoryEventStore(1000)
 
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(5 * time.Second))
+	r := http.NewServeMux()
 
 	s := &server{
 		log:         logger,
@@ -50,17 +44,34 @@ func newServer() *server {
 }
 
 func (s *server) routes() {
-	s.router.Get("/health", s.health)
-	s.router.Get("/metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
-
-	s.router.Route("/api/v1", func(r chi.Router) {
-		r.Get("/state/{key}", s.getState)
-		r.Get("/state", s.listState)
-		r.Post("/state", s.setState)
-		r.Post("/state/batch", s.setStateBatch)
-		r.Post("/events", s.appendEvent)
-		r.Get("/events", s.listEvents)
-	})
+	s.router.Handle("/health", s.wrap(s.health))
+	s.router.Handle("/metrics", promhttp.Handler())
+	s.router.Handle("/api/v1/state/batch", s.wrap(s.setStateBatch))
+	s.router.Handle("/api/v1/state", s.wrap(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/state" {
+			s.getState(w, r)
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			s.listState(w, r)
+		case http.MethodPost:
+			s.setState(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	s.router.Handle("/api/v1/state/", s.wrap(s.getState))
+	s.router.Handle("/api/v1/events", s.wrap(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			s.listEvents(w, r)
+		case http.MethodPost:
+			s.appendEvent(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
 }
 
 func (s *server) health(w http.ResponseWriter, _ *http.Request) {
@@ -139,7 +150,7 @@ func (s *server) getState(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 
-	key := chi.URLParam(r, "key")
+	key := strings.TrimPrefix(r.URL.Path, "/api/v1/state/")
 	if key == "" {
 		writeError(w, http.StatusBadRequest, "empty key")
 		return
@@ -159,6 +170,21 @@ func (s *server) getState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, entry)
+}
+
+func (s *server) wrap(next http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				s.log.WithField("panic", rec).Error("recovered panic")
+				http.Error(w, "internal error", http.StatusInternalServerError)
+			}
+		}()
+		if r.Header.Get("X-Request-ID") == "" {
+			r.Header.Set("X-Request-ID", uuid.New().String())
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *server) listState(w http.ResponseWriter, r *http.Request) {
