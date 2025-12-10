@@ -11,13 +11,12 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/ogen-go/ogen v1.18.0
 	github.com/prometheus/client_golang v1.23.2
+	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/metric v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/goleak v1.3.0
-
-	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
-	)
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -47,7 +46,6 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+)
 
-	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
-	)
-
+require github.com/sirupsen/logrus v1.9.3

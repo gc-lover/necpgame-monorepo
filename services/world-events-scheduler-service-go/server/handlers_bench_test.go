@@ -7,12 +7,14 @@ import (
 
 	api "github.com/gc-lover/necpgame-monorepo/services/world-events-scheduler-service-go/pkg/api"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // BenchmarkScheduleWorldEvent benchmarks ScheduleWorldEvent handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkScheduleWorldEvent(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	service := NewService(nil, nil, nil, nil, logger)
 	handlers := NewHandlers(service, logger)
 
@@ -31,7 +33,8 @@ func BenchmarkScheduleWorldEvent(b *testing.B) {
 // BenchmarkGetScheduledWorldEvents benchmarks GetScheduledWorldEvents handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetScheduledWorldEvents(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	// Create mock repository to avoid nil pointer dereference
 	mockRepo := &mockRepository{}
 	service := NewService(mockRepo, nil, nil, nil, logger)
@@ -73,7 +76,8 @@ func (m *mockRepository) DeleteScheduledEvent(ctx context.Context, id uuid.UUID)
 // BenchmarkTriggerScheduledWorldEvent benchmarks TriggerScheduledWorldEvent handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkTriggerScheduledWorldEvent(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	service := NewService(nil, nil, nil, nil, logger)
 	handlers := NewHandlers(service, logger)
 

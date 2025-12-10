@@ -11,7 +11,8 @@ import (
 // BenchmarkGetMarginAccount benchmarks GetMarginAccount handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetMarginAccount(b *testing.B) {
-	handlers := NewHandlers()
+	var svc MarginServiceInterface
+	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
 
@@ -26,7 +27,8 @@ func BenchmarkGetMarginAccount(b *testing.B) {
 // BenchmarkBorrowMargin benchmarks BorrowMargin handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkBorrowMargin(b *testing.B) {
-	handlers := NewHandlers()
+	var svc MarginServiceInterface
+	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
 	req := &api.BorrowMarginRequest{}
@@ -42,7 +44,8 @@ func BenchmarkBorrowMargin(b *testing.B) {
 // BenchmarkRepayMargin benchmarks RepayMargin handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkRepayMargin(b *testing.B) {
-	handlers := NewHandlers()
+	var svc MarginServiceInterface
+	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
 	req := &api.RepayMarginRequest{}

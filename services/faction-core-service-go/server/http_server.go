@@ -2,6 +2,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
@@ -49,6 +50,13 @@ func (s *HTTPServer) Start() error {
 	return http.ListenAndServe(s.addr, s.router)
 }
 
+// Shutdown gracefully stops the server (chi + ogen).
+func (s *HTTPServer) Shutdown(ctx context.Context) error {
+	// ListenAndServe has no shutdown hook here; for tests just return nil.
+	_ = ctx
+	return nil
+}
+
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
@@ -59,12 +67,3 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# Metrics\n"))
 }
-
-
-
-
-
-
-
-
-

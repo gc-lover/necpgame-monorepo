@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +39,7 @@ func TestAchievementService_GetAchievementDetails(t *testing.T) {
 	details, err := svc.GetAchievementDetails(ctx, achID)
 	assert.NoError(t, err)
 	assert.NotNil(t, details)
-	assert.Equal(t, "First Blood", details.Achievement.Name)
+	assert.Equal(t, "First Blood", details.Name)
 
 	// Non-existing achievement
 	_, err = svc.GetAchievementDetails(ctx, uuid.New())
@@ -95,6 +94,6 @@ func TestAchievementService_SetActiveTitle(t *testing.T) {
 	activeTitle, err := svc.SetActiveTitle(ctx, playerID, req)
 	assert.NoError(t, err)
 	assert.NotNil(t, activeTitle)
-	assert.Equal(t, titleID, activeTitle.ID.Value)
+	assert.Equal(t, titleID, activeTitle.ID)
 	assert.True(t, activeTitle.IsActive.Value)
 }

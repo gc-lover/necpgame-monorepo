@@ -18,8 +18,8 @@ import (
 
 // Config ...
 type Config struct {
-	Port           string `envconfig:"PORT" default:"8086"`
-	DatabaseURL    string `envconfig:"DATABASE_URL" required:"true"`
+	Port          string `envconfig:"PORT" default:"8086"`
+	DatabaseURL   string `envconfig:"DATABASE_URL" required:"true"`
 	IsDevelopment bool   `envconfig:"IS_DEVELOPMENT" default:"false"`
 }
 
@@ -46,9 +46,7 @@ func main() {
 
 	// Инициализация сервисов
 	svc := server.NewAchievementService(pool)
-	handlers := server.NewHandlers(svc)
-
-	httpServer := server.NewHTTPServer(":"+cfg.Port, handlers, server.RequestLogger, server.Recoverer)
+	httpServer := server.NewHTTPServer(":"+cfg.Port, svc)
 
 	go func() {
 		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
@@ -71,7 +69,3 @@ func main() {
 	}
 	log.Info().Msg("Achievement Service shut down gracefully")
 }
-
-
-
-

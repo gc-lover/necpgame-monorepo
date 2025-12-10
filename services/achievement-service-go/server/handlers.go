@@ -22,7 +22,7 @@ func (h *Handlers) ClaimAchievementReward(ctx context.Context, params api.ClaimA
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ClaimAchievementReward(ctx, params.PlayerId.String(), params.AchievementId.String())
+	result, err := h.service.ClaimAchievementReward(ctx, params.PlayerId, params.AchievementId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.ClaimAchievementRewardNotFound{}, nil
@@ -37,7 +37,7 @@ func (h *Handlers) GetAchievementDetails(ctx context.Context, params api.GetAchi
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetAchievementDetails(ctx, params.AchievementId.String())
+	result, err := h.service.GetAchievementDetails(ctx, params.AchievementId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetAchievementDetailsNotFound{}, nil
@@ -64,7 +64,7 @@ func (h *Handlers) GetPlayerProgress(ctx context.Context, params api.GetPlayerPr
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetPlayerProgress(ctx, params.PlayerId.String(), params)
+	result, err := h.service.GetPlayerProgress(ctx, params.PlayerId, params)
 	if err != nil {
 		return &api.GetPlayerProgressInternalServerError{}, err
 	}
@@ -76,7 +76,7 @@ func (h *Handlers) GetPlayerTitles(ctx context.Context, params api.GetPlayerTitl
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetPlayerTitles(ctx, params.PlayerId.String())
+	result, err := h.service.GetPlayerTitles(ctx, params.PlayerId)
 	if err != nil {
 		return &api.GetPlayerTitlesInternalServerError{}, err
 	}
@@ -88,7 +88,7 @@ func (h *Handlers) SetActiveTitle(ctx context.Context, req *api.SetActiveTitleRe
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.SetActiveTitle(ctx, params.PlayerId.String(), req)
+	result, err := h.service.SetActiveTitle(ctx, params.PlayerId, req)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.SetActiveTitleNotFound{}, nil

@@ -10,12 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetLogger returns a development logger for testing
-func GetLogger() *zap.Logger {
-	logger, _ := zap.NewDevelopment()
-	return logger
-}
-
 // mockRepository is a minimal mock for benchmark tests
 type mockRepository struct{}
 
@@ -62,7 +56,8 @@ func (m *mockRepository) RecordAnnouncement(ctx context.Context, announcement *E
 // BenchmarkCreateWorldEvent benchmarks CreateWorldEvent handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCreateWorldEvent(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	service := NewService(nil, nil, nil, logger)
 	handlers := NewHandlers(service, logger)
 
@@ -82,7 +77,8 @@ func BenchmarkCreateWorldEvent(b *testing.B) {
 // BenchmarkGetWorldEvent benchmarks GetWorldEvent handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEvent(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	service := NewService(nil, nil, nil, logger)
 	handlers := NewHandlers(service, logger)
 
@@ -101,7 +97,8 @@ func BenchmarkGetWorldEvent(b *testing.B) {
 // BenchmarkUpdateWorldEvent benchmarks UpdateWorldEvent handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkUpdateWorldEvent(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	// Create mock repository to avoid nil pointer dereference
 	mockRepo := &mockRepository{}
 	service := NewService(mockRepo, nil, nil, logger)

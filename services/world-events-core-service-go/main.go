@@ -19,7 +19,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-core-service-go/server"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {

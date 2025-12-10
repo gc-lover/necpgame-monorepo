@@ -459,9 +459,9 @@ func (s *UDPServer) convertDeltaToProtobuf(delta *GameStateData) []*pb.EntitySta
 	for _, entity := range delta.Entities {
 		pbEntity := &pb.EntityState{
 			Id: entity.ID,
-			X:  float64(entity.X) / 1000.0, // Convert int32 back to float64
-			Y:  float64(entity.Y) / 1000.0,
-			Z:  float64(entity.Z) / 1000.0,
+			X:  float32(float64(entity.X) / 1000.0), // Convert int32 back to float32 for protobuf
+			Y:  float32(float64(entity.Y) / 1000.0),
+			Z:  float32(float64(entity.Z) / 1000.0),
 		}
 		entities = append(entities, pbEntity)
 	}

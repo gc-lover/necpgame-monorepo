@@ -34,7 +34,7 @@ func TestService_WithMockRepository(t *testing.T) {
 	t.Run("ClaimAchievementReward with mock", func(t *testing.T) {
 		ctx := context.Background()
 		// No repository calls in current implementation
-		result, err := service.ClaimAchievementReward(ctx, uuid.New().String(), uuid.New().String())
+		result, err := service.ClaimAchievementReward(ctx, uuid.New(), uuid.New())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -47,7 +47,7 @@ func TestService_WithMockRepository(t *testing.T) {
 	t.Run("GetAchievementDetails with mock", func(t *testing.T) {
 		ctx := context.Background()
 		// No repository calls in current implementation
-		result, err := service.GetAchievementDetails(ctx, uuid.New().String())
+		result, err := service.GetAchievementDetails(ctx, uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"))
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -77,7 +77,7 @@ func TestService_WithMockRepository(t *testing.T) {
 		params := api.GetPlayerProgressParams{}
 
 		// No repository calls in current implementation
-		result, err := service.GetPlayerProgress(ctx, uuid.New().String(), params)
+		result, err := service.GetPlayerProgress(ctx, uuid.New(), params)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -90,7 +90,7 @@ func TestService_WithMockRepository(t *testing.T) {
 	t.Run("GetPlayerTitles with mock", func(t *testing.T) {
 		ctx := context.Background()
 		// No repository calls in current implementation
-		result, err := service.GetPlayerTitles(ctx, uuid.New().String())
+		result, err := service.GetPlayerTitles(ctx, uuid.New())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -107,7 +107,7 @@ func TestService_WithMockRepository(t *testing.T) {
 		}
 
 		// No repository calls in current implementation
-		result, err := service.SetActiveTitle(ctx, uuid.New().String(), req)
+		result, err := service.SetActiveTitle(ctx, uuid.New(), req)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -124,7 +124,6 @@ func TestService_ErrorScenarios(t *testing.T) {
 	service := NewService(mockRepo)
 
 	t.Run("Repository close error", func(t *testing.T) {
-		ctx := context.Background()
 		mockRepo.On("Close").Return(assert.AnError).Once()
 		
 		err := service.repo.Close()
@@ -152,7 +151,7 @@ func BenchmarkService_WithMock(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ctx := context.Background()
-		_, err := service.ClaimAchievementReward(ctx, uuid.New().String(), uuid.New().String())
+		_, err := service.ClaimAchievementReward(ctx, uuid.New(), uuid.New())
 		if err != nil {
 			b.Fatal(err)
 		}

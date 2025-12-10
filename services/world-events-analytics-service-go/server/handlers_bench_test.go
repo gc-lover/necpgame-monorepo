@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
+	"go.uber.org/zap"
 )
 
 // BenchmarkGetWorldEventMetrics benchmarks GetWorldEventMetrics handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEventMetrics(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	service := NewService(nil, nil, logger)
 	handlers := NewHandlers(service, logger)
 
@@ -30,7 +32,8 @@ func BenchmarkGetWorldEventMetrics(b *testing.B) {
 // BenchmarkGetWorldEventEngagement benchmarks GetWorldEventEngagement handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEventEngagement(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	service := NewService(nil, nil, logger)
 	handlers := NewHandlers(service, logger)
 
@@ -49,7 +52,8 @@ func BenchmarkGetWorldEventEngagement(b *testing.B) {
 // BenchmarkGetWorldEventImpact benchmarks GetWorldEventImpact handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetWorldEventImpact(b *testing.B) {
-	logger := GetLogger()
+	logger := zap.NewExample()
+	defer logger.Sync()
 	service := NewService(nil, nil, logger)
 	handlers := NewHandlers(service, logger)
 

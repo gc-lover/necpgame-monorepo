@@ -11,7 +11,8 @@ import (
 // BenchmarkListCombatSessions benchmarks ListCombatSessions handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkListCombatSessions(b *testing.B) {
-	handlers := NewHandlers()
+	svc := NewCombatSessionService(nil, "", "")
+	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
 	params := api.ListCombatSessionsParams{
@@ -28,7 +29,8 @@ func BenchmarkListCombatSessions(b *testing.B) {
 // BenchmarkCreateCombatSession benchmarks CreateCombatSession handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCreateCombatSession(b *testing.B) {
-	handlers := NewHandlers()
+	svc := NewCombatSessionService(nil, "", "")
+	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
 	req := &api.CreateSessionRequest{
@@ -46,7 +48,8 @@ func BenchmarkCreateCombatSession(b *testing.B) {
 // BenchmarkGetCombatSession benchmarks GetCombatSession handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetCombatSession(b *testing.B) {
-	handlers := NewHandlers()
+	svc := NewCombatSessionService(nil, "", "")
+	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
 	params := api.GetCombatSessionParams{
