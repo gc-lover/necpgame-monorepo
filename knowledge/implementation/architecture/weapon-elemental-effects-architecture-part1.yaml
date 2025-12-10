@@ -1,0 +1,421 @@
+metadata:
+  id: weapon-elemental-effects-architecture
+  title: Архитектура системы стихийных эффектов оружия
+  document_type: architecture
+  category: combat
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-12-07T00:15:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - weapons
+    - elemental
+    - effects
+  related_systems:
+    - weapon-system
+    - combat-engine
+    - effect-system
+    - damage-system
+  related_documents:
+    - id: weapon-special-mechanics-working
+      relation: implements
+  github_issue: 1556
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы стихийных эффектов оружия,
+    включающую огонь, лед, яд и кислоту с DoT эффектами, взаимодействиями
+    между стихиями и интеграцией с окружающей средой.
+  goal: |
+    Создать архитектурную схему с определением компонентов, API, потоков данных
+    и оптимизаций для системы стихийных эффектов оружия.
+  essence: |
+    Полная архитектура стихийных эффектов оружия с поддержкой комплексных
+    взаимодействий и высокой производительностью в боевых сценариях.
+
+architecture:
+  overview: |
+    Архитектура системы стихийных эффектов оружия состоит из следующих компонентов:
+    1. Elemental Effect Manager - управление стихийными эффектами
+    2. Fire Effect Processor - обработка огненных эффектов
+    3. Ice Effect Processor - обработка ледяных эффектов
+    4. Poison Effect Processor - обработка ядовитых эффектов
+    5. Acid Effect Processor - обработка кислотных эффектов
+    6. Elemental Interaction Calculator - расчет взаимодействий между стихиями
+    7. Environmental Effect Integrator - интеграция с окружающей средой
+    8. Elemental Damage Calculator - расчет урона от стихий
+    9. Elemental Effect Visualizer - визуализация эффектов
+    10. Elemental Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: elemental-effects-service
+      port: 8102
+      responsibility: |
+        Обработка стихийных эффектов оружия:
+        - Управление огненными эффектами
+        - Управление ледяными эффектами
+        - Управление ядовитыми эффектами
+        - Управление кислотными эффектами
+        - Расчет взаимодействий между стихиями
+        - Интеграция с окружающей средой
+        - Сбор телеметрии
+      components:
+        - elemental-effect-manager: управление стихийными эффектами
+        - fire-effect-processor: обработка огненных эффектов
+        - ice-effect-processor: обработка ледяных эффектов
+        - poison-effect-processor: обработка ядовитых эффектов
+        - acid-effect-processor: обработка кислотных эффектов
+        - elemental-interaction-calculator: расчет взаимодействий
+        - environmental-effect-integrator: интеграция с окружением
+        - elemental-damage-calculator: расчет урона
+        - elemental-effect-visualizer: визуализация
+        - elemental-telemetry-collector: телеметрия
+      endpoints:
+        - POST /api/v1/elemental-effects/apply - применение стихийного эффекта
+        - POST /api/v1/elemental-effects/interact - расчет взаимодействия стихий
+        - GET /api/v1/elemental-effects/{characterId}/active - активные эффекты
+        - POST /api/v1/elemental-effects/environmental - применение эффектов окружения
+        - GET /api/v1/elemental-effects/damage/calculate - расчет стихийного урона
+      websocket_channels:
+        - wss://api.necp.game/v1/elemental-effects/{characterId} - обновления эффектов
+      events_published:
+        - elemental.effect_applied: применение эффекта
+        - elemental.interaction_calculated: расчет взаимодействия
+        - elemental.environmental_triggered: срабатывание эффекта окружения
+        - elemental.damage_dealt: нанесение урона
+        - elemental.effect_expired: истечение эффекта
+      events_subscribed:
+        - weapon.fired: выстрел оружия
+        - projectile.hit: попадание снаряда
+        - target.damaged: повреждение цели
+        - environment.changed: изменение окружения
+        - combat.round_end: окончание раунда
+
+  elemental_types:
+    fire_effects:
+      description: "Огненные эффекты с DoT и распространением"
+      mechanics:
+        - direct_damage: прямой урон огнем
+        - burn_dot: DoT урон от горения
+        - spread_fire: распространение огня на соседние объекты
+        - fire_explosion: взрыв при взаимодействии с химикатами
+        - fire_weakness: уязвимость к водным атакам
+      stats:
+        - damage_per_second: урон в секунду
+        - spread_chance: шанс распространения
+        - duration: длительность горения
+        - explosion_multiplier: множитель взрыва
+
+    ice_effects:
+      description: "Ледяные эффекты с замедлением и заморозкой"
+      mechanics:
+        - cold_damage: урон холодом
+        - movement_slow: замедление движения
+        - attack_slow: замедление атак
+        - freeze: полная заморозка при накоплении
+        - brittle: хрупкость замороженных целей (+50% урона)
+        - water_interaction: взаимодействие с водой
+      stats:
+        - freeze_threshold: порог заморозки
+        - slow_percentage: процент замедления
+        - brittle_multiplier: множитель хрупкости
+        - shatter_damage: урон от разрушения
+
+    poison_effects:
+      description: "Ядовитые эффекты с накоплением токсинов"
+      mechanics:
+        - poison_damage: урон ядом
+        - regen_reduction: снижение регенерации
+        - damage_amplification: усиление урона при накоплении
+        - spread_poison: распространение на соседние цели
+        - electricity_interaction: взаимодействие с электричеством
+        - fire_interaction: взрыв при взаимодействии с огнем
+      stats:
+        - toxin_buildup: накопление токсинов
+        - max_stacks: максимальное количество стаков
+        - spread_radius: радиус распространения
+        - electricity_multiplier: усиление от электричества
+
+    acid_effects:
+      description: "Кислотные эффекты с коррозией"
+      mechanics:
+        - acid_damage: урон кислотой
+        - armor_reduction: снижение брони цели
+        - surface_damage: повреждение поверхностей
+        - corrosion_dot: постепенная коррозия
+        - water_spread: распространение в воде
+        - metal_weakness: особая эффективность против металла
+      stats:
+        - armor_reduction_percentage: процент снижения брони
+        - corrosion_rate: скорость коррозии
+        - surface_damage_radius: радиус повреждения поверхности
+        - metal_damage_bonus: бонус к урону по металлу
+
+  elemental_interactions:
+    fire_water: |
+      Огонь + Вода = Пар (снижение урона огня, создание облака пара)
+      - Fire damage: -50% effectiveness
+      - Creates steam cloud: reduces visibility in radius
+      - Steam cloud duration: 5 seconds
+
+    fire_ice: |
+      Огонь + Лед = Таяние (ускоренное таяние льда, пар)
+      - Ice duration: -75% reduction
+      - Creates steam cloud
+      - Additional fire damage to frozen targets
+
+    fire_poison: |
+      Огонь + Яд = Взрыв (ядовитый взрыв при поджоге)
+      - Creates poison explosion: radius 3m
+      - Explosion damage: poison + fire
+      - Spreads poison to nearby targets
+
+    ice_poison: |
+      Лед + Яд = Замороженный яд (яд замедляется, но становится сильнее)
+      - Poison tick rate: -50% (longer duration)
+      - Poison damage: +25% when frozen
+      - Freeze extends poison duration
+
+    ice_acid: |
+      Лед + Кислота = Коррозия (кислота медленно разъедает лед)
+      - Ice duration: gradual reduction over time
+      - Acid damage: +50% to frozen targets
+      - Creates corrosive sludge
+
+    poison_acid: |
+      Яд + Кислота = Мутагенный яд (усиление эффектов)
+      - Combined damage: +100% effectiveness
+      - Additional mutation effects
+      - Increased spread radius
+
+  data_flows:
+    elemental_effect_application: |
+      1. Weapon with elemental effect hits target
+      2. Elemental Effect Manager receives hit data
+      3. Effect type determined and routed to appropriate processor
+      4. Elemental Damage Calculator computes initial damage
+      5. Effect applied to target with duration timer
+      6. Visual effects triggered through Elemental Effect Visualizer
+      7. Event elemental.effect_applied published
+
+    elemental_interaction_calculation: |
+      1. Multiple elemental effects detected on target/area
+      2. Elemental Interaction Calculator analyzes effect combinations
+      3. Interaction rules applied (fire + ice = steam)
+      4. Effect modifications calculated
+      5. New combined effects created if applicable
+      6. Event elemental.interaction_calculated published
+
+    environmental_integration: |
+      1. Target enters environmental area (water, fire, etc.)
+      2. Environmental Effect Integrator checks for elemental synergies
+      3. Environmental modifiers applied to active effects
+      4. Effect duration/damage modified based on environment
+      5. Event elemental.environmental_triggered published
+
+  data_consistency:
+    strategy: Eventual Consistency для эффектов, Strong Consistency для критичных взаимодействий
+    mechanisms:
+      - Event Sourcing для всех изменений состояния эффектов
+      - Saga Pattern для комплексных взаимодействий стихий
+      - Optimistic locking для предотвращения конфликтов эффектов
+      - Validation перед применением взаимодействий
+
+  performance_optimizations:
+    memory_optimization:
+      effect_pooling:
+        elemental_effect_pool: size 10000, reuse effect instances
+        interaction_pool: size 2000, reuse interaction calculators
+        damage_pool: size 5000, reuse damage calculators
+
+      struct_alignment:
+        elemental_effect_struct:
+          [
+            effect_id(uuid),
+            target_id(uuid),
+            element_type(uint16),
+            damage(float32),
+            duration(int32),
+          ]
+        interaction_struct:
+          [
+            primary_element(uint16),
+            secondary_element(uint16),
+            interaction_type(uint16),
+            multiplier(float32),
+          ]
+
+    computation_optimization:
+      batch_processing: group multiple effects on same target
+      spatial_indexing: quick lookup for environmental effects
+      effect_combining: merge similar elemental effects
+      lazy_calculation: calculate complex interactions on-demand
+
+    network_optimization:
+      effect_delta: send only changed effect states
+      area_broadcast: send environmental effects to nearby players only
+      effect_prediction: client-side prediction for common effects
+
+  tickrate_specification:
+    elemental_processing:
+      tickrate: 20-60 Hz для активных DoT эффектов, Event-based для активации
+      network_load: |
+        - Effect application: ~0.3-1 KB/sec per active effect
+        - Interaction calculations: ~0.1-0.5 KB/sec per interaction
+        - Environmental updates: ~0.2-0.8 KB/sec per environmental change
+        - Damage ticks: ~0.1-0.3 KB/sec per DoT effect
+        - Total elemental traffic: ~1-3 KB/sec per player in combat
+      latency_requirements: < 30ms для применения эффектов, < 50ms для расчетов взаимодействий
+
+  database_structure:
+    tables:
+      - name: elemental_effects_definitions
+        description: Определения стихийных эффектов
+        columns:
+          - id: UUID PRIMARY KEY
+          - element_type: ENUM (fire, ice, poison, acid)
+          - effect_name: VARCHAR(100)
+          - parameters: JSONB
+          - interaction_rules: JSONB
+          - visual_effects: JSONB
+          - created_at: TIMESTAMP
+
+      - name: active_elemental_effects
+        description: Активные стихийные эффекты
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - target_id: UUID FOREIGN KEY
+          - effect_id: UUID FOREIGN KEY
+          - stacks: INTEGER
+          - damage_per_tick: DECIMAL
+          - duration_remaining: INTEGER
+          - applied_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+
+      - name: elemental_interactions
+        description: Журнал взаимодействий стихий
+        columns:
+          - id: UUID PRIMARY KEY
+          - primary_effect_id: UUID FOREIGN KEY
+          - secondary_effect_id: UUID FOREIGN KEY
+          - interaction_type: VARCHAR(50)
+          - result_effects: JSONB
+          - created_at: TIMESTAMP
+
+      - name: elemental_telemetry
+        description: Телеметрия стихийных эффектов
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_type: VARCHAR(50)
+          - character_id: UUID FOREIGN KEY
+          - target_id: UUID FOREIGN KEY
+          - element_type: VARCHAR(20)
+          - damage_dealt: DECIMAL
+          - effect_duration: INTEGER
+          - created_at: TIMESTAMP
+
+  integrations:
+    combat_service: |
+      - Получение событий попаданий и повреждений
+      - Применение стихийных эффектов к целям
+      - Синхронизация состояния эффектов
+      - Расчет комбинированного урона
+
+    damage_system: |
+      - Расчет стихийного урона через Elemental Damage Calculator
+      - Применение модификаторов сопротивлений
+      - Обработка DoT эффектов
+      - Интеграция с базовым уроном
+
+    effect_system: |
+      - Управление визуальными эффектами стихий
+      - Синхронизация эффектов между клиентами
+      - Управление длительностью и стаками эффектов
+      - Оптимизация рендеринга эффектов
+
+    environment_system: |
+      - Получение данных об окружающей среде
+      - Применение модификаторов окружения
+      - Создание динамических эффектов окружения
+      - Управление зонами эффектов
+
+technical_specification:
+  subtasks:
+    - id: elemental-effect-manager
+      title: Реализация менеджера стихийных эффектов
+      description: |
+        Реализация Elemental Effect Manager с маршрутизацией эффектов
+        по типам и координацией всех компонентов.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: fire-effect-processor
+      title: Реализация процессора огненных эффектов
+      description: |
+        Реализация Fire Effect Processor с логикой горения,
+        распространения и взаимодействия с другими стихиями.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 3 days
+
+    - id: ice-effect-processor
+      title: Реализация процессора ледяных эффектов
+      description: |
+        Реализация Ice Effect Processor с логикой замедления,
+        заморозки и взаимодействия с теплом.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 3 days
+
+    - id: poison-effect-processor
+      title: Реализация процессора ядовитых эффектов
+      description: |
+        Реализация Poison Effect Processor с логикой накопления,
+        распространения и электрических взаимодействий.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 3 days
+
+    - id: acid-effect-processor
+      title: Реализация процессора кислотных эффектов
+      description: |
+        Реализация Acid Effect Processor с логикой коррозии,
+        повреждения поверхностей и водных взаимодействий.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 3 days
+
+    - id: elemental-interaction-calculator
+      title: Реализация калькулятора взаимодействий стихий
+      description: |
+        Реализация Elemental Interaction Calculator с правилами
+        взаимодействия между всеми типами стихий.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 4 days
+
+    - id: environmental-effect-integrator
+      title: Реализация интегратора эффектов окружения
+      description: |
+        Реализация Environmental Effect Integrator с логикой
+        взаимодействия стихий с окружающей средой.
+      dependencies: [elemental-interaction-calculator]
+      estimated_effort: 3 days
+
+    - id: elemental-damage-calculator
+      title: Реализация калькулятора стихийного урона
+      description: |
+        Реализация Elemental Damage Calculator с расчетом
+        урона, сопротивлений и модификаторов.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 3 days
+
+    - id: elemental-effect-visualizer
+      title: Реализация визуализатора эффектов
+      description: |

@@ -1,0 +1,412 @@
+metadata:
+
+# Часть 2
+
+        Реализация Elemental Effect Visualizer с управлением
+        визуальными эффектами и синхронизацией.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 2 days
+
+    - id: elemental-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Elemental Telemetry Collector с логированием
+        использования эффектов и аналитикой.
+      dependencies: [elemental-effect-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema-elemental
+      title: Создание схемы БД для стихийных эффектов
+      description: |
+        Создание таблиц для эффектов, взаимодействий и телеметрии
+        с соответствующими индексами и миграциями.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+
+        Gateway --> ElementalEffectsService[Elemental Effects Service<br/>8102]
+
+        ElementalEffectsService --> EEM[Elemental Effect Manager]
+        ElementalEffectsService --> FEP[Fire Effect Processor]
+        ElementalEffectsService --> IEP[Ice Effect Processor]
+        ElementalEffectsService --> PEP[Poison Effect Processor]
+        ElementalEffectsService --> AEP[Acid Effect Processor]
+        ElementalEffectsService --> EIC[Elemental Interaction Calculator]
+        ElementalEffectsService --> EEI[Environmental Effect Integrator]
+        ElementalEffectsService --> EDC[Elemental Damage Calculator]
+        ElementalEffectsService --> EEV[Elemental Effect Visualizer]
+        ElementalEffectsService --> ETC[Elemental Telemetry Collector]
+
+        EEM --> FEP
+        EEM --> IEP
+        EEM --> PEP
+        EEM --> AEP
+        EEM --> EIC
+        EIC --> EEI
+        EEM --> EDC
+        EEM --> EEV
+
+        ElementalEffectsService --> CombatService[Combat Service]
+        ElementalEffectsService --> DamageSystem[Damage System]
+        ElementalEffectsService --> EffectSystem[Effect System]
+        ElementalEffectsService --> EnvironmentSystem[Environment System]
+
+        ElementalEffectsService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+
+        ElementalEffectsService --> DB[(Elemental Effects DB)]
+    ```
+
+  api_endpoints:
+    rest:
+      - path: /api/v1/elemental-effects/apply
+        method: POST
+        description: Применение стихийного эффекта к цели
+        request:
+          type: object
+          properties:
+            weaponId: { type: string }
+            targetId: { type: string }
+            elementType: { type: string, enum: [fire, ice, poison, acid] }
+            damage: { type: number }
+            duration: { type: integer }
+            stacks: { type: integer, optional: true }
+        response:
+          type: object
+          properties:
+            effectId: { type: string }
+            status: { type: string }
+
+      - path: /api/v1/elemental-effects/{effectId}
+        method: GET
+        description: Получение информации о стихийном эффекте
+        request: {}
+        response:
+          type: object
+          properties:
+            effectId: { type: string }
+            elementType: { type: string }
+            targetId: { type: string }
+            damagePerTick: { type: number }
+            durationRemaining: { type: integer }
+            stacks: { type: integer }
+
+      - path: /api/v1/elemental-effects/{characterId}/active
+        method: GET
+        description: Получение списка активных стихийных эффектов персонажа
+        request: {}
+        response:
+          type: array
+          items:
+            type: object
+            properties:
+              effectId: { type: string }
+              elementType: { type: string }
+              damagePerTick: { type: number }
+              durationRemaining: { type: integer }
+
+      - path: /api/v1/elemental-effects/interact
+        method: POST
+        description: Расчет взаимодействия между стихийными эффектами
+        request:
+          type: object
+          properties:
+            primaryElement: { type: string }
+            secondaryElement: { type: string }
+            targetId: { type: string }
+        response:
+          type: object
+          properties:
+            interactionType: { type: string }
+            resultEffects: { type: array, items: { type: object } }
+
+      - path: /api/v1/elemental-effects/damage/calculate
+        method: POST
+        description: Расчет стихийного урона с учетом сопротивлений
+        request:
+          type: object
+          properties:
+            baseDamage: { type: number }
+            elementType: { type: string }
+            targetId: { type: string }
+            environmentalFactors: { type: array, items: { type: string } }
+        response:
+          type: object
+          properties:
+            totalDamage: { type: number }
+            resistanceApplied: { type: number }
+            environmentalModifier: { type: number }
+
+    websocket:
+      - path: /ws/v1/elemental-effects/{characterId}
+        description: Обновления стихийных эффектов в реальном времени
+        messages:
+          - type: effect_applied
+            payload:
+              type: object
+              properties:
+                effectId: { type: string }
+                elementType: { type: string }
+                targetId: { type: string }
+                duration: { type: integer }
+          - type: effect_updated
+            payload:
+              type: object
+              properties:
+                effectId: { type: string }
+                stacks: { type: integer }
+                durationRemaining: { type: integer }
+          - type: effect_expired
+            payload:
+              type: object
+              properties:
+                effectId: { type: string }
+          - type: interaction_triggered
+            payload:
+              type: object
+              properties:
+                primaryEffectId: { type: string }
+                secondaryEffectId: { type: string }
+                interactionType: { type: string }
+                resultEffects: { type: array, items: { type: object } }
+
+  event_streams:
+    publish:
+      - name: elemental.effect_applied
+        description: Событие применения стихийного эффекта
+        payload:
+          type: object
+          properties:
+            effectId: { type: string }
+            weaponId: { type: string }
+            targetId: { type: string }
+            elementType: { type: string }
+            damage: { type: number }
+            duration: { type: integer }
+            appliedAt: { type: string, format: date-time }
+      - name: elemental.effect_expired
+        description: Событие истечения стихийного эффекта
+        payload:
+          type: object
+          properties:
+            effectId: { type: string }
+            targetId: { type: string }
+            totalDamageDealt: { type: number }
+      - name: elemental.interaction_calculated
+        description: Событие расчета взаимодействия стихий
+        payload:
+          type: object
+          properties:
+            primaryElement: { type: string }
+            secondaryElement: { type: string }
+            interactionType: { type: string }
+            resultEffects: { type: array, items: { type: object } }
+      - name: elemental.damage_dealt
+        description: Событие нанесения стихийного урона
+        payload:
+          type: object
+          properties:
+            effectId: { type: string }
+            targetId: { type: string }
+            damage: { type: number }
+            elementType: { type: string }
+      - name: elemental.environmental_triggered
+        description: Событие срабатывания эффекта окружения
+        payload:
+          type: object
+          properties:
+            environmentType: { type: string }
+            elementType: { type: string }
+            affectedTargets: { type: array, items: { type: string } }
+            effectRadius: { type: number }
+    subscribe:
+      - name: weapon.fired
+        description: Событие выстрела из оружия
+      - name: projectile.hit
+        description: Событие попадания снаряда
+      - name: target.damaged
+        description: Событие повреждения цели
+      - name: environment.changed
+        description: Событие изменения окружения
+      - name: combat.round_end
+        description: Событие окончания раунда боя
+
+  data_models:
+    elemental_effect_definition:
+      - name: ElementalEffectDefinition
+        fields:
+          - name: id
+            type: string
+          - name: elementType
+            type: string # fire, ice, poison, acid
+          - name: name
+            type: string
+          - name: description
+            type: string
+          - name: baseDamage
+            type: number
+          - name: damageType
+            type: string # direct, dot, spread
+          - name: duration
+            type: integer
+          - name: tickRate
+            type: integer
+          - name: maxStacks
+            type: integer
+          - name: interactionRules
+            type: object
+          - name: visualEffects
+            type: object
+          - name: soundEffects
+            type: object
+
+    active_elemental_effect:
+      - name: ActiveElementalEffect
+        fields:
+          - name: id
+            type: string
+          - name: definitionId
+            type: string
+          - name: targetId
+            type: string
+          - name: sourceId
+            type: string
+          - name: currentStacks
+            type: integer
+          - name: damagePerTick
+            type: number
+          - name: durationRemaining
+            type: integer
+          - name: appliedAt
+            type: string
+            format: date-time
+          - name: expiresAt
+            type: string
+            format: date-time
+          - name: environmentalModifiers
+            type: object
+
+    elemental_interaction:
+      - name: ElementalInteraction
+        fields:
+          - name: id
+            type: string
+          - name: primaryElement
+            type: string
+          - name: secondaryElement
+            type: string
+          - name: interactionType
+            type: string
+          - name: resultElements
+            type: array
+            items: { type: string }
+          - name: damageMultiplier
+            type: number
+          - name: durationModifier
+            type: number
+          - name: specialEffects
+            type: object
+
+  data_storage:
+    data_consistency:
+      event_sourcing: для всех изменений состояния эффектов
+      cqrs_pattern: разделение моделей чтения и записи эффектов
+      saga_pattern: для комплексных взаимодействий стихий
+      outbox_pattern: гарантированная доставка событий эффектов
+
+    caching_strategy:
+      - type: Redis
+        data:
+          - key: elemental_effects:{characterId}
+            description: Кэш активных эффектов персонажа (TTL 60s)
+          - key: elemental_definitions
+            description: Кэш определений эффектов (TTL 3600s)
+          - key: elemental_interactions:{primary}:{secondary}
+            description: Кэш результатов взаимодействий стихий (TTL 1800s)
+
+  performance_optimizations:
+    network_optimization:
+      delta_compression: отправка только изменений состояния эффектов
+      area_broadcast: отправка эффектов только ближайшим игрокам
+      effect_batching: группировка обновлений эффектов
+
+  security_considerations:
+    authentication: JWT токены для всех API запросов
+    authorization: RBAC для управления эффектами и данными игроков
+    input_validation: строгая валидация всех входящих данных эффектов
+    anti_cheat: серверная валидация применения эффектов
+    rate_limiting: ограничение частоты запросов на применение эффектов
+
+  monitoring_and_logging:
+    metrics: Prometheus метрики по частоте применения эффектов, средней длительности, типам взаимодействий
+    logging: Структурированные JSON логи для всех операций сервиса (Loki)
+    tracing: Распределенное трассирование для потоков эффектов (Tempo)
+    alerting: Алёртинг по аномалиям в применении эффектов или производительности
+
+  testing_strategy:
+    unit_tests: для индивидуальных процессоров эффектов и калькуляторов
+    integration_tests: для взаимодействий с combat и damage системами
+    e2e_tests: для полных сценариев применения эффектов
+    performance_tests: нагрузочное тестирование применения эффектов
+    security_tests: тестирование на уязвимости в API эффектов
+
+  deployment_strategy:
+    containerization: Docker для elemental-effects-service
+    orchestration: Kubernetes для развертывания и масштабирования
+    blue_green_deployment: для мажорных обновлений логики эффектов
+    rollback_procedures: автоматический откат к предыдущей стабильной версии
+    auto_scaling: по нагрузке на применение эффектов и расчеты взаимодействий
+
+  elemental_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant W as Weapon
+        participant EEM as Elemental Effect Manager
+        participant Processor as Effect Processor
+        participant EIC as Interaction Calculator
+        participant EDC as Damage Calculator
+        participant EEV as Effect Visualizer
+
+        W->>EEM: Hit with elemental effect
+        EEM->>Processor: Route to appropriate processor
+        Processor->>EDC: Calculate damage
+        EDC->>Processor: Return damage value
+        Processor->>EIC: Check for interactions
+        EIC->>Processor: Apply interaction modifiers
+        Processor->>EEV: Trigger visual effects
+        EEV->>EEM: Effects applied successfully
+    ```
+
+history:
+  - version: "1.1.0"
+    date: 2025-12-07
+    author: Architect Agent
+    changes: |
+      Дополнена архитектура системы стихийных эффектов оружия:
+      - Добавлены детальные спецификации API endpoints (REST и WebSocket)
+      - Спроектированы полные event streams с payload структурами
+      - Определены модели данных для эффектов и взаимодействий
+      - Добавлены стратегии data consistency (Event Sourcing, CQRS, Saga)
+      - Реализованы стратегии кэширования для производительности
+      - Добавлены security considerations (аутентификация, авторизация, anti-cheat)
+      - Спроектированы monitoring and logging стратегии
+      - Определены testing и deployment стратегии
+      - Добавлены network optimizations для реального времени
+
+  - version: "1.0.0"
+    date: 2025-12-06
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы стихийных эффектов оружия:
+      - Определены компоненты для всех типов стихий (огонь, лед, яд, кислота)
+      - Спроектирована система взаимодействий между стихиями
+      - Определены API endpoints и WebSocket каналы
+      - Спроектированы потоки данных и интеграции с системами
+      - Добавлены оптимизации производительности и спецификации тикрейта
+      - Создан план подзадач и диаграммы архитектуры
+      - Определена структура БД для эффектов и взаимодействий

@@ -1,0 +1,286 @@
+metadata:
+
+# Часть 2
+
+      fields:
+        - id: UUID
+        - name: string
+        - seed: int64
+        - start_date: timestamp
+        - end_date: timestamp
+        - current_phase: enum (Start, Rise, Crisis, Endgame, Finale)
+        - time_acceleration: float
+        - game_date: timestamp
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: PlayerLegacy
+      fields:
+        - player_id: UUID
+        - legacy_points: int
+        - titles: array<string>
+        - cosmetics: array<UUID>
+        - legacy_items: array<UUID>
+        - global_rating: float
+        - hall_of_fame_entries: array<HallOfFameEntry>
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: LeagueStatistics
+      fields:
+        - league_id: UUID
+        - phase: enum
+        - player_count: int
+        - economy_metrics: json
+        - pvp_metrics: json
+        - quest_metrics: json
+        - top_players: array<PlayerStats>
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: HallOfFameEntry
+      fields:
+        - league_id: UUID
+        - player_id: UUID
+        - category: enum (Story, Economy, PvP, Alternative)
+        - rank: int
+        - achievement: string
+        - statue_model: UUID
+        - created_at: timestamp
+
+  api_endpoints:
+    league_management:
+      - GET /api/v1/league/current
+        description: Получить текущую лигу
+        response: League
+      - GET /api/v1/league/{leagueId}
+        description: Получить информацию о лиге
+        response: League
+      - GET /api/v1/league/{leagueId}/statistics
+        description: Получить статистику лиги
+        response: LeagueStatistics
+      - GET /api/v1/league/countdown
+        description: Получить таймер до конца лиги
+        response: Countdown
+      - GET /api/v1/league/phases
+        description: Получить текущую фазу лиги
+        response: PhaseInfo
+
+    meta_progression:
+      - GET /api/v1/player/legacy-progress
+        description: Получить мета-прогресс игрока
+        response: PlayerLegacy
+      - GET /api/v1/player/titles
+        description: Получить титулы игрока
+        response: array<Title>
+      - GET /api/v1/player/cosmetics
+        description: Получить косметику игрока
+        response: array<Cosmetic>
+      - GET /api/v1/player/legacy-items
+        description: Получить Legacy Items игрока
+        response: array<LegacyItem>
+
+    hall_of_fame:
+      - GET /api/v1/league/hall-of-fame
+        description: Получить Hall of Fame
+        response: array<HallOfFameEntry>
+      - GET /api/v1/league/hall-of-fame/{leagueId}
+        description: Получить Hall of Fame для лиги
+        response: array<HallOfFameEntry>
+
+    legacy_shop:
+      - GET /api/v1/legacy-shop/items
+        description: Получить доступные Legacy Items
+        response: array<LegacyShopItem>
+      - POST /api/v1/legacy-shop/purchase
+        description: Купить Legacy Item
+        request: PurchaseRequest
+        response: PurchaseResponse
+
+    events:
+      - POST /api/v1/league/end-event/register
+        description: Зарегистрироваться на финальный эвент
+        request: EventRegistration
+        response: RegistrationResponse
+
+    admin:
+      - POST /api/v1/league/reset/trigger
+        description: Триггер глобального сброса (admin only)
+        request: ResetRequest
+        response: ResetResponse
+      - POST /api/v1/league/create
+        description: Создать новую лигу (admin only)
+        request: LeagueCreateRequest
+        response: League
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: League Manager и Season Controller
+        tasks:
+          - Реализация League Manager
+          - Реализация Season Controller
+          - Управление фазами лиги
+          - Управление временем и ускорением
+          - Интеграция с World Service
+        estimated_effort: 5 days
+
+      phase_2:
+        name: Global Reset Engine
+        tasks:
+          - Реализация Global Reset Engine
+          - Координация сброса с другими сервисами
+          - Сохранение мета-прогресса
+          - Выдача итоговых наград
+          - Обработка ошибок и откат
+        estimated_effort: 6 days
+
+      phase_3:
+        name: Meta Progression Manager
+        tasks:
+          - Реализация Meta Progression Manager
+          - Управление титулами и достижениями
+          - Косметика и разблокировки
+          - Legacy Items и их эффекты
+          - Глобальный рейтинг с мягким сбросом
+        estimated_effort: 5 days
+
+      phase_4:
+        name: Hall of Fame и Statistics
+        tasks:
+          - Реализация Hall of Fame Manager
+          - Реализация League Statistics Collector
+          - Категории Hall of Fame
+          - Статуя победителя
+          - Интеграция с Analytics Service
+        estimated_effort: 4 days
+
+      phase_5:
+        name: Legacy Shop
+        tasks:
+          - Реализация Legacy Shop Manager
+          - Legacy Points система
+          - Покупка Legacy Items
+          - Ограничения на использование
+        estimated_effort: 3 days
+
+      phase_6:
+        name: Интеграции
+        tasks:
+          - Интеграция с Character Service
+          - Интеграция с Economy Service
+          - Интеграция с Social Service
+          - Интеграция с Quest Service
+          - Интеграция с Matchmaking Service
+          - Event Bus интеграция
+        estimated_effort: 5 days
+
+    total_estimated_effort: 28 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> LeagueService[League Service<br/>8093]
+        
+        LeagueService --> LM[League Manager]
+        LeagueService --> SC[Season Controller]
+        LeagueService --> GRE[Global Reset Engine]
+        LeagueService --> MPM[Meta Progression Manager]
+        LeagueService --> HOFM[Hall of Fame Manager]
+        LeagueService --> LSC[League Statistics Collector]
+        LeagueService --> LSM[Legacy Shop Manager]
+        LeagueService --> TAC[Time Acceleration Controller]
+        
+        LeagueService --> CharacterService[Character Service<br/>8080]
+        LeagueService --> EconomyService[Economy Service<br/>8085]
+        LeagueService --> SocialService[Social Service<br/>8084]
+        LeagueService --> QuestService[Quest Service<br/>8087]
+        LeagueService --> MatchmakingService[Matchmaking Service<br/>8081]
+        LeagueService --> WorldService[World Service<br/>8086]
+        LeagueService --> ProgressionService[Progression Service<br/>8082]
+        LeagueService --> AnalyticsService[Analytics Service<br/>8095]
+        
+        LeagueService --> EventBus[Event Bus<br/>Kafka]
+        LeagueService --> DB[(League DB)]
+        LeagueService --> Cache[(Redis Cache)]
+        
+        Client --> WSLeague[WebSocket<br/>League Updates]
+        WSLeague --> LeagueService
+    ```
+
+  league_lifecycle: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> Start: New League Created
+        Start --> Rise: Month 1 Complete
+        Rise --> Crisis: Months 2-3 Complete
+        Crisis --> Endgame: Months 4-5 Complete
+        Endgame --> Finale: Last 2 Weeks
+        Finale --> Reset: July 27, 2093
+        Reset --> [*]: Reset Complete
+    ```
+
+  reset_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant LeagueService
+        participant GlobalResetEngine
+        participant CharacterService
+        participant EconomyService
+        participant SocialService
+        participant QuestService
+        participant MetaProgressionManager
+        
+        LeagueService->>GlobalResetEngine: Trigger Reset
+        GlobalResetEngine->>CharacterService: Delete Characters
+        GlobalResetEngine->>EconomyService: Reset Economy
+        GlobalResetEngine->>SocialService: Disband Guilds
+        GlobalResetEngine->>QuestService: Reset Quests
+        GlobalResetEngine->>MetaProgressionManager: Save Meta Progress
+        GlobalResetEngine->>MetaProgressionManager: Distribute Rewards
+        GlobalResetEngine->>LeagueService: Reset Complete
+    ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
