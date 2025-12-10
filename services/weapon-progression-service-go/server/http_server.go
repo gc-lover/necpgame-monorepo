@@ -7,23 +7,24 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/weapon-progression-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+type requestIDKey struct{}
+
 // HTTPServer represents HTTP server
 type HTTPServer struct {
 	addr    string
-	router  chi.Router
+	router  *http.ServeMux
 	service *Service
 	server  *http.Server
 }
 
 // NewHTTPServer creates HTTP server with DI
 func NewHTTPServer(addr string, db *sql.DB) *HTTPServer {
-	router := chi.NewRouter()
+	router := http.NewServeMux()
 
 	// Create dependencies
 	repo := NewRepository(db)
@@ -31,13 +32,6 @@ func NewHTTPServer(addr string, db *sql.DB) *HTTPServer {
 	handlers := NewHandlers(service)
 
 	// Apply middleware
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-	router.Use(LoggingMiddleware)
-	router.Use(RecoveryMiddleware)
-	router.Use(CORSMiddleware)
-
 	// Integration with ogen
 	secHandler := &SecurityHandler{}
 	ogenServer, err := api.NewServer(handlers, secHandler)
@@ -45,11 +39,17 @@ func NewHTTPServer(addr string, db *sql.DB) *HTTPServer {
 		panic(err)
 	}
 
+	var handler http.Handler = ogenServer
+	handler = requestIDMiddleware(handler)
+	handler = LoggingMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	handler = CORSMiddleware(handler)
+
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	router.Handle("/api/v1/", handler)
 
 	// Health and metrics
-	router.Get("/health", healthCheck)
+	router.HandleFunc("/health", healthCheck)
 	router.Handle("/metrics", promhttp.Handler())
 
 	return &HTTPServer{
@@ -78,4 +78,16 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Header.Get("X-Request-ID")
+		if reqID == "" {
+			reqID = uuid.NewString()
+		}
+		ctx := context.WithValue(r.Context(), requestIDKey{}, reqID)
+		w.Header().Set("X-Request-ID", reqID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

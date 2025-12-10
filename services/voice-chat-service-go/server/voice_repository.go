@@ -39,7 +39,7 @@ func (r *VoiceRepository) CreateChannel(ctx context.Context, channel *models.Voi
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW(), NOW()
 		) RETURNING id, created_at, updated_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		channel.Type, channel.OwnerID, channel.OwnerType, channel.Name,
 		channel.MaxMembers, channel.QualityPreset, settingsJSON,
 	).Scan(&channel.ID, &channel.CreatedAt, &channel.UpdatedAt)
@@ -156,7 +156,7 @@ func (r *VoiceRepository) AddParticipant(ctx context.Context, participant *model
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW(), NOW()
 		) RETURNING id, joined_at, updated_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		participant.ChannelID, participant.CharacterID, participant.Status,
 		participant.WebRTCToken, positionJSON, statsJSON,
 	).Scan(&participant.ID, &participant.JoinedAt, &participant.UpdatedAt)
@@ -285,7 +285,7 @@ func (r *VoiceRepository) UpdateParticipantPosition(ctx context.Context, channel
 		return fmt.Errorf("failed to marshal position JSON: %w", err)
 	}
 
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`UPDATE social.voice_participants
 		 SET position = $1, updated_at = NOW()
 		 WHERE channel_id = $2 AND character_id = $3`,

@@ -6,29 +6,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr   string
-	router chi.Router
+	router *http.ServeMux
 	logger *logrus.Logger
 	server *http.Server
 }
 
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-
 	logger := GetLogger()
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
+	mux := http.NewServeMux()
 
 	// Handlers (реализация api.Handler из handlers.go)
 	handlers := NewHandlers(service)
@@ -41,17 +32,21 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	}
 
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	handler = http.TimeoutHandler(handler, 60*time.Second, "request timed out")
 
-	router.Get("/health", healthCheck)
+	mux.Handle("/api/v1", handler)
+	mux.HandleFunc("/health", healthCheck)
 
 	server := &HTTPServer{
 		addr:   addr,
-		router: router,
+		router: mux,
 		logger: logger,
 		server: &http.Server{
 			Addr:         addr,
-			Handler:      router,
+			Handler:      mux,
 			ReadTimeout:  15 * time.Second,
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,

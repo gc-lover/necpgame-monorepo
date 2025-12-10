@@ -13,8 +13,8 @@ import (
 var (
 	// goroutineCount is a Prometheus gauge for current goroutine count
 	goroutineCount = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "go_goroutines",
-		Help: "Current number of goroutines",
+		Name: "voice_service_go_goroutines",
+		Help: "Current number of goroutines in voice service",
 	})
 )
 

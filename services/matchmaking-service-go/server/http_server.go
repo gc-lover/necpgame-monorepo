@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-service-go/pkg/api"
 )
 
@@ -29,12 +28,6 @@ func NewHTTPServer(addr string, service Service) *HTTPServer {
 
 // Start запускает HTTP server
 func (s *HTTPServer) Start() error {
-	// Create Chi router
-	router := chi.NewRouter()
-
-	// Issue: #1588 - Load shedding middleware (prevent overload)
-	router.Use(s.loadSheddingMiddleware)
-
 	// Create ogen handlers
 	handlers := NewHandlers(s.service)
 	
@@ -44,19 +37,17 @@ func (s *HTTPServer) Start() error {
 		return err
 	}
 	
-	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
-	
-	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
-	
-	// Wrap with CORS
-	handler := withCORS(router)
+	mux := http.NewServeMux()
+	var handler http.Handler = ogenServer
+	handler = s.loadSheddingMiddleware(handler)
+	handler = withCORS(handler)
+	mux.Handle("/api/v1", handler)
+	mux.HandleFunc("/health", healthCheck)
+	mux.HandleFunc("/metrics", metricsHandler)
 	
 	s.server = &http.Server{
 		Addr:    s.addr,
-		Handler: handler,
+		Handler: mux,
 	}
 	
 	log.Printf("OK Matchmaking Service (ogen) listening on %s", s.addr)

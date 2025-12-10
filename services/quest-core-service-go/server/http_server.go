@@ -7,12 +7,32 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
+
+type requestIDKey struct{}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	if r.status == 0 {
+		r.status = statusCode
+	}
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (r *responseRecorder) Write(b []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(b)
+}
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
@@ -23,29 +43,19 @@ func getEnv(key, defaultValue string) string {
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *http.ServeMux
 	logger *logrus.Logger
 	server *http.Server
 }
 
 func NewHTTPServer(addr string) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router := http.NewServeMux()
 
 	server := &HTTPServer{
 		addr:   addr,
 		router: router,
 		logger: GetLogger(),
 	}
-
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
 
 	// Issue: #1609 - Initialize Redis client for caching
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6379")
@@ -68,8 +78,14 @@ func NewHTTPServer(addr string) *HTTPServer {
 		panic(err)
 	}
 
+	var handler http.Handler = ogenServer
+	handler = requestIDMiddleware(handler)
+	handler = server.loggingMiddleware(handler)
+	handler = server.metricsMiddleware(handler)
+	handler = server.corsMiddleware(handler)
+
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	router.Handle("/api/v1/", handler)
 
 	server.server = &http.Server{
 		Addr:         addr,
@@ -92,14 +108,18 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		ww := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(ww, r)
+		status := ww.status
+		if status == 0 {
+			status = http.StatusOK
+		}
 		s.logger.WithFields(logrus.Fields{
 			"method":    r.Method,
 			"path":      r.URL.Path,
-			"status":    ww.Status(),
+			"status":    status,
 			"duration":  time.Since(start).String(),
-			"requestID": middleware.GetReqID(r.Context()),
+			"requestID": getRequestID(r.Context()),
 		}).Info("Request completed")
 	})
 }
@@ -107,9 +127,13 @@ func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
 func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		ww := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(ww, r)
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(ww.Status()))
+		status := ww.status
+		if status == 0 {
+			status = http.StatusOK
+		}
+		RecordRequest(r.Method, r.URL.Path, http.StatusText(status))
 		RecordRequestDuration(r.Method, r.URL.Path, time.Since(start).Seconds())
 	})
 }
@@ -148,6 +172,28 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
 		GetLogger().WithError(err).Error("Failed to encode JSON error response")
 	}
+}
+
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Header.Get("X-Request-ID")
+		if reqID == "" {
+			reqID = uuid.NewString()
+		}
+		ctx := context.WithValue(r.Context(), requestIDKey{}, reqID)
+		w.Header().Set("X-Request-ID", reqID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func getRequestID(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if v, ok := ctx.Value(requestIDKey{}).(string); ok {
+		return v
+	}
+	return ""
 }
 
 

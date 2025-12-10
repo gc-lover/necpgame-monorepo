@@ -3,7 +3,6 @@ module github.com/gc-lover/necpgame-monorepo/services/feedback-service-go
 go 1.24.0
 
 require (
-	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
 	github.com/golang-jwt/jwt/v5 v5.3.0

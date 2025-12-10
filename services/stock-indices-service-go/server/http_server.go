@@ -5,11 +5,31 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/necpgame/stock-indices-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
+
+type requestIDKey struct{}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	if r.status == 0 {
+		r.status = statusCode
+	}
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (r *responseRecorder) Write(b []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(b)
+}
 
 type HTTPServer struct {
 	addr   string
@@ -20,20 +40,20 @@ type HTTPServer struct {
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	handlers := NewStockHandlers(logger)
 
-	router := chi.NewRouter()
+	router := http.NewServeMux()
 
-	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
-	router.Use(corsMiddleware)
-
-	// Generated API handlers with Chi
-	// ogen server integration
 	ogenServer, err := api.NewServer(handlers)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = requestIDMiddleware(handler)
+	handler = loggingMiddleware(logger)(handler)
+	handler = recoveryMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+
+	router.Handle("/api/v1/", handler)
 
 	router.Handle("/metrics", promhttp.Handler())
 
@@ -77,10 +97,16 @@ func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			next.ServeHTTP(w, r)
+			rr := &responseRecorder{ResponseWriter: w}
+			next.ServeHTTP(rr, r)
+			status := rr.status
+			if status == 0 {
+				status = http.StatusOK
+			}
 			logger.WithFields(logrus.Fields{
 				"method":   r.Method,
 				"path":     r.URL.Path,
+				"status":   status,
 				"duration": time.Since(start),
 			}).Info("HTTP request processed")
 		})
@@ -113,6 +139,18 @@ func corsMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Header.Get("X-Request-ID")
+		if reqID == "" {
+			reqID = time.Now().UTC().Format(time.RFC3339Nano)
+		}
+		ctx := context.WithValue(r.Context(), requestIDKey{}, reqID)
+		w.Header().Set("X-Request-ID", reqID)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

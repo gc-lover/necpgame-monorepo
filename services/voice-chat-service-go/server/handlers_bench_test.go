@@ -4,12 +4,14 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/pkg/api"
 )
 
 // BenchmarkCreateChannel benchmarks CreateChannel handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCreateChannel(b *testing.B) {
-	service := NewService(nil)
+	service := &mockVoiceService{}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -28,7 +30,7 @@ func BenchmarkCreateChannel(b *testing.B) {
 // BenchmarkGetChannel benchmarks GetChannel handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetChannel(b *testing.B) {
-	service := NewService(nil)
+	service := &mockVoiceService{}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -46,7 +48,7 @@ func BenchmarkGetChannel(b *testing.B) {
 // BenchmarkListChannels benchmarks ListChannels handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkListChannels(b *testing.B) {
-	service := NewService(nil)
+	service := &mockVoiceService{}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()

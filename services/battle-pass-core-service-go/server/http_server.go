@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-faster/jx"
 	"github.com/rs/zerolog/log"
 
@@ -18,14 +17,11 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, handlers *Handlers, middlewares ...func(http.Handler) http.Handler) *HTTPServer {
-	r := chi.NewRouter()
+	mux := http.NewServeMux()
 
-	// Применяем middleware
-	for _, m := range middlewares {
-		r.Use(m)
-	}
+	var handler http.Handler = nil
 
-	openapiServer, err := api.NewServer(handlers, handlers, 
+	openapiServer, err := api.NewServer(handlers, handlers,
 		api.WithErrorHandler(func(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 			resp := handlers.NewError(ctx, err)
 			w.Header().Set("Content-Type", "application/json")
@@ -41,17 +37,28 @@ func NewHTTPServer(addr string, handlers *Handlers, middlewares ...func(http.Han
 		log.Fatal().Err(err).Msg("Failed to create OpenAPI server")
 	}
 
-	r.Mount("/api/v1", openapiServer)
+	handler = openapiServer
+
+	// Применяем middleware (в том числе внешние)
+	handler = chainMiddlewares(handler, middlewares...)
+	mux.Handle("/api/v1/", handler)
 
 	httpSrv := &http.Server{
 		Addr:              addr,
-		Handler:           r,
+		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
 
 	return &HTTPServer{httpSrv: httpSrv}
+}
+
+func chainMiddlewares(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
 }
 
 func (s *HTTPServer) Start() error {

@@ -3,7 +3,6 @@ package server
 import (
 	"net/http"
 
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,7 +15,15 @@ func RequestLogger(next http.Handler) http.Handler {
 }
 
 func Recoverer(next http.Handler) http.Handler {
-	return middleware.Recoverer(next)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				log.Error().Interface("err", rec).Msg("panic recovered")
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 
 

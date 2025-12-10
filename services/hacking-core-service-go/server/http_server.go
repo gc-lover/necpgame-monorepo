@@ -6,32 +6,42 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/hacking-core-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
+type requestIDKey struct{}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	if r.status == 0 {
+		r.status = statusCode
+	}
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (r *responseRecorder) Write(b []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(b)
+}
+
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *http.ServeMux
 	logger *logrus.Logger
 	server *http.Server
 }
 
 func NewHTTPServer(addr string) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router := http.NewServeMux()
 
 	logger := GetLogger()
-	router.Use(loggingMiddleware(logger))
-	router.Use(metricsMiddleware())
-	router.Use(corsMiddleware())
 
 	// Handlers (реализация api.Handler из handlers.go)
 	handlers := NewHandlers()
@@ -44,9 +54,14 @@ func NewHTTPServer(addr string) *HTTPServer {
 	}
 
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = requestIDMiddleware(handler)
+	handler = loggingMiddleware(logger)(handler)
+	handler = metricsMiddleware()(handler)
+	handler = corsMiddleware()(handler)
+	router.Handle("/api/v1/", handler)
 
-	router.Get("/health", healthCheck)
+	router.HandleFunc("/health", healthCheck)
 
 	server := &HTTPServer{
 		addr:   addr,
@@ -75,14 +90,18 @@ func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			ww := &responseRecorder{ResponseWriter: w}
 			next.ServeHTTP(ww, r)
+			status := ww.status
+			if status == 0 {
+				status = http.StatusOK
+			}
 			logger.WithFields(logrus.Fields{
 				"method":    r.Method,
 				"path":      r.URL.Path,
-				"status":    ww.Status(),
+				"status":    status,
 				"duration":  time.Since(start).String(),
-				"requestID": middleware.GetReqID(r.Context()),
+				"requestID": getRequestID(r.Context()),
 			}).Info("Request completed")
 		})
 	}
@@ -92,9 +111,13 @@ func metricsMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			ww := &responseRecorder{ResponseWriter: w}
 			next.ServeHTTP(ww, r)
-			RecordRequest(r.Method, r.URL.Path, http.StatusText(ww.Status()))
+			status := ww.status
+			if status == 0 {
+				status = http.StatusOK
+			}
+			RecordRequest(r.Method, r.URL.Path, http.StatusText(status))
 			RecordRequestDuration(r.Method, r.URL.Path, time.Since(start).Seconds())
 		})
 	}
@@ -118,4 +141,26 @@ func corsMiddleware() func(http.Handler) http.Handler {
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Header.Get("X-Request-ID")
+		if reqID == "" {
+			reqID = time.Now().UTC().Format(time.RFC3339Nano)
+		}
+		ctx := context.WithValue(r.Context(), requestIDKey{}, reqID)
+		w.Header().Set("X-Request-ID", reqID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func getRequestID(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if v, ok := ctx.Value(requestIDKey{}).(string); ok {
+		return v
+	}
+	return ""
 }

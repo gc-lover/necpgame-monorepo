@@ -6,22 +6,35 @@ import (
 	"net/http"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
-	"github.com/go-chi/chi/v5"
 )
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	if r.status == 0 {
+		r.status = statusCode
+	}
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (r *responseRecorder) Write(b []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(b)
+}
 
 type HTTPServer struct {
 	addr    string
-	router  *chi.Mux
+	router  *http.ServeMux
 	service *Service
 }
 
 func NewHTTPServer(addr string, handlers *Handlers, service *Service) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Apply middleware
-	router.Use(LoggingMiddleware)
-	router.Use(RecoveryMiddleware)
-	router.Use(CORSMiddleware)
+	router := http.NewServeMux()
 
 	// Create ogen security handler (placeholder for now)
 	secHandler := &SecurityHandler{}
@@ -32,12 +45,15 @@ func NewHTTPServer(addr string, handlers *Handlers, service *Service) *HTTPServe
 		panic(err)
 	}
 
-	// Mount ogen server at /api/v1
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = LoggingMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	handler = CORSMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
 		addr:    addr,
