@@ -5,27 +5,20 @@ package server
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/party-service-go/pkg/api"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 type HTTPServer struct {
 	addr   string
-	router chi.Router
+	router *http.ServeMux
 	server *http.Server
 }
 
 // NewHTTPServer creates ogen-based HTTP server
 func NewHTTPServer(addr string, service *PartyService) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Global middleware
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
+	router := http.NewServeMux()
 
 	// Create ogen handlers
 	handlers := NewHandlers(service)
@@ -37,18 +30,24 @@ func NewHTTPServer(addr string, service *PartyService) *HTTPServer {
 	}
 
 	// Mount ogen routes
-	router.Mount("/api/v1", srv)
+	var handler http.Handler = srv
+	handler = loggingMiddleware(handler)
+	handler = recoverMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/ready", healthCheck)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/ready", healthCheck)
 
 	return &HTTPServer{
 		addr:   addr,
 		router: router,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: router,
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
 		},
 	}
 }
@@ -70,4 +69,23 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"party"}`))
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		_ = time.Since(start)
+	})
+}
+
+func recoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				http.Error(w, "internal error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }

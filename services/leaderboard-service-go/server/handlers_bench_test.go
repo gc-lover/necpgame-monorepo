@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/necpgame/leaderboard-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go/pkg/api"
 	"github.com/google/uuid"
 )
 
@@ -13,7 +13,8 @@ import (
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetGlobalLeaderboard(b *testing.B) {
 	logger := GetLogger()
-	handlers := NewHandlers(logger)
+	service := NewLeaderboardService(logger)
+	handlers := NewHandlers(logger, service)
 
 	ctx := context.Background()
 	params := api.GetGlobalLeaderboardParams{
@@ -31,7 +32,8 @@ func BenchmarkGetGlobalLeaderboard(b *testing.B) {
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetFactionLeaderboard(b *testing.B) {
 	logger := GetLogger()
-	handlers := NewHandlers(logger)
+	service := NewLeaderboardService(logger)
+	handlers := NewHandlers(logger, service)
 
 	ctx := context.Background()
 	params := api.GetFactionLeaderboardParams{
@@ -49,7 +51,8 @@ func BenchmarkGetFactionLeaderboard(b *testing.B) {
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetPlayerRank(b *testing.B) {
 	logger := GetLogger()
-	handlers := NewHandlers(logger)
+	service := NewLeaderboardService(logger)
+	handlers := NewHandlers(logger, service)
 
 	ctx := context.Background()
 	params := api.GetPlayerRankParams{

@@ -16,6 +16,7 @@ func TestMain(m *testing.M) {
 		// Ignore known persistent goroutines
 		goleak.IgnoreTopFunction("internal/poll.runtime_pollWait"),
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
+		goleak.IgnoreTopFunction("github.com/redis/go-redis/v9/internal/pool.startGlobalTimeCache.func1"),
 	)
 }
 
@@ -23,6 +24,7 @@ func TestMain(m *testing.M) {
 func TestResetServiceNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
+		goleak.IgnoreTopFunction("github.com/redis/go-redis/v9/internal/pool.startGlobalTimeCache.func1"),
 	)
 
 	// TODO: Test reset service lifecycle and operations

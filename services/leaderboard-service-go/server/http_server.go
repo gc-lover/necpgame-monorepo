@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -27,12 +26,7 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	// Issue: #1588 - Load shedding for high RPS (leaderboard is hot path)
 	loadShedder := NewLoadShedder(1000) // Max 1000 concurrent requests
 
-	router := chi.NewRouter()
-
-	router.Use(loadShedder.Middleware()) // Issue: #1588 - Load shedding first
-	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	// ogen server
 	ogenServer, err := api.NewServer(handlers, secHandler)
@@ -40,10 +34,15 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 		logger.Fatalf("Failed to create ogen server: %v", err)
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = loadShedder.Middleware()(handler)
+	handler = loggingMiddleware(logger)(handler)
+	handler = recoveryMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
+	router.HandleFunc("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,
@@ -72,10 +71,12 @@ func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			next.ServeHTTP(w, r)
+			rr := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
+			next.ServeHTTP(rr, r)
 			logger.WithFields(logrus.Fields{
 				"method":   r.Method,
 				"path":     r.URL.Path,
+				"status":   rr.status,
 				"duration": time.Since(start),
 			}).Info("HTTP request processed")
 		})
@@ -109,6 +110,16 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rr *responseRecorder) WriteHeader(code int) {
+	rr.status = code
+	rr.ResponseWriter.WriteHeader(code)
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {

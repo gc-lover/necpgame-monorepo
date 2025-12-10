@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	api "github.com/necpgame/admin-service-go/pkg/api"
@@ -36,7 +34,7 @@ type AdminServiceInterface interface {
 
 type HTTPServer struct {
 	addr          string
-	router        http.Handler // Can be chi.Router or mux.Router
+	router        http.Handler
 	adminService  AdminServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
@@ -45,24 +43,16 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	// Use chi router for ogen integration
-	router := chi.NewRouter()
-	
+	router := http.NewServeMux()
+
 	server := &HTTPServer{
 		addr:         addr,
-		router:       mux.NewRouter(), // Keep mux for legacy endpoints
+		router:       mux.NewRouter(),
 		adminService: adminService,
 		logger:       GetLogger(),
 		jwtValidator: jwtValidator,
 		authEnabled:  authEnabled,
 	}
-
-	// Chi middleware for ogen server
-	router.Use(chiMiddleware.RequestID)
-	router.Use(chiMiddleware.RealIP)
-	router.Use(chiMiddleware.Logger)
-	router.Use(chiMiddleware.Recoverer)
-	router.Use(corsMiddlewareChi)
 
 	// ogen handlers
 	ogenHandlers := NewAdminHandlers(adminService, server.logger)
@@ -75,10 +65,15 @@ func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator
 	}
 
 	// Mount ogen server at /api/v1/admin
-	router.Mount("/api/v1/admin", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = corsMiddleware(handler)
+	handler = loggingMiddleware(server.logger)(handler)
+	handler = recoveryMiddleware(server.logger)(handler)
+	handler = timeoutMiddleware(handler, 60*time.Second)
+	router.Handle("/api/v1/admin/", handler)
 
 	// Health and metrics endpoints
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
@@ -87,14 +82,12 @@ func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator
 	
 	// Legacy endpoints removed - all functionality available through ogen API at /api/v1/admin
 
-	// Set router to chi router
 	server.router = router
 
 	return server
 }
 
-// corsMiddlewareChi is CORS middleware for chi router
-func corsMiddlewareChi(next http.Handler) http.Handler {
+func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -106,6 +99,42 @@ func corsMiddlewareChi(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"duration": time.Since(start),
+			}).Info("HTTP request")
+		})
+	}
+}
+
+func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					logger.WithField("panic", rec).Error("recovered panic")
+					http.Error(w, "internal error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func timeoutMiddleware(next http.Handler, d time.Duration) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), d)
+		defer cancel()
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

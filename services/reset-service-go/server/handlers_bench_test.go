@@ -4,35 +4,47 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/pkg/api"
 )
+
+type benchResetService struct{}
+
+func (b *benchResetService) GetResetStats(ctx context.Context) (*models.ResetStats, error) {
+	return &models.ResetStats{}, nil
+}
+func (b *benchResetService) GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*models.ResetListResponse, error) {
+	return &models.ResetListResponse{}, nil
+}
+func (b *benchResetService) TriggerReset(ctx context.Context, resetType models.ResetType) error {
+	return nil
+}
 
 // BenchmarkGetResetStats benchmarks GetResetStats handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetResetStats(b *testing.B) {
-	service := NewService(nil)
+	service := &benchResetService{}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetResetStatsParams{
-	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetResetStats(ctx, params)
+		_, _ = handlers.GetResetStats(ctx)
 	}
 }
 
 // BenchmarkGetResetHistory benchmarks GetResetHistory handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetResetHistory(b *testing.B) {
-	service := NewService(nil)
+	service := &benchResetService{}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetResetHistoryParams{
-	}
+	params := api.GetResetHistoryParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -45,15 +57,16 @@ func BenchmarkGetResetHistory(b *testing.B) {
 // BenchmarkTriggerReset benchmarks TriggerReset handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkTriggerReset(b *testing.B) {
-	service := NewService(nil)
+	service := &benchResetService{}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
+	req := &api.TriggerResetRequest{Type: api.ResetTypeDaily}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.TriggerReset(ctx)
+		_, _ = handlers.TriggerReset(ctx, req)
 	}
 }
 

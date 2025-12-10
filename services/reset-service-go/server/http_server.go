@@ -7,27 +7,19 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/pkg/api"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr         string
-	router       *chi.Mux
+	router       *http.ServeMux
 	resetService ResetServiceInterface
 	logger       *logrus.Logger
 	server       *http.Server
 }
 
 func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router := http.NewServeMux()
 
 	server := &HTTPServer{
 		addr:         addr,
@@ -36,10 +28,6 @@ func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer 
 		logger:       GetLogger(),
 	}
 
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-
 	handlers := NewHandlers(resetService)
 
 	ogenServer, err := api.NewServer(handlers)
@@ -47,9 +35,19 @@ func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer 
 		panic(err)
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = http.StripPrefix("/api/v1", ogenServer)
+	handler = server.loggingMiddleware(handler)
+	handler = server.metricsMiddleware(handler)
+	handler = server.corsMiddleware(handler)
+	router.Handle("/api/v1/", handler)
+	router.Handle("/api/v1/reset", handler)
+	router.Handle("/api/v1/reset/", handler)
+	router.Handle("/api/v1/reset/stats", handler)
+	router.Handle("/api/v1/reset/history", handler)
+	router.Handle("/api/v1/reset/trigger", handler)
+	router.Handle("/", handler)
 
-	router.Get("/health", server.healthCheck)
+	router.HandleFunc("/health", server.healthCheck)
 
 	return server
 }

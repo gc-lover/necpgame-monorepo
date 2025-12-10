@@ -39,7 +39,7 @@ func (r *AdminRepository) CreateAuditLog(ctx context.Context, log *models.AdminA
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW()
 		) RETURNING id, created_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		log.AdminID, log.ActionType, log.TargetID, log.TargetType,
 		detailsJSON, log.IPAddress, log.UserAgent,
 	).Scan(&log.ID, &log.CreatedAt)

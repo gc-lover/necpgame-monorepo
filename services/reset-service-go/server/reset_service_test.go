@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/reset-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/assert"
