@@ -4,7 +4,9 @@ package server
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
 	"github.com/necpgame/character-service-go/models"
 	"github.com/redis/go-redis/v9"
@@ -69,23 +71,29 @@ func (m *mockCharacterRepository) DeleteCharacter(ctx context.Context, character
 }
 
 func setupTestService(t *testing.T) (*CharacterService, *mockCharacterRepository, func()) {
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
+	mr, err := miniredis.Run()
 	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return nil, nil, nil
+		t.Fatalf("failed to start miniredis: %v", err)
 	}
-	redisClient := redis.NewClient(redisOpts)
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:         mr.Addr(),
+		DialTimeout:  50 * time.Millisecond,
+		ReadTimeout:  50 * time.Millisecond,
+		WriteTimeout: 50 * time.Millisecond,
+	})
 
 	mockRepo := new(mockCharacterRepository)
 	service := &CharacterService{
-		repo:        mockRepo,
-		cache:       redisClient,
-		logger:      GetLogger(),
-		keycloakURL: "http://localhost:8080",
+		repo:           mockRepo,
+		cache:          redisClient,
+		characterCache: NewCharacterCache(redisClient, mockRepo),
+		logger:         GetLogger(),
+		keycloakURL:    "http://localhost:8080",
 	}
 
 	cleanup := func() {
 		redisClient.Close()
+		mr.Close()
 	}
 
 	return service, mockRepo, cleanup
