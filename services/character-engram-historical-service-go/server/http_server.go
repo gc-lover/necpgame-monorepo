@@ -167,23 +167,3 @@ func getRequestID(ctx context.Context) string {
 	}
 	return ""
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

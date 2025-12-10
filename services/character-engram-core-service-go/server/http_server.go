@@ -88,14 +88,18 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		ww := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(ww, r)
+		status := ww.status
+		if status == 0 {
+			status = http.StatusOK
+		}
 		s.logger.WithFields(logrus.Fields{
 			"method":    r.Method,
 			"path":      r.URL.Path,
-			"status":    ww.Status(),
+			"status":    status,
 			"duration":  time.Since(start).String(),
-			"requestID": middleware.GetReqID(r.Context()),
+			"requestID": getRequestID(r.Context()),
 		}).Info("Request completed")
 	})
 }
@@ -103,9 +107,13 @@ func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
 func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		ww := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(ww, r)
-		RecordRequest(r.Method, r.URL.Path, http.StatusText(ww.Status()))
+		status := ww.status
+		if status == 0 {
+			status = http.StatusOK
+		}
+		RecordRequest(r.Method, r.URL.Path, http.StatusText(status))
 		RecordRequestDuration(r.Method, r.URL.Path, time.Since(start).Seconds())
 	})
 }
@@ -142,4 +150,26 @@ func respondError(w http.ResponseWriter, statusCode int, err error, details stri
 	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
 		GetLogger().WithError(err).Error("Failed to encode JSON error response")
 	}
+}
+
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Header.Get("X-Request-ID")
+		if reqID == "" {
+			reqID = time.Now().UTC().Format(time.RFC3339Nano)
+		}
+		ctx := context.WithValue(r.Context(), requestIDKey{}, reqID)
+		w.Header().Set("X-Request-ID", reqID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func getRequestID(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if v, ok := ctx.Value(requestIDKey{}).(string); ok {
+		return v
+	}
+	return ""
 }
