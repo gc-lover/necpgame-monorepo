@@ -1,3 +1,4 @@
+# Issue: #1484
 metadata:
   id: ui-implants-management
   title: Implants System - Management Interface UI/UX Design
@@ -13,15 +14,13 @@ metadata:
   tags: [ui, ux, design, implants, management]
   github_issue: 1484
 summary:
-  problem: Необходим UI/UX дизайн для управления имплантами: установка, удаление, улучшение.
-  goal: Создать интерфейс для управления установленными имплантами.
+  problem: Нужен понятный поток установки/снятия/апгрейда имплантов с совместимостью и превью эффектов.
+  goal: Уменьшить ошибки установки, показать стоимость/гуманность/энергию до подтверждения.
   key_points:
-    - Выбор слота для установки
-    - Проверка совместимости
-    - Предпросмотр изменений
-    - Подтверждение установки
-    - Удаление импланта
-    - Улучшение импланта
+    - Установка: слот → имплант → совместимость → превью → подтверждение.
+    - Снятие: подтверждение с предупреждением о потере бонусов/стоимости.
+    - Апгрейд: опции, стоимость, риск, превью итоговых статов.
+    - Быстрые действия: снять все, заменить в слоте, откат/история.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -42,22 +41,40 @@ content:
             - type: compatibility_check
             - type: preview_panel
             - type: confirm_button
+            - type: cost_display
+            - type: humanity_energy_impact
         - id: removal_flow
           components:
             - type: installed_implants_list
             - type: removal_confirmation
+            - type: loss_preview
         - id: upgrade_flow
           components:
             - type: upgradeable_implants
             - type: upgrade_options
             - type: cost_display
+            - type: upgrade_preview
+        - id: history_panel
+          components:
+            - type: install_history
+            - type: rollback_button
   ux_mechanics:
     interactions:
       install_implant: {flow: [select_slot, choose_implant, check_compat, preview, confirm]}
       remove_implant: {flow: [select_implant, confirm_removal, execute]}
       upgrade_implant: {flow: [select_implant, view_upgrades, confirm_upgrade]}
+      rollback: {flow: [open_history, select_entry, confirm_rollback]}
   animations:
     transitions:
       install_animation: {duration: 1000ms, effect: installation_sequence}
       removal_animation: {duration: 800ms, effect: removal_sequence}
+      upgrade_animation: {duration: 900ms, effect: upgrade_sequence}
+  data_states:
+    loading: skeleton_panels
+    invalid: block_confirm with reasons
+    offline: disable_install + cached_state
+  accessibility:
+    colorblind_safe: alt palette for states
+    keyboard: tab through flows; enter=confirm; esc=cancel; ctrl+z rollback (if allowed)
+    screenreader: announce slot, chosen implant, compat status, cost, humanity/energy impact
 

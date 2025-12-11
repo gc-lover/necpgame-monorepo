@@ -1,3 +1,4 @@
+# Issue: #1486
 metadata:
   id: ui-arena-results
   title: Arena System - Results Interface UI/UX Design
@@ -20,16 +21,13 @@ metadata:
       path: knowledge/design/ui/ui-arena-match.yaml
   github_issue: 1486
 summary:
-  problem: Необходим UI/UX дизайн для результатов матча: счет, статистика, награды, рейтинг, история.
-  goal: Создать информативный экран результатов с детальной статистикой и наградами.
+  problem: Нужен понятный экран результатов: итог, личные/командные статы, награды, рейтинг, сезоны.
+  goal: Быстро показать результат, прогресс и мотивацию продолжать (next match/leaderboard/history/поделиться).
   key_points:
-    - Итоговый счет
-    - Статистика игрока (убийства, смерти, урон)
-    - Статистика команды
-    - Награды и опыт
-    - Изменение рейтинга
-    - Кнопка следующего матча
-    - Рейтинги и сезоны
+    - Итог матча, победитель, изменение рейтинга/MMR.
+    - Личные статы (K/D/A, урон, цели) с сравнением по команде.
+    - Награды/опыт/сезонный прогресс, лут/контракты.
+    - Быстрые действия: следующий матч, лидерборд, история, share.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -46,11 +44,13 @@ content:
           components:
             - type: victory_defeat_display
             - type: final_score
+            - type: rating_change
         - id: player_stats
           components:
             - type: personal_statistics
               items: [kills, deaths, damage, assists]
             - type: performance_rating
+            - type: objective_stats
         - id: team_stats
           components:
             - type: team_comparison
@@ -60,11 +60,14 @@ content:
             - type: rewards_list
             - type: experience_gained
             - type: rating_change
+            - type: season_progress
+            - type: loot_drops
         - id: navigation
           components:
             - type: next_match_button
             - type: view_leaderboard
             - type: view_history
+            - type: share_result
         - id: rankings_seasons
           components:
             - type: personal_rating
@@ -75,11 +78,21 @@ content:
     interactions:
       view_details: {flow: [click_stat, show_detail_panel]}
       next_match: {flow: [click_button, return_to_selection]}
+      share_result: {flow: [click_share, copy_link]}
   animations:
     transitions:
       results_enter: {duration: 1000ms, effect: dramatic_reveal}
       stat_reveal: {duration: 300ms, effect: count_up}
       reward_show: {duration: 500ms, effect: slide_in}
+      rating_change: {duration: 400ms, effect: pulse_glow}
+  data_states:
+    loading: skeleton_cards
+    win_lose_draw_palette: true
+    offline: cached stats, disable share/next
+  accessibility:
+    colorblind_safe: alt palette for win/lose/draw
+    keyboard: tab through sections, enter open detail, n next match
+    screenreader: announce result, rating delta, top personal stats
 implementation:
   technical_requirements:
     - match_statistics_api

@@ -1,0 +1,102 @@
+# Issue: #1712
+metadata:
+  id: economy-supply-sabotage-quality-drop
+  title: 'Саботаж снабжения (понижение качества лута фракций)'
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - economy
+    - sabotage
+    - faction
+    - loot
+    - risk_reward
+  topics:
+    - economy_systems
+    - faction_conflict
+  related_systems:
+    - economy-service
+    - combat-service
+    - world-service
+  related_documents:
+    - id: economy-grey-bonds-faction-funding
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - economy
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Игроки портят цепочки снабжения фракций, снижая тир лута патрулей и повышая цены; нужно задать шаги саботажа и таймеры восстановления.
+  goal: Определить цели, длительность эффектов, снижение качества лута, рост цен, реакцию фракций и телеметрию.
+  essence: Саботаж временно ухудшает лут и повышает цены для фракции; фракции реагируют усилением охраны и починкой логистики.
+  key_points:
+    - Три шага саботажа (логистика, хранилище, конвой) с нарастающим эффектом.
+    - Эффект: снижение тира лута, рост цен; откат по таймеру.
+    - Контрплей: охрана, ремонт, трекинг диверсантов.
+content:
+  sections:
+    - id: sabotage_steps
+      title: Цели и шаги
+      body: |
+        Шаг 1: Логистический узел (взлом/подрыв) — открывает эффект Tier -1 на 10 мин.
+        Шаг 2: Хранилище — Tier -1 доп., всего Tier -2, длительность 12 мин.
+        Шаг 3: Конвой — Tier -1 доп., всего Tier -3, длительность 15 мин.
+        При пропуске шага цепочка не усиливается; откат начинается по последнему активному шагу.
+    - id: effects
+      title: Эффекты на лут и цены
+      body: |
+        Лут патрулей фракции: Tier снижается до -1/-2/-3 по шагу; шанс редкого лута -8/-15/-22 п.п.
+        Рынок фракции: цены +5%/+9%/+14% на товары фракции, длительность синхронизирована со ступенью.
+        После окончания: плавный откат 3 мин, затем значения нормализуются.
+    - id: reaction
+      title: Реакция фракций и контрплей
+      body: |
+        Охрана усиливается: +15%/+25%/+35% количество патрулей на соответствующей ступени.
+        Ремонт/патч: фракция может сократить длительность на 50% при успешной обороне узла (ивент).
+        Трекинг диверсантов: при 2+ саботажах в 30 мин игрок получает «метку розыска» (репутация -10, баунти на игрока).
+    - id: anti_abuse
+      title: Анти-абуз
+      body: |
+        Кулдаун на повтор саботажа одной фракции: 45 мин после полного отката.
+        Один игрок засчитывается максимум в 1 успешный саботаж за 15 мин.
+        Награды саботажа не стакаются с эффектами «Кровавые дивиденды»; берётся более сильный штраф для лута.
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать:
+        - `sabotage.attempts`, `sabotage.success`, `sabotage.step_reached`.
+        - `sabotage.loot_tier_delta`, `sabotage.price_delta`.
+        - `sabotage.faction_response` (охрана/ремонт), `wanted_marks_issued`.
+appendix:
+  glossary: []
+implementation:
+  needs_task: false
+  github_issue: 1712
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Определены шаги саботажа, эффекты на лут/цены, контрплей и телеметрия.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

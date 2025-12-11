@@ -1,3 +1,5 @@
+-- Issue: #133
+-- github_issue: 133
 -- Migration: 005-create-world-state-system.sql
 -- Version: 1.0.0
 -- Date: 2025-11-07 00:26

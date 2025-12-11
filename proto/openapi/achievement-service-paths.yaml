@@ -1,0 +1,227 @@
+# Issue: #1632
+openapi: 3.0.3
+info:
+  title: Achievement Service Paths
+  version: 1.0.0
+paths:
+  /achievements:
+    get:
+      tags: [Achievements]
+      summary: Получить список достижений
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Фильтр по категории
+        - name: rarity
+          in: query
+          schema:
+            $ref: 'achievement-service-schemas.yaml#/components/schemas/AchievementRarity'
+          description: Фильтр по редкости
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Каталог достижений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: 'achievement-service-schemas.yaml#/components/schemas/Achievement'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    post:
+      tags: [Achievements]
+      summary: Создать достижение
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'achievement-service-schemas.yaml#/components/schemas/CreateAchievementRequest'
+      responses:
+        '201':
+          description: Достижение создано
+          content:
+            application/json:
+              schema:
+                $ref: 'achievement-service-schemas.yaml#/components/schemas/Achievement'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /achievements/{achievementId}:
+    get:
+      tags: [Achievements]
+      summary: Получить достижение
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'achievement-service-schemas.yaml#/components/parameters/AchievementId'
+      responses:
+        '200':
+          description: Достижение
+          content:
+            application/json:
+              schema:
+                $ref: 'achievement-service-schemas.yaml#/components/schemas/Achievement'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    patch:
+      tags: [Achievements]
+      summary: Обновить достижение
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'achievement-service-schemas.yaml#/components/parameters/AchievementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'achievement-service-schemas.yaml#/components/schemas/UpdateAchievementRequest'
+      responses:
+        '200':
+          description: Обновленное достижение
+          content:
+            application/json:
+              schema:
+                $ref: 'achievement-service-schemas.yaml#/components/schemas/Achievement'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    delete:
+      tags: [Achievements]
+      summary: Удалить достижение
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'achievement-service-schemas.yaml#/components/parameters/AchievementId'
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /players/me/achievements:
+    get:
+      tags: [Player Achievements]
+      summary: Прогресс текущего игрока
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Прогресс по достижениям
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  progress:
+                    type: array
+                    items:
+                      $ref: 'achievement-service-schemas.yaml#/components/schemas/AchievementProgress'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /players/me/achievements/{achievementId}:
+    get:
+      tags: [Player Achievements]
+      summary: Прогресс по достижению
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'achievement-service-schemas.yaml#/components/parameters/AchievementId'
+      responses:
+        '200':
+          description: Прогресс
+          content:
+            application/json:
+              schema:
+                $ref: 'achievement-service-schemas.yaml#/components/schemas/AchievementProgress'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /players/me/achievements/{achievementId}/unlock:
+    post:
+      tags: [Player Achievements]
+      summary: Зафиксировать выполнение достижения
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'achievement-service-schemas.yaml#/components/parameters/AchievementId'
+      responses:
+        '200':
+          description: Достижение зафиксировано
+          content:
+            application/json:
+              schema:
+                $ref: 'achievement-service-schemas.yaml#/components/schemas/AchievementProgress'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /players/me/achievements/{achievementId}/claim:
+    post:
+      tags: [Player Achievements]
+      summary: Получить награду за достижение
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'achievement-service-schemas.yaml#/components/parameters/AchievementId'
+      responses:
+        '200':
+          description: Награда выдана
+          content:
+            application/json:
+              schema:
+                $ref: 'achievement-service-schemas.yaml#/components/schemas/AchievementReward'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+

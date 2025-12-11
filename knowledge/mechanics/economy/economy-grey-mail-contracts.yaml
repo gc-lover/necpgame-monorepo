@@ -1,0 +1,121 @@
+# Issue: #1659
+metadata:
+  id: economy-grey-mail-contracts
+  title: 'Экономика: контракты «серой почты» (динамическая оплата и штрафы)'
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - courier
+    - risk_reward
+    - dynamic_pricing
+  topics:
+    - economy_rewards
+    - stealth
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: mechanics/economy/economy-logistics
+      relation: references
+    - id: mechanics/social/social-stealth
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - economy
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужна модель «серых» курьерских контрактов с динамической оплатой, надбавками за риск и штрафами за детект.
+  goal: Задать формулы награды/штрафов, модификаторы времени/зон, чистый лог без детекта, анти-абуз и метрики.
+  essence: Контракты оплачиваются по динамике риска (время суток, патрули, сканеры, маршрут). Чистое прохождение дает бонус, детект и тревоги режут награду или конфискуют депозит. Частые спам-заказы снижают цену.
+  key_points:
+    - Динамический прайсинг по времени, зоне, теплоте маршрута.
+    - Бонус за «чистый лог», штрафы за детект/тревоги/боестолкновения.
+    - Анти-спам: лимиты частоты, затухание цены при фарме.
+    - Метрики провалов и профита.
+content:
+  sections:
+    - id: base_pricing
+      title: Базовая награда и надбавки
+      body: |
+        База контракта: reward_base = 800 кр. (t1) / 1200 (t2) / 1800 (t3) — задаётся автором задания.
+        Модификаторы:
+        - Время суток: ночь +18%, рассвет/закат +8%, день 0%.
+        - Риск зоны (патроли/сканеры): low 0%, medium +12%, high +25%.
+        - Маршрут «теплоты» (часто палят): hot_route_penalty = -10% * hot_rank (1..3).
+        - Незасвеченный маршрут (без сенсоров в 70% пути): clean_path_bonus +15%.
+        Итог: reward = reward_base * (1 + time_mod + risk_mod + clean_path_bonus - hot_route_penalty) * demand_mod.
+        demand_mod: 1.0 базово; при отсутствии заказов в зоне 10+ мин растет до 1.2; при спаме тем же игроком падает до 0.8.
+    - id: clean_log
+      title: Бонус за «чистый лог»
+      body: |
+        Условия: нет тревог, нет боевых столкновений >10 с, сигнал сенсоров не превышал «жёлтый» уровень.
+        clean_bonus = +18% к награде, +1.5x шанс редкого груза (loot table courier_rare).
+        При единичном детекте <2 с и без боя — частичный бонус +8%.
+    - id: penalties
+      title: Штрафы и конфискации
+      body: |
+        Детект сканером >2 с: -20% к награде.
+        Тревога/боестолкновение >10 с: -35% и конфискация депозита (см. ниже).
+        Срыв (смерть/бегство с грузом): выплата 0, штраф -200 кр. и -10 репутации фракции.
+        Депозит заказчика: 25% reward_base удерживается на старте; возвращается при успешной доставке, при штрафе удерживается.
+    - id: frequency_limits
+      title: Анти-абуз и частота
+      body: |
+        Хард-лимит: 3 контракта t2+ или 5 t1 за 60 мин на игрока в одной зоне.
+        Динамика цены при спаме: для каждого контракта сверх 2 в 30 мин: demand_mod *= 0.9 (до минимума 0.6).
+        Lockout 20 мин после двух подряд провалов в одной зоне.
+    - id: hooks
+      title: Хуки контента и вариации
+      body: |
+        Редкие грузы: шанс 10% (t2) / 15% (t3) на лут из таблицы courier_rare, повышается до 25% при чистом логе.
+        Фракционные заказы: +12% награда, но штрафы к репутации удваиваются при провале.
+        Дейлики: 1 контракт/день с фикс-бонусом +10% и без hot_route_penalty.
+    - id: telemetry
+      title: Метрики
+      body: |
+        Логировать:
+        - `grey_mail.accepted`, `completed`, `failed`.
+        - `grey_mail.clean_rate`, `grey_mail.detect_rate`, `grey_mail.alarm_rate`.
+        - `grey_mail.avg_profit`, `profit_per_hour`, `deposit_confiscations`.
+        - `grey_mail.demand_mod_distribution`, hot_route usage.
+appendix:
+  glossary:
+    - term: hot_route
+      definition: Маршрут, часто засвеченный сенсорами/патрулями; даёт штраф к оплате.
+  formulas:
+    - name: reward
+      expression: reward = reward_base * (1 + time_mod + risk_mod + clean_path_bonus - hot_route_penalty) * demand_mod
+      notes: demand_mod учитывает дефицит/спам, минимум 0.6, максимум 1.2.
+implementation:
+  needs_task: false
+  github_issue: 1659
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовые формулы и ограничения для «серой почты».
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

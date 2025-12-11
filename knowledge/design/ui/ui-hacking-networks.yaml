@@ -1,3 +1,4 @@
+# Issue: #1487
 metadata:
   id: ui-hacking-networks
   title: Hacking System - Network Visualization UI/UX Design
@@ -46,14 +47,14 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Необходим детальный UI/UX дизайн для визуализации сетей, узлов, защиты ICE и маршрутов взлома.
-  goal: Создать интуитивную визуализацию сетей в стиле Cyberpunk 2077 с интерактивными элементами.
-  essence: Дизайн-документ описывает визуализацию сетей, узлов, защиты, маршрутов взлома и интерактивное взаимодействие.
+  problem: Нужна читаемая карта сетей: узлы/ICE/доступ, маршруты взлома и риски.
+  goal: Упростить выбор цели и путь взлома, подсветить риски/стоимости, дать быстрые фильтры.
+  essence: Граф сети с узлами, ICE, уровнями доступа, маршрутами, панелью деталей и действиями.
   key_points:
-    - Карта сети с узлами и связями
-    - Визуализация защиты ICE с уровнями сложности
-    - Интерактивные маршруты взлома
-    - Уровни доступа и контрольные узлы
+    - Граф с подсветкой доступа, ICE и критических целей.
+    - Фильтры, режимы обзора (overview/detailed/security), легенда.
+    - Маршрутные подсказки: оптимальный/тихий/быстрый; стоимость/риск.
+    - Быстрые действия: скан сети, пометить цель, начать взлом, аварийный выход.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -134,6 +135,10 @@ content:
                   visual: line
                   width: dynamic_by_bandwidth
                   label: connection_type
+              overlays:
+                - ice_zones
+                - access_levels
+                - detected_routes
             - type: ice_visualization
               display: overlay_shield
               color: dynamic_by_level
@@ -141,6 +146,8 @@ content:
             - type: access_level_indicators
               display: color_coding
               legend: visible
+            - type: route_preview
+              display: highlighted_path
         - id: network_info_panel
           title: Network Information
           position: right_sidebar
@@ -163,6 +170,7 @@ content:
                 - hack_node
                 - scan_network
                 - view_details
+                - set_primary_target
         - id: network_controls
           title: Controls
           position: top_bar
@@ -179,10 +187,13 @@ content:
                 - access_level
                 - ice_level
                 - connection_status
+                - target_priority
             - type: zoom_controls
               min: 0.5x
               max: 3x
               default: 1x
+            - type: route_mode
+              options: [optimal, stealth, speed]
         - id: network_legend
           title: Legend
           position: bottom_left
@@ -242,6 +253,10 @@ content:
           - discovery_animation
           - node_reveal
           - connection_reveal
+      set_target:
+        flow: [select_node, mark_target, highlight_routes, show_risk_cost]
+      reroute:
+        flow: [choose_route_mode, show_path, confirm]
     feedback_systems:
       notifications:
         types:
@@ -266,6 +281,15 @@ content:
       text_scaling: true
       high_contrast_mode: true
       screen_reader_support: true
+  data_states:
+    loading: skeleton_graph
+    alarmed: highlight ice + lock high-risk routes
+    stealth: dim non-target nodes, highlight stealth route
+    offline: cached map, disable hack_node
+  accessibility:
+    colorblind_safe: alt palette for access/ice/routes
+    keyboard: arrows/pan, +/- zoom, h hack, n open, r route mode
+    screenreader: announce node name/type/access/ice, route risk/cost
   animations:
     transitions:
       view_open:

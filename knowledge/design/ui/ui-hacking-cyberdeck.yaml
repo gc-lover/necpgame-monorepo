@@ -1,3 +1,4 @@
+# Issue: #1487
 metadata:
   id: ui-hacking-cyberdeck
   title: Hacking System - Cyberdeck Interface UI/UX Design
@@ -52,14 +53,14 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Необходим детальный UI/UX дизайн для интерфейса кибердека, управления взломами и мониторинга состояния.
-  goal: Создать интуитивный интерфейс кибердека в стиле Cyberpunk 2077 для выбора взломов, управления энергией и быстрого доступа.
-  essence: Дизайн-документ описывает структуру интерфейса кибердека, визуальный стиль, UX механики для управления взломами.
+  problem: Нужен быстрый и безопасный UI кибердека: выбор/подготовка взломов, энергия/перегрев, кулдауны.
+  goal: Ускорить подбор и запуск взломов, снизить ошибок по энергии/кулдаунам, дать пресеты и статус.
+  essence: Каталог + детали + быстрая панель, энергия/overheat, активные эффекты, пресеты, избранное.
   key_points:
-    - Список доступных взломов с категориями и фильтрами
-    - Управление энергопотреблением и кулдаунами
-    - Быстрый доступ к часто используемым взломам
-    - Мониторинг перегрева и состояния кибердека
+    - Фильтры/сортировки, поиск с дебаунсом, избранное, пресеты быстрых сетов.
+    - Карточка взлома: стоимость, кулдаун, длительность, требования, тэги, синергии.
+    - Статус-карточка: энергия, перегрев, активные взломы, таймеры.
+    - Быстрые действия: добавить в хотбар, протестировать, заменить, снять все активные.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -130,6 +131,7 @@ content:
               layout: horizontal
               drag_drop: true
               visual: hack_icons
+              quick_actions: [swap, clear_slot, favorite_toggle]
         - id: hack_catalog
           title: Available Hacks
           position: center_left
@@ -151,13 +153,18 @@ content:
                 - energy_cost
                 - cooldown
                 - availability
+                - tag
               sort_options:
                 - name
                 - energy_cost
                 - cooldown
                 - usage_frequency
+                - rarity
             - type: search_bar
               placeholder: 'Search hacks...'
+              behavior: debounce_300ms + recent_queries
+            - type: presets_panel
+              actions: [save_preset, load_preset, reset]
         - id: hack_details
           title: Hack Details
           position: center_right
@@ -174,6 +181,8 @@ content:
                 - duration
                 - effects
                 - requirements
+                - tags
+                - synergy
             - type: preview_animation
               trigger: hover
             - type: action_buttons
@@ -181,6 +190,7 @@ content:
                 - add_to_quick_access
                 - test_hack
                 - view_requirements
+                - replace_in_slot
         - id: cyberdeck_status
           title: Cyberdeck Status
           position: bottom
@@ -200,6 +210,8 @@ content:
               max_visible: 5
             - type: cooldown_timers
               display: countdown_badges
+            - type: presets_quick_switch
+              display: dropdown
       navigation:
         tabs:
           - id: hacks
@@ -222,6 +234,8 @@ content:
         quick_hack_3: '3'
         quick_hack_4: '4'
         cycle_category: 'Tab'
+        swap_preset: 'Alt+Number'
+        clear_active: 'Shift+Backspace'
     interactions:
       select_hack:
         flow:
@@ -247,6 +261,10 @@ content:
           - success_animation
           - energy_consumption
           - cooldown_start
+      swap_preset:
+        flow: [open_presets, choose_preset, apply, show_toast]
+      clear_active_hacks:
+        flow: [press_clear, confirm_if_needed, stop_effects]
     feedback_systems:
       notifications:
         types:
@@ -271,6 +289,15 @@ content:
       text_scaling: true
       high_contrast_mode: true
       screen_reader_support: true
+  data_states:
+    loading: skeleton_cards + shimmer_bars
+    low_energy: dim non-essential; highlight energy meter
+    overheat: lock heavy hacks; show warning banner
+    offline: cached hacks; disable execute
+  accessibility:
+    colorblind_safe: alt palette for categories/energy/overheat
+    keyboard: tab to cards, enter add, numbers launch, shift+backspace clear
+    screenreader: announce hack name, cost, cooldown, requirements, state (ready/locked)
   animations:
     transitions:
       menu_open:

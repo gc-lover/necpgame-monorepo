@@ -1,3 +1,4 @@
+# Issue: #1481
 metadata:
   id: ui-crafting-creation
   title: Crafting System - Creation Interface UI/UX Design
@@ -13,16 +14,13 @@ metadata:
   tags: [ui, ux, design, crafting, creation]
   github_issue: 1481
 summary:
-  problem: Необходим UI/UX дизайн для интерфейса создания: выбор рецепта, материалы, прогресс.
-  goal: Создать интуитивный интерфейс для создания предметов.
+  problem: Нужен безопасный и понятный поток крафта: проверка материалов, времени, стоимости, количества.
+  goal: Снизить ошибки крафта, показать недостающие материалы и дать быстрый старт производства.
   key_points:
-    - Выбор рецепта
-    - Отображение требуемых материалов
-    - Проверка доступности материалов
-    - Выбор количества (если возможно)
-    - Предпросмотр времени создания
-    - Подтверждение создания
-    - Прогресс-бар создания
+    - Проверка наличия/альтернатив материалов, подсказки по дефициту.
+    - Количество с автоподсчётом ресурсов и времени.
+    - Подтверждение с итогами: время, стоимость, опыт/профессия, выход.
+    - Прогресс и уведомления о завершении.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -42,22 +40,41 @@ content:
             - type: required_materials_list
             - type: available_materials_check
             - type: quantity_selector
+              modes: [1x, 5x, max_available]
+            - type: deficiency_hints
+              actions: [open_market, set_gather_mission]
         - id: creation_info
           components:
             - type: time_preview
             - type: cost_display
             - type: result_preview
+            - type: profession_xp_display
+            - type: success_chance (optional)
         - id: creation_controls
           components:
             - type: craft_button
             - type: progress_bar
             - type: cancel_button
+            - type: confirm_modal
+              summary: [qty, time_total, cost_total, xp_gain, output]
   ux_mechanics:
     interactions:
       start_crafting: {flow: [select_recipe, check_materials, set_quantity, confirm_craft, start_progress]}
+      handle_deficit: {flow: [show_missing, suggest_sources, open_links]}
+      cancel_crafting: {flow: [click_cancel, confirm_cancel]}
   animations:
     transitions:
       craft_start: {duration: 300ms, effect: start_animation}
       progress_update: {duration: 100ms, effect: fill_animation}
       craft_complete: {duration: 500ms, effect: success_animation}
+      error_state: {duration: 250ms, effect: shake_soft}
+  data_states:
+    loading: skeleton_panels
+    missing_materials: highlight_missing + CTA to market/gather
+    in_progress: lock_controls + progress + eta
+    completed: toast + collect_button
+  accessibility:
+    colorblind_safe: alt colors for states
+    keyboard: tab through inputs; enter=confirm; esc=cancel modal
+    screenreader: announce missing materials, total time, total cost, xp gain
 

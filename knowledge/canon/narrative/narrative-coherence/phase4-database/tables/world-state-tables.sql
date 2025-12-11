@@ -1,3 +1,5 @@
+-- Issue: #133
+-- github_issue: 133
 -- World State Tables for Hybrid Player Impact System
 -- Version: 1.0.0
 -- Date: 2025-11-06 23:31

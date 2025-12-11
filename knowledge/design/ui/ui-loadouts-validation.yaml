@@ -1,3 +1,4 @@
+# Issue: #1483
 metadata:
   id: ui-loadouts-validation
   title: Loadouts System - Validation Interface UI/UX Design
@@ -13,14 +14,13 @@ metadata:
   tags: [ui, ux, design, loadouts, validation]
   github_issue: 1483
 summary:
-  problem: Необходим UI/UX дизайн для валидации и статистики лодаута: энергобюджет, вес, совместимость.
-  goal: Создать информативный интерфейс для проверки валидности лодаута.
+  problem: Нужен понятный экран валидации: энергия, вес, совместимость, синергии, предупреждения.
+  goal: Быстро показать, что блокирует применение лодаута, и как это исправить.
   key_points:
-    - Энергобюджет лодаута
-    - Общий вес
-    - Совместимость имплантов
-    - Предупреждения о несовместимости
-    - Визуализация синергий
+    - Энергия/вес/ресурсы с порогами и цветовой кодировкой.
+    - Совместимость имплантов и конфликтов, подсказки по фиксам.
+    - Синергии (сетовые/фракционные/классовые) с подсветкой.
+    - Список предупреждений/ошибок с решениями.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -42,19 +42,35 @@ content:
               display: circular_progress
             - type: weight_meter
               display: linear_progress
+            - type: slot_usage_meter
+              display: pill_bar
         - id: compatibility_matrix
           components:
             - type: compatibility_grid
               shows: [implant_compatibility, equipment_synergies]
+            - type: synergy_highlights
+              categories: [set_bonus, faction_bonus, role_bonus]
         - id: warnings_errors
           components:
             - type: warnings_list
             - type: errors_list
             - type: suggestions_list
+            - type: apply_fix_button
   ux_mechanics:
     interactions:
       view_details: {flow: [hover_warning, show_tooltip, click_for_solution]}
+      quick_fix: {flow: [click_solution, apply_change, revalidate]}
   animations:
     transitions:
       validation_update: {duration: 300ms, effect: status_change_animation}
+      synergy_pop: {duration: 250ms, effect: glow_pulse}
+  data_states:
+    loading: skeleton_panels
+    valid: show_success_badge
+    warning: show_warning_banner
+    error: block_apply + list_errors
+  accessibility:
+    colorblind_safe: alt palette + patterns for statuses/resources
+    keyboard: tab through warnings; enter opens solution; space applies quick-fix (if safe)
+    screenreader: announce energy/weight levels, counts of warnings/errors, top blocker
 

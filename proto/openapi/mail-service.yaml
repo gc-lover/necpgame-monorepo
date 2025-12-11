@@ -1,3 +1,4 @@
+# Issue: #1647
 openapi: 3.0.3
 info:
   title: Mail Service API
@@ -123,6 +124,175 @@ paths:
             application/json:
               schema:
                 $ref: common.yaml#/components/schemas/Error
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /social/mail/{mail_id}/cod/pay:
+    parameters:
+    - $ref: common.yaml#/components/parameters/MailId
+    post:
+      tags:
+      - Mail
+      summary: Оплатить COD и получить вложения
+      operationId: payCod
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: COD оплачен, вложения выданы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailDetailResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /social/mail/{mail_id}/cod/decline:
+    parameters:
+    - $ref: common.yaml#/components/parameters/MailId
+    post:
+      tags:
+      - Mail
+      summary: Отклонить COD и вернуть письмо отправителю
+      operationId: declineCod
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: COD отклонён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailDetailResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /social/mail/system/send:
+    post:
+      tags:
+      - Mail
+      summary: Отправить системное письмо конкретному игроку
+      operationId: sendSystemMail
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendSystemMailRequest'
+      responses:
+        '201':
+          description: Системное письмо отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMailResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+  /social/mail/system/broadcast:
+    post:
+      tags:
+      - Mail
+      summary: Массовая рассылка системных писем по фильтру
+      operationId: broadcastSystemMail
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastSystemMailRequest'
+      responses:
+        '200':
+          description: Рассылка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastResult'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+  /social/mail/unread-count:
+    get:
+      tags:
+      - Mail
+      summary: Получить количество непрочитанных писем
+      operationId: getUnreadCount
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Количество непрочитанных и всего писем
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadMailCountResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+  /social/mail/expiring:
+    get:
+      tags:
+      - Mail
+      summary: Получить письма с истекающим сроком действия
+      operationId: getExpiringMail
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: days
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 3
+      - $ref: common.yaml#/components/parameters/Page
+      - $ref: common.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Истекающие письма
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboxResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+  /social/mail/{mail_id}/extend:
+    parameters:
+    - $ref: common.yaml#/components/parameters/MailId
+    post:
+      tags:
+      - Mail
+      summary: Продлить срок действия письма
+      operationId: extendMail
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendMailRequest'
+      responses:
+        '200':
+          description: Срок продлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailDetailResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
         '404':
           $ref: common.yaml#/components/responses/NotFound
 components:

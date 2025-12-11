@@ -1,3 +1,4 @@
+# Issue: #1487
 metadata:
   id: ui-hacking-cyberspace
   title: Hacking System - Cyberspace Interface UI/UX Design
@@ -46,14 +47,14 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Необходим детальный UI/UX дизайн для 3D интерфейса киберпространства, навигации по зонам и взаимодействия с объектами.
-  goal: Создать захватывающий 3D интерфейс киберпространства в стиле Cyberpunk 2077 с интуитивной навигацией.
-  essence: Дизайн-документ описывает 3D визуализацию киберпространства, навигацию, интерактивные объекты и мини-карту.
+  problem: Нужен читаемый 3D/2D интерфейс киберпространства с зонами, маршрутами и взаимодействием с объектами/ICE.
+  goal: Дать быструю ориентацию, безопасный переход между зонами и понятные статусы угроз/доступа.
+  essence: 3D киберпространство с миникартой, зонами, маршрутами, ICE/alarms, сбором данных и быстрым выходом.
   key_points:
-    - 3D визуализация киберпространства с зонами и объектами
-    - Навигация по зонам и уровням
-    - Интерактивные объекты данных и файлов
-    - Мини-карта для ориентации
+    - 3D мир + 2D проекция (fallback/mini-map), подсветка зон/маршрутов.
+    - Стейты опасности/ICE/тревог, алерты, энергетические/временные ограничения.
+    - Быстрые действия: скан, пинг маршрута, скрытный проход, экстренный выход.
+    - Доступность: контраст, паттерны, уменьшение движения, озвучка зон.
 content:
   visual_design:
     style: cyberpunk-2077-tron
@@ -112,6 +113,7 @@ content:
               rendering: real_time
               camera: first_person
               movement: free_roam
+              fallback: 2d_projection
             - type: data_visualization
               elements:
                 - data_streams
@@ -128,6 +130,10 @@ content:
                 - program_nodes
                 - access_points
                 - portals
+            - type: danger_zones
+              display: heatmap
+            - type: stealth_paths
+              display: dashed_lines
         - id: cyberspace_hud
           title: HUD Overlay
           position: overlay
@@ -137,6 +143,7 @@ content:
               size: 200x200px
               display: 2d_top_down
               zoom_levels: 3
+              overlays: [ice, alarms, paths]
             - type: zone_info
               position: top_left
               display: zone_name_level
@@ -146,6 +153,12 @@ content:
             - type: navigation_compass
               position: top_center
               display: direction_indicator
+            - type: threat_indicator
+              position: top_center
+              display: alert_level
+            - type: timer_panel
+              position: bottom_right
+              display: remaining_time
         - id: cyberspace_menu
           title: Cyberspace Menu
           position: overlay_panel
@@ -163,6 +176,8 @@ content:
               display: data_files_list
             - type: settings
               display: cyberspace_options
+            - type: alarms_control
+              display: disable_alarm_button
   ux_mechanics:
     navigation:
       primary_method: mouse_keyboard
@@ -173,6 +188,8 @@ content:
         open_menu: 'M'
         toggle_minimap: 'Tab'
         quick_travel: 'T'
+        scan_area: 'F'
+        stealth_route: 'Shift+R'
     interactions:
       navigate_zone:
         flow:
@@ -204,6 +221,9 @@ content:
           - data_stream_animation
           - collection_sound
           - inventory_notification
+      avoid_ice:
+        flow: [detect_ice, show_zone_overlay, choose_route, proceed_or_disable]
+        feedback: [ice_glow, alarm_risk_indicator]
     feedback_systems:
       notifications:
         types:
@@ -228,6 +248,15 @@ content:
       high_contrast_mode: true
       screen_reader_support: true
       motion_reduction: true
+  data_states:
+    loading: wireframe_grid + shimmer
+    alarmed: red overlay + restricted_routes
+    stealth: dim enemies, highlight stealth_paths
+    offline: cached map, disable quick_travel
+  accessibility:
+    colorblind_safe: alt palette for ice/paths/zones
+    keyboard: WASD movement; tab map; m menu; f scan; esc exit
+    screenreader: announce zone name, danger level, nearby data/ice, time left
   animations:
     transitions:
       enter_cyberspace:

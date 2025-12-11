@@ -1,0 +1,114 @@
+# Issue: #1769
+metadata:
+  id: economy-extract-risk-overstay
+  title: 'Экстракт-экономика риска (оверстей в зоне)'
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - extract
+    - risk_reward
+    - loot
+  topics:
+    - economy_rewards
+    - encounter_escalation
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - ai-service
+  related_documents:
+    - id: combat-suppression-sound-ai
+      relation: complements
+    - id: economy-grey-mail-contracts
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - economy
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужно сбалансировать риск за задержку в экстракт-зоне: растущие угрозы vs шанс редкого лута.
+  goal: Определить эскалацию по времени (волны/ICE/патрули), кривую редкого лута, UX-индикатор риска/награды и телеметрию.
+  essence: Чем дольше игрок остаётся после открытия экстракта, тем выше награда и опасность: волны врагов, ICE и патрули растут, шанс редкого лута повышается.
+  key_points:
+    - Таймеры эскалации и типы угроз.
+    - Таблица шанса редкого лута vs время.
+    - UX-индикатор баланса риск/награда.
+content:
+  sections:
+    - id: timers_and_phases
+      title: Таймеры и фазы
+      body: |
+        T0: Экстракт открыт. Базовый шанс редкого лута (loot_base = 0.05).
+        Фазы оверстея после T0:
+        - Фаза 1 (0–60 с): патруль +1, ICE нет. loot_mult = 1.0, loot_rare = loot_base + 0.04.
+        - Фаза 2 (60–120 с): патруль +2, ICE tier1 активируется. loot_mult = 1.15, loot_rare = loot_base + 0.08.
+        - Фаза 3 (120–180 с): волна врагов (tier повышен на 1), ICE tier2. loot_mult = 1.25, loot_rare = loot_base + 0.12.
+        - Фаза 4 (180–240 с): усиленные враги/дроны, ICE tier3, вероятность элит 15%. loot_mult = 1.35, loot_rare = loot_base + 0.17.
+        - Фаза 5 (240–300 с): постоянные волны, ICE tier3+, риск автозакрытия. loot_mult = 1.45, loot_rare = loot_base + 0.20.
+        Hard cap: 300 с — экстракт закрывается, если игрок не начал выход.
+    - id: rare_loot_curve
+      title: Кривая шанса редкого лута
+      body: |
+        loot_rare(t) = clamp(loot_base + 0.0007 * t, loot_base, 0.25), где t — секунды после T0.
+        Доп. модификаторы:
+        - Squad bonus: +0.02, если отряд >=2 жив.
+        - Stealth bonus: +0.03, если не было тревог >120 с.
+        - Death penalty: -0.05 к итоговому шансу, если игрок умирал в этой зоне ранее в матче.
+    - id: threat_escalation
+      title: Рост угроз
+      body: |
+        Волны врагов усиливаются каждые 60 с: +1 уровень сложности, +8% HP, +6% урона.
+        ICE: каждая фаза добавляет слой замедления/дебаффа хаков; в фазе 4+ шанс «trace» 10%/мин.
+        Патрули: шанс появления +5% каждые 60 с, кап 35%.
+    - id: ux_indicator
+      title: UX: индикатор риск/награда
+      body: |
+        HUD-бар с двумя шкалами: Risk (угроза) и Reward (loot_mult/loot_rare). Цветовая подсветка фаз.
+        Предупреждение о hard cap за 30 с. Отдельный alert при ICE trace.
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать:
+        - `extract.overstay_time`, распределение по фазам.
+        - `extract.rare_loot_given`, `loot_mult_avg`.
+        - `extract.deaths_per_phase`, `ice_traces`, `patrol_spawns`.
+        - `extract.extractions_success_rate` по фазам.
+appendix:
+  glossary:
+    - term: ICE
+      definition: Сетевые меры против игрока (замедление, trace).
+  formulas:
+    - name: loot_rare
+      expression: loot_rare(t) = clamp(loot_base + 0.0007 * t, loot_base, 0.25)
+      notes: t в секундах после открытия экстракта; учитывает бонусы/штрафы отдельно.
+implementation:
+  needs_task: false
+  github_issue: 1769
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовая модель эскалации угроз и кривой редкого лута при оверстее экстракта.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

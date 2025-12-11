@@ -1,0 +1,188 @@
+# Issue: #1619
+metadata:
+  id: ui-weapon-effects-interface
+  title: Weapon Effects UI/UX — Elemental, Temporal, Combos
+  document_type: design
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-11T21:10:00Z
+  concept_approved: true
+  owners:
+    - role: ui_ux_designer
+      contact: ui-ux@necp.game
+  tags: [ui, ux, design, combat, weapon-effects, cyberpunk]
+  github_issue: 1619
+  sources:
+    - knowledge/analysis/tasks/ideas/weapon-visual-audio-effects-system-concept.md
+    - knowledge/analysis/tasks/ideas/weapon-elemental-effects-system-concept.md
+    - knowledge/analysis/tasks/ideas/weapon-temporal-effects-system-concept.md
+    - knowledge/analysis/tasks/ideas/weapon-effects-accumulation-combo-system-concept.md
+summary:
+  problem: Нет единого интерфейса, который показывает игроку элементальные и временные эффекты оружия, их накопление, комбо и статус откатов прямо в бою и в меню.
+  goal: Дать ясную, стильную в духе Cyberpunk 2077 визуализацию эффектов оружия: текущее состояние, стеки, пороги, комбо, взаимодействия стихий, временные искажения.
+  key_points:
+    - HUD-модуль для боевого статуса эффектов и стаков
+    - Карточки эффектов для инспекции и сравнения в меню
+    - Отдельные индикаторы временных эффектов (ускорение, замедление, вампиризм)
+    - Визуальные сигналы взаимодействий стихий и комбо
+    - Минимальный шум, чёткая читаемость при высокой динамике боя
+content:
+  visual_design:
+    style: cyberpunk-2077
+    color_scheme:
+      elemental:
+        fire: '#FF5C2B'
+        ice: '#7AE1FF'
+        poison: '#9CE34A'
+        acid: '#C3FF5C'
+        electric: '#00D1FF'
+        emp: '#7F6CFF'
+      temporal:
+        vampirism: '#D3009F'
+        haste: '#FFD642'
+        slowmo: '#8A7BFF'
+      states:
+        stacking_high: '#FF306E'
+        stacking_mid: '#FFA53B'
+        neutral: '#8FD8FF'
+        cooldown: '#666C7A'
+    ui_motifs:
+      - holo_borders_glitch
+      - neon_edge_glow
+      - scanline_overlay_low_opacity
+      - micro-particles on active effects
+    typography:
+      primary: Eurostile-Cyber
+      numbers: Digital-7-Mono
+  interface_structure:
+    combat_overlay:
+      sections:
+        - id: weapon_effect_strip
+          components:
+            - type: effect_chip_row
+              items: [primary_element, secondary_element, temporal_buff]
+              cues:
+                stacking_bar: vertical_micro
+                cooldown_ring: radial
+                synergy_badge: inline_icon
+            - type: combo_meter
+              layout: horizontal
+              markers: [x3, x5, x8, overdrive]
+            - type: temporal_timer
+              modes: [vampirism, haste, slowmo]
+              indicator: dual_ring_with_glow
+        - id: hazard_notifications
+          components:
+            - type: synergy_toast
+              triggers: [fire+poison_explosion, ice+electric_chain, acid+water_spread]
+              duration: 2.5s
+            - type: overload_warning
+              states: [heat, energy, instability]
+        - id: reticle_context
+          components:
+            - type: elemental_reticle_overlay
+              feedback: hit_confirm_color + spark_particles
+            - type: time_dilation_wave
+              feedback: vignette_shift + chroma_bend
+    loadout_screen:
+      sections:
+        - id: effect_cards_panel
+          components:
+            - type: effect_card_grid
+              fields: [name, tier, element, temporal, stacking_cap, synergy_tags, cooldown]
+            - type: comparison_slot
+              diff_fields: [dps, dot, control, range, uptime]
+        - id: tuning_controls
+          components:
+            - type: slider_group
+              sliders: [visual_intensity, audio_intensity, alerts_density]
+            - type: toggle_group
+              toggles: [colorblind_safe_palette, minimal_mode, haptics]
+        - id: preview_panel
+          components:
+            - type: live_preview
+              scenes: [urban_night, industrial_indoor, open_field]
+              playback: slowmo + normal + haste
+    inspection_modal:
+      sections:
+        - id: stacking_breakdown
+          components:
+            - type: stacked_bar
+              thresholds: [25, 50, 75, 100]
+            - type: combo_path
+              nodes: [base, chain, overload, finisher]
+        - id: temporal_curve
+          components:
+            - type: timeline_chart
+              tracks: [duration, regen, movement, rof, crit]
+            - type: trigger_list
+              items: [on_hit, on_kill, on_reload, on_swap]
+    alerts_center:
+      components:
+        - type: toast_queue
+          priority: [danger, warning, info]
+          max_visible: 3
+        - type: banner_alert
+          cases: [overheat, overload, instability, cooldown_lock]
+  ux_mechanics:
+    interactions:
+      stacking_flow: {flow: [hit_target, add_stack, threshold_cue, decay_or_spend]}
+      combo_flow: {flow: [consecutive_hits, build_combo_meter, unlock_finisher, execute_finisher]}
+      temporal_flow: {flow: [trigger_effect, show_timer, curve_decay, warn_before_end]}
+      synergy_flow: {flow: [apply_element_a, apply_element_b, synergy_detected, show_toast, bonus_effect]}
+    input_patterns:
+      - quick_toggle_element_secondary: hold_mouse4 + scroll
+      - finisher_activation: double_tap_R
+      - temporal_cancel: hold_R + tap_Q
+    error_prevention:
+      - cooldown_lock_blur_on_disabled_actions
+      - pre_warning_at_80pct_stack_for_overload
+      - safe_mode_toggle_for_epilepsy (disable flash/glitch)
+  feedback_and_states:
+    stacking:
+      decay: gradual after 1.5s idle; decay bar pulses when about to drop
+      overload: red glitch overlay + controller rumble + short audio chirp
+    temporal:
+      haste: forward-lean UI skew + yellow trail on reticle
+      slowmo: desaturated periphery + stretched hit sparks
+      vampirism: magenta siphon beam + health pip pop-in
+    elemental_synergy:
+      fire_poison: orange-green explosion sigil
+      ice_electric: blue-violet arc chains
+      acid_water: lime ripple spread map overlay
+    accessibility:
+      colorblind_safe: alternate palette with patterns (striped fire, dotted poison)
+      clarity_modes: minimal_mode hides decorative particles, keeps timers/icons
+      subtitles: textual effect callouts for hearing-impaired (top-right micro feed)
+  animations:
+    transitions:
+      effect_chip_activate: {duration: 180ms, effect: neon_pop + light_trail}
+      combo_milestone: {duration: 260ms, effect: slam_glow + brief_screen_shake_small}
+      temporal_start: {duration: 220ms, effect: radial_blur_in + chroma_shift}
+    states:
+      cooldown_ring: clockwise wipe with fading sparks
+      toast_in: slide_from_right + opacity_fade
+  telemetry:
+    events:
+      - event: ui_effect_stack_threshold_hit
+        payload: [weapon_id, element, stack_level, location_type]
+      - event: ui_temporal_effect_used
+        payload: [effect_type, duration, uptime_pct, cancel_reason]
+      - event: ui_synergy_triggered
+        payload: [pair, source_weapon, targets_hit, dps_gain]
+      - event: ui_overload_warning_shown
+        payload: [heat_level, time_to_overheat]
+  implementation_notes:
+    handoff_targets: [UE5]
+    assets:
+      - reticle_overlay_vectors
+      - icon_set_elemental + icon_set_temporal
+      - particle_presets_low_mid_high
+    performance:
+      - keep overlay drawcalls under 1.5ms budget on mid-tier GPU
+      - provide low_fx_mode flag to UE5 for scalability layers
+    localization:
+      - short labels (<=14 chars) to fit chip width
+      - numeric timers use mm:ss or tenths when <5s
+

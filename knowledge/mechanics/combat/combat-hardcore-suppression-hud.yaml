@@ -1,0 +1,111 @@
+# Issue: #1772
+metadata:
+  id: combat-hardcore-suppression-hud
+  title: 'Хардкор: усиленная супрессия (сужение HUD/обзора, метка источника)'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - suppression
+    - hud
+    - hardcore
+    - risk_reward
+  topics:
+    - combat_effects
+    - ui_feedback
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - realtime-service
+    - ai-service
+  related_documents:
+    - id: combat-suppression-sound-ai
+      relation: complements
+    - id: combat-ux-guidelines
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - combat
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужна усиленная супрессия для хардкора с визуальным сужением обзора/HUD и маркером источника.
+  goal: Определить пороги пуль/радиус/длительность, эффекты HUD/FOV, метку источника, баланс и телеметрию.
+  essence: При плотном огне игрок получает сильный супресс-эффект: HUD сужается, FOV уменьшается, показывается направление источника; есть кулдауны и капы.
+  key_points:
+    - Порог супрессии и таймеры.
+    - Эффекты HUD/FOV/разброс.
+    - Анти-абуз/кулдаун, телеметрия.
+content:
+  sections:
+    - id: thresholds
+      title: Пороги и начисление
+      body: |
+        Событие срабатывает при наборе suppression_burst >= 8 очков за 3 с.
+        Начисление: пули <1.5 м = 2 очка, 1.5–3 м = 1 очко; взрыв в 8 м = 4 очка.
+        Радиус проверки: 10 м (пули), 14 м (взрывы). Окклюзия стен -50%.
+        Кулдаун повторного триггера: 10 с (не складывается).
+    - id: effects
+      title: Эффекты HUD/FOV и штрафы
+      body: |
+        FOV сужение: -12% на 4 с, плавный вход/выход 0.3 с.
+        HUD vignette + directional marker источника (±20° точность).
+        Разброс +10%, скорость -6% на 4 с; дрожание при ADS 15% шанс.
+        Маркер пропадает через 2 с или при смене позиции на >8 м.
+    - id: decay
+      title: Длительность и спад
+      body: |
+        Активная фаза 4 с; после неё 3 с мягкого хвоста (FOV -4%, разброс +4%).
+        Если игрок сменил позицию >10 м или лёг, хвост обнуляется на 1 с раньше.
+    - id: ai_interaction
+      title: AI и игроки
+      body: |
+        AI под эффектом: агрессия -20%, шанс сменить позицию 50%, дым/глушилка 30% при наличии.
+        PvP: эффекты на игроков полные; на AI -20% к штрафам.
+        Взаимодействие с базовой супрессией: берётся максимум штрафов, FOV-эффект не суммируется.
+    - id: anti_abuse
+      title: Анти-абуз
+      body: |
+        Не триггерится от союзного огня. От одного стрелка за 3 с максимум 6 очков; нужен второй источник или взрыв.
+        Если цель под эффектом менее 2 с назад, новые триггеры игнорируются.
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать:
+        - `hardcore_suppression.triggers`, `sources` (pistol/rifle/lmg/explosion).
+        - `hardcore_suppression.fov_events`, `marker_duration_avg`.
+        - `position_changes_after_trigger` (>8 м), смертность под эффектом.
+appendix:
+  glossary:
+    - term: suppression_burst
+      definition: Очки супрессии за короткое окно (3 с), инициирующие хардкор-эффект.
+implementation:
+  needs_task: false
+  github_issue: 1772
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Введены пороги, эффекты HUD/FOV, кулдаун и телеметрия для хардкор-супрессии.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

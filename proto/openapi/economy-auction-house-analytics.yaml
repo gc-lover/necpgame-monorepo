@@ -1,0 +1,263 @@
+# Issue: #82
+openapi: 3.0.3
+info:
+  title: Auction House Analytics API
+  description: 'Метрики и аналитические выборки аукционного дома: активные лоты, ставки,
+
+    конверсия выкупа, лидеры ставок. Используется economy-service и dashboards.
+
+    '
+  version: 1.0.0
+servers:
+- url: http://localhost:8080/api/v1
+  description: Economy Service (dev)
+- url: https://api.necp.game/api/v1
+  description: Economy Service (prod)
+tags:
+- name: Auction Analytics
+  description: Метрики и отчеты аукционного дома
+paths:
+  /economy/auction-house/analytics/overview:
+    get:
+      tags:
+      - Auction Analytics
+      summary: Обзор метрик аукциона
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: window
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+        description: Окно агрегации
+      responses:
+        '200':
+          description: Сводка метрик
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionOverviewMetrics'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/analytics/bidders/top:
+    get:
+      tags:
+      - Auction Analytics
+      summary: Топ участников по ставкам
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 20
+          maximum: 100
+      - name: window
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+        description: Окно расчёта
+      responses:
+        '200':
+          description: Лидеры по ставкам
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bidders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BidderStats'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/analytics/items/top:
+    get:
+      tags:
+      - Auction Analytics
+      summary: Топ предметов по выручке
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 20
+          maximum: 100
+      - name: window
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+      responses:
+        '200':
+          description: Самые прибыльные предметы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItemRevenueStats'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/analytics/auctions/activity:
+    get:
+      tags:
+      - Auction Analytics
+      summary: Активность аукционов по времени
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: bucket_minutes
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 60
+          minimum: 5
+          maximum: 1440
+        description: Размер временного бакета
+      - name: window_hours
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 24
+          minimum: 1
+          maximum: 168
+      responses:
+        '200':
+          description: Серия активности
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  series:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionActivityPoint'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+components:
+  securitySchemes:
+    $ref: common.yaml#/components/securitySchemes
+  schemas:
+    AuctionOverviewMetrics:
+      type: object
+      required:
+      - active_auctions
+      - bids_24h
+      - buyout_rate
+      - avg_price
+      - gross_volume
+      properties:
+        avg_price:
+          type: integer
+          format: int64
+          description: Средняя цена продажи (minor units)
+        gross_volume:
+          type: integer
+          format: int64
+          description: Оборот за окно (minor units)
+        active_auctions:
+          type: integer
+          format: int32
+        bids_24h:
+          type: integer
+          format: int32
+        buyout_rate:
+          type: number
+          format: float
+          description: Доля лотов, ушедших по buyout
+      description: 'BACKEND NOTE: Fields ordered large → small для выравнивания структур.'
+    BidderStats:
+      type: object
+      required:
+      - bidder_id
+      - total_bids
+      - wins
+      - total_spent
+      properties:
+        bidder_id:
+          type: string
+          format: uuid
+        total_spent:
+          type: integer
+          format: int64
+        total_bids:
+          type: integer
+          format: int32
+        wins:
+          type: integer
+          format: int32
+      description: 'BACKEND NOTE: Fields ordered large → small.'
+    ItemRevenueStats:
+      type: object
+      required:
+      - item_id
+      - revenue
+      - sold_count
+      - avg_price
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        revenue:
+          type: integer
+          format: int64
+          description: Суммарная выручка (minor units)
+        avg_price:
+          type: integer
+          format: int64
+        sold_count:
+          type: integer
+          format: int32
+      description: 'BACKEND NOTE: Fields ordered large → small.'
+    AuctionActivityPoint:
+      type: object
+      required:
+      - bucket_start
+      - auctions_created
+      - bids_placed
+      - buyouts
+      properties:
+        bucket_start:
+          type: string
+          format: date-time
+        auctions_created:
+          type: integer
+          format: int32
+        bids_placed:
+          type: integer
+          format: int32
+        buyouts:
+          type: integer
+          format: int32
+      description: 'BACKEND NOTE: Fields ordered large → small.'

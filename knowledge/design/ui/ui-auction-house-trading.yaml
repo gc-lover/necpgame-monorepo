@@ -1,3 +1,4 @@
+# Issue: #1479
 metadata:
   id: ui-auction-house-trading
   title: Auction House - Trading Interface UI/UX Design
@@ -13,16 +14,13 @@ metadata:
   tags: [ui, ux, design, economy, auction-house]
   github_issue: 1479
 summary:
-  problem: Необходим UI/UX дизайн для ставок и создания лотов: ставки, создание лотов, мгновенный выкуп.
-  goal: Создать интуитивный интерфейс для торговли на аукционе.
+  problem: Нужен безопасный и быстрый поток ставок/выкупа/создания лота, с валидацией и прозрачными комиссиями.
+  goal: Снизить ошибки ставок, ускорить создание лота, показать комиссии и риски (анти-снайп, минимальный шаг).
   key_points:
-    - Размещение ставок
-    - Создание своих лотов
-    - Установка стартовой цены
-    - Установка цены мгновенного выкупа (опционально)
-    - Выбор длительности (24/48/72 часа)
-    - Предпросмотр комиссии
-    - Подтверждение создания
+    - Ставки: min_step, авто-подсказка минимального бида, подтверждение.
+    - Buyout: мгновенное подтверждение + предупреждение о безоткатности.
+    - Создание лота: выбор предмета, старт/байаут, длительность, комиссия/нетто.
+    - Анти-снайп и защита: указание правил продления при последних минутах.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -42,8 +40,11 @@ content:
           components:
             - type: current_bid_display
             - type: bid_input
+              helpers: [min_increment_hint, max_bid_warning, balance_available]
             - type: minimum_bid_display
             - type: bid_button
+            - type: confirm_modal
+              fields: [bid_amount, total_with_fee, time_left, anti_snipe_rule]
         - id: create_lot_flow
           components:
             - type: item_selector
@@ -51,18 +52,35 @@ content:
             - type: buyout_price_input
             - type: duration_selector
             - type: commission_preview
+              outputs: [fee, net_after_fee, recommended_buyout_range]
             - type: create_button
+            - type: create_confirm_modal
+              summary: [item, start_price, buyout_price, duration, fee, net]
         - id: buyout_interface
           components:
             - type: buyout_price_display
             - type: buyout_button
+            - type: confirm_modal
+              warnings: [irreversible, funds_lock]
   ux_mechanics:
     interactions:
       place_bid: {flow: [select_lot, enter_bid_amount, confirm_bid, process_payment]}
       create_lot: {flow: [select_item, set_prices, select_duration, preview_commission, confirm_create]}
       buyout: {flow: [select_lot, confirm_buyout_price, process_payment, complete_purchase]}
+      auto_fill_min_bid: {flow: [tap_min_step, fill_input, confirm]}
+      edit_duration: {flow: [open_duration, choose_24_48_72, apply]}
+      handle_error: {flow: [show_error, suggest_fix, retry]}
   animations:
     transitions:
       bid_success: {duration: 500ms, effect: success_animation}
       lot_created: {duration: 300ms, effect: creation_animation}
+      error_state: {duration: 250ms, effect: shake_soft}
+  data_states:
+    loading: skeleton_forms
+    pending_payment: lock_inputs + spinner
+    error: inline_banner + retry
+  accessibility:
+    colorblind_safe: alt colors for actions
+    keyboard: tab through inputs; enter=confirm; esc=cancel modal
+    screenreader: announce fee/net, min_step, anti-snipe rule, time_left
 

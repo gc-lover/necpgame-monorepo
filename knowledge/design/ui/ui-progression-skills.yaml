@@ -1,3 +1,4 @@
+# Issue: #1485
 metadata:
   id: ui-progression-skills
   title: Progression System - Skills Interface UI/UX Design
@@ -17,14 +18,13 @@ metadata:
       path: knowledge/mechanics/progression/progression-skills.yaml
   github_issue: 1485
 summary:
-  problem: Необходим UI/UX дизайн для экрана навыков: дерево навыков, уровни, прогресс, эффекты.
-  goal: Создать интуитивное дерево навыков с визуализацией прогресса.
+  problem: Нужен интерактивный экран навыков: категории, прогресс, требования, эффекты.
+  goal: Обеспечить быстрый обзор дерева, подсветить доступные узлы и риски блокировки.
   key_points:
-    - Дерево навыков по категориям
-    - Уровни навыков и прогресс
-    - Эффекты навыков
-    - Требования для разблокировки
-    - Визуализация прогресса
+    - Категории навыков с node-graph, стейты: locked/available/maxed.
+    - Тултипы с эффектами, требованиями, связями.
+    - Боковая панель деталей с прогрессом уровней и ресурсами.
+    - Быстрые действия: авто-путь до цели, откат, избранные навыки.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -55,12 +55,25 @@ content:
             - type: selected_skill_info
             - type: level_progression
             - type: unlock_requirements
+            - type: favorites_toggle
+            - type: path_hint
   ux_mechanics:
     interactions:
       view_skill: {flow: [hover_node, show_tooltip, click_for_details]}
       unlock_skill: {flow: [select_skill, check_requirements, confirm_unlock]}
+      auto_path: {flow: [select_target_skill, highlight_path, confirm_cost]}
+      rollback: {flow: [open_history, select_step, confirm]}
   animations:
     transitions:
       skill_unlock: {duration: 800ms, effect: dramatic_reveal}
       progress_update: {duration: 500ms, effect: fill_animation}
+      path_hint: {duration: 300ms, effect: glow_trail}
+  data_states:
+    loading: skeleton_tree
+    no_points: disable_unlock + tooltip
+    offline: cached_tree, disable_changes
+  accessibility:
+    colorblind_safe: alt colors for states/categories
+    keyboard: arrows to move nodes, enter=open details, space=unlock (if available)
+    screenreader: announce skill name, level/progress, state, requirements, effects
 

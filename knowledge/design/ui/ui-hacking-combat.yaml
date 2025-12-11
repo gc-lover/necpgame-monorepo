@@ -1,3 +1,4 @@
+# Issue: #1487
 metadata:
   id: ui-hacking-combat
   title: Hacking System - Combat Integration UI/UX Design
@@ -46,14 +47,14 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Необходим детальный UI/UX дизайн для боевой интеграции взлома: быстрый взлом в бою, цели, эффекты и защита.
-  goal: Создать быстрый и интуитивный интерфейс для взлома в боевых ситуациях с минимальным прерыванием геймплея.
-  essence: Дизайн-документ описывает боевую интеграцию взлома, быстрый доступ, визуализацию целей и эффектов.
+  problem: Нужен быстрый боевой UI взлома с целями, статусами и минимальным перекрытием прицела.
+  goal: Ускорить выбор/запуск хака в бою, показать энергию/кулдаун/риск, предупредить о защите/контр-взломе.
+  essence: Радиальное меню + индикаторы целей/статусов, активные эффекты, защита/алерты, минимальный HUD.
   key_points:
-    - Быстрый взлом в бою через радиальное меню
-    - Визуализация целей для взлома
-    - Эффекты взлома на врагов
-    - Защита от взлома и индикаторы
+    - Радиал с быстрыми слотами, предпросмотром, стоимостью и кулдауном.
+    - Индикаторы целей (hackable/protected/immune), прогресс/статус над целью.
+    - Активные эффекты, защита, контр-взлом/алерты.
+    - Быстрые действия: отмена, смена слота, экстренный выход.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -117,6 +118,8 @@ content:
             - type: energy_cost
               position: bottom
               display: cost_badge
+            - type: cooldown_badge
+              position: top
         - id: target_indicators
           title: Hack Targets
           position: world_space
@@ -133,6 +136,9 @@ content:
               display: icon_badge
               position: above_target
               condition: hack_active
+            - type: protection_badge
+              display: shield_icon
+              condition: target_protected
         - id: active_hack_effects
           title: Active Hacks
           position: top_right
@@ -161,6 +167,8 @@ content:
             - type: hack_warning
               display: alert_badge
               condition: hack_detected
+            - type: counter_hack_status
+              display: warning_icon
   ux_mechanics:
     navigation:
       primary_method: mouse_keyboard
@@ -172,6 +180,8 @@ content:
         quick_hack_3: '3'
         quick_hack_4: '4'
         cancel_hack: 'Esc'
+        quick_cancel: 'Alt+Esc'
+        swap_slot: 'Tab'
     interactions:
       quick_hack_combat:
         flow:
@@ -201,6 +211,10 @@ content:
           - target_highlight
           - hack_preview
           - energy_cost_display
+      emergency_cancel:
+        flow: [press_quick_cancel, stop_cast, clear_progress]
+      counter_hack_response:
+        flow: [alert_player, show_counter_meter, suggest_action (break line of sight or shield), resume]
     feedback_systems:
       notifications:
         types:
@@ -227,6 +241,15 @@ content:
       text_scaling: true
       high_contrast_mode: true
       screen_reader_support: true
+  data_states:
+    loading: minimal HUD
+    no_energy: disable hacks, show warning
+    protected_target: highlight shield badge, prevent execute
+    counter_hack: show banner + timer
+  accessibility:
+    colorblind_safe: alt palette for target states/protection
+    keyboard/controller: parity for radial + cancel; hold to slow time (if allowed)
+    screenreader: announce target name, status (hackable/protected/immune), cost, cooldown, counter-hack alerts
   animations:
     transitions:
       radial_menu_open:

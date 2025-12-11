@@ -1,0 +1,116 @@
+# Issue: #1710
+metadata:
+  id: economy-grey-data-anonymous-market
+  title: 'Серые торги данными (анонимный рынок лотов)'
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - economy
+    - grey_market
+    - risk_reward
+    - loot
+  topics:
+    - economy_trading
+    - data_broker
+  related_systems:
+    - economy-service
+    - gameplay-service
+    - inventory-service
+  related_documents:
+    - id: economy-grey-mail-contracts
+      relation: references
+    - id: economy-biochain-nanostim-loot-risk
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - economy
+    - gameplay
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен серый анонимный аукцион данных с неполной информацией и риском «плохих» лотов.
+  goal: Определить модель лотов, вероятности ловушек/вирусов, цены/комиссии, капы сделок и пост-проверку.
+  essence: Игрок покупает/продаёт анонимные лоты данных с шансом получить редкие чертежи или вредоносный контент.
+  key_points:
+    - Типы лотов: чистые данные, чертежи, фейк/вирус, ловушка.
+    - Комиссия + страховка, кап на сделки и верификация после покупки.
+    - Телеметрия: объём, % ловушек, маржа.
+content:
+  sections:
+    - id: lot_types
+      title: Типы лотов и вероятности
+      body: |
+        Лоты (базовые вероятности до модификаторов спроса):
+        - Clean Data (обычные данные): 55%.
+        - Rare Blueprint (редкий чертёж): 12%.
+        - Epic Blueprint: 4%.
+        - Fake/Filler: 18%.
+        - Malware Trap: 6%.
+        - Bait/Trace Trap (раскрытие позиции/ID): 5%.
+        Модификатор спроса: при росте спроса >120% за 30 мин шанс Fake +2 п.п., Trap +1 п.п., уменьшая Clean.
+    - id: pricing
+      title: Ценообразование и комиссии
+      body: |
+        Диапазон стартовых цен (аукцион слепых ставок): 500–2500 кр.
+        Комиссия площадки: 6% с покупателя, 4% с продавца.
+        Страховка (опционально): +8% к цене, снижает ущерб от Malware Trap на 70% и от Bait на 50%.
+        Buyout: если ставка >1.6x средней — мгновенная покупка; комиссия +2 п.п.
+    - id: risk_effects
+      title: Эффекты «плохих» лотов
+      body: |
+        Malware Trap: заражает девайс, -10% скорость взлома и -15% реген стамины на 8 мин, требует очистку (расходник).
+        Bait/Trace: раскрытие временного ID на 3 мин, шанс засвета фракции (репутация -5).
+        Fake/Filler: бесполезный предмет, нельзя продать обратно кроме как утилизировать за 10% цены.
+    - id: limits
+      title: Капы и анти-абуз
+      body: |
+        Кап покупок: 5 лотов в час на игрока.
+        Кап продаж: 5 лотов в час; при превышении комиссия продавца +4 п.п.
+        Повторная покупка у того же псевдо-продавца >3 раз за час запрещена (анти-collusion).
+        Подтверждение владения товаром для продавца через хеш-сигнатуру; лоты без верификации получают флаг High Risk (+3 п.п. к Trap).
+    - id: verification
+      title: Пост-проверка и верификация
+      body: |
+        После покупки игрок может запустить «Быструю проверку» (5 с): снижает шанс скрытого Malware на 50%.
+        Глубокая проверка (30 с вне боя): гарантирует обнаружение Malware/Bait, но не отменяет Fake.
+        При нахождении Malware: страховая выплата 50% цены (если страховка была).
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать:
+        - `grey_market.trades_total`, `volume_credits`, `avg_price`.
+        - `grey_market.trap_rate`, `fake_rate`, `blueprint_rate`.
+        - `grey_market.insurance_take_rate`, `insurance_payouts`.
+        - `grey_market.buyer_repeat_rate`, `seller_repeat_rate`.
+appendix:
+  glossary: []
+implementation:
+  needs_task: false
+  github_issue: 1710
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовая модель серого анонимного рынка данных с рисками ловушек и комиссиями.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

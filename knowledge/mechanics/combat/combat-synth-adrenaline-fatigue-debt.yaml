@@ -1,0 +1,146 @@
+# Issue: #1657
+metadata:
+  id: combat-synth-adrenaline-fatigue-debt
+  title: 'Баф «Синт-адреналин» с долгом усталости'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - buff
+    - stamina
+    - melee
+    - sprint
+    - risk_reward
+  topics:
+    - combat_effects
+    - stamina_management
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - realtime-service
+  related_documents:
+    - id: combat-shooter-core
+      relation: interacts_with
+    - id: combat-abilities
+      relation: complements
+    - id: combat-implants-mechanics
+      relation: references
+    - id: combat-loadouts-system
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - combat
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен краткосрочный боевой бафф ближнего боя/спринта, который даёт ощутимый буст без перманентного power creep и имеет плату усталостью после применения.
+  goal: Задать численные параметры «Синт-адреналина», ввести формулы долга усталости и пороги для лёгких/средних/тяжёлых билдов, добавить анти-спам и телеметрию.
+  essence: В бою игрок получает резкий пик мобильности и урона вблизи, но копит долг усталости, который после схватки режет стамину и восстановление; debt масштабируется по массе билда и сбрасывается через рекуперацию.
+  key_points:
+    - Бафф про скорости/TTK в ближнем бою, ограничен дистанцией <7 м и временем 6–8 с.
+    - Долг усталости накапливается пропорционально длительности и массовой категории, конвертируется в штрафы стамины после окончания.
+    - Пороговые значения для лёгкого/среднего/тяжёлого сетапов, чтобы исключить единый BiS.
+    - Анти-спам: уникальный кулдаун, жёсткий lockout при высоком долге, уменьшение эффективности при повторных проках.
+content:
+  sections:
+    - id: buff_parameters
+      title: Параметры баффа и дистанция
+      body: |
+        Активируется вручную, требует >40% текущей стамины, нельзя под глушением или в воздухе.
+        Профиль баффа (базовые значения):
+        - Длительность: 6.0 с (PvP), 8.0 с (PvE).
+        - Кулдаун: 40 с (PvP), 32 с (PvE).
+        - Бонус к урону ближним оружием и рукопашке в радиусе ≤7 м: +20% (PvP), +30% (PvE).
+        - Бонус к спринту/рывку: +18% скорости + 1 дополнительный короткий dash (10 м, 0.35 с анимация).
+        - ADS штраф: +8% к разбросу в первые 0.6 с, чтобы сместить бафф в ближний бой.
+        - Сопротивление контролю: -20% длительность замедлений, но оглушения работают полноценно.
+        Debt накопление во время действия: `debt_raw = base_debt * (1 + 0.35*(t / base_duration))`, где base_debt = 30 стамины-очков и t — фактическая продолжительность баффа.
+    - id: ttk_and_gear_thresholds
+      title: Пороговые значения TTK и стамины по классам экипировки
+      body: |
+        Базовые входные параметры (до баффа): TTK_light = 1.05 с, TTK_medium = 1.25 с, TTK_heavy = 1.45 с в ближнем бою при 3 попаданиях.
+        Под баффом (PvP таргет):
+        - Лёгкий: TTK ≈ 0.88 с (2–3 хита), стамина затраты +15%. Debt мультипликатор k_mass = 0.9.
+        - Средний: TTK ≈ 1.05 с (3–4 хита), стамина затраты +20%. k_mass = 1.0.
+        - Тяжёлый: TTK ≈ 1.22 с (4–5 хитов), стамина затраты +25%. k_mass = 1.15.
+        Формула итоговой стамины после действия: `stamina_post = max(0, stamina_pre - debt_raw * k_mass)`.
+        Восстановление после: `regen_post = regen_base * (1 - 0.6 * debt_ratio)`, где `debt_ratio = clamp(debt_raw / 60, 0, 1)`.
+    - id: fatigue_debt_conversion
+      title: Конвертация долга усталости и дебафф
+      body: |
+        После завершения эффекта весь накопленный debt_raw переходит в дебафф на 12 с (PvP) / 16 с (PvE).
+        Штрафы дебаффа:
+        - -12% / -18% к максимуму стамины (PvP/PvE).
+        - -25% к скорости регенерации стамины при debt_ratio ≤0.5; до -45% при debt_ratio >0.75.
+        - -10% к скорости спринта и +8% к расходу стамины на рывки при debt_ratio >0.5.
+        - Weapon handling: +6% к разбросу и -5% к устойчивости, если debt_ratio >0.6.
+        Debt decay: линейное восстановление 50% долга за время дебаффа, оставшиеся 50% гасятся только вне боя (3 с без урона) или через стим-пак «Detox» (-30% долга, отдельный КД 90 с).
+    - id: anti_abuse
+      title: Ограничения и анти-спам
+      body: |
+        - Уникальный бафф в категории «стим»: не стакается с «Берсерк» и «Нейрошот».
+        - Lockout: если debt_ratio >0.8, повторная активация запрещена 90 с, HUD предупреждает.
+        - Diminishing returns: каждая активация в течение 4 мин: -15% к урон-баффу (минимум -30%).
+        - PvE безопасная сетка: при длительном бою debt capped на 45 для предотвращения soft-lock.
+        - Срабатывает fail-safe: при стамине <25% бафф не стартует, чтобы исключить «бесплатный» нуль-дебт.
+    - id: telemetry
+      title: Телеметрия и метрики
+      body: |
+        Логировать в combat-service / gameplay-service:
+        - `synth_adrenaline.activations` (per match/session), `unique_users`.
+        - `synth_adrenaline.debt_avg`, `debt_peak`, распределение по gear_class.
+        - `synth_adrenaline.kills_under_buff`, `deaths_under_buff`, `ttk_delta_ms`.
+        - `fatigue_debuff.duration_avg`, `regen_penalty_avg`.
+        - Аномалии: активации <15 с интервала, debt_ratio >0.9, смертность в 2 с после баффа.
+    - id: tuning_table
+      title: Матрица тюнинга по классам
+      body: |
+        Лёгкий сет (<=12 кг): base_debt 28, debt cap 42, дебафф стамины -10%, реген -25%, кулдаун 38 с.
+        Средний (13–24 кг): base_debt 30, debt cap 50, дебафф стамины -12%, реген -30%, кулдаун 40 с.
+        Тяжёлый (25+ кг): base_debt 33, debt cap 55, дебафф стамины -14%, реген -35%, кулдаун 44 с.
+appendix:
+  glossary:
+    - term: debt_ratio
+      definition: Нормализованное отношение накопленного долга усталости к порогу 60 стамины-очков.
+    - term: k_mass
+      definition: Мультипликатор долга усталости по классу экипировки, отражающий нагрузку массы на энергообмен.
+  formulas:
+    - name: debt_raw
+      expression: debt_raw = base_debt * (1 + 0.35*(t / base_duration))
+      notes: t — фактическая длительность эффекта, base_duration = 6 c (PvP).
+    - name: stamina_post
+      expression: stamina_post = max(0, stamina_pre - debt_raw * k_mass)
+      notes: stamina_pre — оставшаяся стамина на момент окончания эффекта.
+    - name: regen_post
+      expression: regen_post = regen_base * (1 - 0.6 * debt_ratio)
+      notes: debt_ratio = clamp(debt_raw / 60, 0, 1).
+implementation:
+  needs_task: false
+  github_issue: 1657
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Создана базовая численная спецификация баффа «Синт-адреналин» с долгом усталости.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

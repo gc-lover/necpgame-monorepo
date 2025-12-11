@@ -1,0 +1,122 @@
+# Issue: #1675
+metadata:
+  id: combat-berserk-reverse-stim
+  title: 'Берсерк: «Реверсивный стим» (урон растёт при потере HP)'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - berserk
+    - buff
+    - stamina
+    - risk_reward
+  topics:
+    - combat_effects
+    - dps_modulation
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - realtime-service
+  related_documents:
+    - id: combat-shooter-core
+      relation: interacts_with
+    - id: combat-implants-mechanics
+      relation: references
+    - id: combat-ux-guidelines
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - combat
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен бафф урона, растущий при потере HP, с платой за лечение и риском смерти.
+  goal: Определить формулу урона vs %HP, длительность/кулдаун, штрафы к лечению, контрплей и метрики.
+  essence: Берсерк усиливает урон при снижении HP, но повышает стоимость и время лечения; есть анти-баффы и капы TTK.
+  key_points:
+    - Скейл урона от %HP с капом.
+    - Штраф к лечению/регену во время баффа.
+    - Контрплей анти-берсерк эффектами.
+content:
+  sections:
+    - id: damage_formula
+      title: Формула урона vs HP
+      body: |
+        Базовый множитель: `damage_mult = 1 + clamp(k_mass * (1 - hp_ratio), 0, cap)`.
+        Параметры по массе (k_mass / cap):
+        - Лёгкий: k=0.55, cap=0.35 → при 30% HP множитель ~1.39.
+        - Средний: k=0.65, cap=0.42 → при 30% HP ~1.46.
+        - Тяжёлый: k=0.75, cap=0.48 → при 30% HP ~1.53.
+        hp_ratio = current_hp / max_hp, квантуется каждые 5%.
+        Жёсткий кап TTK: бонус урона не увеличивает фактический TTK >15% относительно базовой модели оружия.
+    - id: uptime
+      title: Длительность и кулдаун
+      body: |
+        Длительность: 10 с. Кулдаун: 50 с (PvP), 42 с (PvE).
+        Активация требует стамину >40% и отсутствие тяжёлых ранений/оглушений.
+        Бафф снимается при лечении выше 60% HP или при получении анти-берсерк дебаффа.
+    - id: healing_penalty
+      title: Штрафы к лечению и регену
+      body: |
+        Во время баффа:
+        - Стоимость лечения (медкит/стим) x1.25 (PvP) / x1.15 (PvE).
+        - Время применения хил-предметов +20% (PvP) / +10% (PvE).
+        - Реген стамины -20%; реген HP отключён.
+        После баффа: «откат» 6 с: реген стамины -10%, HP-regen остаётся отключён ещё 3 с.
+    - id: fail_states
+      title: Риски и смерть
+      body: |
+        При HP <15% игрок получает «опасный порог»: +10% входящего урона. Повторная активация запрещена 60 с после смерти.
+        Если смерть наступила под баффом, следующий запуск даёт -10% к cap на 1 бой.
+    - id: counterplay
+      title: Контрплей
+      body: |
+        Анти-берсерк дебафф: снижает damage_mult на 50% и включает нормальные стоимости лечения на 8 с.
+        Шумовые гранаты и EMP: сбрасывают стаки квантования (hp_ratio округляется вверх до ближайших 10%).
+        В PvP мед-дроны союзников могут временно игнорировать штрафы лечения (1 раз/бой, 3 с окно).
+    - id: telemetry
+      title: Метрики
+      body: |
+        Логировать:
+        - `reverse_stim.activations`, `duration_avg`, `hp_ratio_avg_on_activation`.
+        - `reverse_stim.deaths_under_buff`, `ttk_delta_ms`, `damage_mult_avg`.
+        - `healing_cost_multiplier_avg`, `antiberserk_triggers`.
+        - Экономика: средний расход медкитов/стимов под баффом.
+appendix:
+  glossary:
+    - term: hp_ratio
+      definition: Доля текущего HP к максимуму, квантуется для расчёта баффа.
+  formulas:
+    - name: damage_mult
+      expression: damage_mult = 1 + clamp(k_mass * (1 - hp_ratio), 0, cap)
+      notes: k_mass и cap зависят от класса экипировки; hp_ratio квантуется каждые 5%.
+implementation:
+  needs_task: false
+  github_issue: 1675
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовая формула берсерка с штрафами к лечению и контрплеем.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

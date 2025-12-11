@@ -1,0 +1,98 @@
+# Issue: #1678
+metadata:
+  id: economy-debt-grid-microloans
+  title: 'Экономика: «Сетка долгов» (боевые микрозаймы)'
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - microloans
+    - economy
+    - risk_reward
+  topics:
+    - economy_rewards
+    - debt_systems
+  related_systems:
+    - economy-service
+    - gameplay-service
+    - loot-service
+  related_documents:
+    - id: economy-grey-bonds-faction-funding
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - economy
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужна модель боевых микрозаймов с растущими процентами и погашением лутом/кредитами.
+  goal: Задать ставки, рост долга, капы, штрафы, списание редкого лута, анти-абуз и телеметрию.
+  essence: Игрок берёт быстрый займ на расходники; проценты растут до погашения. Долг можно погасить кредитами или сдачей редкого лута; есть лимиты и cooldown.
+  key_points:
+    - Таблица ставок/кап.
+    - Штрафы за просрочку, списание лута.
+    - Лимиты и cooldown.
+content:
+  sections:
+    - id: loan_params
+      title: Параметры займа
+      body: |
+        Сумма: 500/1000/1500 кр.
+        Ставка базовая: 6% в 10 мин (кап на 60 мин).
+        Рост: каждые 10 мин ставка +2 п.п. (кап 18%).
+        Кап долга: 2.0x суммы займа.
+    - id: repayment
+      title: Погашение и списание лута
+      body: |
+        Погашение кредитами в любой момент.
+        Альтернатива: списание редкого лута (tierRare=400 кр., tierEpic=900 кр.) в счёт долга.
+        При полном погашении — небольшой бонус репутации +2.
+    - id: penalties
+      title: Просрочка и штрафы
+      body: |
+        После 60 мин непогашения: штраф -15% к наградам контрактов на 20 мин.
+        При превышении капа долга: авто-изъятие случайного редкого предмета (если есть) + блок новых займов 30 мин.
+    - id: limits
+      title: Лимиты и cooldown
+      body: |
+        Максимум 1 активный займ. Cooldown на новый займ 20 мин после полного погашения.
+        В рейде (PvE): займы доступны только вне боя; в PvP отключены.
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать:
+        - `debt.loans_issued`, `loans_repaid`, `loans_defaulted`.
+        - `debt.avg_interest`, `debt.time_to_repay`, `debt.penalties_applied`.
+        - `debt.loot_sacrificed` по tier.
+appendix:
+  glossary: []
+implementation:
+  needs_task: false
+  github_issue: 1678
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовая модель микрозаймов с ростом ставок, капом, штрафами и погашением лутом.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

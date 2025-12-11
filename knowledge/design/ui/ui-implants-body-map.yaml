@@ -1,3 +1,4 @@
+# Issue: #1484
 metadata:
   id: ui-implants-body-map
   title: Implants System - Body Map Interface UI/UX Design
@@ -17,14 +18,13 @@ metadata:
       path: knowledge/mechanics/combat/combat-implants.yaml
   github_issue: 1484
 summary:
-  problem: Необходим UI/UX дизайн для карты тела с имплантами: 3D модель, визуализация слотов, интерактивный выбор.
-  goal: Создать интуитивную 3D карту тела для управления имплантами.
+  problem: Нужна интерактивная карта тела (3D/2D) с установками имплантов, слотами и быстрыми действиями.
+  goal: Упростить выбор слота, понять занятость/совместимость и быстро перейти к установке/снятию.
   key_points:
-    - 3D модель тела персонажа
-    - Визуализация установленных имплантов
-    - Слоты для имплантов (голова, торс, руки, ноги)
-    - Интерактивный выбор слотов
-    - Визуальные эффекты имплантов
+    - 3D модель с подсветкой зон, быстрый переход к слоту, поддержка 2D fallback.
+    - Состояния слотов: установлен, свободен, несовместим, заблокирован.
+    - Быстрые действия: открыть каталог, снять, улучшить, посмотреть эффекты.
+    - Анимации установки/подсветки + доступность (контуры, клавиши).
 content:
   visual_design:
     style: cyberpunk-2077
@@ -47,6 +47,7 @@ content:
             - type: 3d_body_model
               interactive: true
               highlight_zones: true
+              fallback: 2d_projection
             - type: implant_overlay
               display: installed_implants
             - type: slot_indicators
@@ -60,12 +61,25 @@ content:
             - type: selected_slot_info
             - type: installed_implant_info
             - type: available_implants_list
+            - type: quick_actions
+              actions: [open_catalog, remove_implant, upgrade_implant, view_effects]
   ux_mechanics:
     interactions:
       select_zone: {flow: [click_zone, highlight_zone, show_slots]}
       install_implant: {flow: [select_slot, choose_implant, check_compatibility, confirm_install]}
+      remove_implant: {flow: [select_slot, confirm_remove, execute]}
+      upgrade_implant: {flow: [select_slot, open_upgrade, confirm]}
   animations:
     transitions:
       zone_select: {duration: 300ms, effect: highlight_pulse}
       implant_install: {duration: 1000ms, effect: installation_animation}
+      slot_state_change: {duration: 250ms, effect: glow_pulse}
+  data_states:
+    loading: skeleton_body + shimmer_slots
+    live_update: flash_on_change (install/remove)
+    offline: cached_view + disable_install
+  accessibility:
+    colorblind_safe: alt palette + patterns for slot states
+    keyboard: arrows to move slots, enter=open slot, del=remove (confirm)
+    screenreader: announce zone, slot, status, installed implant
 

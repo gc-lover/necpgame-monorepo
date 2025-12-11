@@ -1,10 +1,13 @@
+// Issue: #196
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "IInventoryManager.h"
+#include "HAL/CriticalSection.h"
 #include "IInventoryItem.h"
+#include "IInventoryManager.h"
 #include "LyraInventoryManagerComponent.h"
+
 #include "NECPInventoryComponent.generated.h"
 
 class UNECPInventoryItem;
@@ -37,6 +40,7 @@ public:
 
 private:
 	void InitializeInventory();
+	UNECPInventoryItem* CreateWrapper(ULyraInventoryItemInstance* LyraItem);
 
 	UPROPERTY()
 	TObjectPtr<ULyraInventoryManagerComponent> LyraInventoryComponent;
@@ -46,4 +50,3 @@ private:
 
 	mutable FCriticalSection InventoryCriticalSection;
 };
-

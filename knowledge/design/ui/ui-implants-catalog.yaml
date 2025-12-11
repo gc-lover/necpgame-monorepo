@@ -1,3 +1,4 @@
+# Issue: #1484
 metadata:
   id: ui-implants-catalog
   title: Implants System - Catalog Interface UI/UX Design
@@ -17,14 +18,13 @@ metadata:
       path: knowledge/mechanics/combat/combat-implants-types.yaml
   github_issue: 1484
 summary:
-  problem: Необходим UI/UX дизайн для каталога имплантов: список, фильтры, поиск, превью.
-  goal: Создать удобный каталог имплантов с детальной информацией.
+  problem: Нужен каталог имплантов с совместимостью, брендами и энергобюджетом, чтобы быстро понять, что поставить.
+  goal: Дать игроку быстрый поиск/фильтр, совместимость с текущими слотами и визуальный превью эффектов.
   key_points:
-    - Список доступных имплантов
-    - Фильтры: тип, бренд, уровень, совместимость
-    - Поиск по названию
-    - Сортировка: уровень, цена, популярность
-    - Превью импланта с характеристиками
+    - Фильтры/сортировки с сохранением пресетов; поиск с дебаунсом.
+    - Карточка: редкость, бренд, тип, энергобюджет, совместимость, человечность/киберпсихоз-импакт.
+    - Детали: требования, эффекты, синергии, визуальный превью.
+    - Быстрые действия: попробовать в слот (preview), добавить в wishlist, сравнить.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -41,14 +41,20 @@ content:
         - id: filters_sidebar
           components:
             - type: filter_controls
-              filters: [type, brand, level, compatibility, rarity]
+              filters: [type, brand, level, compatibility, rarity, energy_cost, humanity_impact]
             - type: search_bar
+              behavior: debounce_300ms + recent_queries
             - type: sort_options
+              options: [rarity, level, price, energy_cost, popularity]
+            - type: saved_filters
+              actions: [save, load, reset]
         - id: implants_grid
           components:
             - type: implants_list
               layout: grid
               item_template: implant_card
+              card_fields: [thumb, name, rarity, brand, type, energy_cost, humanity_impact, compatibility_badge]
+              quick_actions: [preview_in_slot, add_wishlist, compare]
         - id: implant_details
           components:
             - type: implant_info_panel
@@ -56,11 +62,26 @@ content:
             - type: compatibility_check
             - type: visual_preview
             - type: install_button
+            - type: humanity_impact_display
+            - type: synergy_tags
+            - type: requirements_list
   ux_mechanics:
     interactions:
       browse_implants: {flow: [apply_filters, browse_grid, view_details]}
       preview_implant: {flow: [select_implant, show_preview, check_compatibility]}
+      wishlist: {flow: [tap_wishlist, save]}
+      compare: {flow: [add_to_compare, open_compare_panel]}
   animations:
     transitions:
       implant_select: {duration: 200ms, effect: highlight_glow}
+      compatibility_flash: {duration: 250ms, effect: glow_pulse}
+  data_states:
+    loading: skeleton_cards + shimmer_filters
+    live_update: flash_on_price/availability
+    empty: "Нет имплантов" + CTA сбросить фильтры
+    offline: cached snapshot + disable_install
+  accessibility:
+    colorblind_safe: alt palette for rarity/compatibility
+    keyboard: tab filters → grid → details; enter=open; space=wishlist; c=compare
+    screenreader: announce rarity, energy, humanity impact, compatibility
 

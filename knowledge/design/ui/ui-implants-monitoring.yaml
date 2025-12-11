@@ -1,3 +1,4 @@
+# Issue: #1484
 metadata:
   id: ui-implants-monitoring
   title: Implants System - Monitoring Interface UI/UX Design
@@ -17,14 +18,13 @@ metadata:
       path: knowledge/mechanics/combat/combat-cyberpsychosis.yaml
   github_issue: 1484
 summary:
-  problem: Необходим UI/UX дизайн для мониторинга состояния: энергия, человечность, киберпсихоз.
-  goal: Создать информативный интерфейс для отслеживания состояния имплантов.
+  problem: Нужен мониторинг энергии/человечности/риска киберпсихоза с понятными порогами и алертами.
+  goal: Дать игроку быстрый сигнал о рисках, показать факторы и предложить действия для снижения риска.
   key_points:
-    - Уровень энергии (энергобюджет)
-    - Уровень человечности
-    - Риск киберпсихоза
-    - Визуальные индикаторы
-    - Предупреждения о превышении лимитов
+    - Энергия и человечность с цвет-кодом и порогами.
+    - Риск киберпсихоза с факторами (импланты, перегруз, события).
+    - Алерты и рекомендации (снять имплант, снизить нагрузку, принять стабилизатор).
+    - История пиков и уведомления.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -52,15 +52,31 @@ content:
             - type: risk_meter
               display: warning_gauge
             - type: risk_factors_list
+            - type: recommendations
         - id: warnings_panel
           components:
             - type: active_warnings
             - type: limit_exceeded_alerts
+            - type: history_peaks
+            - type: notification_settings
   ux_mechanics:
     interactions:
       view_details: {flow: [hover_meter, show_tooltip, click_for_details]}
+      apply_recommendation: {flow: [select_recommendation, confirm_action, update_status]}
+      configure_alerts: {flow: [open_settings, set_thresholds, save]}
   animations:
     transitions:
       status_change: {duration: 500ms, effect: pulse_warning}
       limit_exceeded: {duration: 300ms, effect: urgent_alert}
+      recommendation_apply: {duration: 300ms, effect: success_flash}
+  data_states:
+    loading: skeleton_meters
+    safe: subtle_glow
+    warning: pulse_warning + CTA
+    danger: urgent_alert + disable_risky_actions_optional
+    offline: cached_snapshot + banner
+  accessibility:
+    colorblind_safe: alt palette + patterns for levels
+    keyboard: tab through meters, enter opens details, space applies recommendation
+    screenreader: announce energy/humanity values, risk level, top warning, recommendation summary
 

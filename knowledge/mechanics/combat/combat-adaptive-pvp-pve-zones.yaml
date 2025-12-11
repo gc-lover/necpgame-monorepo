@@ -1,0 +1,114 @@
+# Issue: #1770
+metadata:
+  id: combat-adaptive-pvp-pve-zones
+  title: 'PvP/PvE адаптивное зонирование (режимы с индикаторами)'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - pvp
+    - pve
+    - zones
+    - risk_reward
+  topics:
+    - combat_rules
+    - economy_rewards
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - realtime-service
+  related_documents:
+    - id: combat-shooter-core
+      relation: interacts_with
+    - id: combat-ux-guidelines
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - combat
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужно разделение карт на сегменты с разным PvP риском и явными индикаторами.
+  goal: Задать правила входа/выхода, модификаторы лута/рисков, санкции за нарушение и UI-индикацию.
+  essence: Зоны имеют режимы (Safe/Hybrid/Hostile) с разной наградой и риском; игрок видит индикаторы и получает санкции за агрессию вне правил.
+  key_points:
+    - Три режима с лут/риск модификаторами.
+    - Правила флага агрессии и тайм-ауты выхода.
+    - Телеметрия посещений/смертей/лут-выдач.
+content:
+  sections:
+    - id: zone_modes
+      title: Режимы зон
+      body: |
+        Safe (PvE): PvP запрещён, friendly-fire off. Loot_mult 0.9, редкость -20%. Санкция за агрессию: временный бан входа 30 мин + штраф репутации.
+        Hybrid (PvPvE): PvP разрешён с флагом агрессии, но стражи реагируют. Loot_mult 1.0, редкость +0%. При агрессии стражи реагируют 30 с, репутация -5.
+        Hostile (Full PvP): свободное PvP, стражей нет. Loot_mult 1.25, редкость +20%, шанс редких контрактов +10%.
+    - id: aggression_rules
+      title: Правила агрессии и флагов
+      body: |
+        В Hybrid требуется флаг: агрессор получает «combat flag» на 90 с, выход из зоны с флагом запрещён 20 с (combat timeout).
+        В Safe агрессия невозможна; попытка наносит санкцию (бан зоны + репутация -10).
+        Hostile: combat flag всё время боя; выход требует 10 с без урона.
+    - id: entry_exit
+      title: Вход/выход и переходы
+      body: |
+        При входе в зону игрок видит модификаторы лута/рисков. Переход между Safe → Hybrid → Hostile возможен через шлюзы; combat flag блокирует переход 15 с.
+        Экстракт в Hostile/Hybrid: базовый таймер +10 с при combat flag.
+    - id: loot_risk_mods
+      title: Модификаторы лута и риска
+      body: |
+        Safe: loot_mult 0.9, шанс редкого -5%, риск нулевой.
+        Hybrid: loot_mult 1.0, редкий лут базовый, но +5% шанс на контрактные награды.
+        Hostile: loot_mult 1.25, редкий лут +20%, шанс на фракционные кейсы +12%, но смерть теряет 60% несохранённого лута.
+    - id: ui_indicators
+      title: UI индикатор режима
+      body: |
+        HUD-баннер при входе: цвет (зелёный Safe, жёлтый Hybrid, красный Hostile), текстовые модификаторы лута/риска.
+        Миникарта: границы цвета; значки стражей в Hybrid/Safe.
+        Combat flag отображается иконкой с таймером; предупреждение при попытке выхода/перехода под флагом.
+    - id: sanctions
+      title: Санкции за нарушение
+      body: |
+        Safe: санкция бан 30 мин на Safe-зоны + репутация -10. Hybrid: репутация -5 + агро стражей, возможность розыска на 5 мин.
+        Hostile: санкций нет, только обычные риски смерти/потери лута.
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать:
+        - `zones.visits` по типам зон, `zones.deaths`, `zones.loot_awarded`.
+        - `zones.combat_flags`, `zones.guard_interventions`.
+        - `zones.sanctions_applied` (safe/hybrid).
+appendix:
+  glossary:
+    - term: combat flag
+      definition: Состояние агрессора с таймером, блокирующее выход/переход.
+implementation:
+  needs_task: false
+  github_issue: 1770
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовая модель режимов зон, модификаторов лута/риска, санкций и телеметрии.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

@@ -1,3 +1,4 @@
+# Issue: #1486
 metadata:
   id: ui-arena-match
   title: Arena System - Match Interface UI/UX Design
@@ -23,15 +24,13 @@ metadata:
       path: knowledge/design/ui/ui-arena-results.yaml
   github_issue: 1486
 summary:
-  problem: Необходим UI/UX дизайн для интерфейса матча: мини-карта, информация о командах, цели, таймер.
-  goal: Создать информативный HUD для матча с минимальным прерыванием геймплея.
+  problem: Нужен HUD матча с минимальным шумом: счет/цели/таймер/статусы и читаемая килл-лента.
+  goal: Дать игроку мгновенную боевую картину: команды, цели, время, события, без перекрытия прицела.
   key_points:
-    - Мини-карта
-    - Информация о командах (счет, жизни)
-    - Список игроков и статус
-    - Цели и задачи
-    - Таймер матча
-    - Уведомления о событиях
+    - Мини-карта с пингами и зонами целей.
+    - Счет, жизни/тикеты, статусы игроков, трек целей.
+    - Таймер, килл-лента, важные события (объективы, серия убийств).
+    - Состояния: пауза, reconnect, низкий HUD (минимал).
 content:
   visual_design:
     style: cyberpunk-2077
@@ -46,31 +45,57 @@ content:
         - id: minimap
           position: top_right
           size: 200x200px
+          features: [pings, objectives, ally/enemy, zoom_toggle]
         - id: team_info
           position: top_left
           components:
             - type: score_display
             - type: lives_remaining
             - type: player_status_list
+            - type: respawn_timers
         - id: objectives
           position: top_center
           components:
             - type: objective_list
             - type: objective_progress
+            - type: priority_callouts
         - id: match_timer
           position: top_center
           display: countdown_timer
         - id: event_notifications
           position: center_screen
           display: kill_feed
+          filters: [kills, streaks, objectives]
+        - id: status_panels
+          position: bottom_left
+          components:
+            - type: buff_debuff_bar
+            - type: ammo_energy_status
+        - id: quick_comms
+          position: bottom_right
+          components:
+            - type: ping_wheel_hint
+            - type: team_commands
   ux_mechanics:
     interactions:
       view_minimap: {trigger: 'Tab', effect: expand_minimap}
       check_objectives: {trigger: 'O', effect: show_objectives_panel}
+      toggle_minimal_hud: {trigger: 'Alt+H', effect: collapse_noncritical}
+      acknowledge_event: {trigger: 'MiddleClick', effect: pin_on_minimap}
   animations:
     transitions:
       kill_notification: {duration: 300ms, effect: slide_in_fade}
       objective_capture: {duration: 500ms, effect: pulse_glow}
+      score_update: {duration: 250ms, effect: count_up}
+  data_states:
+    loading: placeholder HUD
+    live: 30hz updates; throttle animations
+    reconnect: show reconnect banner + minimal stats
+    paused: dim HUD, pause timer
+  accessibility:
+    colorblind_safe: alt palette for teams/objectives
+    keyboard/controller parity for shortcuts
+    screenreader: announce objectives, score, timer, killfeed highlights
 implementation:
   technical_requirements:
     - real_time_match_state

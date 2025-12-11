@@ -1,0 +1,491 @@
+openapi: 3.0.3
+info:
+  title: Feedback Service API
+  version: 1.0.0
+  description: 'Сервис принимает предложения и багрепорты игроков, выполняет модерацию,
+
+    объединяет дубликаты, синхронизирует обращения с GitHub Issues и поддерживает голосование.
+
+    '
+tags:
+- name: Feedback
+  description: Прием и просмотр обращений игроков
+- name: Votes
+  description: Голосование за обращения
+- name: Moderation
+  description: Модерация и объединение дублей
+security:
+- BearerAuth: []
+paths:
+  /api/v1/feedback:
+    post:
+      tags:
+      - Feedback
+      summary: Создать обращение игрока
+      operationId: createFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFeedbackRequest'
+      responses:
+        '201':
+          description: Обращение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackBase'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '429':
+          $ref: common.yaml#/components/responses/TooManyRequests
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    get:
+      tags:
+      - Feedback
+      summary: Список обращений
+      operationId: listFeedback
+      parameters:
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackStatus'
+      - name: category
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackCategory'
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackType'
+      - name: priority
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackPriority'
+      - name: search
+        in: query
+        schema:
+          type: string
+          maxLength: 100
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - updated_at
+          - votes_count
+          default: created_at
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список обращений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackListResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '429':
+          $ref: common.yaml#/components/responses/TooManyRequests
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /api/v1/feedback/{feedback_id}:
+    parameters:
+    - name: feedback_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      tags:
+      - Feedback
+      summary: Получить обращение
+      operationId: getFeedback
+      responses:
+        '200':
+          description: Обращение найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackBase'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    patch:
+      tags:
+      - Moderation
+      summary: Обновить обращение (статус, приоритет, GitHub)
+      operationId: updateFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFeedbackRequest'
+      responses:
+        '200':
+          description: Обращение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackBase'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /api/v1/feedback/{feedback_id}/votes:
+    parameters:
+    - name: feedback_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    post:
+      tags:
+      - Votes
+      summary: Поставить голос за обращение
+      operationId: addFeedbackVote
+      responses:
+        '200':
+          description: Голос учтен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoteResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '429':
+          $ref: common.yaml#/components/responses/TooManyRequests
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    delete:
+      tags:
+      - Votes
+      summary: Удалить голос игрока
+      operationId: removeFeedbackVote
+      responses:
+        '200':
+          description: Голос удален
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoteResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /api/v1/feedback/{feedback_id}/moderation:
+    parameters:
+    - name: feedback_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    post:
+      tags:
+      - Moderation
+      summary: Решение модерации
+      operationId: moderateFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationRequest'
+      responses:
+        '200':
+          description: Статус обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackBase'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /api/v1/feedback/{feedback_id}/merge:
+    parameters:
+    - name: feedback_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    post:
+      tags:
+      - Moderation
+      summary: Объединить с другим обращением
+      operationId: mergeFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeFeedbackRequest'
+      responses:
+        '200':
+          description: Обращение объединено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    FeedbackType:
+      type: string
+      enum:
+      - feature_request
+      - bug_report
+      - wishlist
+      - feedback
+    FeedbackCategory:
+      type: string
+      enum:
+      - gameplay
+      - balance
+      - content
+      - technical
+      - lore
+      - ui_ux
+      - other
+    FeedbackPriority:
+      type: string
+      enum:
+      - low
+      - medium
+      - high
+      - critical
+    FeedbackStatus:
+      type: string
+      enum:
+      - pending_moderation
+      - pending
+      - in_review
+      - assigned
+      - in_progress
+      - resolved
+      - rejected
+      - duplicate
+      - merged
+    GameContext:
+      type: object
+      properties:
+        game_version:
+          type: string
+          maxLength: 32
+        location:
+          type: string
+          maxLength: 120
+        character_level:
+          type: integer
+          format: int32
+          minimum: 1
+        session_time_seconds:
+          type: integer
+          format: int32
+          minimum: 0
+      additionalProperties: false
+    FeedbackBase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        merged_into:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 10
+          maxLength: 100
+        description:
+          type: string
+          minLength: 50
+          maxLength: 2000
+        github_issue_url:
+          type: string
+          format: uri
+          maxLength: 2048
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        category:
+          $ref: '#/components/schemas/FeedbackCategory'
+        priority:
+          $ref: '#/components/schemas/FeedbackPriority'
+        status:
+          $ref: '#/components/schemas/FeedbackStatus'
+        type:
+          $ref: '#/components/schemas/FeedbackType'
+        game_context:
+          $ref: '#/components/schemas/GameContext'
+        votes_count:
+          type: integer
+          format: int32
+          minimum: 0
+        github_issue_number:
+          type: integer
+          format: int32
+          minimum: 1
+      required:
+      - id
+      - title
+      - description
+      - type
+      - category
+      - status
+      - votes_count
+      - created_at
+      - updated_at
+      additionalProperties: false
+    CreateFeedbackRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 10
+          maxLength: 100
+        description:
+          type: string
+          minLength: 50
+          maxLength: 2000
+        category:
+          $ref: '#/components/schemas/FeedbackCategory'
+        priority:
+          $ref: '#/components/schemas/FeedbackPriority'
+        type:
+          $ref: '#/components/schemas/FeedbackType'
+        game_context:
+          $ref: '#/components/schemas/GameContext'
+      required:
+      - type
+      - category
+      - title
+      - description
+      additionalProperties: false
+    UpdateFeedbackRequest:
+      type: object
+      properties:
+        merged_into:
+          type: string
+          format: uuid
+        moderation_notes:
+          type: string
+          maxLength: 500
+        github_issue_url:
+          type: string
+          format: uri
+          maxLength: 2048
+        priority:
+          $ref: '#/components/schemas/FeedbackPriority'
+        status:
+          $ref: '#/components/schemas/FeedbackStatus'
+        github_issue_number:
+          type: integer
+          format: int32
+          minimum: 1
+      additionalProperties: false
+    MergeFeedbackRequest:
+      type: object
+      properties:
+        target_feedback_id:
+          type: string
+          format: uuid
+      required:
+      - target_feedback_id
+      additionalProperties: false
+    ModerationRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+          - approve
+          - reject
+        reason:
+          type: string
+          maxLength: 500
+      required:
+      - action
+      additionalProperties: false
+    FeedbackListResponse:
+      type: object
+      properties:
+        pagination:
+          $ref: common.yaml#/components/schemas/PaginationResponse
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackBase'
+      required:
+      - items
+      - pagination
+      additionalProperties: false
+    VoteResponse:
+      type: object
+      properties:
+        feedback_id:
+          type: string
+          format: uuid
+        votes_count:
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+      - feedback_id
+      - votes_count
+      additionalProperties: false

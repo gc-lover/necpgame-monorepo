@@ -1,3 +1,4 @@
+// Issue: #1620
 package server
 
 import (
@@ -51,6 +52,9 @@ func (cds *ClientDeltaState) GetLastState() *GameStateData {
 func (cds *ClientDeltaState) SetLastState(state *GameStateData) {
 	cds.mu.Lock()
 	defer cds.mu.Unlock()
+	if cds.lastState != nil && cds.lastState != state {
+		PutGameStateToPool(cds.lastState)
+	}
 	cds.lastState = state
 }
 
@@ -87,7 +91,7 @@ func CalculateDelta(oldState, newState *GameStateData) *GameStateData {
 		newEntity := &newState.Entities[i]
 		newEntitiesMap[newEntity.ID] = true
 		oldEntity, exists := oldEntitiesMap[newEntity.ID]
-		
+
 		if !exists {
 			delta.Entities = append(delta.Entities, *newEntity)
 			continue
@@ -170,4 +174,3 @@ func CopyGameStateData(src *GameStateData) *GameStateData {
 
 	return dst
 }
-

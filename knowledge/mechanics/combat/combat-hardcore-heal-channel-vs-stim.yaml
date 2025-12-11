@@ -1,0 +1,101 @@
+# Issue: #1774
+metadata:
+  id: combat-hardcore-heal-channel-vs-stim
+  title: 'Хардкор: агрессивное время на хил (канал vs стим)'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - healing
+    - stim
+    - channel
+    - risk_reward
+  topics:
+    - combat_effects
+    - economy
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - economy-service
+  related_documents:
+    - id: combat-berserk-reverse-stim
+      relation: complements
+    - id: combat-hardcore-suppression-hud
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - combat
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен баланс между канал-медкитом и мгновенным стимом в хардкор-режиме.
+  goal: Определить длительность канала/прерывания, моментальный хил стима и пост-штрафы, цены/кд и телеметрию.
+  essence: Медкит требует канала и сбивается уроном; стим лечит мгновенно, но даёт временный штраф к защите. Оба имеют цены, кд и лимиты стаков.
+  key_points:
+    - Числа по длительности, хилу, штрафам.
+    - КД/цены/стеки.
+    - Телеметрия прерываний/смертности.
+content:
+  sections:
+    - id: medkit_channel
+      title: Медкит (канал)
+      body: |
+        Канал 2.2 с (PvP), 1.8 с (PvE). Прерывание при любом уроне >5 HP.
+        Хил: 55% HP от максимума (PvP), 65% (PvE). Реген-буст после канала +20% на 4 с.
+        КД: 35 с. Цена: 250 кр. (пвп) / 220 (пве). Стек: максимум 2 в инвентаре в бою.
+    - id: stim_instant
+      title: Стим (мгновенный)
+      body: |
+        Каст 0.1 с. Хил: 30% HP мгновенно.
+        Пост-штраф 10 с: броня -12% (PvP) / -8% (PvE), резист к статусам -10%, входящий урон по броне +8%.
+        КД: 50 с. Цена: 320 кр. Стек: 1 в бою; повторное использование в 60 с нельзя.
+    - id: economy_limits
+      title: Экономика и лимиты
+      body: |
+        В бою максимум: 2 медкита + 1 стим. Перенос вне боя: 4/2.
+        При смерти под стимом: следующий стим в матче получает +5 с штрафа длительности дебаффа.
+    - id: interactions
+      title: Взаимодействия и анти-абуз
+      body: |
+        Стим нельзя использовать в канале медкита. При получении урона в первые 0.5 с после стима штраф усилен: броня -16% (PvP).
+        Heal lock: после прерванного канала накладывается 3 с блокировка повторного канала.
+        Анти-спам: использование медкита снижает эффективность следующего медкита на 15% в течение 90 с (не стекается).
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать:
+        - `heal.medkit_uses`, `interrupts`, `heal_done`, `deaths_during_channel`.
+        - `heal.stim_uses`, `post_debuff_duration_avg`, `deaths_during_debuff`.
+        - `heal.lock_events`, `inventory_limits_hits`.
+appendix:
+  glossary: []
+implementation:
+  needs_task: false
+  github_issue: 1774
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Баланс канал-медкита и мгновенного стима с пост-штрафами и анти-спамом.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

@@ -1,3 +1,4 @@
+# Issue: #1486
 metadata:
   id: ui-arena-selection
   title: Arena System - Selection Interface UI/UX Design
@@ -46,14 +47,14 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Необходим детальный UI/UX дизайн для выбора арены, режима и быстрого поиска матча.
-  goal: Создать интуитивный интерфейс выбора арены в стиле Cyberpunk 2077 с фильтрами и быстрым поиском.
-  essence: Дизайн-документ описывает интерфейс выбора арены, режима, фильтры и быстрый поиск матча.
+  problem: Нужен быстрый экран выбора арены/режима с фильтрами, очередью и прозрачным ожиданием.
+  goal: Упростить старт матча, подсветить подходящие арены/режимы и минимизировать время до матча.
+  essence: Интерфейс выбора арены с фильтрами, очередью, оценкой времени и алертами недоступности.
   key_points:
-    - Список доступных арен с информацией
-    - Выбор режима (PvP, PvPvE)
-    - Фильтры по режиму, карте, времени
-    - Быстрый поиск матча
+    - Каталог арен с картой/режимом/спонсором/ожиданием.
+    - Табы режимов (PvP/PvPvE), фильтры, избранные/предпочтения.
+    - Быстрый матч/плейлист + ручной выбор, стейт поиска с отменой.
+    - Состояния: недоступно, прайм-тайм, рекомендуемые.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -120,6 +121,8 @@ content:
                 - arena_description
                 - player_count
                 - estimated_wait_time
+                - ping_estimate
+                - favorites_toggle
         - id: mode_selection
           title: Game Mode
           position: top_center
@@ -130,8 +133,10 @@ content:
               modes:
                 - pvp
                 - pvpve
+                - featured
             - type: mode_info
               display: mode_description
+            - type: playlist_selector
         - id: filters_sidebar
           title: Filters
           position: right_sidebar
@@ -144,9 +149,13 @@ content:
                 - map
                 - time_preference
                 - estimated_wait
+                - ping
+                - party_size
             - type: quick_search
               display: find_match_button
               position: bottom
+            - type: saved_filters
+              actions: [save, load, reset]
         - id: matchmaking_status
           title: Matchmaking
           position: bottom_bar
@@ -158,6 +167,8 @@ content:
               display: time_counter
             - type: cancel_button
               position: right
+            - type: match_found_panel
+              display: accept_decline
   ux_mechanics:
     navigation:
       primary_method: mouse_keyboard
@@ -192,6 +203,8 @@ content:
           - search_animation
           - status_updates
           - match_found_notification
+      cancel_queue: {flow: [press_cancel, stop_search, clear_status]}
+      save_preferences: {flow: [adjust_filters, save_slot, auto_apply_next_time]}
     feedback_systems:
       notifications:
         types:
@@ -212,6 +225,15 @@ content:
       text_scaling: true
       high_contrast_mode: true
       screen_reader_support: true
+  data_states:
+    loading: skeleton_cards + shimmer_filters
+    searching: disable_filters + show_eta + cancel_btn
+    match_found: accept/decline timer
+    offline: cached list, disable search
+  accessibility:
+    colorblind_safe: alt palette for modes/states
+    keyboard: arrows navigate cards, enter select, q quick search, esc cancel
+    screenreader: announce arena name/mode/ping/ETA/availability
   animations:
     transitions:
       menu_open:

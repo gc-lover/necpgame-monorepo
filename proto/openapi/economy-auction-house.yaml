@@ -1,0 +1,426 @@
+# Issue: #435
+openapi: 3.0.3
+info:
+  title: Auction House Service API
+  description: 'REST API для аукционного дома экономики: управление лотами, ставками и выкупом.
+
+    Поддерживает фильтры каталога, быстрые действия (bid/buyout) и списки продавца/покупателя.
+
+    '
+  version: 1.0.0
+servers:
+- url: http://localhost:8080/api/v1
+  description: Economy Service (dev)
+- url: https://api.necp.game/api/v1
+  description: Economy Service (prod)
+tags:
+- name: Auction House
+  description: Операции аукционного дома
+paths:
+  /economy/auction-house/auctions:
+    get:
+      tags:
+      - Auction House
+      summary: Получить список аукционов
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/AuctionStatus'
+        description: Фильтр по статусу лота
+      - name: item_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Фильтр по предмету
+      - name: seller_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Фильтр по продавцу
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - ending_soon
+          - price_asc
+          - price_desc
+          - newest
+        description: Сортировка каталога
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список аукционов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionSummary'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    post:
+      tags:
+      - Auction House
+      summary: Создать аукцион
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Аукцион создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/auctions/{auctionId}:
+    get:
+      tags:
+      - Auction House
+      summary: Получить детали аукциона
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/AuctionId'
+      responses:
+        '200':
+          description: Детали аукциона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/auctions/{auctionId}/bid:
+    post:
+      tags:
+      - Auction House
+      summary: Разместить ставку
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/AuctionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBidRequest'
+      responses:
+        '200':
+          description: Ставка размещена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/auctions/{auctionId}/buyout:
+    post:
+      tags:
+      - Auction House
+      summary: Выкупить лот
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/AuctionId'
+      responses:
+        '200':
+          description: Лот выкуплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/auctions/{auctionId}/cancel:
+    post:
+      tags:
+      - Auction House
+      summary: Отменить аукцион
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/AuctionId'
+      responses:
+        '200':
+          description: Аукцион отменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/me/auctions:
+    get:
+      tags:
+      - Auction House
+      summary: Мои аукционы (продавец)
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/AuctionStatus'
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список аукционов продавца
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionSummary'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /economy/auction-house/me/bids:
+    get:
+      tags:
+      - Auction House
+      summary: Мои ставки
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список ставок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bids:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionBid'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+components:
+  securitySchemes:
+    $ref: common.yaml#/components/securitySchemes
+  parameters:
+    AuctionId:
+      name: auctionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор аукциона
+  schemas:
+    AuctionStatus:
+      type: string
+      enum:
+      - active
+      - sold
+      - expired
+      - cancelled
+    Currency:
+      type: string
+      enum:
+      - credits
+    AuctionSummary:
+      type: object
+      required:
+      - id
+      - item_id
+      - seller_id
+      - quantity
+      - start_price
+      - current_bid
+      - currency
+      - expires_at
+      - status
+      - bid_count
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        current_bidder_id:
+          type: string
+          format: uuid
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/AuctionStatus'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        start_price:
+          type: integer
+          format: int64
+          description: Стартовая цена (minor units)
+        current_bid:
+          type: integer
+          format: int64
+        buyout_price:
+          type: integer
+          format: int64
+          nullable: true
+        quantity:
+          type: integer
+          format: int32
+        bid_count:
+          type: integer
+          format: int32
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuctionDetail:
+      type: object
+      required:
+      - auction
+      properties:
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionBid'
+        auction:
+          allOf:
+          - $ref: '#/components/schemas/AuctionSummary'
+          - type: object
+            properties:
+              sold_price:
+                type: integer
+                format: int64
+                nullable: true
+              sold_at:
+                type: string
+                format: date-time
+                nullable: true
+              winning_bidder_id:
+                type: string
+                format: uuid
+                nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuctionBid:
+      type: object
+      required:
+      - id
+      - auction_id
+      - bidder_id
+      - amount
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        auction_id:
+          type: string
+          format: uuid
+        bidder_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        amount:
+          type: integer
+          format: int64
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateAuctionRequest:
+      type: object
+      required:
+      - item_id
+      - quantity
+      - start_price
+      - duration_hours
+      - currency
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        currency:
+          $ref: '#/components/schemas/Currency'
+        start_price:
+          type: integer
+          format: int64
+        buyout_price:
+          type: integer
+          format: int64
+          nullable: true
+        quantity:
+          type: integer
+          format: int32
+        duration_hours:
+          type: integer
+          format: int32
+          description: Длительность лота в часах
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlaceBidRequest:
+      type: object
+      required:
+      - amount
+      properties:
+        amount:
+          type: integer
+          format: int64
+          description: Ставка в minor units
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

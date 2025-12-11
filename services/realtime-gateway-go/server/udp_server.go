@@ -1,4 +1,4 @@
-// Issue: #1580 - UDP server for real-time game state
+// Issue: #1580, #1620 - UDP server for real-time game state
 // CRITICAL: Real-time game state requires UDP + Protobuf
 // Gains: Latency ↓50-60%, Jitter ↓75-80%, Encoding ↓70% (2.5x faster)
 
@@ -10,11 +10,12 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
+	pb "github.com/necpgame/realtime-gateway-go/pkg/proto"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
-	pb "github.com/necpgame/realtime-gateway-go/pkg/proto"
 )
 
 // UDP buffer pool for performance (Issue: #1580)
@@ -105,7 +106,7 @@ func NewUDPServer(addr string, handler *GatewayHandler) (*UDPServer, error) {
 
 	server := &UDPServer{
 		conn:        conn,
-		spatialGrid: NewSpatialGrid(50.0), // 50m cell size (optimal for 100m radius)
+		spatialGrid: NewSpatialGrid(100.0), // 100m cell size per spec (3x3 visibility → 300m)
 		tickRate:    NewAdaptiveTickRate(),
 		handler:     handler,
 		logger:      GetLogger(),
@@ -153,7 +154,7 @@ func (s *UDPServer) readLoop(ctx context.Context) {
 			// Get buffer from pool
 			bufPtr := udpBufferPool.Get().(*[]byte)
 			buf := *bufPtr
-			
+
 			// Set read deadline for non-blocking
 			s.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 			n, clientAddr, err := s.conn.ReadFromUDP(buf)
@@ -170,7 +171,7 @@ func (s *UDPServer) readLoop(ctx context.Context) {
 			packetData := make([]byte, n)
 			copy(packetData, buf[:n])
 			udpBufferPool.Put(bufPtr) // Return to pool
-			
+
 			s.handlePacket(ctx, packetData, clientAddr)
 		}
 	}
@@ -222,6 +223,8 @@ func (s *UDPServer) handlePlayerInput(ctx context.Context, session *UDPSession, 
 		return
 	}
 
+	oldPos := session.lastPosition
+
 	// Update session
 	session.playerID = input.PlayerId
 	position := Vec3{
@@ -232,8 +235,9 @@ func (s *UDPServer) handlePlayerInput(ctx context.Context, session *UDPSession, 
 	session.lastPosition = position
 
 	// Update spatial grid (Issue: #1580 - spatial partitioning)
-	oldPos := session.lastPosition
-	s.spatialGrid.Update(session.playerID, oldPos, position)
+	if session.playerID != "" {
+		s.spatialGrid.Update(session.playerID, oldPos, position)
+	}
 
 	// Update game state manager (if handler has it)
 	if s.handler != nil && s.handler.gameStateMgr != nil {
@@ -301,9 +305,9 @@ func (s *UDPServer) tickLoop(ctx context.Context) {
 func (s *UDPServer) broadcastGameState() {
 	// Get all players and their positions
 	type playerInfo struct {
-		session   *UDPSession
-		position  Vec3
-		entity    *pb.EntityState
+		session  *UDPSession
+		position Vec3
+		entity   *pb.EntityState
 	}
 
 	players := make([]playerInfo, 0, 100)
@@ -332,9 +336,9 @@ func (s *UDPServer) broadcastGameState() {
 	// For each player, send updates only to nearby players (spatial partitioning)
 	// Issue: #1580 - Spatial partitioning reduces traffic by 80-90%
 	for _, player := range players {
-		// Get nearby players (100m radius)
-		nearbyIDs := s.spatialGrid.GetNearby(player.position, 100.0)
-		
+		// Get nearby players (≈300m radius → 3x3 cells per spec)
+		nearbyIDs := s.spatialGrid.GetNearby(player.position, 300.0)
+
 		// Build entity list for nearby players
 		nearbyEntities := make([]*pb.EntityState, 0, len(nearbyIDs))
 		for _, id := range nearbyIDs {
@@ -362,10 +366,10 @@ func (s *UDPServer) sendGameStateUpdate(session *UDPSession, entities []*pb.Enti
 
 	// Issue: #1580 - Delta compression: convert pb.EntityState to GameStateData
 	newState := s.convertToGameStateData(entities, time.Now().UnixMilli())
-	
+
 	// Get last state for delta calculation
 	oldState := session.deltaState.GetLastState()
-	
+
 	// Calculate delta (only changed entities)
 	delta := CalculateDelta(oldState, newState)
 	defer func() {
@@ -374,17 +378,17 @@ func (s *UDPServer) sendGameStateUpdate(session *UDPSession, entities []*pb.Enti
 		}
 		PutGameStateToPool(newState)
 	}()
-	
+
 	// If no changes, skip update (bandwidth savings)
 	if delta == nil || len(delta.Entities) == 0 {
 		// Update last state even if no changes
 		session.deltaState.SetLastState(CopyGameStateData(newState))
 		return
 	}
-	
+
 	// Convert delta back to protobuf (only changed entities)
 	deltaEntities := s.convertDeltaToProtobuf(delta)
-	
+
 	// Send delta update (only changed entities - ↓70-85% bandwidth)
 	state := &pb.ServerMessage{
 		Payload: &pb.ServerMessage_GameState{
@@ -407,7 +411,7 @@ func (s *UDPServer) sendGameStateUpdate(session *UDPSession, entities []*pb.Enti
 
 	// Use batch writes for performance (Issue: #1580)
 	s.conn.WriteToUDP(data, session.addr)
-	
+
 	// Update last state after successful send
 	session.deltaState.SetLastState(CopyGameStateData(newState))
 }
@@ -430,21 +434,21 @@ func (s *UDPServer) convertToGameStateData(entities []*pb.EntityState, tick int6
 	state := GetGameStateFromPool()
 	state.Tick = tick
 	state.Entities = make([]EntityState, 0, len(entities))
-	
+
 	for _, pbEntity := range entities {
 		entity := EntityState{
-			ID: pbEntity.Id,
-			X:  int32(pbEntity.X * 1000), // Convert float64 to int32 (0.001 precision)
-			Y:  int32(pbEntity.Y * 1000),
-			Z:  int32(pbEntity.Z * 1000),
-			VX: 0, // Velocity not in pb.EntityState yet
-			VY: 0,
-			VZ: 0,
+			ID:  pbEntity.Id,
+			X:   int32(pbEntity.X * 1000), // Convert float64 to int32 (0.001 precision)
+			Y:   int32(pbEntity.Y * 1000),
+			Z:   int32(pbEntity.Z * 1000),
+			VX:  0, // Velocity not in pb.EntityState yet
+			VY:  0,
+			VZ:  0,
 			Yaw: 0,
 		}
 		state.Entities = append(state.Entities, entity)
 	}
-	
+
 	return state
 }
 
@@ -454,7 +458,7 @@ func (s *UDPServer) convertDeltaToProtobuf(delta *GameStateData) []*pb.EntitySta
 	if delta == nil {
 		return nil
 	}
-	
+
 	entities := make([]*pb.EntityState, 0, len(delta.Entities))
 	for _, entity := range delta.Entities {
 		pbEntity := &pb.EntityState{
@@ -465,7 +469,7 @@ func (s *UDPServer) convertDeltaToProtobuf(delta *GameStateData) []*pb.EntitySta
 		}
 		entities = append(entities, pbEntity)
 	}
-	
+
 	return entities
 }
 
@@ -516,9 +520,45 @@ func (s *UDPServer) cleanupLoop(ctx context.Context) {
 
 // setUDPSocketOptions sets performance options for UDP socket
 func setUDPSocketOptions(conn *net.UDPConn) error {
-	// TODO: Set SO_REUSEADDR, SO_RCVBUF, SO_SNDBUF
-	// This requires syscall package and platform-specific code
-	// For now, return nil (will be implemented in Phase 6)
+	if conn == nil {
+		return fmt.Errorf("udp conn is nil")
+	}
+
+	const bufferSize = 4 * 1024 * 1024 // 4MB buffers for high PPS
+
+	// Increase read/write buffers (best-effort)
+	_ = conn.SetReadBuffer(bufferSize)
+	_ = conn.SetWriteBuffer(bufferSize)
+
+	rawConn, err := conn.SyscallConn()
+	if err != nil {
+		return fmt.Errorf("failed to get syscall conn: %w", err)
+	}
+
+	var firstErr error
+	controlErr := rawConn.Control(func(fd uintptr) {
+		fdHandle := syscall.Handle(fd)
+		if err := syscall.SetsockoptInt(fdHandle, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("SO_REUSEADDR: %w", err)
+		}
+		// Keep the OS buffers in sync with SetRead/WriteBuffer
+		if err := syscall.SetsockoptInt(fdHandle, syscall.SOL_SOCKET, syscall.SO_RCVBUF, bufferSize); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("SO_RCVBUF: %w", err)
+		}
+		if err := syscall.SetsockoptInt(fdHandle, syscall.SOL_SOCKET, syscall.SO_SNDBUF, bufferSize); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("SO_SNDBUF: %w", err)
+		}
+	})
+
+	if controlErr != nil && firstErr == nil {
+		firstErr = fmt.Errorf("control: %w", controlErr)
+	}
+
+	// Do not fail the server on unsupported options; log and continue
+	if firstErr != nil {
+		GetLogger().WithError(firstErr).Warn("UDP socket tuning partially applied")
+		return nil
+	}
+
 	return nil
 }
-

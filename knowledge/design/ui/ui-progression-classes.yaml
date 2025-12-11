@@ -1,3 +1,4 @@
+# Issue: #1485
 metadata:
   id: ui-progression-classes
   title: Progression System - Classes Interface UI/UX Design
@@ -17,14 +18,13 @@ metadata:
       path: knowledge/mechanics/progression/classes-overview.yaml
   github_issue: 1485
 summary:
-  problem: Необходим UI/UX дизайн для экрана классов: список классов, способности, прогресс, переключение.
-  goal: Создать информативный интерфейс для управления классами персонажа.
+  problem: Нужен экран классов с прогрессом, способностями и синергиями/командными бонусами.
+  goal: Дать обзор классов, их билдов и синергий, упростить переключение и планирование.
   key_points:
-    - Список классов персонажа
-    - Способности каждого класса
-    - Прогресс класса
-    - Переключение между классами
-    - Синергии между классами
+    - Карточки классов с ролями, перками, уровнем/XP, активным статусом.
+    - Детали: способности, ветки, синергии (класс-класс/фракция), командные бонусы.
+    - Быстрые действия: переключить, дублировать билд, поделиться шаблоном.
+    - Переход к навыкам/перкам, сохранение пресетов.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -41,16 +41,31 @@ content:
           components:
             - type: class_cards
               layout: horizontal_scroll
+              card_fields: [name, role, level, xp, perks, active_badge]
+              quick_actions: [set_active, duplicate_build, share_template]
         - id: class_details
           components:
             - type: class_info
             - type: abilities_list
             - type: class_progress
             - type: synergies_display
+            - type: team_bonuses
+            - type: presets_switcher
   ux_mechanics:
     interactions:
       switch_class: {flow: [select_class, preview_changes, confirm_switch]}
+      share_template: {flow: [copy_link, show_toast]}
+      set_preset: {flow: [choose_preset, confirm_apply]}
   animations:
     transitions:
       class_switch: {duration: 500ms, effect: fade_transition}
+      synergy_pop: {duration: 300ms, effect: glow_pulse}
+  data_states:
+    loading: skeleton_cards
+    empty: CTA "Добавьте класс"
+    offline: cached_snapshot + disable_switch
+  accessibility:
+    colorblind_safe: alt palette for class types
+    keyboard: arrows navigate cards, enter open, ctrl+number set active
+    screenreader: announce class name, level/xp, active state, role
 

@@ -1,0 +1,120 @@
+# Issue: #1664
+metadata:
+  id: combat-synesthetic-buffs
+  title: 'Комбо-механика: «Синестетические баффы» (ритм → точность/отдача)'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - rhythm
+    - accuracy
+    - recoil
+    - risk_reward
+  topics:
+    - combat_effects
+    - aim_handling
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - realtime-service
+  related_documents:
+    - id: combat-shooter-core
+      relation: interacts_with
+    - id: combat-shooting-advanced
+      relation: complements
+    - id: combat-ux-guidelines
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - combat
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужна ритм-механика, дающая бонус к точности/отдаче за игру «в такт», с ясными окнами, уровнями сложности и защитой от макросов.
+  goal: Определить окна допуска, длительность баффа, стакаемость, штрафы за промах, UX-индикацию и телеметрию.
+  essence: Игрок попадает в тайминг аудио/визуального паттерна; точные входы дают краткосрочные бонусы к контролю оружия, сбои рождают лёгкий дебафф. Есть три сложности паттернов с разной наградой и защитой от автоматизации.
+  key_points:
+    - Окна ритма (easy/med/hard) с разными бонусами и штрафами.
+    - Стек или продление баффа при сериях попаданий в такт.
+    - Анти-макрос: стохастический дрейф паттерна, проверка вариативности входов.
+content:
+  sections:
+    - id: rhythm_tiers
+      title: Слои сложности и окна
+      body: |
+        Три паттерна (BPM привязаны к оружейному профилю):
+        - Easy: окно ±120 мс, длительность паттерна 6 тактов. Бонус: -6% отдача, -6% разброс. Штраф при фейле: +4% разброс на 1.5 с.
+        - Medium: окно ±80 мс, 8 тактов. Бонус: -9% отдача, -8% разброс. Штраф: +6% разброс и +4% вертикальная отдача на 2 с.
+        - Hard: окно ±55 мс, 10 тактов. Бонус: -12% отдача, -10% разброс, +4% устойчивость при ADS. Штраф: «дезсинк» +8% разброс и -6% устойчивость на 2.5 с.
+        Допуск по пингу: окно = base_window + clamp(ping - 50, 0, 60) * 0.3 мс (смягчает высокий пинг).
+    - id: buff_logic
+      title: Длительность, стакаемость и кулдауны
+      body: |
+        Бафф выдаётся при попадании в >=3 такта за паттерн. Базовая длительность баффа: 6 с, обновляется при новом успешном паттерне.
+        Стек: до 3 уровней; каждый уровень даёт +20% к силе бонуса (cap после 3).
+        Кулдаун на повторный паттерн после фейла: 4 с (easy), 5 с (med), 6 с (hard).
+        Совместимость: не стакается с «Сандевистан» accuracy бонусами; берётся наименьший штраф, если наложены.
+    - id: fail_states
+      title: Штрафы за промах по ритму
+      body: |
+        Miss_count отслеживает фейлы в окне паттерна. При 2+ подряд фейлах — «рассинхрон»: -5% устойчивость, +8% спред на 3 с, сброс стека.
+        Случайный дрейф паттерна (±25 мс на такт) отключается при активном штрафе, чтобы не усиливать наказание.
+    - id: anti_macro
+      title: Анти-абуз/макросы
+      body: |
+        - Перемешивание паттерна: каждые 2–3 такта добавляется микро-сдвиг ±10–30 мс (равномерное распределение).
+        - Проверка вариативности ввода: если stddev интервалов <8 мс на 12+ тактах, бафф отключается на 20 с и логируется.
+        - Input diversity: требуется хотя бы одно действие перемещения или смены стойки между паттернами; иначе паттерн не засчитывается.
+        - Сервера PvP: ограничение hard-паттернов до 2 активных серий подряд, затем форс-перерыв 10 с.
+    - id: ux_accessibility
+      title: UX и доступность
+      body: |
+        HUD: кольцевой метроном + аудио-клик; интенсивность регулируется. Цветовая слепота: альтернативные формы/вибрация.
+        Аудио можно заменить на тактильные вспышки. Индикатор окна «зелёная зона» равен текущему допускаемому окну.
+        Предупреждение о штрафе показывается 0.5 с до окончания окна при высокой латентности.
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Логировать в combat-service:
+        - `synesthetic.success_rate`, `synesthetic.avg_window_hit_ms`.
+        - `synesthetic.bonus_uptime`, `synesthetic.stack_peak`, `synesthetic.dps_delta`.
+        - `synesthetic.fail_streaks`, `desync_events`.
+        - Анти-макрос: `pattern_variance`, случаи отключения.
+appendix:
+  glossary:
+    - term: window_hit
+      definition: Абсолютное отклонение входа игрока от целевого такта.
+  formulas:
+    - name: adjusted_window
+      expression: window = base_window + 0.3 * clamp(ping - 50, 0, 60)
+      notes: смягчает высокую задержку, не превышая +18 мс добавки.
+implementation:
+  needs_task: false
+  github_issue: 1664
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовая математика ритм-баффов с окнами, бонусами, штрафами и анти-макрос защитой.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

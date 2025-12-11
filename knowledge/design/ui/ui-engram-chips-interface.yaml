@@ -1,0 +1,156 @@
+# Issue: #1544
+metadata:
+  id: ui-engram-chips-interface
+  title: Engram Chips System - Interface & Visualization UI/UX Design
+  document_type: design
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-11T00:00:00Z
+  concept_approved: true
+  owners:
+    - role: ui_ux_designer
+      contact: ui-ux@necp.game
+  tags: [ui, ux, design, engram, cyberpunk]
+  related_documents:
+    - id: engram-chips-system-concept
+      relation: based_on
+      path: knowledge/mechanics/progression/engram-chips-system-concept.md
+    - id: ui-progression-attributes
+      relation: complements
+      path: knowledge/design/ui/ui-progression-attributes.yaml
+    - id: ui-progression-skills
+      relation: complements
+      path: knowledge/design/ui/ui-progression-skills.yaml
+    - id: ui-hacking-networks
+      relation: reference
+      path: knowledge/design/ui/ui-hacking-networks.yaml
+summary:
+  problem: Нужен UI/UX для управления энграммами, визуализации влияния и конфликтов, HUD-индикаторов и сцен появления.
+  goal: Дать игроку прозрачный контроль энграмм (установка/снятие/приоритезация), показать влияние/конфликты, интегрировать HUD и сценки.
+  key_points:
+    - Центр управления: инвентарь чипов, установка/снятие, влияние/конфликты, лог взаимодействий.
+    - HUD: уровни влияния, предупреждения, конфликты, всплывающие алерты и мини-сцены.
+    - Визуализация образов: частота/форма по порогам влияния, конфликты между энграммами.
+    - Доступность: паттерны, подсветка критов, озвучка порогов; состояния данных/офлайн.
+content:
+  visual_design:
+    style: cyberpunk-2077
+    color_scheme:
+      influence_levels:
+        low: '#00FF88'
+        medium: '#FFAA00'
+        high: '#FF4444'
+        critical: '#FF0000'
+      chip_rarity:
+        common: '#B0B0B0'
+        rare: '#00AAFF'
+        epic: '#AA00FF'
+        legendary: '#FFAA00'
+      conflict: '#FF0066'
+    effects:
+      glitch: subtle at 50%+, intense at 80%+
+      hologram: pulse glow for apparition scenes
+      warning: shake+flash for >90%
+  interface_structure:
+    engram_menu:
+      layout: fullscreen_overlay
+      sections:
+        - id: chips_inventory
+          title: Энграммы
+          components:
+            - type: filter_bar
+              filters: [rarity, influence, status(active/inactive), origin, conflicts]
+            - type: search_bar
+              behavior: debounce_300ms
+            - type: chips_grid
+              item_template: chip_card
+              card_fields: [portrait, name, tier, influence, status, conflict_badge]
+              quick_actions: [inspect, equip, remove, favorite]
+        - id: chip_details
+          title: Детали энграммы
+          components:
+            - type: chip_profile
+              fields: [name, tier, origin, influence_range, personality, compatibility, requirements]
+            - type: abilities_list
+            - type: conflict_matrix
+            - type: mood_meter
+            - type: interaction_log
+            - type: actions
+              items: [equip_slot, unequip, prioritize, suppress, delete_if_allowed]
+        - id: influence_panel
+          title: Влияние
+          components:
+            - type: influence_meter
+              display: segmented_bar
+              thresholds: [20, 50, 70, 90]
+            - type: conflict_alerts
+            - type: suppression_controls
+            - type: schedule_settings
+              options: [quiet_mode, story_only, always_on]
+        - id: skills_integration
+          title: Навыки и бонусы
+          components:
+            - type: skills_table
+              columns: [skill, source_chip, status, requirements]
+            - type: perk_slots
+            - type: gating_info
+        - id: settings_panel
+          title: Настройки
+          components:
+            - type: hallucination_intensity
+            - type: notification_levels
+            - type: privacy_controls
+            - type: export_import (log/settings)
+    hud_overlay:
+      elements:
+        - type: influence_badge
+          position: top_right
+          states: [low, medium, high, critical]
+        - type: conflict_toast
+          position: top_center
+          triggers: conflict, suppression_fail
+        - type: apparition_hint
+          position: dynamic
+          display: hologram_icon + subtitle
+        - type: dialog_overlay
+          position: bottom
+          shows: chip_name + mood + quick_choices (suppress, accept)
+  ux_mechanics:
+    interactions:
+      equip_chip: {flow: [select_chip, view_details, choose_slot, confirm], validation: [slot_free, compatibility_ok]}
+      remove_chip: {flow: [select_chip, confirm, apply], feedback: [cooldown_notice_if_any]}
+      prioritize_chip: {flow: [select_chip, set_priority, save], effect: adjusts apparition frequency}
+      suppress_apparition: {flow: [toast_appears, press_suppress, timer], risk: fatigue meter optional}
+      resolve_conflict: {flow: [view_conflict, pick_resolution (suppress/rotate/remove), confirm], feedback: [cooldown/blockers]}
+      adjust_notifications: {flow: [open_settings, set_levels, save], preview: live_toast_sample}
+    animations:
+      menu_open: {duration: 300ms, effect: slide_from_left}
+      card_hover: {duration: 150ms, effect: glow_scale}
+      conflict_alert: {duration: 400ms, effect: shake_flash}
+      apparition: {duration: 800ms, effect: hologram_fade_in}
+  data_states:
+    loading: skeleton_cards + shimmer_meters
+    empty: "Нет энграмм" + CTA «получить/импортировать»
+    conflict: highlight conflict_badge + block equip until resolved (if severe)
+    restricted: story_lock message
+    offline: cached list; disable equip/remove; show warning
+  accessibility:
+    colorblind_safe: alt palette for influence/conflict
+    keyboard: arrows to grid, enter open details, e equip, r remove, s suppress, esc back
+    screenreader: announce chip name, tier, influence %, conflict status, action hints
+    motion_reduction: disable intense glitch; use static badges
+  telemetry:
+    events:
+      - view_chip_detail
+      - equip_chip
+      - remove_chip
+      - conflict_shown
+      - suppression_used
+      - apparition_seen
+    metrics:
+      - time_to_equip
+      - suppress_usage_rate
+      - conflict_resolution_choice
+      - hud_alert_dismiss_time
+

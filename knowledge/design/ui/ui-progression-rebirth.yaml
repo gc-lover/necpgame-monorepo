@@ -1,3 +1,4 @@
+# Issue: #1485
 metadata:
   id: ui-progression-rebirth
   title: Progression System - Rebirth Interface UI/UX Design
@@ -17,13 +18,13 @@ metadata:
       path: knowledge/mechanics/progression/progression-rebirth.yaml
   github_issue: 1485
 summary:
-  problem: Необходим UI/UX дизайн для системы ребирта: информация, выбор бонусов, подтверждение, история.
-  goal: Создать понятный интерфейс для системы перерождения персонажа.
+  problem: Нужен прозрачный интерфейс ребирта с бонусами, предупреждениями и историей.
+  goal: Показать последствия ребирта, дать выбор бонусов и требовать осознанное подтверждение.
   key_points:
-    - Информация о ребирте
-    - Выбор бонусов ребирта
-    - Подтверждение ребирта
-    - История ребиртов
+    - Информация о сбросах/сохранениях (атрибуты, навыки, инвентарь).
+    - Выбор бонусов/модификаторов ребирта с требованиями.
+    - Предупреждение и двойное подтверждение, таймеры/стоимость.
+    - История ребиртов и полученные бонусы.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -39,21 +40,37 @@ content:
             - type: rebirth_explanation
             - type: current_progress
             - type: rebirth_benefits
+            - type: reset_impacts
         - id: bonus_selection
           components:
             - type: bonus_options
             - type: selected_bonuses
+            - type: requirements_check
         - id: confirmation
           components:
             - type: warning_message
             - type: confirm_button
+            - type: double_confirm_checkbox
+            - type: cost_display
         - id: rebirth_history
           components:
             - type: history_list
+            - type: earned_bonuses_log
   ux_mechanics:
     interactions:
       perform_rebirth: {flow: [view_info, select_bonuses, read_warning, confirm_rebirth]}
+      review_history: {flow: [open_history, view_bonuses, close]}
   animations:
     transitions:
       rebirth_execute: {duration: 2000ms, effect: dramatic_transformation}
+      warning_flash: {duration: 300ms, effect: pulse_warning}
+  data_states:
+    loading: skeleton_sections
+    locked: show_requirements
+    ready: enable_confirm
+    offline: disable_confirm + cached_history
+  accessibility:
+    colorblind_safe: alt palette for warning/confirm
+    keyboard: tab through options; enter confirm; space checkbox
+    screenreader: announce cost/impact, selected bonuses, warning text
 

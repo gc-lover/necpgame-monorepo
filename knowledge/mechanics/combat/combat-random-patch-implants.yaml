@@ -1,0 +1,122 @@
+# Issue: #1672
+metadata:
+  id: combat-random-patch-implants
+  title: 'Риск-бафф: «Случайный патч» для имплантов'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: game_balance
+      contact: balance@necp.game
+  tags:
+    - implants
+    - buff
+    - debuff
+    - risk_reward
+  topics:
+    - combat_effects
+    - risk_management
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - realtime-service
+  related_documents:
+    - id: combat-implants-mechanics
+      relation: references
+    - id: combat-implants-limits
+      relation: complements
+    - id: combat-shooter-core
+      relation: interacts_with
+  source: ''
+  visibility: internal
+  audience:
+    - combat
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: game_balance_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен high risk/high reward патч для имплантов, дающий случайный бафф или дебафф в бою.
+  goal: Определить списки эффектов, режимы хаос/контроль, вероятности, стоимость, кулдауны, контрплей и метрики.
+  essence: Игрок вручную прошивает имплант боевым патчем; в «хаос» шанс баффа/дебаффа 50/50 с сильными величинами, в «контроле» шанс баффа выше, но эффекты слабее. Существуют стабилизаторы и антимоды.
+  key_points:
+    - Таблица эффектов с весами.
+    - Два режима риска с разной вероятностью и силой.
+    - Возможность перепрошивки/отмены с ценой.
+    - Метрики использования и влияния на DPS/TTK.
+content:
+  sections:
+    - id: modes
+      title: Режимы патча
+      body: |
+        Хаос: шанс бафф/дебафф 50/50. Сила эффектов 1.0x.
+        Контроль: шанс бафф 70%, дебафф 30%. Сила эффектов 0.7x.
+        Время активации: 1.5 с канал, можно прервать (теряет заряд).
+        Кулдаун: 45 с хаос, 55 с контроль. Стоимость: био-топливо 1 ед. + 10% стамины.
+        Перепрошивка: в течение 3 с после активации можно отменить, потеряв заряд и получив -5% стамины (safety).
+    - id: effects_table
+      title: Эффекты и веса
+      body: |
+        Баффы (в хаосе сила 1.0, в контроле 0.7):
+        - «Overclock»: +15% ROF, +8% reload speed, 8 с. Вес 24.
+        - «Focus»: -12% разброс, -10% отдача, 10 с. Вес 22.
+        - «Adrenal Surge»: +10% скорость, +10% melee dmg, 8 с. Вес 18.
+        - «Stability Weave»: +14% устойчивость при ADS, +10% sway resist, 9 с. Вес 16.
+        - «Nano-Kinetic»: +8% урон пулями, +6% penetration, 7 с. Вес 12.
+        Дебаффы:
+        - «Lag Spike»: +15% задержка ввода/ADS, +10% spread, 8 с. Вес 24.
+        - «Drain»: -12% реген стамины, -8% скорость, 10 с. Вес 22.
+        - «Sensor Noise»: -15% дальность обнаружения, -10% точность в движении, 9 с. Вес 18.
+        - «Jitter»: +12% вертикальная отдача, +8% sway, 9 с. Вес 16.
+        - «Thermal Throttle»: -8% ROF, +5% overheat chance (энергооружие), 7 с. Вес 12.
+        Блокировка повторов: один и тот же эффект не может выпасть дважды подряд.
+    - id: risk_controls
+      title: Контрплей и стабилизаторы
+      body: |
+        Стабилизатор патчей: снижает шанс дебаффа на 20% в хаосе (до 40%) и на 10% в контроле (до 20%), но удваивает КД.
+        Антимод «Safe Rollback»: позволяет один раз в бою отменить дебафф (кнопка rollback, 1 с канал), оставляя -5% стамины.
+        PvP: дебаффы не могут снижать TTK более чем на 8%; баффы не повышают TTK-вклад более чем на 12% (кепы).
+        PvE: эффекты полные, но боссам даётся резист -30% к баффам игрока.
+    - id: balancing_rules
+      title: Баланс и ограничения
+      body: |
+        Lockout: если получен дебафф выше Tier2 (Lag Spike или Thermal Throttle), повторная активация запрещена 20 с.
+        Стоимость повторной активации в течение 2 мин: +1 био-топливо и +5% стамины на каждую попытку (stack).
+        Не работает при стамине <20% или под hard-CC.
+        В PvP контроль-режим ограничен до 2 активаций за бой; дальше только хаос.
+    - id: telemetry
+      title: Метрики
+      body: |
+        Логировать:
+        - `random_patch.activations` (по режимам), `unique_users`.
+        - `random_patch.buff_rate`, `debuff_rate`, распределение по эффектам.
+        - `random_patch.dps_delta`, `ttk_delta_ms` за окно эффекта.
+        - `rollback_uses`, `stabilizer_usage`.
+appendix:
+  glossary:
+    - term: rollback
+      definition: Разовая отмена негативного эффекта патча с ценой стамины.
+implementation:
+  needs_task: false
+  github_issue: 1672
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: game_balance_team
+    changes: Базовый дизайн «Случайного патча» с режимами, таблицей эффектов, контрплеем и метриками.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

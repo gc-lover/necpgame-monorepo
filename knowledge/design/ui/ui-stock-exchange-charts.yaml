@@ -1,3 +1,4 @@
+# Issue: #1478
 metadata:
   id: ui-stock-exchange-charts
   title: Stock Exchange - Charts Interface UI/UX Design
@@ -14,13 +15,13 @@ metadata:
   github_issue: 1478
 summary:
   problem: Необходим UI/UX дизайн для графиков цен: свечные графики, временные интервалы, история.
-  goal: Создать информативные графики цен в стиле реальных бирж.
+  goal: Создать информативные и отзывчивые графики с интерактивными индикаторами и режимами сравнения.
   key_points:
-    - График цены (1m, 5m, 15m, 1h, 4h, 1d, 1w)
-    - Свечные графики (candlestick) в стиле реальных бирж
-    - История цен
-    - Интерактивные элементы графика
-    - Масштабирование и навигация
+    - Свечные графики с объёмом и выделением значимых событий.
+    - Режим сравнения нескольких акций и индексов.
+    - Переключение таймфреймов и индикаторов (EMA/SMA/RSI/VWAP).
+    - Прецизионные тултипы, кроссхайр, диапазонное выделение.
+    - Состояния: реальный лайв-поток, задержка, отсутствие данных.
 content:
   visual_design:
     style: cyberpunk-2077-tron
@@ -30,6 +31,8 @@ content:
         candles_down: '#FF4444'
         grid_lines: '#333344'
         volume_bars: '#00AAFF'
+        compare_series: '#FF8CFF'
+        selection: '#FFD642'
   interface_structure:
     charts_screen:
       sections:
@@ -38,6 +41,8 @@ content:
             - type: candlestick_chart
               interactive: true
               zoomable: true
+              overlays: [ema20, ema50, vwap_toggle]
+              indicators_panel: [rsi, macd, bollinger]
             - type: volume_chart
               position: bottom
             - type: time_interval_selector
@@ -47,17 +52,35 @@ content:
             - type: zoom_controls
             - type: pan_controls
             - type: indicator_toggle
+              presets: [scalper, intraday, swing, investor]
+            - type: compare_toggle
+              sources: [watchlist, indices]
         - id: chart_info
           components:
             - type: price_tooltip
+              fields: [open, high, low, close, change_pct, volume]
             - type: volume_display
             - type: time_display
+            - type: event_markers
+              events: [dividend, split, news, breaker]
   ux_mechanics:
     interactions:
       navigate_chart: {flow: [hover_candle, show_tooltip, click_for_details]}
-      change_interval: {flow: [select_interval, reload_chart_data]}
+      change_interval: {flow: [select_interval, preload_cache, reload_chart_data]}
+      compare_assets: {flow: [open_compare, pick_symbol, overlay_series, toggle_visibility]}
+      mark_range: {flow: [drag_start, drag_end, show_range_stats]}
   animations:
     transitions:
       chart_update: {duration: 500ms, effect: smooth_transition}
       interval_change: {duration: 300ms, effect: fade_transition}
+      event_marker_pop: {duration: 220ms, effect: pulse}
+  data_states:
+    live: 1s push, flash_on_change true
+    delayed: show 'Delay 15s' badge
+    empty: placeholder_chart + CTA "Добавьте тикер"
+    error: banner + retry + cached_last_snapshot
+  accessibility:
+    colorblind_safe: alt palette for candles/volume
+    keyboard: arrows pan, +/- zoom, tab to intervals, enter select
+    screenreader: summary of last price, change, volume, next event
 

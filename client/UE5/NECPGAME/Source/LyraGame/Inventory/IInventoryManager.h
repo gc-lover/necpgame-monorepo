@@ -1,9 +1,12 @@
+// Issue: #196
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "IInventoryItem.h"
+
 #include "IInventoryManager.generated.h"
+
+class IInventoryItem;
 
 UINTERFACE(MinimalAPI, BlueprintType)
 class UInventoryManager : public UInterface
@@ -23,4 +26,5 @@ public:
 	virtual TArray<IInventoryItem*> GetAllItems() const = 0;
 	virtual IInventoryItem* FindItemByClass(TSubclassOf<UObject> ItemClass) const = 0;
 };
+
 

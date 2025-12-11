@@ -1,8 +1,13 @@
+// Issue: #196
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+
 #include "IInventoryItem.generated.h"
+
+class ULyraInventoryItemInstance;
+class ULyraInventoryItemDefinition;
 
 UINTERFACE(MinimalAPI, BlueprintType)
 class UInventoryItem : public UInterface
@@ -20,5 +25,7 @@ public:
 	virtual void SetStackCount(int32 NewCount) = 0;
 	virtual bool CanStackWith(const IInventoryItem* OtherItem) const = 0;
 	virtual bool IsValid() const = 0;
+	virtual ULyraInventoryItemInstance* GetLyraInstance() const = 0;
+	virtual TSubclassOf<ULyraInventoryItemDefinition> GetDefinition() const = 0;
 };
 

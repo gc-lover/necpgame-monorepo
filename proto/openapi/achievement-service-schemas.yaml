@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: Achievement Service Schemas
+  version: 1.0.0
+components:
+  parameters:
+    AchievementId:
+      name: achievementId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор достижения
+  schemas:
+    AchievementRarity:
+      type: string
+      enum:
+      - common
+      - rare
+      - epic
+      - legendary
+    AchievementStatus:
+      type: string
+      enum:
+      - draft
+      - active
+      - retired
+    Achievement:
+      type: object
+      required:
+      - id
+      - code
+      - title
+      - description
+      - rarity
+      - points
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          description: Уникальный системный код
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          nullable: true
+        icon_url:
+          type: string
+          format: uri
+          nullable: true
+        rarity:
+          $ref: '#/components/schemas/AchievementRarity'
+        reward:
+          $ref: '#/components/schemas/AchievementReward'
+        status:
+          $ref: '#/components/schemas/AchievementStatus'
+        points:
+          type: integer
+          format: int32
+      description: 'BACKEND NOTE: Fields ordered large → small.'
+    AchievementReward:
+      type: object
+      required:
+      - type
+      - amount
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+          enum:
+          - xp
+          - currency
+          - item
+        amount:
+          type: integer
+          format: int64
+      description: 'BACKEND NOTE: Fields ordered large → small.'
+    AchievementProgress:
+      type: object
+      required:
+      - achievement_id
+      - completed
+      - progress
+      - unlocked_at
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+        claimed_at:
+          type: string
+          format: date-time
+          nullable: true
+        progress:
+          type: integer
+          format: int32
+          description: Текущее значение прогресса
+        completed:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered large → small.'
+    CreateAchievementRequest:
+      type: object
+      required:
+      - code
+      - title
+      - description
+      - rarity
+      - points
+      properties:
+        code:
+          type: string
+          description: Уникальный системный код
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          nullable: true
+        rarity:
+          $ref: '#/components/schemas/AchievementRarity'
+        reward:
+          $ref: '#/components/schemas/AchievementReward'
+        status:
+          $ref: '#/components/schemas/AchievementStatus'
+        points:
+          type: integer
+          format: int32
+      description: 'BACKEND NOTE: Fields ordered large → small.'
+    UpdateAchievementRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          nullable: true
+        rarity:
+          $ref: '#/components/schemas/AchievementRarity'
+        reward:
+          $ref: '#/components/schemas/AchievementReward'
+        status:
+          $ref: '#/components/schemas/AchievementStatus'
+        points:
+          type: integer
+          format: int32
+      description: 'BACKEND NOTE: Fields ordered large → small.'

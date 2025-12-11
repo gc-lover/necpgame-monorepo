@@ -1,3 +1,4 @@
+# Issue: #1485
 metadata:
   id: ui-progression-attributes
   title: Progression System - Attributes Interface UI/UX Design
@@ -17,13 +18,13 @@ metadata:
       path: knowledge/mechanics/progression/progression-attributes-matrix.yaml
   github_issue: 1485
 summary:
-  problem: Необходим UI/UX дизайн для экрана атрибутов: матрица атрибутов, распределение очков, предпросмотр эффектов.
-  goal: Создать интуитивный интерфейс для управления атрибутами персонажа.
+  problem: Нужен понятный экран атрибутов с распределением очков, эффектами и зависимостями.
+  goal: Упростить распределение, снизить ошибки, показать влияние на навыки/требования.
   key_points:
-    - Матрица атрибутов (Body, Reflexes, Intelligence, Tech, Cool)
-    - Текущие значения и доступные очки
-    - Предпросмотр эффектов от повышения
-    - Визуализация зависимостей
+    - Матрица атрибутов (Body, Reflexes, Intelligence, Tech, Cool, Willpower, Luck, Charisma, Perception).
+    - Доступные очки, предпросмотр эффекта (скилл-ап, требования оружия/имплантов).
+    - Визуализация зависимостей и капов, сброс с подтверждением.
+    - Быстрые действия: +1, +5, авто-распределение по пресету.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -54,16 +55,29 @@ content:
             - type: available_points_display
             - type: point_allocation_controls
             - type: reset_button
+            - type: presets_select
         - id: effects_preview
           components:
             - type: preview_panel
               shows: [skill_unlocks, equipment_requirements, stat_changes]
+            - type: cap_warnings
+            - type: synergy_highlights
   ux_mechanics:
     interactions:
       allocate_point: {flow: [select_attribute, click_increase, preview_effects, confirm]}
       reset_points: {flow: [click_reset, confirm, restore_defaults]}
+      apply_preset: {flow: [select_preset, show_preview, confirm]}
   animations:
     transitions:
       point_allocation: {duration: 300ms, effect: pulse_glow}
       attribute_increase: {duration: 500ms, effect: count_up}
+      cap_alert: {duration: 250ms, effect: shake_soft}
+  data_states:
+    loading: skeleton_cards
+    pending: highlight pending allocations
+    empty_points: disable allocation controls
+  accessibility:
+    colorblind_safe: alt palette for attribute groups
+    keyboard: arrows to move grid, +/- to change value, r to reset (confirm)
+    screenreader: announce attr name, current/max, available points, preview effects
 

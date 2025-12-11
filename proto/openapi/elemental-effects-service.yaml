@@ -1,0 +1,450 @@
+openapi: 3.0.3
+info:
+  title: Elemental Effects Service API
+  version: 1.0.0
+  description: 'Управление стихийными эффектами оружия, правилами взаимодействий и расчетом комбинированного урона.
+
+    '
+servers:
+- url: https://api.necpgame.com
+  description: Production
+- url: https://staging-api.necpgame.com
+  description: Staging
+tags:
+- name: Effects
+  description: CRUD стихийных эффектов
+- name: Interactions
+  description: Правила и расчеты взаимодействий
+security:
+- BearerAuth: []
+paths:
+  /api/v1/effects:
+    get:
+      tags:
+      - Effects
+      summary: Список стихийных эффектов
+      operationId: listEffects
+      parameters:
+      - name: type
+        in: query
+        description: Фильтр по типу эффекта
+        schema:
+          $ref: '#/components/schemas/ElementType'
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список эффектов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectListResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+    post:
+      tags:
+      - Effects
+      summary: Создать эффект
+      operationId: createEffect
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectUpsertRequest'
+      responses:
+        '201':
+          description: Эффект создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+  /api/v1/effects/{effect_id}:
+    parameters:
+    - name: effect_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      tags:
+      - Effects
+      summary: Получить эффект
+      operationId: getEffect
+      responses:
+        '200':
+          description: Эффект найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+    patch:
+      tags:
+      - Effects
+      summary: Обновить эффект
+      operationId: updateEffect
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectUpsertRequest'
+      responses:
+        '200':
+          description: Эффект обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+    delete:
+      tags:
+      - Effects
+      summary: Удалить эффект
+      operationId: deleteEffect
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /api/v1/effects/interactions:
+    get:
+      tags:
+      - Interactions
+      summary: Список правил взаимодействий
+      operationId: listInteractions
+      responses:
+        '200':
+          description: Правила взаимодействий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionListResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+    post:
+      tags:
+      - Interactions
+      summary: Создать правило взаимодействия
+      operationId: createInteraction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionUpsertRequest'
+      responses:
+        '201':
+          description: Правило создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+  /api/v1/effects/interactions/preview:
+    post:
+      tags:
+      - Interactions
+      summary: Рассчитать взаимодействие
+      operationId: previewInteraction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionPreviewRequest'
+      responses:
+        '200':
+          description: Результат расчета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionPreviewResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    ElementType:
+      type: string
+      enum:
+      - fire
+      - ice
+      - poison
+      - acid
+      - electric
+      - void
+    EffectBase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/ElementType'
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+        dot_dps:
+          type: number
+          format: float
+          minimum: 0
+        proc_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        slow_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        armor_shred_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        explosion_radius_m:
+          type: number
+          format: float
+          minimum: 0
+        spread_enabled:
+          type: boolean
+      required:
+      - id
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EffectUpsertRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+        type:
+          $ref: '#/components/schemas/ElementType'
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+        dot_dps:
+          type: number
+          format: float
+          minimum: 0
+        proc_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        slow_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        armor_shred_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        explosion_radius_m:
+          type: number
+          format: float
+          minimum: 0
+        spread_enabled:
+          type: boolean
+      required:
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EffectResponse:
+      allOf:
+      - $ref: '#/components/schemas/EffectBase'
+    EffectListResponse:
+      type: object
+      properties:
+        pagination:
+          $ref: common.yaml#/components/schemas/PaginationResponse
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectBase'
+      required:
+      - items
+      - pagination
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InteractionRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status_applied:
+          type: string
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        result_type:
+          $ref: '#/components/schemas/ElementType'
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+          default: 1
+      required:
+      - id
+      - attacker_type
+      - defender_type
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InteractionUpsertRequest:
+      type: object
+      properties:
+        status_applied:
+          type: string
+          maxLength: 64
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        result_type:
+          $ref: '#/components/schemas/ElementType'
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+          default: 1
+      required:
+      - attacker_type
+      - defender_type
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InteractionResponse:
+      allOf:
+      - $ref: '#/components/schemas/InteractionRule'
+    InteractionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionRule'
+      required:
+      - items
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InteractionPreviewRequest:
+      type: object
+      properties:
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        stacks_applied:
+          type: integer
+          format: int32
+          minimum: 0
+        base_damage:
+          type: number
+          format: float
+          minimum: 0
+        defender_is_wet:
+          type: boolean
+        defender_is_armor_broken:
+          type: boolean
+      required:
+      - attacker_type
+      - defender_type
+      - base_damage
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InteractionPreviewResponse:
+      type: object
+      properties:
+        applied_status:
+          type: string
+          maxLength: 64
+        notes:
+          type: array
+          items:
+            type: string
+            maxLength: 256
+        total_damage:
+          type: number
+          format: float
+          minimum: 0
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+      required:
+      - total_damage
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

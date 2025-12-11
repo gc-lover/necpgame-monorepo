@@ -1,3 +1,4 @@
+# Issue: #1478
 metadata:
   id: ui-stock-exchange-trading
   title: Stock Exchange - Trading Interface UI/UX Design
@@ -13,16 +14,14 @@ metadata:
   tags: [ui, ux, design, economy, stock-exchange]
   github_issue: 1478
 summary:
-  problem: Необходим UI/UX дизайн для торгового интерфейса биржи: список акций, торговля, формы покупки/продажи.
-  goal: Создать удобный интерфейс для торговли акциями.
+  problem: Необходим UI/UX дизайн для торгового интерфейса биржи: выбор акции, покупка/продажа, формы, подтверждение, риск-контроль.
+  goal: Создать быстрый и безопасный торговый поток с минимальными ошибками и высокой читаемостью.
   key_points:
-    - Список акций с фильтрами (сектор, корпорация, изменение цены)
-    - Поиск по названию корпорации
-    - Сортировка (цена, изменение, объем)
-    - Быстрый просмотр: текущая цена, изменение за 24ч, объем торгов
-    - Детальная информация об акции
-    - Форма покупки/продажи
-    - История сделок игрока
+    - Лента акций с фильтрами/сортировкой и watchlist.
+    - Карточка акции с лайв-котировкой, спредом, объёмом, глубиной рынка (top-of-book).
+    - Формы BUY/SELL с валидацией, превью комиссии, подтверждением, DRY-run.
+    - Быстрые действия (1-click, быстрая сумма, процент портфеля).
+    - История сделок/ордеров и статусы исполнений.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -34,36 +33,68 @@ content:
       trading_actions:
         buy: '#00FF88'
         sell: '#FF4444'
+      states:
+        pending: '#FFA53B'
+        error: '#FF306E'
+        disabled: '#5A6572'
   interface_structure:
     trading_screen:
       sections:
         - id: stocks_list
           components:
             - type: filter_controls
-              filters: [sector, corporation, price_change]
+              filters: [sector, corporation, price_change, volatility, favorites]
             - type: search_bar
+              behavior: debounce_250ms
             - type: stocks_table
-              columns: [name, current_price, change_24h, volume, actions]
+              columns: [name, current_price, change_24h, volume, spread, watch_toggle, actions]
+            - type: watchlist_strip
+              actions: [add_remove, reorder, quick_open]
         - id: stock_details
           components:
             - type: stock_info_panel
             - type: current_price_display
+              includes: [last, bid, ask, spread, day_range]
             - type: price_change_indicator
+              includes: [pct_24h, pct_7d]
             - type: volume_display
+              includes: [24h_volume, turnover, avg_daily_volume]
+            - type: market_depth_preview
+              depth: top5
         - id: trading_forms
           components:
             - type: buy_form
-              fields: [quantity, total_cost, confirm_button]
+              fields: [quantity, slider_pct_portfolio, limit_price, fee_preview, total_cost, confirm_button]
+              quick_actions: [market, limit, best_bid, best_ask, 25pct, 50pct, 100pct]
             - type: sell_form
-              fields: [quantity, total_revenue, confirm_button]
+              fields: [quantity, slider_pct_position, limit_price, fee_preview, total_revenue, confirm_button]
+              quick_actions: [market, limit, best_bid, best_ask, 25pct, 50pct, 100pct]
+            - type: confirm_modal
+              data: [action, symbol, qty, est_total, fees, slippage_hint]
+            - type: error_banner
+              cases: [insufficient_funds, price_moved, cooldown_active, market_closed]
         - id: transaction_history
           components:
             - type: player_transactions_list
+              columns: [time, symbol, side, qty, price, fee, status]
+            - type: orders_status
+              filters: [pending, filled, cancelled, rejected]
   ux_mechanics:
     interactions:
-      trade_stock: {flow: [select_stock, choose_action, enter_quantity, confirm_trade, process_transaction]}
+      trade_stock: {flow: [select_stock, choose_action, enter_quantity_or_percent, pick_price_type, review_preview, confirm_trade, process_transaction, show_result]}
+      toggle_watch: {flow: [tap_star, persist_watch, toast_success]}
+      handle_error: {flow: [show_error_banner, suggest_fix, retry_action]}
   animations:
     transitions:
       price_update: {duration: 300ms, effect: price_flash}
       trade_complete: {duration: 500ms, effect: success_animation}
+      error_state: {duration: 300ms, effect: shake_soft}
+  data_states:
+    loading: skeleton_rows + shimmer on price/volume
+    live_update: diff_flash_on_change (green/red), rate_limit: 5hz ui
+    offline: show cached last price + reconnect CTA
+  accessibility:
+    colorblind_safe: alt_palette_for_profit_loss
+    keyboard: tab order through list → details → forms; enter=confirm, esc=cancel
+    haptics: short vibration on confirm, double on error (mobile)
 

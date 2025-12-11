@@ -1,3 +1,4 @@
+# Issue: #1485
 metadata:
   id: ui-progression-perks
   title: Progression System - Perks Interface UI/UX Design
@@ -17,14 +18,13 @@ metadata:
       path: knowledge/mechanics/progression/progression-perks.yaml
   github_issue: 1485
 summary:
-  problem: Необходим UI/UX дизайн для экрана перков: список перков, фильтры, поиск, предпросмотр эффектов.
-  goal: Создать удобный интерфейс для выбора и управления перками.
+  problem: Нужен удобный выбор перков с фильтрами, требованиями и предпросмотром эффектов.
+  goal: Ускорить подбор, подсветить доступные и показать влияние/стоимость до выбора.
   key_points:
-    - Список доступных перков
-    - Фильтры: категория, требования, доступность
-    - Поиск по названию
-    - Предпросмотр эффектов
-    - Выбор перков
+    - Каталог перков с редкостью, требованиями, доступностью.
+    - Фильтры/поиск с пресетами; сравнение/избранные.
+    - Детали: эффекты, требования, синергии, cost/ресурсы.
+    - Быстрые действия: выбрать, добавить в избранное, сравнить.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -41,21 +41,38 @@ content:
         - id: perks_catalog
           components:
             - type: filter_bar
-              filters: [category, requirements, availability, rarity]
+              filters: [category, requirements, availability, rarity, cost, synergy_tags]
             - type: search_bar
+              behavior: debounce_300ms + recent_queries
             - type: perks_grid
               layout: grid
               item_template: perk_card
+              card_fields: [name, rarity, category, requirements_short, availability_badge, cost]
+              quick_actions: [select, favorite, compare]
         - id: perk_details
           components:
             - type: perk_info_panel
             - type: effect_preview
             - type: requirement_check
             - type: select_button
+            - type: synergy_tags
+            - type: cost_display
+            - type: favorite_toggle
   ux_mechanics:
     interactions:
       select_perk: {flow: [browse_perks, filter_search, view_details, select_perk]}
+      toggle_favorite: {flow: [tap_star, persist]}
+      compare_perks: {flow: [add_to_compare, open_compare_panel]}
   animations:
     transitions:
       perk_select: {duration: 300ms, effect: highlight_glow}
+      availability_flash: {duration: 250ms, effect: pulse_glow}
+  data_states:
+    loading: skeleton_cards + shimmer_filters
+    empty: "Нет перков" + CTA сбросить фильтры
+    offline: cached snapshot + disable_select
+  accessibility:
+    colorblind_safe: alt palette for rarity/availability + patterns
+    keyboard: tab through cards, enter=open, space=favorite
+    screenreader: announce rarity, requirements met?, cost, availability
 

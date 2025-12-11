@@ -1,13 +1,16 @@
+// Issue: #196
 #include "NECPInventoryComponent.h"
-#include "NECPInventoryItem.h"
+
 #include "LyraInventoryItemDefinition.h"
 #include "LyraInventoryItemInstance.h"
-#include "HAL/CriticalSection.h"
+#include "Misc/ScopeLock.h"
+#include "NECPInventoryItem.h"
 
 UNECPInventoryComponent::UNECPInventoryComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, LyraInventoryComponent(nullptr)
 {
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UNECPInventoryComponent::BeginPlay()
@@ -23,23 +26,38 @@ void UNECPInventoryComponent::InitializeInventory()
 		LyraInventoryComponent = GetOwner()->FindComponentByClass<ULyraInventoryManagerComponent>();
 	}
 
-	if (LyraInventoryComponent)
+	if (!LyraInventoryComponent)
 	{
-		TArray<ULyraInventoryItemInstance*> AllLyraItems = LyraInventoryComponent->GetAllItems();
-		
-		FScopeLock Lock(&InventoryCriticalSection);
-		
-		ItemCache.Empty();
-		for (ULyraInventoryItemInstance* LyraItem : AllLyraItems)
+		return;
+	}
+
+	const TArray<ULyraInventoryItemInstance*> AllItems = LyraInventoryComponent->GetAllItems();
+
+	FScopeLock Lock(&InventoryCriticalSection);
+	ItemCache.Empty();
+
+	for (ULyraInventoryItemInstance* LyraItem : AllItems)
+	{
+		if (IsValid(LyraItem))
 		{
-			if (IsValid(LyraItem))
+			if (UNECPInventoryItem* Wrapper = CreateWrapper(LyraItem))
 			{
-				UNECPInventoryItem* NewItem = NewObject<UNECPInventoryItem>(this);
-				NewItem->SetLyraInstance(LyraItem);
-				ItemCache.Add(NewItem);
+				ItemCache.Add(Wrapper);
 			}
 		}
 	}
+}
+
+UNECPInventoryItem* UNECPInventoryComponent::CreateWrapper(ULyraInventoryItemInstance* LyraItem)
+{
+	if (!LyraItem)
+	{
+		return nullptr;
+	}
+
+	UNECPInventoryItem* NewItem = NewObject<UNECPInventoryItem>(this);
+	NewItem->SetLyraInstance(LyraItem);
+	return NewItem;
 }
 
 void UNECPInventoryComponent::SetLyraInventoryComponent(ULyraInventoryManagerComponent* InLyraInventory)
@@ -57,31 +75,26 @@ bool UNECPInventoryComponent::CanAddItem(IInventoryItem* Item) const
 	}
 
 	FScopeLock Lock(&InventoryCriticalSection);
-	
+
 	if (!LyraInventoryComponent)
 	{
 		return false;
 	}
 
-	UNECPInventoryItem* NECPItem = Cast<UNECPInventoryItem>(Item);
-	if (!NECPItem)
-	{
-		return false;
-	}
-
-	ULyraInventoryItemInstance* LyraInstance = NECPItem->GetLyraInstance();
+	ULyraInventoryItemInstance* LyraInstance = Item->GetLyraInstance();
 	if (!LyraInstance)
 	{
 		return false;
 	}
 
-	TSubclassOf<ULyraInventoryItemDefinition> ItemDef = LyraInstance->GetItemDef();
-	if (!ItemDef)
+	const TSubclassOf<ULyraInventoryItemDefinition> ItemDef = Item->GetDefinition();
+	const int32 StackCount = FMath::Max(1, Item->GetStackCount());
+	if (!ItemDef || StackCount <= 0)
 	{
 		return false;
 	}
 
-	return LyraInventoryComponent->CanAddItemDefinition(ItemDef, 1);
+	return LyraInventoryComponent->CanAddItemDefinition(ItemDef, StackCount);
 }
 
 bool UNECPInventoryComponent::AddItem(IInventoryItem* Item)
@@ -93,29 +106,21 @@ bool UNECPInventoryComponent::AddItem(IInventoryItem* Item)
 
 	FScopeLock Lock(&InventoryCriticalSection);
 
-	UNECPInventoryItem* NECPItem = Cast<UNECPInventoryItem>(Item);
-	if (!NECPItem)
+	const TSubclassOf<ULyraInventoryItemDefinition> ItemDef = Item->GetDefinition();
+	const int32 StackCount = FMath::Max(1, Item->GetStackCount());
+	if (!ItemDef || StackCount <= 0)
 	{
 		return false;
 	}
 
-	ULyraInventoryItemInstance* LyraInstance = NECPItem->GetLyraInstance();
-	if (!LyraInstance)
+	ULyraInventoryItemInstance* AddedInstance = LyraInventoryComponent->AddItemDefinition(ItemDef, StackCount);
+	if (!AddedInstance)
 	{
 		return false;
 	}
 
-	TSubclassOf<ULyraInventoryItemDefinition> ItemDef = LyraInstance->GetItemDef();
-	if (!ItemDef)
+	if (UNECPInventoryItem* NewItem = CreateWrapper(AddedInstance))
 	{
-		return false;
-	}
-
-	ULyraInventoryItemInstance* AddedInstance = LyraInventoryComponent->AddItemDefinition(ItemDef, 1);
-	if (AddedInstance)
-	{
-		UNECPInventoryItem* NewItem = NewObject<UNECPInventoryItem>(this);
-		NewItem->SetLyraInstance(AddedInstance);
 		ItemCache.Add(NewItem);
 		return true;
 	}
@@ -132,21 +137,19 @@ bool UNECPInventoryComponent::RemoveItem(IInventoryItem* Item)
 
 	FScopeLock Lock(&InventoryCriticalSection);
 
-	UNECPInventoryItem* NECPItem = Cast<UNECPInventoryItem>(Item);
-	if (!NECPItem)
-	{
-		return false;
-	}
-
-	ULyraInventoryItemInstance* LyraInstance = NECPItem->GetLyraInstance();
-	if (!LyraInstance)
+	ULyraInventoryItemInstance* LyraInstance = Item->GetLyraInstance();
+	if (!LyraInstance || !LyraInventoryComponent)
 	{
 		return false;
 	}
 
 	LyraInventoryComponent->RemoveItemInstance(LyraInstance);
-	
-	int32 RemovedIndex = ItemCache.Find(NECPItem);
+
+	const int32 RemovedIndex = ItemCache.IndexOfByPredicate(
+		[LyraInstance](const UNECPInventoryItem* CachedItem)
+		{
+			return CachedItem && CachedItem->GetLyraInstance() == LyraInstance;
+		});
 	if (RemovedIndex != INDEX_NONE)
 	{
 		ItemCache.RemoveAt(RemovedIndex);
@@ -165,10 +168,10 @@ int32 UNECPInventoryComponent::GetItemCount() const
 TArray<IInventoryItem*> UNECPInventoryComponent::GetAllItems() const
 {
 	FScopeLock Lock(&InventoryCriticalSection);
-	
+
 	TArray<IInventoryItem*> Result;
 	Result.Reserve(ItemCache.Num());
-	
+
 	for (UNECPInventoryItem* Item : ItemCache)
 	{
 		if (IsValid(Item) && Item->IsValid())
@@ -176,7 +179,7 @@ TArray<IInventoryItem*> UNECPInventoryComponent::GetAllItems() const
 			Result.Add(Item);
 		}
 	}
-	
+
 	return Result;
 }
 
@@ -197,8 +200,7 @@ IInventoryItem* UNECPInventoryComponent::FindItemByClass(TSubclassOf<UObject> It
 			continue;
 		}
 
-		ULyraInventoryItemInstance* LyraInstance = Item->GetLyraInstance();
-		if (LyraInstance && LyraInstance->GetItemDef() == ItemDef)
+		if (Item->GetDefinition() == ItemDef)
 		{
 			return Item;
 		}
@@ -209,7 +211,7 @@ IInventoryItem* UNECPInventoryComponent::FindItemByClass(TSubclassOf<UObject> It
 
 bool UNECPInventoryComponent::AddItemDefinition(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, int32 StackCount)
 {
-	if (!ItemDef)
+	if (!ItemDef || StackCount <= 0)
 	{
 		return false;
 	}
@@ -222,10 +224,13 @@ bool UNECPInventoryComponent::AddItemDefinition(TSubclassOf<ULyraInventoryItemDe
 	}
 
 	ULyraInventoryItemInstance* AddedInstance = LyraInventoryComponent->AddItemDefinition(ItemDef, StackCount);
-	if (AddedInstance)
+	if (!AddedInstance)
 	{
-		UNECPInventoryItem* NewItem = NewObject<UNECPInventoryItem>(this);
-		NewItem->SetLyraInstance(AddedInstance);
+		return false;
+	}
+
+	if (UNECPInventoryItem* NewItem = CreateWrapper(AddedInstance))
+	{
 		ItemCache.Add(NewItem);
 		return true;
 	}
@@ -248,22 +253,22 @@ bool UNECPInventoryComponent::RemoveItemByDefinition(TSubclassOf<ULyraInventoryI
 	}
 
 	ULyraInventoryItemInstance* FoundInstance = LyraInventoryComponent->FindFirstItemStackByDefinition(ItemDef);
-	if (FoundInstance)
+	if (!FoundInstance)
 	{
-		LyraInventoryComponent->RemoveItemInstance(FoundInstance);
-		
-		for (int32 i = ItemCache.Num() - 1; i >= 0; --i)
-		{
-			if (ItemCache[i] && ItemCache[i]->GetLyraInstance() == FoundInstance)
-			{
-				ItemCache.RemoveAt(i);
-				break;
-			}
-		}
-		
-		return true;
+		return false;
 	}
 
-	return false;
+	LyraInventoryComponent->RemoveItemInstance(FoundInstance);
+
+	for (int32 Index = ItemCache.Num() - 1; Index >= 0; --Index)
+	{
+		if (ItemCache[Index] && ItemCache[Index]->GetLyraInstance() == FoundInstance)
+		{
+			ItemCache.RemoveAt(Index);
+			break;
+		}
+	}
+
+	return true;
 }
 

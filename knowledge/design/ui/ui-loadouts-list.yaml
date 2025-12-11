@@ -1,3 +1,4 @@
+# Issue: #1483
 metadata:
   id: ui-loadouts-list
   title: Loadouts System - List Interface UI/UX Design
@@ -17,14 +18,13 @@ metadata:
       path: knowledge/mechanics/combat/combat-loadouts-system.yaml
   github_issue: 1483
 summary:
-  problem: Необходим UI/UX дизайн для списка лодаутов: до 10 слотов, быстрый просмотр, переключение.
-  goal: Создать удобный интерфейс для управления множественными лодаутами.
+  problem: Нужен быстрый список лодаутов (до 10) с активным статусом, категориями и моментальным переключением.
+  goal: Упростить выбор/копирование/переключение лодаута, минимизировать ошибки и держать нужный слот под рукой.
   key_points:
-    - До 10 слотов лодаутов
-    - Быстрый просмотр каждого лодаута
-    - Категория лодаута (PvE, PvP, стелс)
-    - Активный лодаут
-    - Быстрое переключение
+    - Карточки с категорией, превью, активным статусом и быстрыми действиями.
+    - 10 слотов, индикация пустых, избранные/быстрые слоты.
+    - Быстрое переключение с подтверждением, дубликат, удаление.
+    - Сохранение сортировки/категорий, клавиатурные шорткаты.
 content:
   visual_design:
     style: cyberpunk-2077
@@ -47,19 +47,33 @@ content:
               layout: grid
               items_per_row: 5
               max_items: 10
-            - type: loadout_card
-              components: [name, category, preview_image, equipment_count, active_badge]
+              card_fields: [name, category, preview_image, equipment_count, tags, active_badge, favorite_toggle]
+              quick_actions: [set_active, duplicate, delete, open_editor]
         - id: quick_actions
           components:
             - type: create_loadout_button
             - type: duplicate_loadout_button
             - type: delete_loadout_button
+            - type: sort_filter_controls
+              options: [category, last_used, favorites]
   ux_mechanics:
     interactions:
       switch_loadout: {flow: [click_loadout, confirm_switch, apply_loadout]}
       create_loadout: {flow: [click_create, enter_name, select_category, open_editor]}
+      duplicate_loadout: {flow: [select_loadout, duplicate, rename_optional]}
+      delete_loadout: {flow: [select_loadout, confirm_delete]}
+      favorite_toggle: {flow: [tap_star, persist_preference]}
   animations:
     transitions:
       loadout_switch: {duration: 500ms, effect: transition_animation}
       loadout_select: {duration: 200ms, effect: highlight_glow}
+      active_badge_pulse: {duration: 250ms, effect: pulse_glow}
+  data_states:
+    loading: skeleton_cards
+    empty: CTA "Создать лодаут"
+    offline: cached snapshot + reconnect banner
+  accessibility:
+    colorblind_safe: alt palette for categories
+    keyboard: arrows to move grid, enter=open, ctrl+number set active, del=delete (confirm)
+    screenreader: announce name, category, active status, last used
 
