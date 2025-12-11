@@ -188,12 +188,23 @@ content:
       body: |
         Основной маршрут: встреча с беженцами, обеспечение маршрута, эскорт, возврат за наградой.
         Ветви: COOL 15 (переговоры), MEDICAL 13 (стабилизация), TACTICS 14 (маршрут), PERCEPTION 14 (альтернативный пролаз).
+        Штрафы: провал стелса/переговоров усиливает одну волну врагов и снижает награду на 10%; критический провал MEDICAL добавляет +1 раненого (нужен доп. стазис).
+        Outcomes по ветвям:
+          - COOL 15: снижает число столкновений на маршруте, открывает соц-вызовы.
+          - MEDICAL 13: уменьшает шанс гибели NPC, сохраняет full награду.
+          - TACTICS 14: сокращает путь (−1 encounter), бонус к таймеру эвакуации.
+          - PERCEPTION 14: открывает обходной туннель, снижает вероятность засады.
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
     - id: parameters
       title: D&D параметры
       body: |
         Инициатива d20 + REF, AC врагов 11–14, состояния подавление/кровотечение/радиационный ожог.
+        Skill Checks:
+          - COOL 15: skip агрессивной встречи, −2 к стоимости взятки.
+          - MEDICAL 13: стабилизация раненых, снимает состояние bleeding, даёт +50 XP.
+          - TACTICS 14: выбор маршрута, −1 encounter, +30 сек к таймеру.
+          - PERCEPTION 14: раннее обнаружение засады, даёт преимущество (advantage) в первом раунде.
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
     - id: ux
@@ -205,7 +216,18 @@ content:
     - id: dialogue
       title: Диалоговое дерево
       body: |
-        Узлы `start`, `r_risks`, `r_arrive`, `r_med`, ветви проверки COOL/TACTICS/PERCEPTION, события пути `escort_1-3`, финал `complete`.
+        26 узлов (ключевые):
+        - `start`, `brief`, `accept`, `decline`, `re-accept`
+        - `r_risks`, `r_route_choice` (TACTICS 14), `r_alt_path` (PERCEPTION 14)
+        - `r_med` (MEDICAL 13), `r_cool_negotiation` (COOL 15)
+        - `escort_1`, `escort_2`, `escort_3` (каждый с подветками: combat / negotiate / med)
+        - `ambush_alert`, `ambush_resolved`
+        - `arrival_watson`, `reward_branch` (`reward_full`, `reward_reduced`)
+        - `fail_state`, `respawn_scenario`, `complete`
+        Исходы:
+        - Успех COOL: минус одна волна, доп. репутация.
+        - Успех MEDICAL: сохраняет всех NPC, убирает штраф к награде.
+        - Успех TACTICS/PERCEPTION: короче маршрут, меньше ресурсов на бой.
       mechanics_links:
         - mechanics/social/social-mechanics-overview.yaml
     - id: rewards
@@ -213,6 +235,12 @@ content:
       body: |
         База: 500 XP, 600 eddies, `item-components-basic`, репутация independent +15.
         Бонусы за успешные проверки COOL, MEDICAL, TACTICS, PERCEPTION.
+        Ветвления наград:
+          - COOL успех: +50 XP, +2 independent, скидка на торговлю у fixer Watson.
+          - MEDICAL успех: +1 `medkit-tier1`, избегает штрафа к eddies.
+          - TACTICS успех: +75 eddies за экономию маршрута.
+          - PERCEPTION успех: шанс лута `map-cache` (открывает побочный тайник).
+        Штрафы: гибель NPC уменьшает репутацию independent на 3 и снижает eddies на 15%.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-analytics.yaml
     - id: interfaces
@@ -220,12 +248,16 @@ content:
       body: |
         `POST /api/v1/quests/{id}/accept`, `/skill-check`, `/combat/start`, `/quests/{id}/complete`.
         Соответствие JSON: `mvp-data-json/quests.json`.
+        Дополнительно для маршрутов:
+        - `POST /api/v1/quests/{id}/branch/route` (payload: tactics|perception)
+        - `POST /api/v1/quests/{id}/telemetry` (cool, medical, encounters, casualties)
       mechanics_links:
         - implementation/backend/quest-engine-backend.yaml
     - id: telemetry
       title: Логи и QA
       body: |
         Логи проверок, боёв, эскорта; тесты: социальный, боевой, медицинский, тактический, провал/респаун.
+        Метрики: время эвакуации, % успеха по навыкам, число выживших NPC, количество засад, расход стим-паков.
       mechanics_links:
         - mechanics/quests/quest-system.yaml
 appendix:
@@ -239,6 +271,13 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2045-red-dust-refugees
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-12
+    author: content_writer
+    changes: >
+      Детализированы цели, штрафы и исходы ветвей, расширены skill-check эффекты,
+      диалоговое дерево (26 узлов), ветвления наград и API/телеметрия для маршрутов
+      и эвакуации; добавлены метрики QA.
   - version: '2.0.0'
     date: 2025-12-01
     author: content_writer

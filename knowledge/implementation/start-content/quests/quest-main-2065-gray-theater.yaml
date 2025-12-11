@@ -5,8 +5,8 @@ metadata:
   document_type: implementation
   category: start-content
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-12-01T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-12T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -204,18 +204,39 @@ content:
       body: |
         Маршрут: принять задание → проникнуть → саботировать (данные или оборудование) → устранить охрану → уйти незамеченным → доложить.
         Ветви: STEALTH 18 (−4 врага), TECH 17 (−15% времени), COOL 17 (защита от паники).
+        Штрафы: тревога добавляет +6 врагов и уменьшает таймер эвакуации; провал стелса уменьшает награды на 15%.
+        Саботаж:
+        - `data`: усиливает репутацию, открывает side-интел квесты.
+        - `equipment`: усиливает лут, но снижает репутацию Arasaka.
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
     - id: parameters
       title: D&D параметры
       body: |
         Инициатива d20 + REF, AC врагов 14–17, урон SMG/AR/heavy, состояния паника/сигнализация/ослепление.
+        Skill Checks:
+          - STEALTH 18: скрытный маршрут, −4 охранника, отключает тяжелого дрона.
+          - TECH 17: быстрое вскрытие, −15% таймера эвакуации, снижает шум.
+          - COOL 17: иммунитет к панике, +1 re-roll в переговорах.
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
     - id: dialogues
       title: Диалоговое дерево
       body: |
-        Узлы `start`, `details`, `accept`, `travel`, `infiltrate_silent`, `infiltrate_loud`, `steal_data`, `destroy_equipment`, `escape_prep`, `combat`, `complete`.
+        25 узлов (ключевые):
+        - `start`, `details`, `accept`, `decline`, `re-accept`
+        - `travel` → `pre-brief` → `entry_choice` (silent/loud/fake-ID)
+        - `infiltrate_silent`, `infiltrate_loud`, `infiltrate_fake_id`
+        - `intel_node` (узнать о патрулях) → `choose_sabotage` (`steal_data` / `destroy_equipment`)
+        - `mid_combat_talk` (уговор охраны) — COOL 17 даёт skip боя
+        - `alarm_triggered` (ветка паники)
+        - `escape_prep`, `evac_roof`, `evac_service_tunnel`
+        - `report_branch` (`report_success`, `report_fail`, `report_partial`)
+        - `complete`, `fail_state`, `postmortem` (обратная связь NCPD)
+        Исходы:
+        - Успех stealth: нет доп. волн, +репутация.
+        - Успех tech: быстрее эвакуация, лог-файлы как лут.
+        - Успех cool: можно отпустить охрану, минус тревога.
       mechanics_links:
         - mechanics/social/social-mechanics-overview.yaml
     - id: rewards
@@ -224,6 +245,10 @@ content:
         База: 920 XP, 1200 eddies, `item-corporate-data`, репутация NCPD +22.
         Бонусы: успешные STEALTH/TECH/COOL проверки (+100 XP, меньше врагов, защита).
         Штрафы: провал (−15% денег), сигнализация (доп. враги), паника (−2 действия).
+        Саботаж данных:
+          - +200 eddies, +5 NCPD, открывает side-цепочку "Data Leak".
+        Саботаж оборудования:
+          - +150 eddies, шанс лута `weapon-mod-tier2`, −2 репутации Arasaka.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-analytics.yaml
     - id: interfaces
@@ -233,6 +258,8 @@ content:
         - `POST /api/v1/skill-check`
         - `POST /api/v1/combat/start`
         - `POST /api/v1/quests/quest-main-2065-gray-theater/complete`
+        - `POST /api/v1/quests/quest-main-2065-gray-theater/sabotage` (method=data|equipment)
+        - `POST /api/v1/quests/quest-main-2065-gray-theater/telemetry` (skill rolls, alarm, evac route)
       mechanics_links:
         - implementation/backend/quest-engine-backend.yaml
     - id: telemetry
@@ -240,6 +267,7 @@ content:
       body: |
         Логи skill-check, stealth/combat, выбор саботажа.
         Тесты: чистый stealth, силовой, смешанный, провал и alarm.
+        Метрики: время до тревоги, % успехов по навыкам, число обнаружений, выбранные маршруты эвакуации.
       mechanics_links:
         - mechanics/quests/quest-system.yaml
 appendix:
@@ -253,6 +281,14 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2065-gray-theater
   blockers: []
 history:
+  - version: '2.1.0'
+    date: 2025-12-12
+    author: content_writer
+    changes: >
+      Расширены ветвления и диалоги (25 узлов, исходы stealth/tech/cool), добавлены
+      штрафы и бонусы для саботажа данных/оборудования, уточнены skill-check
+      эффекты, добавлены новые API эндпоинты для саботажа и телеметрии, расширены
+      метрики тестирования.
   - version: '2.0.0'
     date: 2025-12-01
     author: content_writer

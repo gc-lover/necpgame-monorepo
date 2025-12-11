@@ -100,6 +100,50 @@ content:
         - defense-service: профили угроз для стихий (шторм/лавовый/ледовый), таблица оборонных рубежей (купола, барьеры, башни), события тревоги (lockdown, evacuation).
         - logistics-service: коридоры поставок (порт, маглев, караван, воздушный), пропускные квоты, точки choke-point и резервные маршруты.
         - telemetry: единый набор метрик — threat_level, supply_stability, faction_tension, evac_readiness.
+    - id: integration_template
+      title: Шаблон блоков integration.* для YAML городов
+      body: |
+        ```yaml
+        integration:
+          world_state:
+            city_id: <slug>                # уникальный идентификатор города
+            cluster_ids:                   # ключевые кластеры для world-state
+              - <cluster_id>
+            threat_level: <low|med|high>   # суммарный риск (шторм/лед/лавa/конфликты)
+            faction_control:
+              dominant: <faction>
+              contested: [<faction>]
+            story_nodes_active:
+              - id: <node_id>
+                cooldown: <duration>       # ISO 8601, например PT12H
+          defense_service:
+            hazard_profiles:
+              - type: <storm|lava|ice|riot>
+                level: <1-5>
+                coverage: <cluster_id|global>
+            defense_rings:
+              - id: <ring_id>
+                type: <dome|barrier|tower>
+                status: <ready|damaged|offline>
+            alert_events:
+              - id: <event_id>
+                trigger: <lockdown|evacuation|curfew>
+                cooldown: <duration>
+          logistics_service:
+            corridors:
+              - id: <corridor_id>
+                mode: <port|maglev|caravan|air>
+                capacity: <throughput_per_hour>
+                choke_points: [<location_id>]
+                backup_routes: [<corridor_id>]
+            supply_stability: <0-100>      # % устойчивости поставок
+          telemetry:
+            metrics:
+              threat_level: <float>        # 0-1
+              supply_stability: <float>    # 0-1
+              faction_tension: <float>     # 0-1
+              evac_readiness: <float>      # 0-1
+        ```
     - id: handoff_next_steps
       title: Handoff на Content
       body: |

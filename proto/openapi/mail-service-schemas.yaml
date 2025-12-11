@@ -1,0 +1,329 @@
+# Issue: #1647
+components:
+  schemas:
+    SendMailRequest:
+      type: object
+      required:
+      - recipientId
+      - subject
+      properties:
+        recipientId:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          maxLength: 255
+        body:
+          type: string
+          maxLength: 5000
+        codCurrency:
+          type: string
+          default: gold
+        attachmentCurrency:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 1
+          example:
+            gold: 1000
+            premium: 50
+        attachmentItems:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            required:
+            - itemId
+            - quantity
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        codAmount:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+          description: Сумма COD (Cash on Delivery)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SendMailResponse:
+      type: object
+      required:
+      - mailId
+      - status
+      - expiresAt
+      properties:
+        mailId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - sent
+        expiresAt:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InboxResponse:
+      type: object
+      required:
+      - mails
+      - unreadCount
+      - totalCount
+      properties:
+        mails:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailSummary'
+        unreadCount:
+          type: integer
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MailSummary:
+      type: object
+      required:
+      - id
+      - senderName
+      - subject
+      - mailStatus
+      - sentAt
+      - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        senderName:
+          type: string
+        subject:
+          type: string
+        mailStatus:
+          type: string
+          enum:
+          - sent
+          - read
+          - claimed
+          - expired
+        sentAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        codAmount:
+          type: integer
+        hasAttachments:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MailDetailResponse:
+      type: object
+      required:
+      - mail
+      properties:
+        mail:
+          $ref: '#/components/schemas/MailDetail'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MailDetail:
+      allOf:
+      - $ref: '#/components/schemas/MailSummary'
+      - type: object
+        properties:
+          body:
+            type: string
+          attachmentItems:
+            type: array
+            items:
+              type: object
+              properties:
+                itemId:
+                  type: string
+                  format: uuid
+                itemName:
+                  type: string
+                quantity:
+                  type: integer
+          attachmentCurrency:
+            type: object
+            additionalProperties:
+              type: integer
+          codCurrency:
+            type: string
+          attachmentClaimed:
+            type: boolean
+          readAt:
+            type: string
+            format: date-time
+          claimedAt:
+            type: string
+            format: date-time
+    ClaimAttachmentsResponse:
+      type: object
+      required:
+      - claimed
+      properties:
+        currencyReceived:
+          type: object
+          additionalProperties:
+            type: integer
+        itemsReceived:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              itemName:
+                type: string
+              quantity:
+                type: integer
+        codPaid:
+          type: integer
+        claimed:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MailAttachment:
+      type: object
+      required:
+      - type
+      - quantity
+      properties:
+        id:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+        itemName:
+          type: string
+        type:
+          type: string
+          enum:
+          - item
+          - currency
+          - questReward
+          - achievementReward
+          - eventReward
+        quantity:
+          type: integer
+        currency:
+          type: integer
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SendSystemMailRequest:
+      type: object
+      required:
+      - recipientId
+      - type
+      - title
+      - content
+      properties:
+        recipientId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+          maxLength: 5000
+        type:
+          type: string
+          enum:
+          - questReward
+          - achievementReward
+          - eventReward
+          - maintenanceNotification
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+          maxItems: 20
+        expiresInDays:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 30
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    BroadcastSystemMailRequest:
+      type: object
+      required:
+      - type
+      - title
+      - content
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+          maxLength: 5000
+        type:
+          type: string
+          enum:
+          - questReward
+          - achievementReward
+          - eventReward
+          - maintenanceNotification
+        filter:
+          type: object
+          additionalProperties: true
+          nullable: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+          maxItems: 20
+        expiresInDays:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 30
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    BroadcastResult:
+      type: object
+      required:
+      - sentCount
+      - totalRecipients
+      properties:
+        sentCount:
+          type: integer
+        failedCount:
+          type: integer
+          default: 0
+        totalRecipients:
+          type: integer
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UnreadMailCountResponse:
+      type: object
+      required:
+      - unreadCount
+      - totalCount
+      properties:
+        unreadCount:
+          type: integer
+        totalCount:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ExtendMailRequest:
+      type: object
+      required:
+      - days
+      properties:
+        days:
+          type: integer
+          minimum: 1
+          maximum: 30
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+

@@ -4,9 +4,14 @@ info:
   title: Mail Service API
   description: API для почтовой системы - доставка сообщений, предметов и наград
   version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
 servers:
-- url: http://localhost:8084/api/v1
-  description: Local development
+- url: https://api.necp.game/api/v1
+  description: Production
+- url: https://dev.necp.game/api/v1
+  description: Development
 tags:
 - name: Mail
   description: Управление письмами
@@ -39,6 +44,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InboxResponse'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
   /social/mail/{mail_id}:
     parameters:
     - $ref: common.yaml#/components/parameters/MailId
@@ -72,6 +79,10 @@ paths:
             application/json:
               schema:
                 $ref: common.yaml#/components/schemas/SuccessResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
   /social/mail/send:
     post:
       tags:
@@ -300,195 +311,6 @@ components:
     BearerAuth:
       $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
-    SendMailRequest:
-      type: object
-      required:
-      - recipientId
-      - subject
-      properties:
-        recipientId:
-          type: string
-          format: uuid
-        subject:
-          type: string
-          maxLength: 255
-        body:
-          type: string
-          maxLength: 5000
-        codCurrency:
-          type: string
-          default: gold
-        attachmentCurrency:
-          type: object
-          additionalProperties:
-            type: integer
-            minimum: 1
-          example:
-            gold: 1000
-            premium: 50
-        attachmentItems:
-          type: array
-          maxItems: 10
-          items:
-            type: object
-            required:
-            - itemId
-            - quantity
-            properties:
-              itemId:
-                type: string
-                format: uuid
-              quantity:
-                type: integer
-                minimum: 1
-        codAmount:
-          type: integer
-          minimum: 0
-          maximum: 1000000
-          description: Сумма COD (Cash on Delivery)
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    SendMailResponse:
-      type: object
-      required:
-      - mailId
-      - status
-      - expiresAt
-      properties:
-        mailId:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-          - sent
-        expiresAt:
-          type: string
-          format: date-time
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    InboxResponse:
-      type: object
-      required:
-      - mails
-      - unreadCount
-      - totalCount
-      properties:
-        mails:
-          type: array
-          items:
-            $ref: '#/components/schemas/MailSummary'
-        unreadCount:
-          type: integer
-        totalCount:
-          type: integer
-        page:
-          type: integer
-        totalPages:
-          type: integer
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    MailSummary:
-      type: object
-      required:
-      - id
-      - senderName
-      - subject
-      - mailStatus
-      - sentAt
-      - expiresAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        senderId:
-          type: string
-          format: uuid
-        senderName:
-          type: string
-        subject:
-          type: string
-        mailStatus:
-          type: string
-          enum:
-          - sent
-          - read
-          - claimed
-          - expired
-        sentAt:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-        codAmount:
-          type: integer
-        hasAttachments:
-          type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    MailDetailResponse:
-      type: object
-      required:
-      - mail
-      properties:
-        mail:
-          $ref: '#/components/schemas/MailDetail'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    MailDetail:
-      allOf:
-      - $ref: '#/components/schemas/MailSummary'
-      - type: object
-        properties:
-          body:
-            type: string
-          attachmentItems:
-            type: array
-            items:
-              type: object
-              properties:
-                itemId:
-                  type: string
-                  format: uuid
-                itemName:
-                  type: string
-                quantity:
-                  type: integer
-          attachmentCurrency:
-            type: object
-            additionalProperties:
-              type: integer
-          codCurrency:
-            type: string
-          attachmentClaimed:
-            type: boolean
-          readAt:
-            type: string
-            format: date-time
-          claimedAt:
-            type: string
-            format: date-time
-    ClaimAttachmentsResponse:
-      type: object
-      required:
-      - claimed
-      properties:
-        currencyReceived:
-          type: object
-          additionalProperties:
-            type: integer
-        itemsReceived:
-          type: array
-          items:
-            type: object
-            properties:
-              itemId:
-                type: string
-                format: uuid
-              itemName:
-                type: string
-              quantity:
-                type: integer
-        codPaid:
-          type: integer
-        claimed:
-          type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    $ref: './mail-service-schemas.yaml#/components/schemas'
 security:
 - BearerAuth: []
