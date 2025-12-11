@@ -52,8 +52,8 @@ func (r *Repository) GetSurfacesInZone(ctx context.Context, characterID uuid.UUI
 			return nil, err
 		}
 
-		surface.Normal = api.Direction3D{X: normalX, Y: normalY, Z: normalZ}
-		surface.Position = api.Position3D{X: posX, Y: posY, Z: posZ}
+		surface.Normal = api.Direction3D{X: float32(normalX), Y: float32(normalY), Z: float32(normalZ)}
+		surface.Position = api.Position3D{X: float32(posX), Y: float32(posY), Z: float32(posZ)}
 
 		surfaces = append(surfaces, surface)
 	}
@@ -88,8 +88,8 @@ func (r *Repository) GetSurface(ctx context.Context, surfaceID uuid.UUID) (*api.
 		return nil, err
 	}
 
-	surface.Normal = api.Direction3D{X: normalX, Y: normalY, Z: normalZ}
-	surface.Position = api.Position3D{X: posX, Y: posY, Z: posZ}
+	surface.Normal = api.Direction3D{X: float32(normalX), Y: float32(normalY), Z: float32(normalZ)}
+	surface.Position = api.Position3D{X: float32(posX), Y: float32(posY), Z: float32(posZ)}
 
 	return &surface, nil
 }

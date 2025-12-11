@@ -8,27 +8,16 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-acrobatics-wall-run-service-go/pkg/api"
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *http.ServeMux
 	server *http.Server
 }
 
 func NewHTTPServer(addr string, handlers api.Handler) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Apply middleware
-	router.Use(chiMiddleware.RequestID)
-	router.Use(chiMiddleware.RealIP)
-	router.Use(chiMiddleware.Logger)
-	router.Use(chiMiddleware.Recoverer)
-	router.Use(LoggingMiddleware)
-	router.Use(RecoveryMiddleware)
-	router.Use(CORSMiddleware)
+	router := http.NewServeMux()
 
 	// ogen server integration
 	secHandler := &SecurityHandler{}
@@ -37,11 +26,15 @@ func NewHTTPServer(addr string, handlers api.Handler) *HTTPServer {
 		panic(err)
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = LoggingMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	handler = CORSMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
 		addr:   addr,

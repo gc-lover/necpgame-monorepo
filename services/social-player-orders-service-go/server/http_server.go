@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/gc-lover/necpgame-monorepo/services/social-player-orders-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -20,11 +19,7 @@ type HTTPServer struct {
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	handlers := NewServiceHandlers(logger)
 
-	router := chi.NewRouter()
-
-	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	// ogen handlers
 	ogenServer, err := api.NewServer(handlers)
@@ -32,11 +27,16 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 		logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
+	var handler http.Handler = ogenServer
+	handler = loggingMiddleware(logger)(handler)
+	handler = recoveryMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	router.Handle("/api/v1/", handler)
 
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
+	router.HandleFunc("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,
@@ -109,6 +109,3 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
 }
-
-
-
