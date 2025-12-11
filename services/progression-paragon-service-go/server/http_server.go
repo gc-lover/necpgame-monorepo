@@ -5,27 +5,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/necpgame/progression-paragon-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr           string
-	router         *chi.Mux
+	router         *http.ServeMux
 	paragonService ParagonServiceInterface
 	logger         *logrus.Logger
 	server         *http.Server
 }
 
 func NewHTTPServer(addr string, paragonService ParagonServiceInterface) *HTTPServer {
-	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router := http.NewServeMux()
 
 	server := &HTTPServer{
 		addr:           addr,
@@ -34,10 +27,6 @@ func NewHTTPServer(addr string, paragonService ParagonServiceInterface) *HTTPSer
 		logger:         GetLogger(),
 	}
 
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-
 	handlers := NewParagonHandlers(paragonService)
 	secHandler := &SecurityHandler{}
 	ogenServer, err := api.NewServer(handlers, secHandler)
@@ -45,8 +34,13 @@ func NewHTTPServer(addr string, paragonService ParagonServiceInterface) *HTTPSer
 		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	router.Mount("/api/v1", ogenServer)
-	router.Get("/health", server.healthCheck)
+	var handler http.Handler = ogenServer
+	handler = server.loggingMiddleware(handler)
+	handler = server.metricsMiddleware(handler)
+	handler = server.corsMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	router.Handle("/api/v1/", handler)
+	router.HandleFunc("/health", server.healthCheck)
 
 	return server
 }
@@ -86,5 +80,17 @@ func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
+}
+
+// RecoveryMiddleware recovers from panics.
+func RecoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 

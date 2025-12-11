@@ -139,6 +139,9 @@ func (r *TicketRepository) GetByPlayerID(ctx context.Context, playerID uuid.UUID
 		tickets = append(tickets, ticket)
 	}
 
+	if tickets == nil {
+		tickets = []models.SupportTicket{}
+	}
 	return tickets, nil
 }
 
@@ -175,6 +178,9 @@ func (r *TicketRepository) GetByAgentID(ctx context.Context, agentID uuid.UUID, 
 		tickets = append(tickets, ticket)
 	}
 
+	if tickets == nil {
+		tickets = []models.SupportTicket{}
+	}
 	return tickets, nil
 }
 
@@ -211,6 +217,9 @@ func (r *TicketRepository) GetByStatus(ctx context.Context, status models.Ticket
 		tickets = append(tickets, ticket)
 	}
 
+	if tickets == nil {
+		tickets = []models.SupportTicket{}
+	}
 	return tickets, nil
 }
 
@@ -308,6 +317,9 @@ func (r *TicketRepository) GetResponsesByTicketID(ctx context.Context, ticketID 
 		responses = append(responses, response)
 	}
 
+	if responses == nil {
+		responses = []models.TicketResponse{}
+	}
 	return responses, nil
 }
 

@@ -7,37 +7,25 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/necpgame/stock-margin-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *http.ServeMux
 	logger *logrus.Logger
 	server *http.Server
 }
 
 func NewHTTPServer(addr string) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+	router := http.NewServeMux()
 
 	server := &HTTPServer{
 		addr:   addr,
 		router: router,
 		logger: GetLogger(),
 	}
-
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
 
 	// Initialize service
 	service := NewMarginService(server.logger)
@@ -49,9 +37,13 @@ func NewHTTPServer(addr string) *HTTPServer {
 		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = server.loggingMiddleware(handler)
+	handler = server.metricsMiddleware(handler)
+	handler = server.corsMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
-	router.Get("/health", server.healthCheck)
+	router.HandleFunc("/health", server.healthCheck)
 
 	return server
 }

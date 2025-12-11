@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/necpgame/social-service-go/models"
 	"github.com/sirupsen/logrus"
@@ -114,7 +114,11 @@ func (h *OrderHandlers) GetPlayerOrder(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
 	defer cancel()
 
-	orderIDStr := chi.URLParam(r, "orderId")
+	orderIDStr, ok := parseOrderID(r.URL.Path)
+	if !ok {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
 	orderID, err := uuid.Parse(orderIDStr)
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)
@@ -149,7 +153,11 @@ func (h *OrderHandlers) AcceptPlayerOrder(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	orderIDStr := chi.URLParam(r, "orderId")
+	orderIDStr, ok := parseOrderActionPath(r.URL.Path, "accept")
+	if !ok {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
 	orderID, err := uuid.Parse(orderIDStr)
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)
@@ -172,7 +180,11 @@ func (h *OrderHandlers) StartPlayerOrder(w http.ResponseWriter, r *http.Request)
 	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
 	defer cancel()
 
-	orderIDStr := chi.URLParam(r, "orderId")
+	orderIDStr, ok := parseOrderActionPath(r.URL.Path, "start")
+	if !ok {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
 	orderID, err := uuid.Parse(orderIDStr)
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)
@@ -195,7 +207,11 @@ func (h *OrderHandlers) CompletePlayerOrder(w http.ResponseWriter, r *http.Reque
 	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
 	defer cancel()
 
-	orderIDStr := chi.URLParam(r, "orderId")
+	orderIDStr, ok := parseOrderActionPath(r.URL.Path, "complete")
+	if !ok {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
 	orderID, err := uuid.Parse(orderIDStr)
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)
@@ -224,7 +240,11 @@ func (h *OrderHandlers) CancelPlayerOrder(w http.ResponseWriter, r *http.Request
 	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
 	defer cancel()
 
-	orderIDStr := chi.URLParam(r, "orderId")
+	orderIDStr, ok := parseOrderActionPath(r.URL.Path, "cancel")
+	if !ok {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
 	orderID, err := uuid.Parse(orderIDStr)
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)
@@ -240,5 +260,24 @@ func (h *OrderHandlers) CancelPlayerOrder(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(order)
+}
+
+func parseOrderID(path string) (string, bool) {
+	segments := strings.Split(strings.Trim(path, "/"), "/")
+	if len(segments) < 1 {
+		return "", false
+	}
+	return segments[len(segments)-1], true
+}
+
+func parseOrderActionPath(path string, action string) (string, bool) {
+	segments := strings.Split(strings.Trim(path, "/"), "/")
+	if len(segments) < 2 {
+		return "", false
+	}
+	if segments[len(segments)-1] != action {
+		return "", false
+	}
+	return segments[len(segments)-2], true
 }
 

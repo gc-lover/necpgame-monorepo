@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -420,7 +420,8 @@ func (siw *ServerInterfaceWrapper) DisbandGroup(w http.ResponseWriter, r *http.R
 	// ------------- Path parameter "group_id" -------------
 	var groupId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawGroupID, _ := getPathParam(r, "group_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", rawGroupID, &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
 		return
@@ -451,7 +452,8 @@ func (siw *ServerInterfaceWrapper) GetGroup(w http.ResponseWriter, r *http.Reque
 	// ------------- Path parameter "group_id" -------------
 	var groupId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawGroupID, _ := getPathParam(r, "group_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", rawGroupID, &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
 		return
@@ -482,7 +484,8 @@ func (siw *ServerInterfaceWrapper) UpdateGroup(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "group_id" -------------
 	var groupId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawGroupID, _ := getPathParam(r, "group_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", rawGroupID, &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
 		return
@@ -513,7 +516,8 @@ func (siw *ServerInterfaceWrapper) GetGroupMembers(w http.ResponseWriter, r *htt
 	// ------------- Path parameter "group_id" -------------
 	var groupId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawGroupID, _ := getPathParam(r, "group_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", rawGroupID, &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
 		return
@@ -544,7 +548,8 @@ func (siw *ServerInterfaceWrapper) AddGroupMember(w http.ResponseWriter, r *http
 	// ------------- Path parameter "group_id" -------------
 	var groupId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawGroupID, _ := getPathParam(r, "group_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", rawGroupID, &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
 		return
@@ -575,7 +580,8 @@ func (siw *ServerInterfaceWrapper) RemoveGroupMember(w http.ResponseWriter, r *h
 	// ------------- Path parameter "group_id" -------------
 	var groupId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawGroupID, _ := getPathParam(r, "group_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", rawGroupID, &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
 		return
@@ -584,7 +590,8 @@ func (siw *ServerInterfaceWrapper) RemoveGroupMember(w http.ResponseWriter, r *h
 	// ------------- Path parameter "member_id" -------------
 	var memberId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "member_id", chi.URLParam(r, "member_id"), &memberId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawMemberID, _ := getPathParam(r, "member_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "member_id", rawMemberID, &memberId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "member_id", Err: err})
 		return
@@ -615,7 +622,8 @@ func (siw *ServerInterfaceWrapper) GetGroupTasks(w http.ResponseWriter, r *http.
 	// ------------- Path parameter "group_id" -------------
 	var groupId openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	rawGroupID, _ := getPathParam(r, "group_id")
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", rawGroupID, &groupId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
 		return
@@ -728,75 +736,121 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, ChiServerOptions{})
+	return HandlerWithOptions(si, ServerOptions{})
 }
 
-type ChiServerOptions struct {
+type ServerOptions struct {
 	BaseURL          string
-	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
-	return HandlerWithOptions(si, ChiServerOptions{
-		BaseRouter: r,
-	})
+type pathParamKey string
+
+func setPathParam(r *http.Request, name, value string) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), pathParamKey(name), value))
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, ChiServerOptions{
-		BaseURL:    baseURL,
-		BaseRouter: r,
-	})
+func getPathParam(r *http.Request, name string) (string, bool) {
+	val, ok := r.Context().Value(pathParamKey(name)).(string)
+	return val, ok
 }
 
-// HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
-	r := options.BaseRouter
-
-	if r == nil {
-		r = chi.NewRouter()
-	}
+// HandlerWithOptions creates http.Handler with additional options using stdlib ServeMux.
+func HandlerWithOptions(si ServerInterface, options ServerOptions) http.Handler {
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/social/groups", wrapper.SearchGroups)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/social/groups", wrapper.CreateGroup)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/social/groups/{group_id}", wrapper.DisbandGroup)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/social/groups/{group_id}", wrapper.GetGroup)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/social/groups/{group_id}", wrapper.UpdateGroup)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/social/groups/{group_id}/members", wrapper.GetGroupMembers)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/social/groups/{group_id}/members", wrapper.AddGroupMember)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/social/groups/{group_id}/members/{member_id}", wrapper.RemoveGroupMember)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/social/groups/{group_id}/tasks", wrapper.GetGroupTasks)
-	})
+	mux := http.NewServeMux()
+	base := options.BaseURL
 
-	return r
+	mux.Handle(base+"/social/groups", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			wrapper.SearchGroups(w, r)
+		case http.MethodPost:
+			wrapper.CreateGroup(w, r)
+		default:
+			http.NotFound(w, r)
+			return
+		}
+	}))
+
+	// /social/groups/{group_id}
+	mux.Handle(base+"/social/groups/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, base+"/social/groups/") {
+			http.NotFound(w, r)
+			return
+		}
+		path := strings.TrimPrefix(r.URL.Path, base+"/social/groups/")
+		if path == "" {
+			http.NotFound(w, r)
+			return
+		}
+		segments := strings.Split(path, "/")
+		groupID := segments[0]
+		r = setPathParam(r, "group_id", groupID)
+
+		// /social/groups/{group_id}
+		if len(segments) == 1 {
+			switch r.Method {
+			case http.MethodGet:
+				wrapper.GetGroup(w, r)
+			case http.MethodPut:
+				wrapper.UpdateGroup(w, r)
+			case http.MethodDelete:
+				wrapper.DisbandGroup(w, r)
+			default:
+				http.NotFound(w, r)
+			}
+			return
+		}
+
+		// /social/groups/{group_id}/members
+		if len(segments) >= 2 && segments[1] == "members" {
+			if len(segments) == 2 {
+				switch r.Method {
+				case http.MethodGet:
+					wrapper.GetGroupMembers(w, r)
+				case http.MethodPost:
+					wrapper.AddGroupMember(w, r)
+				default:
+					http.NotFound(w, r)
+				}
+				return
+			}
+			if len(segments) == 3 {
+				r = setPathParam(r, "member_id", segments[2])
+				if r.Method == http.MethodDelete {
+					wrapper.RemoveGroupMember(w, r)
+					return
+				}
+			}
+			http.NotFound(w, r)
+			return
+		}
+
+		// /social/groups/{group_id}/tasks
+		if len(segments) == 2 && segments[1] == "tasks" {
+			if r.Method == http.MethodGet {
+				wrapper.GetGroupTasks(w, r)
+				return
+			}
+			http.NotFound(w, r)
+			return
+		}
+
+		http.NotFound(w, r)
+	}))
+
+	return mux
 }

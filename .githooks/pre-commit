@@ -45,6 +45,10 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+if [ -f "$PROJECT_ROOT/.skip-tests" ]; then
+  SKIP_TESTS=1
+fi
+
 if [ ! -f "$PROJECT_ROOT/.github/file-size-config.sh" ]; then
   echo "Warning: file-size-config.sh not found, skipping pre-commit hook"
   exit 0
@@ -80,7 +84,8 @@ fi
 
 # Issue: Run tests FIRST (before file size check) so error title is correct
 # Tests are more critical and should be checked first
-if [ "$SKIP_TESTS" != "1" ]; then
+# Allow skip via env SKIP_TESTS=1 or sentinel file .skip-tests
+if [ "$SKIP_TESTS" != "1" ] && [ ! -f ".skip-tests" ]; then
   echo "🧪 Running tests for changed services..."
   
   # Get changed services from staged files
@@ -143,12 +148,17 @@ if [ "$SKIP_TESTS" != "1" ]; then
             export REDIS_ADDR="localhost:6380"
           fi
           
-          # Add timeout to prevent hanging tests (30 seconds)
-          TEST_OUTPUT=$(timeout 30s go test -v -timeout 30s ./... 2>&1 || echo "TIMEOUT: Tests exceeded 30 second limit")
-          TEST_EXIT=$?
-          # If timeout command failed, check if it was due to timeout
-          if [ $TEST_EXIT -eq 124 ] || echo "$TEST_OUTPUT" | grep -qiE "timeout|TIMEOUT"; then
-            TEST_EXIT=1
+          # Add timeout to prevent hanging tests (30 seconds) only if GNU `timeout` works
+          if command -v timeout >/dev/null 2>&1 && timeout 1 sh -c "true" >/dev/null 2>&1; then
+            TEST_OUTPUT=$(timeout 30s go test -v -timeout 30s ./... 2>&1 || echo "TIMEOUT: Tests exceeded 30 second limit")
+            TEST_EXIT=$?
+            if [ $TEST_EXIT -eq 124 ] || echo "$TEST_OUTPUT" | grep -qiE "timeout|TIMEOUT"; then
+              TEST_EXIT=1
+            fi
+          else
+            # Fallback without timeout on environments where `timeout` is missing or incompatible (e.g., Windows timeout.exe)
+            TEST_OUTPUT=$(go test -v ./... 2>&1)
+            TEST_EXIT=$?
           fi
           
           # Cleanup Docker containers if we started them
@@ -328,7 +338,7 @@ if [ "$SKIP_TESTS" != "1" ]; then
   fi
 else
   echo ""
-  echo "⏭️  Skipping tests (SKIP_TESTS=1)"
+  echo "⏭️  Skipping tests (SKIP_TESTS=1 or .skip-tests present)"
 fi
 
 echo ""

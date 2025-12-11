@@ -6,9 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+	"strings"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	supportapi "github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
@@ -31,7 +30,7 @@ type TicketServiceInterface interface {
 
 type HTTPServer struct {
 	addr          string
-	router        *chi.Mux
+	router        *http.ServeMux
 	ticketService TicketServiceInterface
 	slaService    SLAServiceInterface
 	logger        *logrus.Logger
@@ -41,7 +40,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService SLAServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
-	router := chi.NewRouter()
+	router := http.NewServeMux()
 	server := &HTTPServer{
 		addr:          addr,
 		router:        router,
@@ -52,36 +51,29 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, slaService
 		authEnabled:   authEnabled,
 	}
 
-	router.Use(server.loggingMiddleware)
-	router.Use(server.metricsMiddleware)
-	router.Use(server.corsMiddleware)
-	router.Use(middleware.Recoverer)
-	
-	// Issue: Test support - preserve user_id from context when auth is disabled
-	if !authEnabled {
-		router.Use(func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Preserve user_id from request context (for testing)
-				if userID := r.Context().Value("user_id"); userID != nil {
-					ctx := context.WithValue(r.Context(), "user_id", userID)
-					r = r.WithContext(ctx)
-				}
-				next.ServeHTTP(w, r)
-			})
-		})
-	}
-
 	// Issue: #1489 - Initialize ogen handlers with SLA service
 	ogenHandlers := NewHandlers(ticketService, slaService)
 	ogenSecurity := NewSecurityHandler(jwtValidator, authEnabled)
 
-	// Create ogen server
+	// Create ogen server (routes under /support/...)
 	ogenServer, err := supportapi.NewServer(ogenHandlers, ogenSecurity, supportapi.WithPathPrefix("/api/v1"))
 	if err != nil {
 		server.logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	// Custom endpoints not present in OpenAPI (assign, responses, rate, detail)
+	handler = server.extraSupportRoutes(handler)
+	handler = server.loggingMiddleware(handler)
+	handler = server.metricsMiddleware(handler)
+	handler = server.corsMiddleware(handler)
+	handler = recoveryMiddleware(handler, server.logger)
+	// Preserve user_id from context in tests when auth disabled
+	if !authEnabled {
+		handler = preserveUserIDMiddleware(handler)
+	}
+
+	router.Handle("/", handler)
 
 	router.HandleFunc("/health", server.healthCheck)
 
@@ -184,4 +176,173 @@ type statusRecorder struct {
 func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
+}
+
+func recoveryMiddleware(next http.Handler, logger *logrus.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				logger.WithField("panic", rec).Error("recovered from panic")
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+func preserveUserIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if userID := r.Context().Value("user_id"); userID != nil {
+			ctx := context.WithValue(r.Context(), "user_id", userID)
+			r = r.WithContext(ctx)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// extraSupportRoutes handles endpoints not covered by the generated OpenAPI server.
+func (s *HTTPServer) extraSupportRoutes(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/api/v1/support/tickets/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/assign") && r.Method == http.MethodPost:
+			s.handleAssignTicket(w, r)
+		case strings.HasSuffix(r.URL.Path, "/responses") && r.Method == http.MethodPost:
+			s.handleAddResponse(w, r)
+		case strings.HasSuffix(r.URL.Path, "/rate") && r.Method == http.MethodPost:
+			s.handleRateTicket(w, r)
+		case strings.HasSuffix(r.URL.Path, "/detail") && r.Method == http.MethodGet:
+			s.handleTicketDetail(w, r)
+		default:
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
+func (s *HTTPServer) handleAssignTicket(w http.ResponseWriter, r *http.Request) {
+	ticketIDStr := pathBaseTrimSuffix(r.URL.Path, "/assign")
+	ticketID, err := uuid.Parse(ticketIDStr)
+	if err != nil {
+		http.Error(w, "invalid ticket id", http.StatusBadRequest)
+		return
+	}
+
+	var req models.AssignTicketRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.AgentID == uuid.Nil {
+		http.Error(w, "agent_id is required", http.StatusBadRequest)
+		return
+	}
+
+	ticket, err := s.ticketService.AssignTicket(r.Context(), ticketID, req.AgentID)
+	if err != nil {
+		http.Error(w, "failed to assign", http.StatusInternalServerError)
+		return
+	}
+	if ticket == nil {
+		http.NotFound(w, r)
+		return
+	}
+	s.respondJSON(w, http.StatusOK, ticket)
+}
+
+func (s *HTTPServer) handleAddResponse(w http.ResponseWriter, r *http.Request) {
+	ticketIDStr := pathBaseTrimSuffix(r.URL.Path, "/responses")
+	ticketID, err := uuid.Parse(ticketIDStr)
+	if err != nil {
+		http.Error(w, "invalid ticket id", http.StatusBadRequest)
+		return
+	}
+
+	var req models.AddResponseRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	authorID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	response, err := s.ticketService.AddResponse(r.Context(), ticketID, authorID, false, &req)
+	if err != nil {
+		http.Error(w, "failed to add response", http.StatusInternalServerError)
+		return
+	}
+	if response == nil {
+		http.NotFound(w, r)
+		return
+	}
+	s.respondJSON(w, http.StatusCreated, response)
+}
+
+func (s *HTTPServer) handleRateTicket(w http.ResponseWriter, r *http.Request) {
+	ticketIDStr := pathBaseTrimSuffix(r.URL.Path, "/rate")
+	ticketID, err := uuid.Parse(ticketIDStr)
+	if err != nil {
+		http.Error(w, "invalid ticket id", http.StatusBadRequest)
+		return
+	}
+
+	var body struct {
+		Rating int `json:"rating"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	if body.Rating < 1 || body.Rating > 5 {
+		http.Error(w, "invalid rating", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.ticketService.RateTicket(r.Context(), ticketID, body.Rating); err != nil {
+		http.Error(w, "failed to rate", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *HTTPServer) handleTicketDetail(w http.ResponseWriter, r *http.Request) {
+	ticketIDStr := pathBaseTrimSuffix(r.URL.Path, "/detail")
+	ticketID, err := uuid.Parse(ticketIDStr)
+	if err != nil {
+		http.Error(w, "invalid ticket id", http.StatusBadRequest)
+		return
+	}
+
+	detail, err := s.ticketService.GetTicketDetail(r.Context(), ticketID)
+	if err != nil {
+		http.Error(w, "failed to fetch detail", http.StatusInternalServerError)
+		return
+	}
+	if detail == nil {
+		http.NotFound(w, r)
+		return
+	}
+	s.respondJSON(w, http.StatusOK, detail)
+}
+
+func pathBaseTrimSuffix(path string, suffix string) string {
+	trimmed := strings.TrimSuffix(path, suffix)
+	trimmed = strings.Trim(trimmed, "/")
+	parts := strings.Split(trimmed, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	return parts[len(parts)-1]
 }

@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -23,13 +21,7 @@ type HTTPServer struct {
 func NewHTTPServer(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HTTPServer {
 	handlers := NewHandlers(logger, db)
 
-	router := chi.NewRouter()
-
-	router.Use(chiMiddleware.RequestID)
-	router.Use(chiMiddleware.RealIP)
-	router.Use(chiMiddleware.Logger)
-	router.Use(chiMiddleware.Recoverer)
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	// ogen server integration
 	secHandler := &SecurityHandler{}
@@ -38,7 +30,9 @@ func NewHTTPServer(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HTTPSe
 		logger.Fatalf("Failed to create ogen server: %v", err)
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = corsMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	router.Handle("/metrics", promhttp.Handler())
 

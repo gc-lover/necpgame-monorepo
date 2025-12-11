@@ -61,7 +61,6 @@ docker run -p 8090:8090 social-player-orders-service:latest
 
 ## Зависимости
 
-- `github.com/go-chi/chi/v5` - HTTP router
 - `github.com/oapi-codegen/runtime` - OpenAPI runtime
 - `github.com/jackc/pgx/v5` - PostgreSQL driver
 - `github.com/prometheus/client_golang` - Metrics

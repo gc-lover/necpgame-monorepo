@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	api "github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -23,13 +21,7 @@ func NewHTTPServer(addr string, logger *logrus.Logger, service LootServiceInterf
 	handlers := NewHandlers(logger, service)
 	secHandler := &SecurityHandler{}
 
-	router := chi.NewRouter()
-
-	router.Use(chiMiddleware.RequestID)
-	router.Use(chiMiddleware.RealIP)
-	router.Use(chiMiddleware.Logger)
-	router.Use(chiMiddleware.Recoverer)
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	// ogen server
 	ogenServer, err := api.NewServer(handlers, secHandler)
@@ -37,10 +29,14 @@ func NewHTTPServer(addr string, logger *logrus.Logger, service LootServiceInterf
 		logger.WithError(err).Fatal("Failed to create ogen server")
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = loggingMiddleware(logger)(handler)
+	handler = recoverMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
+	router.HandleFunc("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,
@@ -65,6 +61,12 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"healthy"}`))
+}
+
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -80,8 +82,42 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"healthy"}`))
+func recoverMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					logger.WithField("panic", rec).Error("recovered from panic")
+					http.Error(w, "internal server error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			rr := &responseRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+			next.ServeHTTP(rr, r)
+			logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"status":   rr.statusCode,
+				"duration": time.Since(start).String(),
+			}).Info("request completed")
+		})
+	}
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rr *responseRecorder) WriteHeader(code int) {
+	rr.statusCode = code
+	rr.ResponseWriter.WriteHeader(code)
 }

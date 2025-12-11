@@ -8,9 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	
 	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
@@ -18,28 +15,17 @@ import (
 type HTTPServer struct {
 	addr   string
 	server *http.Server
-	router chi.Router
+	router *http.ServeMux
 }
 
 // NewHTTPServer creates new HTTP server with ogen integration
 // SOLID: ТОЛЬКО настройка сервера и роутера
 // Issue: #1588 - Load shedding for overload protection
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
-	router := chi.NewRouter()
+	router := http.NewServeMux()
 
 	// Issue: #1588 - Load shedding (max 5000 concurrent for hot path)
 	loadShedder := NewLoadShedder(5000)
-	router.Use(loadShedder.Middleware)
-
-	// Built-in middleware
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-	router.Use(middleware.Timeout(60 * time.Second)) // Global timeout
-
-	// Custom middleware
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
 
 	// Handlers (реализация api.Handler из handlers.go)
 	handlers := NewHandlers(service)
@@ -54,12 +40,18 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	}
 
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = loadShedder.Middleware(handler)
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	handler = TimeoutMiddleware(handler, 60*time.Second)
+	handler = RecoveryMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	// Health and metrics
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
-	router.Get("/ready", readyCheck)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
+	router.HandleFunc("/ready", readyCheck)
 
 	return &HTTPServer{
 		addr:   addr,

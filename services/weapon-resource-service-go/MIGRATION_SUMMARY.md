@@ -19,7 +19,7 @@
 - Context timeouts (50ms DB)
 
 ### 3. Updated http_server.go
-- Using ogen server with chi router
+- Using ogen server with stdlib `http.ServeMux`
 - SecurityHandler integration
 
 ### 4. Created security.go

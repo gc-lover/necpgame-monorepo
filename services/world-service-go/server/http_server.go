@@ -3,11 +3,9 @@ package server
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/gc-lover/necpgame-monorepo/services/world-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -23,24 +21,24 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	// Create ogen handlers
 	handlers := NewHandlers(logger)
 
-	// Create Chi router
-	router := chi.NewRouter()
-
-	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	// Create ogen server (CRITICAL: pass handlers as both Handler and SecurityHandler)
 	ogenServer, err := api.NewServer(handlers, handlers)
 	if err != nil {
-		log.Fatalf("Failed to create ogen server: %v", err)
+		logger.Fatalf("Failed to create ogen server: %v", err)
 	}
 
+	var handler http.Handler = ogenServer
+	handler = loggingMiddleware(logger)(handler)
+	handler = recoveryMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+
 	// Mount ogen server under /world
-	router.Mount("/world", ogenServer)
+	router.Handle("/world/", handler)
 
 	router.Handle("/metrics", promhttp.Handler())
-	router.Get("/health", healthCheckHandler)
+	router.HandleFunc("/health", healthCheckHandler)
 
 	return &HTTPServer{
 		addr: addr,

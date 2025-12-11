@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -101,7 +101,8 @@ func (s *store) incUsage(sessionID uuid.UUID, resource string, amount int64) (in
 
 type server struct {
 	log   *logrus.Logger
-	r     chi.Router
+	r     *http.ServeMux
+	h     http.Handler
 	store *store
 }
 
@@ -111,31 +112,25 @@ func newServer() *server {
 
 	s := &server{
 		log:   l,
-		r:     chi.NewRouter(),
+		r:     http.NewServeMux(),
 		store: newStore(),
 	}
 
-	s.r.Use(middleware.RequestID)
-	s.r.Use(middleware.RealIP)
-	s.r.Use(middleware.Recoverer)
-	s.r.Use(middleware.Timeout(5 * time.Second))
-
 	s.routes()
+	s.h = recoveryMiddleware(timeoutMiddleware(s.r, 5*time.Second), s.log)
 	return s
 }
 
 func (s *server) routes() {
-	s.r.Get("/health", s.health)
-	s.r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		promhttp.Handler().ServeHTTP(w, r)
-	})
-	s.r.Post("/restricted-modes/select/{mode}/{characterId}", s.selectMode)
-	s.r.Get("/restricted-modes/status/{characterId}", s.status)
-	s.r.Post("/restricted-modes/complete/{characterId}", s.complete)
-	s.r.Post("/restricted-modes/fail/{characterId}", s.fail)
-	s.r.Post("/restricted-modes/permadeath/{characterId}", s.permadeath)
-	s.r.Post("/restricted-modes/death/{characterId}", s.registerDeath)
-	s.r.Post("/restricted-modes/resource/{characterId}/{resource}/{amount}", s.consumeResource)
+	s.r.HandleFunc("/health", s.health)
+	s.r.Handle("/metrics", promhttp.Handler())
+	s.r.HandleFunc("/restricted-modes/select/", s.selectMode)
+	s.r.HandleFunc("/restricted-modes/status/", s.status)
+	s.r.HandleFunc("/restricted-modes/complete/", s.complete)
+	s.r.HandleFunc("/restricted-modes/fail/", s.fail)
+	s.r.HandleFunc("/restricted-modes/permadeath/", s.permadeath)
+	s.r.HandleFunc("/restricted-modes/death/", s.registerDeath)
+	s.r.HandleFunc("/restricted-modes/resource/", s.consumeResource)
 }
 
 func (s *server) health(w http.ResponseWriter, r *http.Request) {
@@ -143,8 +138,13 @@ func (s *server) health(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) selectMode(w http.ResponseWriter, r *http.Request) {
-	modeStr := chi.URLParam(r, "mode")
-	charIDStr := chi.URLParam(r, "characterId")
+	segments := pathSegments(r.URL.Path)
+	if len(segments) != 4 || segments[0] != "restricted-modes" || segments[1] != "select" {
+		http.NotFound(w, r)
+		return
+	}
+	modeStr := segments[2]
+	charIDStr := segments[3]
 	charID, err := uuid.Parse(charIDStr)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid characterId")
@@ -165,7 +165,12 @@ func (s *server) selectMode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) status(w http.ResponseWriter, r *http.Request) {
-	charID, err := uuid.Parse(chi.URLParam(r, "characterId"))
+	segments := pathSegments(r.URL.Path)
+	if len(segments) != 3 || segments[0] != "restricted-modes" || segments[1] != "status" {
+		http.NotFound(w, r)
+		return
+	}
+	charID, err := uuid.Parse(segments[2])
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid characterId")
 		return
@@ -178,19 +183,36 @@ func (s *server) status(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) complete(w http.ResponseWriter, r *http.Request) {
-	s.updateState(w, r, ModeCompleted)
+	charID, ok := parseCharacterIDWithPrefix(w, r, "complete")
+	if !ok {
+		return
+	}
+	s.updateState(w, charID, ModeCompleted)
 }
 
 func (s *server) fail(w http.ResponseWriter, r *http.Request) {
-	s.updateState(w, r, ModeFailed)
+	charID, ok := parseCharacterIDWithPrefix(w, r, "fail")
+	if !ok {
+		return
+	}
+	s.updateState(w, charID, ModeFailed)
 }
 
 func (s *server) permadeath(w http.ResponseWriter, r *http.Request) {
-	s.updateState(w, r, ModeFailed)
+	charID, ok := parseCharacterIDWithPrefix(w, r, "permadeath")
+	if !ok {
+		return
+	}
+	s.updateState(w, charID, ModeFailed)
 }
 
 func (s *server) registerDeath(w http.ResponseWriter, r *http.Request) {
-	charID, err := uuid.Parse(chi.URLParam(r, "characterId"))
+	segments := pathSegments(r.URL.Path)
+	if len(segments) != 3 || segments[0] != "restricted-modes" || segments[1] != "death" {
+		http.NotFound(w, r)
+		return
+	}
+	charID, err := uuid.Parse(segments[2])
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid characterId")
 		return
@@ -225,15 +247,19 @@ func (s *server) registerDeath(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) consumeResource(w http.ResponseWriter, r *http.Request) {
-	charID, err := uuid.Parse(chi.URLParam(r, "characterId"))
+	segments := pathSegments(r.URL.Path)
+	if len(segments) != 5 || segments[0] != "restricted-modes" || segments[1] != "resource" {
+		http.NotFound(w, r)
+		return
+	}
+	charID, err := uuid.Parse(segments[2])
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid characterId")
 		return
 	}
-	resource := chi.URLParam(r, "resource")
-	amountStr := chi.URLParam(r, "amount")
-	var amount int64
-	if _, err := fmt.Sscan(amountStr, &amount); err != nil || amount <= 0 {
+	resource := segments[3]
+	amount, err := strconv.ParseInt(segments[4], 10, 64)
+	if err != nil || amount <= 0 {
 		writeError(w, http.StatusBadRequest, "invalid amount")
 		return
 	}
@@ -259,12 +285,7 @@ func (s *server) consumeResource(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, st)
 }
 
-func (s *server) updateState(w http.ResponseWriter, r *http.Request, state ModeState) {
-	charID, err := uuid.Parse(chi.URLParam(r, "characterId"))
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid characterId")
-		return
-	}
+func (s *server) updateState(w http.ResponseWriter, charID uuid.UUID, state ModeState) {
 	st, ok := s.store.getStatus(charID)
 	if !ok {
 		writeError(w, http.StatusNotFound, "not found")
@@ -286,7 +307,7 @@ func main() {
 	addr := getEnv("ADDR", ":8084")
 	httpSrv := &http.Server{
 		Addr:         addr,
-		Handler:      s.r,
+		Handler:      s.h,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		IdleTimeout:  30 * time.Second,
@@ -314,6 +335,58 @@ func main() {
 }
 
 func ptr[T any](v T) *T { return &v }
+
+func pathSegments(path string) []string {
+	trimmed := strings.Trim(path, "/")
+	if trimmed == "" {
+		return []string{}
+	}
+	return strings.Split(trimmed, "/")
+}
+
+func parseCharacterIDWithPrefix(w http.ResponseWriter, r *http.Request, action string) (uuid.UUID, bool) {
+	segments := pathSegments(r.URL.Path)
+	if len(segments) != 3 || segments[0] != "restricted-modes" || segments[1] != action {
+		http.NotFound(w, r)
+		return uuid.Nil, false
+	}
+	charID, err := uuid.Parse(segments[2])
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid characterId")
+		return uuid.Nil, false
+	}
+	return charID, true
+}
+
+func recoveryMiddleware(next http.Handler, logger *logrus.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				logger.WithField("panic", rec).Error("recovered from panic")
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+func timeoutMiddleware(next http.Handler, d time.Duration) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), d)
+		defer cancel()
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(data)
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
 
 func getEnv(key, def string) string {
 	if v, ok := os.LookupEnv(key); ok {

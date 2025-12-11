@@ -4,24 +4,19 @@ package server
 import (
 	"context"
 	"net/http"
+	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-weapon-special-mechanics-service-go/pkg/api"
 )
 
 type HTTPServer struct {
 	addr   string
 	server *http.Server
-	router chi.Router
+	router *http.ServeMux
 }
 
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
+	router := http.NewServeMux()
 
 	handlers := NewHandlers(service)
 	secHandler := NewSecurityHandler()
@@ -31,10 +26,14 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 		panic(err)
 	}
 
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
 		addr:   addr,
@@ -62,5 +61,33 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP weapon_special_mechanics_service metrics\n"))
+}
+
+// LoggingMiddleware logs requests.
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		_ = time.Since(start)
+	})
+}
+
+// MetricsMiddleware is a stub for metrics collection.
+func MetricsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RecoveryMiddleware recovers from panics.
+func RecoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 

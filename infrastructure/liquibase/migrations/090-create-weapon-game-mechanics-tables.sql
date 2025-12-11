@@ -301,3 +301,4 @@ CREATE TRIGGER trigger_update_weapon_resources_timestamp
 
 
 
+

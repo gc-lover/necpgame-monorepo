@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	cosmeticapi "github.com/necpgame/cosmetic-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -15,23 +13,13 @@ import (
 
 type HTTPServer struct {
 	addr   string
-	router *chi.Mux
+	router *http.ServeMux
 	server *http.Server
 	logger *logrus.Logger
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-
-	// Custom middlewares
-	router.Use(loggingMiddleware(logger))
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	// Register ogen handlers
 	ogenHandlers := NewHandlers(logger)
@@ -40,7 +28,11 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 		logger.Fatalf("Failed to create ogen server: %v", err)
 	}
 
-	router.Mount("/", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = loggingMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+	handler = recoveryMiddleware(logger)(handler)
+	router.Handle("/", handler)
 
 	router.Handle("/metrics", promhttp.Handler())
 
@@ -108,5 +100,19 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func recoveryMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.WithField("panic", err).Error("Recovered from panic")
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 

@@ -3,7 +3,6 @@ module github.com/gc-lover/necpgame-monorepo/services/movement-service-go
 go 1.24.0
 
 require (
-	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
 	github.com/google/uuid v1.6.0
@@ -26,7 +25,6 @@ require (
 
 require (
 	github.com/klauspost/compress v1.18.2
-	github.com/oapi-codegen/runtime v1.1.2
 	github.com/pierrec/lz4/v4 v4.1.22
 	go.uber.org/goleak v1.3.0
 )
@@ -99,10 +97,10 @@ require (
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230731190214-cbb8c96f2d6d // indirect
 	google.golang.org/grpc v1.58.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-

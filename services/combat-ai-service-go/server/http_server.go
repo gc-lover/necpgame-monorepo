@@ -5,21 +5,17 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-ai-service-go/pkg/api"
 )
 
 type HTTPServer struct {
 	addr   string
 	server *http.Server
-	router chi.Router
+	router *http.ServeMux
 }
 
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
-	router := chi.NewRouter()
-	router.Use(middleware.Logger, middleware.Recoverer, middleware.RequestID)
-	router.Use(LoggingMiddleware, MetricsMiddleware)
+	router := http.NewServeMux()
 
 	handlers := NewHandlers(service)
 	secHandler := &SecurityHandler{}
@@ -28,9 +24,13 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 		panic(err)
 	}
 	
-	router.Mount("/api/v1", ogenServer)
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	var handler http.Handler = ogenServer
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	router.Handle("/api/v1/", handler)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
 		addr:   addr,

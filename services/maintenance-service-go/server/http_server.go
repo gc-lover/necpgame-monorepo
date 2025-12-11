@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/necpgame/maintenance-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -20,14 +18,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
-	router := chi.NewRouter()
-
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-	router.Use(loggingMiddleware(logger))
-	router.Use(recoveryMiddleware(logger))
-	router.Use(corsMiddleware)
+	router := http.NewServeMux()
 
 	handlers := NewHandlers(logger)
 
@@ -36,7 +27,11 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 		panic(err)
 	}
 
-	router.Mount("/", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = loggingMiddleware(logger)(handler)
+	handler = recoveryMiddleware(logger)(handler)
+	handler = corsMiddleware(handler)
+	router.Handle("/", handler)
 	router.Handle("/metrics", promhttp.Handler())
 
 	return &HTTPServer{

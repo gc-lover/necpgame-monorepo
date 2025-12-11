@@ -5,7 +5,6 @@ package server
 import (
 	"context"
 	"testing"
-
 )
 
 // BenchmarkHandler benchmarks handler performance
@@ -13,7 +12,8 @@ import (
 func BenchmarkHandler(b *testing.B) {
 	// Setup - adjust based on service structure
 	logger := GetLogger()
-	handlers := NewIntegrationHandlers(logger)
+	service := NewIntegrationService(logger)
+	handlers := NewIntegrationHandlers(logger, service)
 
 	ctx := context.Background()
 

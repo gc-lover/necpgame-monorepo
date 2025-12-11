@@ -205,31 +205,24 @@ func (s *Service) GetPlayer(ctx context.Context, id string) (*api.Player, error)
 
 ### Phase 5: Server Setup (30 min)
 
-**OLD (oapi-codegen + Chi):**
+**OLD (oapi-codegen + router):**
 ```go
-router := chi.NewRouter()
+router := mux.NewRouter()
 handlers := NewHandlers(service)
-
-api.HandlerWithOptions(handlers, api.ChiServerOptions{
-    BaseURL: "/api/v1",
-    BaseRouter: router,
-})
 ```
 
-**NEW (ogen built-in server):**
+**NEW (ogen built-in server on ServeMux):**
 ```go
 handlers := NewHandlers(service)
 securityHandler := &SecurityHandler{}
 
-// ogen creates its own server
 ogenServer, err := api.NewServer(handlers, securityHandler)
 if err != nil {
     log.Fatal(err)
 }
 
-// Can still mount under Chi if needed
-router := chi.NewRouter()
-router.Mount("/api/v1", ogenServer)
+router := http.NewServeMux()
+router.Handle("/api/v1/", ogenServer)
 ```
 
 **Security Handler (required):**

@@ -4,6 +4,8 @@ package server
 import (
 	"context"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/world-service-go/pkg/api"
 )
 
 // BenchmarkListContinents benchmarks ListContinents handler

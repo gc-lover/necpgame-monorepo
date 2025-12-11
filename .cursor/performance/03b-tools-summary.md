@@ -18,7 +18,7 @@
 ```
 
 ### API/HTTP Stack
-- OGEN as the default HTTP/codegen stack. Do **not** add `github.com/go-chi/chi` to new services; keep/remove chi only for legacy code when unavoidable.
+- OGEN + stdlib `http.ServeMux` as default HTTP/codegen stack. Не добавлять сторонние роутеры на новые сервисы.
 
 ## Performance:
 ```go

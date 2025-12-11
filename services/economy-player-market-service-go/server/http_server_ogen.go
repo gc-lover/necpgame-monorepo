@@ -7,23 +7,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-player-market-service-go/pkg/api"
 )
 
 type HTTPServerOgen struct {
 	addr   string
 	server *http.Server
-	router *chi.Mux
+	router *http.ServeMux
 }
 
 func NewHTTPServerOgen(addr string) *HTTPServerOgen {
-	router := chi.NewRouter()
-	
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
+	router := http.NewServeMux()
 	
 	handlers := NewMarketHandlersOgen()
 	security := NewSecurityHandler()
@@ -33,9 +27,13 @@ func NewHTTPServerOgen(addr string) *HTTPServerOgen {
 		log.Fatal(err)
 	}
 	
-	router.Mount("/api/v1", srv)
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	var handler http.Handler = srv
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	router.Handle("/api/v1/", handler)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
 	
 	return &HTTPServerOgen{
 		addr:   addr,

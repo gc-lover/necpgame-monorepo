@@ -1,32 +1,35 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"time"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 // NewRouter wires HTTP routes to service handlers.
 func NewRouter(svc *Service) http.Handler {
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(2 * time.Second))
+	mux := http.NewServeMux()
 
-	r.Post("/api/v1/gameplay/combat/acrobatics/air-dash", svc.HandlePerformAirDash)
-	r.Get("/api/v1/gameplay/combat/acrobatics/air-dash/available", svc.HandleGetAirDashAvailability)
-	r.Get("/api/v1/gameplay/combat/acrobatics/air-dash/charges", svc.HandleGetAirDashCharges)
+	withTimeout := func(h http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+			defer cancel()
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
 
-	r.Post("/api/v1/gameplay/combat/acrobatics/wall-kick", svc.HandlePerformWallKick)
-	r.Get("/api/v1/gameplay/combat/acrobatics/wall-kick/available", svc.HandleGetWallKickAvailability)
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/air-dash", withTimeout(svc.HandlePerformAirDash))
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/air-dash/available", withTimeout(svc.HandleGetAirDashAvailability))
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/air-dash/charges", withTimeout(svc.HandleGetAirDashCharges))
 
-	r.Post("/api/v1/gameplay/combat/acrobatics/vault", svc.HandlePerformVault)
-	r.Get("/api/v1/gameplay/combat/acrobatics/vault/obstacles", svc.HandleListVaultObstacles)
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/wall-kick", withTimeout(svc.HandlePerformWallKick))
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/wall-kick/available", withTimeout(svc.HandleGetWallKickAvailability))
 
-	r.Get("/api/v1/gameplay/combat/acrobatics/advanced/state", svc.HandleGetAdvancedState)
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/vault", withTimeout(svc.HandlePerformVault))
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/vault/obstacles", withTimeout(svc.HandleListVaultObstacles))
 
-	return r
+	mux.HandleFunc("/api/v1/gameplay/combat/acrobatics/advanced/state", withTimeout(svc.HandleGetAdvancedState))
+
+	return mux
 }
 

@@ -102,22 +102,11 @@ func (s *Service) StartWallRun(ctx context.Context, req api.OptStartWallRunReque
 		return nil, ErrWallRunActive
 	}
 
-	// Find suitable surface
-	var surfaceID uuid.UUID
-	if req.IsSet() && req.Value.SurfaceID.IsSet() {
-		surfaceID = req.Value.SurfaceID.Value
-	} else {
-		// Auto-detect surface
-		surfaceID = uuid.New() // TODO: Implement surface detection logic
-	}
-
-	// Validate surface
-	surface, err := s.repo.GetSurface(ctx, surfaceID)
-	if err != nil {
-		return nil, err
-	}
-	if !surface.IsSuitable {
-		return nil, ErrInvalidSurface
+	// Surface selection currently placeholder (no surface ID in request schema)
+	surface := &api.Surface{
+		SurfaceID: uuid.New(),
+		Position:  api.Position3D{X: 0, Y: 0, Z: 0},
+		IsSuitable: true,
 	}
 
 	// Create wall run session
@@ -127,7 +116,7 @@ func (s *Service) StartWallRun(ctx context.Context, req api.OptStartWallRunReque
 	session := &WallRunSession{
 		ID:              sessionID,
 		CharacterID:     characterID,
-		SurfaceID:       surfaceID,
+		SurfaceID:       surface.SurfaceID,
 		StateID:         stateID,
 		StartedAt:       time.Now(),
 		Direction:       api.Direction3D{X: 0, Y: 0, Z: 1}, // Default forward
@@ -146,9 +135,9 @@ func (s *Service) StartWallRun(ctx context.Context, req api.OptStartWallRunReque
 	defer s.statePool.Put(response)
 
 	response.StateID = stateID
-	response.WallSurfaceID = api.NewOptNilUUID(surfaceID)
+	response.WallSurfaceID = api.NewOptNilUUID(surface.SurfaceID)
 	response.StartedAt = session.StartedAt
-	response.StoppedAt = api.NewOptNilDateTime(api.NilDateTime{})
+	response.StoppedAt.SetToNull()
 	response.Direction = session.Direction
 	response.StartPosition = session.StartPosition
 	response.CurrentPosition = session.CurrentPosition
@@ -184,7 +173,7 @@ func (s *Service) StopWallRun(ctx context.Context) (*api.WallRunStateResponse, e
 	response.StateID = session.StateID
 	response.WallSurfaceID = api.NewOptNilUUID(session.SurfaceID)
 	response.StartedAt = session.StartedAt
-	response.StoppedAt = api.NewOptNilDateTime(api.NewNilDateTime(time.Now()))
+	response.StoppedAt.SetTo(time.Now())
 	response.Direction = session.Direction
 	response.StartPosition = session.StartPosition
 	response.CurrentPosition = session.CurrentPosition

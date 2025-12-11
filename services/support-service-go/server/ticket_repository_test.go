@@ -56,6 +56,10 @@ func setupTestRepository(t *testing.T) (*TicketRepository, func()) {
 	return repo, cleanup
 }
 
+func uniqueTicketNumber() string {
+	return fmt.Sprintf("TKT-%s", uuid.NewString())
+}
+
 func TestNewTicketRepository(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -109,7 +113,7 @@ func TestTicketRepository_GetByNumber_NotFound(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	number := "TKT-20250101-0001"
+	number := uniqueTicketNumber()
 	result, err := repo.GetByNumber(ctx, number)
 
 	if err != nil {
@@ -135,7 +139,7 @@ func TestTicketRepository_Create(t *testing.T) {
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
 		ID:          uuid.New(),
-		Number:      "TKT-20250101-0001",
+		Number:      uniqueTicketNumber(),
 		PlayerID:    playerID,
 		Category:    models.TicketCategoryTechnical,
 		Priority:    models.TicketPriorityNormal,
@@ -170,7 +174,7 @@ func TestTicketRepository_GetByID_Success(t *testing.T) {
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
 		ID:          uuid.New(),
-		Number:      "TKT-20250101-0001",
+		Number:      uniqueTicketNumber(),
 		PlayerID:    playerID,
 		Category:    models.TicketCategoryTechnical,
 		Priority:    models.TicketPriorityNormal,
@@ -282,7 +286,7 @@ func TestTicketRepository_Update(t *testing.T) {
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
 		ID:          uuid.New(),
-		Number:      "TKT-20250101-0001",
+		Number:      uniqueTicketNumber(),
 		PlayerID:    playerID,
 		Category:    models.TicketCategoryTechnical,
 		Priority:    models.TicketPriorityNormal,
@@ -460,7 +464,7 @@ func TestTicketRepository_Create_DatabaseError(t *testing.T) {
 
 	ticket := &models.SupportTicket{
 		ID:          uuid.Nil,
-		Number:      "TKT-20250101-0001",
+		Number:      uniqueTicketNumber(),
 		PlayerID:    uuid.New(),
 		Category:    models.TicketCategoryTechnical,
 		Priority:    models.TicketPriorityNormal,
@@ -516,7 +520,7 @@ func TestTicketRepository_Update_NotFound(t *testing.T) {
 
 	ticket := &models.SupportTicket{
 		ID:          uuid.New(),
-		Number:      "TKT-20250101-0001",
+		Number:      uniqueTicketNumber(),
 		PlayerID:    uuid.New(),
 		Category:    models.TicketCategoryTechnical,
 		Priority:    models.TicketPriorityNormal,
@@ -670,7 +674,7 @@ func TestTicketRepository_GetResponsesByTicketID_WithResponses(t *testing.T) {
 	playerID := uuid.New()
 	ticket := &models.SupportTicket{
 		ID:          uuid.New(),
-		Number:      "TKT-20250101-0001",
+		Number:      uniqueTicketNumber(),
 		PlayerID:    playerID,
 		Category:    models.TicketCategoryTechnical,
 		Priority:    models.TicketPriorityNormal,

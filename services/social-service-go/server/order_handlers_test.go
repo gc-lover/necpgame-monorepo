@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/necpgame/social-service-go/models"
 	"github.com/stretchr/testify/assert"
@@ -110,14 +109,10 @@ func TestOrderHandlers_GetPlayerOrder(t *testing.T) {
 
 	mockService.On("GetPlayerOrder", mock.Anything, orderID).Return(expectedOrder, nil)
 
-	// Use chi router to properly extract URL params
-	router := chi.NewRouter()
-	router.Get("/{orderId}", handlers.GetPlayerOrder)
-
 	httpReq := httptest.NewRequest("GET", "/"+orderID.String(), nil)
 	w := httptest.NewRecorder()
 
-	router.ServeHTTP(w, httpReq)
+	handlers.GetPlayerOrder(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	mockService.AssertExpectations(t)
@@ -142,14 +137,11 @@ func TestOrderHandlers_AcceptPlayerOrder(t *testing.T) {
 
 	mockService.On("AcceptPlayerOrder", mock.Anything, orderID, userID).Return(expectedOrder, nil)
 
-	router := chi.NewRouter()
-	router.Post("/{orderId}/accept", handlers.AcceptPlayerOrder)
-
 	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/accept", nil)
 	httpReq = httpReq.WithContext(context.WithValue(httpReq.Context(), "user_id", userID.String()))
 	w := httptest.NewRecorder()
 
-	router.ServeHTTP(w, httpReq)
+	handlers.AcceptPlayerOrder(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	mockService.AssertExpectations(t)
@@ -172,13 +164,10 @@ func TestOrderHandlers_StartPlayerOrder(t *testing.T) {
 
 	mockService.On("StartPlayerOrder", mock.Anything, orderID).Return(expectedOrder, nil)
 
-	router := chi.NewRouter()
-	router.Post("/{orderId}/start", handlers.StartPlayerOrder)
-
 	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/start", nil)
 	w := httptest.NewRecorder()
 
-	router.ServeHTTP(w, httpReq)
+	handlers.StartPlayerOrder(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	mockService.AssertExpectations(t)
@@ -209,13 +198,10 @@ func TestOrderHandlers_CompletePlayerOrder(t *testing.T) {
 	})).Return(expectedOrder, nil)
 
 	body, _ := json.Marshal(req)
-	router := chi.NewRouter()
-	router.Post("/{orderId}/complete", handlers.CompletePlayerOrder)
-
 	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/complete", bytes.NewReader(body))
 	w := httptest.NewRecorder()
 
-	router.ServeHTTP(w, httpReq)
+	handlers.CompletePlayerOrder(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	mockService.AssertExpectations(t)
@@ -238,13 +224,10 @@ func TestOrderHandlers_CancelPlayerOrder(t *testing.T) {
 
 	mockService.On("CancelPlayerOrder", mock.Anything, orderID).Return(expectedOrder, nil)
 
-	router := chi.NewRouter()
-	router.Post("/{orderId}/cancel", handlers.CancelPlayerOrder)
-
-	httpReq := httptest.NewRequest("POST", "/"+orderID.String()+"/cancel", nil)
+	httpReq := httptest.NewRequest("POST", "/api/v1/social/orders/"+orderID.String()+"/cancel", nil)
 	w := httptest.NewRecorder()
 
-	router.ServeHTTP(w, httpReq)
+	handlers.CancelPlayerOrder(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	mockService.AssertExpectations(t)

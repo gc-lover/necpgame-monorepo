@@ -12,14 +12,14 @@
 - Removed `oapi-codegen/runtime`
 - Added `ogen-go/ogen v1.18.0`
 - Added OpenTelemetry dependencies
-- Added `go-chi/chi/v5` for routing
+- Switched to stdlib `http.ServeMux` (no chi)
 
 ### 2. Updated handlers.go
 - Already using typed responses OK
 - Fixed error handling for GetCompatibilityMatrix
 
 ### 3. Updated http_server.go
-- Using ogen server with chi router
+- Using ogen server on `http.ServeMux`
 - Added middleware support
 - Health and metrics endpoints
 
@@ -34,7 +34,7 @@
 - Fixed PaginationResponse fields
 
 ### 6. Updated middleware.go
-- Fixed function signatures for chi middleware
+- Fixed middleware signatures for stdlib handler wrappers
 
 ### 7. Build tags
 - Added `//go:build ignore` to UDP/protobuf files (udp_server.go, projectile_service_optimized.go, spatial_culler.go)

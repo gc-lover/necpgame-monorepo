@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 
@@ -44,6 +45,10 @@ func connectWithRetry(t *testing.T, connStr string) *sql.DB {
 func startRedisContainer(t *testing.T) (*redis.RedisContainer, string) {
 	t.Helper()
 
+	if runtime.GOOS == "windows" {
+		t.Skip("testcontainers rootless Redis not supported on Windows environment")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 
@@ -61,6 +66,10 @@ func startRedisContainer(t *testing.T) (*redis.RedisContainer, string) {
 
 func startPostgresContainer(t *testing.T) (*postgres.PostgresContainer, string) {
 	t.Helper()
+
+	if runtime.GOOS == "windows" {
+		t.Skip("testcontainers rootless Postgres not supported on Windows environment")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	t.Cleanup(cancel)

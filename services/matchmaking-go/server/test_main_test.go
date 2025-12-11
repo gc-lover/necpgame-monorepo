@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"testing"
 	"time"
@@ -86,6 +87,26 @@ func startRedisForSuite(ctx context.Context) *redis.RedisContainer {
 	}
 	testRedisAddr = host + ":" + port.Port()
 	return container
+}
+
+func connectWithRetryCtx(ctx context.Context, connStr string) *sql.DB {
+	var db *sql.DB
+	for i := 0; i < 5; i++ {
+		var err error
+		db, err = sql.Open("postgres", connStr)
+		if err == nil {
+			if pingErr := db.PingContext(ctx); pingErr == nil {
+				return db
+			}
+			_ = db.Close()
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(time.Second):
+		}
+	}
+	return nil
 }
 
 func shutdownSuite(ctx context.Context) {

@@ -5,8 +5,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-actions-service-go/pkg/api"
 )
 
@@ -14,22 +12,13 @@ import (
 type HTTPServer struct {
 	addr   string
 	server *http.Server
-	router chi.Router
+	router *http.ServeMux
 }
 
 // NewHTTPServer creates new HTTP server
 // SOLID: ТОЛЬКО настройка сервера и роутера. Middleware в middleware.go, Handlers в handlers.go
 func NewHTTPServer(addr string, service *Service) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Built-in middleware
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.RequestID)
-
-	// Custom middleware (из middleware.go)
-	router.Use(LoggingMiddleware)
-	router.Use(MetricsMiddleware)
+	router := http.NewServeMux()
 
 	// Handlers (реализация api.Handler из handlers.go)
 	handlers := NewHandlers(service)
@@ -42,11 +31,15 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	}
 	
 	// Mount ogen server under /api/v1
-	router.Mount("/api/v1", ogenServer)
+	var handler http.Handler = ogenServer
+	handler = LoggingMiddleware(handler)
+	handler = MetricsMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+	router.Handle("/api/v1/", handler)
 
 	// Health check
-	router.Get("/health", healthCheck)
-	router.Get("/metrics", metricsHandler)
+	router.HandleFunc("/health", healthCheck)
+	router.HandleFunc("/metrics", metricsHandler)
 
 	return &HTTPServer{
 		addr:   addr,
@@ -78,5 +71,17 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_actions_service metrics\n"))
+}
+
+// RecoveryMiddleware recovers from panics.
+func RecoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 

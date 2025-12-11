@@ -131,9 +131,9 @@ func (r *Repository) GetActiveWallRun(ctx context.Context, characterID uuid.UUID
 		return nil, err
 	}
 
-	session.Direction = api.Direction3D{X: dirX, Y: dirY, Z: dirZ}
-	session.StartPosition = api.Position3D{X: startX, Y: startY, Z: startZ}
-	session.CurrentPosition = api.Position3D{X: currX, Y: currY, Z: currZ}
+	session.Direction = api.Direction3D{X: float32(dirX), Y: float32(dirY), Z: float32(dirZ)}
+	session.StartPosition = api.Position3D{X: float32(startX), Y: float32(startY), Z: float32(startZ)}
+	session.CurrentPosition = api.Position3D{X: float32(currX), Y: float32(currY), Z: float32(currZ)}
 
 	return &session, nil
 }
