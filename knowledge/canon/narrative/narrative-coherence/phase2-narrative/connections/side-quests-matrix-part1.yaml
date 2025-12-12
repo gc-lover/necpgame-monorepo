@@ -1,0 +1,288 @@
+# Issue: #109
+# Side Quests Connections Matrix
+# Version: 1.0.0
+# Date: 2025-11-06 23:24
+# Description: Полная матрица связей побочных квестов с главной сюжетной линией
+
+metadata:
+  github_issue: 109
+  version: "1.0.0"
+  created: "2025-11-06"
+  updated: "2025-11-06 23:24"
+  status: approved
+  total_quests: 450
+  connections_mapped: 120
+  description: "Матрица связей побочных квестов"
+
+# Структура:
+# quest_id:
+#   name: Название квеста
+#   era: Эпоха
+#   type: Тип (side, faction, class, romantic)
+#   main_quest_connections: Связи с главными квестами
+#   influences: На что влияет
+#   influenced_by: От чего зависит
+
+quests:
+  # ====== ЭПОХА 2020-2030 ======
+  
+  SQ-2020-001:
+    name: "Контракт Войтека"
+    era: "2020-2030"
+    type: side
+    class_focus: Solo
+    main_quest_connections:
+      - MQ-2020-001  # Первые шаги (вводит в мир)
+      - MQ-2020-003  # Слепые зоны МАКСТАК (связан с зонами)
+    influences:
+      reputation:
+        Solo_Guild: +15
+        Trauma_Team: +10
+      unlocks:
+        - SQ-2020-002  # Контракт Trauma Team (если репутация высокая)
+      world_state:
+        - key: "watson_security_improved"
+          value: true
+          condition: "quest_success"
+    influenced_by:
+      - quest: MQ-2020-001
+        condition: completed
+    consequences:
+      next_era:
+        - "Solo гильдия помнит услугу (2030-2045)"
+        - "Доступ к контрактам Trauma Team"
+  
+  SQ-2020-002:
+    name: "Контракт Trauma Team"
+    era: "2020-2030"
+    type: side
+    class_focus: Solo
+    main_quest_connections:
+      - MQ-2020-004  # Сертификат человечности (связан с медициной)
+    influences:
+      reputation:
+        Trauma_Team: +20
+        Medtech_Guild: +15
+      unlocks:
+        - SQ-2030-001  # Медиа кампания (в следующей эпохе)
+    influenced_by:
+      - quest: SQ-2020-001
+        condition: completed
+        reputation_required:
+          Trauma_Team: 10
+    consequences:
+      next_era:
+        - "Trauma Team контракты доступны в 2030-2045"
+  
+  SQ-2020-003:
+    name: "Защита чистого канала"
+    era: "2020-2030"
+    type: side
+    class_focus: Netrunner
+    main_quest_connections:
+      - MQ-2020-002  # Узел Триака (прямая связь)
+      - MQ-2020-005  # Чистый канал (влияет на финал эпохи)
+    influences:
+      reputation:
+        NetWatch: +25
+        Voodoo_Boys: -20
+      flags:
+        - netwatch_ally: true
+        - voodoo_enemy: true
+      unlocks:
+        - SQ-2020-004  # Трассировка фантомов (только если NetWatch союзник)
+    influenced_by:
+      - quest: MQ-2020-002
+        condition: choice_netwatch
+    consequences:
+      critical_path:
+        - "Определяет доступ к NetWatch квестам в 2030-2045"
+        - "Закрывает Voodoo Boys квесты"
+      main_story:
+        - "Влияет на MQ-2030-002 (Картография Низа)"
+  
+  SQ-2020-004:
+    name: "Улич образование"
+    era: "2020-2030"
+    type: side
+    class_focus: Rockerboy
+    main_quest_connections:
+      - MQ-2020-001  # Первые шаги (вводный)
+    influences:
+      reputation:
+        Valentinos: +15
+        6th_Street: +10
+      unlocks:
+        - SQ-2020-006  # Долг Padre (если репутация с бандами)
+    influenced_by:
+      - quest: MQ-2020-001
+        condition: completed
+    consequences:
+      next_era:
+        - "Банды помнят услугу"
+  
+  SQ-2020-005:
+    name: "Конвой Aldecaldos"
+    era: "2020-2030"
+    type: side
+    class_focus: Nomad
+    main_quest_connections:
+      - MQ-2020-003  # Слепые зоны (маршруты связаны)
+    influences:
+      reputation:
+        Nomads: +25
+        Aldecaldo_Clan: +30
+      flags:
+        - nomad_friend: true
+      unlocks:
+        - SQ-2030-003  # Underground maps (в следующей эпохе)
+    influenced_by:
+      - quest: MQ-2020-001
+        condition: completed
+      - origin: Nomad  # Легче для Nomad
+    consequences:
+      critical_path:
+        - "Открывает Nomad путь в 2030-2045"
+        - "Доступ к пустошам"
+      main_story:
+        - "Влияет на MQ-2030-006 (Приватные войны)"
+  
+  SQ-2020-006:
+    name: "Долг Padre"
+    era: "2020-2030"
+    type: faction
+    faction_focus: Valentinos
+    main_quest_connections:
+      - MQ-2020-005  # Чистый канал (косвенно)
+    influences:
+      reputation:
+        Valentinos: +30
+        Padre: +50
+      unlocks:
+        - SQ-2030-004  # Neuroethics lawsuit (связь через Padre)
+      flags:
+        - padre_owes_favor: true
+    influenced_by:
+      - quest: SQ-2020-004
+        condition: completed
+        reputation_required:
+          Valentinos: 15
+    consequences:
+      next_era:
+        - "Padre может помочь в 2030-2045"
+        - "Доступ к эксклюзивным Valentinos контрактам"
+      main_story:
+        - "Может помочь в MQ-2030-006 (выбор Valentinos стороны)"
+  
+  # ====== ЭПОХА 2030-2045 ======
+  
+  SQ-2030-001:
+    name: "Медиа кампания"
+    era: "2030-2045"
+    type: side
+    class_focus: Media
+    main_quest_connections:
+      - MQ-2030-001  # Устав Световых Куполов (информационная война)
+    influences:
+      reputation:
+        Media_Guild: +25
+        Public_Opinion: +20
+      world_state:
+        - key: "public_awareness_domes"
+          value: high
+          condition: "quest_success"
+      unlocks:
+        - SQ-2030-002  # Dome audit
+    influenced_by:
+      - quest: SQ-2020-002
+        condition: completed  # Связь с Trauma Team контрактом
+      - quest: MQ-2030-001
+        condition: in_progress
+    consequences:
+      main_story:
+        - "Влияет на исход MQ-2030-001 (общественное мнение)"
+      next_era:
+        - "Медиа кампании доступны в 2045-2060"
+  
+  SQ-2030-002:
+    name: "Аудит купола"
+    era: "2030-2045"
+    type: side
+    class_focus: Netrunner
+    main_quest_connections:
+      - MQ-2030-001  # Устав Световых Куполов (прямая связь)
+      - MQ-2030-005  # Кризис доступа (связан с куполами)
+    influences:
+      reputation:
+        Dome_Residents: +15
+        Corpo_Security: -10
+      flags:
+        - dome_secrets_known: true
+      unlocks:
+        - SQ-2045-001  # Phantom hunt (в следующей эпохе, связь через данные)
+    influenced_by:
+      - quest: SQ-2030-001
+        condition: completed
+      - class: Netrunner  # Легче для Netrunner
+    consequences:
+      critical_path:
+        - "Открывает информацию о куполах"
+        - "Может изменить исход MQ-2030-001"
+      main_story:
+        - "Данные важны для MQ-2045-002 (Глушь-пакеты)"
+  
+  SQ-2030-003:
+    name: "Подземные карты"
+    era: "2030-2045"
+    type: side
+    class_focus: Nomad
+    main_quest_connections:
+      - MQ-2030-002  # Картография Низа (прямая связь)
+    influences:
+      reputation:
+        Nomads: +20
+        Underground_Networks: +25
+      world_state:
+        - key: "underground_routes_mapped"
+          value: true
+      unlocks:
+        - SQ-2045-003  # Chorus conversion (связь через подземелье)
+    influenced_by:
+      - quest: SQ-2020-005
+        condition: completed  # Конвой Aldecaldos
+      - quest: MQ-2030-002
+        condition: in_progress
+    consequences:
+      critical_path:
+        - "Карты доступны всем союзникам"
+        - "Открывает скрытые локации в 2045-2060"
+  
+  SQ-2030-004:
+    name: "Нейроэтический иск"
+    era: "2030-2045"
+    type: side
+    class_focus: Lawman
+    main_quest_connections:
+      - MQ-2030-003  # Соглашение о нейроэтике (прямая связь)
+    influences:
+      reputation:
+        Lawman_Guild: +25
+        Corpo_Legal: +15
+        Cyberware_Manufacturers: -20
+      world_state:
+        - key: "neuroethics_lawsuit_won"
+          value: true
+          condition: "quest_success"
+      unlocks:
+        - SQ-2045-002  # Emitter cartel (в следующей эпохе)
+    influenced_by:
+      - quest: SQ-2020-006
+        condition: completed  # Padre может помочь юридически
+      - quest: MQ-2030-003
+        condition: in_progress
+    consequences:
+      main_story:
+        - "Может изменить MQ-2030-003 (ограничения имплантов)"
+      next_era:
+        - "Нейроэтика становится важной в 2045-2060"
+  

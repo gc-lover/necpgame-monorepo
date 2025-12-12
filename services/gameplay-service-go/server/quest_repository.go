@@ -17,6 +17,7 @@ type QuestRepositoryInterface interface {
 	ImportQuest(ctx context.Context, quest *models.QuestDefinition) (*models.QuestDefinition, error)
 	GetQuestByQuestID(ctx context.Context, questID string) (*models.QuestDefinition, error)
 	CancelQuest(ctx context.Context, characterID uuid.UUID, questID uuid.UUID) error
+	SaveQuest(ctx context.Context, questID string, version int, title, description, questType string, isActive bool, contentData map[string]interface{}) (*models.QuestDefinition, error)
 }
 
 type QuestRepository struct {
@@ -128,4 +129,24 @@ func (r *QuestRepository) CancelQuest(ctx context.Context, characterID uuid.UUID
 	}
 
 	return nil
+}
+
+// SaveQuest upserts quest definition from content import payload.
+// It maps minimal fields into QuestDefinition and delegates to ImportQuest for DB upsert.
+func (r *QuestRepository) SaveQuest(ctx context.Context, questID string, version int, title, description, questType string, isActive bool, contentData map[string]interface{}) (*models.QuestDefinition, error) {
+	quest := &models.QuestDefinition{
+		QuestID:      questID,
+		Title:        title,
+		Description:  description,
+		QuestType:    questType,
+		Requirements: map[string]interface{}{},
+		Objectives:   map[string]interface{}{},
+		Rewards:      map[string]interface{}{},
+		Branches:     map[string]interface{}{},
+		ContentData:  contentData,
+		Version:      version,
+		IsActive:     isActive,
+	}
+
+	return r.ImportQuest(ctx, quest)
 }

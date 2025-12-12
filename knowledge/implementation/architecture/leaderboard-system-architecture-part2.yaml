@@ -1,0 +1,371 @@
+<!-- Issue: #140 -->
+metadata:
+  id: leaderboard-system-architecture
+  title: Архитектура системы лидербордов (Leaderboard System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-30T19:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - leaderboard
+    - backend
+    - world
+    - rankings
+  related_systems:
+    - world-service-go
+    - social-service-go
+    - character-service-go
+    - achievement-service-go
+    - gameplay-service-go
+  related_documents:
+    - id: backend-leaderboard-system
+      relation: extends
+    - id: implementation-leaderboard-core
+      relation: references
+  github_issue: 140
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы лидербордов
+    для управления глобальными, сезонными, дружественными и гильдийными рейтингами
+        - leaderboard-ranking (обновление позиций)
+        - leaderboard-seasons (управление сезонами)
+        - leaderboard-cache (кэширование)
+    - Интеграция с Redis для hot data
+    - Интеграция с PostgreSQL для персистентности
+    - Периодическая синхронизация Redis ↔ PostgreSQL
+    - Оптимизация запросов (индексы, кэширование)
+
+  performance_requirements:
+    - Получение топ-100 < 10ms (из Redis)
+    - Получение позиции игрока < 5ms (из Redis)
+    - Обновление позиции < 50ms
+    - Поддержка до 1M игроков в глобальных рейтингах
+    - Поддержка до 10K активных лидербордов
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через world-service
+    - Распределение нагрузки на Redis кластер
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование активных лидербордов в Redis
+
+  caching_strategy:
+    - Redis для hot data (топ-1000, активные позиции)
+    - PostgreSQL для полных данных и истории
+    - Периодическая синхронизация (каждые 5 минут)
+    - Инвалидация кэша при обновлениях
+
+  data_consistency:
+    strategy: Eventual Consistency (Redis) + Strong Consistency (PostgreSQL)
+    mechanisms:
+      - Redis для hot data с периодической синхронизацией
+      - PostgreSQL для персистентного хранения с ACID транзакциями
+      - Оптимистичные блокировки для обновления позиций
+      - Outbox Pattern для гарантированной доставки событий
+      - Saga Pattern для сезонных операций (multi-service)
+
+  data_synchronization:
+    event_sourcing: |
+      Все изменения рейтингов записываются как события:
+      - ScoreUpdatedEvent - очки обновлены
+      - RankChangedEvent - позиция изменена
+      - SeasonStartedEvent - сезон начался
+      - SeasonEndedEvent - сезон завершен
+
+      События хранятся в Event Store (Kafka topics) для:
+      - Восстановления состояния рейтингов
+      - Аудит-лога операций
+      - Синхронизации с другими сервисами
+      - Аналитики и мониторинга
+
+    cqrs_pattern: |
+      Разделение команд и запросов:
+      - Write Model: Ranking Engine обрабатывает команды (update score, update rank)
+      - Read Model: Оптимизированные представления для быстрого чтения рейтингов
+      - Projections: Материализованные представления для частых запросов
+      - Event Handlers: Обработка событий для обновления read-моделей
+
+    saga_pattern: |
+      Для сезонных операций:
+      - Season Reset Saga: координация между world, achievement, economy сервисами
+      - Reward Distribution Saga: распределение наград по тирам
+
+      Компенсирующие транзакции:
+      - Откат сезонных изменений при ошибках
+      - Восстановление состояния при сбоях
+
+    outbox_pattern: |
+      Гарантированная доставка событий:
+      - Запись событий в outbox таблицу в той же транзакции
+      - Outbox Processor публикует события в Event Bus
+      - Retry механизм для failed событий
+      - Идемпотентность обработки событий
+
+  tickrate_specification:
+    leaderboard_operations:
+      tickrate: Event-based (on-demand) + 1-5 Hz для синхронизации
+      description: |
+        Операции с лидербордами выполняются по требованию (event-based),
+        но требуется периодическая синхронизация Redis ↔ PostgreSQL.
+      network_load: |
+        - Обновление очков: event-based, ~10-50 events/sec на сервер
+        - Синхронизация Redis ↔ PostgreSQL: 1-5 updates/sec
+        - Запросы лидербордов: on-demand, ~5-20 requests/sec
+        - Общий трафик: ~0.5-1 KB/sec на игрока
+      sync_strategy: Eventual Consistency (Redis) + Strong Consistency (PostgreSQL)
+      latency_requirements: |
+        - Получение топ-100: < 10ms (из Redis)
+        - Получение позиции игрока: < 5ms (из Redis)
+        - Обновление позиции: < 50ms
+        - Синхронизация Redis ↔ PostgreSQL: < 200ms (асинхронно)
+
+subtasks:
+  - id: leaderboard-manager-module
+    title: Реализация модуля Leaderboard Manager
+    description: |
+      Создание модуля управления лидербордами
+      CRUD операции для лидербордов
+      Получение рейтингов и позиций
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: score-calculator-implementation
+    title: Реализация Score Calculator
+    description: |
+      Реализация функций расчёта очков
+      Интеграция с другими сервисами
+      Оптимизация расчётов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: ranking-engine-development
+    title: Реализация Ranking Engine
+    description: |
+      Обновление позиций игроков
+      Синхронизация Redis ↔ PostgreSQL
+      Батчевая обработка обновлений
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: season-manager-implementation
+    title: Реализация Season Manager
+    description: |
+      Управление сезонами
+      Сезонные сбросы и архивация
+      Распределение наград
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: cache-manager-development
+    title: Реализация Cache Manager
+    description: |
+      Управление кэшированием в Redis
+      Операции с sorted sets
+      Инвалидация кэша
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: redis-postgresql-sync
+    title: Синхронизация Redis ↔ PostgreSQL
+    description: |
+      Периодическая синхронизация данных
+      Батчевая запись в PostgreSQL
+      Обработка конфликтов
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Материализованные представления
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для лидербордов
+      Интеграция с существующим API world-service
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты управления лидербордами
+      Тесты расчёта очков
+      Тесты синхронизации Redis ↔ PostgreSQL
+      Тесты сезонных сбросов
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "World Service"
+            LM[Leaderboard Manager]
+            SC[Score Calculator]
+            RE[Ranking Engine]
+            SM[Season Manager]
+            CM[Cache Manager]
+        end
+
+        subgraph "Storage"
+            Redis[(Redis<br/>Sorted Sets)]
+            DB[(PostgreSQL<br/>leaderboards<br/>leaderboard_entries<br/>leaderboard_snapshots)]
+        end
+
+        subgraph "External Services"
+            CS[Character Service]
+            AS[Achievement Service]
+            ES[Economy Service]
+            SS[Social Service]
+            GS[Gameplay Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| LM
+        LM --> CM
+        LM --> RE
+        RE --> CM
+        RE --> SC
+        SC --> CS
+        SC --> AS
+        SC --> ES
+        SC --> GS
+        CM -->|read/write| Redis
+        RE -->|sync| DB
+        SM -->|snapshots| DB
+        LM -->|friends/guilds| SS
+        RE -->|updates| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant E as Event
+        participant SC as Score Calculator
+        participant RE as Ranking Engine
+        participant CM as Cache Manager
+        participant R as Redis
+        participant DB as PostgreSQL
+        participant RG as Realtime Gateway
+        participant C as Client
+
+        E->>SC: Game event
+        SC->>SC: Calculate score
+        SC->>RE: Update ranking
+        RE->>CM: Update cache
+        CM->>R: ZADD score
+        RE->>DB: Batch sync
+        RE->>RG: Notify change
+        RG->>C: Push update
+        
+        C->>CM: Query leaderboard
+        CM->>R: ZRANGE top-100
+        R->>CM: Return data
+        CM->>C: Return leaderboard
+    ```
+
+  season_lifecycle: |
+    ```mermaid
+    graph LR
+        subgraph "Season Lifecycle"
+            S1[Season Start]
+            S2[Active Season]
+            S3[Season End]
+            S4[Snapshot Created]
+            S5[Rewards Distributed]
+            S6[Archived]
+        end
+
+        S1 -->|start| S2
+        S2 -->|end date| S3
+        S3 -->|create snapshot| S4
+        S4 -->|distribute rewards| S5
+        S5 -->|archive| S6
+        S6 -->|new season| S1
+    ```
+
+decisions:
+  - id: adr-leaderboard-architecture
+    summary: |
+      Выбрана модульная архитектура внутри world-service-go для обеспечения
+      тесной интеграции с мировыми системами и глобальными данными.
+
+  - id: adr-redis-postgresql
+    summary: |
+      Использование Redis для hot data (топ-1000, активные позиции) и PostgreSQL
+      для персистентного хранения обеспечивает баланс между производительностью
+      и надёжностью.
+
+  - id: adr-scoring-functions
+    summary: |
+      Модульная система расчёта очков позволяет легко добавлять новые метрики
+      и типы лидербордов без изменения основной архитектуры.
+
+  - id: adr-seasonal-resets
+    summary: |
+      Сезонные сбросы с архивацией и наградами обеспечивают долгосрочную
+      мотивацию игроков и справедливое соревнование.
+
+  - id: adr-realtime-updates
+    summary: |
+      Real-time обновления через Realtime Gateway обеспечивают актуальность
+      данных для игроков и повышают вовлечённость.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение стратегии кэширования
+
+history:
+  - version: "1.1.0"
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы лидербордов:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с лидербордами
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
+  - version: "1.0.0"
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы лидербордов:
+      - Определены компоненты (Leaderboard Manager, Score Calculator, Ranking Engine, Season Manager, Cache Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД и Redis
+      - Спроектирована система обновления рейтингов
+      - Определена стратегия кэширования
+      - Создано техническое задание
+      - Разбито на подзадачи
