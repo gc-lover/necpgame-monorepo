@@ -1,0 +1,94 @@
+# Issue: #1765
+metadata:
+  id: combat-dynamic-armor-1765
+  title: "Динамическая броня и пробитие по зонам"
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: combat_designer
+      contact: combat@necp.game
+  tags:
+    - armor
+    - penetration
+    - ricochet
+  topics:
+    - ballistics
+  related_systems:
+    - gameplay-service
+    - physics-engine
+    - analytics-service
+  visibility: internal
+  audience:
+    - gameplay
+    - analytics
+  risk_level: medium
+summary:
+  problem: "Нужна модель брони по зонам (head/torso/legs), материалы soft/hard, пробитие/рикошет по типам боеприпасов."
+  goal: "Задать слои/модификаторы, шансы pen/ricochet, износ и UI-индикацию; собрать телеметрию."
+  essence: "Зональная броня с износом; soft быстрее стирается, hard рикошетит; AP/HP/EM/energy по-разному пробивают."
+content:
+  sections:
+    - id: layers
+      title: "Слои и материалы"
+      body: |
+        • Зоны: head/torso/legs.  
+        • Soft: базовый DR 18–24%, износ 10–14 HP/попадание; рикошет 2–4%.  
+        • Hard: DR 32–42%, износ 6–9 HP/попадание; рикошет 8–14%.  
+        • Износ снижает DR линейно; при 0 HP слой пробит.
+      mechanics_links: []
+      assets: []
+    - id: ammo
+      title: "Боеприпасы и модификаторы"
+      body: |
+        • HP: +20% урон по soft, -25% pen по hard; рикошет -4%.  
+        • AP: +30% pen, -10% урон по flesh; рикошет +5% на hard.  
+        • EM: игнор 25% DR hard, снижает рикошет на 6%; наносит shock.  
+        • Energy: стабильный pen, но падает на 15% через 2 слоя.
+      mechanics_links: []
+      assets: []
+    - id: ricochet
+      title: "Рикошет и угол"
+      body: |
+        • Базовый шанс зависит от материала и угла; острый угол <25° даёт +6–10% к рикошету.  
+        • Рикошет снижает урон на 40–55% и меняет траекторию.
+      mechanics_links: []
+      assets: []
+    - id: ui
+      title: "UI/индикация"
+      body: |
+        • Иконки soft/hard по зонам, цвет по HP слоя.  
+        • Предупреждение о пробитии; звуковой сигнал при рикошете.  
+        • Тренировочный стенд для теста pen/ricochet.
+      mechanics_links: []
+      assets: []
+    - id: telemetry
+      title: "Телеметрия"
+      body: |
+        • hits_by_zone, pen_events, ricochet_events, armor_hp_loss.  
+        • ttk_delta_from_pen, ricochet_angle_stats, ammo_split.  
+        • Цели: рикошет не доминирует, pen ощутим на AP/EM.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1765
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: combat_team
+    changes: "Зональная броня: soft/hard, pen/ricochet по боеприпасам, UI и телеметрия."
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

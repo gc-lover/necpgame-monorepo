@@ -1,5 +1,5 @@
 -- Issue: #133
--- github_issue: 133
+-- github_issue: 109
 -- Migration: 001-expand-quests-table.sql
 -- Version: 1.0.0
 -- Date: 2025-11-07 00:22

@@ -1,0 +1,115 @@
+title: Аналитика боя: «Боевой инспектор»
+# Issue: #1755
+summary:
+  goal: Расходник включает аналитику на 60 с: показывает TTK, точность, слабые зоны врага; помогает адаптировать билд/тактику.
+item:
+  duration_s: 60
+  cooldown_s: 300
+  cost: medium
+metrics_shown:
+  ttk_avg_ms: per target type
+  accuracy_pct: hits/shots
+  weakspot_hint: zone taking most damage
+  recoil_pattern_hint: simple overlay
+telemetry:
+  - metric: inspector_uses
+    desc: использования и winrate после
+  - metric: inspector_ttk_change
+    desc: изменение TTK между до/после
+  - metric: inspector_accuracy_change
+    desc: прирост точности
+edge_cases:
+  - anti_abuse: overlay минимальный, нет автоприцеливания
+  - coop: данные показываются только пользователю
+  - minors: убрать gore из weakspot визуала
+
+# Issue: #1755
+metadata:
+  id: analytics-battle-inspector-1755
+  title: "Аналитика боя: «Боевой инспектор»"
+  document_type: mechanics
+  category: analytics
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: analytics_designer
+      contact: analytics@necp.game
+  tags:
+    - analytics
+    - combat
+    - consumable
+  topics:
+    - telemetry
+  related_systems:
+    - analytics-service
+    - gameplay-service
+    - ui-service
+  visibility: internal
+  audience:
+    - analytics
+    - gameplay
+  risk_level: medium
+summary:
+  problem: "Расходник на 60с показывает средний TTK, точность, слабые зоны врага; нужен баланс/UX без перегруза."
+  goal: "Определить параметры расходника, метрики, точность, HUD overlay и телеметрию."
+  essence: "Боевой инспектор: 60с сессия аналитики, метрики TTK/точность/weakpoints, лёгкий HUD."
+content:
+  sections:
+    - id: consumable
+      title: "Параметры расходника"
+      body: |
+        • Длительность 60с, кд 5 мин, стоимость средняя.  
+        • Активируется в бою; сбор метрик по текущей встрече.
+      mechanics_links: []
+      assets: []
+    - id: metrics
+      title: "Метрики"
+      body: |
+        • Средний TTK, точность (%), попадания по зонам, слабые зоны врага (нижний DR).  
+        • DPS, first-shot accuracy, overheat/перезаряд паузы.
+      mechanics_links: []
+      assets: []
+    - id: ux
+      title: "UX/HUD"
+      body: |
+        • Минимальный оверлей: карточка с метриками, индикатор слабой зоны.  
+        • Нет автосоветов, только данные; можно открыть после боя.  
+        • Приватный режим — метрики не шарятся.
+      mechanics_links: []
+      assets: []
+    - id: accuracy
+      title: "Точность и ограничения"
+      body: |
+        • Оценка weakpoints с доверительным интервалом; если данных мало — показываем «недостаточно данных».  
+        • Не работает в PvP рейтинге (анти-абуз).
+      mechanics_links: []
+      assets: []
+    - id: telemetry
+      title: "Телеметрия"
+      body: |
+        • inspector_uses, metrics_viewed, post_use_winrate_delta.  
+        • weakpoint_confidence_levels, overlay_open_time.  
+        • Цели: помощь игроку без P2W, сбор балансовых данных.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1755
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: analytics_team
+    changes: "Боевой инспектор: расходник, метрики TTK/точность/weakpoints, UX и телеметрия."
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

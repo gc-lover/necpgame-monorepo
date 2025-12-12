@@ -1,0 +1,63 @@
+# Issue: #1832
+metadata:
+  id: analysis-idea-ai-merc-chameleons
+  title: AI враг: Наёмники-«хамелеоны» (маскировка под окружение)
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1832
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - ai
+    - stealth
+    - ambush
+  topics:
+    - camouflage
+    - traps
+  related_systems:
+    - ai_director
+    - perception
+    - telemetry
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1832
+summary:
+  problem: Нужны гуманоидные стелс-наёмники, раскрываемые сканами.
+  goal: Задать камуфляж, ловушки, смену позиции и метрики обнаружения/убийств из засады.
+  essence: Кратковременный стелс, выстрел → отход, мины/ловушки, синергия со снайперами-дронами.
+  key_points:
+    - Камуфляж с кулдауном, раскрытие при выстреле.
+    - Мины и ловушки на маршруте игроков.
+    - Подсветка целей для отряда.
+    - Телеметрия обнаружений и засадных убийств.
+content:
+  stealth:
+    duration_sec: 6
+    cooldown_sec: 14
+    reveal_on: [shot_fired, thermo_scan, sound_scan]
+  traps:
+    types: [proximity_mine, slow_trap]
+    placement_logic: choke_points
+  behavior:
+    opener: ambush_volley
+    retreat_after_shot: true
+    avoid_sensors: true
+  synergy:
+    - drone_snipers_follow_up_on_marks
+    - marks_shared_with_corp_squad
+  telemetry:
+    events:
+      - name: chameleon_detected
+        fields: [detection_type]
+      - name: chameleon_trap_kill
+        fields: [trap_type]
+      - name: chameleon_ambush_kill
+        fields: [target_role]
+risks:
+  - frustration_if_detection_tools_are_rare
+  - trap_spam_in_narrow_corridors
+  - low_threat_if_traps_too_weak
+

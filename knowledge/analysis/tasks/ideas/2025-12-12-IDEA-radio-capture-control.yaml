@@ -1,0 +1,58 @@
+# Issue: #1760
+metadata:
+  id: analysis-idea-radio-capture-control
+  title: Контроль каналов связи (радио-капчер)
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1760
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - control
+    - communication
+    - pvpve
+  topics:
+    - radio_capture
+    - comms_buff
+  related_systems:
+    - telemetry
+    - matchmaking
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1760
+summary:
+  problem: Нужен капчер радиоканала района с баффом связи и резом радиуса пингов врагам.
+  goal: Определить механику мини-игры/захвата, длительность владения, бонусы и анти-абуз.
+  essence: Захвати канал через мини-игру → команда получает буст связи, враги теряют радиус пингов на время.
+  key_points:
+    - Мини-игра чек/спектр, окно удержания.
+    - Бонус к связи, дебаф радиуса пингов врагам.
+    - Кулдауны/шум/контр-капчер.
+    - Телеметрия захватов и длительности владения.
+content:
+  capture:
+    minigame_type: freq_alignment
+    capture_time_sec: 18
+    hold_duration_sec: 90
+    contestable: true
+  effects:
+    team_comms_bonus_pct: 20
+    enemy_ping_radius_reduction_pct: 30
+    effect_radius_m: 180
+  anti_abuse:
+    recapture_cooldown_sec: 60
+    noise_beacon_on_capture: true
+  telemetry:
+    events:
+      - name: radio_channel_capture
+        fields: [contested, duration_sec]
+      - name: radio_channel_lost
+        fields: [hold_time_sec]
+risks:
+  - пермаконтроль без жёстких кулдаунов
+  - дискомфорт от дебафа пингов в PvP матчах
+  - перегруз сервера при множестве точек
+

@@ -1,0 +1,95 @@
+# Issue: #1686
+metadata:
+  id: idea-event-night-auction
+  title: Эвент: «Ночной аукцион» (конвой редкостей)
+  document_type: analysis
+  category: world-event
+  status: in-progress
+  version: '0.1.0'
+  last_updated: 2025-12-12T14:02:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  processed_by: idea-writer
+  processed_at: 2025-12-12T14:02:00Z
+  github_issue_number: 1686
+  owners:
+    - role: liveops
+      contact: liveops@necp.game
+  tags:
+    - world-event
+    - convoy
+  topics:
+    - pvpve
+    - loot
+  related_systems:
+    - world-service
+    - gameplay-service
+    - analytics-service
+    - auth-service
+  related_documents: []
+  source: ''
+  visibility: internal
+  audience:
+    - design
+    - liveops
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: gameplay_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions:
+    - owner: balance
+      action: утвердить параметры волн/таймеров удержания
+      due_at: 2025-12-15
+summary:
+  problem: Нужен PvPvE-конвой с редким лутом, где контроль «сервера аукциона» решает награды.
+  goal: Определить маршрут, волны охраны, механику захвата сервера, таймеры и лут-пулы.
+  essence: Конвой движется по маршруту, игроки штурмуют точки доступа к серверу; удержание сервера даёт право на дроп.
+  key_points:
+    - Маршрут с 3 сегментами и событиями, волны охраны по таймеру/дмг.
+    - Сервер-аукцион: захват каналом, сбои от урона/EMP.
+    - Лут-пулы с редкими модами, антик-фильтрами и сезонными сетами.
+content:
+  sections:
+    - id: route
+      title: Маршрут конвоя
+      body: |
+        - Длина: 3 сегмента по 3–4 минуты, общая длительность ~10 минут.
+        - События: блокпост (сегмент 1), тоннель с эмп-полями (сегмент 2), открытое поле с дронами (сегмент 3).
+        - Скорость: 8 м/с базовая, замедление до 5 м/с при уроне >15% за 10с.
+    - id: waves
+      title: Волны охраны
+      body: |
+        - Тайминги: каждые 90с малая волна, каждые 240с усиленная.
+        - Состав: пехота (SMG/shotgun), дроны (jam/scan), мини-турели.
+        - Эскалация: при падении HP конвоя <60% спавн элитного звена; <30% — финальный заслон.
+    - id: auction_server
+      title: Сервер аукциона
+      body: |
+        - Точки доступа: 2 на сегмент, активны 60с; нужно channel 12с без прерывания.
+        - Прерывание: любой урон по пользователю или EMP → сброс прогресса.
+        - Победа: первая сторона, удержавшая канал 12с в текущем окне, получает «ключ аукциона».
+        - Ключ действует на финальном дропе: право открыть редкий контейнер (1 на эвент).
+    - id: loot
+      title: Лут-пулы
+      body: |
+        - Базовый контейнер: редкие моды/ресурсы; шанс 20% на сетовый мод.
+        - Аукционный контейнер: 1 штука, гарант epic+ мод/сет, шанс 5% на легендарный сетовый элемент.
+        - Антик-фильтр: снижает шанс дропа, если ключ был получен одним и тем же аккаунтом >2 раз/неделю (анти-фарм).
+    - id: telemetry
+      title: Телеметрия/метрики
+      body: |
+        - Метрики: capture_rate, average_hold_time, convoy_hp_left, deaths_pvp/pve, key_reuse_blocked.
+        - События: convoy_spawn, convoy_segment_start, auction_channel_start/complete/interrupt, auction_key_awarded, loot_open.
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: idea-writer
+    changes: Черновик маршрута, волн охраны, механики сервера, лута и метрик.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

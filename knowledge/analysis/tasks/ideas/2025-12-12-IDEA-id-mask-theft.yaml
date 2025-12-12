@@ -1,0 +1,71 @@
+# Issue: #1667
+metadata:
+  id: analysis-idea-id-mask-theft
+  title: Стелс/соц: «Живая маска ID» кража профиля NPC
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1667
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - stealth
+    - social
+    - hacking
+  topics:
+    - identity_theft
+    - alarms
+  related_systems:
+    - security-service
+    - access-control
+    - drone-scanners
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1667
+summary:
+  problem: Нужна механика временного захвата профиля NPC с риском раскрытия и розыска.
+  goal: Описать флоу захвата, длительность, рост риска, эффекты розыска и контрмеры.
+  essence: Захват профиля → маска активна ограниченно, риск детекта растёт, при раскрытии — розыск и сканеры.
+  key_points:
+    - Хак/устройство для клонирования профиля.
+    - Градации доступа (низкий/средний/высокий) с разным риском.
+    - Условия раскрытия: рассинхронизация, камеры, свидетели.
+    - Розыск: метка, проверки, дроны-сканеры.
+content:
+  mask_grades:
+    - grade: low
+      duration_sec: 180
+      access: common_areas
+      detection_growth_pct_per_min: 5
+    - grade: mid
+      duration_sec: 120
+      access: secure_doors
+      detection_growth_pct_per_min: 9
+    - grade: high
+      duration_sec: 90
+      access: high_security_terminals
+      detection_growth_pct_per_min: 14
+  detection_triggers:
+    - desync_with_npc
+    - camera_face_match
+    - witness_alert
+    - high_security_terminal_access
+  wanted_effects:
+    - player_tagged_for_scanners
+    - increased_checks_by_npcs
+    - patrol_spawn_on_trigger
+  telemetry:
+    events:
+      - name: id_mask_start
+        fields: [grade]
+      - name: id_mask_detected
+        fields: [trigger]
+      - name: id_mask_profit
+        fields: [loot_value]
+risks:
+  - перма-фарм если риски малы
+  - фрустрация от раннего детекта без контрмер
+  - перегруз дронов-сканеров в локации
+

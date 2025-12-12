@@ -1,4 +1,4 @@
-// Issue: #50
+// Issue: #50, #387, #388
 package server
 
 import (
@@ -8,9 +8,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 )
 
 type QuestRepositoryInterface interface {
@@ -107,26 +107,25 @@ func (r *QuestRepository) CancelQuest(ctx context.Context, characterID uuid.UUID
 		 SET state = 'CANCELLED', updated_at = $1
 		 WHERE player_id = $2 AND quest_id = $3`,
 		time.Now(), characterID, questID)
-	
+
 	if err != nil {
 		return err
 	}
-	
+
 	// Check if any row was affected
 	var rowsAffected int64
 	err = r.db.QueryRow(ctx,
 		`SELECT COUNT(*) FROM gameplay.quest_instances 
 		 WHERE player_id = $1 AND quest_id = $2`,
 		characterID, questID).Scan(&rowsAffected)
-	
+
 	if err != nil {
 		return err
 	}
-	
+
 	if rowsAffected == 0 {
 		return errors.New("quest not found")
 	}
-	
+
 	return nil
 }
-

@@ -1,0 +1,115 @@
+title: Хардкор — усиленная супрессия (сужение HUD/обзора, метка источника)
+# Issue: #1772
+summary:
+  goal: Плотный огонь даёт супрессию: сужает FOV/HUD, лёгкий конус разброса, метит направление источника.
+thresholds:
+  bullets_in_2s: 8
+  radius_m: 22
+effects:
+  fov_narrow_deg: -8
+  hud_mask_opacity: 0.4
+  spread_cone_pct: +12
+  duration_s: 4
+  source_marker: brief arrow 2 s
+cooldown_s: 6 (per target)
+ai:
+  reacts_with_reposition: true
+  wont_stack: single effect per source
+telemetry:
+  - metric: suppression_events
+    desc: активации и длительность
+  - metric: suppression_repositions
+    desc: смены позиций игроков/NPC
+  - metric: suppression_deaths
+    desc: смертность под эффектом
+edge_cases:
+  - anti_abuse: одиночные пистолеты не триггерят; нужен rifle/LMG fire rate
+  - coop: эффекты не стакаются от разных источников одновременно
+  - minors: уменьшенная маска HUD
+
+# Issue: #1772
+metadata:
+  id: combat-hardcore-suppression-hud-1772
+  title: "Хардкор: усиленная супрессия (сужение HUD/обзора, метка источника)"
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: combat_designer
+      contact: combat@necp.game
+  tags:
+    - hardcore
+    - suppression
+    - pvp
+  topics:
+    - ballistics
+    - hud
+  related_systems:
+    - gameplay-service
+    - audio-engine
+    - analytics-service
+  visibility: internal
+  audience:
+    - gameplay
+    - analytics
+  risk_level: medium
+summary:
+  problem: "Плотный огонь должен сужать HUD/обзор и метить направление источника, вынуждая смену позиции."
+  goal: "Определить пороги супрессии, длительность эффектов, маркер направления и телеметрию."
+  essence: "Супрессия накапливается от входящих пуль; при пороге — сужение FOV/HUD и маркер источника, легкий разброс."
+content:
+  sections:
+    - id: thresholds
+      title: "Пороги и длительность"
+      body: |
+        • Порог супрессии: 4 пули за 1.2с в радиусе 1.8 м → эффект 2.0–2.8с.  
+        • Стек до 2 уровней: уровень 2 при 8 пуль → длительность 3.2–3.8с, штрафы сильнее.  
+        • Кулдаун иммунитета после эффекта: 6с.
+      mechanics_links: []
+      assets: []
+    - id: effects
+      title: "Эффекты"
+      body: |
+        • Сужение FOV на 8–12% (уровень 1) / 14–18% (уровень 2).  
+        • HUD-обрезка (компас/пинги) на 50–70% яркости; легкий конус разброса +6–10%.  
+        • Маркер грубого направления источника (сектор 35–50°).
+      mechanics_links: []
+      assets: []
+    - id: balance
+      title: "Баланс и анти-абуз"
+      body: |
+        • Супрессия влияет на AI/игроков одинаково; AI ищет укрытие или фланг.  
+        • Лимит срабатываний: не чаще 1 раз в 4с на цель.  
+        • Шум/окклюзия уменьшают накопление на 25%.
+      mechanics_links: []
+      assets: []
+    - id: telemetry
+      title: "Телеметрия"
+      body: |
+        • suppression_triggers, avg_duration, position_changes_after_trigger.  
+        • source_marker_accuracy, ttk_delta_under_suppression.  
+        • Цели: ≥40% смен позиций после уровня 2, маркер помогает, но не wallhack.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1772
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: combat_team
+    changes: "Добавлена модель усиленной супрессии с HUD/FOV эффектами и маркером источника."
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

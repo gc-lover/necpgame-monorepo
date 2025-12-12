@@ -1,0 +1,73 @@
+# Issue: #143889185
+metadata:
+  id: idea-time-glitch-rewind
+  title: Аномалия: «Сбои времени» (откат позиции 2–3 сек)
+  document_type: analysis
+  category: anomaly
+  status: in-progress
+  version: '0.1.0'
+  last_updated: 2025-12-12T14:28:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  processed_by: idea-writer
+  processed_at: 2025-12-12T14:28:00Z
+  github_issue_number: 143889185
+  owners:
+    - role: design
+      contact: design@necp.game
+  tags:
+    - anomaly
+    - time
+    - pvpve
+  topics:
+    - world-events
+    - anomalies
+  related_systems:
+    - world-service
+    - gameplay-service
+    - analytics-service
+    - auth-service
+  related_documents: []
+  source: ''
+  visibility: internal
+  audience:
+    - design
+    - analytics
+  risk_level: medium
+summary:
+  problem: Нужен редкий временной «откат позиции» на 2–3 сек с рисками и анти-абьюзом.
+  goal: Задать условия спавна, правила отката, награды/риски, метрики.
+  essence: В аномальной зоне игроки иногда откатываются в прошлую позицию, получая шанс на лут/бафф, но с риском стана.
+content:
+  sections:
+    - id: mechanics
+      title: Механика
+      body: |
+        - Спавн: редкие зоны (0.5% шанс при смене погоды/трафика), длительность 8 мин.
+        - Эффект: каждые 40–60с у игроков в зоне 10% шанс отката позиции/состояния на 2–3с; HP/патроны не откатываются (только позиция/статусы движения).
+        - Награда: при откате можно собрать «Temporal Residue» (1 шт.) → обмен на редкий шейдер/мод (1/день).
+    - id: risks
+      title: Риски/ограничения
+      body: |
+        - После отката 20% шанс стана на 1с (дезориентация).
+        - В бою с босами/аренах эффект отключён.
+        - Откат не возвращает игрока через стены/закрытые двери (navmesh safe clamp).
+    - id: anti_abuse
+      title: Анти-абьюз
+      body: |
+        - 1 откат/игрок/зона макс; мультиаккаунты с одинаковым IP/device → шанс отката снижен до 0.
+        - Telemetry проверяет частоту аномалий; >3 в час на аккаунт → флаг review.
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        - События: anomaly_spawn, rewind_trigger, rewind_reward, rewind_flagged.
+        - Поля: player_id, shard_id, zone_id, delta_time, rewind_success, stun_flag, residue_collected.
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: idea-writer
+    changes: Черновик правил отката, рисков, анти-абьюза и метрик.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

@@ -1,0 +1,56 @@
+# Issue: #1735
+metadata:
+  id: analysis-idea-falling-courier-drones
+  title: Пасхалка: Падающие дроны-курьеры
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1735
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - easter-egg
+    - drones
+    - loot
+  topics:
+    - repair
+    - traps
+  related_systems:
+    - loot
+    - telemetry
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1735
+summary:
+  problem: Редко падают повреждённые дроны; починка даёт лут или лог с подсказкой, возможна ловушка.
+  goal: Настроить частоту падений, шансы лут/лог, пример шифра и риск взрыва при неудаче.
+  essence: Поднять дрон → починить → получить ресурс/лог; провал — ловушка/взрыв.
+  key_points:
+    - Редкие спавны падений.
+    - Шансы лут vs. лог (base64/hex) с координатой/квест-хуком.
+    - Риск ловушки/взрыва при плохой починке.
+    - Телеметрия починок/взрывов/лутов.
+content:
+  spawn:
+    frequency_per_zone_per_hour: 0.3
+    zones: [market_roofs, transit_lines]
+  rewards:
+    loot_chance_pct: 65
+    log_chance_pct: 35
+    log_format: base64_coord_hint
+  trap:
+    explosion_damage: medium
+    failure_chance_pct: 20
+  telemetry:
+    events:
+      - name: courier_drone_repaired
+        fields: [outcome]
+      - name: courier_drone_trap
+        fields: [damage_taken]
+risks:
+  - фарм при высокой частоте спавна
+  - слишком частые взрывы отпугнут игроков
+  - лог может быть бесполезным без квестов
+

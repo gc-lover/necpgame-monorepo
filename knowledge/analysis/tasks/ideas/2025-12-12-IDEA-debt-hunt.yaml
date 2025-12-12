@@ -1,0 +1,56 @@
+# Issue: #1753
+metadata:
+  id: analysis-idea-debt-hunt
+  title: Соц-фа ворк: «Охота за должниками»
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1753
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - social
+    - bounty
+    - reputation
+  topics:
+    - debt_tracking
+    - informant
+  related_systems:
+    - reputation
+    - telemetry
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1753
+summary:
+  problem: Нужна система поимки игроков с долгами/штрафами с меткой «стукач».
+  goal: Описать логику долгов, поиск целей, награды и санкции для охотника.
+  essence: Отслеживай должников → сдача даёт кредиты/репутацию, но вешает метку «стукач» у других фракций.
+  key_points:
+    - Детекция легитимных долгов.
+    - Награды и метка «стукач».
+    - Анти-абуз лимиты.
+    - Телеметрия сдач и ответок фракций.
+content:
+  bounty:
+    base_reward: 2500
+    reputation_gain: medium
+    snitch_mark_duration_min: 45
+  detection:
+    min_debt_value: 1500
+    verification_checks: [faction_log, transaction_mismatch]
+  anti_abuse:
+    turn_in_cooldown_min: 20
+    repeat_on_same_target_cooldown_min: 60
+  telemetry:
+    events:
+      - name: debtor_flagged
+        fields: [debt_value]
+      - name: debtor_turned_in
+        fields: [reward]
+risks:
+  - ложные долги без верификации
+  - токсичность из-за метки «стукач»
+  - фарм на друзьях без кулдауна
+

@@ -1,15 +1,16 @@
+# Issue: #461
 metadata:
   id: analysis-ideas-2025-11-03-procedural-equipment-matrix
   title: Процедурная матрица снаряжения
   document_type: analysis
   category: combat-systems
   status: approved
-  version: '1.0.0'
-  last_updated: 2025-11-27T22:07:45Z
+  version: '1.1.0'
+  last_updated: 2025-12-12T10:30:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-27T22:07:45Z
   processed_by: idea-writer
-  processed_at: 2025-11-27T22:07:45Z
+  processed_at: 2025-12-12T10:30:00Z
   github_issue_number: 461
   owners:
     - role: brain_manager
@@ -57,7 +58,16 @@ review:
       reviewer: ''
       reviewed_at: ''
       status: pending
-  next_actions: []
+  next_actions:
+    - owner: brain_manager
+      action: утвердить перечень брендов и редкостей (таблица brand_matrix)
+      due_at: 2025-12-18
+    - owner: api-designer
+      action: обновить OpenAPI /economy/equipment с brand_id, rarity_seed, stat_pool_id
+      due_at: 2025-12-20
+    - owner: backend
+      action: оформить тестовые сиды и фикстуры матрицы (10 брендов, 5 редкостей, 6 пулов статов)
+      due_at: 2025-12-22
 summary:
   problem: Текущему документу требуется систематизировать идею процедурной генерации снаряжения с учётом брендов и баланса.
   goal: Определить основы матрицы характеристик и модификаторов для оружия, имплантов и экипировки.
@@ -81,6 +91,11 @@ content:
       body: |
         Предлагается поддержка процедурного дропа, крафта и квестовых наград с детерминированными сидами. Баланс пулов статов
         производится по лигам, режимам PvE/PvP/экстракта и температурным ограничениям, чтобы удерживать TTK и риски киберпсихоза.
+        - Редкости: Common (0.5), Uncommon (0.3), Rare (0.12), Epic (0.06), Legendary (0.02) — веса до серверных эвентов.
+        - Пулы статов: weapon_core (DMG/ROF/ACC), cyber_core (latency/stability/heat), armor_core (DR/HP/resists), utility_core (mobility/reload/stealth), support_core (heal/regen/cooldown), exotic_core (proc/chain/cc).
+        - Сиды: global_seed для сезона, shard_seed для шардов, player_seed для deterministic craft; формула: hash(season_seed, shard_id, player_id, item_slot, roll_id).
+        - Ограничения: TTK PvP 0.8–1.2s целевой; PvE энкаунтеры держать DPS-рейтинг ±8% от эталона уровня; тепловой бюджет имплантов ≤ 115% от допустимого класса.
+        - Anti-abuse: reroll ограничен 3/сутки на аккаунт; craft гарантирует один стат из целевого пула; легоси-предметы получают cap для progression-лиг.
       mechanics_links: []
       assets: []
     - id: system_links
@@ -97,6 +112,23 @@ content:
         крафтом и влиянии на экономику прогрессии лиг.
       mechanics_links: []
       assets: []
+    - id: brand_matrix
+      title: Бренды, сигнатуры и модификаторы
+      body: |
+        | Бренд | Фракция | Сигнатуры | Слабости | Уникальные моды |
+        | --- | --- | --- | --- | --- |
+        | Kiroshi Black | корпы | +ACC, +CRIT, low recoil | -HP, -heat cap | «Optic Lace» (ADS speed +15%), «Silent Sync» (-8% шум) |
+        | Militech Vanguard | милитар | +DMG, +pen, +stability | -stealth, -mobility | «Overpress» (+12% pen, +heat), «Brace» (-recoil ramp) |
+        | Arasaka Oni | синергия имплантов | +proc chance, +hack synergy | -raw DMG | «Neural Chain» (chains 2 targets), «Ghost Ping» (mark on crit) |
+        | Kang Tao Pulse | мобайл | +ROF, +reload, +mobility | -ACC | «Slide Reload» (reload while sliding), «Pulse Tap» (+ROF burst) |
+        | Zetatech Frost | контроль | +slow/cc, +cooldown | -DMG | «Frost Spike» (slow on hit), «Coolant Loop» (-heat, +stability) |
+        | Biotechnica Regen | выживаемость | +HP, +regen, +DR | -burst | «Cell Bloom» (+HoT on hit), «Thick Skin» (+DR on low HP) |
+        | Midnight Null | эксплойты | +crit multi, +backstab | -front DPS | «Backline» (+crit multi from behind), «Null Trace» (short vanish on kill) |
+        | Maelstrom Scrap | DIY | random rolls +chaos | -reliability | «Glitch Mod» (random proc), «Risk Spike» (+huge DMG, -stability) |
+        | Trauma Team Guardian | саппорт | +ally buffs, +rez speed | -solo DPS | «Guardian Field» (+ally DR), «Fast Patch» (rez speed) |
+        | 6th Street Grit | бюджет | +consistency, +cheap craft | -exotics | «Reliable Feed» (+jam immunity), «Spare Parts» (-craft cost) |
+        - Редкость влияет на количество мод-слотов: C=0/1, U=1, R=2, E=3, L=4.
+        - Exotic Core доступен только Epic+ и требует сезонного seed-флага.
 appendix:
   glossary: []
   references: []
@@ -108,6 +140,10 @@ implementation:
     - shared/trackers/queues/concept/queued.yaml#analysis-ideas-2025-11-03-procedural-equipment-matrix
   blockers: []
 history:
+  - version: '1.1.0'
+    date: 2025-12-12
+    author: idea-writer
+    changes: Добавлены brand_matrix, сиды, веса редкостей, анти-абьюз и next_actions для API/Backend.
   - version: '0.1.0'
     date: 2025-11-11
     author: brain_manager

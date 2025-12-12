@@ -44,10 +44,4 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-<<<<<<< HEAD
 )
-=======
-
-	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
-	)
->>>>>>> 70bbb2d80d93858714d52fd7f2ace4402c4a7bfc

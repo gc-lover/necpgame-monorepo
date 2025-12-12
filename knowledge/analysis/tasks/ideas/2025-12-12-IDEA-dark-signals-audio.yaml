@@ -1,0 +1,63 @@
+# Issue: #1724
+metadata:
+  id: analysis-idea-dark-signals-audio
+  title: Загадка: «Тёмные сигналы» (аудио-пакеты вне сетей)
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1724
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - puzzle
+    - audio
+    - risk
+  topics:
+    - decoding
+    - psych_stack
+  related_systems:
+    - radio
+    - telemetry
+    - psych-effects
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1724
+summary:
+  problem: Редкие «тёмные» сигналы дают криптоподсказки, но копят псих-напряжение.
+  goal: Настроить спавн частот, мини-игру декодирования, награды и риски псих-стека.
+  essence: Поймать сигнал → декодировать морзянкой/шумами → получить подсказку/лут, с шансом псих-эффектов.
+  key_points:
+    - Редкий спавн по таймерам/локациям вне сетей.
+    - Мини-игра/skill-check на декодирование.
+    - Псих-стек растёт при провале/затягивании.
+    - Телеметрия попыток/успехов/дебаффов.
+content:
+  spawn:
+    locations: [industrial_roofs, outskirts_towers]
+    cooldown_min: 900
+    active_window_sec: 90
+  decoding:
+    method: morse_noise_mix
+    time_limit_sec: 30
+    rewards: [lore_hint, small_cache_coord]
+    failure_effect: psych_stack_inc
+  psych_stack:
+    gain_on_fail: 10
+    thresholds:
+      - level: mild
+        effect: hud_glitch
+      - level: severe
+        effect: aim_sway
+  telemetry:
+    events:
+      - name: dark_signal_attempt
+        fields: [result, time_spent]
+      - name: dark_signal_reward
+        fields: [reward_type]
+risks:
+  - фрустрация при частых провалах
+  - перегруз псих-эффектов на новичках
+  - чит через гайды без рандомизации кодов
+

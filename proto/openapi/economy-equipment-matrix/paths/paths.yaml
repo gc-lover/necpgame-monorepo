@@ -1,0 +1,168 @@
+# Issue: #461
+paths:
+  /economy/equipment/generate:
+    post:
+      tags: [Equipment Generation]
+      summary: Сгенерировать предмет
+      description: |
+        Процедурно генерирует предмет на основе матрицы брендов, редкостей, пулов статов и модификаторов.
+      operationId: generateEquipment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateEquipmentRequest"
+      responses:
+        "200":
+          description: Сгенерированный предмет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedItem"
+        "400":
+          $ref: ../../common.yaml#/components/responses/BadRequest
+        "401":
+          $ref: ../../common.yaml#/components/responses/Unauthorized
+        "429":
+          $ref: ../../common.yaml#/components/responses/TooManyRequests
+        "500":
+          $ref: ../../common.yaml#/components/responses/InternalServerError
+
+  /economy/equipment/matrix:
+    get:
+      tags: [Equipment Matrix]
+      summary: Получить матрицу характеристик
+      description: Возвращает матрицу характеристик и модификаторов с фильтрами по бренду, типу предмета и редкости.
+      operationId: getEquipmentMatrix
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: brand_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по бренду
+        - name: item_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ItemType"
+          description: Фильтр по типу предмета
+        - name: rarity
+          in: query
+          schema:
+            $ref: "#/components/schemas/RarityCode"
+          description: Фильтр по редкости
+      responses:
+        "200":
+          description: Матрица характеристик
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipmentMatrixListResponse"
+        "401":
+          $ref: ../../common.yaml#/components/responses/Unauthorized
+        "429":
+          $ref: ../../common.yaml#/components/responses/TooManyRequests
+        "500":
+          $ref: ../../common.yaml#/components/responses/InternalServerError
+
+  /economy/equipment/brands:
+    get:
+      tags: [Equipment Matrix]
+      summary: Список брендов
+      operationId: listBrands
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Перечень брендов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrandListResponse"
+        "401":
+          $ref: ../../common.yaml#/components/responses/Unauthorized
+        "429":
+          $ref: ../../common.yaml#/components/responses/TooManyRequests
+        "500":
+          $ref: ../../common.yaml#/components/responses/InternalServerError
+
+  /economy/equipment/rarities:
+    get:
+      tags: [Equipment Matrix]
+      summary: Список редкостей
+      operationId: listRarities
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Перечень редкостей
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RarityListResponse"
+        "401":
+          $ref: ../../common.yaml#/components/responses/Unauthorized
+        "429":
+          $ref: ../../common.yaml#/components/responses/TooManyRequests
+        "500":
+          $ref: ../../common.yaml#/components/responses/InternalServerError
+
+  /economy/equipment/stat-pools:
+    get:
+      tags: [Equipment Matrix]
+      summary: Пулы характеристик
+      operationId: listStatPools
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ItemType"
+          description: Фильтр по типу предмета
+      responses:
+        "200":
+          description: Перечень пулов статов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatPoolListResponse"
+        "401":
+          $ref: ../../common.yaml#/components/responses/Unauthorized
+        "429":
+          $ref: ../../common.yaml#/components/responses/TooManyRequests
+        "500":
+          $ref: ../../common.yaml#/components/responses/InternalServerError
+
+  /economy/equipment/validate-balance:
+    post:
+      tags: [Balance Validation]
+      summary: Валидация баланса предмета
+      description: Проверка TTK, режимов (PvE/PvP/экстракт), температурных лимитов и рисков киберпсихоза.
+      operationId: validateEquipmentBalance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateBalanceRequest"
+      responses:
+        "200":
+          description: Результат проверки баланса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalanceValidationResult"
+        "400":
+          $ref: ../../common.yaml#/components/responses/BadRequest
+        "401":
+          $ref: ../../common.yaml#/components/responses/Unauthorized
+        "500":
+          $ref: ../../common.yaml#/components/responses/InternalServerError

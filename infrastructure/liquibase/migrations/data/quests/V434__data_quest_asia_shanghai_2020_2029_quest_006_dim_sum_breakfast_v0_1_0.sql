@@ -1,4 +1,4 @@
--- Issue: #50
+-- Issue: #50, #384
 -- Import quest from: asia\shanghai\2020-2029\quest-006-dim-sum-breakfast.yaml
 -- Version: 0.1.0
 -- Generated: 2025-12-07T01:14:46.965192

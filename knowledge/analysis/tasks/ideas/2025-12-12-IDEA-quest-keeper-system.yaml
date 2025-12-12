@@ -1,0 +1,62 @@
+# Issue: #1444
+metadata:
+  id: analysis-idea-quest-keeper-system
+  title: Система квест-киперов
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1444
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - npc
+    - quests
+    - narrative
+  topics:
+    - factions
+    - dialogue
+  related_systems:
+    - quest-service
+    - faction-service
+    - npc-service
+  related_documents:
+    - knowledge/analysis/tasks/ideas/quest-keeper-system-concept.md
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1444
+summary:
+  problem: Нужна система NPC-квест-киперов, связанных с фракциями/корпами и выдающих сюжетные ветки.
+  goal: Определить роли, привязки, диалоговые состояния и выдачу/прогресс квестов.
+  essence: NPC с фракционными ролями, диалогами и правами выдачи квестов с логом прогресса.
+  key_points:
+    - Привязка к фракции/корпорации и уровню доверия.
+    - Состояния диалога и условия выдачи.
+    - Лог прогресса и обновление доступных квестов.
+    - Анти-абуз на повторную выдачу.
+content:
+  npc_roles:
+    - fixer
+    - handler
+    - faction_representative
+  dialogue_states:
+    - greet
+    - offer
+    - in_progress
+    - turn_in
+  access_rules:
+    reputation_thresholds: [friendly, trusted, allied]
+    cooldown_on_repeat_hours: 24
+  telemetry:
+    events:
+      - name: quest_keeper_offer
+        fields: [npc_id, quest_id]
+      - name: quest_keeper_progress
+        fields: [quest_id, stage]
+      - name: quest_keeper_repeat_blocked
+        fields: [reason]
+risks:
+  - фарм через повторную выдачу без кулдауна
+  - несогласованность фракционного статуса и доступа
+  - рост сложности диалоговых деревьев без инструментации
+

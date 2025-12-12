@@ -1,0 +1,64 @@
+# Issue: #1793
+metadata:
+  id: analysis-idea-corp-audit-court
+  title: Соц/корп: Внутренние аудиторы и «корп-суд»
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1793
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - audit
+    - reputation
+    - sanctions
+  topics:
+    - compliance
+    - appeals
+  related_systems:
+    - reputation
+    - economy
+    - telemetry
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1793
+summary:
+  problem: Нужен флоу внутреннего аудита/корп-суда с штрафами или баффом доверия.
+  goal: Задать триггеры, шаги проверки, исходы и анти-абуз лимиты.
+  essence: Жалобы/подозрения → аудит логов/контрактов → штраф/блок или оправдание с бонусом доверия.
+  key_points:
+    - Триггеры аудита и подтверждение AI/модерацией.
+    - Штрафы/блоки/бафф доверия.
+    - Лимиты частоты, апелляции.
+    - Телеметрия аудитов и злоупотреблений.
+content:
+  triggers:
+    - suspicious_trade
+    - repeated_complaints
+    - faction_request
+  process:
+    steps: [flag, review, verdict]
+    review_time_sec: 120
+  outcomes:
+    penalties:
+      asset_freeze_sec: 600
+      fine_pct_of_balance: 8
+    rewards_on_clear:
+      trust_buff_duration_min: 30
+      discount_pct: 5
+  anti_abuse:
+    audit_cooldown_per_target_min: 60
+    appeal_allowed: true
+  telemetry:
+    events:
+      - name: corp_audit_started
+        fields: [trigger]
+      - name: corp_audit_verdict
+        fields: [outcome]
+risks:
+  - злоупотребление аудитом без кулдаунов
+  - негативный опыт при ложных штрафах без апелляций
+  - нагрузка на логи и модерацию
+

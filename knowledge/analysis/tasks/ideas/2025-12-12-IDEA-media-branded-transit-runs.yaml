@@ -1,0 +1,78 @@
+# Issue: #1814
+metadata:
+  id: analysis-idea-media-branded-transit-runs
+  title: Соц/медиа: бренд-рейсы транспорта/дронов (визуал, ссылки)
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1814
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - media
+    - transport
+    - branding
+  topics:
+    - rotations
+    - telemetry
+    - cosmetics-only
+  related_systems:
+    - transport
+    - telemetry
+    - moderation
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1814
+summary:
+  problem: Нужны брендовые рейсы транспорта/дронов с визуалом и ссылками без влияния на геймплей.
+  goal: Описать слоты ротаций, ливреи, QR/ссылки и метрики показов/кликов.
+  essence: Временные бренд-рейсы с ливреями и ссылками на креаторов/сообщества, с модерацией и телеметрией.
+  key_points:
+    - Только визуал, без бонусов к скорости или грузу.
+    - Слоты ротаций и сроки аренды.
+    - NSFW/brand-safety фильтры для ливрей и ссылок.
+    - Метрики показов и кликов по QR/ссылкам.
+content:
+  rotation:
+    slots_per_city: 4
+    duration_days: 4
+    vehicles: [metro, bus, cargo_drone, taxi_drone]
+    rules:
+      - enforce_expiry
+      - no_stat_modifiers
+      - limit_same_brand_repetition: 1_per_30_days
+  liveries:
+    assets:
+      - side_wrap
+      - roof_banner
+      - drone_skin
+    constraints:
+      - resolution_limits
+      - nsfw_and_trademark_checks
+      - qr_area_reserved
+  links_qr:
+    content:
+      - creator_profile
+      - community_invite
+      - ugc_shop_link
+    validation:
+      - domain_whitelist
+      - qr_scan_safety
+      - auto_expire_on_end_of_rental
+  telemetry:
+    events:
+      - name: transit_impression
+        fields: [vehicle_type, brand_id, route_id]
+      - name: transit_qr_scan
+        fields: [vehicle_type, brand_id, link_type]
+    metrics:
+      - impressions_per_route
+      - qr_ctr
+      - brand_repeat_rate
+risks:
+  - nsfw_or_trademark_violations
+  - low_ctr_without_good_routes
+  - clutter_if_slots_not_limited
+

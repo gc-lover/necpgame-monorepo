@@ -1,0 +1,114 @@
+title: Взлом погодной сетки (локальные туман/дождь/буря)
+# Issue: #1763
+summary:
+  goal: Игроки вызывают локальный туман/дождь/бурю за ресурс; повышает стелс, снижает видимость всем.
+params:
+  cost_resource: weather_chip
+  duration_s: 120
+  radius_m: 60
+  cooldown_s: 300
+effects:
+  fog: visibility_pct: 0.6, sensor_penalty_pct: 15
+  rain: visibility_pct: 0.7, projectile_spread_pct: +5
+  storm: visibility_pct: 0.5, sensor_penalty_pct: 25, lightning_noise: yes
+risk:
+  self_penalty: владелец тоже получает эффект
+  detection: при активации посылается сигнал охране
+telemetry:
+  - metric: weather_hacks
+    desc: активации по типу (fog/rain/storm)
+  - metric: fights_in_weather
+    desc: бои под эффектом и winrate
+  - metric: detection_responses
+    desc: сколько раз пришла охрана
+edge_cases:
+  - anti_abuse: 1 активный эффект на район; попытка второго — отказ, ресурс не тратится
+  - coop: эффект общий для всех в радиусе
+  - minors: снизить вспышки молний
+
+# Issue: #1763
+metadata:
+  id: world-weather-hack-1763
+  title: "Взлом погодной сетки (локальные туман/дождь/буря)"
+  document_type: mechanics
+  category: world
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: world_designer
+      contact: world@necp.game
+  tags:
+    - weather
+    - hacking
+    - stealth
+  topics:
+    - world
+  related_systems:
+    - world-service
+    - gameplay-service
+    - analytics-service
+  visibility: internal
+  audience:
+    - world
+    - gameplay
+    - analytics
+  risk_level: medium
+summary:
+  problem: "Нужен взлом погодной сетки: локальный туман/дождь/буря, повышает стелс, снижает видимость всем."
+  goal: "Определить стоимость, радиус, длительность, эффекты на сенсоры/TTK и анти-абуз."
+  essence: "Погодный импульс за ресурс: туман/дождь/буря, улучшает стелс, режет видимость/сенсоры, имеет кулдаун и зоновые лимиты."
+content:
+  sections:
+    - id: parameters
+      title: "Параметры"
+      body: |
+        • Стоимость: редкий ресурс/креды; чек авторизации.  
+        • Радиус 45–70 м, длительность 60–110с; кулдаун зоны 6–8 мин.  
+        • Типы: туман (видимость -30%, сенсоры -25%), дождь (-20%, шум +10%), буря (-40%, сенсоры -35%, урон имплантов/дронов малый).
+      mechanics_links: []
+      assets: []
+    - id: effects
+      title: "Эффекты на бой/сенсоры"
+      body: |
+        • Стелс бонус: снижение обнаружения на 15–25% в тумане/дожде.  
+        • TTK: урон по цели с низкой видимостью снижен на 5–10% из-за промахов.  
+        • Сенсоры/дроны работают хуже, буря глушит дальний пинг.
+      mechanics_links: []
+      assets: []
+    - id: anti-abuse
+      title: "Анти-абуз"
+      body: |
+        • Лимит активаций на район, кулдаун.  
+        • Повышенный шум при запуске (привлекает патруль).  
+        • Авто-откат при частом использовании (уменьшение длительности).
+      mechanics_links: []
+      assets: []
+    - id: telemetry
+      title: "Телеметрия"
+      body: |
+        • weather_hacks, type_split, fights_under_weather, winrate_during_weather.  
+        • sensor_fail_events, abuse_flags, patrol_alerts.  
+        • Цели: туман полезен для стелса, но даёт риск патруля.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1763
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: world_team
+    changes: "Взлом погодной сетки: стоимость, типы эффектов, анти-абуз, телеметрия."
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

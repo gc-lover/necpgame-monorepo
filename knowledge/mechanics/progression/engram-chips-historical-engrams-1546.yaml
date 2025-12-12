@@ -1,0 +1,131 @@
+title: Исторические энграммы — уникальные личности и получение
+# Issue: #1546
+summary:
+  goal: Дизайн исторических энграмм из лора (Сильверхенд и др.), их уникальные бонусы, условия получения и сюжетная ценность.
+  constraints:
+    - доступность строго по таймлайну появления технологии (2060+), исключения обоснованы сюжетом
+    - каждая энграмма <500 строк описания; файл <500 строк
+timeline:
+  tech_window:
+    earliest_viable_year: 2060
+    stable_mass_production: 2075
+    legendary_unlocks: 2077+
+  acquisition_modes:
+    - сюжетные арки (корп/бунт/анархия)
+    - рейды/raid_heists с уникальными требованиями
+    - фракционные репутации + black market
+roster:
+  - id: johnny_silverhand
+    death_year: 2023
+    availability_year: 2077
+    archetype: агрессивный рокер/анархист
+    bonuses:
+      skills: [reflex_guitar_buffs, inspire_resistance, explosive_expert]
+      passives: +15% мотивация отряда в критических фазах, +10% к урону взрывов
+    risks:
+      influence_gain_pct: 25
+      conflict_tags: [authority, corpo_alignment]
+    quests:
+      entry: легендарная линия "Johnny Legacy" (Night City)
+      gating: требует репутацию с уличными фиксеров и доступ к Relic Tier4+
+  - id: alt_cunningham
+    death_year: 2013
+    availability_year: 2077
+    archetype: нетраннер/девелопер Blackwall
+    bonuses:
+      skills: [blackwall_pierce, daemon_crafting_speed, quickhack_efficiency]
+      passives: -20% к риску обнаружения при взломе, +15% скорость демонов
+    risks:
+      influence_gain_pct: 30
+      conflict_tags: [ai_symbiosis, autonomy_loss]
+    quests:
+      entry: киберпространственный рейд через Blackwall-хабы
+      gating: требует анти-ICE деку и Tri-Neural Core
+  - id: saburo_aranasaka
+    death_year: 2077
+    availability_year: 2080
+    archetype: стратег/корпорат
+    bonuses:
+      skills: [resource_economy, negotiation, command_aura]
+      passives: -10% стоимость контрактов, +8% к эффективности баффов лидерства
+    risks:
+      influence_gain_pct: 35
+      conflict_tags: [rebellion, nomad_alignment]
+    quests:
+      entry: корпоративная ветка "Legacy of Iron"
+      gating: высокий корп-реп, блокатор Tier4+, moral_alignment != anarchist
+  - id: rogue_amendiares
+    death_year: 2083
+    availability_year: 2085
+    archetype: фиксер/тактик
+    bonuses:
+      skills: [stealth_ops, contract_bonus, escape_routes]
+      passives: +10% к наградам за скрытные контракты, -15% штраф к эвакуации
+    risks:
+      influence_gain_pct: 22
+      conflict_tags: [authority]
+    quests:
+      entry: цепочка фиксеров "Afterlife Promise"
+      gating: репутация с фиксерскими сетями, Relic Tier3+
+  - id: santiago_aldecaldo
+    death_year: 2079
+    availability_year: 2081
+    archetype: номад/саботаж
+    bonuses:
+      skills: [vehicle_control, sabotage, mobility]
+      passives: +12% к урону по технике, +10% скорость транспорта вне города
+    risks:
+      influence_gain_pct: 18
+      conflict_tags: [corpo_alignment]
+    quests:
+      entry: номадская арка "Sand Road"
+      gating: репутация с кланами, доступ к пустынным хабам
+mechanics:
+  unlock_rules:
+    - исторические энграммы требуют аутентичные ключи памяти (raid drop/quest)
+    - если персонаж умер до 2060, нужен сюж. justification (архив/Blackwall копия)
+    - каждая энграмма связана с таймлайном событий (перезапись невозможна до даты)
+  influence_model:
+    base_growth_pct: 1.0
+    legendary_growth_multiplier: 1.3
+    conflict_stack_penalty_pct: 10
+    therapy_decay_pct: 15
+  compatibility:
+    forbidden_pairs:
+      - [saburo_aranasaka, johnny_silverhand]
+      - [alt_cunningham, blackwall_fantom]
+    soft_conflicts:
+      - [rogue_amendiares, saburo_aranasaka]
+      - [johnny_silverhand, corpo_class_slots]
+  economy:
+    relic_min_tier: 4
+    upkeep_cost_per_day: 2500
+    black_market_markup_pct: 120
+    cloning_risk_pct: 35
+quests_hooks:
+  branches:
+    - type: anarchist_route
+      rewards: johnny_silverhand
+      blockers: prohibits saburo_aranasaka install
+    - type: corpo_route
+      rewards: saburo_aranasaka
+      penalties: +15% conflict with nomad bonuses
+    - type: netrunner_route
+      rewards: alt_cunningham
+      risks: blackwall_corruption_events
+  events:
+    - blackwall_feedback: периодические глитчи на 10-15с, усиливаются при 70% влияния
+    - legacy_echoes: редкие голосовые сцены при ключевых локациях (Afterlife, Arasaka Tower)
+telemetry:
+  - metric: engram_acquisition_rate
+    desc: доля игроков, получивших каждую историческую энграмму
+  - metric: influence_conflict_events
+    desc: количество конфликтов между историческими и стандартными энграммами
+  - metric: black_market_sales
+    desc: продажи исторических чипов на нелегальных рынках
+  - metric: quest_branch_completion
+    desc: завершения веток (anarchist/corpo/netrunner/nomad)
+edge_cases:
+  - anti_abuse: запрет на дупликацию исторической энграммы через кооп без ключа-подтверждения
+  - progression_guard: исторические чипы не ставятся на Relic Tier <3
+  - narrative_lock: если сюжетная арка не завершена, энграмма даёт только 50% бонусов

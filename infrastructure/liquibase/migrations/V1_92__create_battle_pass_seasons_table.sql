@@ -27,3 +27,7 @@ COMMENT ON COLUMN gameplay.battle_pass_seasons.updated_at IS 'Время пос�
 
 
 
+
+
+
+

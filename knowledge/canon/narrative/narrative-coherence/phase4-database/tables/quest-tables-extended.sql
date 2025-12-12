@@ -1,5 +1,5 @@
 -- Issue: #133
--- github_issue: 133
+-- github_issue: 109
 -- Extended Quest Tables for AAA MMORPG
 -- Version: 1.0.0
 -- Date: 2025-11-06 23:30

@@ -1,0 +1,96 @@
+# Issue: #1685
+metadata:
+  id: idea-event-city-of-silence
+  title: Эвент: «Город тишины» (оффлайн-район 15 мин)
+  document_type: analysis
+  category: world-event
+  status: in-progress
+  version: '0.1.0'
+  last_updated: 2025-12-12T13:55:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  processed_by: idea-writer
+  processed_at: 2025-12-12T13:55:00Z
+  github_issue_number: 1685
+  owners:
+    - role: liveops
+      contact: liveops@necp.game
+  tags:
+    - world-event
+    - offline-zone
+  topics:
+    - survival
+    - extraction
+  related_systems:
+    - world-service
+    - gameplay-service
+    - analytics-service
+    - auth-service
+  related_documents: []
+  source: ''
+  visibility: internal
+  audience:
+    - design
+    - liveops
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: gameplay_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions:
+    - owner: analytics
+      action: добавить метрики survival_rate/offline_deaths/evac_time
+      due_at: 2025-12-15
+summary:
+  problem: Нужен оффлайн-район на 15 мин без сети/HUD с дронами-патрулями и наградами за выживание/эвакуацию.
+  goal: Задать правила отключения, патрули, таймер, эвак-точки, награды и телеметрию.
+  essence: Игроки заходят в оффлайн-зону без HUD/связи, переживают патрули дронов и эвакуируются через ограниченные окна.
+  key_points:
+    - 15 минут: без сети/HUD, ограниченный инвентарь, баффов нет.
+    - Патрули дронов с эскалацией каждые 5 минут.
+    - Награды по времени жизни и эвак-статусу; телеметрия обязательна.
+content:
+  sections:
+    - id: rules
+      title: Правила зоны
+      body: |
+        - Длительность: 15 мин с момента входа последнего игрока или старта окна.
+        - HUD/сеть: отключены (нет карт, пингов, чата, маркеров). Минимальный diegetic UI: звук/свет дронов, таймер браслета.
+        - Инвентарь: запрет смены билдов; расходники разрешены, но не восполняются внутри.
+        - Баффы/дебаффы извне: обнуляются при входе.
+    - id: patrols
+      title: Патрули дронов
+      body: |
+        - Волны: каждые 5 мин усиливаются (HP/урон +20% каждая волна).
+        - Типы: скан-дроны (heat/EM), боевые (hitscan), подавители (jam/slow).
+        - Детект: шум/свет; стелс снижает шанс агро.
+        - Эскалация: при убийстве 5+ дронов за 60с спавн усиленного отряда.
+    - id: evac
+      title: Эвакуация
+      body: |
+        - Точки эвакуации: 2–3, активируются на 10-й и 13-й минуте, окно 60с.
+        - Требование: удерживать точку, пока идет загрузка (channel 6с); сбой — откат.
+        - Если не эвакуировался до 15:00 — авто-выброс с штрафом (50% наград).
+    - id: rewards
+      title: Награды
+      body: |
+        - Базовые: валюта + редкие расходники за выживание >5/10/15 мин.
+        - Эвак-бонус: шанс на редкий мод/шейдер; дополнительный дроп, если без урона от дронов.
+        - Риск: смерть = потеря части лута эвента (20–40%).
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        - Метрики: survival_rate, median_time_alive, evac_success_rate, deaths_from_drones%, disconnects, avg_dmg_taken.
+        - События: offline_enter, offline_exit, offline_evac, offline_death, drone_wave_spawn, drone_wave_kill.
+history:
+  - version: '0.1.0'
+    date: 2025-12-12
+    author: idea-writer
+    changes: Черновик правил оффлайн-эвента, патрулей дронов, эвакуации и наград.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

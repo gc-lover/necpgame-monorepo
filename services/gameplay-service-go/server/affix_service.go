@@ -7,9 +7,9 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,6 +27,11 @@ type AffixService struct {
 	logger *logrus.Logger
 }
 
+const (
+	serviceTimeoutRead  = 2 * time.Second
+	serviceTimeoutWrite = 3 * time.Second
+)
+
 func NewAffixService(db *pgxpool.Pool) *AffixService {
 	return &AffixService{
 		repo:   NewAffixRepository(db),
@@ -35,6 +40,9 @@ func NewAffixService(db *pgxpool.Pool) *AffixService {
 }
 
 func (s *AffixService) GetActiveAffixes(ctx context.Context) (*models.ActiveAffixesResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, serviceTimeoutRead)
+	defer cancel()
+
 	rotation, err := s.repo.GetActiveRotation(ctx)
 	if err != nil {
 		return nil, err
@@ -49,10 +57,16 @@ func (s *AffixService) GetActiveAffixes(ctx context.Context) (*models.ActiveAffi
 }
 
 func (s *AffixService) GetAffix(ctx context.Context, id uuid.UUID) (*models.Affix, error) {
+	ctx, cancel := context.WithTimeout(ctx, serviceTimeoutRead)
+	defer cancel()
+
 	return s.repo.GetAffix(ctx, id)
 }
 
 func (s *AffixService) GetInstanceAffixes(ctx context.Context, instanceID uuid.UUID) (*models.InstanceAffixesResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, serviceTimeoutRead)
+	defer cancel()
+
 	affixes, appliedAt, err := s.repo.GetInstanceAffixes(ctx, instanceID)
 	if err != nil {
 		return nil, err
@@ -67,15 +81,18 @@ func (s *AffixService) GetInstanceAffixes(ctx context.Context, instanceID uuid.U
 	}
 
 	return &models.InstanceAffixesResponse{
-		InstanceID:            instanceID,
-		AppliedAt:             appliedAt,
-		Affixes:               affixes,
-		TotalRewardModifier:   totalRewardModifier,
+		InstanceID:              instanceID,
+		AppliedAt:               appliedAt,
+		Affixes:                 affixes,
+		TotalRewardModifier:     totalRewardModifier,
 		TotalDifficultyModifier: totalDifficultyModifier,
 	}, nil
 }
 
 func (s *AffixService) GetRotationHistory(ctx context.Context, weeksBack, limit, offset int) (*models.AffixRotationHistoryResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, serviceTimeoutRead)
+	defer cancel()
+
 	if weeksBack < 1 || weeksBack > 52 {
 		weeksBack = 4
 	}
@@ -100,6 +117,9 @@ func (s *AffixService) GetRotationHistory(ctx context.Context, weeksBack, limit,
 }
 
 func (s *AffixService) TriggerRotation(ctx context.Context, force bool, customAffixes []uuid.UUID) (*models.AffixRotation, error) {
+	ctx, cancel := context.WithTimeout(ctx, serviceTimeoutWrite)
+	defer cancel()
+
 	if !force {
 		active, err := s.repo.GetActiveRotation(ctx)
 		if err == nil && active.WeekEnd.After(time.Now()) {
@@ -115,7 +135,7 @@ func (s *AffixService) TriggerRotation(ctx context.Context, force bool, customAf
 	if len(customAffixes) >= 8 {
 		affixIDs = customAffixes[:8]
 	} else {
-		allAffixes, err := s.getAllAffixes(ctx)
+		allAffixes, err := s.repo.ListAffixIDs(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -143,11 +163,11 @@ func (s *AffixService) TriggerRotation(ctx context.Context, force bool, customAf
 			continue
 		}
 		rotation.ActiveAffixes = append(rotation.ActiveAffixes, models.AffixSummary{
-			ID:                affix.ID,
-			Name:              affix.Name,
-			Category:          affix.Category,
-			Description:       affix.Description,
-			RewardModifier:    affix.RewardModifier,
+			ID:                 affix.ID,
+			Name:               affix.Name,
+			Category:           affix.Category,
+			Description:        affix.Description,
+			RewardModifier:     affix.RewardModifier,
 			DifficultyModifier: affix.DifficultyModifier,
 		})
 	}
@@ -160,28 +180,15 @@ func (s *AffixService) TriggerRotation(ctx context.Context, force bool, customAf
 }
 
 func (s *AffixService) getAllAffixes(ctx context.Context) ([]uuid.UUID, error) {
-	rows, err := s.repo.(*AffixRepository).db.Query(ctx,
-		`SELECT id FROM gameplay.affixes`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var ids []uuid.UUID
-	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-
-	return ids, nil
+	return s.repo.ListAffixIDs(ctx)
 }
 
 // GenerateAndApplyInstanceAffixes generates 2-4 random affixes from active rotation and applies to instance
 // Issue: #1515
 func (s *AffixService) GenerateAndApplyInstanceAffixes(ctx context.Context, instanceID uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(ctx, serviceTimeoutWrite)
+	defer cancel()
+
 	rotation, err := s.repo.GetActiveRotation(ctx)
 	if err != nil {
 		return errors.New("no active rotation")
@@ -221,4 +228,3 @@ func getNextMonday(t time.Time) time.Time {
 	nextMonday := t.AddDate(0, 0, daysUntilMonday)
 	return time.Date(nextMonday.Year(), nextMonday.Month(), nextMonday.Day(), 0, 0, 0, 0, time.UTC)
 }
-

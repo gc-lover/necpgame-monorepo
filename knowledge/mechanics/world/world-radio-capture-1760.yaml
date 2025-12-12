@@ -1,0 +1,113 @@
+title: Контроль каналов связи (радио-капчер)
+# Issue: #1760
+summary:
+  goal: Мини-игра захвата радиочастоты района; владение усиливает связь сквада и режет радиус пингов врагам на время.
+mechanics:
+  capture_minigame_time_s: 8
+  hold_duration_s: 180
+  buff_comms_radius_pct: 30
+  enemy_ping_radius_reduction_pct: 25
+  zone_lock_cooldown_s: 300
+anti_abuse:
+  noise_radius_m: 40 on start
+  counter_capture_time_s: 6 (для врага), освещение антенны
+  per_zone_limit: 1 active capture
+telemetry:
+  - metric: radio_captures
+    desc: успешные/сорванные капчеры
+  - metric: radio_hold_time
+    desc: суммарное владение
+  - metric: radio_fights
+    desc: бои у антенн
+edge_cases:
+  - anti_stalemate: если зона неоспорима 5 мин — бафф уменьшается до 10%
+  - coop: эффект на сквад владельца; врагам — штраф пингов
+  - minors: сниженные вспышки на индикаторе
+
+# Issue: #1760
+metadata:
+  id: world-radio-capture-1760
+  title: "Контроль каналов связи (радио-капчер)"
+  document_type: mechanics
+  category: world
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: world_designer
+      contact: world@necp.game
+  tags:
+    - radio
+    - capture
+    - communication
+  topics:
+    - control
+    - pvpve
+  related_systems:
+    - world-service
+    - gameplay-service
+    - analytics-service
+  visibility: internal
+  audience:
+    - world
+    - gameplay
+    - analytics
+  risk_level: medium
+summary:
+  problem: "Нужен радио-капчер: захват частоты района, усиление связи группы и резка радиуса пингов врагам."
+  goal: "Определить мини-игру/чек, длительность владения, эффекты на связь/пинги, анти-абуз и телеметрию."
+  essence: "Захват частоты через мини-игру; владение даёт буст связи, врагам режет пинг/радиус; есть шум и контр-капчер."
+content:
+  sections:
+    - id: capture
+      title: "Механика капчера"
+      body: |
+        • Точка радиоканала, мини-игра 8–12с или прогресс-бар с риском сбоя.  
+        • Владение 90–150с, затем точка нейтралится; контр-капчер сбрасывает прогресс.  
+        • Шум при захвате привлекает патруль.
+      mechanics_links: []
+      assets: []
+    - id: effects
+      title: "Эффекты на связь"
+      body: |
+        • Группе: радиус пингов +25–35%, стабильность связи.  
+        • Врагам в зоне: радиус пингов -20–30%, задержка.  
+        • Стакается с глобальной сетью? Нет, только локально.
+      mechanics_links: []
+      assets: []
+    - id: anti-abuse
+      title: "Анти-абуз"
+      body: |
+        • Кулдаун на повторный захват 3–4 мин.  
+        • Лимит одновременных точек на район.  
+        • Если точка пуста >30с, захват прогресс откатывается.
+      mechanics_links: []
+      assets: []
+    - id: telemetry
+      title: "Телеметрия"
+      body: |
+        • captures, holds_duration, contested_events, patrol_alerts.  
+        • ping_radius_changes, comms_quality_reports.  
+        • Цели: ощутимый буст связи, но с риском и контрой.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1760
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: world_team
+    changes: "Радио-капчер: мини-игра, эффекты на связь/пинги, анти-абуз, телеметрия."
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

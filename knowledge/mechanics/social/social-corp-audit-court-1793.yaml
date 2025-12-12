@@ -1,0 +1,38 @@
+title: Соц/корп — Внутренние аудиторы и «корп-суд»
+# Issue: #1793
+summary:
+  goal: Внутренний аудит игроков/кланов: проверка логов/контрактов. Исход — штрафы/блоки или бафф доверия.
+triggers:
+  - жалобы игроков
+  - подозрительные сделки (аномальные суммы/частота)
+  - флаг модерации
+process:
+  steps: precheck -> full_audit -> verdict -> appeal_window
+  timers_s:
+    precheck: 30
+    full_audit: 120
+    appeal: 180
+outcomes:
+  penalties:
+    fine_pct: 5-15 of recent earnings
+    temp_block_h: 4
+    rep_loss: -20 faction
+  positive:
+    trust_buff_duration_h: 24
+    discount_pct: 5 on faction vendors
+limits:
+  frequency_per_account_day: 2
+  auto_block_repeat: 3 penalties in 7d -> longer block
+telemetry:
+  - metric: audits_started
+    desc: запуски аудитов по триггерам
+  - metric: audit_outcomes
+    desc: штрафы/оправдания/апелляции
+  - metric: abuse_flags
+    desc: злоупотребления жалобами
+edge_cases:
+  - anti_abuse: массовые жалобы с одного клана замедляют старт (throttle)
+  - coop: клановые штрафы делятся между участниками онлайн
+  - minors: мягкий cap штрафов и блоков
+
+

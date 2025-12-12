@@ -1,4 +1,4 @@
--- Issue: #50
+-- Issue: #50, #358
 -- Import quest from: america\new-york\2078-2093\quest-042-league-constitution-ny.yaml
 -- Generated: 2025-12-06T21:12:57.831659
 

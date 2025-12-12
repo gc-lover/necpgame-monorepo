@@ -1,4 +1,4 @@
--- Issue: #50
+-- Issue: #50, #383
 -- Import quest from: asia\shanghai\2020-2029\quest-002-shanghai-tower.yaml
 -- Version: 0.1.0
 -- Generated: 2025-12-07T01:14:46.942085

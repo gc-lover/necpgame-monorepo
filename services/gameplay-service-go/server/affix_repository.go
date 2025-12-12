@@ -7,9 +7,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 )
 
 type AffixRepositoryInterface interface {
@@ -19,17 +19,26 @@ type AffixRepositoryInterface interface {
 	CreateRotation(ctx context.Context, rotation *models.AffixRotation) error
 	GetInstanceAffixes(ctx context.Context, instanceID uuid.UUID) ([]models.AffixSummary, time.Time, error)
 	SaveInstanceAffixes(ctx context.Context, instanceID uuid.UUID, affixes []uuid.UUID) error
+	ListAffixIDs(ctx context.Context) ([]uuid.UUID, error)
 }
 
 type AffixRepository struct {
 	db *pgxpool.Pool
 }
 
+const (
+	dbTimeoutRead  = 2 * time.Second
+	dbTimeoutWrite = 3 * time.Second
+)
+
 func NewAffixRepository(db *pgxpool.Pool) *AffixRepository {
 	return &AffixRepository{db: db}
 }
 
 func (r *AffixRepository) GetAffix(ctx context.Context, id uuid.UUID) (*models.Affix, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeoutRead)
+	defer cancel()
+
 	var affix models.Affix
 	var mechanicsJSON, visualEffectsJSON []byte
 
@@ -62,6 +71,9 @@ func (r *AffixRepository) GetAffix(ctx context.Context, id uuid.UUID) (*models.A
 }
 
 func (r *AffixRepository) GetActiveRotation(ctx context.Context) (*models.AffixRotation, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeoutRead)
+	defer cancel()
+
 	var rotation models.AffixRotation
 	var seasonalAffixID *uuid.UUID
 
@@ -101,11 +113,11 @@ func (r *AffixRepository) GetActiveRotation(ctx context.Context) (*models.AffixR
 		affix, err := r.GetAffix(ctx, *seasonalAffixID)
 		if err == nil {
 			rotation.SeasonalAffix = &models.AffixSummary{
-				ID:                affix.ID,
-				Name:              affix.Name,
-				Category:          affix.Category,
-				Description:       affix.Description,
-				RewardModifier:    affix.RewardModifier,
+				ID:                 affix.ID,
+				Name:               affix.Name,
+				Category:           affix.Category,
+				Description:        affix.Description,
+				RewardModifier:     affix.RewardModifier,
 				DifficultyModifier: affix.DifficultyModifier,
 			}
 		}
@@ -115,6 +127,9 @@ func (r *AffixRepository) GetActiveRotation(ctx context.Context) (*models.AffixR
 }
 
 func (r *AffixRepository) GetRotationHistory(ctx context.Context, weeksBack, limit, offset int) ([]models.AffixRotation, int, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeoutRead)
+	defer cancel()
+
 	weekStart := time.Now().AddDate(0, 0, -7*weeksBack)
 
 	var total int
@@ -172,11 +187,11 @@ func (r *AffixRepository) GetRotationHistory(ctx context.Context, weeksBack, lim
 			affix, err := r.GetAffix(ctx, *seasonalAffixID)
 			if err == nil {
 				rotation.SeasonalAffix = &models.AffixSummary{
-					ID:                affix.ID,
-					Name:              affix.Name,
-					Category:          affix.Category,
-					Description:       affix.Description,
-					RewardModifier:    affix.RewardModifier,
+					ID:                 affix.ID,
+					Name:               affix.Name,
+					Category:           affix.Category,
+					Description:        affix.Description,
+					RewardModifier:     affix.RewardModifier,
 					DifficultyModifier: affix.DifficultyModifier,
 				}
 			}
@@ -189,6 +204,9 @@ func (r *AffixRepository) GetRotationHistory(ctx context.Context, weeksBack, lim
 }
 
 func (r *AffixRepository) CreateRotation(ctx context.Context, rotation *models.AffixRotation) error {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeoutWrite)
+	defer cancel()
+
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -222,6 +240,9 @@ func (r *AffixRepository) CreateRotation(ctx context.Context, rotation *models.A
 }
 
 func (r *AffixRepository) GetInstanceAffixes(ctx context.Context, instanceID uuid.UUID) ([]models.AffixSummary, time.Time, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeoutRead)
+	defer cancel()
+
 	var appliedAt time.Time
 
 	err := r.db.QueryRow(ctx,
@@ -256,6 +277,9 @@ func (r *AffixRepository) GetInstanceAffixes(ctx context.Context, instanceID uui
 }
 
 func (r *AffixRepository) SaveInstanceAffixes(ctx context.Context, instanceID uuid.UUID, affixes []uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeoutWrite)
+	defer cancel()
+
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -283,3 +307,24 @@ func (r *AffixRepository) SaveInstanceAffixes(ctx context.Context, instanceID uu
 	return tx.Commit(ctx)
 }
 
+func (r *AffixRepository) ListAffixIDs(ctx context.Context) ([]uuid.UUID, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeoutRead)
+	defer cancel()
+
+	rows, err := r.db.Query(ctx, `SELECT id FROM gameplay.affixes`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, rows.Err()
+}

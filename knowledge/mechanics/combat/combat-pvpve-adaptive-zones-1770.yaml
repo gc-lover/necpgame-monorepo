@@ -1,0 +1,35 @@
+title: PvP/PvE адаптивное зонирование (режимы с индикаторами)
+# Issue: #1770
+summary:
+  goal: Сегменты карт с разной степенью PvP: безопасные, смешанные с повышенным лутом и открытым PvP; явный индикатор режима.
+segments:
+  safe:
+    pvp_enabled: false
+    loot_modifier: 0.8
+    penalties: heavy for aggression
+  mixed:
+    pvp_enabled: true
+    loot_modifier: 1.2
+    risk: patrols + player hunters
+  hardcore:
+    pvp_enabled: true
+    loot_modifier: 1.5
+    risk: open hostility, bounty possible
+transitions:
+  gates: clear UI warning + countdown 5 s
+  sanctions: flag if safe rules broken -> guard response
+ui:
+  indicators: map shading + HUD banner of current mode
+telemetry:
+  - metric: zone_visits
+    desc: посещения по типу сегмента
+  - metric: zone_deaths
+    desc: смертность PvE/PvP по сегментам
+  - metric: zone_loot
+    desc: лут/редкость по сегментам
+edge_cases:
+  - anti_abuse: смена сегмента для избегания боя даёт debuff -loot 30 s
+  - coop: сквад принимает режим лидера при переходе
+  - minors: default safe-only доступ
+
+

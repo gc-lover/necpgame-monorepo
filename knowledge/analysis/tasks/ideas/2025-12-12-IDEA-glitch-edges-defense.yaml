@@ -1,0 +1,121 @@
+# Issue: #1677
+metadata:
+  id: idea-glitch-edges-defense
+  title: Дефенс «Глитч-грани»
+  document_type: analysis
+  category: defense
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T13:28:00Z
+  github_issue_number: 1677
+  processed_by: idea-writer
+  tags: [defense, hitbox, accuracy, risk]
+summary:
+  problem: Нужен временный дрожащий хитбокс, уменьшающий входящий hit-rate, но портящий прицел игрока.
+  goal: Задать амплитуду/частоту дрожания, штрафы, длительность, кулдауны и уровни.
+  essence: Игрок труднее уязвим, но сам стреляет хуже; есть мягкий и жёсткий режимы.
+content:
+  levels:
+    - id: soft
+      name: Мягкий
+      params:
+        duration_sec: 8
+        cooldown_sec: 35
+        hitbox_shake_amp_m: 0.15
+        hitbox_shake_freq_hz: 2.5
+        self_accuracy_penalty: -8%
+        recoil_penalty: +6%
+    - id: hard
+      name: Жёсткий
+      params:
+        duration_sec: 6
+        cooldown_sec: 45
+        hitbox_shake_amp_m: 0.22
+        hitbox_shake_freq_hz: 3.2
+        self_accuracy_penalty: -14%
+        recoil_penalty: +10%
+  effects:
+    incoming_hit_rate_reduction: "~12-18% (soft) / ~20-26% (hard) в среднем по автоматике"
+    aim_drift: "пила-образный шум 0.3°/0.5° (soft/hard) обновл. каждые 120 мс"
+  counterplay:
+    - Стабилизаторы/гировкаты уменьшают дрейф прицела на 30%.
+    - Предиктивный AI оппонентов снижает эффект на hit-rate (до -5%).
+    - EMP кратко (2 сек) выключает дрожание.
+  metrics:
+    - Δ hit-rate по владельцу и владельцем, до/после.
+    - Средний урон, предотвращенный за активацию.
+    - Кол-во прерванных прицельных серий (trigger break).
+open_points:
+  - Нужно ли давать краткий aftereffect дрожания 1 сек после окончания.
+  - Допускается ли критический резист боссов (например, -50% эффекта).
+# Issue: #1677
+metadata:
+  id: idea-glitch-edges-defense-2025-12-12
+  title: Дефенс «Глитч-грани» — дрожащий хитбокс
+  document_type: idea
+  category: combat
+  status: draft
+  version: "0.1.0"
+  last_updated: 2025-12-12T13:17:00Z
+  github_issue_number: 1677
+  owners:
+    - role: idea_writer
+      contact: ideas@necp.game
+  tags:
+    - defense
+    - hitbox
+    - balance
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - analytics-service
+
+summary:
+  problem: Игроки хотят защитный инструмент, уменьшающий входящий урон при снайп-давлении, но с ощутимой обраткой.
+  goal: Ввести дрожащий хитбокс, который сложнее пробить, но ухудшает точность владельца.
+  pillars:
+    - Два уровня эффекта (мягкий/жёсткий) с разными штрафами.
+    - Прозрачные числа для балансирования и телеметрия hit rate.
+    - Контрплей через стабилизаторы и ИИ с предиктом траектории.
+
+mechanics:
+  levels:
+    - name: soft
+      jitter:
+        amplitude: 0.12 m
+        frequency: 3.0 Hz
+        duration: 6 s
+      self_penalty:
+        accuracy_spread: +15%
+        recoil: +10%
+      cooldown: 45 s
+    - name: hard
+      jitter:
+        amplitude: 0.22 m
+        frequency: 4.5 Hz
+        duration: 6 s
+      self_penalty:
+        accuracy_spread: +30%
+        recoil: +20%
+      cooldown: 60 s
+  constraints:
+    - не суммируется с другими «evasion» эффектами
+    - отключается при нулевом движении >3 s (анти-статик-абуз)
+    - недоступно в дуэлях с турнировым флагом fair-hitbox
+
+counterplay:
+  - стабилизаторы прицела уменьшают jitter по владельцу на 30%
+  - ИИ-снайперы с предиктом снижают промахи по jitter на 20%
+  - сканер показывает иконку «glitch» для врагов в 25 м
+
+telemetry:
+  metrics:
+    - incoming_hit_rate_delta
+    - outgoing_hit_rate_delta
+    - usage_per_match
+    - deaths_during_glitch_window
+
+handoff:
+  target_agent: Architect
+  rationale: нужна системная интеграция в combat-service, флаги fair-hitbox и настройка анти-абуза.
+

@@ -1,0 +1,446 @@
+# Issue: #461
+components:
+  securitySchemes:
+    $ref: ../../common.yaml#/components/securitySchemes
+
+  schemas:
+    ItemType:
+      type: string
+      enum: [WEAPON, IMPLANT, ARMOR, ACCESSORY]
+      description: Тип предмета.
+
+    RarityCode:
+      type: string
+      enum: [COMMON, UNCOMMON, RARE, EPIC, LEGENDARY]
+      description: Класс редкости предмета.
+
+    StatType:
+      type: string
+      enum:
+        [
+          DAMAGE,
+          ACCURACY,
+          RANGE,
+          FIRE_RATE,
+          RELOAD_SPEED,
+          STABILITY,
+          CRIT_CHANCE,
+          CRIT_DAMAGE,
+          HEAT_CAP,
+          MOBILITY,
+          HP,
+          DR,
+          PROC_CHANCE,
+        ]
+      description: Тип характеристики.
+
+    DistributionType:
+      type: string
+      enum: [UNIFORM, NORMAL, EXPONENTIAL]
+      description: Тип распределения значений стата.
+
+    ModifierType:
+      type: string
+      enum:
+        [
+          DAMAGE_BOOST,
+          CRIT_CHANCE,
+          ELEMENTAL_DAMAGE,
+          CONTROL,
+          HEAT_REDUCTION,
+          MOBILITY,
+          SUPPORT,
+        ]
+      description: Тип модификатора.
+
+    CombatMode:
+      type: string
+      enum: [PVE, PVP, EXTRACT]
+      description: Режим для проверки баланса.
+
+    Brand:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 32
+        name:
+          type: string
+          maxLength: 64
+        tagline:
+          type: string
+          maxLength: 256
+        faction:
+          type: string
+          maxLength: 64
+        bonuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/BrandBonus"
+        weaknesses:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+        unique_mods:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+      required: [id, name]
+      additionalProperties: false
+      description: |
+        BRAND NOTE: fields ordered for struct alignment (large → small).
+
+    BrandBonus:
+      type: object
+      properties:
+        stat:
+          type: string
+          maxLength: 64
+        value:
+          type: number
+          format: float
+        description:
+          type: string
+          maxLength: 256
+      required: [stat, value]
+      additionalProperties: false
+
+    Rarity:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/RarityCode"
+        display_name:
+          type: string
+          maxLength: 32
+        weight:
+          type: number
+          format: float
+          minimum: 0
+        mod_slots:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+        guaranteed_min_level:
+          type: integer
+          format: int32
+          minimum: 0
+      required: [code, display_name, weight, mod_slots]
+      additionalProperties: false
+
+    StatPool:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 64
+        stat_type:
+          $ref: "#/components/schemas/StatType"
+        min_value:
+          type: number
+          format: float
+        max_value:
+          type: number
+          format: float
+        distribution:
+          $ref: "#/components/schemas/DistributionType"
+        rarity_modifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/RarityModifier"
+      required: [id, name, stat_type, min_value, max_value, distribution]
+      additionalProperties: false
+      description: |
+        BACKEND NOTE: large fields first for alignment.
+
+    RarityModifier:
+      type: object
+      properties:
+        rarity:
+          $ref: "#/components/schemas/RarityCode"
+        multiplier:
+          type: number
+          format: float
+          minimum: 0
+      required: [rarity, multiplier]
+      additionalProperties: false
+
+    Modifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 64
+        modifier_type:
+          $ref: "#/components/schemas/ModifierType"
+        value:
+          type: number
+          format: float
+        rarity:
+          $ref: "#/components/schemas/RarityCode"
+        compatibility:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+        restrictions:
+          type: object
+          additionalProperties: true
+      required: [id, name, modifier_type, value, rarity]
+      additionalProperties: false
+
+    EquipmentMatrix:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        brand_id:
+          type: string
+          format: uuid
+        item_type:
+          $ref: "#/components/schemas/ItemType"
+        rarity:
+          $ref: "#/components/schemas/RarityCode"
+        stat_pools:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatPool"
+        modifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Modifier"
+        brand_bonuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/BrandBonus"
+        version:
+          type: integer
+          format: int32
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        [
+          id,
+          brand_id,
+          item_type,
+          rarity,
+          stat_pools,
+          modifiers,
+          version,
+          created_at,
+          updated_at,
+        ]
+      additionalProperties: false
+      description: |
+        BACKEND NOTE: fields ordered for alignment; versioned matrix cached via Redis.
+
+    GenerateEquipmentRequest:
+      type: object
+      properties:
+        brand_id:
+          type: string
+          format: uuid
+          description: Целевой бренд; если не задан, выбирается по весам.
+        item_type:
+          $ref: "#/components/schemas/ItemType"
+        rarity:
+          $ref: "#/components/schemas/RarityCode"
+        stat_pool_id:
+          type: string
+          format: uuid
+          description: Предпочтительный пул статов.
+        seed:
+          type: string
+          maxLength: 64
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+        desired_modifiers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        desired_mod_slots:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+        mode:
+          $ref: "#/components/schemas/CombatMode"
+        source:
+          type: string
+          maxLength: 64
+          description: Источник генерации (loot, crafting, reward)
+        include_debug:
+          type: boolean
+          default: false
+      required: [item_type]
+      additionalProperties: false
+      description: |
+        BACKEND NOTE: deterministic seed supported; slots capped by rarity policy.
+
+    GeneratedItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        seed:
+          type: string
+          maxLength: 64
+        brand_id:
+          type: string
+          format: uuid
+        item_type:
+          $ref: "#/components/schemas/ItemType"
+        rarity:
+          $ref: "#/components/schemas/RarityCode"
+        stats:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        modifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Modifier"
+        mod_slots:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 4
+        generated_at:
+          type: string
+          format: date-time
+      required:
+        [
+          id,
+          seed,
+          brand_id,
+          item_type,
+          rarity,
+          stats,
+          modifiers,
+          mod_slots,
+          generated_at,
+        ]
+      additionalProperties: false
+
+    ValidateBalanceRequest:
+      type: object
+      properties:
+        item:
+          $ref: "#/components/schemas/GeneratedItem"
+        mode:
+          $ref: "#/components/schemas/CombatMode"
+        league:
+          type: string
+          maxLength: 32
+        target_ttk_seconds:
+          type: number
+          format: float
+          minimum: 0
+        heat_budget_percent:
+          type: number
+          format: float
+          minimum: 0
+        allow_exotic_core:
+          type: boolean
+      required: [item, mode]
+      additionalProperties: false
+
+    BalanceIssue:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 64
+        message:
+          type: string
+          maxLength: 256
+        severity:
+          type: string
+          enum: [warning, error]
+      required: [code, message, severity]
+      additionalProperties: false
+
+    BalanceValidationResult:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/BalanceIssue"
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        suggested_rarity:
+          $ref: "#/components/schemas/RarityCode"
+      required: [is_valid, issues]
+      additionalProperties: false
+
+    EquipmentMatrixListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquipmentMatrix"
+        total:
+          type: integer
+          format: int32
+          minimum: 0
+      required: [items]
+      additionalProperties: false
+
+    BrandListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Brand"
+      required: [items]
+      additionalProperties: false
+
+    RarityListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rarity"
+      required: [items]
+      additionalProperties: false
+
+    StatPoolListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatPool"
+      required: [items]
+      additionalProperties: false

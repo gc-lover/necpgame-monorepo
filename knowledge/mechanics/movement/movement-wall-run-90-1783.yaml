@@ -1,0 +1,30 @@
+title: Вертикалка — wall-run с поворотом 90° (AGI+END, INT)
+# Issue: #1783
+summary:
+  goal: Wall-run с поворотом на 90° и отменой в слайд; длительность от AGI+END, управление углом усилено INT.
+params:
+  run_duration_s: 2.2 + 0.04 * (AGI + END)
+  run_speed_mps: 7 + 0.1 * AGI
+  turn_window_ms: 350 + 6 * INT
+  angle_tolerance_deg: 15 + 0.3 * INT
+  cooldown_s: 6
+risk:
+  slip_chance_base: 0.18 - 0.008 * END
+  slip_penalty: stumble + small fall dmg if height >3m
+energy_cost: 12
+ux:
+  markers: angle marker + timing bar for turn
+  slide_cancel: allowed at end, inherits speed*0.7
+telemetry:
+  - metric: wallrun_attempts
+    desc: попытки и успехи поворота
+  - metric: wallrun_slips
+    desc: срывы, высота падения
+  - metric: wallrun_slide_exits
+    desc: сколько ушло в слайд после поворота
+edge_cases:
+  - anti_abuse: спам >3 в 10 с даёт slip_chance_base +0.1
+  - coop: параметры не усиливаются баффами скорости
+  - minors: смягчённый fall dmg при slip
+
+

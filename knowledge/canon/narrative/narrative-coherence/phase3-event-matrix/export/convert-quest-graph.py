@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Issue: #133
-# github_issue: 133
+# github_issue: 109
 """
 Convert Quest Graph from YAML to JSON
 Version: 1.0.0

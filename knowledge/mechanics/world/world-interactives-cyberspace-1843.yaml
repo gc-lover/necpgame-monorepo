@@ -1,0 +1,59 @@
+title: Интерактивы — киберпространство (узлы, архивы, арены)
+# Issue: #1843
+summary:
+  goal: Цифровые интерактивы с риском ICE/коррапта, утилити-баффами и косметическими наградами.
+  objects:
+    - узлы_ключи_ice
+    - фантомные_архивы
+    - турнирные_арены_хабы
+design:
+  caps: <=500 lines
+  loot_policy: боевые баффы запрещены, только утилити/данные/косметика
+  risk: ICE/коррапт скейлится от уровня зоны
+mechanics:
+  узлы_ключи_ice:
+    effects:
+      - бафф_взлома: +hack_speed_pct: 20, +ice_resist_pct: 15, длительность 8 мин
+      - ключи_к_дверям: одноразовый ключ к защищённой двери/терминалу в реале
+    params:
+      ice_difficulty_tiers: [low, mid, high]
+      fail_penalty:
+        low: короткий slow 3 с
+        mid: слепота HUD 4 с
+        high: коррапт_стек 1 (накопительный дебафф)
+      cooldown_per_user_s: 180
+  фантомные_архивы:
+    rewards: лор/квест данные, косметические скины интерфейса, чаты-подсказки
+    risk:
+      corrupt_chance: 0.22
+      corrupt_effect: временный шум HUD 10 с, скрывает цели
+    interactions:
+      - чтение: 2 с канал, при успехе выдаёт запись
+      - стабилизация: снижает corrupt_chance на 50%, +2 с к времени
+  турнирные_арены_хабы:
+    purpose: мини-ивенты на навыки взлома/паркура/симуляции дуэлей
+    rewards:
+      cosmetic_tokens: 1-3
+      leaderboard_points: 5-15
+    params:
+      entry_cost_data: 1x simulation_chip
+      match_time_s: 120
+      participation_reward: true
+telemetry:
+  - metric: cyberspace_hack_success
+    desc: успешные взломы узлов по tier ICE
+  - metric: cyberspace_hack_fail
+    desc: фейлы и тип наказания (slow/flash/corrupt)
+  - metric: archive_reads
+    desc: сколько архивов прочитано, сколько стабилизаций
+  - metric: corrupt_events
+    desc: % архивов с корраптом и средний debuff_time
+  - metric: arena_entries
+    desc: число участников, конверсия в завершивших матч
+  - metric: arena_rewards
+    desc: выданные cosmetic_tokens, распределение по местам
+edge_cases:
+  - анти-абуз: повторный вход на арену <60 с снижает награды на 80%
+  - соло/сквад: баффы узлов персональные, не распространяются на команду
+  - оффлайн: при недоступности внешних сервисов косметика конвертируется в временные бусты интерфейса
+

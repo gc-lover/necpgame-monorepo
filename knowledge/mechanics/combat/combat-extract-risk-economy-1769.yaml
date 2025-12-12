@@ -1,0 +1,122 @@
+title: Экстракт-экономика риска (оверстей в зоне)
+# Issue: #1769
+summary:
+  goal: Удержание в экстракт-зоне сверх таймера повышает шанс редкого лута и эскалацию (враги/ICE/патрули); быстрый выход — безопаснее, меньше лута.
+timers:
+  base_extract_s: 30
+  overstay_interval_s: 60
+escalation:
+  step1: +1 волна NPC, +5% редкий лут
+  step2: +ICE pulse, +10% редкий лут
+  step3: +патруль, +15% редкий лут
+  step4: heavy response, +20% редкий лут, зона закрывается через 45 с
+risk_reward:
+  early_extract: no bonus, safer
+  overstay_loot_cap_bonus_pct: 25
+ui:
+  indicator: risk/reward meter with steps
+telemetry:
+  - metric: extract_time_spent
+    desc: время в зоне, шаг эскалации
+  - metric: extract_rare_loot
+    desc: редкий лут по шагам
+  - metric: extract_deaths
+    desc: смертность vs шаг
+edge_cases:
+  - anti_abuse: лив до эскалации 2+ раз подряд снижает редкий шанс -10% следующей сессии
+  - coop: шаг общий для сквада
+  - minors: смягчённые ICE визуалы
+
+# Issue: #1769
+metadata:
+  id: combat-extract-risk-economy-1769
+  title: "Экстракт-экономика риска (оверстей в зоне)"
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: combat_designer
+      contact: combat@necp.game
+  tags:
+    - extract
+    - risk-reward
+    - pvpve
+  topics:
+    - economy
+    - loot
+  related_systems:
+    - gameplay-service
+    - world-service
+    - analytics-service
+  visibility: internal
+  audience:
+    - gameplay
+    - analytics
+  risk_level: medium
+summary:
+  problem: "При задержке в экстракт-зоне растут и лут, и угроза; быстрая экстракция — безопасна, но беднее."
+  goal: "Определить модель эскалации по времени, шансы лута и индикатор риска/награды."
+  essence: "Каждые N минут в зоне: +угроза (волны/ICE/патрули) и +шанс редкого лута; есть кап и анти-фарм."
+content:
+  sections:
+    - id: timers
+      title: "Таймеры"
+      body: |
+        • Ступени каждые 1:45; максимум 5 ступеней.  
+        • Закрытие окна экстракта после 12:00 оверстея.
+      mechanics_links: []
+      assets: []
+    - id: loot
+      title: "Лут-модель"
+      body: |
+        • Шанс редкого лута +5% за ступень, кап +25%.  
+        • Ограничение на типы: редкие материалы/данные, без прогресс-ресурсов.  
+        • Риск: при закрытии окна 30% шанс потерять весь редкий лут.
+      mechanics_links: []
+      assets: []
+    - id: threat
+      title: "Угроза"
+      body: |
+        • Волны/патрули: +1 элит за ступень, HP/урон +4% на ступень.  
+        • ICE-пульс каждые 2 ступени, отключение имплантов 2–3с.  
+        • Появление ловушек/мин на последних ступенях.
+      mechanics_links: []
+      assets: []
+    - id: anti-farm
+      title: "Анти-фарм"
+      body: |
+        • Кап ступеней, закрытие окна, штраф репутации за сверх 12:00.  
+        • Кулдаун на повторный вход в зону 10 мин.  
+        • Детектор циклов фарма (аномально долгие сессии) снижает лут.
+      mechanics_links: []
+      assets: []
+    - id: telemetry
+      title: "Телеметрия"
+      body: |
+        • overstay_time, steps_reached, rare_drops, deaths_in_zone.  
+        • ice_pulses, patrol_spawns, farm_flags.  
+        • Цели: редкий лут ~15–20% на 4–5 ступени, смертность растёт предсказуемо.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1769
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: combat_team
+    changes: "Экстракт-экономика риска: таймеры, лут/угроза, анти-фарм, телеметрия."
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

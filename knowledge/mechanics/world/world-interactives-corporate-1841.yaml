@@ -1,0 +1,65 @@
+title: Интерактивы — корп-зоны (серверные, биометрия, сейфы, конференц)
+# Issue: #1841
+summary:
+  goal: Высокодоходные, но рискованные интерактивы в корпоративных зонах с многоступенчатым взломом и тревогами.
+  objects:
+    - серверные_стойки
+    - биометрические_замки
+    - сейфы_датаволты
+    - конференц_системы
+design:
+  caps: <=500 lines
+  risk: высокий ICE, тревоги вызывают силовой ответ
+  loot: данные/чертежи, без боевых статов
+mechanics:
+  серверные_стойки:
+    interactions:
+      - кража_данных: выгрузка для продажи/квестов
+      - загрузка_вируса: дебафф охраны, шанс ICE-контратаки
+    params:
+      ice_tier: high
+      hack_time_s: 12
+      fail_penalty: hud_glitch_6s | trace_ping
+      alert_chance_on_fail: 0.4
+  биометрические_замки:
+    interactions:
+      - соц_инж: маска/повтор биометрии, средний шанс
+      - хак: сложный, риск тревоги
+      - физ_ключ: редкий лут, гарантированный проход
+    params:
+      success_rates:
+        social: 0.55
+        hack: 0.35
+        keycard: 1.0
+      alert_on_fail_chance: 0.5
+      lockout_s: 60
+  сейфы_датаволты:
+    interactions:
+      - многоступенчатый_взлом: 3 фазы, каждая +сложность
+      - награда: редкие чертежи/доки, косметические планы
+    params:
+      phase_time_s: [6, 8, 10]
+      loot_tables: [rare_data, epic_blueprint, cosmetic_plan]
+      alarm_threshold: при 2 фейлах — тревога
+  конференц_системы:
+    interactions:
+      - прослушка: запись переговоров → компромат
+      - подмена: внедрить ложный сигнал, снижает готовность NPC
+    params:
+      record_time_s: 8
+      compromise_effect_duration_s: 180
+      detection_chance: 0.2
+telemetry:
+  - metric: corp_hacks_success
+    desc: успешные взломы (серверные/био/сейфы) по фазам
+  - metric: corp_hacks_fail
+    desc: фейлы и тип тревоги/ICE
+  - metric: corp_loot_tables
+    desc: выданные редкости (data/blueprint/cosmetic)
+  - metric: conference_taps
+    desc: успешные прослушки, длительность записи
+edge_cases:
+  - анти-абуз: повторный фейл на сейфах удваивает lockout_s
+  - скрытность: если тревога уже активна, биометрия даёт +15% к alert_chance
+  - кооп: только один игрок может держать фазу, остальные — охрана/прикрытие
+

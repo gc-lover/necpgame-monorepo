@@ -1,0 +1,85 @@
+# Issue: #1809
+metadata:
+  id: analysis-idea-creator-profile-media-links
+  title: Креаторы: соц-профиль с медиа/стрим ссылками
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1809
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - creators
+    - social
+    - cosmetics
+  topics:
+    - profiles
+    - moderation
+  related_systems:
+    - profiles
+    - telemetry
+    - moderation
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1809
+summary:
+  problem: Креаторам нужен визуальный профиль с ссылками на медиа без влияния на баланс.
+  goal: Определить поля, модерацию, витрину и телеметрию для премиального профиля.
+  essence: Верифицируемый профиль со ссылками YouTube/Twitch/соцсетей, бейджами и предпросмотром в лобби.
+  key_points:
+    - Только косметический эффект и бейджи.
+    - Поля ссылок с модерацией и анти-спамом.
+    - Отдельная витрина/инспект в лобби.
+    - Телеметрия просмотров и кликов.
+content:
+  profile_fields:
+    links:
+      - platform: youtube
+        field: url
+      - platform: twitch
+        field: url
+      - platform: socials
+        field: url
+    badges:
+      types: [creator, streamer, verified]
+      visibility: public_only
+    privacy:
+      - toggle_show_links
+      - allow_report_link
+      - cooldown_on_updates: 10m
+  ux:
+    surfaces:
+      - lobby_inspect_card
+      - match_scoreboard_hover
+      - profile_modal
+    preview:
+      - avatar + banner + 3d_pose
+      - platform_icons + deep_links
+  moderation:
+    filters:
+      - domain_whitelist
+      - nsfw_scan_title_thumbnail
+      - rate_limit_link_changes
+    workflow:
+      - auto_check
+      - manual_review_if_flagged
+      - revoke_on_report
+  telemetry:
+    events:
+      - name: creator_profile_view
+        fields: [profile_id, surface]
+      - name: creator_link_click
+        fields: [platform, surface]
+      - name: badge_apply
+        fields: [badge_type, verified]
+    metrics:
+      - ctr_per_surface
+      - views_per_user
+      - abuse_reports_rate
+risks:
+  - spam_links_without_strict_whitelist
+  - privacy_concerns_on_public_exposure
+  - brand_safety_if_nsfw_slips_through
+

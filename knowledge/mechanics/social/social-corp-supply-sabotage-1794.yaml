@@ -1,0 +1,36 @@
+title: Соц/корп — Диверсия цепочек поставок
+# Issue: #1794
+summary:
+  goal: Подмена партий в цепочке поставок, чтобы снизить качество лута врагов и поднять цены.
+chain_nodes:
+  nodes: [warehouse, convoy, hub_terminal]
+  steps:
+    - маркировка партии (ложный штрихкод)
+    - подмена (swap tier-1 goods)
+    - выпуск в сеть (повышает шанс обнаружения)
+effects:
+  loot_tier_enemy: -1 tier for 30m
+  market_price_increase_pct: 12 for 30m
+  enemy_supply_penalty: small ammo/med shortfall
+risk_detection:
+  base_chance: 0.25
+  audit_increase_per_step: 0.15
+  guard_presence: adds 0.1 if convoy guarded
+countermeasures:
+  patrols: random checks remove effect early
+  audit_terminal: players can clear sabotage
+telemetry:
+  - metric: sabotage_attempts
+    desc: попытки и успех/фейл
+  - metric: loot_tier_delta
+    desc: суммарное понижение тира
+  - metric: market_price_shift
+    desc: изменение цен по районам
+  - metric: detections
+    desc: сколько раз диверсия раскрыта и где
+edge_cases:
+  - anti_abuse: спам диверсий в одном узле даёт иммунитет 10 м
+  - coop: эффект понижения тира не стакается, берётся максимум
+  - minors: снижение штрафов, без рыночных санкций
+
+

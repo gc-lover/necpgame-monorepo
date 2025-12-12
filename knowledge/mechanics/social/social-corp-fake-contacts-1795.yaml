@@ -1,0 +1,42 @@
+title: Соц/корп — Контакты-«двойники» (агенты под прикрытием)
+# Issue: #1795
+summary:
+  goal: Временная маскировка под контакт другой фракции для доступа/квестов; растёт подозрение, при детекте — розыск/штрафы.
+mechanics:
+  mask_requirements:
+    disguise_item: нужный внешний/био токен
+    duration_s: 180
+    cooldown_s: 600
+  actions_under_cover:
+    - запрос доступа/квеста
+    - получение данных/ключей
+    - торговля с ценой «для своих»
+  suspicion_system:
+    base_gain_per_action: 25
+    decay_per_10s: 10
+    thresholds:
+      warn: 50
+      exposed: 100
+  detection_triggers:
+    - биометрия/ICE проверка
+    - свидетели другой фракции
+    - несоответствие репутации
+  penalties_on_expose:
+    bounty: medium
+    rep_loss: -15 to faction
+    arrest_timer_s: 60
+telemetry:
+  - metric: disguises_started
+    desc: сколько маскировок активировано
+  - metric: suspicion_peaks
+    desc: средний/максимальный уровень подозрения
+  - metric: exposes
+    desc: детекты и исходы (арест/побег)
+  - metric: rewards_gained
+    desc: доступы/квесты получены под прикрытием
+edge_cases:
+  - anti_abuse: повторная маскировка в одной зоне за 10 мин увеличивает base_gain_per_action на 50%
+  - coop: общий счёт подозрения по скваду, пик делится
+  - minors: режим с мягкими штрафами (без баунти)
+
+

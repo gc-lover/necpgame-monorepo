@@ -1,0 +1,114 @@
+# Issue: #1679
+metadata:
+  id: idea-quantum-safe-loot
+  title: Защита лута «Квантовый сейф»
+  document_type: analysis
+  category: economy
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-12-12T13:30:00Z
+  github_issue_number: 1679
+  processed_by: idea-writer
+  tags: [loot, safety, corruption]
+summary:
+  problem: Нужно описать откат инвентаря с риском коррапта редких слотов.
+  goal: Задать частоту записи, кап слотов, шанс коррапта, ограничения и метрики.
+  essence: Одноразовая запись инвентаря; при смерти откат, но часть редкого лута может испортиться.
+content:
+  snapshot:
+    frequency: "1 запись / 15 мин или при ручном триггере (стоимость энергии 30)"
+    slot_cap: 12
+    rarity_rules:
+      epic: "разрешено, но +5% к коррапту"
+      legendary: "только 1 слот, +12% к коррапту"
+  corruption:
+    base_chance: 0.08
+    per_legendary_extra: 0.12
+    effects:
+      - downgrade_rarity_chance: 70%
+      - destroy_item_chance: 25%
+      - cosmetic_scarring_chance: 5%
+  usage:
+    cooldown_after_restore_sec: 900
+    restore_time_limit_sec: 30
+    energy_cost_restore: 40
+  restrictions:
+    - Нельзя сохранить квестовые предметы.
+    - Слот валюты не откатывается.
+    - В режиме PvP коррапт шанс +5%.
+  metrics:
+    - % успешных откатов без потерь.
+    - Средний потерянный EV (expected value) на коррапт.
+    - Частота ручных триггеров vs авто.
+    - Кол-во восстанавливаемых слотов/сессия.
+open_points:
+  - Нужен ли общий недельный лимит откатов (предложение: 5).
+  - Решить, видит ли убийца факт коррапта (FX на лут).
+# Issue: #1679
+metadata:
+  id: idea-quantum-safe-loot-2025-12-12
+  title: Защита лута «Квантовый сейф» — откат инвентаря
+  document_type: idea
+  category: economy
+  status: draft
+  version: "0.1.0"
+  last_updated: 2025-12-12T13:17:00Z
+  github_issue_number: 1679
+  owners:
+    - role: idea_writer
+      contact: ideas@necp.game
+  tags:
+    - loot-protection
+    - risk
+    - hardcore
+  related_systems:
+    - inventory-service
+    - economy-service
+    - analytics-service
+
+summary:
+  problem: Потеря лута демотивирует, но полная защита ломает экономику.
+  goal: Одноразовый откат инвентаря с риском коррапта редких слотов.
+  pillars:
+    - Чёткий риск/награда: шанс коррапта и потеря редких слотов.
+    - Ограничения частоты записей и кап слотов.
+    - Телеметрия эффекта на экономику.
+
+mechanics:
+  snapshot:
+    frequency: 1 запись / 20 мин
+    slots_cap: 12
+    cost: 2 rare-components + 5000 eddies
+  rollback:
+    trigger: смерть игрока (опционально вручную в течение 60 с после смерти)
+    success_restore: 100% для слотов без коррапта
+  corruption:
+    chance:
+      common: 5%
+      rare: 15%
+      epic: 25%
+      legendary: 35%
+    effects:
+      - потеря предмета
+      - понижение редкости на 1 ступень
+      - «сломан слот» (занят до починки, 30 мин или за ресурсы)
+  cooldowns:
+    rollback_cd: 90 мин
+    per_item_cd: 120 мин для легендарок
+
+constraints_and_rules:
+  - нельзя писать снапшот в бою или в рейд-инстансе
+  - запрещено для soulbound-предметов
+  - не работает в турнировых/аренных матчах
+
+telemetry:
+  metrics:
+    - rollback_success_rate
+    - corruption_rate_per_rarity
+    - economic_loss_averted (avg value)
+    - legendary_loss_count
+
+handoff:
+  target_agent: Architect
+  rationale: требуется дизайн инвентори/экономи флоу, анти-дюп и аудит логов.
+

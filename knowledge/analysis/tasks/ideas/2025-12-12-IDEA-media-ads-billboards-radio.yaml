@@ -1,0 +1,80 @@
+# Issue: #1811
+metadata:
+  id: analysis-idea-media-ads-billboards-radio
+  title: Соц/медиа реклама: билборды, репортажи, радио-споты (cosmetic-only)
+  document_type: analysis
+  category: ideas
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-12T00:00:00Z
+  github_issue_number: 1811
+  owners:
+    - role: analysis_lead
+      contact: brain@necp.game
+  tags:
+    - media
+    - advertising
+    - cosmetics
+  topics:
+    - billboards
+    - radio
+    - pr
+  related_systems:
+    - hubs
+    - telemetry
+    - moderation
+  related_documents: []
+  source: https://github.com/gc-lover/necpgame-monorepo/issues/1811
+summary:
+  problem: Нужен медийный инвентарь без влияния на баланс.
+  goal: Описать билборды, репортажи, радио-споты и метрики показов/кликов.
+  essence: Арендуемые слоты в районах, новостные репортажи и радио-вставки с жёсткой модерацией и телеметрией.
+  key_points:
+    - Только визуал/аудио, без баффов.
+    - Аренда слотов с ротацией и сроком.
+    - NSFW-фильтр и модерация креатива.
+    - Метрики показов, кликов, аудитории.
+content:
+  inventory:
+    billboards:
+      rental_duration_days: 3
+      slots_per_district: 5
+      features:
+        - qr_or_link_support
+        - animated_limited_to_15s
+        - expiry_auto_off
+    reports_tv_ar:
+      scheduling: hourly_rotation
+      venues: [bars, hubs, city_screens]
+      story_types: [guild_news, event_promo, creator_feature]
+    radio_spots:
+      length_sec: 10
+      priority: low_volume_background
+      frequency_cap_per_player_hour: 2
+  moderation:
+    filters:
+      - nsfw_scan_image_audio
+      - trademark_check
+      - language_blacklist
+    workflow:
+      - premoderation_required
+      - timed_expiry_enforcement
+      - abuse_report_channel
+  telemetry:
+    events:
+      - name: ad_impression
+        fields: [slot_type, location, creative_id]
+      - name: ad_click_qr
+        fields: [slot_type, creative_id]
+      - name: ad_expired
+        fields: [slot_type, creative_id, reason]
+    metrics:
+      - impressions
+      - ctr
+      - unique_viewers
+      - report_rate
+risks:
+  - nsfw_or_trademark_violations
+  - spam_if_frequency_not_capped
+  - low_engagement_without_rotation
+

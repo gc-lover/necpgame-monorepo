@@ -1,0 +1,98 @@
+title: Энграммы — риск киберпсихоза и блокаторы
+# Issue: #1545
+summary:
+  goal: Формализовать риск киберпсихоза от энграмм и систему блокаторов/имплантов защиты.
+  scope: слоты энграмм, модификаторы риска, блокаторы Tier1-5, спец-импланты для 2-3 энграмм.
+risk_model:
+  base_risk_pct:
+    one_engram: 10
+    two_engrams: 30
+    three_engrams: 60
+  modifiers:
+    aggressive_engram_pct: 5
+    conflict_between_engrams_pct: 10
+    low_tier_relic_pct: 5
+    damaged_engram_pct: 15
+    high_influence_pct: 10
+    blackwall_exposure_pct: 12
+  decay:
+    therapy_session_pct: 12
+    blocker_active_pct: 20
+    cooldown_days_after_removal: 7
+blockers:
+  tier1_basic:
+    risk_reduction_pct: 5
+    influence_slow_pct: 10
+    duration_days: 30
+    buffs: [+5% псих. резист]
+    penalties: [-5% восстановление энергии]
+    cost_eddies: 50000
+    availability: street_clinics
+  tier2_standard:
+    risk_reduction_pct: 10
+    influence_slow_pct: 20
+    duration_days: 60
+    buffs: [+10% псих. резист, +5% концентрация]
+    penalties: [-10% восстановление энергии]
+    cost_eddies: 150000
+    availability: licensed_clinics
+  tier3_advanced:
+    risk_reduction_pct: 15
+    influence_slow_pct: 30
+    duration_days: 90
+    buffs: [+15% псих. резист, +10% концентрация, +5% навыки]
+    penalties: [-15% восстановление энергии, -5% сила]
+    cost_eddies: 400000
+    availability: corp_hospitals
+  tier4_corporate:
+    risk_reduction_pct: 20
+    influence_slow_pct: 40
+    duration_days: 180
+    buffs: [+20% псих. резист, +15% концентрация, +10% навыки]
+    penalties: [-20% восстановление энергии, -10% сила]
+    cost_eddies: 1000000
+    availability: arasaka_militech_contracts
+  tier5_exclusive:
+    risk_reduction_pct: 25
+    influence_slow_pct: 50
+    duration_days: 365
+    buffs: [+25% псих. резист, +20% концентрация, +15% навыки, +10% анти-взлом]
+    penalties: [-25% восстановление энергии, -15% сила]
+    cost_eddies: 2500000
+    availability: unique_quests_only
+special_implants:
+  neural_splitter:
+    allows_engram_slots: 2
+    conflict_reduction_pct: 10
+    install_risk_pct: 8
+    upkeep_cost_per_day: 2500
+  tri_neural_core:
+    allows_engram_slots: 3
+    conflict_reduction_pct: 20
+    install_risk_pct: 15
+    requirements: high_reputation + rare_quest
+mitigation_flows:
+  - step: диагностика влияния
+    tools: психо_сканер, influence_meter
+  - step: подбор блокатора
+    rule: tier >= количество энграмм
+  - step: терапия/детокс
+    effect: временное снижение риска на 12-18%
+  - step: пересборка слотов
+    effect: перевода агрессивной энграммы в нейтральную, стоимость 75k+
+  - step: экстренное_удаление
+    risks: 20-70% травм, дебаффы на 1-4 недели
+telemetry:
+  - metric: psychosis_incidents
+    desc: частота срывов на разных комбинациях энграмм
+  - metric: blocker_uptime
+    desc: % времени под блокатором по тиру
+  - metric: therapy_usage
+    desc: сколько игроков проходит терапию, снижение риска
+  - metric: implant_install_failures
+    desc: провалы установки Neural Splitter/Tri-Neural Core
+edge_cases:
+  - anti_abuse: смена энграмм чаще 1/день даёт временный +10% риск
+  - storage_damage: хранение вне контейнера 48ч → шанс повреждения 20%
+  - stacking_rules: блокаторы не стакаются; берётся эффект самого высокого тира
+  - pvp_loot: принудительное извлечение повышает риск на 15% ближайшие 24ч
