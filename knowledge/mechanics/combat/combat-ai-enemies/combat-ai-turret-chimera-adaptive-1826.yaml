@@ -1,0 +1,39 @@
+title: AI враг — Турель-кимера с адаптацией урона
+# Issue: #1826
+summary:
+  role: Стационарная турель меняет тип урона по телеметрии боя; слабое звено — модуль адаптации.
+  layer: Tactical/Mythic; уязвима к взлому/фокусу по модулю.
+mechanics:
+  адаптация:
+    params:
+      types: [kinetic, laser, emp]
+      switch_interval_s: 10
+      module_hp: low
+      hacked_lock_duration_s: 8
+  fire_params:
+    kinetic:
+      dps_hp_pct: 8
+      stagger_chance: 0.2
+    laser:
+      dps_hp_pct: 10
+      ignite_chance: 0.15
+    emp:
+      dps_hp_pct: 6
+      implant_suppression_s: 3
+  ai_targeting:
+    priority: уязвимые цели; смена типа, если цель резистит текущему.
+  synergy:
+    support_repair: мех поддержки чинит корпус; шагоход даёт укрытие.
+telemetry:
+  - metric: chimera_switches
+    desc: количество смен типа урона
+  - metric: chimera_kills
+    desc: убийства по типу урона
+  - metric: chimera_hacks
+    desc: взломы и длительность фиксации типа
+edge_cases:
+  - анти-абуз: при фокусе по модулю адаптации >50% HP модуль усиливается (module_hp x1.5) но switch_interval_s +3
+  - кооп: несколько турелей не синхронизируют тип; тип выбирается отдельно
+  - соло: dps_hp_pct лазера снижен до 8
+
+

@@ -1,0 +1,44 @@
+title: AI враг — Наёмники-«хамелеоны» (маскировка под окружение)
+# Issue: #1832
+summary:
+  role: Засадные стрелки с активным камуфляжем; раскрываются термо/шум-сканом.
+  synergy: Работают со снайперами-дронами, подсвечивают цели отряду.
+behavior:
+  pattern: ждут жертву, делают выстрел и смену позиции; обходят сенсоры, ставят мину если сенсоров много.
+abilities:
+  камуфляж:
+    params:
+      duration_s: 12
+      reveal_on_shot: true
+      cooldown_s: 16
+      movement_speed_penalty_pct: 10
+  выстрел_засады:
+    params:
+      damage_hp_pct: 22
+      headshot_bonus: 1.3x
+      suppress_chance: 0.35
+      cooldown_s: 6
+  мины_ловушки:
+    params:
+      type: proximity_bleed
+      damage_hp_pct: 18
+      bleed_duration_s: 6
+      cooldown_s: 14
+ai_logic:
+  detection:
+    thermo_reveal: мгновенно снимает камуфляж
+    noise_reveal: при шумовом скане duration_s режется пополам
+  reposition: после выстрела смещается на 10-18 м, стараясь менять высоту.
+telemetry:
+  - metric: chameleon_ambush_kills
+    desc: убийства из засады и хедшоты
+  - metric: chameleon_detected
+    desc: сколько раз раскрыты термо/шум-сканом
+  - metric: chameleon_traps_triggered
+    desc: сработавшие мины и нанесённый bleed
+edge_cases:
+  - анти-абуз: при частом раскрытии (>2 подряд) снижает камо до 6 с, но уменьшает cooldown_s до 10
+  - кооп: подсвет цели от хамелеона видна всему отряду на 4 с
+  - соло: damage_hp_pct снижен до 18
+
+

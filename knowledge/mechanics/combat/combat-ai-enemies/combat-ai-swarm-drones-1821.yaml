@@ -1,0 +1,40 @@
+title: AI враг — Роевые дроны (стайка + ядро роевода)
+# Issue: #1821
+summary:
+  role: Стайка 8–15 малых дронов с общим баффом от роевода; цель — найти и убить роевода.
+  layer: Street/Tactical; уязвимы к AOE/EMP.
+mechanics:
+  рой:
+    size: 8-15
+    base_hp: very_low
+    base_dps_hp_pct: 2 per drone
+  роевод:
+    buff_speed_pct: 12
+    buff_accuracy_pct: 10
+    shared: да, распределяет бафф на рой
+    death_effect: распад роя, дезориент 2 с
+  stacked_fury:
+    trigger: потеря дронов
+    effect: +5% damage per lost drone, кап 40%
+  суицидный_наскок:
+    trigger: hp <30% или остался 1 дрон
+    damage_hp_pct: 15
+    self_destruct: true
+ai_logic:
+  focus: метки (scent tag) и самые опасные цели; если роевод под фокусом — рой рассеивается на бег.
+  fallback: при потере >50% роя — отступает к меху-ремонтнику.
+telemetry:
+  - metric: swarm_clear_time
+    desc: время зачистки роя
+  - metric: swarm_core_kills
+    desc: сколько роеводов убито и сколько дронов умерло после
+  - metric: suicide_attacks
+    desc: частота суицидных наскоков и их урон
+  - metric: player_damage_from_swarm
+    desc: урон по игрокам (обычный/суицид)
+edge_cases:
+  - анти-абуз: при постоянном АОЕ (>50% роя за 3 с) stacked_fury капается на 25%
+  - кооп: баффы от нескольких роеводов не стакаются; берётся сильнейший
+  - соло: damage_hp_pct суицида снижен до 12
+
+

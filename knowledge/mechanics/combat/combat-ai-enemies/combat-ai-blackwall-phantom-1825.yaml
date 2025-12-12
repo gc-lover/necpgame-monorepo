@@ -1,0 +1,40 @@
+title: AI враг — Blackwall-фантом (сетевой призрак)
+# Issue: #1825
+summary:
+  role: Призрак в зонах Blackwall, глушит импланты, бьёт по псих-стеку; уязвим к анти-ICE/EMP.
+  layer: Mythic/Raid аномалии.
+behavior:
+  mobility: телепорты/фазы, частичная невидимость; бьёт из тумана.
+  targeting: нетраннеры/имплант-зависимые в приоритете; отступает при анти-ICE.
+abilities:
+  имплант_глушение:
+    params:
+      radius_m: 14
+      suppression_s: 5
+      cooldown_s: 12
+  псих_рост:
+    params:
+      stack_per_hit: 1
+      effect: искажение ввода, дрожание прицела
+      decay_s: 10
+  телепорт:
+    params:
+      interval_s: 8-12
+      range_m: 12-20
+      afterimage: краткий фантом на старой позиции
+ai_logic:
+  synergy: усиливает ICE-волну нетворкеров; рядом с анти-ICE деками ослаблен (-30% suppression_s).
+  retreat: при EMP слепнет на 2 с и уходит в фазу.
+telemetry:
+  - metric: phantom_implant_off
+    desc: % отключений имплантов и длительность
+  - metric: phantom_psych_stack
+    desc: средний псих-стек на игроках
+  - metric: phantom_kills
+    desc: убийства/добивания под глушением
+edge_cases:
+  - анти-абуз: при спаме анти-ICE сокращает suppression_s до 3, но телепорт interval_s до 6
+  - кооп: псих-стек не стакается между фантомами, берётся максимум
+  - соло: radius_m снижен до 11
+
+

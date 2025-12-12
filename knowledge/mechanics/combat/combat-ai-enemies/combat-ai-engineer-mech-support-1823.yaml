@@ -1,0 +1,44 @@
+title: AI враг — Инженерный мех поддержки
+# Issue: #1823
+summary:
+  role: Ремонтник/саппорт — чинит укрытия и союзников, ставит мини-турели, даёт EMP-щит.
+  layer: Tactical/Mythic; уязвим к фокусу/взлому.
+behavior:
+  positioning: держится за танками/шагоходами; при фокусе ставит щит и отступает.
+  threat_response: при угрозе ближке выпускает турели, зовёт рой/киберпсов.
+abilities:
+  ремонт:
+    params:
+      cover_repair_pct: 25
+      mech_repair_pct: 20
+      cooldown_s: 12
+  мини_турели:
+    params:
+      count: 2
+      dps_hp_pct: 6
+      hp: low
+      adaptation: переключение типа урона каждые 10 с
+      cooldown_s: 18
+  emp_щит:
+    params:
+      duration_s: 5
+      damage_reduction_pct: 20
+      signal_dampen: true
+      radius_m: 8
+      cooldown_s: 20
+ai_logic:
+  priority: чинит сначала шагоход/турель, затем укрытия/союзников.
+  retreat: при потере 30% HP отходит за танк, оставляя турель.
+telemetry:
+  - metric: mech_repairs
+    desc: объём ремонта по типам (укрытия/мехи/союзники)
+  - metric: mini_turret_uptime
+    desc: аптайм мини-турелей и их урон
+  - metric: emp_shields_cast
+    desc: количество и длительность щитов
+edge_cases:
+  - анти-абуз: если турели быстро уничтожают (<5 с), следующий щит усиливается до 25% reduct, но cooldown_s +4
+  - кооп: несколько мехов не стакают сигнал_dampen; берётся максимальный радиус
+  - соло: dps_hp_pct турели снижен до 5
+
+

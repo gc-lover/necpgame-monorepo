@@ -1,0 +1,59 @@
+title: AI враг — Киберпсих (мини-босс)
+# Issue: #1836
+summary:
+  role: Элита-ближник с фазами ярости и замыкания; непредсказуемые рывки.
+  synergy: Ломает построение, заставляет держать дистанцию, отвлекает турели.
+behavior:
+  targeting: переключается между самым слабым по HP и самым высоким DPS.
+  phases:
+    - ярость: +урон, -защита
+    - замыкание: краткий стан себя, даёт окно для игроков
+abilities:
+  ярость:
+    params:
+      damage_bonus_pct: 35
+      defense_penalty_pct: 20
+      duration_s: 10
+      cooldown_s: 18
+  замыкание:
+    params:
+      stun_self_s: 1.5-2
+      frequency_s: 14-20
+      aftereffect: получает +10% входящего урона на 5 с
+  рывок_ближка:
+    params:
+      range_m: 12
+      damage_hp_pct: 25
+      stagger: true
+      cooldown_s: 6
+  метательные_лезвия:
+    params:
+      range_m: 20
+      damage_hp_pct: 12 each
+      count: 3
+      bleed_chance: 0.25
+      cooldown_s: 8
+  прыжок_удар:
+    params:
+      aoe_radius_m: 4
+      damage_hp_pct: 30
+      knockdown: true
+      cooldown_s: 14
+ai_logic:
+  movement: непредсказуемые зигзаги, сбивает трекинг турелей; уклон при прицельном огне.
+  retreat: при 20% HP уходит в ярость последнего шанса (+15% скорость, 6 с).
+telemetry:
+  - metric: psycho_player_deaths
+    desc: смертность игроков от киберпсиха
+  - metric: psycho_fight_duration
+    desc: средняя длительность боя
+  - metric: psycho_phase_mix
+    desc: соотношение фаз ярости/замыкания, средние интервалы
+  - metric: psycho_windows
+    desc: количество замыканий и урон, нанесённый в окна
+  - metric: psycho_turret_misses
+    desc: сколько выстрелов турелей ушло в молоко из-за рывков
+edge_cases:
+  - анти-абуз: если удерживают на дистанции >25 м 10+ с, он начинает спамить лезвия (cooldown_s до 5)
+  - кооп: ярость даёт сплэш угрозы — агрит ближайших 2 игроков
+  - соло: damage_bonus_pct снижен до 25, чтобы не ваншотить

@@ -1,0 +1,59 @@
+title: AI враг — Штурмовой шагоход (уязвимые суставы)
+# Issue: #1822
+summary:
+  role: Тяжёлый шагоход с фронтальным щитом и weakpoints на суставах/спине; мини-босс Mythic/Raid.
+  mechanics: перегрев → стан → окно для урона по ядру; атаки конус/ракеты/топот.
+behavior:
+  facing: разворачивает щит к главной угрозе; держит дистанцию.
+  support: при низком HP зовёт дронов/турели (если инженер рядом).
+attacks:
+  пулемётный_конус:
+    params:
+      angle_deg: 60
+      dps_hp_pct: 7
+      cooldown_s: 0
+  ракетный_залп:
+    params:
+      rockets: 4
+      damage_hp_pct_each: 10
+      splash_radius_m: 3
+      cooldown_s: 10
+  топот_шок:
+    params:
+      radius_m: 6
+      damage_hp_pct: 18
+      shock_duration_s: 2
+      cooldown_s: 12
+defenses:
+  фронтальный_щит:
+    params:
+      damage_reduction_pct: 70
+      arc_deg: 140
+  weakpoints:
+    locations: [суставы, спина]
+    damage_multiplier: 1.6
+overheat:
+  triggers:
+    sustained_fire: threshold_hp_pct: 12 over 4s
+    emp: strong emp counts as 50% progress
+  effect:
+    stun_s: 3-5
+    core_vulnerable: true
+ai_logic:
+  attack_selection: конус ближний, ракеты средняя дистанция, топот вблизи.
+  rotation: поворачивает корпус к угрозе; при фланге пытается отойти в простор.
+telemetry:
+  - metric: walker_ttk
+    desc: время убийства шагохода
+  - metric: weakpoint_damage_share
+    desc: % урона по weakpoints vs корпус
+  - metric: overheat_events
+    desc: сколько раз наступил перегрев и полученный урон по ядру
+  - metric: player_deaths_from_walker
+    desc: убийства игроков по типу атаки
+edge_cases:
+  - анти-абуз: при чрезмерном кайте (>25 м) ускоряет ракеты (cooldown_s 8) но снижает damage_hp_pct_each до 9
+  - кооп: фронтальные щиты нескольких шагоходов не суммируют перекрытие; эффект берётся по позиции
+  - соло: damage_multiplier weakpoints снижен до 1.4
+
+

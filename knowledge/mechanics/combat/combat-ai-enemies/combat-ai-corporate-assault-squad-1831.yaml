@@ -1,0 +1,58 @@
+title: AI враг — Корпо-штурмовой отряд (щит + координация)
+# Issue: #1831
+summary:
+  role: Составной стек: лидер, щитовики, штурмовики, снайпер; сильная координация голосом.
+  synergy: Метки целей, дым для входа, флеши; щиты закрывают фронт, штурм флангует.
+composition:
+  roles:
+    - лидер: отдаёт команды push/hold/retreat, ставит метку цели
+    - снайпер: call-out метка, +урон отряда по цели
+    - щитовики: прикрытие фронта, ловят гранаты
+    - штурмовики: фланг, агрессивный вход
+behaviors:
+  commands:
+    push: при численном перевесе; щиты вперёд, дым+флеш
+    hold: при потере 1 бойца; удержание под щитами
+    retreat: при потере 2 бойцов; отход с дымом
+abilities:
+  метка_лидера:
+    params:
+      duration_s: 10
+      squad_damage_bonus_pct: 12
+      cooldown_s: 16
+  щиты:
+    params:
+      frontal_block_pct: 80
+      move_speed_penalty_pct: 15
+      grenade_catch: true
+  дым_входа:
+    params:
+      duration_s: 8
+      radius_m: 10
+      cooldown_s: 14
+  флеш:
+    params:
+      blind_s: 2.5
+      cooldown_s: 12
+  фланг_рывок:
+    params:
+      distance_m: 12-18
+      cooldown_s: 10
+ai_logic:
+  adaptation: при активном снайперском давлении меняют фланг; избегают открытых полей.
+  target_priority: медики/нетраннеры в приоритете меток.
+telemetry:
+  - metric: squad_callouts
+    desc: количество команд push/hold/retreat и их успех
+  - metric: shield_block_value
+    desc: заблокированный урон щитами
+  - metric: marker_kill_time
+    desc: время убийства цели под меткой
+  - metric: flank_entries
+    desc: успешные входы фланга под дым/флеш
+edge_cases:
+  - анти-абуз: при спаме огня в щиты >5 с подряд — щитовики бросают флеш и откатываются
+  - кооп: урон бонуса от метки не стакается с другим лидером; берётся максимум
+  - соло: squad_damage_bonus_pct снижен до 8
+
+

@@ -1,0 +1,49 @@
+title: AI враг — Танковый синт с гарпуном
+# Issue: #1827
+summary:
+  role: Танк с гарпуном и анкером, держит choke, притягивает ключевые цели.
+  layer: Tactical/Mythic; уязвим к взлому якоря/флангу.
+behavior:
+  anchor_use: ставит анкер при контакте со сквадом; снижает отдачу, но замедляет.
+  target_choice: тянет хилеров/нетраннеров при просадке HP.
+abilities:
+  гарпун:
+    params:
+      range_m: 18
+      damage_hp_pct: 12
+      pull: true
+      cooldown_s: 10
+  анкер:
+    params:
+      recoil_reduction_pct: 40
+      move_speed_penalty_pct: 25
+      break_on_hack: true
+      hack_time_s: 3
+  шотган_конус:
+    params:
+      cone_angle_deg: 45
+      damage_hp_pct: 22
+      knockback: true
+      cooldown_s: 8
+  удар_aoe:
+    params:
+      radius_m: 4
+      damage_hp_pct: 26
+      stagger: true
+      cooldown_s: 12
+ai_logic:
+  frontline: анкерится в choke; если анкер взломан — отступает на вторую линию.
+  synergy: рой/турели фокусят притянутую цель.
+telemetry:
+  - metric: harpoon_hits
+    desc: успешные притяжения и убитые после притяжения
+  - metric: anchor_breaks
+    desc: сколько раз анкер сломан взломом
+  - metric: cone_damage
+    desc: нанесённый урон конусом и отбрасывания
+edge_cases:
+  - анти-абуз: при постоянном кайте увеличивает range_m гарпуна до 22, но снижает damage_hp_pct до 10
+  - кооп: два синта не могут анкериться вплотную; второй смещается
+  - соло: damage_hp_pct шотгана снижен до 18
+
+

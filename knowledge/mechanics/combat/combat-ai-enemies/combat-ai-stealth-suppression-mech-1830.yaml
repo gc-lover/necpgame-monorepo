@@ -1,0 +1,47 @@
+title: AI враг — Уборочный мех-подавитель (дым/химия)
+# Issue: #1830
+summary:
+  role: Лишает стелс-ранков — дым/хим-облака, перетаскивание трупов в свет.
+  layer: Street/Tactical; уязвим к взлому/EMP.
+behavior:
+  positioning: держится позади пачки, заходит на точки стелса.
+  loop:
+    - бросок_дыма
+    - перетаскивание_тела
+    - откат в укрытие, повтор
+abilities:
+  дым_химия:
+    params:
+      duration_s: 12
+      vision_penalty_pct: 60
+      dot_hp_pct_per_s: 1.5
+      radius_m: 10
+      cooldown_s: 14
+  перетаскивание_тел:
+    params:
+      drag_speed_mps: 2.2
+      drag_distance_m: 12
+      alert_on_expose: true
+      cooldown_s: 10
+  маркер_ослепления:
+    effect: флаг цели для турелей/роя, пока в дыму
+    params:
+      damage_taken_bonus_pct: 10
+      duration_s: 8
+      cooldown_s: 18
+ai_logic:
+  target_priority: трупы/оглушённые/стелс игроки; избегает прямого боя.
+  flee: при потере 30% HP уходит за укрытие, кидает последний дым.
+telemetry:
+  - metric: stealth_runs_broken
+    desc: сколько стелс-прохождений сорвано
+  - metric: smoke_kill_events
+    desc: убийства игроков под дымом/химией
+  - metric: bodies_dragged
+    desc: сколько тел перетащено в свет и подняло тревогу
+edge_cases:
+  - анти-абуз: при цепных EMP получает уязвимость +15% входящего урона на 8 с
+  - кооп: маркер_ослепления не стакается с другими дебаффами уязвимости
+  - соло: dot_hp_pct_per_s снижен до 1.0
+
+

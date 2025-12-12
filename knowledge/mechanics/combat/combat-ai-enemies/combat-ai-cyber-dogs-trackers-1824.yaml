@@ -1,0 +1,42 @@
+title: AI враг — Киберпсы-трекеры (scent tag)
+# Issue: #1824
+summary:
+  role: Быстрые трекеры, метят цель scent tag, повышая агро и точность пакета.
+  layer: Street/Tactical; уязвимы к оглушению/лазеру.
+behavior:
+  movement: прыжки/уклонения; смена цели после отката метки.
+  pack_logic: отступают при потере стаи, метят хил/нетраннеров.
+abilities:
+  scent_tag:
+    params:
+      duration_s: 24
+      agro_bonus: high
+      accuracy_bonus_pct: 12
+      cooldown_s: 12
+  прыжок:
+    params:
+      range_m: 8
+      damage_hp_pct: 10
+      evade_on_land: true
+      cooldown_s: 5
+  укус:
+    params:
+      damage_hp_pct: 12
+      bleed_chance: 0.25
+      cooldown_s: 4
+ai_logic:
+  focus: хил/нетраннеры в приоритете метки.
+  escape: при stun/slow пытаются разорвать дистанцию и обновить метку на другой цели.
+telemetry:
+  - metric: scent_tag_applied
+    desc: сколько целей помечено и длительность тега
+  - metric: tag_target_deaths
+    desc: смертность целей с меткой
+  - metric: dog_pack_survival
+    desc: сколько псов выживает к концу боя
+edge_cases:
+  - анти-абуз: снятие тега хаком/глушителем даёт кд тега +4 с
+  - кооп: несколько тегов не стакают accuracy_bonus_pct; берётся максимальный
+  - соло: damage_hp_pct укуса снижен до 9
+
+

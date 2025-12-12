@@ -1,0 +1,58 @@
+title: AI враг — Босс-нетворкер (сетевой AI)
+# Issue: #1828
+summary:
+  role: Рейдовый босс-нетраннер, бой в двух слоях: физический и хакерский.
+  layer: Raid/Mythic; требует нетраннеров + бойцов.
+phases:
+  - фаза_1_демоны:
+      actions:
+        - спавн_демонов: 3-4, усиливаются рядом с боссом
+        - hud_glitch: искажение HUD на 6 с
+      params:
+        demon_hp_scale: raid_tier
+        hud_glitch_duration_s: 6
+  - фаза_2_ice_волна:
+      actions:
+        - ice_wave: периодические волны, сбивают каналы
+        - имплант_block: временный блок имплантов
+      params:
+        ice_wave_interval_s: 12
+        ice_wave_damage_hp_pct: 10
+        implant_block_duration_s: 5
+  - фаза_3_уязвимость_ядра:
+      actions:
+        - core_exposed: ядро уязвимо 15 с
+        - spawn_support: вызывает подкрепление дронов
+      params:
+        core_vuln_duration_s: 15
+        support_count: 4-6
+mechanics:
+  hud_glitches:
+    effects: дрожание прицела, пропадание маркеров
+    cooldown_s: 18
+  anti_implant:
+    effects: блок активок на 5 с
+    cooldown_s: 20
+  demons:
+    synergy: рядом с боссом получают +15% урона
+    counter: анти-ICE деки снижают бафф до 5%
+ai_logic:
+  pattern: циклично фаза1 → фаза2 → фаза3 → повтор; ускоряет цикл при 50% HP.
+  target_priority: фокусит нетраннеров/медиков цифровыми атаками, бойцов — физическими демонами.
+telemetry:
+  - metric: networker_battle_duration
+    desc: длительность боя
+  - metric: networker_wipes
+    desc: вайпы и на какой фазе
+  - metric: networker_core_damage
+    desc: урон по ядру в окна уязвимости
+  - metric: demon_spawns
+    desc: количество демонов и их убийства
+  - metric: implant_blocks
+    desc: сколько раз отключены импланты
+edge_cases:
+  - анти-абуз: при чрезмерном кайте (>25 м постоянной дистанции) сокращает ice_wave_interval_s до 9
+  - кооп: ядро открыто для всего рейда; баффы не стакаются между копиями босса
+  - соло: damage_hp_pct ice_wave снижен до 6
+
+

@@ -1,0 +1,46 @@
+title: AI враг — Ганг-берсерки (хим-стим + агрессия)
+# Issue: #1833
+summary:
+  role: Раш-ближники под стимами, высокий урон, уязвимы к контролю.
+  synergy: Бафы от «бардов»/ди-джеев усиливают волну стима; ломают укрытия.
+behavior:
+  pathing: кратчайший путь к цели, игнор огня до критического HP.
+  panic: при откате стима и низком HP — короткий отход.
+abilities:
+  хим_стим:
+    params:
+      speed_bonus_pct: 25
+      damage_bonus_pct: 30
+      self_dot_hp_pct: 2 per 2s
+      duration_s: 12
+      cooldown_s: 18
+  рывок:
+    params:
+      range_m: 10
+      damage_hp_pct: 18
+      stagger: true
+      cooldown_s: 6
+  удар_по_укрытию:
+    params:
+      cover_damage: medium
+      break_chance: 0.4
+      cooldown_s: 10
+  паника_отход:
+    trigger_hp_pct: 20
+    duration_s: 4
+ai_logic:
+  target_priority: фокусит самый ближний и самый мягкий (low armor).
+  control_vulnerability: слеп/стан увеличивает входящий урон по ним на +15%.
+telemetry:
+  - metric: berserk_deaths
+    desc: смертность берсерков и их длительность жизни
+  - metric: berserk_damage_to_players
+    desc: урон по игрокам, доля от рывков
+  - metric: cover_breaks
+    desc: сломанные укрытия и их тип
+edge_cases:
+  - анти-абуз: если кайтают >12 с без урона по игрокам, они получают ускорение +10% и бросок метательного предмета (низкий урон)
+  - кооп: стим-баффы разных берсерков не стакаются; берётся максимальный
+  - соло: self_dot_hp_pct снижен до 1.5 per 2s
+
+

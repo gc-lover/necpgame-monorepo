@@ -1,0 +1,42 @@
+title: AI враг — Снайпер-дрон «мимик»
+# Issue: #1829
+summary:
+  role: Снайперский дрон с камуфляжем; раскрывается термо/шум-сканом, высокие хедшоты, низкий HP.
+  layer: Tactical; слаб в ближке.
+behavior:
+  positioning: дальние позиции 70-110 м; смена точки после выстрела или скана.
+  focus: цели с хилом/нетраннеры.
+abilities:
+  камуфляж:
+    params:
+      duration_s: 10
+      reveal_on_scan: thermo/noise
+      cooldown_s: 12
+  зарядный_выстрел:
+    params:
+      windup_s: 1.2
+      damage_hp_pct: 48
+      headshot_bonus: 1.5x
+      range_m: 140
+      cooldown_s: 9
+  релоцирование:
+    params:
+      time_s: 2.5
+      distance_m: 15-25
+      trigger_on_reveal: true
+ai_logic:
+  anti_reveal: при скане уходит в камо + смена позиции.
+  target_priority: хил/нетраннер > лидер > остальное; избегает танков.
+telemetry:
+  - metric: mimic_headshots
+    desc: хедшоты/убийства дрона
+  - metric: mimic_reveals
+    desc: сколько раз раскрыт сканами
+  - metric: mimic_relolos
+    desc: релоцирования после выстрела/скана
+edge_cases:
+  - анти-абуз: при спаме сканов windup_s падает до 0.9, но damage_hp_pct до 40
+  - кооп: две метки от дрона не стакаются; берётся последний выстрел
+  - соло: damage_hp_pct снижен до 42
+
+

@@ -1,0 +1,46 @@
+title: AI враг — Медик-полевик (реаниматор)
+# Issue: #1835
+summary:
+  role: Саппорт, лечит/реанимирует союзников, поднимает под дымом/щитом.
+  synergy: Работает с лидером/щитовиками для создания окна реанима.
+behavior:
+  positioning: держится в укрытии, выходит только на подъем downed.
+  panic: при фокусе бросает дым, откатывается назад.
+abilities:
+  хил_на_дистанции:
+    params:
+      range_m: 18
+      heal_per_tick_hp_pct: 6
+      duration_s: 4
+      charges: 4
+      cooldown_s: 8
+  реаним_канал:
+    params:
+      channel_s: 3.5
+      shield_hp_pct: 25
+      smoke_radius_m: 8
+      smoke_duration_s: 10
+      cooldown_s: 18
+  стим_пакет_союзнику:
+    params:
+      speed_bonus_pct: 15
+      damage_resist_pct: 10
+      duration_s: 8
+      charges: 2
+      cooldown_s: 20
+ai_logic:
+  target_priority: сначала поднимает тяжёлые роли (щит/лидер), потом DPS.
+  cancel: прерывает реаним при входящем уроне >20% HP за 1 с.
+telemetry:
+  - metric: medic_revives
+    desc: успешные и прерванные реанимы
+  - metric: medic_revive_interrupt_rate
+    desc: доля сорванных каналов по причинам (урон, контроль, линия видимости)
+  - metric: medic_heal_done
+    desc: общий объём хила и распределение по ролям
+  - metric: medic_smoke_uses
+    desc: количество применений дыма при подъёме
+edge_cases:
+  - анти-абуз: если игроки фокусируют без перерыва, медик уходит в бегство на 6 с и не кастует
+  - кооп: щиты разных медиков не стакаются; берётся больший
+  - соло: channel_s сокращается до 2.8 для снижения фрустрации

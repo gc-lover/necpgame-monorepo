@@ -1,0 +1,43 @@
+title: AI враг — Нетрейсер-глушитель (anti-hack саппорт)
+# Issue: #1834
+summary:
+  role: Контроль кибердеки игроков — ставит глушилки, режет каналы, снимает баффы.
+  synergy: Усиливает турели/дроны, снижает эффективность демонов по отряду.
+behavior:
+  positioning: тыл, ставит глушилки на choke; при фокусе — дым и смена позиции.
+abilities:
+  глушилки:
+    params:
+      radius_m: 12
+      block: взлом/связь
+      duration_s: 18
+      health: low
+      removal: хак или уничтожение
+      cooldown_s: 16
+  анти_ice_импульс:
+    params:
+      effect: снимает временные баффы кибердеки, сбивает канал
+      range_m: 15
+      cast_time_s: 1
+      cooldown_s: 14
+  бафф_турели:
+    params:
+      turret_accuracy_bonus_pct: 12
+      duration_s: 12
+      cooldown_s: 18
+ai_logic:
+  target_priority: нетраннеры/медики, затем лидеры; избегает фронтлайна.
+  deploy_logic: ставит глушилку на подход к цели; не более 1 активной.
+telemetry:
+  - metric: jammer_jam_activations
+    desc: сколько глушилок активно, средняя длительность
+  - metric: anti_ice_casts
+    desc: успешные сбития каналов/баффов
+  - metric: turret_buff_uptime
+    desc: аптайм баффа на турелях
+edge_cases:
+  - анти-абуз: при быстром уничтожении глушилок (<5 с) AI кидает импульс сразу (cooldown_s 8) перед следующей
+  - кооп: радиус глушилки не стакается; берётся максимальный
+  - соло: radius_m снижается до 9 для меньшего страдания
+
+
