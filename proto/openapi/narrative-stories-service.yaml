@@ -1,0 +1,210 @@
+# Issue: #140875775
+openapi: 3.0.3
+info:
+  title: Narrative Stories Service API
+  description: API для управления историями и повествованием в MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/narrative
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/narrative
+    description: Продакшен сервер
+
+tags:
+  - name: Stories
+    description: Управление историями и повествованием
+
+paths:
+  /stories:
+    get:
+      tags:
+        - Stories
+      summary: Получение списка доступных историй
+      operationId: getStories
+      parameters:
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [easy, medium, hard]
+        - name: timeline_year_min
+          in: query
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+        - name: timeline_year_max
+          in: query
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: completed_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список историй
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        title:
+                          type: string
+                        summary:
+                          type: string
+                        author:
+                          type: string
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        timeline_year:
+                          type: integer
+                        reading_time:
+                          type: integer
+                        difficulty:
+                          type: string
+                        is_completed:
+                          type: boolean
+                  total:
+                    type: integer
+
+  /stories/{story_id}:
+    get:
+      tags:
+        - Stories
+      summary: Получение полной истории
+      operationId: getStory
+      parameters:
+        - name: story_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Полная история
+          content:
+            application/json:
+              schema:
+                $ref: 'narrative-player-schemas.yaml#/components/schemas/Story'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /stories/{story_id}/read:
+    post:
+      tags:
+        - Stories
+      summary: Начать/продолжить чтение истории
+      operationId: startReadingStory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: story_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_chapter:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                choice_made:
+                  type: integer
+                  description: Номер выбранного варианта (если применимо)
+      responses:
+        '200':
+          description: Текущая глава истории
+          content:
+            application/json:
+              schema:
+                $ref: 'narrative-player-schemas.yaml#/components/schemas/StoryChapter'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /stories/{story_id}/complete:
+    post:
+      tags:
+        - Stories
+      summary: Отметить историю как прочитанную
+      operationId: completeStory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: story_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: История отмечена как прочитанная
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  completed_at:
+                    type: string
+                    format: date-time
+                  rewards:
+                    $ref: 'narrative-player-schemas.yaml#/components/schemas/ScenarioRewards'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

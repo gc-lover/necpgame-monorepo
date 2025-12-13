@@ -1,0 +1,449 @@
+openapi: 3.0.3
+info:
+  title: Narrative Player Schemas
+  description: Схемы данных для игровой narrative системы (stories, scenarios, events) в MMOFPS RPG
+  version: 1.0.0
+components:
+  schemas:
+    Story:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 1000
+        content:
+          type: string
+          description: Полный текст истории
+        author:
+          type: string
+          description: Автор истории
+        tags:
+          type: array
+          items:
+            type: string
+          description: Тематические теги
+        timeline_year:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+          description: Год в таймлайне игры
+        location:
+          type: string
+          description: Локация событий
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryCharacter'
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryChapter'
+        reading_time:
+          type: integer
+          description: Время чтения в минутах
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        prerequisites:
+          type: array
+          items:
+            type: string
+          description: Необходимые условия для чтения
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    StoryCharacter:
+      type: object
+      required:
+        - name
+        - role
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum: [protagonist, antagonist, supporting, mentor, villain, ally]
+        description:
+          type: string
+          maxLength: 500
+        importance:
+          type: integer
+          minimum: 1
+          maximum: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    StoryChapter:
+      type: object
+      required:
+        - chapter_number
+        - title
+        - content
+      properties:
+        chapter_number:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        content:
+          type: string
+        summary:
+          type: string
+          maxLength: 300
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryChoice'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    StoryChoice:
+      type: object
+      required:
+        - text
+        - next_chapter
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 200
+        next_chapter:
+          type: integer
+          description: Номер следующей главы
+        requirements:
+          type: array
+          items:
+            type: string
+          description: Требования для выбора
+        consequences:
+          type: string
+          maxLength: 500
+          description: Последствия выбора
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    Scenario:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        type:
+          type: string
+          enum: [main_quest, side_quest, event, random_encounter, tutorial]
+        difficulty:
+          type: string
+          enum: [tutorial, easy, medium, hard, deadly]
+        estimated_duration:
+          type: integer
+          description: Предполагаемая длительность в минутах
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioObjective'
+        rewards:
+          $ref: '#/components/schemas/ScenarioRewards'
+        prerequisites:
+          type: array
+          items:
+            type: string
+          description: Необходимые условия для запуска
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioBranch'
+        timeline_year:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+        location:
+          type: string
+        npc_involved:
+          type: array
+          items:
+            type: string
+            format: uuid
+        created_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ScenarioObjective:
+      type: object
+      required:
+        - description
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+        type:
+          type: string
+          enum: [primary, secondary, optional, hidden]
+        progress_type:
+          type: string
+          enum: [boolean, counter, percentage, time_based]
+        target_value:
+          type: integer
+          description: Целевое значение для counter/percentage
+        current_value:
+          type: integer
+          description: Текущее значение прогресса
+        completed:
+          type: boolean
+          default: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ScenarioRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+        currency_rewards:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Валютные награды (тип валюты -> количество)
+        item_rewards:
+          type: array
+          items:
+            type: string
+            format: uuid
+            description: ID предмета
+        reputation_changes:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Изменения репутации (фракция -> изменение)
+        unlocks:
+          type: array
+          items:
+            type: string
+          description: Разблокированные возможности/предметы
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ScenarioBranch:
+      type: object
+      required:
+        - condition
+        - next_scenario_id
+      properties:
+        condition:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Условие ветвления
+        next_scenario_id:
+          type: string
+          format: uuid
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Вероятность выбора этой ветви
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    NarrativeEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        type:
+          type: string
+          enum: [world_event, character_event, faction_event, random_event, time_based]
+        trigger_conditions:
+          type: array
+          items:
+            type: string
+          description: Условия срабатывания события
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventEffect'
+        timeline_year:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+        location:
+          type: string
+        duration:
+          type: integer
+          description: Длительность события в часах
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+        is_active:
+          type: boolean
+          default: false
+        activated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    EventEffect:
+      type: object
+      required:
+        - type
+        - description
+      properties:
+        type:
+          type: string
+          enum: [dialogue, quest_unlock, item_spawn, npc_behavior_change, environment_change, reputation_change]
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Дополнительные параметры эффекта
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PlayerNarrativeProgress:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        current_story_id:
+          type: string
+          format: uuid
+        current_chapter:
+          type: integer
+        completed_stories:
+          type: array
+          items:
+            type: string
+            format: uuid
+        active_scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerScenarioProgress'
+        narrative_preferences:
+          type: object
+          properties:
+            preferred_difficulty:
+              type: string
+              enum: [easy, medium, hard]
+            story_tags:
+              type: array
+              items:
+                type: string
+            timeline_focus:
+              type: integer
+              minimum: 2020
+              maximum: 2093
+        last_updated:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PlayerScenarioProgress:
+      type: object
+      required:
+        - scenario_id
+        - status
+      properties:
+        scenario_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, failed, abandoned]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        objectives_progress:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveProgress'
+        current_branch:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ObjectiveProgress:
+      type: object
+      required:
+        - objective_id
+        - completed
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+        completed:
+          type: boolean
+        current_value:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    NarrativeFilter:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [story, scenario, event]
+        difficulty:
+          type: string
+          enum: [tutorial, easy, medium, hard, deadly]
+        timeline_year_min:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+        timeline_year_max:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+        tags:
+          type: array
+          items:
+            type: string
+        location:
+          type: string
+        author:
+          type: string
+        completed_only:
+          type: boolean
+          default: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

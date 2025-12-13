@@ -1,0 +1,288 @@
+# Issue: #140875775
+openapi: 3.0.3
+info:
+  title: Narrative Scenarios Service API
+  description: API для управления игровыми сценариями в MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/narrative
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/narrative
+    description: Продакшен сервер
+
+tags:
+  - name: Scenarios
+    description: Управление игровыми сценариями
+
+paths:
+  /scenarios:
+    get:
+      tags:
+        - Scenarios
+      summary: Получение списка доступных сценариев
+      operationId: getScenarios
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [main_quest, side_quest, event, random_encounter, tutorial]
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [tutorial, easy, medium, hard, deadly]
+        - name: timeline_year_min
+          in: query
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+        - name: timeline_year_max
+          in: query
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список сценариев
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenarios:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        title:
+                          type: string
+                        description:
+                          type: string
+                        type:
+                          type: string
+                        difficulty:
+                          type: string
+                        estimated_duration:
+                          type: integer
+                        timeline_year:
+                          type: integer
+                        is_available:
+                          type: boolean
+                        prerequisites_met:
+                          type: boolean
+                  total:
+                    type: integer
+
+  /scenarios/{scenario_id}:
+    get:
+      tags:
+        - Scenarios
+      summary: Получение деталей сценария
+      operationId: getScenario
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали сценария
+          content:
+            application/json:
+              schema:
+                $ref: 'narrative-player-schemas.yaml#/components/schemas/Scenario'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /scenarios/{scenario_id}/start:
+    post:
+      tags:
+        - Scenarios
+      summary: Начать сценарий
+      operationId: startScenario
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Сценарий начат
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenario_progress:
+                    $ref: 'narrative-player-schemas.yaml#/components/schemas/PlayerScenarioProgress'
+                  initial_objectives:
+                    type: array
+                    items:
+                      $ref: 'narrative-player-schemas.yaml#/components/schemas/ScenarioObjective'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /scenarios/{scenario_id}/progress:
+    get:
+      tags:
+        - Scenarios
+      summary: Получение прогресса по сценарию
+      operationId: getScenarioProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Прогресс по сценарию
+          content:
+            application/json:
+              schema:
+                $ref: 'narrative-player-schemas.yaml#/components/schemas/PlayerScenarioProgress'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Scenarios
+      summary: Обновление прогресса по сценарию
+      operationId: updateScenarioProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                objective_updates:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - objective_id
+                      - current_value
+                    properties:
+                      objective_id:
+                        type: string
+                        format: uuid
+                      current_value:
+                        type: integer
+                        minimum: 0
+                branch_choice:
+                  type: string
+                  format: uuid
+                  description: ID выбранной ветви сценария
+      responses:
+        '200':
+          description: Прогресс обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'narrative-player-schemas.yaml#/components/schemas/PlayerScenarioProgress'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /scenarios/{scenario_id}/complete:
+    post:
+      tags:
+        - Scenarios
+      summary: Завершить сценарий
+      operationId: completeScenario
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  default: true
+                completion_notes:
+                  type: string
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Сценарий завершен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    $ref: 'narrative-player-schemas.yaml#/components/schemas/ScenarioRewards'
+                  completion_time:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
