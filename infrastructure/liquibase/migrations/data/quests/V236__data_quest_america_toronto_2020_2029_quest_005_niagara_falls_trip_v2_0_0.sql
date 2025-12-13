@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\toronto\2020-2029\quest-005-niagara-falls-trip.yaml
--- Generated: 2025-12-06T21:12:58.166443
+-- Generated: 2025-12-13T21:13:34.376269
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\new-york\2061-2077\quest-033-brooklyn-hipsters.yaml
--- Generated: 2025-12-06T21:12:57.795886
+-- Generated: 2025-12-13T21:13:34.004894
 
 BEGIN;
 

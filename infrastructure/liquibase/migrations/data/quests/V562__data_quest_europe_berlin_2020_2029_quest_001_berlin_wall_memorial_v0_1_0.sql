@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2020-2029\quest-001-berlin-wall-memorial.yaml
--- Generated: 2025-12-06T21:12:59.730998
+-- Generated: 2025-12-13T21:13:35.627185
 
 BEGIN;
 

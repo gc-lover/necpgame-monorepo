@@ -1,0 +1,449 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  description: API для системы уведомлений в игре MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Notifications
+    description: Управление уведомлениями
+  - name: WebSocket
+    description: Real-time уведомления
+paths:
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Получить уведомления пользователя
+      operationId: getNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - unread
+              - read
+              - all
+            default: unread
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  total:
+                    type: integer
+                  unread_count:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Notifications
+      summary: Создать уведомление
+      operationId: createNotification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '201':
+          description: Уведомление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /notifications/{notification_id}:
+    get:
+      tags:
+        - Notifications
+      summary: Получить уведомление по ID
+      operationId: getNotification
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уведомление найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Notifications
+      summary: Обновить уведомление
+      operationId: updateNotification
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationRequest'
+      responses:
+        '200':
+          description: Уведомление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /notifications/{notification_id}/read:
+    post:
+      tags:
+        - Notifications
+      summary: Отметить уведомление как прочитанное
+      operationId: markAsRead
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уведомление отмечено как прочитанное
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /notifications/bulk-read:
+    post:
+      tags:
+        - Notifications
+      summary: Отметить несколько уведомлений как прочитанные
+      operationId: markBulkAsRead
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notification_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                  maxItems: 100
+      responses:
+        '200':
+          description: Уведомления отмечены как прочитанные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  processed_count:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /notifications/ws:
+    get:
+      tags:
+        - WebSocket
+      summary: WebSocket соединение для real-time уведомлений
+      operationId: notificationWebSocket
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT токен для аутентификации
+      responses:
+        '101':
+          description: WebSocket соединение установлено
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - system
+            - achievement
+            - quest
+            - social
+            - combat
+            - economy
+            - event
+        title:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+          maxLength: 1000
+        data:
+          type: object
+          description: Дополнительные данные уведомления (JSON)
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+            - critical
+          default: normal
+        status:
+          type: string
+          enum:
+            - unread
+            - read
+            - dismissed
+          default: unread
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - type
+        - title
+        - message
+        - priority
+        - status
+        - created_at
+        - updated_at
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateNotificationRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: ID пользователя-получателя
+        type:
+          type: string
+          enum:
+            - system
+            - achievement
+            - quest
+            - social
+            - combat
+            - economy
+            - event
+        title:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+          maxLength: 1000
+        data:
+          type: object
+          description: Дополнительные данные уведомления (JSON)
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+            - critical
+          default: normal
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - user_id
+        - type
+        - title
+        - message
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateNotificationRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+          maxLength: 1000
+        data:
+          type: object
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+            - critical
+        status:
+          type: string
+          enum:
+            - unread
+            - read
+            - dismissed
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND

@@ -1,0 +1,282 @@
+# Issue: #1835
+metadata:
+  id: canon-narrative-npc-field-medic
+  title: "AI враг: Медик-полевик (реаниматор)"
+  document_type: canon
+  category: narrative
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-13T12:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T21:56:43Z
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - npc
+    - ai-enemy
+    - combat
+    - medic
+    - support
+  topics:
+    - narrative
+    - gameplay
+    - combat-systems
+  related_systems:
+    - combat-service
+    - ai-enemy-service
+    - telemetry-service
+  related_documents:
+    - id: canon-mechanics-combat-enemies
+      relation: implements
+    - id: canon-narrative-npc-common-template
+      relation: based_on
+  source: knowledge/canon/narrative/npc-lore/common/ai-enemy-field-medic-2020-2093.yaml
+  visibility: internal
+  audience:
+    - content
+    - combat-design
+    - ai-developers
+  risk_level: low
+review:
+  chain:
+    - role: content_writer
+      reviewer: Content Writer Agent
+      reviewed_at: 2025-12-13T12:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Необходим AI враг поддержки для тактических боёв
+  goal: Создать сбалансированного медика, который лечит союзников и создаёт тактические окна
+  essence: Боевой медик с реанимацией, дымом/щитом и ограниченными зарядами
+  key_points:
+    - Реанимация с каналом и защитой поднимаемого
+    - Лечение на расстоянии с ограниченными зарядами
+    - Синергия с лидерами и щитовиками
+    - Тактическое поведение с укрытиями
+content:
+  identity:
+    name: Field Medic
+    aliases:
+      - Combat Medic
+      - Support Unit
+      - Reanimator
+    unique_id: ai-enemy-field-medic-001
+    category: ai-enemy
+    type: support
+    era: 2020-2093
+    active_years: 2020-2093
+    threat_level: tactical
+    faction_affiliation: various
+
+  context:
+    factions:
+      - all_combat_factions
+    locations:
+      - urban_combat_zones
+      - industrial_sites
+      - faction_strongholds
+    related_services:
+      - combat-service
+      - ai-enemy-service
+    api_endpoints:
+      - /api/v1/combat/enemies/medic
+    frontend_modules:
+      - CombatAI
+      - EnemyBehaviors
+
+  appearance_style:
+    visual_description: |
+      Стандартный боевой медик в бронекостюме с медицинскими имплантами.
+      На спине - портативный медблок с инъекторами.
+      В руках - комбинированное оружие (пистолет + мед-сканер).
+      Светящиеся медицинские индикаторы на броне.
+    implants:
+      - medical_nanites
+      - trauma_response_system
+      - bio-scanner
+    clothing_style: tactical_medical_armor
+    speech_patterns: |
+      - "Hold position! Medical support incoming!"
+      - "Target down! Reviving..."
+      - "Cover me while I work!"
+      - "Medic! Medic!"
+
+  history:
+    origin: |
+      Разработан как стандартная единица поддержки для различных фракций.
+      Эволюционировал от простых полевых медиков к тактическим AI с продвинутыми медицинскими имплантами.
+    key_events:
+      - "2020: Введение базовой версии с реанимацией"
+      - "2035: Добавление дымовых/щитовых гранат"
+      - "2050: Интеграция с боевыми AI для тактической координации"
+    current_status: active
+    motivations: |
+      - Поддержка союзных юнитов
+      - Тактическое преимущество через лечение
+      - Самосохранение через укрытия
+
+  relationships:
+    faction_relations:
+      - faction: all_combat_factions
+        initial_relation: neutral_to_supportive
+        development_factors:
+          - player_threat_level
+          - squad_composition
+    npc_relations:
+      - type: combat_leaders
+        relation: supportive
+        synergy: coordination
+      - type: shield_bearers
+        relation: cooperative
+        synergy: protection_windows
+    player_interactions:
+      - initial_relation: hostile
+      - development_factors:
+          - combat_performance
+          - mercy_actions
+
+  gameplay_role:
+    primary_function: support_healing
+    secondary_functions:
+      - tactical_disruption
+      - squad_revitalization
+    related_quests: []
+    related_events:
+      - combat_encounters
+      - faction_conflicts
+    rewards:
+      - medical_supplies
+      - faction_reputation
+    consequences:
+      - squad_casualties_reduced
+      - extended_combat_duration
+
+  mechanics:
+    combat_stats:
+      health: 800
+      armor: 400
+      movement_speed: 3.5
+      threat_radius: 15m
+
+    abilities:
+      - name: Combat_Resurrection
+        description: "Реанимация downed союзника с каналом"
+        cooldown: 30
+        duration: 8
+        range: 5m
+        charges: 3
+        effects:
+          - revive_ally: true
+          - channel_interruptible: true
+          - smoke_cover: 3m_radius
+          - shield_bubble: 50%_damage_reduction
+
+      - name: Distance_Healing
+        description: "Лечение союзника на расстоянии"
+        cooldown: 12
+        range: 20m
+        charges: 5
+        effects:
+          - heal_amount: 200
+          - overheal_cap: 150%
+          - priority_low_health: true
+
+      - name: Tactical_Retreat
+        description: "Бросок дымовой гранаты при угрозе"
+        cooldown: 25
+        triggers:
+          - low_health_threshold: 30%
+          - player_focus_detected
+        effects:
+          - smoke_screen: 8m_radius
+          - movement_speed_boost: 50%
+          - temporary_invisibility: 3s
+
+    ai_behavior:
+      priorities:
+        - revive_downed_allies
+        - heal_low_health_units
+        - maintain_distance
+        - seek_cover
+      tactics:
+        - hide_behind_shields
+        - coordinate_with_leaders
+        - retreat_when_focused
+        - prioritize_key_units
+
+    telemetry_tracking:
+      metrics:
+        - successful_revives
+        - interrupted_channels
+        - healing_efficiency
+        - survival_rate
+      balance_indicators:
+        - revive_success_rate: target_60%
+        - channel_interrupt_rate: target_40%
+        - average_combat_duration: target_+15%
+
+  dialogues:
+    combat_lines:
+      - "Hold position! Medical support incoming!"
+      - "Target down! Reviving now..."
+      - "Cover me while I work!"
+      - "Medic! Medic!"
+      - "Stay down! Help is coming!"
+    victory_lines:
+      - "Medical support successful."
+      - "Squad revitalized."
+    defeat_lines:
+      - "Medical... support... failing..."
+
+  inspiration:
+    cyberpunk_sources:
+      - "Original Cyberpunk 2077: Trauma Team medics"
+      - "Military field medics with cybernetic enhancements"
+      - "Tactical support units in modern warfare"
+    unique_elements:
+      - "Channel-based resurrection with interruption risk"
+      - "Limited charges creating resource management"
+      - "Synergy with shield units for protection"
+
+  maintenance:
+    open_questions: []
+    visual_needs:
+      - medical_backpack_model
+      - healing_effect_particles
+      - resurrection_animation
+    quest_integration: []
+    change_history:
+      - version: "1.0.0"
+        date: 2025-12-13
+        author: content_writer_agent
+        changes: Initial implementation of field medic AI enemy
+appendix:
+  glossary:
+    - term: Combat Resurrection
+      definition: Ability to revive downed allies with channeling
+    - term: Tactical Retreat
+      definition: Emergency smoke deployment with speed boost
+  references:
+    - title: Combat Enemy Template
+      link: ./ai-enemy-template.yaml
+    - title: Medical Systems Design
+      link: ../../mechanics/combat-medical-systems.yaml
+  decisions:
+    - rationale: Limited charges to prevent spam healing
+      impact: Creates tactical resource management
+    - rationale: Channel interruption for counter-play
+      impact: Adds risk-reward to medic targeting
+implementation:
+  needs_task: false
+  github_issue: 1835
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-13
+    author: content_writer_agent
+    changes: Created field medic AI enemy specification
+validation:
+  checksum: ""
+  schema_version: "1.0"

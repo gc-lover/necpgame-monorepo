@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\sao-paulo\2020-2029\quest-007-japanese-district.yaml
--- Generated: 2025-12-06T21:12:58.055538
+-- Generated: 2025-12-13T21:13:34.271628
 
 BEGIN;
 

@@ -1,6 +1,6 @@
--- Issue: #50, #358
+-- Issue: #50
 -- Import quest from: america\new-york\2078-2093\quest-041-lady-liberty-awakens.yaml
--- Generated: 2025-12-06T21:12:57.827507
+-- Generated: 2025-12-13T21:13:34.042130
 
 BEGIN;
 

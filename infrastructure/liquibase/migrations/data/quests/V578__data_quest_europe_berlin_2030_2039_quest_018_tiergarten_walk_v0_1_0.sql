@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2030-2039\quest-018-tiergarten-walk.yaml
--- Generated: 2025-12-06T21:12:59.787689
+-- Generated: 2025-12-13T21:13:35.682206
 
 BEGIN;
 

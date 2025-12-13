@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\new-york\2040-2060\quest-026-jazz-club-underground.yaml
--- Generated: 2025-12-06T21:12:57.766588
+-- Generated: 2025-12-13T21:13:33.977027
 
 BEGIN;
 

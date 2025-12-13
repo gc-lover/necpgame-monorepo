@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\tokyo\2078-2093\quest-049-sayonara-tokyo.yaml
--- Generated: 2025-12-06T21:12:58.714557
+-- Generated: 2025-12-13T21:13:34.854093
 
 BEGIN;
 

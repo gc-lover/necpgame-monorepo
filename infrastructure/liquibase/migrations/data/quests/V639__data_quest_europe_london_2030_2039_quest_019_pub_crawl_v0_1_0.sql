@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2030-2039\quest-019-pub-crawl.yaml
--- Generated: 2025-12-06T21:13:00.004551
+-- Generated: 2025-12-13T21:13:35.937726
 
 BEGIN;
 

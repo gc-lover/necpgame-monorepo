@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2030-2039\quest-019-rostral-columns.yaml
--- Generated: 2025-12-06T21:12:59.346583
+-- Generated: 2025-12-13T21:13:35.324744
 
 BEGIN;
 

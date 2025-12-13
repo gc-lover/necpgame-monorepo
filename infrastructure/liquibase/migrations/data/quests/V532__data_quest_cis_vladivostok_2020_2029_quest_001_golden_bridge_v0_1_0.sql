@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\vladivostok\2020-2029\quest-001-golden-bridge.yaml
--- Generated: 2025-12-06T21:12:59.601953
+-- Generated: 2025-12-13T21:13:35.515691
 
 BEGIN;
 

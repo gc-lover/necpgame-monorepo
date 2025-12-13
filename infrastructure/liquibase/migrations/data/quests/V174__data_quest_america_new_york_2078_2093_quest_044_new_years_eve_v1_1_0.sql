@@ -1,6 +1,6 @@
--- Issue: #50, #359
+-- Issue: #50
 -- Import quest from: america\new-york\2078-2093\quest-044-new-years-eve.yaml
--- Generated: 2025-12-06T21:12:57.839809
+-- Generated: 2025-12-13T21:13:34.056624
 
 BEGIN;
 

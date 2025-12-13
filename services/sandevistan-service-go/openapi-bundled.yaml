@@ -1,0 +1,327 @@
+openapi: 3.0.3
+info:
+  title: Sandevistan Service API
+  description: API для системы Sandevistan Temporal Overdrive - механики замедления времени
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Sandevistan
+    description: Управление Sandevistan системой
+  - name: Combat
+    description: Боевые механики
+paths:
+  /sandevistan/activate:
+    post:
+      tags:
+        - Sandevistan
+      summary: Активировать Sandevistan
+      operationId: activateSandevistan
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateSandevistanRequest'
+      responses:
+        '200':
+          description: Sandevistan активирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Cooldown активен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CooldownError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sandevistan/deactivate:
+    post:
+      tags:
+        - Sandevistan
+      summary: Деактивировать Sandevistan
+      operationId: deactivateSandevistan
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sandevistan деактивирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanState'
+        '400':
+          description: Sandevistan не активен
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /sandevistan/state:
+    get:
+      tags:
+        - Sandevistan
+      summary: Получить состояние Sandevistan
+      operationId: getSandevistanState
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Текущее состояние Sandevistan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /sandevistan/upgrade:
+    post:
+      tags:
+        - Sandevistan
+      summary: Улучшить Sandevistan
+      operationId: upgradeSandevistan
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeSandevistanRequest'
+      responses:
+        '200':
+          description: Sandevistan улучшен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanStats'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Недостаточно ресурсов
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sandevistan/stats:
+    get:
+      tags:
+        - Sandevistan
+      summary: Получить статистику Sandevistan
+      operationId: getSandevistanStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Статистика Sandevistan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    ActivateSandevistanRequest:
+      type: object
+      properties:
+        duration_override:
+          type: number
+          format: float
+          description: Переопределить длительность активации (секунды)
+          minimum: 0.1
+          maximum: 30
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SandevistanState:
+      type: object
+      properties:
+        is_active:
+          type: boolean
+        activation_time:
+          type: string
+          format: date-time
+          nullable: true
+        remaining_time:
+          type: number
+          format: float
+          description: Оставшееся время активации (секунды)
+        time_dilation:
+          type: number
+          format: float
+          description: Коэффициент замедления времени
+        cooldown_remaining:
+          type: number
+          format: float
+          description: Оставшееся время cooldown (секунды)
+        cyberpsychosis_level:
+          type: number
+          format: float
+          description: Текущий уровень киберпсихоза
+        heat_level:
+          type: number
+          format: float
+          description: Уровень нагрева импланта
+      required:
+        - is_active
+        - time_dilation
+        - cooldown_remaining
+        - cyberpsychosis_level
+        - heat_level
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CooldownError:
+      type: object
+      properties:
+        error:
+          type: string
+        cooldown_remaining:
+          type: number
+          format: float
+        message:
+          type: string
+      required:
+        - error
+        - cooldown_remaining
+        - message
+    UpgradeSandevistanRequest:
+      type: object
+      properties:
+        upgrade_type:
+          type: string
+          enum:
+            - duration
+            - cooldown
+            - cyberpsychosis_resistance
+            - heat_dissipation
+        level:
+          type: integer
+          minimum: 1
+          maximum: 10
+      required:
+        - upgrade_type
+        - level
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SandevistanStats:
+      type: object
+      properties:
+        level:
+          type: integer
+          minimum: 0
+          maximum: 10
+        max_duration:
+          type: number
+          format: float
+          description: Максимальная длительность активации (секунды)
+        cooldown_time:
+          type: number
+          format: float
+          description: Время cooldown (секунды)
+        time_dilation_base:
+          type: number
+          format: float
+          description: Базовый коэффициент замедления времени
+        cyberpsychosis_resistance:
+          type: number
+          format: float
+          description: Сопротивление киберпсихозу (0-1)
+        heat_dissipation_rate:
+          type: number
+          format: float
+          description: Скорость охлаждения
+        total_activations:
+          type: integer
+          description: Общее количество активаций
+        total_duration:
+          type: number
+          format: float
+          description: Общее время использования (секунды)
+        best_streak:
+          type: integer
+          description: Лучшая серия активаций
+        average_duration:
+          type: number
+          format: float
+          description: Средняя длительность активации
+      required:
+        - level
+        - max_duration
+        - cooldown_time
+        - time_dilation_base
+        - cyberpsychosis_resistance
+        - heat_dissipation_rate
+        - total_activations
+        - total_duration
+        - best_streak
+        - average_duration
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR

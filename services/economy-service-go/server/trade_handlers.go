@@ -13,14 +13,16 @@ import (
 
 // EconomyHandlers implements api.Handler interface (ogen typed handlers!)
 type EconomyHandlers struct {
-	tradeService TradeServiceInterface
-	logger       *logrus.Logger
+	tradeService            TradeServiceInterface
+	currencyExchangeService CurrencyExchangeServiceInterface
+	logger                  *logrus.Logger
 }
 
-func NewEconomyHandlers(tradeService TradeServiceInterface) *EconomyHandlers {
+func NewEconomyHandlers(tradeService TradeServiceInterface, currencyExchangeService CurrencyExchangeServiceInterface) *EconomyHandlers {
 	return &EconomyHandlers{
-		tradeService: tradeService,
-		logger:       GetLogger(),
+		tradeService:            tradeService,
+		currencyExchangeService: currencyExchangeService,
+		logger:                  GetLogger(),
 	}
 }
 

@@ -12,8 +12,9 @@ import (
 
 	"go.uber.org/zap"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"necpgame/services/auth-login-service-go/server"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // main является точкой входа для auth-login-service
@@ -86,8 +87,8 @@ func connectDatabase(databaseURL string, logger *zap.Logger) (*sql.DB, error) {
 	}
 
 	// Настраиваем connection pool для MMOFPS оптимизаций
-	db.SetMaxOpenConns(25)     // Максимум 25 соединений для высокой нагрузки
-	db.SetMaxIdleConns(10)     // 10 idle соединений
+	db.SetMaxOpenConns(25)                 // Максимум 25 соединений для высокой нагрузки
+	db.SetMaxIdleConns(10)                 // 10 idle соединений
 	db.SetConnMaxLifetime(5 * time.Minute) // Пересоздаем соединения каждые 5 минут
 
 	// Проверяем соединение с таймаутом

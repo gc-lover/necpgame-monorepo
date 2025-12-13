@@ -6,13 +6,16 @@ package api
 type OperationName = string
 
 const (
-	ActivateSandevistanOperation   OperationName = "ActivateSandevistan"
-	ApplyCoolingCartridgeOperation OperationName = "ApplyCoolingCartridge"
-	ApplyCounterplayOperation      OperationName = "ApplyCounterplay"
-	DeactivateSandevistanOperation OperationName = "DeactivateSandevistan"
-	GetHeatStatusOperation         OperationName = "GetHeatStatus"
-	GetSandevistanStatusOperation  OperationName = "GetSandevistanStatus"
-	GetTemporalMarksOperation      OperationName = "GetTemporalMarks"
-	SetTemporalMarksOperation      OperationName = "SetTemporalMarks"
-	UseActionBudgetOperation       OperationName = "UseActionBudget"
+	ActivateSandevistanOperation        OperationName = "ActivateSandevistan"
+	ApplyCoolingCartridgeOperation      OperationName = "ApplyCoolingCartridge"
+	ApplyCounterplayOperation           OperationName = "ApplyCounterplay"
+	ApplyTemporalMarksOperation         OperationName = "ApplyTemporalMarks"
+	DeactivateSandevistanOperation      OperationName = "DeactivateSandevistan"
+	GetHeatStatusOperation              OperationName = "GetHeatStatus"
+	GetSandevistanBonusesOperation      OperationName = "GetSandevistanBonuses"
+	GetSandevistanStatusOperation       OperationName = "GetSandevistanStatus"
+	GetTemporalMarksOperation           OperationName = "GetTemporalMarks"
+	PublishPerceptionDragEventOperation OperationName = "PublishPerceptionDragEvent"
+	SetTemporalMarksOperation           OperationName = "SetTemporalMarks"
+	UseActionBudgetOperation            OperationName = "UseActionBudget"
 )

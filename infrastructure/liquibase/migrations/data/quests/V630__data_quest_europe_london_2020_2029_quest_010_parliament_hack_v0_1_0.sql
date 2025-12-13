@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2020-2029\quest-010-parliament-hack.yaml
--- Generated: 2025-12-06T21:12:59.973201
+-- Generated: 2025-12-13T21:13:35.903485
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2040-2060\quest-029-tresor-legacy.yaml
--- Generated: 2025-12-06T21:12:59.827821
+-- Generated: 2025-12-13T21:13:35.721884
 
 BEGIN;
 

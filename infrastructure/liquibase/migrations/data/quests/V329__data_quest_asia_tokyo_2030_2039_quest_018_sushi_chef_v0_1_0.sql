@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\tokyo\2030-2039\quest-018-sushi-chef.yaml
--- Generated: 2025-12-06T21:12:58.601664
+-- Generated: 2025-12-13T21:13:34.749047
 
 BEGIN;
 

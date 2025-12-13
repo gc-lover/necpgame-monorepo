@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2030-2039\quest-013-sherlock-ai.yaml
--- Generated: 2025-12-06T21:12:59.983260
+-- Generated: 2025-12-13T21:13:35.913280
 
 BEGIN;
 

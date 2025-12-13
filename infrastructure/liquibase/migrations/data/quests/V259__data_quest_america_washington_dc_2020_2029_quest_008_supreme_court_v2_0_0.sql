@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\washington-dc\2020-2029\quest-008-supreme-court.yaml
--- Generated: 2025-12-06T21:12:58.320884
+-- Generated: 2025-12-13T21:13:34.492591
 
 BEGIN;
 

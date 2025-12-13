@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\boston\2020-2029\quest-008-samuel-adams-beer.yaml
--- Generated: 2025-12-06T21:12:57.073493
+-- Generated: 2025-12-13T21:13:33.307778
 
 BEGIN;
 

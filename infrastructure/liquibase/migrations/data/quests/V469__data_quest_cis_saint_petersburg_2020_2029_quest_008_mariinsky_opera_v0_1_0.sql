@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2020-2029\quest-008-mariinsky-opera.yaml
--- Generated: 2025-12-06T21:12:59.281498
+-- Generated: 2025-12-13T21:13:35.279301
 
 BEGIN;
 

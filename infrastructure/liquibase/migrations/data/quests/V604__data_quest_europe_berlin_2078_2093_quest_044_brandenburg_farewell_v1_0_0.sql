@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2078-2093\quest-044-brandenburg-farewell.yaml
--- Generated: 2025-12-06T21:12:59.881963
+-- Generated: 2025-12-13T21:13:35.775816
 
 BEGIN;
 

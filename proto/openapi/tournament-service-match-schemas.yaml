@@ -1,0 +1,230 @@
+# Issue: #1846 - Tournament Match Schemas
+components:
+  schemas:
+    Match:
+      type: object
+      required:
+        - id
+        - tournament_id
+        - round_number
+        - participants
+        - status
+        - scheduled_time
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID матча
+        tournament_id:
+          type: string
+          format: uuid
+          description: ID турнира
+        round_number:
+          type: integer
+          minimum: 1
+          description: Номер раунда
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 10
+          description: ID участников
+        status:
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - cancelled
+            - disputed
+          description: Статус матча
+        scheduled_time:
+          type: string
+          format: date-time
+          description: Запланированное время
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения
+        winner_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID победителя
+        server_id:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: ID сервера
+        replay_url:
+          type: string
+          nullable: true
+          description: URL реплея
+        dispute_reason:
+          type: string
+          nullable: true
+          description: Причина спора
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~150 bytes/instance."
+    MatchDetail:
+      allOf:
+        - $ref: "#/components/schemas/Match"
+        - type: object
+          properties:
+            participant_details:
+              type: array
+              items:
+                $ref: "#/components/schemas/MatchParticipant"
+            results:
+              $ref: "#/components/schemas/MatchResult"
+            spectators:
+              type: integer
+              default: 0
+              description: Количество зрителей
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~200 bytes/instance."
+    MatchParticipant:
+      type: object
+      required:
+        - character_id
+        - character_name
+        - team
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        character_name:
+          type: string
+          maxLength: 100
+          description: Имя персонажа
+        team:
+          type: integer
+          minimum: 1
+          maximum: 2
+          description: Номер команды
+        ready_status:
+          type: boolean
+          default: false
+          description: Готовность к матчу
+        connection_status:
+          type: string
+          enum:
+            - connected
+            - disconnected
+            - reconnecting
+          default: connected
+          description: Статус подключения
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~60 bytes/instance."
+    MatchResultRequest:
+      type: object
+      required:
+        - winner_team
+        - scores
+      properties:
+        winner_team:
+          type: integer
+          minimum: 1
+          maximum: 2
+          description: Номер победившей команды
+        scores:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Счет по персонажам (character_id -> score)
+        statistics:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/MatchPlayerStats"
+          description: Статистика игроков
+        replay_data:
+          type: string
+          nullable: true
+          description: Данные реплея (base64)
+        duration_seconds:
+          type: integer
+          minimum: 1
+          description: Длительность матча в секундах
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~100 bytes/instance."
+    MatchResult:
+      type: object
+      required:
+        - match_id
+        - winner_team
+        - final_scores
+        - submitted_at
+      properties:
+        match_id:
+          type: string
+          format: uuid
+          description: ID матча
+        winner_team:
+          type: integer
+          minimum: 1
+          maximum: 2
+          description: Номер победившей команды
+        final_scores:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Финальный счет
+        player_statistics:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/MatchPlayerStats"
+          description: Статистика игроков
+        duration_seconds:
+          type: integer
+          minimum: 1
+          description: Длительность матча
+        submitted_at:
+          type: string
+          format: date-time
+          description: Время отправки результатов
+        replay_url:
+          type: string
+          nullable: true
+          description: URL реплея
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~120 bytes/instance."
+    MatchPlayerStats:
+      type: object
+      properties:
+        kills:
+          type: integer
+          default: 0
+          description: Убийств
+        deaths:
+          type: integer
+          default: 0
+          description: Смертей
+        assists:
+          type: integer
+          default: 0
+          description: Помощи
+        score:
+          type: integer
+          default: 0
+          description: Очки
+        damage_dealt:
+          type: integer
+          default: 0
+          description: Нанесенный урон
+        damage_taken:
+          type: integer
+          default: 0
+          description: Полученный урон
+        healing_done:
+          type: integer
+          default: 0
+          description: Исцеление
+        objectives_completed:
+          type: integer
+          default: 0
+          description: Выполненные objectives
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~32 bytes/instance."

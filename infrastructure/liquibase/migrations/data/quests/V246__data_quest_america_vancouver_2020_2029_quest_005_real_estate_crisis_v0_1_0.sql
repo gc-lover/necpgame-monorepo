@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\vancouver\2020-2029\quest-005-real-estate-crisis.yaml
--- Generated: 2025-12-06T21:12:58.233265
+-- Generated: 2025-12-13T21:13:34.424137
 
 BEGIN;
 

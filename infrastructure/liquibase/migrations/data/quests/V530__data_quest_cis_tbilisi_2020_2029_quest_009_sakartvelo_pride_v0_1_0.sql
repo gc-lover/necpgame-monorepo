@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\tbilisi\2020-2029\quest-009-sakartvelo-pride.yaml
--- Generated: 2025-12-06T21:12:59.593212
+-- Generated: 2025-12-13T21:13:35.506995
 
 BEGIN;
 

@@ -40,6 +40,15 @@ func (UnimplementedHandler) ApplyCounterplay(ctx context.Context, req *ApplyCoun
 	return r, ht.ErrNotImplemented
 }
 
+// ApplyTemporalMarks implements applyTemporalMarks operation.
+//
+// Применить Temporal Marks (delayed burst damage).
+//
+// POST /combat/players/{player_id}/sandevistan/apply-temporal-marks
+func (UnimplementedHandler) ApplyTemporalMarks(ctx context.Context, params ApplyTemporalMarksParams) (r ApplyTemporalMarksRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // DeactivateSandevistan implements deactivateSandevistan operation.
 //
 // Досрочно деактивировать Sandevistan.
@@ -58,6 +67,15 @@ func (UnimplementedHandler) GetHeatStatus(ctx context.Context, params GetHeatSta
 	return r, ht.ErrNotImplemented
 }
 
+// GetSandevistanBonuses implements getSandevistanBonuses operation.
+//
+// Получить текущие бонусы Sandevistan.
+//
+// GET /combat/players/{player_id}/sandevistan/bonuses
+func (UnimplementedHandler) GetSandevistanBonuses(ctx context.Context, params GetSandevistanBonusesParams) (r GetSandevistanBonusesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetSandevistanStatus implements getSandevistanStatus operation.
 //
 // Получить статус Sandevistan.
@@ -73,6 +91,15 @@ func (UnimplementedHandler) GetSandevistanStatus(ctx context.Context, params Get
 //
 // GET /combat/players/{player_id}/sandevistan/temporal-marks
 func (UnimplementedHandler) GetTemporalMarks(ctx context.Context, params GetTemporalMarksParams) (r GetTemporalMarksRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PublishPerceptionDragEvent implements publishPerceptionDragEvent operation.
+//
+// Опубликовать Perception Drag событие.
+//
+// POST /combat/players/{player_id}/sandevistan/perception-drag
+func (UnimplementedHandler) PublishPerceptionDragEvent(ctx context.Context, req *PerceptionDragEvent, params PublishPerceptionDragEventParams) (r PublishPerceptionDragEventRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

@@ -307,6 +307,143 @@ components:
           description: Завершена ли фаза
           example: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TemporalMarksApplied:
+      type: object
+      required:
+        - marks_applied
+        - damage_dealt
+        - targets_hit
+      properties:
+        marks_applied:
+          type: integer
+          minimum: 0
+          description: Количество применённых temporal marks
+          example: 2
+        damage_dealt:
+          type: integer
+          minimum: 0
+          description: Общий нанесённый урон
+          example: 150
+        targets_hit:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список ID целей, которым был нанесён урон
+          example:
+            - 550e8400-e29b-41d4-a716-446655440002
+            - 550e8400-e29b-41d4-a716-446655440003
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SandevistanBonuses:
+      type: object
+      required:
+        - is_active
+        - phase
+        - movement_boost
+        - fire_rate_boost
+        - dash_distance
+        - auto_target_enabled
+      properties:
+        is_active:
+          type: boolean
+          description: Активен ли Sandevistan
+          example: true
+        phase:
+          type: string
+          enum:
+            - idle
+            - preparation
+            - active
+            - recovery
+          description: Текущая фаза
+          example: active
+        movement_boost:
+          type: number
+          format: float
+          description: Множитель скорости движения (1.0 = базовая скорость)
+          example: 1.4
+        fire_rate_boost:
+          type: number
+          format: float
+          description: Множитель скорости стрельбы (1.0 = базовая скорость)
+          example: 1.25
+        dash_distance:
+          type: number
+          format: float
+          description: Дистанция auto-target dash в метрах
+          example: 15
+        auto_target_enabled:
+          type: boolean
+          description: Включен ли auto-target dash
+          example: true
+      description: 'BACKEND NOTE: Current Sandevistan gameplay bonuses. Used by combat-service for real-time effect application.'
+    PerceptionDragEvent:
+      type: object
+      required:
+        - event_type
+        - player_id
+        - activation_id
+        - phase
+        - timestamp
+        - affected_players
+        - drag_duration_ms
+        - drag_intensity
+      properties:
+        event_type:
+          type: string
+          enum:
+            - sandevistan_activated
+            - sandevistan_deactivated
+            - phase_changed
+          description: Тип события Perception Drag
+          example: sandevistan_activated
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока с Sandevistan
+          example: 550e8400-e29b-41d4-a716-446655440000
+        activation_id:
+          type: string
+          format: uuid
+          description: ID активации Sandevistan
+          example: 550e8400-e29b-41d4-a716-446655440001
+        phase:
+          type: string
+          enum:
+            - preparation
+            - active
+            - recovery
+            - idle
+          description: Фаза Sandevistan
+          example: active
+        timestamp:
+          type: string
+          format: date-time
+          description: Время события
+          example: '2025-11-29T10:00:00Z'
+        affected_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список игроков, подверженных Perception Drag
+          example:
+            - 550e8400-e29b-41d4-a716-446655440002
+            - 550e8400-e29b-41d4-a716-446655440003
+        drag_duration_ms:
+          type: integer
+          minimum: 0
+          maximum: 5000
+          description: Длительность Perception Drag в миллисекундах
+          example: 120
+        drag_intensity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1.0
+          description: Интенсивность эффекта (0.0 = нет эффекта, 1.0 = максимальный)
+          example: 0.8
+      description: 'BACKEND NOTE: Event for Perception Drag effects. Published to realtime-service for client-side visual effects.'
 
 
 

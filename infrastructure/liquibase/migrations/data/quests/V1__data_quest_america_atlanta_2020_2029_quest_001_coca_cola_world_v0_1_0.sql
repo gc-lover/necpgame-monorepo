@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\atlanta\2020-2029\quest-001-coca-cola-world.yaml
--- Generated: 2025-12-06T21:12:56.989463
+-- Generated: 2025-12-13T21:13:33.239907
 
 BEGIN;
 

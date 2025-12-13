@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2061-2077\quest-033-football-hooligans.yaml
--- Generated: 2025-12-06T21:13:00.051724
+-- Generated: 2025-12-13T21:13:35.990645
 
 BEGIN;
 

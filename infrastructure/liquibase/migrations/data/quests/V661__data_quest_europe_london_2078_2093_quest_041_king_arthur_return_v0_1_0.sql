@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2078-2093\quest-041-king-arthur-return.yaml
--- Generated: 2025-12-06T21:13:00.078989
+-- Generated: 2025-12-13T21:13:36.015202
 
 BEGIN;
 

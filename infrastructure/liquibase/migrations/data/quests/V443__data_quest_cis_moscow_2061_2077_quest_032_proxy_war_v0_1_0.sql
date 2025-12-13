@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2061-2077\quest-032-proxy-war.yaml
--- Generated: 2025-12-06T21:12:59.137754
+-- Generated: 2025-12-13T21:13:35.187969
 
 BEGIN;
 

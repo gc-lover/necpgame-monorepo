@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2078-2093\quest-050-london-reborn.yaml
--- Generated: 2025-12-06T21:13:00.107357
+-- Generated: 2025-12-13T21:13:36.042986
 
 BEGIN;
 

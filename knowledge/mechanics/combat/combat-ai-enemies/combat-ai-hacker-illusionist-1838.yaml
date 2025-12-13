@@ -1,59 +1,197 @@
-title: AI враг — Хакер-иллюзионист (ложные сигналы)
 # Issue: #1838
+metadata:
+  id: combat-ai-hacker-illusionist-1838
+  title: "AI враг: Хакер-иллюзионист (ложные сигналы)"
+  document_type: canon
+  category: mechanics
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-13T12:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T21:56:54Z
+  owners:
+    - role: content_director
+      contact: content@necp.game
+  tags:
+    - ai-enemy
+    - hacker
+    - illusion
+    - diversion
+    - netrunning
+  topics:
+    - combat-mechanics
+    - ai-behavior
+    - cyberpunk-hacking
+  related_systems:
+    - combat-service
+    - ai-behavior-service
+  related_documents:
+    - id: combat-ai-enemies-index
+      relation: part_of
+    - id: mechanics-combat-ai-enemies
+      relation: extends
+  source: shared/docs/knowledge/mechanics/combat/combat-ai-enemies/combat-ai-hacker-illusionist-1838.md
+  visibility: internal
+  audience:
+    - backend
+    - qa
+    - game-design
+  risk_level: low
+review:
+  chain:
+    - role: backend_engineer
+      reviewer: Backend Team
+      reviewed_at: 2025-12-08T21:56:54Z
+      status: approved
+    - role: content_director
+      reviewer: Content Documentation Cell
+      reviewed_at: 2025-12-13T12:00:00Z
+      status: approved
+  next_actions: []
 summary:
-  role: Диверсант, создающий ложные пинги/голограммы и HUD-помехи, чтобы дезориентировать игроков.
-  synergy: Работает вместе с штурмовым звеном, отвлекает, пока фланг заходит.
-behavior:
-  positioning: держится в тылу, меняет позицию при раскрытии, использует дым/перегрузку сети
-  cycle:
-    - фаза_обмана: каст ложных пингов/силуэтов
-    - фаза_отхода: смена позиции, установка помех
-    - фаза_поддержки: бафф сетевых помех штурму, затем повтор
-abilities:
-  ложные_пинги:
-    effect: создаёт пинги на карте/сенсорах, помечая фантомные цели
-    params:
-      count: 3
-      scatter_radius_m: 30
-      duration_s: 12
-      cooldown_s: 18
-  фантомные_силуэты:
-    effect: голограммы целей, которые исчезают при попадании
-    params:
-      silhouettes: 2-3
-      duration_s: 8
-      decay_on_damage: true
-      cooldown_s: 22
-  hud_хаки:
-    effect: короткие блики/шумы на HUD, без урона
-    params:
-      blur_duration_s: 2
-      noise_duration_s: 3
-      cooldown_s: 16
-  перегрузка_сети:
-    effect: краткий debuff связи сквада, снижает дальность меток
-    params:
-      comms_radius_penalty_pct: 40
-      duration_s: 10
-      cooldown_s: 28
-ai_logic:
-  target_priority: выбирает группы >2 игроков; избегает прямой линии огня
-  retreat_trigger: при получении 35% HP урона — уходит в дым, меняет этаж/коридор
-  reveal_counter:
-    - скан импланта/дрона снижает duration_s фантомов вдвое
-    - при 2 раскрытиях подряд AI увеличивает расстояние до боя на +20 м
-telemetry:
-  - metric: illusion_pings_triggered
-    desc: сколько игроков пошло на ложные пинги
-  - metric: time_to_detect_hacker
-    desc: среднее время до выявления и убийства хакера
-  - metric: silhouette_shots_wasted
-    desc: потраченные пули/время на фантомы
-  - metric: comms_debuff_uptime
-    desc: суммарное время ослабленной связи
-  - metric: hud_noise_reacts
-    desc: частота очистки HUD-шума/контрмер игроками
-edge_cases:
-  - анти-абуз: если игроки игнорируют пинги >2 циклов, AI усиливает шум HUD (длительность x1.5)
-  - кооп: фантомы видимы всей группе; раскрытие одним даёт бафф инфо остальным
-  - соло: сниженный scatter_radius_m до 18, чтобы пинги были ближе и заметнее
+  problem: Отсутствовало детальное описание AI хакера-иллюзиониста для реализации в backend
+  goal: Создать полную спецификацию AI врага с механиками, поведением и телеметрией
+  essence: Хакер-иллюзионист - диверсант, создающий ложные сигналы и голограммы для дезориентации игроков, работая в синергии со штурмовыми отрядами
+  key_points:
+    - Создает ложные пинги на карте и сенсорах для отвлечения
+    - Генерирует фантомные голограммы целей
+    - Внедряет помехи в HUD игроков
+    - Перегружает сетевую связь сквада
+    - Адаптируется к поведению игроков
+content:
+  sections:
+    - id: identity
+      title: Идентификация AI врага
+      body: |
+        Хакер-иллюзионист - это специализированный AI враг типа "диверсант", использующий кибернетические
+        способности для создания иллюзий и помех. Активен в урбан и корпоративных зонах Night City.
+        Представляет собой человеческого нетраннера в легкой броне с портативным деком и голографическими
+        проекторами. Не предназначен для прямого боя, полагается на обман и отвлечение.
+      mechanics_links:
+        - mechanics/combat/combat-ai-enemies.yaml
+      assets: []
+    - id: appearance_style
+      title: Внешность и стиль
+      body: |
+        Внешне выглядит как обычный уличный нетраннер: худощавый силуэт в потрепанной куртке с
+        неоновыми вставками, рюкзак с антеннами и голографическими модулями. На спине - портативный
+        ICE-проектор, руки в перчатках с сенсорными панелями. Глаза скрыты за AR-очками с красным
+        свечением. Двигается нервно, постоянно оглядываясь, имитируя паранойю настоящего хакера.
+        При активации способностей вокруг появляются голографические помехи и статические разряды.
+      mechanics_links: []
+      assets: []
+    - id: behavior
+      title: Поведение и тактика
+      body: |
+        Держится в тылу боевых отрядов, на расстоянии 20-40 метров от основных целей. Активно меняет
+        позицию при обнаружении, используя дымовые устройства и сетевые помехи для маскировки отхода.
+        Работает в циклах: фаза обмана → фаза отхода → фаза поддержки. Синергия с штурмовыми отрядами -
+        отвлекает внимание, пока союзники заходят с фланга. Избегает прямого контакта, но может
+        использовать EMP-гранаты для самообороны при cornering.
+      mechanics_links:
+        - mechanics/combat/combat-ai-behavior.yaml
+      assets: []
+    - id: abilities
+      title: Способности и механики
+      body: |
+        Основной арсенал направлен на дезориентацию, а не на прямой урон. Все способности имеют
+        кулдауны и требуют времени на активацию. AI адаптируется к поведению игроков - игнорирование
+        иллюзий приводит к усилению эффектов.
+      mechanics_links:
+        - mechanics/combat/combat-abilities.yaml
+      assets: []
+    - id: abilities_false_pings
+      title: Ложные пинги
+      body: |
+        Создает фантомные сигналы на карте и сенсорах, имитируя присутствие врагов. Пинги появляются
+        в радиусе 30 метров от AI, в количестве 3 штук. Каждый пинг существует 12 секунд и отмечен
+        как враждебная цель. При приближении к пингу он исчезает. Кулдаун 18 секунд.
+      mechanics_links: []
+      assets: []
+    - id: abilities_phantom_silhouettes
+      title: Фантомные силуэты
+      body: |
+        Проецирует голографические копии целей (2-3 силуэта одновременно). Силуэты выглядят как
+        реальные игроки, но исчезают при получении урона. Существуют 8 секунд, кулдаун 22 секунды.
+        Видимы всем членам сквада одновременно.
+      mechanics_links: []
+      assets: []
+    - id: abilities_hud_hacks
+      title: HUD хаки
+      body: |
+        Короткие инъекции помех в интерфейс игроков: блики на экране (2 секунды) и цифровой шум
+        (3 секунды). Не наносят урона, но временно снижают видимость. Кулдаун 16 секунд. Эффект
+        усиливается, если игроки игнорируют иллюзии (>2 циклов подряд).
+      mechanics_links: []
+      assets: []
+    - id: abilities_network_overload
+      title: Перегрузка сети
+      body: |
+        Создает электромагнитный импульс, снижающий радиус связи сквада на 40% (метки союзников
+        пропадают на расстоянии). Длится 10 секунд, кулдаун 28 секунд. Активируется автоматически
+        при обнаружении AI или по тактическому решению.
+      mechanics_links: []
+      assets: []
+    - id: ai_logic
+      title: Логика ИИ
+      body: |
+        Приоритет целей: группы из 2+ игроков. Избегает прямой линии огня и открытых пространств.
+        Отступает при получении 35% урона HP, используя дым и смену позиции. Адаптируется к
+        обнаружению: скан имплантов/дронов снижает длительность фантомов вдвое, повторные
+        раскрытия заставляют AI увеличить дистанцию боя. В кооперативе фантомы видимы всем,
+        но раскрытие одним игроком дает информационный бафф остальным.
+      mechanics_links: []
+      assets: []
+    - id: gameplay_role
+      title: Роль в игре
+      body: |
+        Служит для создания напряжения и тактической глубины. Не является основной угрозой, но
+        значительно усложняет координацию сквада. Награда за убийство: редкие чипы для нетраннинга
+        и косметические предметы. Может появляться в квестах как "таинственный хакер" или в
+        динамических событиях. Слаб против команд с хорошей коммуникацией и анти-хак защитой.
+      mechanics_links: []
+      assets: []
+    - id: balance_solo_coop
+      title: Баланс соло/кооператив
+      body: |
+        В соло: радиус пингов снижен до 18 метров для лучшей заметности. В кооперативе: фантомы
+        требуют координации для проверки, создавая window для AI атаки. Эффекты масштабируются
+        по количеству игроков в зоне.
+      mechanics_links: []
+      assets: []
+    - id: inspiration
+      title: Источники вдохновения
+      body: |
+        Вдохновлен концепцией "digital ghosts" из Cyberpunk 2077 RED. Сочетает элементы хакеров
+        из Deus Ex с иллюзионистами из Shadowrun. Технически основан на реальных техниках
+        spoofing и holographic projection в AR/VR системах.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: ICE
+      definition: Intrusion Countermeasures Electronics - защитные программы в сети
+    - term: Spoofing
+      definition: Подмена сигналов для создания ложных данных
+    - term: Holographic projection
+      definition: Проекция трехмерных голографических изображений
+  references:
+    - title: AI Enemies Index
+      link: ./index.yaml
+    - title: Combat Mechanics Overview
+      link: ../mechanics-overview.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  github_issue: 1838
+  queue_reference:
+    - shared/trackers/queues/content/queued.yaml
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-13
+    author: content_writer
+    changes: Создан полный YAML файл для AI хакера-иллюзиониста согласно требованиям
+validation:
+  checksum: ""
+  schema_version: "1.0"

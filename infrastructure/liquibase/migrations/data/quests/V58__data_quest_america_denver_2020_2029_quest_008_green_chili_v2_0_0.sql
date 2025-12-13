@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\denver\2020-2029\quest-008-green-chili.yaml
--- Generated: 2025-12-06T21:12:57.295513
+-- Generated: 2025-12-13T21:13:33.501777
 
 BEGIN;
 

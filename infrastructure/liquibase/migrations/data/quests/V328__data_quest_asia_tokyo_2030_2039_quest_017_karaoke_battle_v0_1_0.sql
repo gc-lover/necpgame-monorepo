@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\tokyo\2030-2039\quest-017-karaoke-battle.yaml
--- Generated: 2025-12-06T21:12:58.597840
+-- Generated: 2025-12-13T21:13:34.745519
 
 BEGIN;
 

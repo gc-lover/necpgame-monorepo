@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\paris\2020-2029\quest-008-versailles-palace.yaml
--- Generated: 2025-12-06T21:13:00.211486
+-- Generated: 2025-12-13T21:13:36.131799
 
 BEGIN;
 

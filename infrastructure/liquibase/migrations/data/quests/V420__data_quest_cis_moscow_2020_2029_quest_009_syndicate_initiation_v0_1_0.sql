@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2020-2029\quest-009-syndicate-initiation.yaml
--- Generated: 2025-12-06T21:12:59.021043
+-- Generated: 2025-12-13T21:13:35.116543
 
 BEGIN;
 

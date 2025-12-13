@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2020-2029\quest-003-brandenburg-gate.yaml
--- Generated: 2025-12-06T21:12:59.738093
+-- Generated: 2025-12-13T21:13:35.633737
 
 BEGIN;
 

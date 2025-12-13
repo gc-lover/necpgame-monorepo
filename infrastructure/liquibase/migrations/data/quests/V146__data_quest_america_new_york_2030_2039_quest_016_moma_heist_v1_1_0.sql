@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\new-york\2030-2039\quest-016-moma-heist.yaml
--- Generated: 2025-12-06T21:12:57.718254
+-- Generated: 2025-12-13T21:13:33.937766
 
 BEGIN;
 

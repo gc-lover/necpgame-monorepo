@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\madrid\2020-2029\quest-005-retiro-park.yaml
--- Generated: 2025-12-06T21:13:00.131318
+-- Generated: 2025-12-13T21:13:36.069016
 
 BEGIN;
 

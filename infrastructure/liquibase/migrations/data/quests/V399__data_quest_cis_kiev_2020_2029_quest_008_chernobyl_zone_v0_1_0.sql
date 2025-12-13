@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\kiev\2020-2029\quest-008-chernobyl-zone.yaml
--- Generated: 2025-12-06T21:12:58.926444
+-- Generated: 2025-12-13T21:13:35.041158
 
 BEGIN;
 

@@ -1,544 +1,411 @@
+# Issue: #143577317
+# Mail System Architecture
+# Спроектировано Architect агентом
+
+version: "1.0.0"
+last_updated: "2025-12-13"
+author: "Architect Agent"
+
 metadata:
-  id: mail-system-architecture
-  title: Архитектура почтовой системы (Mail System)
-  document_type: architecture
-  category: systems
-  status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-30T19:45:00Z
-  owners:
-    - role: architect
-      contact: architect@necp.game
-  tags:
-    - architecture
-    - mail
-    - backend
-    - social
-  related_systems:
-    - mail-service-go
-    - social-service-go
-    - economy-service-go
-    - inventory-service-go
-    - notification-service-go
-  related_documents:
-    - id: mail-system
-      relation: extends
-  github_issue: 151
-  visibility: internal
-  audience:
-    - architect
-    - backend
-    - api-designer
-
-summary:
-  problem: |
-    Требуется спроектировать полную техническую архитектуру почтовой системы
-    для доставки сообщений, предметов и наград между игроками с поддержкой
-    вложений, COD, системных рассылок и автоматического истечения.
-  goal: |
-    Создать архитектурную схему почтовой системы с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Системы вложений
-    - Системы COD
-    - Системы автоматического истечения
-    - Технического задания для реализации
-  essence: |
-    Социальная система доставки сообщений, предметов и наград между игроками
-    с поддержкой вложений, COD, системных рассылок и автоматического истечения.
-
-architecture:
-  overview: |
-    Почтовая система состоит из пяти основных компонентов:
-    1. Mail Manager - управление письмами
-    2. Attachment Handler - обработка вложений
-    3. COD Processor - обработка COD (Cash on Delivery)
-    4. Expiration Manager - управление истечением писем
-    5. System Mail Sender - системные рассылки
-
-  components:
-    - name: Mail Manager
-      location: mail-service-go (модуль mail)
-      responsibility: |
-        - Управление письмами (создание, отправка, получение)
-        - Управление статусами писем (unread, read, claimed, expired)
-        - Поиск и фильтрация писем
-        - Интеграция с другими модулями
-      port: 8086 (mail-service-go)
-      endpoints:
-        - POST /api/v1/social/mail/send - отправка письма
-        - GET /api/v1/social/mail/inbox - входящие письма
-        - GET /api/v1/social/mail/{mail_id} - получение письма
-        - PUT /api/v1/social/mail/{mail_id}/read - пометка как прочитанное
-        - DELETE /api/v1/social/mail/{mail_id} - удаление письма
-        - GET /api/v1/social/mail/unread-count - количество непрочитанных
-
-    - name: Attachment Handler
-      location: mail-service-go (модуль attachments)
-      responsibility: |
-        - Управление вложениями (предметы, валюта)
-        - Проверка доступности вложений
-        - Выдача вложений игрокам
-        - Интеграция с inventory-service и economy-service
-      attachment_types: |
-        - items: предметы
-        - currency: валюта
-        - quest_rewards: награды за квесты
-        - achievement_rewards: награды за достижения
-      endpoints:
-        - POST /api/v1/social/mail/{mail_id}/attachments/claim - получение вложений
-        - GET /api/v1/social/mail/{mail_id}/attachments - список вложений
-
-    - name: COD Processor
-      location: mail-service-go (модуль cod)
-      responsibility: |
-        - Обработка COD (Cash on Delivery)
-        - Проверка баланса получателя
-        - Списание средств при получении
-        - Возврат при отказе
-      cod_features: |
-        - Установка стоимости доставки
-        - Проверка баланса перед выдачей
-        - Автоматический возврат при истечении
-      endpoints:
-        - POST /api/v1/social/mail/{mail_id}/cod/pay - оплата COD
-        - POST /api/v1/social/mail/{mail_id}/cod/decline - отказ от COD
-
-    - name: Expiration Manager
-      location: mail-service-go (модуль expiration)
-      responsibility: |
-        - Управление истечением писем
-        - Автоматическая очистка истёкших писем
-        - Возврат вложений отправителю
-        - Уведомления об истечении
-      expiration_rules: |
-        - Системные письма: 30 дней
-        - Письма от игроков: 7 дней
-        - Письма с COD: 3 дня
-        - Награды: 14 дней
-      endpoints:
-        - GET /api/v1/social/mail/expiring - истекающие письма
-        - POST /api/v1/social/mail/{mail_id}/extend - продление срока
-
-    - name: System Mail Sender
-      location: mail-service-go (модуль system-mail)
-      responsibility: |
-        - Системные рассылки
-        - Массовая отправка писем
-        - Шаблоны системных писем
-        - Интеграция с event bus
-      system_mail_types: |
-        - quest_rewards: награды за квесты
-        - achievement_rewards: награды за достижения
-        - maintenance_notifications: уведомления о технических работах
-        - event_rewards: награды за события
-      endpoints:
-        - POST /api/v1/social/mail/system/send - отправка системного письма
-        - POST /api/v1/social/mail/system/broadcast - массовая рассылка
-
-  data_flow:
-    mail_sending: |
-      1. Игрок отправляет письмо
-      2. Mail Manager валидирует получателя и вложения
-      3. Attachment Handler проверяет наличие предметов/валюты
-      4. Economy Service списывает предметы/валюту
-      5. Письмо сохраняется в БД
-      6. Notification Service уведомляет получателя
-      7. Realtime Gateway отправляет push уведомление
-
-    attachment_claiming: |
-      1. Игрок запрашивает получение вложений
-      2. Attachment Handler проверяет статус письма
-      3. Если COD - COD Processor проверяет баланс
-      4. Inventory Service добавляет предметы
-      5. Economy Service добавляет валюту
-      6. Статус письма обновляется на "claimed"
-      7. Realtime Gateway уведомляет об обновлении
-
-    mail_expiration: |
-      1. Expiration Manager проверяет истекающие письма
-      2. Если письмо истекло и не прочитано
-      3. Если есть вложения - возвращаются отправителю
-      4. Письмо помечается как expired
-      5. Уведомления отправляются обеим сторонам
-
-  integrations:
-    with_economy_service: |
-      - Списание/начисление валюты
-      - Проверка баланса для COD
-      - Интеграция с экономической системой
-
-    with_inventory_service: |
-      - Добавление предметов в инвентарь
-      - Проверка свободного места
-      - Обработка переполнения инвентаря
-
-    with_social_service: |
-      - Интеграция с системой друзей
-      - Уведомления о письмах
-      - История переписки
-
-    with_notification_service: |
-      - Уведомления о новых письмах
-      - Уведомления об истечении
-      - Уведомления о получении вложений
-
-    with_gameplay_service: |
-      - Получение событий о наградах
-      - Автоматическая отправка наград
-      - Интеграция с квестами
-
-    with_realtime_gateway: |
-      - Push уведомления о новых письмах
-      - Обновления статуса писем
-      - Синхронизация состояния
-
-  data_consistency:
-    strategy: Strong Consistency (ACID транзакции) для критичных операций
-    mechanisms:
-      - ACID транзакции для отправки писем и получения вложений
-      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
-      - Валидация перед отправкой письма и получением вложений
-      - Синхронизация с другими сервисами через Event Bus
-      - Outbox Pattern для гарантированной доставки событий
-      - Saga Pattern для распределенных операций (отправка письма с вложениями, получение вложений, обновление инвентаря)
-
-  data_synchronization:
-    event_sourcing: |
-      Все изменения состояния почтовой системы (отправка письма, получение вложений, истечение)
-      записываются как события в Event Store. Это обеспечивает полный аудит,
-      возможность восстановления состояния и "time travel" для отладки.
-      Примеры событий: MailSentEvent, MailReadEvent, AttachmentClaimedEvent, MailExpiredEvent.
-    cqrs_pattern: |
-      Разделение команд (отправка письма, получение вложений, удаление письма) и запросов
-      (получение списка писем, получение письма, количество непрочитанных) для оптимизации производительности
-      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
-    saga_pattern: |
-      Для распределенных транзакций, таких как отправка письма с вложениями (списание предметов/валюты,
-      создание письма, уведомление получателя) или получение вложений (проверка баланса для COD,
-      добавление предметов в инвентарь, добавление валюты), используется Saga Pattern для обеспечения
-      атомарности операций между Mail Service, Inventory Service и Economy Service.
-    outbox_pattern: |
-      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
-      который записывает события в транзакционную таблицу перед публикацией.
-
-  tickrate_specification:
-    mail_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Отправка письма: event-based, ~0.1-0.3 events/sec на игрока
-        - Получение списка писем: event-based, ~0.1-0.5 requests/sec на игрока
-        - Получение вложений: event-based, ~0.1-0.2 events/sec на игрока
-        - Обновление статуса письма: event-based, ~0.1-0.2 events/sec на игрока
-        - Общий трафик: ~0.3-0.7 KB/sec на игрока
-      latency_requirements: < 50-200ms для операций с почтой
-      sync_strategy: Strong Consistency (ACID транзакции) для отправки писем и получения вложений
-
-    realtime_notifications:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Уведомления о новых письмах: event-based, ~0.1-0.2 events/sec на игрока
-        - Обновление количества непрочитанных: event-based, ~0.1-0.2 events/sec на игрока
-        - Общий трафик: ~0.1-0.3 KB/sec на игрока
-      latency_requirements: < 30-100ms для уведомлений
-      sync_strategy: Eventual Consistency для уведомлений
-
-    expiration_processing:
-      tickrate: 1-5 Hz для проверки истечения
-      network_load: |
-        - Проверка истечения: 1-5 Hz, ~0.1-0.2 KB/sec
-        - Возврат вложений: event-based, ~0.01-0.05 events/sec на игрока
-        - Общий трафик: ~0.1-0.2 KB/sec
-      latency_requirements: < 100-500ms для обработки истечения
-      sync_strategy: Eventual Consistency для фоновой обработки
-
-  database_schema:
-    tables:
-      - name: mail_messages
-        description: Письма игроков
-        fields:
-          - id: UUID (PK)
-          - sender_id: UUID (FK accounts, nullable) - null для системных
-          - recipient_id: UUID (FK accounts)
-          - subject: VARCHAR(255)
-          - body: TEXT
-          - type: ENUM (player, system, quest_reward, achievement_reward, event_reward)
-          - status: ENUM (unread, read, claimed, expired, deleted)
-          - cod_amount: DECIMAL(20,2) (nullable)
-          - cod_currency: VARCHAR(50) (nullable)
-          - sent_at: TIMESTAMP
-          - read_at: TIMESTAMP (nullable)
-          - expires_at: TIMESTAMP
-          - claimed_at: TIMESTAMP (nullable)
-        indexes:
-          - recipient_id, status
-          - sender_id, sent_at
-          - status, expires_at
-          - type, sent_at
-
-      - name: mail_attachments
-        description: Вложения в письмах
-        fields:
-          - id: UUID (PK)
-          - mail_id: UUID (FK mail_messages)
-          - attachment_type: ENUM (item, currency, quest_reward)
-          - item_id: UUID (FK items, nullable)
-          - item_quantity: INTEGER (nullable)
-          - currency_type: VARCHAR(50) (nullable)
-          - currency_amount: DECIMAL(20,2) (nullable)
-          - is_claimed: BOOLEAN (default: false)
-          - claimed_at: TIMESTAMP (nullable)
-        indexes:
-          - mail_id
-          - is_claimed
-
-      - name: mail_returns
-        description: Возвраты писем при истечении
-        fields:
-          - id: UUID (PK)
-          - mail_id: UUID (FK mail_messages)
-          - returned_at: TIMESTAMP
-          - reason: ENUM (expired, declined, inventory_full)
-        indexes:
-          - mail_id
-
-technical_specification:
-  backend_requirements:
-    - Реализация модулей в mail-service-go:
-      - mail (управление письмами)
-      - attachments (вложения)
-      - cod (COD обработка)
-      - expiration (истечение)
-      - system-mail (системные рассылки)
-    - Интеграция с economy-service для валюты
-    - Интеграция с inventory-service для предметов
-    - Оптимизация запросов к БД (индексы, кэширование)
-
-  realtime_requirements:
-    - Уведомления о новых письмах через WebSocket
-    - Обновления статуса писем в реальном времени
-    - Синхронизация количества непрочитанных
-
+  system_name: "Mail System"
+  description: "Система внутренней почты для коммуникации игроков с поддержкой вложений и уведомлений"
+  domain: "Social"
+  criticality: "High"
   performance_requirements:
-    - Отправка письма < 100ms
-    - Получение списка писем < 50ms
-    - Получение вложений < 100ms
-    - Поддержка до 100K писем на игрока
-    - Поддержка до 10K активных писем
+    peak_load: "3k req/sec"
+    concurrent_users: "25k"
+    p99_latency: "<200ms"
+    data_retention: "90 days"
 
-  scalability_requirements:
-    - Горизонтальное масштабирование через mail-service
-    - Распределение нагрузки на письма
-    - Оптимизация запросов к БД (batch, индексы)
-    - Кэширование непрочитанных писем
+architecture_overview:
+  purpose: |
+    Mail System предоставляет полноценную систему внутренней почты для игры,
+    позволяя игрокам обмениваться сообщениями, предметами и валютой.
 
-subtasks:
-  - id: mail-manager-module
-    title: Реализация модуля Mail Manager
-    description: |
-      Управление письмами
-      CRUD операции
-      Поиск и фильтрация
-    priority: high
-    estimated_time: 3-4 дня
+  key_features:
+    - Отправка сообщений между игроками
+    - Система вложений (предметы, валюта)
+    - Папки и организация почты
+    - Уведомления о новых сообщениях
+    - Система черного списка
+    - Поиск по сообщениям
+    - Автоматические системные сообщения
 
-  - id: attachment-handler-implementation
-    title: Реализация Attachment Handler
-    description: |
-      Управление вложениями
-      Выдача предметов и валюты
-      Интеграция с inventory и economy
-    priority: high
-    estimated_time: 3-4 дня
+  business_value:
+    - Улучшение социального взаимодействия
+    - Экономический обмен между игроками
+    - Система поддержки игроков
+    - Автоматизированные уведомления
 
-  - id: cod-processor-development
-    title: Реализация COD Processor
-    description: |
-      Обработка COD
-      Проверка баланса
-      Возврат при отказе
-    priority: medium
-    estimated_time: 2-3 дня
+components:
+  mail_manager:
+    description: "Управление почтовыми ящиками и сообщениями"
+    responsibilities:
+      - CRUD операции с сообщениями
+      - Управление папками и метками
+      - Поиск по сообщениям
+      - Управление настройками почты
+    interfaces:
+      - REST API: /mail/admin/*
+      - Internal: MailManager interface
+    dependencies:
+      - Database: mail_messages, player_mailboxes
 
-  - id: expiration-manager-implementation
-    title: Реализация Expiration Manager
-    description: |
-      Управление истечением
-      Автоматическая очистка
-      Возврат вложений
-    priority: high
-    estimated_time: 2-3 дня
+  message_handler:
+    description: "Обработка отправки и получения сообщений"
+    responsibilities:
+      - Валидация получателей
+      - Обработка вложений
+      - Отправка уведомлений
+      - Управление черным списком
+    interfaces:
+      - Event Bus: mail:send, mail:received
+      - Internal: MessageHandler interface
+    dependencies:
+      - Character Service для валидации игроков
+      - Notification Service для оповещений
 
-  - id: system-mail-sender
-    title: Реализация System Mail Sender
-    description: |
-      Системные рассылки
-      Массовая отправка
-      Шаблоны писем
-    priority: medium
-    estimated_time: 2-3 дня
+  attachment_processor:
+    description: "Обработка вложений в сообщения"
+    responsibilities:
+      - Валидация предметов и валюты
+      - Передача собственности на вложения
+      - Обработка возвратов при ошибках
+      - Управление временными блокировками
+    interfaces:
+      - Internal: AttachmentProcessor interface
+    dependencies:
+      - Economy Service для валюты
+      - Inventory Service для предметов
 
-  - id: database-optimization
-    title: Оптимизация БД и запросов
-    description: |
-      Создание индексов
-      Оптимизация запросов
-      Кэширование непрочитанных
-    priority: medium
-    estimated_time: 1-2 дня
+  spam_filter:
+    description: "Фильтрация спама и защита от злоупотреблений"
+    responsibilities:
+      - Анализ паттернов отправки
+      - Блокировка подозрительной активности
+      - Управление черным списком
+      - Отчеты о нарушениях
+    interfaces:
+      - Internal: SpamFilter interface
+    dependencies:
+      - Security Service для проверки
+      - Analytics для паттернов
 
-  - id: api-endpoints
-    title: Реализация REST API endpoints
-    description: |
-      Создание всех endpoints для почты
-      Интеграция с существующим API
-    priority: high
-    estimated_time: 2-3 дня
+  notification_system:
+    description: "Управление уведомлениями о почте"
+    responsibilities:
+      - Отправка push-уведомлений
+      - Управление настройками уведомлений
+      - Агрегация уведомлений
+      - Обработка оффлайн сообщений
+    interfaces:
+      - Event Bus: notification:*
+      - WebSocket: real-time notifications
+    dependencies:
+      - Realtime Gateway для push
+      - Notification Service
 
-  - id: integration-testing
-    title: Интеграционное тестирование
-    description: |
-      Тесты отправки писем
-      Тесты вложений
-      Тесты COD
-      Тесты интеграций
-    priority: high
-    estimated_time: 2-3 дня
+data_model:
+  tables:
+    player_mailboxes:
+      description: "Почтовые ящики игроков"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        player_id: "BIGINT NOT NULL"
+        total_messages: "INTEGER NOT NULL DEFAULT 0"
+        unread_count: "INTEGER NOT NULL DEFAULT 0"
+        max_messages: "INTEGER NOT NULL DEFAULT 1000"
+        settings: "JSONB" # настройки уведомлений, автоудаления
+        created_at: "TIMESTAMP NOT NULL"
+        updated_at: "TIMESTAMP NOT NULL"
+      indexes:
+        - "player_id (UNIQUE)"
+      partitioning: "HASH (player_id)" # для равномерного распределения
 
-diagrams:
-  component_diagram: |
-    ```mermaid
-    graph TB
-        subgraph "Mail Service"
-            MM[Mail Manager]
-            AH[Attachment Handler]
-            CP[COD Processor]
-            EM[Expiration Manager]
-            SMS[System Mail Sender]
-        end
+    mail_messages:
+      description: "Сообщения почты"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        sender_id: "BIGINT NOT NULL"
+        recipient_id: "BIGINT NOT NULL"
+        subject: "VARCHAR(200) NOT NULL"
+        content: "TEXT NOT NULL"
+        message_type: "VARCHAR(20) NOT NULL" # PLAYER, SYSTEM, ADMIN, TRADE
+        status: "VARCHAR(20) NOT NULL" # SENT, DELIVERED, READ, DELETED
+        priority: "VARCHAR(10) NOT NULL DEFAULT 'NORMAL'" # LOW, NORMAL, HIGH, URGENT
+        has_attachments: "BOOLEAN DEFAULT FALSE"
+        folder_id: "BIGINT" # NULL для входящих
+        sent_at: "TIMESTAMP NOT NULL"
+        read_at: "TIMESTAMP"
+        expires_at: "TIMESTAMP" # автоудаление
+        metadata: "JSONB" # дополнительные данные
+      indexes:
+        - "recipient_id, status, sent_at DESC"
+        - "sender_id, sent_at DESC"
+        - "message_type, sent_at DESC"
+        - "expires_at" # для автоудаления
+      partitioning: "RANGE (sent_at)" # месячная партиция
 
-        subgraph "Database"
-            DB[(PostgreSQL<br/>mail_messages<br/>mail_attachments<br/>mail_returns)]
-        end
+    mail_attachments:
+      description: "Вложения в сообщения"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        message_id: "BIGINT NOT NULL"
+        attachment_type: "VARCHAR(20) NOT NULL" # CURRENCY, ITEM, BLUEPRINT
+        item_id: "VARCHAR(100)" # ID предмета или тип валюты
+        quantity: "INTEGER"
+        value: "DECIMAL(15,2)" # для валюты
+        metadata: "JSONB" # дополнительные свойства
+        status: "VARCHAR(20) NOT NULL" # PENDING, ATTACHED, CLAIMED, RETURNED
+        created_at: "TIMESTAMP NOT NULL"
+      indexes:
+        - "message_id"
+        - "status"
+      partitioning: "RANGE (created_at)" # месячная партиция
 
-        subgraph "External Services"
-            ES[Economy Service]
-            IS[Inventory Service]
-            SS[Social Service]
-            NS[Notification Service]
-            GS[Gameplay Service]
-            RG[Realtime Gateway]
-        end
+    mail_folders:
+      description: "Папки для организации почты"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        player_id: "BIGINT NOT NULL"
+        name: "VARCHAR(50) NOT NULL"
+        folder_type: "VARCHAR(20) NOT NULL" # CUSTOM, SYSTEM (INBOX, SENT, TRASH, SPAM)
+        message_count: "INTEGER NOT NULL DEFAULT 0"
+        is_default: "BOOLEAN DEFAULT FALSE"
+        created_at: "TIMESTAMP NOT NULL"
+        updated_at: "TIMESTAMP NOT NULL"
+      indexes:
+        - "player_id, folder_type"
+        - "player_id, name (UNIQUE)"
+      partitioning: "HASH (player_id)"
 
-        subgraph "Client"
-            CL[UE5 Client]
-        end
+    mail_blacklist:
+      description: "Черный список игроков"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        player_id: "BIGINT NOT NULL"
+        blocked_player_id: "BIGINT NOT NULL"
+        reason: "VARCHAR(200)"
+        created_at: "TIMESTAMP NOT NULL"
+        expires_at: "TIMESTAMP"
+      indexes:
+        - "player_id, blocked_player_id (UNIQUE)"
+        - "blocked_player_id"
+        - "expires_at"
 
-        CL -->|send mail| MM
-        MM --> AH
-        MM --> CP
-        MM --> EM
-        MM --> SMS
-        MM -->|store| DB
-        AH -->|add items| IS
-        AH -->|add currency| ES
-        CP -->|check balance| ES
-        SMS -->|events| GS
-        MM -->|notify| NS
-        MM -->|sync state| RG
-        RG -->|push events| CL
-    ```
+  caching_strategy:
+    redis_keys:
+      - "mail:player:{player_id}:unread" # счетчик непрочитанных
+      - "mail:player:{player_id}:recent" # последние сообщения
+      - "mail:message:{id}" # кэш сообщения
+      - "mail:blacklist:{player_id}" # черный список
+    ttl:
+      unread: "1h"
+      recent: "30m"
+      messages: "1h"
+      blacklist: "24h"
 
-  data_flow_diagram: |
-    ```mermaid
-    sequenceDiagram
-        participant S as Sender
-        participant MM as Mail Manager
-        participant AH as Attachment Handler
-        participant ES as Economy Service
-        participant R as Recipient
-        participant IS as Inventory Service
+api_endpoints:
+  player:
+    - "GET /mail/messages" # список сообщений с пагинацией
+    - "GET /mail/messages/{id}" # получить сообщение
+    - "POST /mail/send" # отправить сообщение
+    - "PUT /mail/messages/{id}/read" # отметить как прочитанное
+    - "DELETE /mail/messages/{id}" # удалить сообщение
+    - "POST /mail/messages/{id}/claim" # получить вложения
 
-        S->>MM: Send mail with attachments
-        MM->>AH: Validate attachments
-        AH->>ES: Check balance
-        ES->>AH: Balance OK
-        MM->>MM: Store mail
-        MM->>R: Notify recipient
-        
-        R->>MM: Claim attachments
-        MM->>AH: Process claim
-        AH->>IS: Add items
-        AH->>ES: Add currency
-        MM->>MM: Update status
-    ```
+  folders:
+    - "GET /mail/folders" # список папок
+    - "POST /mail/folders" # создать папку
+    - "PUT /mail/folders/{id}" # переименовать папку
+    - "DELETE /mail/folders/{id}" # удалить папку
+    - "PUT /mail/messages/{id}/folder" # переместить в папку
 
-decisions:
-  - id: adr-mail-architecture
-    summary: |
-      Выбрана модульная архитектура внутри mail-service-go для обеспечения
-      централизованного управления всей почтовой системой.
+  social:
+    - "GET /mail/blacklist" # черный список
+    - "POST /mail/blacklist" # добавить в черный список
+    - "DELETE /mail/blacklist/{player_id}" # удалить из черного списка
 
-  - id: adr-attachments
-    summary: |
-      Система вложений с интеграцией inventory и economy обеспечивает
-      безопасную передачу предметов и валюты между игроками.
+  admin:
+    - "POST /mail/admin/broadcast" # массовое сообщение
+    - "GET /mail/admin/stats" # статистика почты
+    - "POST /mail/admin/spam-report" # отчет о спаме
 
-  - id: adr-cod-system
-    summary: |
-      COD система обеспечивает безопасную торговлю через почту с защитой
-      от мошенничества.
+event_driven_architecture:
+  published_events:
+    - "mail:message-sent" # сообщение отправлено
+    - "mail:message-delivered" # сообщение доставлено
+    - "mail:message-read" # сообщение прочитано
+    - "mail:attachment-claimed" # вложение получено
+    - "mail:blacklist-updated" # черный список изменен
 
-  - id: adr-expiration
-    summary: |
-      Автоматическое истечение писем предотвращает накопление неактуальных
-      данных и обеспечивает возврат вложений.
+  subscribed_events:
+    - "player:login" # уведомление о непрочитанных
+    - "character:level-up" # системные поздравления
+    - "achievement:unlocked" # поздравления с достижениями
+    - "economy:transaction-completed" # уведомления о транзакциях
 
-  - id: adr-system-mail
-    summary: |
-      Системные рассылки обеспечивают автоматическую доставку наград и
-      уведомлений от игровых систем.
+integrations:
+  character_service:
+    purpose: "Валидация игроков и получение информации"
+    endpoints:
+      - "GET /character/{id}/exists"
+      - "GET /character/{id}/basic"
+    events:
+      - "character:created"
+      - "character:deleted"
 
-validation:
-  architecture_complete: true
-  components_defined: true
-  microservices_identified: true
-  api_endpoints_described: true
-  technical_specification_ready: true
-  subtasks_defined: true
+  economy_service:
+    purpose: "Обработка валютных вложений"
+    endpoints:
+      - "POST /economy/transfer"
+      - "POST /economy/freeze"
+      - "POST /economy/unfreeze"
+    events:
+      - "economy:transfer-completed"
+      - "economy:transfer-failed"
 
-next_steps:
-  - Передача задачи агенту API Designer для создания OpenAPI спецификации
-  - Детализация API endpoints
-  - Создание request/response схем
-  - Определение правил истечения
+  inventory_service:
+    purpose: "Обработка предметных вложений"
+    endpoints:
+      - "POST /inventory/transfer"
+      - "POST /inventory/lock"
+      - "POST /inventory/unlock"
+    events:
+      - "inventory:transfer-completed"
 
-history:
-  - version: '1.1.0'
-    date: 2025-11-30
-    author: Architect Agent
-    changes: |
-      Добавлена детальная синхронизация данных:
-      - Event Sourcing для всех изменений состояния почтовой системы
-      - CQRS Pattern для разделения команд и запросов
-      - Saga Pattern для распределенных операций (отправка письма с вложениями, получение вложений)
-      - Outbox Pattern для гарантированной доставки событий
-      - Обновлена секция data_consistency с механизмами синхронизации
-      - Добавлена спецификация тикрейта для почтовых операций, realtime уведомлений и обработки истечения
-  - version: '1.0.0'
-    date: 2025-11-22
-    author: Architect Agent
-    changes: |
-      Создана полная архитектура почтовой системы:
-      - Определены компоненты (Mail Manager, Attachment Handler, COD Processor, Expiration Manager, System Mail Sender)
-      - Описаны API endpoints (высокоуровнево)
-      - Спроектированы потоки данных
-      - Определена структура БД (mail_messages, mail_attachments, mail_returns)
-      - Спроектирована система вложений
-      - Спроектирована система COD
-      - Спроектирована система автоматического истечения
-      - Создано техническое задание
-      - Разбито на подзадачи
+  notification_service:
+    purpose: "Отправка уведомлений"
+    endpoints:
+      - "POST /notification/send"
+      - "POST /notification/bulk"
+    events:
+      - "notification:delivered"
 
+  realtime_gateway:
+    purpose: "Real-time уведомления"
+    endpoints:
+      - "POST /realtime/personal/{player_id}"
+      - "POST /realtime/broadcast"
+    events:
+      - "realtime:connected"
+      - "realtime:disconnected"
 
+performance_optimizations:
+  level_1_basics:
+    - Context timeouts для всех операций
+    - DB connection pool (25-50 connections)
+    - Redis caching для счетчиков
+    - Structured logging
+
+  level_2_hot_path:
+    - Message batching для массовых отправок
+    - Lazy loading для вложений
+    - Pagination для списков сообщений
+    - Attachment pre-validation
+
+  level_3_gaming:
+    - Sharding по player_id для равномерной нагрузки
+    - Time-based partitioning для старых сообщений
+    - Background cleanup для expired messages
+    - CDN для attachment metadata
+
+data_consistency:
+  patterns:
+    event_sourcing:
+      description: "Все изменения почты через events"
+      implementation: "Outbox pattern для гарантированной доставки"
+    saga:
+      description: "Распределенные транзакции для вложений"
+      compensation: "Возврат вложений при ошибках отправки"
+    eventual_consistency:
+      description: "Финальные консистентность для счетчиков"
+      implementation: "Background sync jobs"
+
+  sync_mechanisms:
+    - Immediate consistency для отправки сообщений
+    - Eventual consistency для счетчиков непрочитанных
+    - Strong consistency для вложений
+
+scaling_strategy:
+  horizontal_scaling:
+    - Stateless API services
+    - Shared Redis для кэша
+    - Event-driven communication
+    - Database read replicas
+
+  data_partitioning:
+    - Hash partitioning по player_id для mailboxes
+    - Range partitioning по sent_at для messages
+    - Composite partitioning для attachments
+
+  load_distribution:
+    - Message queues для асинхронной обработки
+    - Background jobs для cleanup
+    - Rate limiting для spam prevention
+
+monitoring_and_observability:
+  metrics:
+    - mail_messages_sent_total
+    - mail_messages_delivered_total
+    - mail_attachments_claimed_total
+    - mail_average_response_time
+    - mail_error_rate
+
+  alerts:
+    - High undelivered message rate
+    - Attachment processing failures
+    - Spam filter false positives
+    - Database connection issues
+
+  logging:
+    - Structured logs for all operations
+    - Audit trail for attachments
+    - Performance profiling for slow queries
+
+migration_plan:
+  current_state: "No mail system"
+  target_state: "Full mail system with attachments"
+
+  phases:
+    phase_1: "Core messaging (2 weeks)"
+    phase_2: "Attachments system (2 weeks)"
+    phase_3: "Advanced features (2 weeks)"
+    phase_4: "Optimization (1 week)"
+
+  dependencies:
+    - Character Service ready
+    - Economy Service ready
+    - Inventory Service ready
+    - Notification Service ready
+
+testing_strategy:
+  unit_tests:
+    - Message validation logic
+    - Attachment processing
+    - Spam filtering algorithms
+
+  integration_tests:
+    - End-to-end message sending
+    - Attachment claiming flows
+    - Cross-service communication
+
+  performance_tests:
+    - Message throughput (1000 msg/sec)
+    - Attachment processing load
+    - Database query performance
+
+  security_tests:
+    - Attachment validation
+    - Spam prevention
+    - Data privacy
+
+change_history:
+  - version: "1.0.0"
+    date: "2025-12-13"
+    changes:
+      - Initial architecture design
+      - Component specification
+      - API design
+      - Data model definition
+      - Integration planning

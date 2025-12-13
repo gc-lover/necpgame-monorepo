@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2040-2060\quest-025-wembley-arena.yaml
--- Generated: 2025-12-06T21:13:00.025764
+-- Generated: 2025-12-13T21:13:35.959808
 
 BEGIN;
 

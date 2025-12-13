@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\amsterdam\2020-2029\quest-007-stroopwafel-quest.yaml
--- Generated: 2025-12-06T21:12:59.715029
+-- Generated: 2025-12-13T21:13:35.613312
 
 BEGIN;
 

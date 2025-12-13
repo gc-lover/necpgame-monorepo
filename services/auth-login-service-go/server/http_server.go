@@ -18,9 +18,9 @@ import (
 
 // HTTPServer представляет HTTP сервер с оптимизациями для MMOFPS
 type HTTPServer struct {
-	server   *http.Server
-	logger   *zap.Logger
-	service  *Service
+	server     *http.Server
+	logger     *zap.Logger
+	service    *Service
 	middleware *AuthMiddleware
 	handler    *authHandler
 }
@@ -76,11 +76,11 @@ func NewHTTPServer(logger *zap.Logger, db *sql.DB, jwtSecret string) *HTTPServer
 	}
 
 	return &HTTPServer{
-		server:    server,
-		logger:    logger,
-		service:   service,
+		server:     server,
+		logger:     logger,
+		service:    service,
 		middleware: authMiddleware,
-		handler:   handler,
+		handler:    handler,
 	}
 }
 

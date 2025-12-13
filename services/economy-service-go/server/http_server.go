@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,31 +26,33 @@ type TradeServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr                string
-	router              *mux.Router
-	tradeService        TradeServiceInterface
-	engramCreationService EngramCreationServiceInterface
-	engramTransferService EngramTransferServiceInterface
+	addr                      string
+	router                    *mux.Router
+	tradeService              TradeServiceInterface
+	currencyExchangeService   CurrencyExchangeServiceInterface
+	engramCreationService     EngramCreationServiceInterface
+	engramTransferService     EngramTransferServiceInterface
 	weaponCombinationsService WeaponCombinationsServiceInterface
-	logger              *logrus.Logger
-	server              *http.Server
-	jwtValidator        *JwtValidator
-	authEnabled         bool
+	logger                    *logrus.Logger
+	server                    *http.Server
+	jwtValidator              *JwtValidator
+	authEnabled               bool
 }
 
-func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface, weaponCombinationsService WeaponCombinationsServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, tradeService TradeServiceInterface, currencyExchangeService CurrencyExchangeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface, weaponCombinationsService WeaponCombinationsServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
-	
+
 	server := &HTTPServer{
-		addr:                addr,
-		router:              router,
-		tradeService:        tradeService,
-		engramCreationService: engramCreationService,
-		engramTransferService: engramTransferService,
+		addr:                      addr,
+		router:                    router,
+		tradeService:              tradeService,
+		currencyExchangeService:   currencyExchangeService,
+		engramCreationService:     engramCreationService,
+		engramTransferService:     engramTransferService,
 		weaponCombinationsService: weaponCombinationsService,
-		logger:              GetLogger(),
-		jwtValidator:        jwtValidator,
-		authEnabled:         authEnabled,
+		logger:                    GetLogger(),
+		jwtValidator:              jwtValidator,
+		authEnabled:               authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -70,7 +72,7 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 	router.HandleFunc("/api/v1/economy/trade", server.createTradeLegacy).Methods("POST")
 
 	// ogen server
-	handlers := NewEconomyHandlers(server.tradeService)
+	handlers := NewEconomyHandlers(server.tradeService, server.currencyExchangeService)
 	secHandler := NewSecurityHandler(server.jwtValidator)
 
 	ogenServer, err := api.NewServer(handlers, secHandler)
@@ -245,27 +247,27 @@ func (sr *statusRecorder) WriteHeader(code int) {
 // getActiveTrades is a legacy endpoint for getting active trades
 func (s *HTTPServer) getActiveTrades(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
 	// Get user ID from context (set by authMiddleware or createRequestWithUserID)
 	userIDStr, ok := ctx.Value("user_id").(string)
 	if !ok {
 		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
 		return
 	}
-	
+
 	characterID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid user ID")
 		return
 	}
-	
+
 	trades, err := s.tradeService.GetActiveTrades(ctx, characterID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get active trades")
 		s.respondError(w, http.StatusInternalServerError, "failed to get active trades")
 		return
 	}
-	
+
 	s.respondJSON(w, http.StatusOK, trades)
 }
 
@@ -273,33 +275,33 @@ func (s *HTTPServer) getActiveTrades(w http.ResponseWriter, r *http.Request) {
 func (s *HTTPServer) createTradeLegacy(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
 	defer cancel()
-	
+
 	// Get user ID from context
 	userIDStr, ok := ctx.Value("user_id").(string)
 	if !ok {
 		s.respondError(w, http.StatusUnauthorized, "user ID not found in context")
 		return
 	}
-	
+
 	initiatorID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid user ID")
 		return
 	}
-	
+
 	var reqBody models.CreateTradeRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		s.respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	
+
 	session, err := s.tradeService.CreateTrade(ctx, initiatorID, &reqBody)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to create trade")
 		s.respondError(w, http.StatusInternalServerError, "failed to create trade")
 		return
 	}
-	
+
 	s.respondJSON(w, http.StatusCreated, session)
 }
 
@@ -524,4 +526,3 @@ func (s *HTTPServer) getTradeHistory(w http.ResponseWriter, r *http.Request) {
 
 	s.respondJSON(w, http.StatusOK, history)
 }
-

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\kiev\2020-2029\quest-003-dnieper-crossing.yaml
--- Generated: 2025-12-06T21:12:58.899566
+-- Generated: 2025-12-13T21:13:35.019196
 
 BEGIN;
 

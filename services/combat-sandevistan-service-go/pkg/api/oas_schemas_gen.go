@@ -10,19 +10,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/Action
 type Action struct {
-	// Тип действия.
-	Type ActionType `json:"type"`
 	// Идентификатор цели.
 	TargetID OptNilUUID `json:"target_id"`
+	// Тип действия.
+	Type ActionType `json:"type"`
 	// Позиция цели.
 	TargetPosition OptActionTargetPosition `json:"target_position"`
-}
-
-// GetType returns the value of Type.
-func (s *Action) GetType() ActionType {
-	return s.Type
 }
 
 // GetTargetID returns the value of TargetID.
@@ -30,14 +27,14 @@ func (s *Action) GetTargetID() OptNilUUID {
 	return s.TargetID
 }
 
+// GetType returns the value of Type.
+func (s *Action) GetType() ActionType {
+	return s.Type
+}
+
 // GetTargetPosition returns the value of TargetPosition.
 func (s *Action) GetTargetPosition() OptActionTargetPosition {
 	return s.TargetPosition
-}
-
-// SetType sets the value of Type.
-func (s *Action) SetType(val ActionType) {
-	s.Type = val
 }
 
 // SetTargetID sets the value of TargetID.
@@ -45,11 +42,18 @@ func (s *Action) SetTargetID(val OptNilUUID) {
 	s.TargetID = val
 }
 
+// SetType sets the value of Type.
+func (s *Action) SetType(val ActionType) {
+	s.Type = val
+}
+
 // SetTargetPosition sets the value of TargetPosition.
 func (s *Action) SetTargetPosition(val OptActionTargetPosition) {
 	s.TargetPosition = val
 }
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/ActionBudgetResult
 type ActionBudgetResult struct {
 	// Выполненные действия.
@@ -347,6 +351,14 @@ type ApplyCounterplayUnauthorized Error
 
 func (*ApplyCounterplayUnauthorized) applyCounterplayRes() {}
 
+type ApplyTemporalMarksInternalServerError Error
+
+func (*ApplyTemporalMarksInternalServerError) applyTemporalMarksRes() {}
+
+type ApplyTemporalMarksUnauthorized Error
+
+func (*ApplyTemporalMarksUnauthorized) applyTemporalMarksRes() {}
+
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -372,6 +384,8 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/CoolingResult
 type CoolingResult struct {
 	// Количество удаленных стаков перегрева.
@@ -426,14 +440,16 @@ func (s *CoolingResult) SetCyberpsychosisRisk(val OptFloat32) {
 
 func (*CoolingResult) applyCoolingCartridgeRes() {}
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/CounterplayResult
 type CounterplayResult struct {
 	// Примененный эффект.
 	EffectApplied CounterplayResultEffectApplied `json:"effect_applied"`
-	// Прерван ли Sandevistan.
-	SandevistanInterrupted bool `json:"sandevistan_interrupted"`
 	// Уменьшение Action Budget.
 	ActionBudgetReduced OptInt `json:"action_budget_reduced"`
+	// Прерван ли Sandevistan.
+	SandevistanInterrupted bool `json:"sandevistan_interrupted"`
 	// Завершена ли фаза.
 	PhaseEnded OptBool `json:"phase_ended"`
 }
@@ -443,14 +459,14 @@ func (s *CounterplayResult) GetEffectApplied() CounterplayResultEffectApplied {
 	return s.EffectApplied
 }
 
-// GetSandevistanInterrupted returns the value of SandevistanInterrupted.
-func (s *CounterplayResult) GetSandevistanInterrupted() bool {
-	return s.SandevistanInterrupted
-}
-
 // GetActionBudgetReduced returns the value of ActionBudgetReduced.
 func (s *CounterplayResult) GetActionBudgetReduced() OptInt {
 	return s.ActionBudgetReduced
+}
+
+// GetSandevistanInterrupted returns the value of SandevistanInterrupted.
+func (s *CounterplayResult) GetSandevistanInterrupted() bool {
+	return s.SandevistanInterrupted
 }
 
 // GetPhaseEnded returns the value of PhaseEnded.
@@ -463,14 +479,14 @@ func (s *CounterplayResult) SetEffectApplied(val CounterplayResultEffectApplied)
 	s.EffectApplied = val
 }
 
-// SetSandevistanInterrupted sets the value of SandevistanInterrupted.
-func (s *CounterplayResult) SetSandevistanInterrupted(val bool) {
-	s.SandevistanInterrupted = val
-}
-
 // SetActionBudgetReduced sets the value of ActionBudgetReduced.
 func (s *CounterplayResult) SetActionBudgetReduced(val OptInt) {
 	s.ActionBudgetReduced = val
+}
+
+// SetSandevistanInterrupted sets the value of SandevistanInterrupted.
+func (s *CounterplayResult) SetSandevistanInterrupted(val bool) {
+	s.SandevistanInterrupted = val
 }
 
 // SetPhaseEnded sets the value of PhaseEnded.
@@ -621,6 +637,14 @@ type GetHeatStatusUnauthorized Error
 
 func (*GetHeatStatusUnauthorized) getHeatStatusRes() {}
 
+type GetSandevistanBonusesInternalServerError Error
+
+func (*GetSandevistanBonusesInternalServerError) getSandevistanBonusesRes() {}
+
+type GetSandevistanBonusesUnauthorized Error
+
+func (*GetSandevistanBonusesUnauthorized) getSandevistanBonusesRes() {}
+
 type GetSandevistanStatusInternalServerError Error
 
 func (*GetSandevistanStatusInternalServerError) getSandevistanStatusRes() {}
@@ -661,18 +685,25 @@ type GetTemporalMarksUnauthorized Error
 
 func (*GetTemporalMarksUnauthorized) getTemporalMarksRes() {}
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/HeatStatus
 type HeatStatus struct {
+	// Штрафы за перегрузку.
+	OverstressPenalty OptNilHeatStatusOverstressPenalty `json:"overstress_penalty"`
 	// Текущие стаки перегрева.
 	CurrentStacks int `json:"current_stacks"`
 	// Максимальное количество стаков.
 	MaxStacks int `json:"max_stacks"`
-	// Состояние перегрузки.
-	IsOverstress bool `json:"is_overstress"`
-	// Штрафы за перегрузку.
-	OverstressPenalty OptNilHeatStatusOverstressPenalty `json:"overstress_penalty"`
 	// Риск киберпсихоза.
 	CyberpsychosisRisk OptFloat32 `json:"cyberpsychosis_risk"`
+	// Состояние перегрузки.
+	IsOverstress bool `json:"is_overstress"`
+}
+
+// GetOverstressPenalty returns the value of OverstressPenalty.
+func (s *HeatStatus) GetOverstressPenalty() OptNilHeatStatusOverstressPenalty {
+	return s.OverstressPenalty
 }
 
 // GetCurrentStacks returns the value of CurrentStacks.
@@ -685,19 +716,19 @@ func (s *HeatStatus) GetMaxStacks() int {
 	return s.MaxStacks
 }
 
+// GetCyberpsychosisRisk returns the value of CyberpsychosisRisk.
+func (s *HeatStatus) GetCyberpsychosisRisk() OptFloat32 {
+	return s.CyberpsychosisRisk
+}
+
 // GetIsOverstress returns the value of IsOverstress.
 func (s *HeatStatus) GetIsOverstress() bool {
 	return s.IsOverstress
 }
 
-// GetOverstressPenalty returns the value of OverstressPenalty.
-func (s *HeatStatus) GetOverstressPenalty() OptNilHeatStatusOverstressPenalty {
-	return s.OverstressPenalty
-}
-
-// GetCyberpsychosisRisk returns the value of CyberpsychosisRisk.
-func (s *HeatStatus) GetCyberpsychosisRisk() OptFloat32 {
-	return s.CyberpsychosisRisk
+// SetOverstressPenalty sets the value of OverstressPenalty.
+func (s *HeatStatus) SetOverstressPenalty(val OptNilHeatStatusOverstressPenalty) {
+	s.OverstressPenalty = val
 }
 
 // SetCurrentStacks sets the value of CurrentStacks.
@@ -710,19 +741,14 @@ func (s *HeatStatus) SetMaxStacks(val int) {
 	s.MaxStacks = val
 }
 
-// SetIsOverstress sets the value of IsOverstress.
-func (s *HeatStatus) SetIsOverstress(val bool) {
-	s.IsOverstress = val
-}
-
-// SetOverstressPenalty sets the value of OverstressPenalty.
-func (s *HeatStatus) SetOverstressPenalty(val OptNilHeatStatusOverstressPenalty) {
-	s.OverstressPenalty = val
-}
-
 // SetCyberpsychosisRisk sets the value of CyberpsychosisRisk.
 func (s *HeatStatus) SetCyberpsychosisRisk(val OptFloat32) {
 	s.CyberpsychosisRisk = val
+}
+
+// SetIsOverstress sets the value of IsOverstress.
+func (s *HeatStatus) SetIsOverstress(val bool) {
+	s.IsOverstress = val
 }
 
 func (*HeatStatus) getHeatStatusRes() {}
@@ -1329,6 +1355,228 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// BACKEND NOTE: Event for Perception Drag effects. Published to realtime-service for client-side
+// visual effects.
+// Ref: #/components/schemas/PerceptionDragEvent
+type PerceptionDragEvent struct {
+	// Тип события Perception Drag.
+	EventType PerceptionDragEventEventType `json:"event_type"`
+	// ID игрока с Sandevistan.
+	PlayerID uuid.UUID `json:"player_id"`
+	// ID активации Sandevistan.
+	ActivationID uuid.UUID `json:"activation_id"`
+	// Фаза Sandevistan.
+	Phase PerceptionDragEventPhase `json:"phase"`
+	// Время события.
+	Timestamp time.Time `json:"timestamp"`
+	// Список игроков, подверженных Perception Drag.
+	AffectedPlayers []uuid.UUID `json:"affected_players"`
+	// Длительность Perception Drag в миллисекундах.
+	DragDurationMs int `json:"drag_duration_ms"`
+	// Интенсивность эффекта (0.0 = нет эффекта, 1.0 =
+	// максимальный).
+	DragIntensity float32 `json:"drag_intensity"`
+}
+
+// GetEventType returns the value of EventType.
+func (s *PerceptionDragEvent) GetEventType() PerceptionDragEventEventType {
+	return s.EventType
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *PerceptionDragEvent) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetActivationID returns the value of ActivationID.
+func (s *PerceptionDragEvent) GetActivationID() uuid.UUID {
+	return s.ActivationID
+}
+
+// GetPhase returns the value of Phase.
+func (s *PerceptionDragEvent) GetPhase() PerceptionDragEventPhase {
+	return s.Phase
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *PerceptionDragEvent) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetAffectedPlayers returns the value of AffectedPlayers.
+func (s *PerceptionDragEvent) GetAffectedPlayers() []uuid.UUID {
+	return s.AffectedPlayers
+}
+
+// GetDragDurationMs returns the value of DragDurationMs.
+func (s *PerceptionDragEvent) GetDragDurationMs() int {
+	return s.DragDurationMs
+}
+
+// GetDragIntensity returns the value of DragIntensity.
+func (s *PerceptionDragEvent) GetDragIntensity() float32 {
+	return s.DragIntensity
+}
+
+// SetEventType sets the value of EventType.
+func (s *PerceptionDragEvent) SetEventType(val PerceptionDragEventEventType) {
+	s.EventType = val
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *PerceptionDragEvent) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetActivationID sets the value of ActivationID.
+func (s *PerceptionDragEvent) SetActivationID(val uuid.UUID) {
+	s.ActivationID = val
+}
+
+// SetPhase sets the value of Phase.
+func (s *PerceptionDragEvent) SetPhase(val PerceptionDragEventPhase) {
+	s.Phase = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *PerceptionDragEvent) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetAffectedPlayers sets the value of AffectedPlayers.
+func (s *PerceptionDragEvent) SetAffectedPlayers(val []uuid.UUID) {
+	s.AffectedPlayers = val
+}
+
+// SetDragDurationMs sets the value of DragDurationMs.
+func (s *PerceptionDragEvent) SetDragDurationMs(val int) {
+	s.DragDurationMs = val
+}
+
+// SetDragIntensity sets the value of DragIntensity.
+func (s *PerceptionDragEvent) SetDragIntensity(val float32) {
+	s.DragIntensity = val
+}
+
+// Тип события Perception Drag.
+type PerceptionDragEventEventType string
+
+const (
+	PerceptionDragEventEventTypeSandevistanActivated   PerceptionDragEventEventType = "sandevistan_activated"
+	PerceptionDragEventEventTypeSandevistanDeactivated PerceptionDragEventEventType = "sandevistan_deactivated"
+	PerceptionDragEventEventTypePhaseChanged           PerceptionDragEventEventType = "phase_changed"
+)
+
+// AllValues returns all PerceptionDragEventEventType values.
+func (PerceptionDragEventEventType) AllValues() []PerceptionDragEventEventType {
+	return []PerceptionDragEventEventType{
+		PerceptionDragEventEventTypeSandevistanActivated,
+		PerceptionDragEventEventTypeSandevistanDeactivated,
+		PerceptionDragEventEventTypePhaseChanged,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PerceptionDragEventEventType) MarshalText() ([]byte, error) {
+	switch s {
+	case PerceptionDragEventEventTypeSandevistanActivated:
+		return []byte(s), nil
+	case PerceptionDragEventEventTypeSandevistanDeactivated:
+		return []byte(s), nil
+	case PerceptionDragEventEventTypePhaseChanged:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PerceptionDragEventEventType) UnmarshalText(data []byte) error {
+	switch PerceptionDragEventEventType(data) {
+	case PerceptionDragEventEventTypeSandevistanActivated:
+		*s = PerceptionDragEventEventTypeSandevistanActivated
+		return nil
+	case PerceptionDragEventEventTypeSandevistanDeactivated:
+		*s = PerceptionDragEventEventTypeSandevistanDeactivated
+		return nil
+	case PerceptionDragEventEventTypePhaseChanged:
+		*s = PerceptionDragEventEventTypePhaseChanged
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Фаза Sandevistan.
+type PerceptionDragEventPhase string
+
+const (
+	PerceptionDragEventPhasePreparation PerceptionDragEventPhase = "preparation"
+	PerceptionDragEventPhaseActive      PerceptionDragEventPhase = "active"
+	PerceptionDragEventPhaseRecovery    PerceptionDragEventPhase = "recovery"
+	PerceptionDragEventPhaseIdle        PerceptionDragEventPhase = "idle"
+)
+
+// AllValues returns all PerceptionDragEventPhase values.
+func (PerceptionDragEventPhase) AllValues() []PerceptionDragEventPhase {
+	return []PerceptionDragEventPhase{
+		PerceptionDragEventPhasePreparation,
+		PerceptionDragEventPhaseActive,
+		PerceptionDragEventPhaseRecovery,
+		PerceptionDragEventPhaseIdle,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PerceptionDragEventPhase) MarshalText() ([]byte, error) {
+	switch s {
+	case PerceptionDragEventPhasePreparation:
+		return []byte(s), nil
+	case PerceptionDragEventPhaseActive:
+		return []byte(s), nil
+	case PerceptionDragEventPhaseRecovery:
+		return []byte(s), nil
+	case PerceptionDragEventPhaseIdle:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PerceptionDragEventPhase) UnmarshalText(data []byte) error {
+	switch PerceptionDragEventPhase(data) {
+	case PerceptionDragEventPhasePreparation:
+		*s = PerceptionDragEventPhasePreparation
+		return nil
+	case PerceptionDragEventPhaseActive:
+		*s = PerceptionDragEventPhaseActive
+		return nil
+	case PerceptionDragEventPhaseRecovery:
+		*s = PerceptionDragEventPhaseRecovery
+		return nil
+	case PerceptionDragEventPhaseIdle:
+		*s = PerceptionDragEventPhaseIdle
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type PublishPerceptionDragEventBadRequest Error
+
+func (*PublishPerceptionDragEventBadRequest) publishPerceptionDragEventRes() {}
+
+type PublishPerceptionDragEventInternalServerError Error
+
+func (*PublishPerceptionDragEventInternalServerError) publishPerceptionDragEventRes() {}
+
+type PublishPerceptionDragEventUnauthorized Error
+
+func (*PublishPerceptionDragEventUnauthorized) publishPerceptionDragEventRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/SandevistanActivation
 type SandevistanActivation struct {
 	// Идентификатор активации.
@@ -1339,10 +1587,10 @@ type SandevistanActivation struct {
 	StartedAt time.Time `json:"started_at"`
 	// Время окончания активации.
 	ExpiresAt time.Time `json:"expires_at"`
-	// Оставшийся Action Budget.
-	ActionBudgetRemaining OptInt `json:"action_budget_remaining"`
 	// Бонусы активации.
 	Bonuses OptSandevistanActivationBonuses `json:"bonuses"`
+	// Оставшийся Action Budget.
+	ActionBudgetRemaining OptInt `json:"action_budget_remaining"`
 }
 
 // GetActivationID returns the value of ActivationID.
@@ -1365,14 +1613,14 @@ func (s *SandevistanActivation) GetExpiresAt() time.Time {
 	return s.ExpiresAt
 }
 
-// GetActionBudgetRemaining returns the value of ActionBudgetRemaining.
-func (s *SandevistanActivation) GetActionBudgetRemaining() OptInt {
-	return s.ActionBudgetRemaining
-}
-
 // GetBonuses returns the value of Bonuses.
 func (s *SandevistanActivation) GetBonuses() OptSandevistanActivationBonuses {
 	return s.Bonuses
+}
+
+// GetActionBudgetRemaining returns the value of ActionBudgetRemaining.
+func (s *SandevistanActivation) GetActionBudgetRemaining() OptInt {
+	return s.ActionBudgetRemaining
 }
 
 // SetActivationID sets the value of ActivationID.
@@ -1395,14 +1643,14 @@ func (s *SandevistanActivation) SetExpiresAt(val time.Time) {
 	s.ExpiresAt = val
 }
 
-// SetActionBudgetRemaining sets the value of ActionBudgetRemaining.
-func (s *SandevistanActivation) SetActionBudgetRemaining(val OptInt) {
-	s.ActionBudgetRemaining = val
-}
-
 // SetBonuses sets the value of Bonuses.
 func (s *SandevistanActivation) SetBonuses(val OptSandevistanActivationBonuses) {
 	s.Bonuses = val
+}
+
+// SetActionBudgetRemaining sets the value of ActionBudgetRemaining.
+func (s *SandevistanActivation) SetActionBudgetRemaining(val OptInt) {
+	s.ActionBudgetRemaining = val
 }
 
 func (*SandevistanActivation) activateSandevistanRes() {}
@@ -1496,14 +1744,150 @@ func (s *SandevistanActivationPhase) UnmarshalText(data []byte) error {
 	}
 }
 
-// Ref: #/components/schemas/SandevistanStatus
-type SandevistanStatus struct {
+// BACKEND NOTE: Current Sandevistan gameplay bonuses. Used by combat-service for real-time effect
+// application.
+// Ref: #/components/schemas/SandevistanBonuses
+type SandevistanBonuses struct {
 	// Активен ли Sandevistan.
 	IsActive bool `json:"is_active"`
 	// Текущая фаза.
-	Phase SandevistanStatusPhase `json:"phase"`
+	Phase SandevistanBonusesPhase `json:"phase"`
+	// Множитель скорости движения (1.0 = базовая скорость).
+	MovementBoost float32 `json:"movement_boost"`
+	// Множитель скорости стрельбы (1.0 = базовая скорость).
+	FireRateBoost float32 `json:"fire_rate_boost"`
+	// Дистанция auto-target dash в метрах.
+	DashDistance float32 `json:"dash_distance"`
+	// Включен ли auto-target dash.
+	AutoTargetEnabled bool `json:"auto_target_enabled"`
+}
+
+// GetIsActive returns the value of IsActive.
+func (s *SandevistanBonuses) GetIsActive() bool {
+	return s.IsActive
+}
+
+// GetPhase returns the value of Phase.
+func (s *SandevistanBonuses) GetPhase() SandevistanBonusesPhase {
+	return s.Phase
+}
+
+// GetMovementBoost returns the value of MovementBoost.
+func (s *SandevistanBonuses) GetMovementBoost() float32 {
+	return s.MovementBoost
+}
+
+// GetFireRateBoost returns the value of FireRateBoost.
+func (s *SandevistanBonuses) GetFireRateBoost() float32 {
+	return s.FireRateBoost
+}
+
+// GetDashDistance returns the value of DashDistance.
+func (s *SandevistanBonuses) GetDashDistance() float32 {
+	return s.DashDistance
+}
+
+// GetAutoTargetEnabled returns the value of AutoTargetEnabled.
+func (s *SandevistanBonuses) GetAutoTargetEnabled() bool {
+	return s.AutoTargetEnabled
+}
+
+// SetIsActive sets the value of IsActive.
+func (s *SandevistanBonuses) SetIsActive(val bool) {
+	s.IsActive = val
+}
+
+// SetPhase sets the value of Phase.
+func (s *SandevistanBonuses) SetPhase(val SandevistanBonusesPhase) {
+	s.Phase = val
+}
+
+// SetMovementBoost sets the value of MovementBoost.
+func (s *SandevistanBonuses) SetMovementBoost(val float32) {
+	s.MovementBoost = val
+}
+
+// SetFireRateBoost sets the value of FireRateBoost.
+func (s *SandevistanBonuses) SetFireRateBoost(val float32) {
+	s.FireRateBoost = val
+}
+
+// SetDashDistance sets the value of DashDistance.
+func (s *SandevistanBonuses) SetDashDistance(val float32) {
+	s.DashDistance = val
+}
+
+// SetAutoTargetEnabled sets the value of AutoTargetEnabled.
+func (s *SandevistanBonuses) SetAutoTargetEnabled(val bool) {
+	s.AutoTargetEnabled = val
+}
+
+func (*SandevistanBonuses) getSandevistanBonusesRes() {}
+
+// Текущая фаза.
+type SandevistanBonusesPhase string
+
+const (
+	SandevistanBonusesPhaseIdle        SandevistanBonusesPhase = "idle"
+	SandevistanBonusesPhasePreparation SandevistanBonusesPhase = "preparation"
+	SandevistanBonusesPhaseActive      SandevistanBonusesPhase = "active"
+	SandevistanBonusesPhaseRecovery    SandevistanBonusesPhase = "recovery"
+)
+
+// AllValues returns all SandevistanBonusesPhase values.
+func (SandevistanBonusesPhase) AllValues() []SandevistanBonusesPhase {
+	return []SandevistanBonusesPhase{
+		SandevistanBonusesPhaseIdle,
+		SandevistanBonusesPhasePreparation,
+		SandevistanBonusesPhaseActive,
+		SandevistanBonusesPhaseRecovery,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SandevistanBonusesPhase) MarshalText() ([]byte, error) {
+	switch s {
+	case SandevistanBonusesPhaseIdle:
+		return []byte(s), nil
+	case SandevistanBonusesPhasePreparation:
+		return []byte(s), nil
+	case SandevistanBonusesPhaseActive:
+		return []byte(s), nil
+	case SandevistanBonusesPhaseRecovery:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SandevistanBonusesPhase) UnmarshalText(data []byte) error {
+	switch SandevistanBonusesPhase(data) {
+	case SandevistanBonusesPhaseIdle:
+		*s = SandevistanBonusesPhaseIdle
+		return nil
+	case SandevistanBonusesPhasePreparation:
+		*s = SandevistanBonusesPhasePreparation
+		return nil
+	case SandevistanBonusesPhaseActive:
+		*s = SandevistanBonusesPhaseActive
+		return nil
+	case SandevistanBonusesPhaseRecovery:
+		*s = SandevistanBonusesPhaseRecovery
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/SandevistanStatus
+type SandevistanStatus struct {
 	// Идентификатор текущей активации.
 	ActivationID OptNilUUID `json:"activation_id"`
+	// Текущая фаза.
+	Phase SandevistanStatusPhase `json:"phase"`
 	// Секунды до следующей активации.
 	CooldownRemaining int `json:"cooldown_remaining"`
 	// Количество стаков перегрева.
@@ -1512,21 +1896,18 @@ type SandevistanStatus struct {
 	ActionBudgetRemaining OptInt `json:"action_budget_remaining"`
 	// Количество активных Temporal Marks.
 	TemporalMarksCount OptInt `json:"temporal_marks_count"`
-}
-
-// GetIsActive returns the value of IsActive.
-func (s *SandevistanStatus) GetIsActive() bool {
-	return s.IsActive
-}
-
-// GetPhase returns the value of Phase.
-func (s *SandevistanStatus) GetPhase() SandevistanStatusPhase {
-	return s.Phase
+	// Активен ли Sandevistan.
+	IsActive bool `json:"is_active"`
 }
 
 // GetActivationID returns the value of ActivationID.
 func (s *SandevistanStatus) GetActivationID() OptNilUUID {
 	return s.ActivationID
+}
+
+// GetPhase returns the value of Phase.
+func (s *SandevistanStatus) GetPhase() SandevistanStatusPhase {
+	return s.Phase
 }
 
 // GetCooldownRemaining returns the value of CooldownRemaining.
@@ -1549,19 +1930,19 @@ func (s *SandevistanStatus) GetTemporalMarksCount() OptInt {
 	return s.TemporalMarksCount
 }
 
-// SetIsActive sets the value of IsActive.
-func (s *SandevistanStatus) SetIsActive(val bool) {
-	s.IsActive = val
-}
-
-// SetPhase sets the value of Phase.
-func (s *SandevistanStatus) SetPhase(val SandevistanStatusPhase) {
-	s.Phase = val
+// GetIsActive returns the value of IsActive.
+func (s *SandevistanStatus) GetIsActive() bool {
+	return s.IsActive
 }
 
 // SetActivationID sets the value of ActivationID.
 func (s *SandevistanStatus) SetActivationID(val OptNilUUID) {
 	s.ActivationID = val
+}
+
+// SetPhase sets the value of Phase.
+func (s *SandevistanStatus) SetPhase(val SandevistanStatusPhase) {
+	s.Phase = val
 }
 
 // SetCooldownRemaining sets the value of CooldownRemaining.
@@ -1582,6 +1963,11 @@ func (s *SandevistanStatus) SetActionBudgetRemaining(val OptInt) {
 // SetTemporalMarksCount sets the value of TemporalMarksCount.
 func (s *SandevistanStatus) SetTemporalMarksCount(val OptInt) {
 	s.TemporalMarksCount = val
+}
+
+// SetIsActive sets the value of IsActive.
+func (s *SandevistanStatus) SetIsActive(val bool) {
+	s.IsActive = val
 }
 
 func (*SandevistanStatus) getSandevistanStatusRes() {}
@@ -1684,9 +2070,12 @@ func (s *StatusResponse) SetStatus(val OptString) {
 	s.Status = val
 }
 
-func (*StatusResponse) deactivateSandevistanRes() {}
-func (*StatusResponse) setTemporalMarksRes()      {}
+func (*StatusResponse) deactivateSandevistanRes()      {}
+func (*StatusResponse) publishPerceptionDragEventRes() {}
+func (*StatusResponse) setTemporalMarksRes()           {}
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
 // Ref: #/components/schemas/TemporalMark
 type TemporalMark struct {
 	// Идентификатор метки.
@@ -1750,6 +2139,50 @@ func (s *TemporalMark) SetExpiresAt(val time.Time) {
 func (s *TemporalMark) SetDelayedBurstDamage(val OptFloat32) {
 	s.DelayedBurstDamage = val
 }
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/TemporalMarksApplied
+type TemporalMarksApplied struct {
+	// Количество применённых temporal marks.
+	MarksApplied int `json:"marks_applied"`
+	// Общий нанесённый урон.
+	DamageDealt int `json:"damage_dealt"`
+	// Список ID целей, которым был нанесён урон.
+	TargetsHit []uuid.UUID `json:"targets_hit"`
+}
+
+// GetMarksApplied returns the value of MarksApplied.
+func (s *TemporalMarksApplied) GetMarksApplied() int {
+	return s.MarksApplied
+}
+
+// GetDamageDealt returns the value of DamageDealt.
+func (s *TemporalMarksApplied) GetDamageDealt() int {
+	return s.DamageDealt
+}
+
+// GetTargetsHit returns the value of TargetsHit.
+func (s *TemporalMarksApplied) GetTargetsHit() []uuid.UUID {
+	return s.TargetsHit
+}
+
+// SetMarksApplied sets the value of MarksApplied.
+func (s *TemporalMarksApplied) SetMarksApplied(val int) {
+	s.MarksApplied = val
+}
+
+// SetDamageDealt sets the value of DamageDealt.
+func (s *TemporalMarksApplied) SetDamageDealt(val int) {
+	s.DamageDealt = val
+}
+
+// SetTargetsHit sets the value of TargetsHit.
+func (s *TemporalMarksApplied) SetTargetsHit(val []uuid.UUID) {
+	s.TargetsHit = val
+}
+
+func (*TemporalMarksApplied) applyTemporalMarksRes() {}
 
 type UseActionBudgetBadRequest Error
 

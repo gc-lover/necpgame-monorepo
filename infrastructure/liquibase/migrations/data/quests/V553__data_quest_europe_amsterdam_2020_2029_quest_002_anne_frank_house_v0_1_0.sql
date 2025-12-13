@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\amsterdam\2020-2029\quest-002-anne-frank-house.yaml
--- Generated: 2025-12-06T21:12:59.695315
+-- Generated: 2025-12-13T21:13:35.595352
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2078-2093\quest-045-goodbye-berlin.yaml
--- Generated: 2025-12-06T21:12:59.885399
+-- Generated: 2025-12-13T21:13:35.779765
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\madrid\2020-2029\quest-004-flamenco-night.yaml
--- Generated: 2025-12-06T21:13:00.125391
+-- Generated: 2025-12-13T21:13:36.064273
 
 BEGIN;
 

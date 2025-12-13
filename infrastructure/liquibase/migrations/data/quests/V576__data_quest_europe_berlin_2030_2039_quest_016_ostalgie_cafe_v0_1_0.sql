@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2030-2039\quest-016-ostalgie-cafe.yaml
--- Generated: 2025-12-06T21:12:59.780751
+-- Generated: 2025-12-13T21:13:35.675594
 
 BEGIN;
 

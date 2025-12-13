@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2061-2077\quest-036-shakespear-ai.yaml
--- Generated: 2025-12-06T21:13:00.061244
+-- Generated: 2025-12-13T21:13:35.999862
 
 BEGIN;
 

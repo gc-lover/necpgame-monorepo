@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\yerevan\2020-2029\quest-005-khachkars-art.yaml
--- Generated: 2025-12-06T21:12:59.666202
+-- Generated: 2025-12-13T21:13:35.572422
 
 BEGIN;
 

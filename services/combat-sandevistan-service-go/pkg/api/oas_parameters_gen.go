@@ -213,6 +213,72 @@ func decodeApplyCounterplayParams(args [1]string, argsEscaped bool, r *http.Requ
 	return params, nil
 }
 
+// ApplyTemporalMarksParams is parameters of applyTemporalMarks operation.
+type ApplyTemporalMarksParams struct {
+	// Идентификатор игрока.
+	PlayerID uuid.UUID
+}
+
+func unpackApplyTemporalMarksParams(packed middleware.Parameters) (params ApplyTemporalMarksParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "player_id",
+			In:   "path",
+		}
+		params.PlayerID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeApplyTemporalMarksParams(args [1]string, argsEscaped bool, r *http.Request) (params ApplyTemporalMarksParams, _ error) {
+	// Decode path: player_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "player_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PlayerID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeactivateSandevistanParams is parameters of deactivateSandevistan operation.
 type DeactivateSandevistanParams struct {
 	// Идентификатор игрока.
@@ -345,6 +411,72 @@ func decodeGetHeatStatusParams(args [1]string, argsEscaped bool, r *http.Request
 	return params, nil
 }
 
+// GetSandevistanBonusesParams is parameters of getSandevistanBonuses operation.
+type GetSandevistanBonusesParams struct {
+	// Идентификатор игрока.
+	PlayerID uuid.UUID
+}
+
+func unpackGetSandevistanBonusesParams(packed middleware.Parameters) (params GetSandevistanBonusesParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "player_id",
+			In:   "path",
+		}
+		params.PlayerID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetSandevistanBonusesParams(args [1]string, argsEscaped bool, r *http.Request) (params GetSandevistanBonusesParams, _ error) {
+	// Decode path: player_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "player_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PlayerID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetSandevistanStatusParams is parameters of getSandevistanStatus operation.
 type GetSandevistanStatusParams struct {
 	// Идентификатор игрока.
@@ -429,6 +561,72 @@ func unpackGetTemporalMarksParams(packed middleware.Parameters) (params GetTempo
 }
 
 func decodeGetTemporalMarksParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTemporalMarksParams, _ error) {
+	// Decode path: player_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "player_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PlayerID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// PublishPerceptionDragEventParams is parameters of publishPerceptionDragEvent operation.
+type PublishPerceptionDragEventParams struct {
+	// Идентификатор игрока с Sandevistan.
+	PlayerID uuid.UUID
+}
+
+func unpackPublishPerceptionDragEventParams(packed middleware.Parameters) (params PublishPerceptionDragEventParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "player_id",
+			In:   "path",
+		}
+		params.PlayerID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodePublishPerceptionDragEventParams(args [1]string, argsEscaped bool, r *http.Request) (params PublishPerceptionDragEventParams, _ error) {
 	// Decode path: player_id.
 	if err := func() error {
 		param := args[0]

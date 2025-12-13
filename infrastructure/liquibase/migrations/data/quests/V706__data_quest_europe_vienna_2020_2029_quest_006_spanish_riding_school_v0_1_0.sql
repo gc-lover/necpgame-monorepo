@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\vienna\2020-2029\quest-006-spanish-riding-school.yaml
--- Generated: 2025-12-06T21:13:00.303281
+-- Generated: 2025-12-13T21:13:36.208547
 
 BEGIN;
 

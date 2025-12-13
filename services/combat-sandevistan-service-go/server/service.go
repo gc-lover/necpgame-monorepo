@@ -39,6 +39,9 @@ type SandevistanService interface {
 	ApplyCooling(ctx context.Context, playerID uuid.UUID, cartridgeID uuid.UUID) (*api.CoolingResult, error)
 	GetHeatStatus(ctx context.Context, playerID uuid.UUID) (*api.HeatStatus, error)
 	ApplyCounterplay(ctx context.Context, playerID uuid.UUID, effectType string, sourcePlayerID uuid.UUID) (*api.CounterplayResult, error)
+	ApplyTemporalMarks(ctx context.Context, playerID uuid.UUID) (*api.TemporalMarksApplied, error)
+	GetBonuses(ctx context.Context, playerID uuid.UUID) (*api.SandevistanBonuses, error)
+	PublishPerceptionDragEvent(ctx context.Context, playerID uuid.UUID, event *api.PerceptionDragEvent) error
 }
 
 type sandevistanService struct {
@@ -127,6 +130,9 @@ func (s *sandevistanService) Activate(ctx context.Context, playerID uuid.UUID) (
 		return nil, err
 	}
 
+	// Publish Perception Drag event for activation
+	go s.publishActivationEvent(ctx, activation)
+
 	go s.handlePhaseTransitions(ctx, activation)
 
 	// Issue: #1607 - Use memory pooling
@@ -151,13 +157,22 @@ func (s *sandevistanService) handlePhaseTransitions(ctx context.Context, activat
 	activation.ActivePhaseStartedAt = &now
 	s.repo.SaveActivation(ctx, activation)
 
+	// Publish phase change to active
+	s.publishPhaseChangeEvent(ctx, activation, api.PerceptionDragEventPhaseActive)
+
 	activeTimer := time.NewTimer(ActiveDuration)
 	<-activeTimer.C
+
+	// Apply temporal marks effects before transitioning to recovery
+	s.ApplyTemporalMarks(ctx, activation.PlayerID)
 
 	activation.Phase = PhaseRecovery
 	now = time.Now()
 	activation.RecoveryPhaseStartedAt = &now
 	s.repo.SaveActivation(ctx, activation)
+
+	// Publish phase change to recovery
+	s.publishPhaseChangeEvent(ctx, activation, api.PerceptionDragEventPhaseRecovery)
 
 	recoveryTimer := time.NewTimer(RecoveryDuration)
 	<-recoveryTimer.C
@@ -167,6 +182,9 @@ func (s *sandevistanService) handlePhaseTransitions(ctx context.Context, activat
 	now = time.Now()
 	activation.EndedAt = &now
 	s.repo.SaveActivation(ctx, activation)
+
+	// Publish deactivation event
+	s.publishDeactivationEvent(ctx, activation)
 }
 
 func (s *sandevistanService) Deactivate(ctx context.Context, playerID uuid.UUID) error {
@@ -337,9 +355,18 @@ func (s *sandevistanService) ApplyCooling(ctx context.Context, playerID uuid.UUI
 		activation.HeatStacks -= heatStacksRemoved
 	}
 
+	// Check and apply overstress effect if heat stacks were at threshold
+	wasOverstress := activation.IsOverstress
+	activation.IsOverstress = activation.HeatStacks >= OverstressThreshold
+
 	newHeatLevel := activation.HeatStacks
 	cooldownReduced := 5
 	cyberpsychosisRisk := float32(activation.HeatStacks) * 0.1
+
+	// Apply overstress effects if entering overstress state
+	if !wasOverstress && activation.IsOverstress {
+		s.applyOverstressEffects(ctx, activation)
+	}
 
 	if err := s.repo.SaveActivation(ctx, activation); err != nil {
 		return nil, err
@@ -368,8 +395,13 @@ func (s *sandevistanService) GetHeatStatus(ctx context.Context, playerID uuid.UU
 		currentStacks = activation.HeatStacks
 	}
 
-	isOverstress := currentStacks >= OverstressThreshold
 	cyberpsychosisRisk := float32(currentStacks) * 0.1
+
+	// Check if currently in overstress from activation
+	isCurrentlyOverstress := false
+	if activation != nil {
+		isCurrentlyOverstress = activation.IsOverstress
+	}
 
 	// Issue: #1607 - Use memory pooling
 	status := s.heatStatusPool.Get().(*api.HeatStatus)
@@ -377,7 +409,7 @@ func (s *sandevistanService) GetHeatStatus(ctx context.Context, playerID uuid.UU
 
 	status.CurrentStacks = currentStacks
 	status.MaxStacks = MaxHeatStacks
-	status.IsOverstress = isOverstress
+	status.IsOverstress = isCurrentlyOverstress
 	status.CyberpsychosisRisk = api.NewOptFloat32(cyberpsychosisRisk)
 
 	return status, nil
@@ -437,5 +469,210 @@ func (s *sandevistanService) ApplyCounterplay(ctx context.Context, playerID uuid
 	result.ActionBudgetReduced = api.NewOptInt(actionBudgetReduced)
 
 	return result, nil
+}
+
+func (s *sandevistanService) ApplyTemporalMarks(ctx context.Context, playerID uuid.UUID) (*api.TemporalMarksApplied, error) {
+	marks, err := s.repo.GetTemporalMarks(ctx, playerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(marks) == 0 {
+		return &api.TemporalMarksApplied{
+			MarksApplied: 0,
+			DamageDealt:  0,
+			TargetsHit:   []uuid.UUID{},
+		}, nil
+	}
+
+	var appliedMarks []*TemporalMark
+	var targetsHit []uuid.UUID
+	totalDamage := 0
+
+	for _, mark := range marks {
+		// Check if mark is still valid (not expired)
+		if time.Since(mark.MarkedAt) > 5*time.Second {
+			continue
+		}
+
+		// Apply delayed burst effect
+		// In PvP: 60% base damage, in PvE: full damage + neuroschock
+		damage := 100 // Base damage, would be calculated based on game mechanics
+		totalDamage += damage
+
+		// Mark as applied
+		now := time.Now()
+		mark.AppliedAt = &now
+		appliedMarks = append(appliedMarks, mark)
+		targetsHit = append(targetsHit, mark.TargetID)
+
+		s.logger.WithFields(logrus.Fields{
+			"player_id": playerID,
+			"target_id": mark.TargetID,
+			"damage":    damage,
+		}).Info("Applied temporal mark damage")
+	}
+
+	// Save applied marks
+	if len(appliedMarks) > 0 {
+		if err := s.repo.UpdateTemporalMarks(ctx, appliedMarks); err != nil {
+			s.logger.WithError(err).Error("Failed to update temporal marks")
+		}
+	}
+
+	return &api.TemporalMarksApplied{
+		MarksApplied: len(appliedMarks),
+		DamageDealt:  totalDamage,
+		TargetsHit:   targetsHit,
+	}, nil
+}
+
+func (s *sandevistanService) GetBonuses(ctx context.Context, playerID uuid.UUID) (*api.SandevistanBonuses, error) {
+	activation, err := s.repo.GetActivation(ctx, playerID)
+	if err != nil {
+		return nil, err
+	}
+
+	isActive := false
+	phase := api.SandevistanBonusesPhaseIdle
+	var movementBoost, fireRateBoost, dashDistance float32
+	autoTargetEnabled := false
+
+	if activation != nil && activation.IsActive {
+		isActive = true
+		switch activation.Phase {
+		case PhasePreparation:
+			phase = api.SandevistanBonusesPhasePreparation
+		case PhaseActive:
+			phase = api.SandevistanBonusesPhaseActive
+			// Active phase bonuses according to spec
+			movementBoost = 1.4  // +40%
+			fireRateBoost = 1.25 // +25%
+			dashDistance = 15    // 15 meters
+			autoTargetEnabled = true
+		case PhaseRecovery:
+			phase = api.SandevistanBonusesPhaseRecovery
+			// Recovery phase penalties
+			movementBoost = 0.8  // -20%
+			fireRateBoost = 0.8  // -20%
+		}
+	}
+
+	return &api.SandevistanBonuses{
+		IsActive:          isActive,
+		Phase:             phase,
+		MovementBoost:     movementBoost,
+		FireRateBoost:     fireRateBoost,
+		DashDistance:      dashDistance,
+		AutoTargetEnabled: autoTargetEnabled,
+	}, nil
+}
+
+func (s *sandevistanService) PublishPerceptionDragEvent(ctx context.Context, playerID uuid.UUID, event *api.PerceptionDragEvent) error {
+	// Validate event belongs to player
+	if event.PlayerID != playerID {
+		return errors.New("event player_id does not match request player_id")
+	}
+
+	// Here we would publish to realtime-service via message queue
+	// For now, just log the event
+	s.logger.WithFields(logrus.Fields{
+		"event_type":       event.EventType,
+		"player_id":        event.PlayerID,
+		"phase":            event.Phase,
+		"affected_players": len(event.AffectedPlayers),
+		"drag_duration_ms": event.DragDurationMs,
+		"drag_intensity":   event.DragIntensity,
+	}).Info("Published Perception Drag event")
+
+	// TODO: Integrate with realtime-service for actual event publishing
+	// This would involve sending the event to a message queue that realtime-service subscribes to
+
+	return nil
+}
+
+func (s *sandevistanService) publishActivationEvent(ctx context.Context, activation *Activation) {
+	// Get nearby players (simplified - in real implementation would query world service)
+	affectedPlayers := []uuid.UUID{
+		// This would be populated with actual nearby players
+		uuid.New(), // placeholder
+	}
+
+	event := &api.PerceptionDragEvent{
+		EventType:       api.PerceptionDragEventEventTypeSandevistanActivated,
+		PlayerID:        activation.PlayerID,
+		ActivationID:    activation.ID,
+		Phase:           api.PerceptionDragEventPhasePreparation,
+		Timestamp:       activation.StartedAt,
+		AffectedPlayers: affectedPlayers,
+		DragDurationMs:  300, // Preparation phase duration
+		DragIntensity:   0.3, // Low intensity for preparation
+	}
+
+	_ = s.PublishPerceptionDragEvent(ctx, activation.PlayerID, event)
+}
+
+func (s *sandevistanService) publishPhaseChangeEvent(ctx context.Context, activation *Activation, phase api.PerceptionDragEventPhase) {
+	affectedPlayers := []uuid.UUID{uuid.New()} // placeholder
+
+	var dragDuration int
+	var dragIntensity float32
+
+	switch phase {
+	case api.PerceptionDragEventPhaseActive:
+		dragDuration = 4000 // Active phase duration
+		dragIntensity = 1.0 // Full intensity
+	case api.PerceptionDragEventPhaseRecovery:
+		dragDuration = 6000 // Recovery phase duration
+		dragIntensity = 0.5 // Medium intensity
+	}
+
+	event := &api.PerceptionDragEvent{
+		EventType:       api.PerceptionDragEventEventTypePhaseChanged,
+		PlayerID:        activation.PlayerID,
+		ActivationID:    activation.ID,
+		Phase:           phase,
+		Timestamp:       time.Now(),
+		AffectedPlayers: affectedPlayers,
+		DragDurationMs:  dragDuration,
+		DragIntensity:   dragIntensity,
+	}
+
+	_ = s.PublishPerceptionDragEvent(ctx, activation.PlayerID, event)
+}
+
+func (s *sandevistanService) publishDeactivationEvent(ctx context.Context, activation *Activation) {
+	affectedPlayers := []uuid.UUID{uuid.New()} // placeholder
+
+	event := &api.PerceptionDragEvent{
+		EventType:       api.PerceptionDragEventEventTypeSandevistanDeactivated,
+		PlayerID:        activation.PlayerID,
+		ActivationID:    activation.ID,
+		Phase:           api.PerceptionDragEventPhaseIdle,
+		Timestamp:       time.Now(),
+		AffectedPlayers: affectedPlayers,
+		DragDurationMs:  0,
+		DragIntensity:   0,
+	}
+
+	_ = s.PublishPerceptionDragEvent(ctx, activation.PlayerID, event)
+}
+
+func (s *sandevistanService) applyOverstressEffects(ctx context.Context, activation *Activation) {
+	// Apply overstress effects: 30% HP loss and uncontrolled dash
+	// In a real implementation, this would integrate with combat-service/health-system
+
+	s.logger.WithFields(logrus.Fields{
+		"player_id": activation.PlayerID,
+		"activation_id": activation.ID,
+	}).Warn("Overstress effect triggered: 30% HP loss and uncontrolled dash")
+
+	// TODO: Integrate with combat-service to apply:
+	// - 30% HP damage
+	// - Force an uncontrolled dash movement
+	// - Apply stun/knockback effects
+
+	// For now, just log the effect
+	// In production, this would call combat-service APIs
 }
 

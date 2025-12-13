@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\madrid\2020-2029\quest-003-tapas-crawl.yaml
--- Generated: 2025-12-06T21:13:00.120526
+-- Generated: 2025-12-13T21:13:36.058327
 
 BEGIN;
 

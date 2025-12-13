@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\mexico-city\2020-2029\quest-003-teotihuacan-pyramids.yaml
--- Generated: 2025-12-06T21:12:57.519369
+-- Generated: 2025-12-13T21:13:33.739606
 
 BEGIN;
 

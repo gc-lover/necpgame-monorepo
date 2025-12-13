@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\vienna\2020-2029\quest-004-coffee-house-culture.yaml
--- Generated: 2025-12-06T21:13:00.295129
+-- Generated: 2025-12-13T21:13:36.201208
 
 BEGIN;
 

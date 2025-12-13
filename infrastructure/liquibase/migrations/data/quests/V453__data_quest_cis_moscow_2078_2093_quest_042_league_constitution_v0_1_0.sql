@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2078-2093\quest-042-league-constitution.yaml
--- Generated: 2025-12-06T21:12:59.182162
+-- Generated: 2025-12-13T21:13:35.218930
 
 BEGIN;
 

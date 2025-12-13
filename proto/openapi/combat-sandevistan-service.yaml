@@ -261,6 +261,98 @@ paths:
           $ref: 'common.yaml#/components/responses/NotFound'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/apply-temporal-marks:
+    post:
+      tags:
+        - sandevistan
+      summary: Применить Temporal Marks (delayed burst damage)
+      operationId: applyTemporalMarks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Temporal Marks применены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporalMarksApplied'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/bonuses:
+    get:
+      tags:
+        - sandevistan
+      summary: Получить текущие бонусы Sandevistan
+      operationId: getSandevistanBonuses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Текущие бонусы Sandevistan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanBonuses'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/perception-drag:
+    post:
+      tags:
+        - sandevistan
+      summary: Опубликовать Perception Drag событие
+      operationId: publishPerceptionDragEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока с Sandevistan
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerceptionDragEvent'
+      responses:
+        '200':
+          description: Perception Drag событие опубликовано
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/cooling:
     post:
@@ -413,6 +505,12 @@ components:
       $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/HeatStatus'
     CounterplayResult:
       $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/CounterplayResult'
+    TemporalMarksApplied:
+      $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/TemporalMarksApplied'
+    SandevistanBonuses:
+      $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/SandevistanBonuses'
+    PerceptionDragEvent:
+      $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/PerceptionDragEvent'
     StatusResponse:
       $ref: 'common.yaml#/components/schemas/StatusResponse'
 

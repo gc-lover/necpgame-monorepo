@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\delhi\2020-2029\quest-003-street-food-chaos.yaml
--- Generated: 2025-12-06T21:12:58.345378
+-- Generated: 2025-12-13T21:13:34.516273
 
 BEGIN;
 

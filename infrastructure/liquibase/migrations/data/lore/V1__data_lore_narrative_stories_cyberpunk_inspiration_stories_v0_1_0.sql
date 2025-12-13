@@ -1,0 +1,175 @@
+-- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
+-- Import lore from: narrative\stories\cyberpunk-inspiration-stories.yaml
+-- Generated: 2025-12-13T21:13:37.899794
+
+BEGIN;
+
+-- Lore: canon-narrative-stories-cyberpunk-inspiration
+INSERT INTO narrative.lore_entries (
+    lore_id, title, document_type, category,
+    content_data, version
+)
+VALUES (
+    'canon-narrative-stories-cyberpunk-inspiration',
+    'Истории вдохновения Cyberpunk — адаптации для NECPGAME',
+    'canon',
+    'narrative',
+    '{
+  "metadata": {
+    "id": "canon-narrative-stories-cyberpunk-inspiration",
+    "title": "Истории вдохновения Cyberpunk — адаптации для NECPGAME",
+    "document_type": "canon",
+    "category": "narrative",
+    "status": "draft",
+    "version": "0.1.0",
+    "last_updated": "2025-11-11T00:00:00+00:00",
+    "concept_approved": false,
+    "concept_reviewed_at": "",
+    "owners": [
+      {
+        "role": "narrative_director",
+        "contact": "narrative@necp.game"
+      }
+    ],
+    "tags": [
+      "stories",
+      "cyberpunk",
+      "adaptation"
+    ],
+    "topics": [
+      "storytelling",
+      "inspiration"
+    ],
+    "related_systems": [
+      "narrative-service",
+      "live-ops-service"
+    ],
+    "related_documents": [
+      {
+        "id": "canon-narrative-stories-index",
+        "relation": "references"
+      },
+      {
+        "id": "main-story-framework",
+        "relation": "complements"
+      },
+      {
+        "id": "mechanics-combat-cyberpsychosis",
+        "relation": "influences"
+      }
+    ],
+    "source": "shared/docs/knowledge/canon/narrative/stories/cyberpunk-inspiration-stories.md",
+    "visibility": "internal",
+    "audience": [
+      "concept",
+      "narrative",
+      "live_ops"
+    ],
+    "risk_level": "high"
+  },
+  "review": {
+    "chain": [
+      {
+        "role": "narrative_director",
+        "reviewer": "",
+        "reviewed_at": "",
+        "status": "pending"
+      }
+    ],
+    "next_actions": []
+  },
+  "summary": {
+    "problem": "Лорные вдохновения из Cyberpunk были описаны в Markdown и не соединялись с нарративными фичами NECPGAME.",
+    "goal": "Структурировать ключевые истории из Cyberpunk 2077, Edgerunners и настольной игры для адаптации в MMORPG.",
+    "essence": "Документ выделяет сюжетные арки, элементы для миссий и правила их интеграции в события, фракции и живой мир.",
+    "key_points": [
+      "Рассмотрены сюжетные линии V, Джонни Сильверхенда и корпораций как основа для персональных и глобальных арок.",
+      "Выделены ключевые темы Edgerunners (киберпсихоз, свобода, трагедия) для сезонных событий и Live Ops.",
+      {
+        "Настольные истории расширяют сетку конфликтов": "корпоративные войны, космос и борьба за ресурсы."
+      },
+      "Сформулированы принципы адаптации историй в персональные квесты, глобальные события и фракционные конфликты."
+    ]
+  },
+  "content": {
+    "sections": [
+      {
+        "id": "cp2077_storylines",
+        "title": "Истории из Cyberpunk 2077",
+        "body": "Основные арки включают путь V, историю Джонни Сильверхенда и корпоративные интриги Arasaka. Для MMO они превращаются\nв персональные кампании, ветвящиеся финалы и активности с фиксерами. Ключевые элементы — становление легендой,\nфилософия бессмертия и выбор между корпорациями, бандами и независимостью.\n",
+        "mechanics_links": [
+          "canon/narrative/scenarios/main-story/framework.yaml",
+          "canon/narrative/npc-lore/important/johnny-silverhand.md"
+        ],
+        "assets": []
+      },
+      {
+        "id": "edgerunners_arcs",
+        "title": "Истории из Cyberpunk: Edgerunners",
+        "body": "Арки Дэвида Мартинеса, Люси и команды подчёркивают тему киберпсихоза, дружбы и трагедий. В NECPGAME они задают\nLive Ops-кампании с временными имплантами, эмоциональными событиями и сюжетами о цене модификаций.\n",
+        "mechanics_links": [
+          "mechanics/combat/combat-cyberpsychosis.yaml",
+          "mechanics/progression/progression-perks.yaml"
+        ],
+        "assets": []
+      },
+      {
+        "id": "tabletop_legacy",
+        "title": "Истории настольной игры",
+        "body": "Конфликты корпоративных войн и космические сюжеты расширяют арены игры. Они используются для кросс-региональных событий,\nорбитальных операций и мета-прогрессии фракций, влияя на экономику и политику.\n",
+        "mechanics_links": [
+          "canon/lore/_03-lore/factions/corporations/CORPORATE-POLITICS-MASTER-INDEX.yaml",
+          "mechanics/world/events/world-events-framework.yaml"
+        ],
+        "assets": []
+      },
+      {
+        "id": "mmorpg_adaptation",
+        "title": "Принципы адаптации для MMORPG",
+        "body": "Истории преобразуются в персональные квесты, глобальные события и конфликтные оси. Устанавливаются правила балансировки:\nтрагические исходы → последствия для мира, романсные линии → социальные механики, корпоративные интриги → экономические\nизменения. Живая экономика и фракции реагируют на выбор игроков.\n",
+        "mechanics_links": [
+          "mechanics/social/relationships-system.yaml",
+          "mechanics/economy/economy-events.yaml"
+        ],
+        "assets": []
+      }
+    ]
+  },
+  "appendix": {
+    "glossary": [],
+    "references": [],
+    "decisions": []
+  },
+  "implementation": {
+    "needs_task": false,
+    "github_issue": 67,
+    "queue_reference": [
+      "shared/trackers/queues/concept/queued.yaml#canon-narrative-stories-cyberpunk-inspiration"
+    ],
+    "blockers": []
+  },
+  "history": [
+    {
+      "version": "0.1.0",
+      "date": "2025-11-11",
+      "author": "narrative_team",
+      "changes": "Сформированы адаптации ключевых историй Cyberpunk для MMO контента."
+    }
+  ],
+  "validation": {
+    "checksum": "",
+    "schema_version": "1.0"
+  }
+}'::jsonb,
+    0
+)
+ON CONFLICT (lore_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    document_type = EXCLUDED.document_type,
+    category = EXCLUDED.category,
+    content_data = EXCLUDED.content_data,
+    version = EXCLUDED.version,
+    updated_at = CURRENT_TIMESTAMP;
+
+
+COMMIT;

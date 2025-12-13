@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\delhi\2020-2029\quest-007-sacred-cows.yaml
--- Generated: 2025-12-06T21:12:58.360365
+-- Generated: 2025-12-13T21:13:34.530154
 
 BEGIN;
 

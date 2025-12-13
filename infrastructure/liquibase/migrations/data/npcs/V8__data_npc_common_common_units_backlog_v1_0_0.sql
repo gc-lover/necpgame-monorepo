@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: common\common-units-backlog.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-06T21:13:00.426758
+-- Generated: 2025-12-13T21:13:36.331539
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

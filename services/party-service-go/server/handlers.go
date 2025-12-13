@@ -32,7 +32,7 @@ func (h *Handlers) CreateParty(ctx context.Context, req api.OptCreatePartyReques
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	leaderID := "player-001" // TODO: JWT
+	leaderID := getCharacterIDFromContext(ctx)
 
 	lootMode := "need_greed"
 	if req.IsSet() && req.Value.LootMode.IsSet() {
@@ -83,7 +83,9 @@ func (h *Handlers) InvitePlayer(ctx context.Context, req *api.InviteRequest, par
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	invite, err := h.service.InvitePlayer(ctx, params.PartyId.String(), req.PlayerId.String())
+	inviterID := getCharacterIDFromContext(ctx)
+
+	invite, err := h.service.InvitePlayer(ctx, params.PartyId.String(), req.PlayerId.String(), inviterID)
 	if err != nil {
 		return &api.Error{
 			Error:   "Bad request",
@@ -102,7 +104,7 @@ func (h *Handlers) AcceptInvite(ctx context.Context, params api.AcceptInvitePara
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID := "player-001" // TODO: JWT
+	playerID := getCharacterIDFromContext(ctx)
 
 	party, err := h.service.AcceptInvite(ctx, params.InviteId.String(), playerID)
 	if err != nil {
@@ -117,7 +119,9 @@ func (h *Handlers) DeclineInvite(ctx context.Context, params api.DeclineInvitePa
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	err := h.service.DeclineInvite(ctx, params.InviteId.String())
+	playerID := getCharacterIDFromContext(ctx)
+
+	err := h.service.DeclineInvite(ctx, params.InviteId.String(), playerID)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +136,7 @@ func (h *Handlers) LeaveParty(ctx context.Context, params api.LeavePartyParams) 
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID := "player-001" // TODO: JWT
+	playerID := getCharacterIDFromContext(ctx)
 
 	err := h.service.LeaveParty(ctx, params.PartyId.String(), playerID)
 	if err != nil {
@@ -185,7 +189,7 @@ func (h *Handlers) RollForLoot(ctx context.Context, req *api.LootRollRequest, pa
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID := "player-001" // TODO: JWT
+	playerID := getCharacterIDFromContext(ctx)
 
 	result, err := h.service.RollForLoot(ctx, params.PartyId.String(), playerID, req.ItemId.String(), string(req.RollType))
 	if err != nil {
@@ -195,10 +199,47 @@ func (h *Handlers) RollForLoot(ctx context.Context, req *api.LootRollRequest, pa
 	return result, nil
 }
 
-// Security handler
-func (h *Handlers) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
-	// TODO: JWT validation
+// SecurityHandler implements JWT authentication
+type SecurityHandler struct{}
+
+// NewSecurityHandler creates new security handler
+func NewSecurityHandler() *SecurityHandler {
+	return &SecurityHandler{}
+}
+
+// HandleBearerAuth implements BearerAuth security scheme
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+	// TODO: Implement JWT validation
+	// - Parse JWT token
+	// - Validate signature
+	// - Check expiration
+	// - Extract user ID
+	// - Store in context
+
+	// For now, extract mock user ID from token for development
+	if t.Token != "" {
+		// Mock: extract character ID from token
+		// In production: validate JWT and extract claims
+		ctx = context.WithValue(ctx, "character_id", "player-001")
+	}
+
 	return ctx, nil
+}
+
+// Helper function to get character ID from context
+func getCharacterIDFromContext(ctx context.Context) string {
+	if id, ok := ctx.Value("character_id").(string); ok {
+		return id
+	}
+	// For development/testing - use mock ID
+	return "player-001"
+}
+
+// Security handler (for backward compatibility with existing code)
+func (h *Handlers) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+	// Delegate to security handler
+	sh := &SecurityHandler{}
+	return sh.HandleBearerAuth(ctx, operationName, t)
 }
 
 // NewError implements ogen error handler

@@ -1,219 +1,375 @@
-# Issue: #138
+# Issue: #143577148
+# Achievement System Architecture
+# Спроектировано Architect агентом
+
+version: "1.0.0"
+last_updated: "2025-12-13"
+author: "Architect Agent"
 
 metadata:
-  id: architecture-achievement-system
-  title: "Achievement System Architecture"
-  document_type: architecture
-  category: implementation
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-12-02T18:26:00Z
-  owners:
-    - role: architect
-  tags:
-    - achievements
-    - event-driven
-    - architecture
-  related_systems:
-    - achievement-service
-    - notification-service
-    - mail-service
-    - all-game-services
-  related_documents:
-    - id: achievement-system
-      relation: implements
+  system_name: "Achievement System"
+  description: "Система достижений для отслеживания прогресса игроков, награждения и мотивации"
+  domain: "Gameplay"
+  criticality: "High"
+  performance_requirements:
+    peak_load: "5k req/sec"
+    concurrent_users: "50k"
+    p99_latency: "<100ms"
+    data_retention: "indefinite"
 
-summary:
-  problem: "Необходима event-driven архитектура достижений."
-  goal: "Спроектировать систему достижений с мотивацией игроков."
-  essence: "Event-driven платформа для отслеживания прогресса."
+architecture_overview:
+  purpose: |
+    Achievement System предоставляет комплексную систему достижений для мотивации игроков,
+    отслеживания прогресса и награждения за различные действия в игре.
 
-content:
-  sections:
-    - id: system-overview
-      title: "Обзор"
-      body: |
-        Achievement System:
-        - Отслеживание прогресса по всем механикам
-        - Event-driven updates
-        - Награды (валюта, предметы, титулы)
-        - Категории достижений (8 типов)
-        - Типы: Standard, Progressive, Repeatable
-        - Интеграция со всеми сервисами
+  key_features:
+    - Категории достижений (Combat, Social, Economy, Exploration, Special)
+    - Прогрессивные достижения с уровнями сложности
+    - Тайм-лимитные достижения
+    - Скрытые достижения
+    - Коллекционные достижения
+    - Сезонные достижения
+    - Гильдейские достижения
 
-    - id: components
-      title: "Компоненты"
-      body: |
-        ## achievement-service
-        **Port:** 8086
-        **API:** `/api/v1/world/achievements/*`
-        
-        Компоненты:
-        - AchievementTracker - отслеживание прогресса
-        - RewardDistributor - выдача наград
-        - EventProcessor - обработка событий
-        - TitleManager - управление титулами
+  business_value:
+    - Увеличение вовлеченности игроков
+    - Рост retention через систему наград
+    - Социальная конкуренция через лидерборды
+    - Монетизация через косметические награды
 
-        ## Интеграции
-        - **All Services:** Подписка на события
-        - **Notification Service:** Уведомления об unlock
-        - **Mail Service:** Отправка наград
+components:
+  achievement_manager:
+    description: "Управление каталогом достижений"
+    responsibilities:
+      - CRUD операции с достижениями
+      - Валидация условий достижений
+      - Управление категориями и тегами
+      - Версионирование достижений
+    interfaces:
+      - REST API: /achievement/admin/*
+      - Internal: AchievementCatalog interface
+    dependencies:
+      - Database: achievement_definitions table
 
-    - id: api-endpoints
-      title: "API Endpoints"
-      body: |
-        GET /api/v1/world/achievements
-        - Все достижения
-        - Query: category, type
-        - Response: Array of achievements
+  progress_tracker:
+    description: "Отслеживание прогресса игроков"
+    responsibilities:
+      - Мониторинг действий игроков
+      - Расчет прогресса по достижениям
+      - Определение выполненных условий
+      - Кэширование промежуточных результатов
+    interfaces:
+      - Event Bus: achievement:progress-update
+      - Internal: ProgressCalculator interface
+    dependencies:
+      - Event Bus для получения событий
+      - Redis для кэширования прогресса
+      - Database: player_achievement_progress
 
-        GET /api/v1/world/achievements/{id}
-        - Детали достижения
-        - Response: Achievement details
+  reward_distributor:
+    description: "Распределение наград за достижения"
+    responsibilities:
+      - Выдача наград при выполнении достижений
+      - Уведомление игроков
+      - Интеграция с инвентарем и экономикой
+      - Откат наград при необходимости
+    interfaces:
+      - Event Bus: achievement:completed
+      - Internal: RewardService interface
+    dependencies:
+      - Economy Service для валюты
+      - Inventory Service для предметов
+      - Notification Service для оповещений
 
-        GET /api/v1/players/{playerId}/achievements
-        - Прогресс игрока
-        - Response: Player progress
+  achievement_validator:
+    description: "Валидация достижений и защита от читов"
+    responsibilities:
+      - Проверка корректности прогресса
+      - Анти-чит валидация
+      - Аудит достижений
+      - Блокировка подозрительных действий
+    interfaces:
+      - Internal: AchievementValidator interface
+    dependencies:
+      - Security Service для проверки сессий
+      - Analytics для паттернов поведения
 
-        POST /api/v1/players/{playerId}/achievements/{id}/claim
-        - Забрать награду
-        - Response: Rewards
+  event_handler:
+    description: "Обработка событий и интеграция с другими системами"
+    responsibilities:
+      - Прослушивание игровых событий
+      - Маршрутизация событий к компонентам
+      - Агрегация событий для сложных достижений
+      - Отправка уведомлений о прогрессе
+    interfaces:
+      - Event Bus: all achievement:* events
+      - WebSocket: real-time progress updates
+    dependencies:
+      - Event Bus для коммуникации
+      - Realtime Gateway для уведомлений
 
-        GET /api/v1/players/{playerId}/titles
-        - Титулы игрока
-        - Response: Array of titles
+data_model:
+  tables:
+    achievement_definitions:
+      description: "Определения достижений"
+      fields:
+        id: "BIGINT PRIMARY KEY"
+        code: "VARCHAR(50) UNIQUE NOT NULL"
+        title: "JSONB NOT NULL" # мультиязычный
+        description: "JSONB NOT NULL"
+        category: "VARCHAR(20) NOT NULL"
+        difficulty: "VARCHAR(10) NOT NULL" # EASY, MEDIUM, HARD, LEGENDARY
+        is_hidden: "BOOLEAN DEFAULT FALSE"
+        is_repeatable: "BOOLEAN DEFAULT FALSE"
+        max_progress: "INTEGER NOT NULL"
+        conditions: "JSONB NOT NULL" # условия выполнения
+        rewards: "JSONB NOT NULL" # награды
+        prerequisites: "JSONB" # предварительные условия
+        created_at: "TIMESTAMP NOT NULL"
+        updated_at: "TIMESTAMP NOT NULL"
+        is_active: "BOOLEAN DEFAULT TRUE"
 
-        PUT /api/v1/players/{playerId}/titles/active
-        - Установить активный титул
-        - Request: title_id
+    player_achievements:
+      description: "Достижения игроков"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        player_id: "BIGINT NOT NULL"
+        achievement_id: "BIGINT NOT NULL"
+        status: "VARCHAR(20) NOT NULL" # LOCKED, IN_PROGRESS, COMPLETED
+        unlocked_at: "TIMESTAMP"
+        completed_at: "TIMESTAMP"
+        claimed_at: "TIMESTAMP"
+        created_at: "TIMESTAMP NOT NULL"
+        updated_at: "TIMESTAMP NOT NULL"
+      indexes:
+        - "player_id, achievement_id (UNIQUE)"
+        - "player_id, status"
+        - "achievement_id, status"
+      partitioning: "RANGE (created_at)" # месячная партиция
 
-    - id: database
-      title: "База данных"
-      body: |
-        ## achievement_definitions
-        ```sql
-        CREATE TABLE achievement_definitions (
-          id UUID PRIMARY KEY,
-          name VARCHAR(200),
-          description TEXT,
-          category VARCHAR(50),
-          type VARCHAR(20),
-          criteria JSONB,
-          rewards JSONB,
-          icon VARCHAR(200),
-          rarity VARCHAR(20)
-        );
-        ```
+    achievement_progress:
+      description: "Прогресс по достижениям"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        player_id: "BIGINT NOT NULL"
+        achievement_id: "BIGINT NOT NULL"
+        current_progress: "INTEGER NOT NULL DEFAULT 0"
+        last_updated: "TIMESTAMP NOT NULL"
+        metadata: "JSONB" # дополнительные данные прогресса
+      indexes:
+        - "player_id, achievement_id (UNIQUE)"
+        - "achievement_id, current_progress"
+      partitioning: "RANGE (last_updated)" # месячная партиция
 
-        ## player_achievement_progress
-        ```sql
-        CREATE TABLE player_achievement_progress (
-          player_id UUID,
-          achievement_id UUID,
-          progress INT,
-          max_progress INT,
-          unlocked BOOLEAN,
-          unlocked_at TIMESTAMP,
-          claimed BOOLEAN,
-          claimed_at TIMESTAMP,
-          PRIMARY KEY (player_id, achievement_id)
-        );
-        ```
+    achievement_rewards:
+      description: "История выдачи наград"
+      fields:
+        id: "BIGSERIAL PRIMARY KEY"
+        player_id: "BIGINT NOT NULL"
+        achievement_id: "BIGINT NOT NULL"
+        reward_type: "VARCHAR(20) NOT NULL" # CURRENCY, ITEM, TITLE, COSMETIC
+        reward_id: "VARCHAR(100)" # ID предмета/валюты
+        quantity: "INTEGER"
+        claimed_at: "TIMESTAMP NOT NULL"
+        transaction_id: "VARCHAR(100)" # для отката
+      indexes:
+        - "player_id, achievement_id"
+        - "claimed_at"
+      partitioning: "RANGE (claimed_at)" # месячная партиция
 
-        ## player_titles
-        ```sql
-        CREATE TABLE player_titles (
-          player_id UUID,
-          title_id UUID,
-          unlocked_at TIMESTAMP,
-          PRIMARY KEY (player_id, title_id)
-        );
-        ```
+  caching_strategy:
+    redis_keys:
+      - "achievement:player:{player_id}:progress" # прогресс игрока
+      - "achievement:player:{player_id}:completed" # завершенные достижения
+      - "achievement:definition:{id}" # определение достижения
+      - "achievement:category:{category}:active" # активные достижения категории
+    ttl:
+      progress: "1h"
+      completed: "24h"
+      definitions: "7d"
+      categories: "1h"
 
-    - id: event-driven
-      title: "Event-Driven Architecture"
-      body: |
-        ## Subscribed Events
+api_endpoints:
+  management:
+    - "GET /achievement/admin/list" # список достижений
+    - "POST /achievement/admin/create" # создать достижение
+    - "PUT /achievement/admin/{id}" # обновить достижение
+    - "DELETE /achievement/admin/{id}" # удалить достижение
 
-        - combat.* (урон, убийства, победы)
-        - quest.* (завершение, прогресс)
-        - economy.* (торговля, покупки)
-        - social.* (друзья, гильдии)
-        - character.* (уровень, навыки)
-        - exploration.* (локации, открытия)
+  player:
+    - "GET /achievement/player/progress" # прогресс игрока
+    - "GET /achievement/player/completed" # завершенные достижения
+    - "GET /achievement/player/available" # доступные достижения
+    - "POST /achievement/player/{id}/claim" # получить награду
 
-        ## Published Events
+  public:
+    - "GET /achievement/catalog" # каталог достижений
+    - "GET /achievement/leaderboard" # лидерборд по достижениям
+    - "GET /achievement/stats/global" # глобальная статистика
 
-        - achievement.progress_updated
-        - achievement.unlocked
-        - achievement.claimed
+  real_time:
+    - "WS /achievement/progress" # обновления прогресса
 
-        ## Event Processing
+event_driven_architecture:
+  published_events:
+    - "achievement:unlocked" # достижение разблокировано
+    - "achievement:progress-updated" # прогресс обновлен
+    - "achievement:completed" # достижение выполнено
+    - "achievement:reward-claimed" # награда получена
+    - "achievement:condition-met" # условие выполнено
 
-        1. Receive event from Kafka
-        2. Find relevant achievements
-        3. Update player progress
-        4. Check unlock conditions
-        5. If unlocked: notify + rewards
-        6. Publish achievement event
+  subscribed_events:
+    - "combat:enemy-killed" # враг убит
+    - "quest:completed" # квест завершен
+    - "item:crafted" # предмет создан
+    - "player:level-up" # уровень повышен
+    - "social:friend-added" # друг добавлен
+    - "economy:transaction-completed" # транзакция завершена
 
-    - id: achievement-types
-      title: "Типы достижений"
-      body: |
-        ## Standard
-        - One-time unlock
-        - Example: "First Kill"
+integrations:
+  character_service:
+    purpose: "Получение данных о персонаже"
+    endpoints:
+      - "GET /character/{id}/stats"
+      - "GET /character/{id}/inventory"
+    events:
+      - "character:level-up"
+      - "character:class-changed"
 
-        ## Progressive
-        - Multiple tiers
-        - Example: "Kill 10/100/1000 enemies"
+  economy_service:
+    purpose: "Выдача валюты и предметов"
+    endpoints:
+      - "POST /economy/reward"
+      - "POST /economy/item/grant"
+    events:
+      - "economy:transaction-completed"
 
-        ## Repeatable
-        - Daily/Weekly reset
-        - Example: "Complete 5 dailies"
+  notification_service:
+    purpose: "Уведомления игроков"
+    endpoints:
+      - "POST /notification/send"
+    events:
+      - "notification:delivered"
 
-        ## Categories
-        - Combat (PvE, PvP)
-        - Exploration (locations, secrets)
-        - Economic (trades, wealth)
-        - Social (friends, guilds)
-        - Quests (story, side)
-        - Progression (levels, skills)
-        - PvP (arenas, wars)
-        - Special (seasonal, events)
+  realtime_gateway:
+    purpose: "Real-time обновления"
+    endpoints:
+      - "POST /realtime/broadcast"
+      - "POST /realtime/personal/{player_id}"
 
-    - id: rewards
-      title: "Награды"
-      body: |
-        ## Types
-        - Currency (eurodollars, cryptos)
-        - Items (cosmetics, equipment)
-        - Titles (visual flair)
-        - Reputation (factions)
-        - Experience points
-        - Visual elements (emotes, poses)
+performance_optimizations:
+  level_1_basics:
+    - Context timeouts для всех вызовов
+    - DB connection pool (25-50 connections)
+    - Structured logging
+    - Health/Metrics endpoints
 
-        ## Distribution
-        - Auto-claim: currency, exp
-        - Manual-claim: items, titles
-        - Mail system: items overflow
+  level_2_hot_path:
+    - Redis caching для прогресса
+    - Batch updates для прогресса
+    - Event-driven updates
+    - Zero allocation targets
 
-appendix:
-  decisions:
-    - id: "ach-001"
-      decision: "Event-driven updates"
-      rationale: "Decoupling от других систем"
+  level_3_gaming:
+    - Spatial partitioning для гео-достижений
+    - Adaptive caching
+    - Predictive loading
 
-implementation:
-  github_issue: 138
-  needs_task: true
-  next_steps:
-    - "Database: Миграции"
-    - "API Designer: OpenAPI"
-    - "Backend: Реализация"
+data_consistency:
+  patterns:
+    event_sourcing:
+      description: "Все изменения прогресса через events"
+      implementation: "Outbox pattern для гарантированной доставки"
+    cqrs:
+      description: "Разделение чтения и записи"
+      read_model: "Материализованные view для статистики"
+    saga:
+      description: "Распределенные транзакции для наград"
+      compensation: "Откат наград при ошибках"
 
-history:
+  sync_mechanisms:
+    - Eventual consistency через events
+    - Immediate consistency для критичных операций
+    - Conflict resolution для concurrent updates
+
+scaling_strategy:
+  horizontal_scaling:
+    - Stateless services
+    - Shared Redis cache
+    - Event-driven communication
+    - Database read replicas
+
+  data_partitioning:
+    - Player-based sharding
+    - Time-based partitioning для истории
+    - Category-based grouping
+
+  load_distribution:
+    - CDN для статических данных достижений
+    - Regional caches для популярных достижений
+    - Background processing для тяжелых расчетов
+
+monitoring_and_observability:
+  metrics:
+    - achievement_completion_rate
+    - average_progression_time
+    - reward_distribution_success_rate
+    - cache_hit_ratio
+    - event_processing_latency
+
+  alerts:
+    - High error rates in reward distribution
+    - Stale progress data
+    - Event processing backlog
+
+  logging:
+    - Structured logs for all operations
+    - Audit trail for reward distributions
+    - Performance profiling for slow queries
+
+migration_plan:
+  current_state: "No achievement system"
+  target_state: "Full achievement system with 100+ achievements"
+
+  phases:
+    phase_1: "Core infrastructure (2 weeks)"
+    phase_2: "Basic achievements (3 weeks)"
+    phase_3: "Advanced features (4 weeks)"
+    phase_4: "Optimization and scaling (2 weeks)"
+
+  dependencies:
+    - Database schema ready
+    - Event bus configured
+    - Notification system ready
+    - Economy system integrated
+
+testing_strategy:
+  unit_tests:
+    - Component isolation
+    - Business logic validation
+    - Error handling
+
+  integration_tests:
+    - End-to-end achievement flows
+    - Cross-service communication
+    - Data consistency
+
+  performance_tests:
+    - Load testing (5000 RPS)
+    - Stress testing
+    - Memory leak detection
+
+  security_tests:
+    - Achievement farming prevention
+    - Data integrity validation
+    - Rate limiting
+
+change_history:
   - version: "1.0.0"
-    date: 2025-12-02
-    author: architect
-    changes: "Achievement System architecture"
+    date: "2025-12-13"
+    changes:
+      - Initial architecture design
+      - Component specification
+      - API design
+      - Data model definition
+      - Integration planning

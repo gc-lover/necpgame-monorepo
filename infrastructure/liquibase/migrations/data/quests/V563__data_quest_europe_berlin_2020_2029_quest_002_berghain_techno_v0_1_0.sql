@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2020-2029\quest-002-berghain-techno.yaml
--- Generated: 2025-12-06T21:12:59.734518
+-- Generated: 2025-12-13T21:13:35.630504
 
 BEGIN;
 

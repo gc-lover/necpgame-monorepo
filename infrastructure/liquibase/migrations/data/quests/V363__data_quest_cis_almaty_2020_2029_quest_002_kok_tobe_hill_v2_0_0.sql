@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\almaty\2020-2029\quest-002-kok-tobe-hill.yaml
--- Generated: 2025-12-06T21:12:58.729837
+-- Generated: 2025-12-13T21:13:34.865479
 
 BEGIN;
 

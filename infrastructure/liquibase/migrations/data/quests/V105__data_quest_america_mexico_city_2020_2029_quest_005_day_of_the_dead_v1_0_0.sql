@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\mexico-city\2020-2029\quest-005-day-of-the-dead.yaml
--- Generated: 2025-12-06T21:12:57.526268
+-- Generated: 2025-12-13T21:13:33.746966
 
 BEGIN;
 

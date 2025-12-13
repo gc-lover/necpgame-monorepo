@@ -82,9 +82,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
-				case 'a': // Prefix: "acti"
+				case 'a': // Prefix: "a"
 
-					if l := len("acti"); len(elem) >= l && elem[0:l] == "acti" {
+					if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 						elem = elem[l:]
 					} else {
 						break
@@ -94,9 +94,67 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 					switch elem[0] {
-					case 'o': // Prefix: "on-budget"
+					case 'c': // Prefix: "cti"
 
-						if l := len("on-budget"); len(elem) >= l && elem[0:l] == "on-budget" {
+						if l := len("cti"); len(elem) >= l && elem[0:l] == "cti" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'o': // Prefix: "on-budget"
+
+							if l := len("on-budget"); len(elem) >= l && elem[0:l] == "on-budget" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleUseActionBudgetRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						case 'v': // Prefix: "vate"
+
+							if l := len("vate"); len(elem) >= l && elem[0:l] == "vate" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleActivateSandevistanRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						}
+
+					case 'p': // Prefix: "pply-temporal-marks"
+
+						if l := len("pply-temporal-marks"); len(elem) >= l && elem[0:l] == "pply-temporal-marks" {
 							elem = elem[l:]
 						} else {
 							break
@@ -106,7 +164,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							// Leaf node.
 							switch r.Method {
 							case "POST":
-								s.handleUseActionBudgetRequest([1]string{
+								s.handleApplyTemporalMarksRequest([1]string{
 									args[0],
 								}, elemIsEscaped, w, r)
 							default:
@@ -116,28 +174,28 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
-					case 'v': // Prefix: "vate"
+					}
 
-						if l := len("vate"); len(elem) >= l && elem[0:l] == "vate" {
-							elem = elem[l:]
-						} else {
-							break
+				case 'b': // Prefix: "bonuses"
+
+					if l := len("bonuses"); len(elem) >= l && elem[0:l] == "bonuses" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleGetSandevistanBonusesRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
 						}
 
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleActivateSandevistanRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
-
+						return
 					}
 
 				case 'c': // Prefix: "co"
@@ -237,6 +295,28 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							}, elemIsEscaped, w, r)
 						default:
 							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+
+				case 'p': // Prefix: "perception-drag"
+
+					if l := len("perception-drag"); len(elem) >= l && elem[0:l] == "perception-drag" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handlePublishPerceptionDragEventRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
 						}
 
 						return
@@ -413,9 +493,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
-				case 'a': // Prefix: "acti"
+				case 'a': // Prefix: "a"
 
-					if l := len("acti"); len(elem) >= l && elem[0:l] == "acti" {
+					if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
 						elem = elem[l:]
 					} else {
 						break
@@ -425,9 +505,73 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 					switch elem[0] {
-					case 'o': // Prefix: "on-budget"
+					case 'c': // Prefix: "cti"
 
-						if l := len("on-budget"); len(elem) >= l && elem[0:l] == "on-budget" {
+						if l := len("cti"); len(elem) >= l && elem[0:l] == "cti" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'o': // Prefix: "on-budget"
+
+							if l := len("on-budget"); len(elem) >= l && elem[0:l] == "on-budget" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = UseActionBudgetOperation
+									r.summary = "Использовать Action Budget"
+									r.operationID = "useActionBudget"
+									r.operationGroup = ""
+									r.pathPattern = "/combat/players/{player_id}/sandevistan/action-budget"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'v': // Prefix: "vate"
+
+							if l := len("vate"); len(elem) >= l && elem[0:l] == "vate" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = ActivateSandevistanOperation
+									r.summary = "Активировать Sandevistan"
+									r.operationID = "activateSandevistan"
+									r.operationGroup = ""
+									r.pathPattern = "/combat/players/{player_id}/sandevistan/activate"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					case 'p': // Prefix: "pply-temporal-marks"
+
+						if l := len("pply-temporal-marks"); len(elem) >= l && elem[0:l] == "pply-temporal-marks" {
 							elem = elem[l:]
 						} else {
 							break
@@ -437,11 +581,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							// Leaf node.
 							switch method {
 							case "POST":
-								r.name = UseActionBudgetOperation
-								r.summary = "Использовать Action Budget"
-								r.operationID = "useActionBudget"
+								r.name = ApplyTemporalMarksOperation
+								r.summary = "Применить Temporal Marks (delayed burst damage)"
+								r.operationID = "applyTemporalMarks"
 								r.operationGroup = ""
-								r.pathPattern = "/combat/players/{player_id}/sandevistan/action-budget"
+								r.pathPattern = "/combat/players/{player_id}/sandevistan/apply-temporal-marks"
 								r.args = args
 								r.count = 1
 								return r, true
@@ -450,31 +594,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							}
 						}
 
-					case 'v': // Prefix: "vate"
+					}
 
-						if l := len("vate"); len(elem) >= l && elem[0:l] == "vate" {
-							elem = elem[l:]
-						} else {
-							break
+				case 'b': // Prefix: "bonuses"
+
+					if l := len("bonuses"); len(elem) >= l && elem[0:l] == "bonuses" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = GetSandevistanBonusesOperation
+							r.summary = "Получить текущие бонусы Sandevistan"
+							r.operationID = "getSandevistanBonuses"
+							r.operationGroup = ""
+							r.pathPattern = "/combat/players/{player_id}/sandevistan/bonuses"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
 						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = ActivateSandevistanOperation
-								r.summary = "Активировать Sandevistan"
-								r.operationID = "activateSandevistan"
-								r.operationGroup = ""
-								r.pathPattern = "/combat/players/{player_id}/sandevistan/activate"
-								r.args = args
-								r.count = 1
-								return r, true
-							default:
-								return
-							}
-						}
-
 					}
 
 				case 'c': // Prefix: "co"
@@ -583,6 +727,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							r.operationID = "getHeatStatus"
 							r.operationGroup = ""
 							r.pathPattern = "/combat/players/{player_id}/sandevistan/heat"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
+				case 'p': // Prefix: "perception-drag"
+
+					if l := len("perception-drag"); len(elem) >= l && elem[0:l] == "perception-drag" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = PublishPerceptionDragEventOperation
+							r.summary = "Опубликовать Perception Drag событие"
+							r.operationID = "publishPerceptionDragEvent"
+							r.operationGroup = ""
+							r.pathPattern = "/combat/players/{player_id}/sandevistan/perception-drag"
 							r.args = args
 							r.count = 1
 							return r, true

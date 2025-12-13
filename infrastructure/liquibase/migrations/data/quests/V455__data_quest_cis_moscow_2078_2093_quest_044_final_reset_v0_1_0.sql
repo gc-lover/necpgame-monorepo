@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2078-2093\quest-044-final-reset.yaml
--- Generated: 2025-12-06T21:12:59.190667
+-- Generated: 2025-12-13T21:13:35.224799
 
 BEGIN;
 

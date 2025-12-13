@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\yerevan\2020-2029\quest-007-lavash-baking.yaml
--- Generated: 2025-12-06T21:12:59.677156
+-- Generated: 2025-12-13T21:13:35.578944
 
 BEGIN;
 

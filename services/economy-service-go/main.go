@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 )
@@ -21,7 +21,7 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8086")
 	metricsAddr := getEnv("METRICS_ADDR", ":9096")
-	
+
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/5")
 	keycloakURL := getEnv("KEYCLOAK_URL", "http://localhost:8080")
@@ -54,7 +54,7 @@ func main() {
 	}
 
 	redisClient := redis.NewClient(redisOpts)
-	
+
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6821")
@@ -70,10 +70,10 @@ func main() {
 	go monitor.Start()
 	defer monitor.Stop()
 	logger.Info("OK Goroutine monitor started")
-	
+
 	engramCreationRepo := server.NewEngramCreationRepository(dbPool)
 	engramCreationService := server.NewEngramCreationService(engramCreationRepo, redisClient)
-	
+
 	engramTransferRepo := server.NewEngramTransferRepository(dbPool)
 	engramTransferService := server.NewEngramTransferService(engramTransferRepo, engramCreationRepo, redisClient)
 
@@ -84,6 +84,10 @@ func main() {
 	} else {
 		logger.Info("Weapon combinations service initialized")
 	}
+
+	currencyExchangeRepo := server.NewCurrencyExchangeRepository(dbPool)
+	currencyExchangeService := server.NewCurrencyExchangeService(currencyExchangeRepo)
+	logger.Info("Currency exchange service initialized")
 
 	var jwtValidator *server.JwtValidator
 	if authEnabled && keycloakURL != "" {
@@ -98,7 +102,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, tradeService, jwtValidator, authEnabled, engramCreationService, engramTransferService, weaponCombinationsService)
+	httpServer := server.NewHTTPServer(addr, tradeService, currencyExchangeService, jwtValidator, authEnabled, engramCreationService, engramTransferService, weaponCombinationsService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
@@ -148,4 +152,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\vancouver\2020-2029\quest-001-stanley-park.yaml
--- Generated: 2025-12-06T21:12:58.209454
+-- Generated: 2025-12-13T21:13:34.407183
 
 BEGIN;
 

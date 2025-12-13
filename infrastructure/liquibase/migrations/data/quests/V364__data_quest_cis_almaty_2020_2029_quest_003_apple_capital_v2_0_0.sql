@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\almaty\2020-2029\quest-003-apple-capital.yaml
--- Generated: 2025-12-06T21:12:58.734363
+-- Generated: 2025-12-13T21:13:34.869827
 
 BEGIN;
 

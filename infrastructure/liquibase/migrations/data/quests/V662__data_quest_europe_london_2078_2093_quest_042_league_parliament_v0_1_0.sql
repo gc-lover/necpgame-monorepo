@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2078-2093\quest-042-league-parliament.yaml
--- Generated: 2025-12-06T21:13:00.082440
+-- Generated: 2025-12-13T21:13:36.018219
 
 BEGIN;
 

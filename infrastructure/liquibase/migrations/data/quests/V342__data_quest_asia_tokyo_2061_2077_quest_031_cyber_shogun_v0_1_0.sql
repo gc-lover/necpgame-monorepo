@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\tokyo\2061-2077\quest-031-cyber-shogun.yaml
--- Generated: 2025-12-06T21:12:58.649395
+-- Generated: 2025-12-13T21:13:34.793118
 
 BEGIN;
 

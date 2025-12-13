@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\hong-kong\2020-2029\quest-010-big-buddha.yaml
--- Generated: 2025-12-06T21:12:58.416263
+-- Generated: 2025-12-13T21:13:34.577898
 
 BEGIN;
 

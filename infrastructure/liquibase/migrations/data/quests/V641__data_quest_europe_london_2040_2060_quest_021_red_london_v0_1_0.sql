@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2040-2060\quest-021-red-london.yaml
--- Generated: 2025-12-06T21:13:00.012171
+-- Generated: 2025-12-13T21:13:35.944256
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\singapore\2020-2029\quest-003-strict-laws.yaml
--- Generated: 2025-12-06T21:12:58.505043
+-- Generated: 2025-12-13T21:13:34.659992
 
 BEGIN;
 

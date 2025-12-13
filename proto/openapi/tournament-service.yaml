@@ -1,0 +1,547 @@
+# Issue: #1846
+openapi: 3.0.3
+info:
+  title: Tournament Service API
+  description: 'API для управления турнирной системой MMORPG.
+
+  Система поддерживает:
+  - Создание и управление турнирами
+  - Регистрацию участников
+  - Управление матчами и сериями
+  - Систему квалификаций и финалов
+  - Косметические награды (титулы, баннеры)
+  - Реплеи топ-матчей
+  - Античит защиту
+
+  BACKEND NOTE: Tournament system designed for cosmetic-only rewards.
+  No XP/resources boosts. Focus on competitive integrity and fair play.'
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
+tags:
+- name: Tournaments
+  description: Управление турнирами
+- name: Registrations
+  description: Регистрация участников
+- name: Matches
+  description: Управление матчами
+- name: Leaderboards
+  description: Лестницы и рейтинги
+- name: Rewards
+  description: Награды и достижения
+paths:
+  /tournaments:
+    get:
+      tags:
+      - Tournaments
+      summary: Список турниров
+      operationId: listTournaments
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - upcoming
+          - registration
+          - active
+          - completed
+          - cancelled
+      - name: game_mode
+        in: query
+        schema:
+          type: string
+          enum:
+          - arena_1v1
+          - arena_3v3
+          - arena_5v5
+          - pvpve_extract
+          - stealth_league
+          - hardcore_auth
+      - name: tournament_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - qualification
+          - final
+          - special
+      - name: region
+        in: query
+        schema:
+          type: string
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список турниров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournaments:
+                    type: array
+                    items:
+                      $ref: 'tournament-service-core-schemas.yaml#/components/schemas/TournamentSummary'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+    post:
+      tags:
+      - Tournaments
+      summary: Создание турнира
+      operationId: createTournament
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'tournament-service-core-schemas.yaml#/components/schemas/CreateTournamentRequest'
+      responses:
+        '201':
+          description: Турнир создан
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-core-schemas.yaml#/components/schemas/Tournament'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
+  /tournaments/{tournamentId}:
+    parameters:
+    - name: tournamentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID турнира
+    get:
+      tags:
+      - Tournaments
+      summary: Информация о турнире
+      operationId: getTournament
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Информация о турнире
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-core-schemas.yaml#/components/schemas/TournamentDetail'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+    put:
+      tags:
+      - Tournaments
+      summary: Обновление турнира
+      operationId: updateTournament
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'tournament-service-core-schemas.yaml#/components/schemas/UpdateTournamentRequest'
+      responses:
+        '200':
+          description: Турнир обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-core-schemas.yaml#/components/schemas/Tournament'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+    delete:
+      tags:
+      - Tournaments
+      summary: Удаление турнира
+      operationId: deleteTournament
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Турнир удален
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /tournaments/{tournamentId}/register:
+    post:
+      tags:
+      - Registrations
+      summary: Регистрация на турнир
+      operationId: registerForTournament
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: 'tournament-service-core-schemas.yaml#/components/schemas/RegistrationRequest'
+      responses:
+        '201':
+          description: Регистрация успешна
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-core-schemas.yaml#/components/schemas/Registration'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+  /tournaments/{tournamentId}/unregister:
+    post:
+      tags:
+      - Registrations
+      summary: Отмена регистрации
+      operationId: unregisterFromTournament
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Регистрация отменена
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /tournaments/{tournamentId}/participants:
+    get:
+      tags:
+      - Registrations
+      summary: Список участников турнира
+      operationId: getTournamentParticipants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: 'tournament-service-core-schemas.yaml#/components/schemas/Participant'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /tournaments/{tournamentId}/matches:
+    get:
+      tags:
+      - Matches
+      summary: Матчи турнира
+      operationId: getTournamentMatches
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: round
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - in_progress
+          - completed
+          - cancelled
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Список матчей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matches:
+                    type: array
+                    items:
+                      $ref: 'tournament-service-match-schemas.yaml#/components/schemas/Match'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /matches/{matchId}:
+    parameters:
+    - name: matchId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID матча
+    get:
+      tags:
+      - Matches
+      summary: Информация о матче
+      operationId: getMatch
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Информация о матче
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-match-schemas.yaml#/components/schemas/MatchDetail'
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+  /matches/{matchId}/join:
+    post:
+      tags:
+      - Matches
+      summary: Присоединение к матчу
+      operationId: joinMatch
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Присоединение успешно
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+  /matches/{matchId}/results:
+    post:
+      tags:
+      - Matches
+      summary: Отправка результатов матча
+      operationId: submitMatchResults
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'tournament-service-match-schemas.yaml#/components/schemas/MatchResultRequest'
+      responses:
+        '200':
+          description: Результаты приняты
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-match-schemas.yaml#/components/schemas/MatchResult'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /leaderboards/tournaments/{tournamentId}:
+    get:
+      tags:
+      - Leaderboards
+      summary: Турнирная лестница
+      operationId: getTournamentLeaderboard
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: round
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Турнирная лестница
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: 'tournament-service-reward-schemas.yaml#/components/schemas/LeaderboardEntry'
+                  total:
+                    type: integer
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /tournaments/{tournamentId}/rewards:
+    get:
+      tags:
+      - Rewards
+      summary: Награды турнира
+      operationId: getTournamentRewards
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Награды турнира
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-reward-schemas.yaml#/components/schemas/TournamentRewards'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+  /rewards/claim:
+    post:
+      tags:
+      - Rewards
+      summary: Получение награды
+      operationId: claimReward
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'tournament-service-reward-schemas.yaml#/components/schemas/ClaimRewardRequest'
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: 'tournament-service-reward-schemas.yaml#/components/schemas/ClaimedReward'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth

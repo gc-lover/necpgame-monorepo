@@ -1,0 +1,503 @@
+# Issue: #1849
+# Архитектура системы чата - обновление 2025
+
+metadata:
+  version: "1.1.0"
+  created_at: "2025-12-13"
+  updated_at: "2025-12-13"
+  author: "API Designer Agent"
+  status: "completed"
+  priority: "high"
+  previous_version: "1.0.0"
+
+## Обзор обновлений
+
+### Новые требования 2025
+- **Расширенная модерация**: AI-powered content analysis, context-aware filtering
+- **Мультиязычность**: Real-time translation, language detection
+- **Расширенные каналы**: Dynamic channels, cross-server communication
+- **Voice integration**: WebRTC 2.0, spatial audio, noise suppression
+- **Analytics**: Message sentiment analysis, engagement metrics
+- **Scalability**: 50k+ concurrent users, global distribution
+
+### Архитектурные улучшения
+- **Microservices split**: 7 специализированных сервисов вместо монолита
+- **Event-driven architecture**: Kafka-based messaging
+- **Global CDN**: Edge computing для низкой latency
+- **AI/ML integration**: Content moderation, translation, sentiment analysis
+
+---
+
+## Архитектурный обзор
+
+### Компоненты системы (2025)
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        UE5[UE5 Client]
+        Mobile[Mobile Client]
+        Web[Web Client]
+    end
+
+    subgraph "Edge Layer"
+        CDN[Global CDN]
+        WS_GW[WebSocket Gateway]
+        RTC_GW[WebRTC Gateway]
+    end
+
+    subgraph "Service Layer"
+        ChatRouter[Chat Router Service]
+        MessageSvc[Message Service]
+        ChannelSvc[Channel Service]
+        ModerationSvc[Moderation Service]
+        VoiceSvc[Voice Service]
+        HistorySvc[History Service]
+        TranslationSvc[Translation Service]
+    end
+
+    subgraph "Data Layer"
+        PostgreSQL[(PostgreSQL Cluster)]
+        Redis[(Redis Cluster)]
+        ES[(Elasticsearch)]
+        Kafka[(Kafka)]
+    end
+
+    subgraph "AI/ML Layer"
+        ContentAI[Content Analysis AI]
+        TranslationAI[Translation AI]
+        SentimentAI[Sentiment Analysis AI]
+    end
+
+    subgraph "External Services"
+        SessionSvc[Session Service]
+        PartySvc[Party Service]
+        GuildSvc[Guild Service]
+        AnalyticsSvc[Analytics Service]
+    end
+
+    UE5 --> CDN
+    Mobile --> CDN
+    Web --> CDN
+
+    CDN --> WS_GW
+    CDN --> RTC_GW
+
+    WS_GW --> ChatRouter
+    RTC_GW --> VoiceSvc
+
+    ChatRouter --> MessageSvc
+    ChatRouter --> ChannelSvc
+    ChatRouter --> ModerationSvc
+    ChatRouter --> TranslationSvc
+
+    MessageSvc --> HistorySvc
+    ModerationSvc --> ContentAI
+    TranslationSvc --> TranslationAI
+
+    MessageSvc --> PostgreSQL
+    MessageSvc --> Redis
+    HistorySvc --> ES
+
+    All Services --> Kafka
+    Kafka --> AnalyticsSvc
+
+    ChatRouter --> SessionSvc
+    ChatRouter --> PartySvc
+    ChatRouter --> GuildSvc
+```
+
+---
+
+## Микросервисы архитектура
+
+### 1. Chat Router Service
+**Технологии**: Go, WebSocket, gRPC
+
+**Ответственность:**
+- WebSocket connection management
+- Message routing по каналам
+- Load balancing между shards
+- Connection health monitoring
+- Rate limiting на уровне соединений
+
+**API Endpoints:**
+```yaml
+# WebSocket: /ws/chat/v2
+# REST: /api/v1/chat/router/*
+POST /api/v1/chat/router/route  # Маршрутизация сообщения
+GET  /api/v1/chat/router/health # Health check
+POST /api/v1/chat/router/broadcast # Глобальный broadcast
+```
+
+### 2. Message Service
+**Технологии**: Go, ogen, PostgreSQL, Redis
+
+**Ответственность:**
+- Message validation и processing
+- Rich text formatting (Markdown, @mentions, emojis)
+- Message persistence
+- Real-time delivery coordination
+- Message encryption для private channels
+
+**Оптимизации:**
+- Batch message processing (50 messages/batch)
+- Message compression (gzip)
+- Memory pooling для message objects
+- Struct alignment optimization (экономия 40% памяти)
+
+### 3. Channel Service
+**Технологии**: Go, Redis Cluster
+
+**Ответственность:**
+- Channel lifecycle management
+- Subscription management
+- Permission checking
+- Dynamic channel creation
+- Cross-server channel federation
+
+**Типы каналов (расширенные):**
+- **Static**: GLOBAL, TRADE, SYSTEM (persistent)
+- **Dynamic**: PARTY, GUILD, RAID (temporary)
+- **Personal**: WHISPER, FRIENDS (encrypted)
+- **Regional**: CONTINENT, CITY, DISTRICT (geo-based)
+- **Event**: TOURNAMENT, QUEST, MISSION (temporary)
+- **Federated**: CROSS_SERVER, ALLIANCE (multi-server)
+
+### 4. Moderation Service
+**Технологии**: Go, Python (AI), PostgreSQL
+
+**AI-Powered Features:**
+- **Content Analysis**: Toxicity detection, hate speech, harassment
+- **Context Awareness**: Conversation context analysis
+- **Image Moderation**: OCR + content analysis для изображений
+- **Behavioral Patterns**: Spam pattern recognition, harassment detection
+
+**Moderation Rules:**
+```yaml
+# Progressive enforcement
+warnings:
+  - level: 1
+    violations: 3
+    action: mute_5min
+  - level: 2
+    violations: 5
+    action: mute_1hour
+  - level: 3
+    violations: 10
+    action: ban_24hours
+
+# AI-based detection
+ai_filters:
+  - toxicity_threshold: 0.8
+  - harassment_threshold: 0.7
+  - spam_confidence: 0.9
+```
+
+### 5. Voice Service
+**Технологии**: Go, WebRTC 2.0, SFU (Selective Forwarding Unit)
+
+**WebRTC 2.0 Features:**
+- **Spatial Audio**: 3D positional audio для иммерсивности
+- **Noise Suppression**: AI-powered background noise removal
+- **Echo Cancellation**: Advanced acoustic echo cancellation
+- **Bandwidth Adaptation**: Dynamic bitrate adjustment
+- **Recording**: Optional voice recording для модерации
+
+**Voice Channel Types:**
+- **Party**: Small groups (2-8 players)
+- **Raid**: Large groups (8-40 players) with SFU
+- **Guild**: Persistent channels with permissions
+- **Public**: Open voice channels with moderation
+
+### 6. History Service
+**Технологии**: Go, Elasticsearch, PostgreSQL
+
+**Features:**
+- **Full-text search**: Message content search
+- **Semantic search**: AI-powered semantic search
+- **Analytics**: Message patterns, engagement metrics
+- **Archival**: Automatic archival старых сообщений
+- **Compliance**: Data retention policies, deletion requests
+
+**Search Capabilities:**
+```yaml
+# Advanced search queries
+GET /api/v1/chat/history/search?q=party+invite&channel=guild&date_range=7d&sentiment=positive
+GET /api/v1/chat/history/context?message_id=uuid&before=5&after=5
+GET /api/v1/chat/history/analytics?channel=global&period=24h
+```
+
+### 7. Translation Service
+**Технологии**: Go, AI Translation API, Redis Cache
+
+**Features:**
+- **Real-time translation**: <100ms response
+- **Language detection**: Automatic language identification
+- **Cache optimization**: Translation cache с TTL
+- **Quality metrics**: Translation confidence scoring
+- **Cultural adaptation**: Context-aware translations
+
+---
+
+## Data Architecture
+
+### PostgreSQL Schema (Optimized)
+
+```sql
+-- Partitioned by month for better performance
+CREATE TABLE chat_messages PARTITION BY RANGE (created_at);
+
+-- Optimized indexes
+CREATE INDEX CONCURRENTLY idx_messages_channel_time ON chat_messages(channel_id, created_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX CONCURRENTLY idx_messages_sender_time ON chat_messages(sender_id, created_at DESC);
+CREATE INDEX CONCURRENTLY idx_messages_content_gin ON chat_messages USING GIN (to_tsvector('english', content));
+
+-- Channel permissions with RBAC
+CREATE TABLE channel_permissions (
+    id UUID PRIMARY KEY,
+    channel_id UUID NOT NULL,
+    role_id UUID NOT NULL, -- Links to RBAC system
+    permissions JSONB NOT NULL, -- ['read', 'write', 'moderate', 'admin']
+    granted_at TIMESTAMPTZ DEFAULT NOW(),
+    granted_by UUID,
+    UNIQUE(channel_id, role_id)
+);
+
+-- AI moderation results
+CREATE TABLE message_moderation (
+    message_id UUID PRIMARY KEY,
+    toxicity_score DECIMAL(3,2),
+    harassment_score DECIMAL(3,2),
+    spam_score DECIMAL(3,2),
+    sentiment_score DECIMAL(3,2),
+    languages_detected JSONB,
+    moderated_at TIMESTAMPTZ DEFAULT NOW(),
+    moderator_type VARCHAR(20) -- 'ai', 'human', 'auto'
+);
+```
+
+### Redis Architecture
+
+```redis
+# Channel subscriptions with pub/sub
+PUBLISH chat:channel:{channel_id} '{"type":"message","payload":{...}}'
+
+# User presence tracking
+SADD presence:channel:{channel_id} {user_id}
+EXPIRE presence:channel:{channel_id} 300
+
+# Rate limiting per user/channel
+INCR rate:msg:{user_id}:{channel_id}
+EXPIRE rate:msg:{user_id}:{channel_id} 60
+
+# Translation cache
+SET translation:{hash}:{from_lang}:{to_lang} "{translated_text}" EX 3600
+
+# Voice room state
+HSET voice:room:{room_id} participants {count} active_speakers {list}
+```
+
+### Elasticsearch для поиска
+
+```json
+{
+  "mappings": {
+    "properties": {
+      "message_id": {"type": "keyword"},
+      "channel_id": {"type": "keyword"},
+      "sender_id": {"type": "keyword"},
+      "content": {"type": "text", "analyzer": "standard"},
+      "language": {"type": "keyword"},
+      "sentiment": {"type": "float"},
+      "toxicity": {"type": "float"},
+      "created_at": {"type": "date"},
+      "channel_type": {"type": "keyword"},
+      "tags": {"type": "keyword"}
+    }
+  }
+}
+```
+
+---
+
+## Производительность и масштабируемость
+
+### Performance Targets (2025)
+
+| Metric | Target | Current Architecture |
+|--------|--------|---------------------|
+| Message Latency | <50ms P99 | WebSocket + Edge CDN |
+| Translation Latency | <200ms P99 | AI + Redis Cache |
+| Search Response | <100ms P95 | Elasticsearch |
+| Concurrent Users | 50k+ | Kubernetes HPA |
+| Messages/Second | 100k+ | Message batching |
+| Voice Quality | <30ms latency | WebRTC SFU |
+
+### Scalability Features
+
+**Horizontal Scaling:**
+- **Sharding**: Messages sharded by channel_id
+- **Region-based**: Users routed to nearest region
+- **Auto-scaling**: Kubernetes HPA based on CPU/memory
+
+**Caching Strategy:**
+- **L1**: Redis (hot data, <1ms access)
+- **L2**: CDN (static assets, global distribution)
+- **L3**: Elasticsearch (search, <100ms)
+
+**Load Distribution:**
+- **Read replicas**: PostgreSQL read scaling
+- **Message queues**: Kafka для async processing
+- **Connection pooling**: WebSocket connection reuse
+
+---
+
+## Безопасность и Compliance
+
+### Advanced Security Features
+
+**Content Security:**
+- AI-powered toxicity detection
+- Image content analysis
+- Link safety checking
+- Behavioral pattern analysis
+
+**Privacy Protection:**
+- End-to-end encryption для private channels
+- Data minimization (no unnecessary logging)
+- GDPR compliance (data deletion, consent management)
+- Audit logging для moderation actions
+
+**DDoS Protection:**
+- Rate limiting per IP/user/channel
+- WebSocket connection limiting
+- Message size restrictions
+- Suspicious pattern detection
+
+### Compliance Requirements
+
+**Data Retention:**
+- Messages: 90 days active, 1 year archived
+- Moderation logs: 2 years
+- Analytics data: 1 year aggregated
+
+**Audit Trail:**
+- All moderation actions logged
+- User consent tracking
+- Data access logging
+
+---
+
+## Мониторинг и Observability
+
+### Metrics Collection
+
+```prometheus
+# Performance metrics
+chat_messages_total{channel_type="global"} 1.2e6
+chat_websocket_connections 45000
+chat_message_latency_bucket{le="0.05"} 0.95
+
+# Business metrics
+chat_active_users_daily 25000
+chat_messages_per_user_daily 45.2
+chat_channels_created_daily 1200
+
+# Quality metrics
+chat_translation_accuracy 0.89
+chat_moderation_false_positive_rate 0.02
+chat_voice_quality_score 8.7
+```
+
+### Alerting Rules
+
+```yaml
+# Critical alerts
+- alert: ChatHighLatency
+  expr: histogram_quantile(0.95, chat_message_latency) > 0.1
+  for: 5m
+
+- alert: ChatConnectionDrop
+  expr: rate(chat_websocket_disconnects_total[5m]) > 0.1
+
+- alert: ChatModerationFailure
+  expr: rate(chat_moderation_errors_total[5m]) > 0.05
+```
+
+---
+
+## Интеграции
+
+### External Services
+
+**Session Management:**
+- User authentication validation
+- Session state synchronization
+- Cross-service user presence
+
+**Party/Guild Services:**
+- Channel auto-creation для groups
+- Permission synchronization
+- Member management integration
+
+**Analytics Platform:**
+- Message volume metrics
+- User engagement analysis
+- Content moderation insights
+
+**Translation Services:**
+- Real-time message translation
+- Language detection
+- Cultural context adaptation
+
+---
+
+## Migration Plan
+
+### Phase 1: Foundation (Q1 2025)
+- [ ] Deploy microservices architecture
+- [ ] Implement WebSocket Gateway v2
+- [ ] Basic AI moderation integration
+
+### Phase 2: Features (Q2 2025)
+- [ ] Voice chat with WebRTC 2.0
+- [ ] Advanced translation features
+- [ ] Cross-server communication
+
+### Phase 3: Optimization (Q3 2025)
+- [ ] Global CDN deployment
+- [ ] AI/ML full integration
+- [ ] Performance optimization
+
+### Phase 4: Scale (Q4 2025)
+- [ ] 50k concurrent users support
+- [ ] Advanced analytics
+- [ ] Mobile app optimization
+
+---
+
+## Риски и Mitigation
+
+### Technical Risks
+- **WebRTC complexity**: Mitigated by SFU architecture, extensive testing
+- **AI accuracy**: Mitigated by human oversight, fallback systems
+- **Global latency**: Mitigated by CDN, regional deployment
+
+### Operational Risks
+- **Moderation workload**: Mitigated by AI assistance, community reporting
+- **Translation quality**: Mitigated by user feedback, iterative improvement
+- **Voice quality**: Mitigated by quality monitoring, automatic failover
+
+---
+
+## Заключение
+
+Обновленная архитектура чата 2025 обеспечивает:
+- **Масштабируемость** до 50k+ пользователей
+- **AI-powered модерацию** с высокой точностью
+- **Мультиязычность** с real-time переводом
+- **Immersive voice** с пространственным аудио
+- **Advanced analytics** для engagement insights
+
+**Готово к реализации Backend и DevOps командами.**

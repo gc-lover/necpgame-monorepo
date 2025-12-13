@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\philadelphia\2020-2029\quest-008-mummers-parade.yaml
--- Generated: 2025-12-06T21:12:57.900717
+-- Generated: 2025-12-13T21:13:34.116270
 
 BEGIN;
 

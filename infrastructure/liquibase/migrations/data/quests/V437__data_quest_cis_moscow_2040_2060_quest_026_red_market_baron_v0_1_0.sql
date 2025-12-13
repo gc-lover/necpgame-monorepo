@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2040-2060\quest-026-red-market-baron.yaml
--- Generated: 2025-12-06T21:12:59.111666
+-- Generated: 2025-12-13T21:13:35.168787
 
 BEGIN;
 

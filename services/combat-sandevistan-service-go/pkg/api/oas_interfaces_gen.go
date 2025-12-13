@@ -13,6 +13,10 @@ type ApplyCounterplayRes interface {
 	applyCounterplayRes()
 }
 
+type ApplyTemporalMarksRes interface {
+	applyTemporalMarksRes()
+}
+
 type DeactivateSandevistanRes interface {
 	deactivateSandevistanRes()
 }
@@ -21,12 +25,20 @@ type GetHeatStatusRes interface {
 	getHeatStatusRes()
 }
 
+type GetSandevistanBonusesRes interface {
+	getSandevistanBonusesRes()
+}
+
 type GetSandevistanStatusRes interface {
 	getSandevistanStatusRes()
 }
 
 type GetTemporalMarksRes interface {
 	getTemporalMarksRes()
+}
+
+type PublishPerceptionDragEventRes interface {
+	publishPerceptionDragEventRes()
 }
 
 type SetTemporalMarksRes interface {

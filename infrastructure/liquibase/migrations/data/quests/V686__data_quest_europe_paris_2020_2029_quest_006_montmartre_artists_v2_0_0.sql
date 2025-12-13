@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\paris\2020-2029\quest-006-montmartre-artists.yaml
--- Generated: 2025-12-06T21:13:00.200323
+-- Generated: 2025-12-13T21:13:36.122152
 
 BEGIN;
 

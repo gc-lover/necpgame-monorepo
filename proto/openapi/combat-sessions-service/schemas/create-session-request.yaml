@@ -1,0 +1,50 @@
+# Issue: #141665188
+type: object
+description: |
+  BACKEND NOTE: Session creation request.
+  Fields ordered for struct alignment (large → small).
+  Expected memory: ~56 bytes/instance.
+required:
+  - player_id
+  - session_type
+properties:
+  # UUID fields first (16 bytes)
+  player_id:
+    type: string
+    format: uuid
+    description: Player initiating the session
+  character_id:
+    type: string
+    format: uuid
+    description: Character to use in combat
+  # String fields (16 bytes)
+  session_type:
+    type: string
+    enum: [pve, pvp, raid, extraction]
+    description: Type of combat session
+  map_id:
+    type: string
+    description: Map/zone identifier
+  difficulty:
+    type: string
+    enum: [easy, normal, hard, nightmare]
+    default: normal
+    description: Combat difficulty level
+  # Integer fields (4 bytes)
+  max_participants:
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 10
+    default: 4
+    description: Maximum number of participants
+  # Object fields (variable)
+  settings:
+    type: object
+    description: Session-specific settings (JSON)
+  invited_players:
+    type: array
+    items:
+      type: string
+      format: uuid
+    description: List of invited player IDs

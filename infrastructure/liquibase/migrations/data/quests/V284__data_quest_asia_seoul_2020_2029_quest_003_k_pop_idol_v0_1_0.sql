@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\seoul\2020-2029\quest-003-k-pop-idol.yaml
--- Generated: 2025-12-06T21:12:58.427341
+-- Generated: 2025-12-13T21:13:34.588740
 
 BEGIN;
 

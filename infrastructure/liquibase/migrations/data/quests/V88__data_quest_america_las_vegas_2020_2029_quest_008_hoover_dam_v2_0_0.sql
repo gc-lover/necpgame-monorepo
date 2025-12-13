@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\las-vegas\2020-2029\quest-008-hoover-dam.yaml
--- Generated: 2025-12-06T21:12:57.441915
+-- Generated: 2025-12-13T21:13:33.664655
 
 BEGIN;
 

@@ -34,15 +34,18 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	ActivateSandevistanOperation:   []string{},
-	ApplyCoolingCartridgeOperation: []string{},
-	ApplyCounterplayOperation:      []string{},
-	DeactivateSandevistanOperation: []string{},
-	GetHeatStatusOperation:         []string{},
-	GetSandevistanStatusOperation:  []string{},
-	GetTemporalMarksOperation:      []string{},
-	SetTemporalMarksOperation:      []string{},
-	UseActionBudgetOperation:       []string{},
+	ActivateSandevistanOperation:        []string{},
+	ApplyCoolingCartridgeOperation:      []string{},
+	ApplyCounterplayOperation:           []string{},
+	ApplyTemporalMarksOperation:         []string{},
+	DeactivateSandevistanOperation:      []string{},
+	GetHeatStatusOperation:              []string{},
+	GetSandevistanBonusesOperation:      []string{},
+	GetSandevistanStatusOperation:       []string{},
+	GetTemporalMarksOperation:           []string{},
+	PublishPerceptionDragEventOperation: []string{},
+	SetTemporalMarksOperation:           []string{},
+	UseActionBudgetOperation:            []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

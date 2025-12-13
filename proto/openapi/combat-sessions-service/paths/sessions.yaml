@@ -1,0 +1,66 @@
+# Issue: #141665188
+post:
+  tags:
+    - sessions
+  summary: Create combat session
+  operationId: createCombatSession
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/create-session-request.yaml"
+  responses:
+    "201":
+      description: Session created
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/combat-session.yaml"
+    "400":
+      $ref: "../common.yaml#/components/responses/BadRequest"
+    "409":
+      description: Session creation conflict
+      content:
+        application/json:
+          schema:
+            $ref: "../common.yaml#/components/schemas/Error"
+get:
+  tags:
+    - sessions
+  summary: List combat sessions
+  operationId: listCombatSessions
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: player_id
+      in: query
+      schema:
+        type: string
+        format: uuid
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    - name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+  responses:
+    "200":
+      description: List of sessions
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../schemas/combat-session.yaml"
+    "400":
+      $ref: "../common.yaml#/components/responses/BadRequest"

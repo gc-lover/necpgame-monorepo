@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\montreal\2020-2029\quest-004-montreal-canadiens.yaml
--- Generated: 2025-12-06T21:12:57.613768
+-- Generated: 2025-12-13T21:13:33.836683
 
 BEGIN;
 

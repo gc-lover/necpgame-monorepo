@@ -1,160 +1,895 @@
+# Issue: #141665188
 openapi: 3.0.3
 info:
   title: Combat Sessions Service API
   version: 1.0.0
-  description: Combat session management API
+  description: |
+    Combat session management API for MMOFPS RPG.
+
+    ## Architecture Overview
+    - Server-authoritative combat system
+    - Event-driven architecture with Kafka
+    - Realtime state synchronization
+    - Integrated anti-cheat validation
+
+    ## Performance Notes
+    - Hot paths: session management (500+ RPS), action processing (1000+ RPS)
+    - Memory optimized schemas with field alignment
+    - Context timeouts for all operations
 servers:
-- url: http://localhost:8158
-  description: Local development
+  - url: http://localhost:8158
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
 tags:
-- name: sessions
+  - name: sessions
+    description: Combat session lifecycle management
+  - name: actions
+    description: Combat action execution and validation
+  - name: analytics
+    description: Combat logs and statistics
 paths:
   /gameplay/combat/sessions:
     post:
       tags:
-      - sessions
+        - sessions
+      summary: Create combat session
       operationId: createCombatSession
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSessionRequest'
+              $ref: "#/components/schemas/CreateSessionRequest"
       responses:
-        '201':
+        "201":
           description: Session created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CombatSession'
+                $ref: "#/components/schemas/CombatSession"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "409":
+          description: Session creation conflict
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
     get:
       tags:
-      - sessions
+        - sessions
+      summary: List combat sessions
       operationId: listCombatSessions
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      - $ref: common.yaml#/components/parameters/Limit
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/Limit
       responses:
-        '200':
+        "200":
           description: List of sessions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CombatSession'
+                  $ref: "#/components/schemas/CombatSession"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
   /gameplay/combat/sessions/{session_id}:
     get:
       tags:
-      - sessions
+        - sessions
+      summary: Get combat session details
       operationId: getCombatSession
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
-        '200':
+        "200":
           description: Session details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CombatSession'
-        '404':
+                $ref: "#/components/schemas/CombatSession"
+        "404":
           $ref: common.yaml#/components/responses/NotFound
     delete:
       tags:
-      - sessions
+        - sessions
+      summary: End combat session
       operationId: endCombatSession
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
-        '200':
+        "200":
           description: Session ended
-        '404':
+        "404":
           $ref: common.yaml#/components/responses/NotFound
+
+  /gameplay/combat/sessions/{session_id}/actions:
+    post:
+      tags:
+        - actions
+      operationId: executeCombatAction
+      summary: Execute combat action
+      description: |
+        Execute a combat action in the session.
+
+        ## Security & Validation
+        - Anti-cheat validation required
+        - Action must be valid for current turn
+        - Player must be session participant
+
+        ## Events Published
+        - `combat.action.executed` - action result
+        - `combat.state.updated` - session state change
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CombatActionRequest"
+      responses:
+        "200":
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatActionResult"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "403":
+          $ref: common.yaml#/components/responses/Forbidden
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+        "409":
+          description: Invalid action or not player's turn
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /gameplay/combat/sessions/{session_id}/state:
+    get:
+      tags:
+        - sessions
+      operationId: getCombatSessionState
+      summary: Get realtime session state
+      description: |
+        Get current realtime state of combat session.
+
+        ## Performance Note
+        - Hot endpoint (1000+ RPS expected)
+        - Cached in Redis with TTL
+        - Used by clients for state synchronization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+      responses:
+        "200":
+          description: Current session state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatSessionState"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+  /gameplay/combat/sessions/{session_id}/logs:
+    get:
+      tags:
+        - analytics
+      operationId: getCombatSessionLogs
+      summary: Get session combat logs
+      description: |
+        Retrieve combat logs for analytics and replay.
+
+        ## Use Cases
+        - Combat replay functionality
+        - Analytics and statistics
+        - Anti-cheat investigation
+        - Player session review
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          description: Number of log entries to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        "200":
+          description: Combat logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatLogsResponse"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+  /gameplay/combat/sessions/{session_id}/stats:
+    get:
+      tags:
+        - analytics
+      operationId: getCombatSessionStats
+      summary: Get session statistics
+      description: |
+        Get aggregated statistics for combat session.
+
+        ## Performance Note
+        - Computed on-demand from combat_logs
+        - Cached for active sessions
+        - Used for matchmaking and leaderboards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+      responses:
+        "200":
+          description: Session statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatSessionStats"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
 components:
   schemas:
     CreateSessionRequest:
       type: object
       description: |
-        BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory: ~40 bytes/instance.
+        BACKEND NOTE: Session creation request.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~56 bytes/instance.
       required:
-      - player_id
-      - session_type
+        - player_id
+        - session_type
       properties:
         # UUID fields first (16 bytes)
         player_id:
           type: string
           format: uuid
-        # String fields (16 bytes)
-        map_id:
+          description: Player initiating the session
+        character_id:
           type: string
+          format: uuid
+          description: Character to use in combat
+        # String fields (16 bytes)
         session_type:
           type: string
-          enum:
-          - pve
-          - pvp
-          - raid
+          enum: [pve, pvp, raid, extraction]
+          description: Type of combat session
+        map_id:
+          type: string
+          description: Map/zone identifier
+        difficulty:
+          type: string
+          enum: [easy, normal, hard, nightmare]
+          default: normal
+          description: Combat difficulty level
+        # Integer fields (4 bytes)
+        max_participants:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          default: 4
+          description: Maximum number of participants
+        # Object fields (variable)
+        settings:
+          type: object
+          description: Session-specific settings (JSON)
+        invited_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of invited player IDs
     CombatSession:
       type: object
       description: |
         BACKEND NOTE: Hot path (session management, 500+ RPS).
         Fields ordered for struct alignment (large → small).
-        Expected memory: ~72 bytes/instance.
+        Expected memory: ~96 bytes/instance.
+        Cached in Redis for active sessions.
       required:
-      - id
-      - player_id
-      - session_type
-      - status
-      - created_at
+        - id
+        - session_type
+        - status
+        - created_at
       properties:
         # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
-        player_id:
+          description: Unique session identifier
+        host_player_id:
           type: string
           format: uuid
+          description: Player who created the session
         # String fields (16 bytes)
         session_type:
           type: string
+          enum: [pve, pvp, raid, extraction]
+          description: Type of combat session
         status:
           type: string
-          enum:
-          - active
-          - ended
-          - abandoned
+          enum: [waiting, active, paused, ended, abandoned]
+          description: Current session status
+        map_id:
+          type: string
+          description: Map/zone identifier
+        difficulty:
+          type: string
+          enum: [easy, normal, hard, nightmare]
+          description: Combat difficulty level
+        winner_team:
+          type: string
+          enum: [red, blue, neutral, draw]
+          description: Winning team (for ended sessions)
+        # Integer fields (8 bytes each)
+        max_participants:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          description: Maximum allowed participants
+        current_participants:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current number of participants
+        duration_seconds:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Session duration in seconds (for ended sessions)
         # DateTime fields (8 bytes each)
         created_at:
           type: string
           format: date-time
+          description: Session creation timestamp
+        started_at:
+          type: string
+          format: date-time
+          description: When combat actually started
         ended_at:
           type: string
           format: date-time
+          description: When session ended (if applicable)
+        # Object fields (variable size)
+        settings:
+          type: object
+          description: Session-specific settings (JSON)
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatParticipant"
+          description: Session participants
+    CombatParticipant:
+      type: object
+      description: |
+        BACKEND NOTE: Combat participant data.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~88 bytes/instance.
+      required:
+        - id
+        - player_id
+        - character_id
+        - team
+        - status
+        - joined_at
+      properties:
+        # UUID fields first (16 bytes each)
+        id:
+          type: string
+          format: uuid
+          description: Participant record ID
+        player_id:
+          type: string
+          format: uuid
+          description: Player account ID
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        # String fields (16 bytes)
+        team:
+          type: string
+          enum: [red, blue, neutral]
+          description: Team assignment
+        status:
+          type: string
+          enum: [active, defeated, disconnected, spectator]
+          description: Current participant status
+        # Integer fields (8 bytes each)
+        health:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current health points
+        max_health:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Maximum health points
+        damage_dealt:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total damage dealt
+        damage_taken:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total damage taken
+        kills:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of kills
+        deaths:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of deaths
+        assists:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of assists
+        # DateTime fields (8 bytes each)
+        joined_at:
+          type: string
+          format: date-time
+          description: When participant joined
+        left_at:
+          type: string
+          format: date-time
+          description: When participant left (if applicable)
+    CombatActionRequest:
+      type: object
+      description: |
+        BACKEND NOTE: Combat action request.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~72 bytes/instance.
+        Hot path - validated by anti-cheat.
+      required:
+        - action_type
+        - target_id
+      properties:
+        # String fields first (16 bytes)
+        action_type:
+          type: string
+          enum: [attack, ability, move, defend, reload, use_item]
+          description: Type of combat action
+        # UUID fields (16 bytes)
+        target_id:
+          type: string
+          format: uuid
+          description: Target participant/character ID
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability ID (if action_type is ability)
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID (if action_type is use_item)
+        # Position fields (12 bytes each via $ref)
+        position:
+          $ref: common.yaml#/components/schemas/Position3D
+        direction:
+          $ref: common.yaml#/components/schemas/Direction3D
+        # Integer fields (4 bytes)
+        sequence_number:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Client sequence number for ordering
+        timestamp:
+          type: integer
+          format: int64
+          description: Client timestamp in milliseconds
+    CombatActionResult:
+      type: object
+      description: |
+        BACKEND NOTE: Combat action execution result.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~96 bytes/instance.
+      required:
+        - action_id
+        - success
+        - timestamp
+      properties:
+        # UUID fields first (16 bytes each)
+        action_id:
+          type: string
+          format: uuid
+          description: Unique action identifier
+        # Boolean field (1 byte)
+        success:
+          type: boolean
+          description: Whether action was successful
+        # Integer fields (8 bytes each)
+        damage:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Damage dealt (if applicable)
+        healing:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Healing applied (if applicable)
+        timestamp:
+          type: integer
+          format: int64
+          description: Server timestamp in milliseconds
+        # String fields (16 bytes)
+        status:
+          type: string
+          enum: [executed, blocked, missed, critical]
+          description: Action execution status
+        message:
+          type: string
+          description: Human-readable result message
+        # Array/Object fields (variable size)
+        effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatEffect"
+          description: Applied combat effects
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatReward"
+          description: Immediate rewards (if any)
+    CombatEffect:
+      type: object
+      description: Combat effect applied by action
+      required:
+        - effect_type
+        - duration_ms
+      properties:
+        effect_type:
+          type: string
+          enum: [stun, bleed, poison, buff, debuff, shield]
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Effect duration in milliseconds
+        magnitude:
+          type: number
+          format: float
+          description: Effect strength/magnitude
+        description:
+          type: string
+    CombatReward:
+      type: object
+      description: Immediate combat reward
+      required:
+        - reward_type
+        - amount
+      properties:
+        reward_type:
+          type: string
+          enum: [experience, currency, item]
+        amount:
+          type: integer
+          format: int32
+          minimum: 0
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID (if reward_type is item)
+    CombatSessionState:
+      type: object
+      description: |
+        BACKEND NOTE: Realtime combat session state.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~120 bytes/instance.
+        Hot path - cached in Redis.
+      required:
+        - session_id
+        - status
+        - participants
+        - current_turn
+        - last_action_at
+      properties:
+        # UUID fields first (16 bytes)
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        # String fields (16 bytes)
+        status:
+          type: string
+          enum: [waiting, active, paused, ended]
+          description: Current session status
+        current_turn:
+          type: string
+          format: uuid
+          description: ID of participant whose turn it is
+        # Integer fields (8 bytes)
+        turn_number:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current turn number
+        last_action_at:
+          type: integer
+          format: int64
+          description: Timestamp of last action in milliseconds
+        # Array fields (participants)
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatParticipant"
+          description: All session participants
+        active_effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatEffect"
+          description: Currently active effects
+    CombatLogsResponse:
+      type: object
+      description: Paginated combat logs response
+      required:
+        - logs
+        - total_count
+        - has_more
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatLog"
+          description: Combat log entries
+        total_count:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of log entries
+        has_more:
+          type: boolean
+          description: Whether there are more entries available
+        next_offset:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Offset for next page
+    CombatLog:
+      type: object
+      description: |
+        BACKEND NOTE: Combat log entry for analytics.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~104 bytes/instance.
+      required:
+        - id
+        - session_id
+        - event_type
+        - actor_id
+        - timestamp
+        - sequence_number
+      properties:
+        # UUID fields first (16 bytes each)
+        id:
+          type: string
+          format: uuid
+          description: Log entry ID
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        actor_id:
+          type: string
+          format: uuid
+          description: Actor participant ID
+        target_id:
+          type: string
+          format: uuid
+          description: Target participant ID (if applicable)
+        # String fields (16 bytes)
+        event_type:
+          type: string
+          enum:
+            [
+              action_executed,
+              participant_joined,
+              participant_left,
+              session_started,
+              session_ended,
+              effect_applied,
+              effect_expired,
+            ]
+          description: Type of logged event
+        # Integer fields (8 bytes each)
+        timestamp:
+          type: integer
+          format: int64
+          description: Event timestamp in milliseconds
+        sequence_number:
+          type: integer
+          format: int64
+          description: Sequential event number in session
+        damage:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Damage dealt (if applicable)
+        # Object fields (variable size)
+        action_data:
+          type: object
+          description: Action-specific data (JSON)
+        result_data:
+          type: object
+          description: Result-specific data (JSON)
+    CombatSessionStats:
+      type: object
+      description: |
+        BACKEND NOTE: Aggregated combat session statistics.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~144 bytes/instance.
+      required:
+        - session_id
+        - duration_seconds
+        - total_participants
+        - total_actions
+      properties:
+        # UUID field first (16 bytes)
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        # Integer fields (8 bytes each)
+        duration_seconds:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Session duration in seconds
+        total_participants:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of participants
+        total_actions:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of actions executed
+        total_damage_dealt:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total damage dealt in session
+        total_healing:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total healing applied in session
+        # String fields (16 bytes)
+        winner_team:
+          type: string
+          enum: [red, blue, neutral, draw]
+          description: Winning team (if applicable)
+        # Object fields
+        participant_stats:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParticipantStats"
+          description: Per-participant statistics
+        action_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+          description: Count of each action type
+    ParticipantStats:
+      type: object
+      description: Individual participant statistics
+      required:
+        - participant_id
+        - damage_dealt
+        - damage_taken
+        - kills
+        - deaths
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        damage_dealt:
+          type: integer
+          format: int64
+          minimum: 0
+        damage_taken:
+          type: integer
+          format: int64
+          minimum: 0
+        kills:
+          type: integer
+          format: int32
+          minimum: 0
+        deaths:
+          type: integer
+          format: int32
+          minimum: 0
+        assists:
+          type: integer
+          format: int32
+          minimum: 0
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Action success rate (0.0 to 1.0)
+
   securitySchemes:
     $ref: common.yaml#/components/securitySchemes
   responses:
     $ref: common.yaml#/components/responses
 security:
-- BearerAuth: []
+  - BearerAuth: []

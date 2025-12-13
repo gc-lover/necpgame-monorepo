@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\seattle\2020-2029\quest-006-mount-rainier.yaml
--- Generated: 2025-12-06T21:12:58.114311
+-- Generated: 2025-12-13T21:13:34.327597
 
 BEGIN;
 

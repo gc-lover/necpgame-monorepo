@@ -3,8 +3,8 @@ package main
 
 import (
 	"context"
-	_ "net/http/pprof"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,7 +25,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	
+
 	// Configure DB pool (standard service - 25 connections)
 	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
@@ -35,7 +35,7 @@ func main() {
 	config.MinConns = 5
 	config.MaxConnLifetime = 5 * time.Minute
 	config.MaxConnIdleTime = 10 * time.Minute
-	
+
 	dbpool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		logger.WithError(err).Fatal("Unable to connect to database")
@@ -66,7 +66,7 @@ func main() {
 	logger.Info("OK Goroutine monitor started")
 
 	// Initialize service layers with ogen
-	httpServer := server.NewHTTPServerOgen(":8094")
+	httpServer := server.NewHTTPServerOgen(dbpool, ":8094")
 
 	// Start server
 	go func() {
@@ -98,4 +98,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

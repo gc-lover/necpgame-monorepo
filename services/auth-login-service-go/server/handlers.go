@@ -34,7 +34,7 @@ func newAuthHandler(logger *zap.Logger, db *sql.DB, jwtSecret string) *authHandl
 		logger:     logger,
 		db:         db,
 		jwtSecret:  []byte(jwtSecret),
-		tokenTTL:   15 * time.Minute,  // короткий токен для безопасности
+		tokenTTL:   15 * time.Minute,   // короткий токен для безопасности
 		refreshTTL: 7 * 24 * time.Hour, // длинный refresh токен
 	}
 }
@@ -83,12 +83,12 @@ func (h *authHandler) Login(ctx context.Context, req *api.LoginRequest) (api.Log
 		RefreshToken: api.NewOptString(refreshToken),
 		ExpiresIn:    api.NewOptInt(int(h.tokenTTL.Seconds())),
 		Account: api.NewOptAccount(api.Account{
-			ID:              api.NewOptUUID(uuid.MustParse(user.ID)),
-			Email:           api.NewOptString(user.Email),
-			Username:        api.NewOptString(user.Username),
-			Role:            api.NewOptAccountRole(api.AccountRole(user.Role)),
-			CreatedAt:       api.NewOptDateTime(user.CreatedAt),
-			EmailVerified:   api.NewOptBool(user.EmailVerified),
+			ID:               api.NewOptUUID(uuid.MustParse(user.ID)),
+			Email:            api.NewOptString(user.Email),
+			Username:         api.NewOptString(user.Username),
+			Role:             api.NewOptAccountRole(api.AccountRole(user.Role)),
+			CreatedAt:        api.NewOptDateTime(user.CreatedAt),
+			EmailVerified:    api.NewOptBool(user.EmailVerified),
 			TwoFactorEnabled: api.NewOptBool(user.TwoFactorEnabled),
 		}),
 	}
@@ -170,15 +170,15 @@ func (h *authHandler) RefreshToken(ctx context.Context, req *api.RefreshTokenReq
 // Вспомогательные методы для работы с БД и токенами
 
 type user struct {
-	ID                string
-	Email             string
-	Username          string
-	PasswordHash      string
-	Salt              string
-	Role              string
-	CreatedAt         time.Time
-	EmailVerified     bool
-	TwoFactorEnabled  bool
+	ID               string
+	Email            string
+	Username         string
+	PasswordHash     string
+	Salt             string
+	Role             string
+	CreatedAt        time.Time
+	EmailVerified    bool
+	TwoFactorEnabled bool
 }
 
 // getUserByEmail получает пользователя по email с оптимизированным запросом

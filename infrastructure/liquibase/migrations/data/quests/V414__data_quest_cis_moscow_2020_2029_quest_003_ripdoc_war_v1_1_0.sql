@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2020-2029\quest-003-ripdoc-war.yaml
--- Generated: 2025-12-06T21:12:58.990854
+-- Generated: 2025-12-13T21:13:35.095622
 
 BEGIN;
 

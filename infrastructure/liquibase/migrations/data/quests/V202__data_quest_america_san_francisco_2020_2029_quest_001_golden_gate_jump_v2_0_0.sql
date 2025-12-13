@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\san-francisco\2020-2029\quest-001-golden-gate-jump.yaml
--- Generated: 2025-12-06T21:12:57.949616
+-- Generated: 2025-12-13T21:13:34.163508
 
 BEGIN;
 

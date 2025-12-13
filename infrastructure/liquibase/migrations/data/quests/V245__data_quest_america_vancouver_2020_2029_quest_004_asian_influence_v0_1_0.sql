@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\vancouver\2020-2029\quest-004-asian-influence.yaml
--- Generated: 2025-12-06T21:12:58.228166
+-- Generated: 2025-12-13T21:13:34.420478
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2061-2077\quest-039-imperial-crown.yaml
--- Generated: 2025-12-06T21:12:59.458668
+-- Generated: 2025-12-13T21:13:35.401284
 
 BEGIN;
 

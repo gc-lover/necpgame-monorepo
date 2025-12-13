@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\new-york\2040-2060\quest-024-red-sky-storm.yaml
--- Generated: 2025-12-06T21:12:57.758094
+-- Generated: 2025-12-13T21:13:33.969023
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2061-2077\quest-036-catherine-palace-ball.yaml
--- Generated: 2025-12-06T21:12:59.440895
+-- Generated: 2025-12-13T21:13:35.389975
 
 BEGIN;
 

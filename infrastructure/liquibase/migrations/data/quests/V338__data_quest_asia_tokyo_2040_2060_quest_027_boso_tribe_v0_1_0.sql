@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\tokyo\2040-2060\quest-027-boso-tribe.yaml
--- Generated: 2025-12-06T21:12:58.633036
+-- Generated: 2025-12-13T21:13:34.779725
 
 BEGIN;
 

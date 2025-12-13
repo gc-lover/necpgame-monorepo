@@ -1,0 +1,83 @@
+# Issue: #141665188
+openapi: 3.0.3
+info:
+  title: Combat Sessions Service API
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  description: |
+    Combat session management API for MMOFPS RPG.
+
+    ## Architecture Overview
+    - Server-authoritative combat system
+    - Event-driven architecture with Kafka
+    - Realtime state synchronization
+    - Integrated anti-cheat validation
+
+    ## Performance Notes
+    - Hot paths: session management (500+ RPS), action processing (1000+ RPS)
+    - Memory optimized schemas with field alignment
+    - Context timeouts for all operations
+servers:
+  - url: http://localhost:8158
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+tags:
+  - name: sessions
+    description: Combat session lifecycle management
+  - name: actions
+    description: Combat action execution and validation
+  - name: analytics
+    description: Combat logs and statistics
+paths:
+  /gameplay/combat/sessions:
+    $ref: "./paths/sessions.yaml"
+  /gameplay/combat/sessions/{session_id}:
+    $ref: "./paths/session-by-id.yaml"
+  /gameplay/combat/sessions/{session_id}/actions:
+    $ref: "./paths/session-actions.yaml"
+  /gameplay/combat/sessions/{session_id}/state:
+    $ref: "./paths/session-state.yaml"
+  /gameplay/combat/sessions/{session_id}/logs:
+    $ref: "./paths/session-logs.yaml"
+  /gameplay/combat/sessions/{session_id}/stats:
+    $ref: "./paths/session-stats.yaml"
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "./common.yaml#/components/securitySchemes/BearerAuth"
+  schemas:
+    CreateSessionRequest:
+      $ref: "./schemas/create-session-request.yaml"
+    CombatSession:
+      $ref: "./schemas/combat-session.yaml"
+    CombatParticipant:
+      $ref: "./schemas/combat-participant.yaml"
+    CombatActionRequest:
+      $ref: "./schemas/combat-action-request.yaml"
+    CombatActionResult:
+      $ref: "./schemas/combat-action-result.yaml"
+    CombatEffect:
+      $ref: "./schemas/combat-effect.yaml"
+    CombatReward:
+      $ref: "./schemas/combat-reward.yaml"
+    CombatSessionState:
+      $ref: "./schemas/combat-session-state.yaml"
+    CombatLogsResponse:
+      $ref: "./schemas/combat-logs-response.yaml"
+    CombatLog:
+      $ref: "./schemas/combat-log.yaml"
+    CombatSessionStats:
+      $ref: "./schemas/combat-session-stats.yaml"
+    ParticipantStats:
+      $ref: "./schemas/participant-stats.yaml"
+    Error:
+      $ref: "./common.yaml#/components/schemas/Error"
+security:
+  - BearerAuth: []

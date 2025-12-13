@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\chicago\2020-2029\quest-008-prohibition-speakeasy.yaml
--- Generated: 2025-12-06T21:12:57.193742
+-- Generated: 2025-12-13T21:13:33.408775
 
 BEGIN;
 

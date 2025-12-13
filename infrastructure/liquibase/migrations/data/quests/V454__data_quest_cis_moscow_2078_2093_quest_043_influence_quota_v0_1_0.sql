@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2078-2093\quest-043-influence-quota.yaml
--- Generated: 2025-12-06T21:12:59.187170
+-- Generated: 2025-12-13T21:13:35.221842
 
 BEGIN;
 

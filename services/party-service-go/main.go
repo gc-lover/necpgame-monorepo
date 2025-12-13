@@ -14,9 +14,10 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/gc-lover/necpgame-monorepo/services/party-service-go/server"
+	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -26,6 +27,7 @@ func main() {
 	metricsAddr := getEnv("METRICS_ADDR", ":9094")
 	pprofAddr := getEnv("PPROF_ADDR", "localhost:6308")
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
+	redisURL := getEnv("REDIS_URL", "localhost:6379")
 
 	// Database connection
 	db, err := sql.Open("postgres", dbURL)
@@ -36,10 +38,10 @@ func main() {
 
 	// CRITICAL: Configure DB pool (BLOCKER - Issue #139!)
 	// Prevents connection exhaustion under load
-	db.SetMaxOpenConns(50)           // Max 50 concurrent connections
-	db.SetMaxIdleConns(50)            // Keep 50 idle for reuse
-	db.SetConnMaxLifetime(5 * time.Minute)   // Rotate connections every 5 min
-	db.SetConnMaxIdleTime(10 * time.Minute)  // Close idle after 10 min
+	db.SetMaxOpenConns(50)                  // Max 50 concurrent connections
+	db.SetMaxIdleConns(50)                  // Keep 50 idle for reuse
+	db.SetConnMaxLifetime(5 * time.Minute)  // Rotate connections every 5 min
+	db.SetConnMaxIdleTime(10 * time.Minute) // Close idle after 10 min
 
 	// Test connection
 	if err := db.Ping(); err != nil {
@@ -47,9 +49,31 @@ func main() {
 	}
 	log.Println("OK Database connected (pool: 50 conns)")
 
+	// Initialize Redis for Event Bus
+	rdb := redis.NewClient(&redis.Options{
+		Addr: redisURL,
+	})
+	defer rdb.Close()
+
+	// Test Redis connection
+	if _, err := rdb.Ping(context.Background()).Result(); err != nil {
+		log.Printf("Redis connection failed: %v", err)
+		// Continue without event bus
+		rdb = nil
+	} else {
+		log.Println("OK Redis connected (Event Bus ready)")
+	}
+
 	// Initialize repository & service
-	repo := server.NewPartyRepository()
-	service := server.NewPartyService(repo)
+	repo := server.NewPartyRepository(db)
+	var service *server.PartyService
+	if rdb != nil {
+		eventBus := server.NewRedisEventBus(rdb)
+		service = server.NewPartyService(repo, eventBus)
+	} else {
+		// Fallback without event bus
+		service = server.NewPartyServiceSimple(repo)
+	}
 
 	// Initialize ogen HTTP server
 	httpServer := server.NewHTTPServer(addr, service)

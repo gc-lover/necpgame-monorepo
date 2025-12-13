@@ -1,0 +1,81 @@
+# Issue: #141665188
+type: object
+description: |
+  BACKEND NOTE: Hot path (session management, 500+ RPS).
+  Fields ordered for struct alignment (large → small).
+  Expected memory: ~96 bytes/instance.
+  Cached in Redis for active sessions.
+required:
+  - id
+  - session_type
+  - status
+  - created_at
+properties:
+  # UUID fields first (16 bytes each)
+  id:
+    type: string
+    format: uuid
+    description: Unique session identifier
+  host_player_id:
+    type: string
+    format: uuid
+    description: Player who created the session
+  # String fields (16 bytes)
+  session_type:
+    type: string
+    enum: [pve, pvp, raid, extraction]
+    description: Type of combat session
+  status:
+    type: string
+    enum: [waiting, active, paused, ended, abandoned]
+    description: Current session status
+  map_id:
+    type: string
+    description: Map/zone identifier
+  difficulty:
+    type: string
+    enum: [easy, normal, hard, nightmare]
+    description: Combat difficulty level
+  winner_team:
+    type: string
+    enum: [red, blue, neutral, draw]
+    description: Winning team (for ended sessions)
+  # Integer fields (8 bytes each)
+  max_participants:
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 10
+    description: Maximum allowed participants
+  current_participants:
+    type: integer
+    format: int32
+    minimum: 0
+    description: Current number of participants
+  duration_seconds:
+    type: integer
+    format: int32
+    minimum: 0
+    description: Session duration in seconds (for ended sessions)
+  # DateTime fields (8 bytes each)
+  created_at:
+    type: string
+    format: date-time
+    description: Session creation timestamp
+  started_at:
+    type: string
+    format: date-time
+    description: When combat actually started
+  ended_at:
+    type: string
+    format: date-time
+    description: When session ended (if applicable)
+  # Object fields (variable size)
+  settings:
+    type: object
+    description: Session-specific settings (JSON)
+  participants:
+    type: array
+    items:
+      $ref: "./combat-participant.yaml"
+    description: List of session participants

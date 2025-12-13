@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\phoenix\2020-2029\quest-001-desert-heat.yaml
--- Generated: 2025-12-06T21:12:57.914317
+-- Generated: 2025-12-13T21:13:34.129666
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\vienna\2020-2029\quest-009-vienna-ball-season.yaml
--- Generated: 2025-12-06T21:13:00.315058
+-- Generated: 2025-12-13T21:13:36.217694
 
 BEGIN;
 

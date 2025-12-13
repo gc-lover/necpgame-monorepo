@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\tokyo\2030-2039\quest-015-ninja-clan.yaml
--- Generated: 2025-12-06T21:12:58.590544
+-- Generated: 2025-12-13T21:13:34.738510
 
 BEGIN;
 

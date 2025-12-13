@@ -20,9 +20,9 @@ import (
 
 // Service содержит бизнес-логику аутентификации с оптимизациями для MMOFPS
 type Service struct {
-	handler    *authHandler
-	logger     *zap.Logger
-	db         *sql.DB
+	handler *authHandler
+	logger  *zap.Logger
+	db      *sql.DB
 
 	// Memory pool для снижения аллокаций
 	requestPool sync.Pool
@@ -201,9 +201,9 @@ func (s *Service) ValidateRefreshToken(ctx context.Context, token string) (*Toke
 	}
 
 	return &TokenClaims{
-		UserID:   userID,
-		Role:     role,
-		Email:    email,
+		UserID:    userID,
+		Role:      role,
+		Email:     email,
 		ExpiresAt: expiresAt,
 	}, nil
 }

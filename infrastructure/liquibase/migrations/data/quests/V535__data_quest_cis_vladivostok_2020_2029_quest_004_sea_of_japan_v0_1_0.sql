@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\vladivostok\2020-2029\quest-004-sea-of-japan.yaml
--- Generated: 2025-12-06T21:12:59.619220
+-- Generated: 2025-12-13T21:13:35.528041
 
 BEGIN;
 

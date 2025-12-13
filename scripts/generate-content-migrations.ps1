@@ -17,7 +17,8 @@ $ContentDir = Join-Path $ProjectRoot "knowledge\canon"
 try {
     $pythonVersion = python --version 2>&1
     Write-Host "Using Python: $pythonVersion" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "Error: Python is not installed or not in PATH" -ForegroundColor Red
     exit 1
 }
@@ -235,7 +236,8 @@ print(f'\nTotal: {total_migrations} migrations, {total_quests} quests')
     if ($LASTEXITCODE -eq 0) {
         Write-Host "OK Quests migrations generated" -ForegroundColor Green
         Write-Host $output
-    } else {
+    }
+    else {
         Write-Host "❌ Failed to generate quests migrations" -ForegroundColor Red
         Write-Host $output
         exit 1
@@ -386,7 +388,8 @@ print(f'\nTotal: {total_migrations} migrations, {total_npcs} NPCs')
     if ($LASTEXITCODE -eq 0) {
         Write-Host "OK NPCs migrations generated" -ForegroundColor Green
         Write-Host $output
-    } else {
+    }
+    else {
         Write-Host "WARNING  NPCs migrations skipped (check errors above)" -ForegroundColor Yellow
         Write-Host $output
     }
@@ -536,9 +539,188 @@ print(f'\nTotal: {total_migrations} migrations, {total_dialogues} dialogues')
     if ($LASTEXITCODE -eq 0) {
         Write-Host "OK Dialogues migrations generated" -ForegroundColor Green
         Write-Host $output
-    } else {
+    }
+    else {
         Write-Host "WARNING  Dialogues migrations skipped (check errors above)" -ForegroundColor Yellow
         Write-Host $output
+    }
+}
+
+# Generate lore migration
+function Generate-LoreMigration {
+    $migrationNum = Get-NextMigrationNumber
+
+    Write-Host "Generating lore migrations..." -ForegroundColor Green
+
+    $pythonScript = @"
+import yaml
+import json
+from pathlib import Path
+from datetime import datetime, date
+from collections import defaultdict
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
+
+def escape_sql(s):
+    """Escape single quotes and backslashes in SQL strings"""
+    return s.replace("\\", "\\\\").replace("'", "''")
+
+def generate_migration_name(relative_path):
+    """Generate migration name from path"""
+    if str(relative_path) == '.' or str(relative_path) == '':
+        return 'root'
+    path_str = str(relative_path).replace('\\', '/')
+    name = path_str.replace('/', '_').replace('-', '_')
+    name = '_'.join(filter(None, name.split('_')))
+    return name
+
+migrations_dir = Path(r'$MigrationsDir')
+content_dir = Path(r'$ContentDir')
+migration_num = $migrationNum
+
+# Find lore files - both narrative and timeline-author lore
+lore_paths = [
+    content_dir / "narrative" / "stories",
+    content_dir / "narrative" / "scenarios",
+    content_dir / "narrative" / "events-lore",
+    content_dir / "narrative" / "sid-endings",
+    content_dir / "lore" / "_03-lore" / "timeline-author" / "regions"
+]
+
+lore_files = []
+for lore_path in lore_paths:
+    if lore_path.exists():
+        # Find all YAML files, excluding templates and special files
+        yaml_files = list(lore_path.rglob('*.yaml'))
+        yaml_files.extend(list(lore_path.rglob('*.yml')))
+        lore_files.extend(yaml_files)
+
+# Filter out templates, READMEs, etc.
+lore_files = [f for f in lore_files if not any(skip in f.name.lower() for skip in ['template', 'readme', 'index', 'list', 'tracker', 'spread', 'prioritization'])]
+
+if not lore_files:
+    print('No lore files found')
+    exit(0)
+
+print(f'Found {len(lore_files)} lore files')
+
+total_migrations = 0
+total_lore = 0
+
+for lore_file in sorted(lore_files):
+    # Get relative path from content_dir
+    relative_path = lore_file.relative_to(content_dir)
+    path_without_ext = str(relative_path).replace('.yaml', '').replace('.yml', '')
+    migration_name = generate_migration_name(path_without_ext)
+    data_dir = migrations_dir / 'data' / 'lore'
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    # Template for migration file
+    migration_file_template = data_dir / f'V{migration_num}__data_lore_{migration_name}'
+
+    sql_lines = [
+        '-- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564',
+        f'-- Import lore from: {relative_path}',
+        f'-- Generated: {datetime.now().isoformat()}',
+        '',
+        'BEGIN;',
+        '',
+    ]
+
+    lore_count = 0
+    try:
+        with open(lore_file, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+
+        if not data or 'metadata' not in data:
+            continue
+
+        metadata = data.get('metadata', {})
+
+        lore_id = metadata.get('id', '')
+        if not lore_id:
+            continue
+
+        # Get version from metadata for migration filename
+        version = metadata.get('version', '1.0.0')
+        version_suffix = version.replace('.', '_').replace('-', '_')
+
+        # Set final migration file name with version
+        migration_file = migration_file_template.parent / f'{migration_file_template.name}_v{version_suffix}.sql'
+
+        title = metadata.get('title', '')
+        document_type = metadata.get('document_type', 'lore')
+        category = metadata.get('category', '')
+
+        # Convert full YAML to JSON for storage
+        content_json = json.dumps(data, default=json_serial, ensure_ascii=False, indent=2)
+
+        # Generate SQL INSERT
+        sql_lines.extend([
+            f'-- Lore: {lore_id}',
+            'INSERT INTO narrative.lore_entries (',
+            '    lore_id, title, document_type, category,',
+            '    content_data, version',
+            ')',
+            'VALUES (',
+            f"    '{escape_sql(lore_id)}',",
+            f"    '{escape_sql(title)}',",
+            f"    '{escape_sql(document_type)}',",
+            f"    '{escape_sql(category)}',",
+            f"    '{content_json}'::jsonb,",
+            f"    {version.split('.')[0]}",
+            ')',
+            'ON CONFLICT (lore_id) DO UPDATE SET',
+            '    title = EXCLUDED.title,',
+            '    document_type = EXCLUDED.document_type,',
+            '    category = EXCLUDED.category,',
+            '    content_data = EXCLUDED.content_data,',
+            '    version = EXCLUDED.version,',
+            '    updated_at = CURRENT_TIMESTAMP;',
+            '',
+        ])
+
+        lore_count += 1
+        total_lore += 1
+
+    except Exception as e:
+        print(f'Error processing {lore_file}: {e}')
+        continue
+
+    if lore_count > 0:
+        sql_lines.extend([
+            '',
+            'COMMIT;'
+        ])
+
+        # Write migration file
+        migration_content = '\n'.join(sql_lines)
+
+        with open(migration_file, 'w', encoding='utf-8') as f:
+            f.write(migration_content)
+
+        print(f'Generated: {migration_file.name} ({lore_count} lore entries)')
+        total_migrations += 1
+
+print(f'Generated {total_migrations} lore migrations with {total_lore} total lore entries')
+"@
+
+    if (-not $DryRun) {
+        try {
+            $output = python -c $pythonScript
+            Write-Host $output
+        }
+        catch {
+            Write-Host "❌ Lore migrations failed" -ForegroundColor Red
+            Write-Host $_.Exception.Message
+        }
+    }
+    else {
+        Write-Host "🔍 Dry run - would generate lore migrations" -ForegroundColor Cyan
     }
 }
 
@@ -560,11 +742,16 @@ Write-Host ""
 Generate-DialoguesMigration
 
 Write-Host ""
+
+# Generate lore migration
+Generate-LoreMigration
+
+Write-Host ""
 Write-Host "OK All migrations generated successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:"
 Write-Host "1. Review generated migrations"
-Write-Host "2. Create missing tables (npc_definitions, dialogue_nodes) if needed"
+Write-Host "2. Create missing tables (npc_definitions, dialogue_nodes, lore_entries) if needed"
 Write-Host "3. Apply migrations: liquibase update"
 Write-Host "4. Or use API batch import for updates"
 

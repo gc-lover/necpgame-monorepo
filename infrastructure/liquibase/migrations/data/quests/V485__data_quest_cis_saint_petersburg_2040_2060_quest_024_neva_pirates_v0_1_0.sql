@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2040-2060\quest-024-neva-pirates.yaml
--- Generated: 2025-12-06T21:12:59.376856
+-- Generated: 2025-12-13T21:13:35.343754
 
 BEGIN;
 

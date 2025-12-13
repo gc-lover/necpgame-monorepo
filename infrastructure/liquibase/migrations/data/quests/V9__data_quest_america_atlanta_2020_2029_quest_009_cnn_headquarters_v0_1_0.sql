@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\atlanta\2020-2029\quest-009-cnn-headquarters.yaml
--- Generated: 2025-12-06T21:12:57.031336
+-- Generated: 2025-12-13T21:13:33.267811
 
 BEGIN;
 

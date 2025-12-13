@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\dallas\2020-2029\quest-005-rodeo.yaml
--- Generated: 2025-12-06T21:12:57.221217
+-- Generated: 2025-12-13T21:13:33.435217
 
 BEGIN;
 

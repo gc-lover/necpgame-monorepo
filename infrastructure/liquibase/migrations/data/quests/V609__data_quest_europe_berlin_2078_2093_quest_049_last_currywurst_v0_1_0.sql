@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\berlin\2078-2093\quest-049-last-currywurst.yaml
--- Generated: 2025-12-06T21:12:59.899766
+-- Generated: 2025-12-13T21:13:35.796079
 
 BEGIN;
 

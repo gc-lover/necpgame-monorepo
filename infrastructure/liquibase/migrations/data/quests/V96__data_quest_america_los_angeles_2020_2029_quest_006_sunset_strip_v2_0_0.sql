@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\los-angeles\2020-2029\quest-006-sunset-strip.yaml
--- Generated: 2025-12-06T21:12:57.488363
+-- Generated: 2025-12-13T21:13:33.704731
 
 BEGIN;
 

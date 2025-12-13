@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\miami\2020-2029\quest-009-art-basel.yaml
--- Generated: 2025-12-06T21:12:57.586179
+-- Generated: 2025-12-13T21:13:33.808780
 
 BEGIN;
 

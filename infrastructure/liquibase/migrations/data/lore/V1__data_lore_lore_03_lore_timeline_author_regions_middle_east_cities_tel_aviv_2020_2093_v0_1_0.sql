@@ -1,0 +1,165 @@
+-- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
+-- Import lore from: lore\_03-lore\timeline-author\regions\middle-east\cities\tel-aviv-2020-2093.yaml
+-- Generated: 2025-12-13T21:13:37.716887
+
+BEGIN;
+
+-- Lore: canon-region-middle-east-tel-aviv-2020-2093
+INSERT INTO narrative.lore_entries (
+    lore_id, title, document_type, category,
+    content_data, version
+)
+VALUES (
+    'canon-region-middle-east-tel-aviv-2020-2093',
+    'Тель-Авив 2020-2093 — Пакет безопасности',
+    'canon',
+    'timeline-author',
+    '{
+  "metadata": {
+    "id": "canon-region-middle-east-tel-aviv-2020-2093",
+    "title": "Тель-Авив 2020-2093 — Пакет безопасности",
+    "document_type": "canon",
+    "category": "timeline-author",
+    "status": "draft",
+    "version": "0.1.0",
+    "last_updated": "2025-11-12T01:25:00+00:00",
+    "concept_approved": false,
+    "concept_reviewed_at": "",
+    "owners": [
+      {
+        "role": "lore_analyst",
+        "contact": "lore@necp.game"
+      }
+    ],
+    "tags": [
+      "middle-east",
+      "tel-aviv",
+      "cyber-defense"
+    ],
+    "topics": [
+      "regional-history",
+      "security-tech"
+    ],
+    "related_systems": [
+      "narrative-service",
+      "world-state"
+    ],
+    "related_documents": [
+      {
+        "id": "canon-region-middle-east-2020-2093",
+        "relation": "references"
+      }
+    ],
+    "source": "shared/docs/knowledge/canon/lore/_03-lore/timeline-author/regions/middle-east/cities/tel-aviv-2020-2093.md",
+    "visibility": "internal",
+    "audience": [
+      "lore",
+      "narrative"
+    ],
+    "risk_level": "medium"
+  },
+  "review": {
+    "chain": [
+      {
+        "role": "lore_lead",
+        "reviewer": "",
+        "reviewed_at": "",
+        "status": "pending"
+      }
+    ],
+    "next_actions": []
+  },
+  "summary": {
+    "problem": "Хронология Тель-Авива находилась в Markdown и не учитывалась в базе знаний для сценариев кибербезопасности и водных технологий.",
+    "goal": "Структурировать авторские эпохи города, подчеркнув буферные порты, оборонные системы и экспорт технологического пакета безопасности.",
+    "essence": "Тель-Авив развивается от «Startup Nation 2.0» до глобального экспортёра кибербезопасности и водных технологий, сочетающего военные и гражданские инновации.",
+    "key_points": [
+      "Пять эпох отражают рост от Силикон-Вади до пакета безопасности для мирового рынка.",
+      "Выделены айрон-дом 2.0, Blackwall-испытания и кибуц-серверы как ключевые механики.",
+      "Подготовлены хуки для квестов киберобороны, портовой логистики и цифрового примирения."
+    ]
+  },
+  "content": {
+    "sections": [
+      {
+        "id": "era-2020-2029",
+        "title": "2020–2029 — Startup Nation 2.0",
+        "body": "«Силикон-Вади» формирует киберпанк-версию Кремниевой долины.\n«Военные Технологии» поставляют разработки для PMC, а «Средиземноморские Порты» обслуживают оффлайн-логистику.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "era-2030-2039",
+        "title": "2030–2039 — Кибер-оборона",
+        "body": "«Айрон-Дом 2.0» расширяет защиту от кибератак.\n«Модин-Лаборатории» ведут секретные разработки, «Пляжные Хабы» совмещают отдых и работу.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "era-2040-2060",
+        "title": "2040–2060 — Red+: Опреснение и данные",
+        "body": "«Водные Технологии» выходят на экспорт, «Blackwall-Испытания» используют город как тестовую площадку.\n«Кибуц-Серверы» создают коллективные дата-центры.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "era-2061-2077",
+        "title": "2061–2077 — Технологическая держава",
+        "body": "«Мосад 2.0» превращает киберразведку в глобальную силу.\n«Палестинская интеграция?» ищет цифровые формы примирения.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "era-2078-2093",
+        "title": "2078–2093 — Пакет безопасности",
+        "body": "Город экспортирует протоколы кибербезопасности и водные решения как стандарт региона.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "hooks",
+        "title": "Механики и хуки",
+        "body": "Силикон-Вади, айрон-дом 2.0, водные технологии, кибуц-серверы и киберразведка Мосад 2.0 создают задания по обороне, логистике и дипломатии.\n",
+        "mechanics_links": [],
+        "assets": []
+      }
+    ]
+  },
+  "appendix": {
+    "glossary": [],
+    "references": [],
+    "decisions": []
+  },
+  "implementation": {
+    "needs_task": false,
+    "github_issue": 72,
+    "queue_reference": [
+      "shared/trackers/queues/concept/queued.yaml"
+    ],
+    "blockers": []
+  },
+  "history": [
+    {
+      "version": "0.1.0",
+      "date": "2025-11-12",
+      "author": "concept_director",
+      "changes": "Конвертирована хроника Тель-Авива в YAML и выделены ключевые механики безопасности."
+    }
+  ],
+  "validation": {
+    "checksum": "",
+    "schema_version": "1.0"
+  }
+}'::jsonb,
+    0
+)
+ON CONFLICT (lore_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    document_type = EXCLUDED.document_type,
+    category = EXCLUDED.category,
+    content_data = EXCLUDED.content_data,
+    version = EXCLUDED.version,
+    updated_at = CURRENT_TIMESTAMP;
+
+
+COMMIT;

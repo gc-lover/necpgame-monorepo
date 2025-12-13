@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\las-vegas\2020-2029\quest-004-wedding-chapel.yaml
--- Generated: 2025-12-06T21:12:57.422002
+-- Generated: 2025-12-13T21:13:33.640881
 
 BEGIN;
 

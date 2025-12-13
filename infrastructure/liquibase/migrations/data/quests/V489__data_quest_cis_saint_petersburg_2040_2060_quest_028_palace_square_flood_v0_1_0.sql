@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2040-2060\quest-028-palace-square-flood.yaml
--- Generated: 2025-12-06T21:12:59.403434
+-- Generated: 2025-12-13T21:13:35.359407
 
 BEGIN;
 

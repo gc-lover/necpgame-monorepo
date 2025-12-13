@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2040-2060\quest-025-warm-corridor.yaml
--- Generated: 2025-12-06T21:12:59.106504
+-- Generated: 2025-12-13T21:13:35.165538
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\vladivostok\2020-2029\quest-010-east-meets-west.yaml
--- Generated: 2025-12-06T21:12:59.647117
+-- Generated: 2025-12-13T21:13:35.551674
 
 BEGIN;
 

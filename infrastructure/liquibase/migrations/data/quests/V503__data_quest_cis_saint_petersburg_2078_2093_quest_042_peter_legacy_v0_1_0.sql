@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2078-2093\quest-042-peter-legacy.yaml
--- Generated: 2025-12-06T21:12:59.480469
+-- Generated: 2025-12-13T21:13:35.412745
 
 BEGIN;
 

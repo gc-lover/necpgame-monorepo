@@ -20,6 +20,7 @@ type Activation struct {
 	ActionBudgetRemaining int
 	ActionBudgetMax       int
 	HeatStacks            int
+	IsOverstress          bool
 	IsActive              bool
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
@@ -40,6 +41,7 @@ type Repository interface {
 	SaveActivation(ctx context.Context, activation *Activation) error
 	GetTemporalMarks(ctx context.Context, playerID uuid.UUID) ([]*TemporalMark, error)
 	SaveTemporalMarks(ctx context.Context, marks []*TemporalMark) error
+	UpdateTemporalMarks(ctx context.Context, marks []*TemporalMark) error
 }
 
 type inMemoryRepository struct {
@@ -111,6 +113,34 @@ func (r *inMemoryRepository) SaveTemporalMarks(ctx context.Context, marks []*Tem
 	}
 
 	r.marks[playerID] = marks
+	return nil
+}
+
+func (r *inMemoryRepository) UpdateTemporalMarks(ctx context.Context, marks []*TemporalMark) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if len(marks) == 0 {
+		return nil
+	}
+
+	playerID := marks[0].PlayerID
+	existingMarks, exists := r.marks[playerID]
+	if !exists {
+		return nil
+	}
+
+	// Update existing marks with applied status
+	for _, updateMark := range marks {
+		for i, existingMark := range existingMarks {
+			if existingMark.ID == updateMark.ID {
+				existingMarks[i].AppliedAt = updateMark.AppliedAt
+				break
+			}
+		}
+	}
+
+	r.marks[playerID] = existingMarks
 	return nil
 }
 

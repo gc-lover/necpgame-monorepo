@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\san-francisco\2020-2029\quest-003-silicon-valley-startup.yaml
--- Generated: 2025-12-06T21:12:57.961996
+-- Generated: 2025-12-13T21:13:34.175172
 
 BEGIN;
 

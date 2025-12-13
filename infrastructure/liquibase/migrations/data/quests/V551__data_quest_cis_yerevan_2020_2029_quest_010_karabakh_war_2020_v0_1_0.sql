@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\yerevan\2020-2029\quest-010-karabakh-war-2020.yaml
--- Generated: 2025-12-06T21:12:59.687837
+-- Generated: 2025-12-13T21:13:35.588674
 
 BEGIN;
 

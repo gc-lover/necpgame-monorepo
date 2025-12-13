@@ -1,6 +1,6 @@
--- Issue: #50, #358
+-- Issue: #50
 -- Import quest from: america\new-york\2078-2093\quest-043-american-legacy.yaml
--- Generated: 2025-12-06T21:12:57.835709
+-- Generated: 2025-12-13T21:13:34.051685
 
 BEGIN;
 

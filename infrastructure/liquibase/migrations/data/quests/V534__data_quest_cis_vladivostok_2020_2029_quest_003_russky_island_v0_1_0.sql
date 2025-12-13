@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\vladivostok\2020-2029\quest-003-russky-island.yaml
--- Generated: 2025-12-06T21:12:59.612473
+-- Generated: 2025-12-13T21:13:35.523885
 
 BEGIN;
 

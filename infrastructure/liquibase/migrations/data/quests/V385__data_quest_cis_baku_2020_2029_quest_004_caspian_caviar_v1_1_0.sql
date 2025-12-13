@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\baku\2020-2029\quest-004-caspian-caviar.yaml
--- Generated: 2025-12-06T21:12:58.847134
+-- Generated: 2025-12-13T21:13:34.973300
 
 BEGIN;
 

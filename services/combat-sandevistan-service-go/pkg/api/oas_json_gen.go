@@ -24,14 +24,14 @@ func (s *Action) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Action) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
-	}
-	{
 		if s.TargetID.Set {
 			e.FieldStart("target_id")
 			s.TargetID.Encode(e)
 		}
+	}
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
 	}
 	{
 		if s.TargetPosition.Set {
@@ -42,8 +42,8 @@ func (s *Action) encodeFields(e *jx.Encoder) {
 }
 
 var jsonFieldsNameOfAction = [3]string{
-	0: "type",
-	1: "target_id",
+	0: "target_id",
+	1: "type",
 	2: "target_position",
 }
 
@@ -56,16 +56,6 @@ func (s *Action) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "type":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
-			}
 		case "target_id":
 			if err := func() error {
 				s.TargetID.Reset()
@@ -75,6 +65,16 @@ func (s *Action) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"target_id\"")
+			}
+		case "type":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "target_position":
 			if err := func() error {
@@ -96,7 +96,7 @@ func (s *Action) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000001,
+		0b00000010,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -1208,6 +1208,82 @@ func (s *ApplyCounterplayUnauthorized) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes ApplyTemporalMarksInternalServerError as json.
+func (s *ApplyTemporalMarksInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ApplyTemporalMarksInternalServerError from json.
+func (s *ApplyTemporalMarksInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ApplyTemporalMarksInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ApplyTemporalMarksInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ApplyTemporalMarksInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ApplyTemporalMarksInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ApplyTemporalMarksUnauthorized as json.
+func (s *ApplyTemporalMarksUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ApplyTemporalMarksUnauthorized from json.
+func (s *ApplyTemporalMarksUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ApplyTemporalMarksUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ApplyTemporalMarksUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ApplyTemporalMarksUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ApplyTemporalMarksUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
 func (s *CoolingResult) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -1369,14 +1445,14 @@ func (s *CounterplayResult) encodeFields(e *jx.Encoder) {
 		s.EffectApplied.Encode(e)
 	}
 	{
-		e.FieldStart("sandevistan_interrupted")
-		e.Bool(s.SandevistanInterrupted)
-	}
-	{
 		if s.ActionBudgetReduced.Set {
 			e.FieldStart("action_budget_reduced")
 			s.ActionBudgetReduced.Encode(e)
 		}
+	}
+	{
+		e.FieldStart("sandevistan_interrupted")
+		e.Bool(s.SandevistanInterrupted)
 	}
 	{
 		if s.PhaseEnded.Set {
@@ -1388,8 +1464,8 @@ func (s *CounterplayResult) encodeFields(e *jx.Encoder) {
 
 var jsonFieldsNameOfCounterplayResult = [4]string{
 	0: "effect_applied",
-	1: "sandevistan_interrupted",
-	2: "action_budget_reduced",
+	1: "action_budget_reduced",
+	2: "sandevistan_interrupted",
 	3: "phase_ended",
 }
 
@@ -1412,18 +1488,6 @@ func (s *CounterplayResult) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"effect_applied\"")
 			}
-		case "sandevistan_interrupted":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Bool()
-				s.SandevistanInterrupted = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"sandevistan_interrupted\"")
-			}
 		case "action_budget_reduced":
 			if err := func() error {
 				s.ActionBudgetReduced.Reset()
@@ -1433,6 +1497,18 @@ func (s *CounterplayResult) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"action_budget_reduced\"")
+			}
+		case "sandevistan_interrupted":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.SandevistanInterrupted = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"sandevistan_interrupted\"")
 			}
 		case "phase_ended":
 			if err := func() error {
@@ -1454,7 +1530,7 @@ func (s *CounterplayResult) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000101,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -2013,6 +2089,82 @@ func (s *GetHeatStatusUnauthorized) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes GetSandevistanBonusesInternalServerError as json.
+func (s *GetSandevistanBonusesInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetSandevistanBonusesInternalServerError from json.
+func (s *GetSandevistanBonusesInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSandevistanBonusesInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetSandevistanBonusesInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSandevistanBonusesInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSandevistanBonusesInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetSandevistanBonusesUnauthorized as json.
+func (s *GetSandevistanBonusesUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetSandevistanBonusesUnauthorized from json.
+func (s *GetSandevistanBonusesUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSandevistanBonusesUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetSandevistanBonusesUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSandevistanBonusesUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSandevistanBonusesUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes GetSandevistanStatusInternalServerError as json.
 func (s *GetSandevistanStatusInternalServerError) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
@@ -2325,6 +2477,12 @@ func (s *HeatStatus) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *HeatStatus) encodeFields(e *jx.Encoder) {
 	{
+		if s.OverstressPenalty.Set {
+			e.FieldStart("overstress_penalty")
+			s.OverstressPenalty.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("current_stacks")
 		e.Int(s.CurrentStacks)
 	}
@@ -2333,29 +2491,23 @@ func (s *HeatStatus) encodeFields(e *jx.Encoder) {
 		e.Int(s.MaxStacks)
 	}
 	{
-		e.FieldStart("is_overstress")
-		e.Bool(s.IsOverstress)
-	}
-	{
-		if s.OverstressPenalty.Set {
-			e.FieldStart("overstress_penalty")
-			s.OverstressPenalty.Encode(e)
-		}
-	}
-	{
 		if s.CyberpsychosisRisk.Set {
 			e.FieldStart("cyberpsychosis_risk")
 			s.CyberpsychosisRisk.Encode(e)
 		}
 	}
+	{
+		e.FieldStart("is_overstress")
+		e.Bool(s.IsOverstress)
+	}
 }
 
 var jsonFieldsNameOfHeatStatus = [5]string{
-	0: "current_stacks",
-	1: "max_stacks",
-	2: "is_overstress",
-	3: "overstress_penalty",
-	4: "cyberpsychosis_risk",
+	0: "overstress_penalty",
+	1: "current_stacks",
+	2: "max_stacks",
+	3: "cyberpsychosis_risk",
+	4: "is_overstress",
 }
 
 // Decode decodes HeatStatus from json.
@@ -2367,8 +2519,18 @@ func (s *HeatStatus) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "overstress_penalty":
+			if err := func() error {
+				s.OverstressPenalty.Reset()
+				if err := s.OverstressPenalty.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"overstress_penalty\"")
+			}
 		case "current_stacks":
-			requiredBitSet[0] |= 1 << 0
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Int()
 				s.CurrentStacks = int(v)
@@ -2380,7 +2542,7 @@ func (s *HeatStatus) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"current_stacks\"")
 			}
 		case "max_stacks":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int()
 				s.MaxStacks = int(v)
@@ -2390,28 +2552,6 @@ func (s *HeatStatus) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"max_stacks\"")
-			}
-		case "is_overstress":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				v, err := d.Bool()
-				s.IsOverstress = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"is_overstress\"")
-			}
-		case "overstress_penalty":
-			if err := func() error {
-				s.OverstressPenalty.Reset()
-				if err := s.OverstressPenalty.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"overstress_penalty\"")
 			}
 		case "cyberpsychosis_risk":
 			if err := func() error {
@@ -2423,6 +2563,18 @@ func (s *HeatStatus) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"cyberpsychosis_risk\"")
 			}
+		case "is_overstress":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				v, err := d.Bool()
+				s.IsOverstress = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"is_overstress\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -2433,7 +2585,7 @@ func (s *HeatStatus) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00010110,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -3002,6 +3154,429 @@ func (s *OptString) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *PerceptionDragEvent) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PerceptionDragEvent) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("event_type")
+		s.EventType.Encode(e)
+	}
+	{
+		e.FieldStart("player_id")
+		json.EncodeUUID(e, s.PlayerID)
+	}
+	{
+		e.FieldStart("activation_id")
+		json.EncodeUUID(e, s.ActivationID)
+	}
+	{
+		e.FieldStart("phase")
+		s.Phase.Encode(e)
+	}
+	{
+		e.FieldStart("timestamp")
+		json.EncodeDateTime(e, s.Timestamp)
+	}
+	{
+		e.FieldStart("affected_players")
+		e.ArrStart()
+		for _, elem := range s.AffectedPlayers {
+			json.EncodeUUID(e, elem)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("drag_duration_ms")
+		e.Int(s.DragDurationMs)
+	}
+	{
+		e.FieldStart("drag_intensity")
+		e.Float32(s.DragIntensity)
+	}
+}
+
+var jsonFieldsNameOfPerceptionDragEvent = [8]string{
+	0: "event_type",
+	1: "player_id",
+	2: "activation_id",
+	3: "phase",
+	4: "timestamp",
+	5: "affected_players",
+	6: "drag_duration_ms",
+	7: "drag_intensity",
+}
+
+// Decode decodes PerceptionDragEvent from json.
+func (s *PerceptionDragEvent) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PerceptionDragEvent to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "event_type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.EventType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"event_type\"")
+			}
+		case "player_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.PlayerID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_id\"")
+			}
+		case "activation_id":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ActivationID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"activation_id\"")
+			}
+		case "phase":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Phase.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phase\"")
+			}
+		case "timestamp":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.Timestamp = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "affected_players":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				s.AffectedPlayers = make([]uuid.UUID, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem uuid.UUID
+					v, err := json.DecodeUUID(d)
+					elem = v
+					if err != nil {
+						return err
+					}
+					s.AffectedPlayers = append(s.AffectedPlayers, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"affected_players\"")
+			}
+		case "drag_duration_ms":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Int()
+				s.DragDurationMs = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"drag_duration_ms\"")
+			}
+		case "drag_intensity":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				v, err := d.Float32()
+				s.DragIntensity = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"drag_intensity\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PerceptionDragEvent")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b11111111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfPerceptionDragEvent) {
+					name = jsonFieldsNameOfPerceptionDragEvent[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PerceptionDragEvent) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PerceptionDragEvent) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PerceptionDragEventEventType as json.
+func (s PerceptionDragEventEventType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes PerceptionDragEventEventType from json.
+func (s *PerceptionDragEventEventType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PerceptionDragEventEventType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch PerceptionDragEventEventType(v) {
+	case PerceptionDragEventEventTypeSandevistanActivated:
+		*s = PerceptionDragEventEventTypeSandevistanActivated
+	case PerceptionDragEventEventTypeSandevistanDeactivated:
+		*s = PerceptionDragEventEventTypeSandevistanDeactivated
+	case PerceptionDragEventEventTypePhaseChanged:
+		*s = PerceptionDragEventEventTypePhaseChanged
+	default:
+		*s = PerceptionDragEventEventType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s PerceptionDragEventEventType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PerceptionDragEventEventType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PerceptionDragEventPhase as json.
+func (s PerceptionDragEventPhase) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes PerceptionDragEventPhase from json.
+func (s *PerceptionDragEventPhase) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PerceptionDragEventPhase to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch PerceptionDragEventPhase(v) {
+	case PerceptionDragEventPhasePreparation:
+		*s = PerceptionDragEventPhasePreparation
+	case PerceptionDragEventPhaseActive:
+		*s = PerceptionDragEventPhaseActive
+	case PerceptionDragEventPhaseRecovery:
+		*s = PerceptionDragEventPhaseRecovery
+	case PerceptionDragEventPhaseIdle:
+		*s = PerceptionDragEventPhaseIdle
+	default:
+		*s = PerceptionDragEventPhase(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s PerceptionDragEventPhase) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PerceptionDragEventPhase) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PublishPerceptionDragEventBadRequest as json.
+func (s *PublishPerceptionDragEventBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes PublishPerceptionDragEventBadRequest from json.
+func (s *PublishPerceptionDragEventBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PublishPerceptionDragEventBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = PublishPerceptionDragEventBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PublishPerceptionDragEventBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PublishPerceptionDragEventBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PublishPerceptionDragEventInternalServerError as json.
+func (s *PublishPerceptionDragEventInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes PublishPerceptionDragEventInternalServerError from json.
+func (s *PublishPerceptionDragEventInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PublishPerceptionDragEventInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = PublishPerceptionDragEventInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PublishPerceptionDragEventInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PublishPerceptionDragEventInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PublishPerceptionDragEventUnauthorized as json.
+func (s *PublishPerceptionDragEventUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes PublishPerceptionDragEventUnauthorized from json.
+func (s *PublishPerceptionDragEventUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PublishPerceptionDragEventUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = PublishPerceptionDragEventUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PublishPerceptionDragEventUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PublishPerceptionDragEventUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *SandevistanActivation) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -3027,15 +3602,15 @@ func (s *SandevistanActivation) encodeFields(e *jx.Encoder) {
 		json.EncodeDateTime(e, s.ExpiresAt)
 	}
 	{
-		if s.ActionBudgetRemaining.Set {
-			e.FieldStart("action_budget_remaining")
-			s.ActionBudgetRemaining.Encode(e)
-		}
-	}
-	{
 		if s.Bonuses.Set {
 			e.FieldStart("bonuses")
 			s.Bonuses.Encode(e)
+		}
+	}
+	{
+		if s.ActionBudgetRemaining.Set {
+			e.FieldStart("action_budget_remaining")
+			s.ActionBudgetRemaining.Encode(e)
 		}
 	}
 }
@@ -3045,8 +3620,8 @@ var jsonFieldsNameOfSandevistanActivation = [6]string{
 	1: "phase",
 	2: "started_at",
 	3: "expires_at",
-	4: "action_budget_remaining",
-	5: "bonuses",
+	4: "bonuses",
+	5: "action_budget_remaining",
 }
 
 // Decode decodes SandevistanActivation from json.
@@ -3104,16 +3679,6 @@ func (s *SandevistanActivation) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"expires_at\"")
 			}
-		case "action_budget_remaining":
-			if err := func() error {
-				s.ActionBudgetRemaining.Reset()
-				if err := s.ActionBudgetRemaining.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"action_budget_remaining\"")
-			}
 		case "bonuses":
 			if err := func() error {
 				s.Bonuses.Reset()
@@ -3123,6 +3688,16 @@ func (s *SandevistanActivation) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"bonuses\"")
+			}
+		case "action_budget_remaining":
+			if err := func() error {
+				s.ActionBudgetRemaining.Reset()
+				if err := s.ActionBudgetRemaining.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"action_budget_remaining\"")
 			}
 		default:
 			return d.Skip()
@@ -3320,14 +3895,14 @@ func (s *SandevistanActivationPhase) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *SandevistanStatus) Encode(e *jx.Encoder) {
+func (s *SandevistanBonuses) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *SandevistanStatus) encodeFields(e *jx.Encoder) {
+func (s *SandevistanBonuses) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("is_active")
 		e.Bool(s.IsActive)
@@ -3337,49 +3912,36 @@ func (s *SandevistanStatus) encodeFields(e *jx.Encoder) {
 		s.Phase.Encode(e)
 	}
 	{
-		if s.ActivationID.Set {
-			e.FieldStart("activation_id")
-			s.ActivationID.Encode(e)
-		}
+		e.FieldStart("movement_boost")
+		e.Float32(s.MovementBoost)
 	}
 	{
-		e.FieldStart("cooldown_remaining")
-		e.Int(s.CooldownRemaining)
+		e.FieldStart("fire_rate_boost")
+		e.Float32(s.FireRateBoost)
 	}
 	{
-		if s.HeatStacks.Set {
-			e.FieldStart("heat_stacks")
-			s.HeatStacks.Encode(e)
-		}
+		e.FieldStart("dash_distance")
+		e.Float32(s.DashDistance)
 	}
 	{
-		if s.ActionBudgetRemaining.Set {
-			e.FieldStart("action_budget_remaining")
-			s.ActionBudgetRemaining.Encode(e)
-		}
-	}
-	{
-		if s.TemporalMarksCount.Set {
-			e.FieldStart("temporal_marks_count")
-			s.TemporalMarksCount.Encode(e)
-		}
+		e.FieldStart("auto_target_enabled")
+		e.Bool(s.AutoTargetEnabled)
 	}
 }
 
-var jsonFieldsNameOfSandevistanStatus = [7]string{
+var jsonFieldsNameOfSandevistanBonuses = [6]string{
 	0: "is_active",
 	1: "phase",
-	2: "activation_id",
-	3: "cooldown_remaining",
-	4: "heat_stacks",
-	5: "action_budget_remaining",
-	6: "temporal_marks_count",
+	2: "movement_boost",
+	3: "fire_rate_boost",
+	4: "dash_distance",
+	5: "auto_target_enabled",
 }
 
-// Decode decodes SandevistanStatus from json.
-func (s *SandevistanStatus) Decode(d *jx.Decoder) error {
+// Decode decodes SandevistanBonuses from json.
+func (s *SandevistanBonuses) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode SandevistanStatus to nil")
+		return errors.New("invalid: unable to decode SandevistanBonuses to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -3407,6 +3969,220 @@ func (s *SandevistanStatus) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"phase\"")
 			}
+		case "movement_boost":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Float32()
+				s.MovementBoost = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"movement_boost\"")
+			}
+		case "fire_rate_boost":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Float32()
+				s.FireRateBoost = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"fire_rate_boost\"")
+			}
+		case "dash_distance":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				v, err := d.Float32()
+				s.DashDistance = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"dash_distance\"")
+			}
+		case "auto_target_enabled":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.AutoTargetEnabled = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"auto_target_enabled\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SandevistanBonuses")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00111111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfSandevistanBonuses) {
+					name = jsonFieldsNameOfSandevistanBonuses[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SandevistanBonuses) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SandevistanBonuses) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SandevistanBonusesPhase as json.
+func (s SandevistanBonusesPhase) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes SandevistanBonusesPhase from json.
+func (s *SandevistanBonusesPhase) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SandevistanBonusesPhase to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch SandevistanBonusesPhase(v) {
+	case SandevistanBonusesPhaseIdle:
+		*s = SandevistanBonusesPhaseIdle
+	case SandevistanBonusesPhasePreparation:
+		*s = SandevistanBonusesPhasePreparation
+	case SandevistanBonusesPhaseActive:
+		*s = SandevistanBonusesPhaseActive
+	case SandevistanBonusesPhaseRecovery:
+		*s = SandevistanBonusesPhaseRecovery
+	default:
+		*s = SandevistanBonusesPhase(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s SandevistanBonusesPhase) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SandevistanBonusesPhase) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SandevistanStatus) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SandevistanStatus) encodeFields(e *jx.Encoder) {
+	{
+		if s.ActivationID.Set {
+			e.FieldStart("activation_id")
+			s.ActivationID.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("phase")
+		s.Phase.Encode(e)
+	}
+	{
+		e.FieldStart("cooldown_remaining")
+		e.Int(s.CooldownRemaining)
+	}
+	{
+		if s.HeatStacks.Set {
+			e.FieldStart("heat_stacks")
+			s.HeatStacks.Encode(e)
+		}
+	}
+	{
+		if s.ActionBudgetRemaining.Set {
+			e.FieldStart("action_budget_remaining")
+			s.ActionBudgetRemaining.Encode(e)
+		}
+	}
+	{
+		if s.TemporalMarksCount.Set {
+			e.FieldStart("temporal_marks_count")
+			s.TemporalMarksCount.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("is_active")
+		e.Bool(s.IsActive)
+	}
+}
+
+var jsonFieldsNameOfSandevistanStatus = [7]string{
+	0: "activation_id",
+	1: "phase",
+	2: "cooldown_remaining",
+	3: "heat_stacks",
+	4: "action_budget_remaining",
+	5: "temporal_marks_count",
+	6: "is_active",
+}
+
+// Decode decodes SandevistanStatus from json.
+func (s *SandevistanStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SandevistanStatus to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
 		case "activation_id":
 			if err := func() error {
 				s.ActivationID.Reset()
@@ -3417,8 +4193,18 @@ func (s *SandevistanStatus) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"activation_id\"")
 			}
+		case "phase":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.Phase.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phase\"")
+			}
 		case "cooldown_remaining":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int()
 				s.CooldownRemaining = int(v)
@@ -3459,6 +4245,18 @@ func (s *SandevistanStatus) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"temporal_marks_count\"")
 			}
+		case "is_active":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.IsActive = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"is_active\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -3469,7 +4267,7 @@ func (s *SandevistanStatus) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001011,
+		0b01000110,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -4004,6 +4802,148 @@ func (s *TemporalMark) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *TemporalMark) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TemporalMarksApplied) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TemporalMarksApplied) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("marks_applied")
+		e.Int(s.MarksApplied)
+	}
+	{
+		e.FieldStart("damage_dealt")
+		e.Int(s.DamageDealt)
+	}
+	{
+		e.FieldStart("targets_hit")
+		e.ArrStart()
+		for _, elem := range s.TargetsHit {
+			json.EncodeUUID(e, elem)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfTemporalMarksApplied = [3]string{
+	0: "marks_applied",
+	1: "damage_dealt",
+	2: "targets_hit",
+}
+
+// Decode decodes TemporalMarksApplied from json.
+func (s *TemporalMarksApplied) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TemporalMarksApplied to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "marks_applied":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int()
+				s.MarksApplied = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"marks_applied\"")
+			}
+		case "damage_dealt":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int()
+				s.DamageDealt = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"damage_dealt\"")
+			}
+		case "targets_hit":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				s.TargetsHit = make([]uuid.UUID, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem uuid.UUID
+					v, err := json.DecodeUUID(d)
+					elem = v
+					if err != nil {
+						return err
+					}
+					s.TargetsHit = append(s.TargetsHit, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"targets_hit\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TemporalMarksApplied")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTemporalMarksApplied) {
+					name = jsonFieldsNameOfTemporalMarksApplied[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TemporalMarksApplied) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TemporalMarksApplied) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

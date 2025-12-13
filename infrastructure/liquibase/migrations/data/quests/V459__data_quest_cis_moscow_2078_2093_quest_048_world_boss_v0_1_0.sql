@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2078-2093\quest-048-world-boss.yaml
--- Generated: 2025-12-06T21:12:59.225333
+-- Generated: 2025-12-13T21:13:35.237675
 
 BEGIN;
 

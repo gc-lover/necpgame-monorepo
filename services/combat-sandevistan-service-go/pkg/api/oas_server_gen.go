@@ -26,6 +26,12 @@ type Handler interface {
 	//
 	// POST /combat/players/{player_id}/sandevistan/counterplay
 	ApplyCounterplay(ctx context.Context, req *ApplyCounterplayReq, params ApplyCounterplayParams) (ApplyCounterplayRes, error)
+	// ApplyTemporalMarks implements applyTemporalMarks operation.
+	//
+	// Применить Temporal Marks (delayed burst damage).
+	//
+	// POST /combat/players/{player_id}/sandevistan/apply-temporal-marks
+	ApplyTemporalMarks(ctx context.Context, params ApplyTemporalMarksParams) (ApplyTemporalMarksRes, error)
 	// DeactivateSandevistan implements deactivateSandevistan operation.
 	//
 	// Досрочно деактивировать Sandevistan.
@@ -38,6 +44,12 @@ type Handler interface {
 	//
 	// GET /combat/players/{player_id}/sandevistan/heat
 	GetHeatStatus(ctx context.Context, params GetHeatStatusParams) (GetHeatStatusRes, error)
+	// GetSandevistanBonuses implements getSandevistanBonuses operation.
+	//
+	// Получить текущие бонусы Sandevistan.
+	//
+	// GET /combat/players/{player_id}/sandevistan/bonuses
+	GetSandevistanBonuses(ctx context.Context, params GetSandevistanBonusesParams) (GetSandevistanBonusesRes, error)
 	// GetSandevistanStatus implements getSandevistanStatus operation.
 	//
 	// Получить статус Sandevistan.
@@ -50,6 +62,12 @@ type Handler interface {
 	//
 	// GET /combat/players/{player_id}/sandevistan/temporal-marks
 	GetTemporalMarks(ctx context.Context, params GetTemporalMarksParams) (GetTemporalMarksRes, error)
+	// PublishPerceptionDragEvent implements publishPerceptionDragEvent operation.
+	//
+	// Опубликовать Perception Drag событие.
+	//
+	// POST /combat/players/{player_id}/sandevistan/perception-drag
+	PublishPerceptionDragEvent(ctx context.Context, req *PerceptionDragEvent, params PublishPerceptionDragEventParams) (PublishPerceptionDragEventRes, error)
 	// SetTemporalMarks implements setTemporalMarks operation.
 	//
 	// Установить Temporal Marks на цели.

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2030-2039\quest-014-humanity-ordinance.yaml
--- Generated: 2025-12-06T21:12:59.048417
+-- Generated: 2025-12-13T21:13:35.131491
 
 BEGIN;
 

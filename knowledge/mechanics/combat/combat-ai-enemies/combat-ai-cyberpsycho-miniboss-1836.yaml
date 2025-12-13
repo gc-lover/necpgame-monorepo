@@ -1,59 +1,193 @@
-title: AI враг — Киберпсих (мини-босс)
 # Issue: #1836
+metadata:
+  id: combat-ai-cyberpsycho-miniboss-1836
+  title: "AI враг: Киберпсих (mini-boss)"
+  document_type: canon
+  category: mechanics
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-13T19:15:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T21:56:46Z
+  owners:
+    - role: content_director
+      contact: content@necp.game
+  tags:
+    - ai-enemy
+    - cyberpsycho
+    - miniboss
+    - berserker
+    - phase-boss
+  topics:
+    - combat-mechanics
+    - ai-behavior
+    - cyberpunk-horror
+  related_systems:
+    - combat-service
+    - ai-behavior-service
+  related_documents:
+    - id: combat-ai-enemies-index
+      relation: part_of
+    - id: mechanics-combat-ai-enemies
+      relation: extends
+  source: shared/docs/knowledge/mechanics/combat/combat-ai-enemies/combat-ai-cyberpsycho-miniboss-1836.md
+  visibility: internal
+  audience:
+    - backend
+    - qa
+    - game-design
+  risk_level: high
+review:
+  chain:
+    - role: backend_engineer
+      reviewer: Backend Team
+      reviewed_at: 2025-12-08T21:56:46Z
+      status: approved
+    - role: content_director
+      reviewer: Content Documentation Cell
+      reviewed_at: 2025-12-13T19:15:00Z
+      status: approved
+  next_actions: []
 summary:
-  role: Элита-ближник с фазами ярости и замыкания; непредсказуемые рывки.
-  synergy: Ломает построение, заставляет держать дистанцию, отвлекает турели.
-behavior:
-  targeting: переключается между самым слабым по HP и самым высоким DPS.
-  phases:
-    - ярость: +урон, -защита
-    - замыкание: краткий стан себя, даёт окно для игроков
-abilities:
-  ярость:
-    params:
-      damage_bonus_pct: 35
-      defense_penalty_pct: 20
-      duration_s: 10
-      cooldown_s: 18
-  замыкание:
-    params:
-      stun_self_s: 1.5-2
-      frequency_s: 14-20
-      aftereffect: получает +10% входящего урона на 5 с
-  рывок_ближка:
-    params:
-      range_m: 12
-      damage_hp_pct: 25
-      stagger: true
-      cooldown_s: 6
-  метательные_лезвия:
-    params:
-      range_m: 20
-      damage_hp_pct: 12 each
-      count: 3
-      bleed_chance: 0.25
-      cooldown_s: 8
-  прыжок_удар:
-    params:
-      aoe_radius_m: 4
-      damage_hp_pct: 30
-      knockdown: true
-      cooldown_s: 14
-ai_logic:
-  movement: непредсказуемые зигзаги, сбивает трекинг турелей; уклон при прицельном огне.
-  retreat: при 20% HP уходит в ярость последнего шанса (+15% скорость, 6 с).
-telemetry:
-  - metric: psycho_player_deaths
-    desc: смертность игроков от киберпсиха
-  - metric: psycho_fight_duration
-    desc: средняя длительность боя
-  - metric: psycho_phase_mix
-    desc: соотношение фаз ярости/замыкания, средние интервалы
-  - metric: psycho_windows
-    desc: количество замыканий и урон, нанесённый в окна
-  - metric: psycho_turret_misses
-    desc: сколько выстрелов турелей ушло в молоко из-за рывков
-edge_cases:
-  - анти-абуз: если удерживают на дистанции >25 м 10+ с, он начинает спамить лезвия (cooldown_s до 5)
-  - кооп: ярость даёт сплэш угрозы — агрит ближайших 2 игроков
-  - соло: damage_bonus_pct снижен до 25, чтобы не ваншотить
+  problem: Отсутствовало детальное описание AI киберпсиха-минибосса для реализации в backend
+  goal: Создать полную спецификацию AI врага с фазами ярости, замыканиями и непредсказуемым поведением
+  essence: Киберпсих - элитный враг с киберпсихозом, сочетающий высокую мобильность, фазовые способности и непредсказуемость
+  key_points:
+    - Фазы ярости (увеличенный урон) и замыкания (самостан с окнами)
+    - Непредсказуемые рывки и зигзаги, сбивающие турели
+    - Переключение между целями по HP и DPS
+    - Мини-босс уровня, требующий координации
+content:
+  sections:
+    - id: identity
+      title: Идентификация AI врага
+      body: |
+        Киберпсих - элитный AI враг типа "мини-босс", представляющий человека с киберпсихозом.
+        Активен в урбан и индустриальных зонах Night City. Выглядит как нестабильный кибернетически
+        модифицированный человек в рваной одежде с видимыми имплантами. Высокая мобильность и
+        непредсказуемость делают его опасным для групп игроков.
+      mechanics_links:
+        - mechanics/combat/combat-ai-enemies.yaml
+      assets: []
+    - id: appearance_style
+      title: Внешность и стиль
+      body: |
+        Внешне - обычный человек, но с признаками киберпсихоза: дергающиеся движения, светящиеся
+        импланты, кровь из носа и ушей. Одежда рваная, тело покрыто боевыми имплантами - лезвия
+        в руках, прыжковые усилители. Во время ярости глаза краснеют, тело начинает искрить.
+        При замыкании - замирает на месте с глюками, показывая внутренний конфликт.
+      mechanics_links: []
+      assets: []
+    - id: behavior
+      title: Поведение и тактика
+      body: |
+        Непредсказуемое поведение из-за психоза. Переключается между фазами ярости (агрессивное
+        преследование) и замыкания (самостан с окнами). Двигается зигзагами, рывками, сбивая
+        прицеливание турелей. Синергия с другими врагами - отвлекает внимание, ломает построение
+        отряда. Не боится урона, игнорирует боль из-за психоза.
+      mechanics_links:
+        - mechanics/combat/combat-ai-behavior.yaml
+      assets: []
+    - id: abilities
+      title: Способности и механики
+      body: |
+        Арсенал сочетает высокую мобильность с мощными атаками ближнего боя. Все способности
+        имеют кулдауны, но поведение непредсказуемо из-за психоза. Фазы ярости и замыкания
+        чередуются рандомно, создавая паттерны боя.
+      mechanics_links:
+        - mechanics/combat/combat-abilities.yaml
+      assets: []
+    - id: abilities_rage
+      title: Фаза ярости
+      body: |
+        Вход в режим берсерка: +35% к урону, -20% защита. Длится 10 секунд, кулдаун 18 секунд.
+        Во время ярости киберпсих становится агрессивнее, быстрее перемещается, игнорирует боль.
+      mechanics_links: []
+      assets: []
+    - id: abilities_glitch
+      title: Фаза замыкания
+      body: |
+        Рандомный самостан на 1.5-2 секунды с частотой каждые 14-20 секунд. После замыкания
+        получает +10% входящего урона на 5 секунд (уязвимость). Создает окна для игроков.
+      mechanics_links: []
+      assets: []
+    - id: abilities_charge
+      title: Рывок в ближний бой
+      body: |
+        Быстрый рывок на 12 метров с уроном 25% HP при контакте. Вызывает stagger (оглушение).
+        Кулдаун 6 секунд. Используется для быстрого сближения.
+      mechanics_links: []
+      assets: []
+    - id: abilities_blades
+      title: Метательные лезвия
+      body: |
+        Бросок 3 лезвий на расстояние до 20 метров, каждое наносит 12% HP. Шанс кровотечения 25%.
+        Кулдаун 8 секунд. Альтернативная дальняя атака.
+      mechanics_links: []
+      assets: []
+    - id: abilities_leap
+      title: Прыжок-удар
+      body: |
+        Высокий прыжок с AOE ударом радиусом 4 метра, урон 30% HP, knockdown. Кулдаун 14 секунд.
+        Мощная AOE атака для групп игроков.
+      mechanics_links: []
+      assets: []
+    - id: ai_logic
+      title: Логика ИИ
+      body: |
+        Переключается между целью с наименьшим HP и наиболее опасной по DPS. Непредсказуемые
+        зигзаги и уклоны. При 20% HP входит в финальную ярость (+15% скорость на 6 секунд).
+        Адаптируется к тактикам игроков - спамит лезвия при дистанционном удержании.
+      mechanics_links: []
+      assets: []
+    - id: gameplay_role
+      title: Роль в игре
+      body: |
+        Мини-босс для динамических событий и рейдов. Создает хаос в групповом бою, поощряет
+        координацию. Награда - редкие импланты и косметические предметы. Слаб против одиночных
+        игроков с хорошей мобильностью, силен против неподготовленных групп.
+      mechanics_links: []
+      assets: []
+    - id: balance_solo_coop
+      title: Баланс соло/кооператив
+      body: |
+        В соло: урон ярости снижен до 25% для предотвращения ваншота. В кооперативе: ярость
+        агрит ближайших 2 игроков сплэш-угрозой. Эффекты масштабируются по количеству целей.
+      mechanics_links: []
+      assets: []
+    - id: inspiration
+      title: Источники вдохновения
+      body: |
+        Вдохновлен киберпсихами из Cyberpunk 2077 и берсерками из Dark Souls. Технически
+        основан на концепции нестабильных имплантов и психических расстройств от перегрузки.
+        Сочетает элементы horror с тактическим геймплеем.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: Киберпсихоз
+      definition: Психическое расстройство от чрезмерных кибернетических имплантов
+    - term: Мини-босс
+      definition: Элитный враг с фазовым боем и повышенной сложностью
+    - term: Stagger
+      definition: Короткое оглушение, прерывающее действия цели
+  references:
+    - title: AI Enemies Index
+      link: ./index.yaml
+    - title: Combat Mechanics Overview
+      link: ../mechanics-overview.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  github_issue: 1836
+  queue_reference:
+    - shared/trackers/queues/content/queued.yaml
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-13
+    author: content_writer
+    changes: Создан полный YAML файл для AI киберпсиха-минибосса согласно требованиям
+validation:
+  checksum: ""
+  schema_version: "1.0"

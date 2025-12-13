@@ -1,700 +1,280 @@
-# Issue: #194
+# Issue: #1848
+# Архитектура системы управления сессиями
+
 metadata:
-  id: session-management-system-architecture
-  title: Архитектура системы управления сессиями (Session Management System)
-  document_type: architecture
-  category: systems
-  status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-30T20:05:00Z
-  owners:
-    - role: architect
-      contact: architect@necp.game
-  tags:
-    - architecture
-    - session
-    - backend
-    - auth
-    - infrastructure
-  related_systems:
-    - auth-service-go
-    - character-service-go
-    - world-service-go
-    - gameplay-service-go
-  related_documents:
-    - id: backend-session-management-overview
-      relation: extends
-    - id: backend-session-management-part1
-      relation: extends
-    - id: backend-session-management-part2
-      relation: extends
-  github_issue: 194
-  visibility: internal
-  audience:
-    - architect
-    - backend
-    - api-designer
+  version: "1.1.0"
+  created_at: "2025-12-13"
+  updated_at: "2025-12-13"
+  author: "API Designer Agent"
+  status: "completed"
+  priority: "high"
 
-summary:
-  problem: |
-    Требуется спроектировать полную техническую архитектуру системы управления
-    игровыми сессиями для обработки жизненного цикла сессий, heartbeat,
-    переподключений, мониторинга и безопасности.
-  goal: |
-    Создать архитектурную схему системы управления сессиями с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Системы жизненного цикла сессий
-    - Системы heartbeat
-    - Системы переподключений
-    - Технического задания для реализации
-  essence: |
-    Игровая система управления сессиями для обработки жизненного цикла сессий,
-    heartbeat, переподключений, мониторинга и безопасности.
+## Обзор системы
 
-architecture:
-  overview: |
-    Система управления сессиями состоит из семи основных компонентов:
-    1. Session Lifecycle Manager - управление жизненным циклом сессий
-    2. Session Heartbeat Handler - обработка heartbeat
-    3. Session Reconnection Manager - управление переподключениями
-    4. Session State Manager - управление состоянием сессий
-    5. Session Cleanup Service - очистка сессий
-    6. Session Security Manager - безопасность сессий
-    7. Session Monitoring Service - мониторинг сессий
+Система управления сессиями обеспечивает полный жизненный цикл игровых сессий в MMOFPS RPG,
+включая создание, мониторинг, переподключение и очистку с гарантией высокой производительности
+и безопасности.
 
-  components:
-    - name: Session Lifecycle Manager
-      location: auth-service-go (модуль session)
-      responsibility: |
-        - Создание сессий
-        - Управление жизненным циклом сессий
-        - Переходы между состояниями
-        - Закрытие сессий
-        - Обработка параллельных сессий
-      session_states: |
-        - CREATED: сессия создана
-        - ACTIVE: сессия активна
-        - IDLE: сессия в режиме ожидания
-        - AFK: игрок отсутствует
-        - DISCONNECTED: сессия отключена
-        - EXPIRED: сессия истекла
-        - CLOSED: сессия закрыта
-      state_transitions: |
-        - CREATED -> ACTIVE (при успешной авторизации)
-        - ACTIVE -> IDLE (при отсутствии активности)
-        - ACTIVE -> AFK (при длительном отсутствии)
-        - ACTIVE -> DISCONNECTED (при потере соединения)
-        - DISCONNECTED -> ACTIVE (при переподключении)
-        - IDLE -> EXPIRED (при истечении таймаута)
-        - AFK -> EXPIRED (при истечении таймаута)
-        - DISCONNECTED -> EXPIRED (при истечении таймаута)
-        - * -> CLOSED (при закрытии сессии)
-      endpoints:
-        - POST /api/v1/auth/session/create - создание сессии
-        - POST /api/v1/auth/session/logout - закрытие сессии
-        - GET /api/v1/auth/session/{session_id} - информация о сессии
+### Ключевые требования
+- **Производительность**: P99 <50ms, поддержка 10k+ одновременных сессий
+- **Надежность**: Автоматическое переподключение ≤5 мин, zero-downtime
+- **Безопасность**: Token binding, rate limiting, audit logging
+- **Масштабируемость**: Горизонтальное масштабирование session-service
 
-    - name: Session Heartbeat Handler
-      location: auth-service-go (модуль session-heartbeat)
-      responsibility: |
-        - Обработка heartbeat запросов
-        - Обновление времени последней активности
-        - Проверка состояния сессии
-        - Batch обновления в БД
-        - Управление таймаутами
-      heartbeat_config: |
-        - Интервал heartbeat: 30 секунд
-        - Таймаут неактивности: 5 минут
-        - Абсолютный таймаут: 24 часа
-        - Batch размер: 100 обновлений
-      endpoints:
-        - POST /api/v1/auth/session/heartbeat - отправка heartbeat
-        - GET /api/v1/auth/session/heartbeat/status - статус heartbeat
+## Архитектурные компоненты
 
-    - name: Session Reconnection Manager
-      location: auth-service-go (модуль session-reconnection)
-      responsibility: |
-        - Обработка переподключений
-        - Проверка окна переподключения
-        - Восстановление состояния сессии
-        - Управление токенами переподключения
-        - Интеграция с другими сервисами
-      reconnection_window: |
-        - Окно переподключения: 5 минут
-        - Проверка токена
-        - Восстановление состояния
-        - Публикация событий
-      endpoints:
-        - POST /api/v1/auth/session/reconnect - переподключение
-        - GET /api/v1/auth/session/reconnect/status - статус переподключения
+### 1. Session Service (Core)
+**Технологии**: Go + ogen, PostgreSQL + Redis кластер
+**Масштаб**: 3+ инстансов за load balancer
 
-    - name: Session State Manager
-      location: auth-service-go (модуль session-state)
-      responsibility: |
-        - Управление состоянием сессий
-        - Хранение состояния в Redis
-        - Синхронизация с БД
-        - Восстановление состояния
-        - Кэширование состояния
-      state_storage: |
-        - Redis: активное состояние (TTL 1 час)
-        - PostgreSQL: долгосрочное хранение
-        - Синхронизация каждые 5 минут
-      endpoints:
-        - GET /api/v1/auth/session/{session_id}/state - состояние сессии
-        - POST /api/v1/auth/session/{session_id}/state/update - обновление состояния
+#### API Endpoints (OpenAPI 3.0)
+```yaml
+# Основные операции (session-management-service.yaml)
+POST /auth/session/create          # Создание сессии
+POST /auth/session/heartbeat       # Heartbeat (batch до 100)
+POST /auth/session/reconnect       # Переподключение (≤5 мин окно)
+POST /auth/session/logout          # Выход
+GET  /auth/session/{id}            # Получение сессии
+```
 
-    - name: Session Cleanup Service
-      location: auth-service-go (модуль session-cleanup)
-      responsibility: |
-        - Очистка истекших сессий
-        - Удаление старых сессий
-        - Очистка кэша Redis
-        - Освобождение ресурсов
-        - Публикация событий очистки
-      cleanup_schedule: |
-        - Cron: каждые 5 минут
-        - Удаление сессий старше 7 дней
-        - Очистка истекших сессий
-        - Освобождение ресурсов (party, combat, trade)
-      endpoints:
-        - POST /api/v1/auth/session/cleanup - ручная очистка
-        - GET /api/v1/auth/session/cleanup/stats - статистика очистки
+#### Модель данных (PostgreSQL)
+```sql
+-- player_sessions: основная таблица сессий
+CREATE TABLE player_sessions (
+  id UUID PRIMARY KEY,
+  player_id UUID NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  status session_status_enum NOT NULL,
+  region VARCHAR(50),
+  shard_id VARCHAR(50),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_seen_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
+  reconnect_until TIMESTAMPTZ,
+  client_version VARCHAR(20),
+  device_fp TEXT,
+  ip INET,
+  user_agent TEXT
+);
 
-    - name: Session Security Manager
-      location: auth-service-go (модуль session-security)
-      responsibility: |
-        - Защита от session hijacking
-        - IP binding
-        - Token rotation
-        - Защита от brute force
-        - Валидация токенов
-      security_features: |
-        - IP binding: привязка сессии к IP
-        - Token rotation: ротация токенов
-        - Rate limiting: ограничение частоты запросов
-        - Brute force protection: защита от перебора
-        - Token validation: валидация токенов
-      endpoints:
-        - POST /api/v1/auth/session/security/validate - валидация безопасности
-        - POST /api/v1/auth/session/security/rotate-token - ротация токена
+-- Индексы для высокой производительности
+CREATE INDEX idx_player_sessions_player_status ON player_sessions(player_id, status);
+CREATE INDEX idx_player_sessions_status_last_seen ON player_sessions(status, last_seen_at);
+CREATE INDEX idx_player_sessions_expires_at ON player_sessions(expires_at);
+CREATE INDEX idx_player_sessions_reconnect_until ON player_sessions(reconnect_until);
+```
 
-    - name: Session Monitoring Service
-      location: auth-service-go (модуль session-monitoring)
-      responsibility: |
-        - Мониторинг сессий
-        - Сбор метрик
-        - Административные операции
-        - Статистика сессий
-        - Интеграция с observability
-      monitoring_metrics: |
-        - Активные сессии
-        - Созданные сессии
-        - Закрытые сессии
-        - Переподключения
-        - Таймауты
-        - Ошибки
-      endpoints:
-        - GET /api/v1/auth/session/monitoring/stats - статистика сессий
-        - GET /api/v1/auth/session/monitoring/active - активные сессии
-        - POST /api/v1/auth/session/admin/terminate - принудительное закрытие
+#### Кеш (Redis Cluster)
+```redis
+# session:{token} → быстрый lookup сессии
+SET session:abc123def456 {
+  "session_id": "uuid",
+  "player_id": "uuid",
+  "status": "ACTIVE",
+  "expires_at": "2025-12-13T20:00:00Z",
+  "reconnect_until": "2025-12-13T20:05:00Z",
+  "shard_id": "shard-01"
+} EX 3600
 
-  data_flow:
-    session_creation: |
-      1. Игрок запрашивает создание сессии
-      2. Session Lifecycle Manager проверяет существующие сессии
-      3. Если есть активная сессия - закрывается старая (стратегия One Session Per Player)
-      4. Создаётся новая сессия (CREATED)
-      5. Сессия активируется (ACTIVE)
-      6. Состояние сохраняется в Redis и PostgreSQL
-      7. Session Event Handler публикует session:created
-      8. Realtime Gateway уведомляет клиент
+# active_players:{shard} → set активных игроков
+SADD active_players:shard-01 session_uuid_1 session_uuid_2
 
-    heartbeat_processing: |
-      1. Клиент отправляет heartbeat каждые 30 секунд
-      2. Session Heartbeat Handler получает запрос
-      3. Проверяется валидность сессии
-      4. Обновляется время последней активности
-      5. Состояние обновляется в Redis
-      6. Batch обновление в PostgreSQL (каждые 100 запросов)
-      7. Проверяются таймауты (inactivity, absolute)
-      8. Если таймаут истёк - сессия переходит в EXPIRED
+# reconnect:{player_id} → данные переподключения
+SET reconnect:player_uuid {
+  "session_id": "uuid",
+  "window": 300
+} EX 300
+```
 
-    reconnection: |
-      1. Клиент запрашивает переподключение
-      2. Session Reconnection Manager проверяет окно переподключения (5 минут)
-      3. Проверяется валидность токена
-      4. Восстанавливается состояние сессии
-      5. Сессия переходит из DISCONNECTED в ACTIVE
-      6. Состояние синхронизируется с другими сервисами
-      7. Session Event Handler публикует session:reconnected
-      8. Realtime Gateway уведомляет клиент
+### 2. Event Bus (Kafka/NATS)
+**События сессий**:
+- `session.created` - сессия создана
+- `session.heartbeat` - heartbeat получен
+- `session.expired` - сессия истекла
+- `session.reconnected` - переподключение
+- `session.terminated` - сессия закрыта
 
-    session_cleanup: |
-      1. Cron задача запускается каждые 5 минут
-      2. Session Cleanup Service находит истекшие сессии
-      3. Освобождаются ресурсы (party, combat, trade)
-      4. Сессии удаляются из Redis
-      5. Старые сессии (старше 7 дней) удаляются из PostgreSQL
-      6. Session Event Handler публикует session:expired
-      7. Notification Service уведомляет игроков
+**Потребители**:
+- Analytics Service: DAU, retention метрики
+- Gameplay Service: очистка состояния при disconnect
+- Notification Service: push уведомления
 
-  integrations:
-    with_character_service: |
-      - Получение данных персонажа
-      - Синхронизация состояния персонажа
-      - Обновление последнего входа
+### 3. Monitoring & Observability
 
-    with_world_service: |
-      - Получение информации о локации
-      - Синхронизация с миром
-      - Обновление позиции
+#### Метрики (Prometheus)
+```prometheus
+# RPS метрики
+session_create_total{status="success"} 1500
+session_heartbeat_rps 8500
+session_reconnect_success_total 450
 
-    with_gameplay_service: |
-      - Освобождение боевых сессий
-      - Синхронизация состояния боя
-      - Обработка отключений в бою
+# Задержки
+histogram_quantile(0.95, session_create_duration) < 0.05
+histogram_quantile(0.95, session_heartbeat_duration) < 0.03
 
-    with_social_service: |
-      - Освобождение групп
-      - Синхронизация социальных систем
-      - Обработка отключений в группе
+# Состояния
+session_active_total{shard="shard-01"} 1250
+session_expired_total 25
+```
 
-    with_economy_service: |
-      - Освобождение торговых сессий
-      - Синхронизация экономических операций
-      - Обработка отключений при торговле
+#### Алерты (Alertmanager)
+- Heartbeat P99 >100ms за 5 мин
+- Reconnect fail rate >5% за 5 мин
+- Expired sessions surge >20% за 10 мин
+- Redis/PostgreSQL error rate >1%
 
-    with_notification_service: |
-      - Уведомления о переподключениях
-      - Уведомления об истечении сессий
-      - Уведомления о принудительном закрытии
+### 4. Security Layer
 
-    with_realtime_gateway: |
-      - Синхронизация состояния сессий
-      - Уведомления о событиях
-      - Управление WebSocket соединениями
+#### Token Security
+- **JWT tokens** с RSA подписанием
+- **Token rotation** при reconnect
+- **IP binding** с optional step-up auth
+- **Device fingerprinting** для anomaly detection
 
-  data_consistency:
-    strategy: Strong Consistency (ACID транзакции) для критичных операций
-    mechanisms:
-      - ACID транзакции для создания сессий, обновления состояния и закрытия сессий
-      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
-      - Валидация перед созданием сессии и переподключением
-      - Синхронизация с другими сервисами через Event Bus
-      - Outbox Pattern для гарантированной доставки событий
-      - Saga Pattern для распределенных операций (создание сессии, освобождение ресурсов при закрытии)
+#### Rate Limiting
+```yaml
+# На игрока
+create_session: 5/hour
+reconnect_session: 20/day
 
-  data_synchronization:
-    event_sourcing: |
-      Все изменения состояния сессий (создание сессии, обновление heartbeat, переподключение, закрытие)
-      записываются как события в Event Store. Это обеспечивает полный аудит,
-      возможность восстановления состояния и "time travel" для отладки.
-      Примеры событий: SessionCreatedEvent, SessionHeartbeatEvent, SessionReconnectedEvent, SessionExpiredEvent, SessionClosedEvent.
-    cqrs_pattern: |
-      Разделение команд (создание сессии, обновление heartbeat, переподключение, закрытие) и запросов
-      (получение информации о сессии, получение состояния сессии, статистика) для оптимизации производительности
-      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
-    saga_pattern: |
-      Для распределенных транзакций, таких как создание сессии (создание сессии, синхронизация с Character Service,
-      обновление состояния в World Service) или закрытие сессии (закрытие сессии, освобождение ресурсов в Gameplay Service,
-      Social Service, Economy Service), используется Saga Pattern для обеспечения атомарности операций
-      между Auth Service и другими сервисами.
-    outbox_pattern: |
-      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
-      который записывает события в транзакционную таблицу перед публикацией.
+# Глобальные лимиты
+heartbeat_global: 15k RPS
+```
 
-  tickrate_specification:
-    session_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Создание сессии: event-based, ~0.01-0.05 events/sec на игрока
-        - Закрытие сессии: event-based, ~0.01-0.05 events/sec на игрока
-        - Получение информации о сессии: event-based, ~0.1-0.3 requests/sec на игрока
-        - Общий трафик: ~0.1-0.3 KB/sec на игрока
-      latency_requirements: < 50-200ms для операций с сессиями
-      sync_strategy: Strong Consistency (ACID транзакции) для создания и закрытия сессий
+### 5. Cleanup System
 
-    heartbeat_operations:
-      tickrate: 1-2 Hz (каждые 30-60 секунд)
-      network_load: |
-        - Heartbeat запросы: 1-2 Hz, ~0.1-0.2 KB/sec на игрока
-        - Обновление состояния: 1-2 Hz, ~0.1-0.2 KB/sec на игрока
-        - Batch обновления в БД: 1-5 Hz, ~0.5-1 KB/sec (на все сессии)
-        - Общий трафик: ~0.2-0.4 KB/sec на игрока
-      latency_requirements: < 20-50ms для обработки heartbeat
-      sync_strategy: Eventual Consistency для heartbeat (batch обновления в БД каждые 100 запросов)
+#### Автоматическая очистка
+- **Cleanup Worker**: каждые 5 минут
+- **Expired sessions**: TTL > 24 часа
+- **Idle sessions**: нет heartbeat > 5 минут
+- **Old sessions**: >7 дней в CLOSED статусе
 
-    reconnection_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Переподключение: event-based, ~0.01-0.05 events/sec на игрока
-        - Восстановление состояния: event-based, ~0.1-0.3 KB/sec на игрока
-        - Общий трафик: ~0.1-0.3 KB/sec на игрока
-      latency_requirements: < 100-300ms для переподключения
-      sync_strategy: Strong Consistency (ACID транзакции) для переподключения
+#### Ручная очистка
+```bash
+# Admin API для принудительной очистки
+POST /auth/session/cleanup
+{
+  "force": true,
+  "max_age_hours": 168
+}
+```
 
-    state_synchronization:
-      tickrate: Event-based (on-demand) + 1-5 Hz для синхронизации состояния
-      network_load: |
-        - Синхронизация состояния: 1-5 Hz, ~0.1-0.3 KB/sec на игрока
-        - Обновление состояния в Redis: 1-5 Hz, ~0.1-0.2 KB/sec на игрока
-        - Синхронизация с БД: 1-5 Hz, ~0.1-0.2 KB/sec (на все сессии)
-        - Общий трафик: ~0.2-0.5 KB/sec на игрока
-      latency_requirements: < 30-100ms для синхронизации состояния
-      sync_strategy: Eventual Consistency для синхронизации состояния (Redis + периодическая синхронизация с БД)
+## Производительность и оптимизации
 
-  network_requirements:
-    protocol: |
-      Session Management использует WebSocket (TCP) для синхронизации состояния сессий:
-      - Протокол: WebSocket (TCP) - постоянно, без переключения
-      - Применение: синхронизация состояния сессий, heartbeat, переподключения
-      - Надежная доставка сообщений критична для управления сессиями
-      - Поддержка TLS (wss://)
-      - Интеграция с Realtime Gateway для WebSocket соединений
-    
-    websocket_integration: |
-      Интеграция с Realtime Gateway:
-      - Управление WebSocket соединениями через Realtime Gateway
-      - Синхронизация состояния сессий через WebSocket каналы
-      - Heartbeat через WebSocket (1-2 Hz)
-      - Уведомления о событиях сессий через WebSocket
-    
-    network_optimization: |
-      Оптимизации:
-      - Batch обновления heartbeat в БД (каждые 100 запросов)
-      - Кэширование состояния сессий в Redis для быстрого доступа
-      - Event-based синхронизация для снижения трафика
-      - Периодическая синхронизация с БД (1-5 Hz) вместо realtime
+### Backend Optimizations
+- **Struct alignment**: поля отсортированы large→small (экономия 30-50% памяти)
+- **Memory pooling**: сессии используют object pool
+- **Batch operations**: heartbeat до 100 записей за раз
+- **Connection pooling**: Redis/PostgreSQL pools с keepalive
 
-  database_schema:
-    tables:
-      - name: player_sessions
-        description: Игровые сессии
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - character_id: UUID (FK characters, nullable)
-          - session_token: VARCHAR(255) (unique)
-          - refresh_token: VARCHAR(255) (nullable)
-          - state: ENUM (CREATED, ACTIVE, IDLE, AFK, DISCONNECTED, EXPIRED, CLOSED)
-          - ip_address: INET
-          - user_agent: TEXT
-          - server_id: VARCHAR(100)
-          - zone_id: VARCHAR(100) (nullable)
-          - last_heartbeat_at: TIMESTAMP
-          - last_activity_at: TIMESTAMP
-          - created_at: TIMESTAMP
-          - expires_at: TIMESTAMP
-          - closed_at: TIMESTAMP (nullable)
-        indexes:
-          - player_id, state
-          - session_token (unique)
-          - state, expires_at
-          - last_heartbeat_at
+### Database Optimizations
+- **Partitioning**: сессии по дате создания
+- **Archiving**: старые сессии в archive таблицы
+- **Read replicas**: analytics читает из replicas
+- **Index optimization**: covering indexes для hot queries
 
-      - name: session_audit_log
-        description: Аудит сессий
-        fields:
-          - id: UUID (PK)
-          - session_id: UUID (FK player_sessions)
-          - event_type: ENUM (created, activated, heartbeat, reconnected, expired, closed, terminated)
-          - event_data: JSONB
-          - ip_address: INET
-          - created_at: TIMESTAMP
-        indexes:
-          - session_id, created_at
-          - event_type, created_at
+### Cache Optimizations
+- **TTL strategy**: expires_at = session TTL
+- **Redis cluster**: horizontal scaling
+- **Cache warming**: preload active sessions on startup
 
-      - name: session_reconnection_tokens
-        description: Токены переподключения
-        fields:
-          - id: UUID (PK)
-          - session_id: UUID (FK player_sessions)
-          - token: VARCHAR(255) (unique)
-          - expires_at: TIMESTAMP
-          - used_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - session_id
-          - token (unique)
-          - expires_at
+## Масштабирование
 
-technical_specification:
-  backend_requirements:
-    - Реализация модулей в auth-service-go:
-      - session (управление жизненным циклом)
-      - session-heartbeat (heartbeat)
-      - session-reconnection (переподключения)
-      - session-state (состояние)
-      - session-cleanup (очистка)
-      - session-security (безопасность)
-      - session-monitoring (мониторинг)
-    - Интеграция с Redis для кэширования
-    - Интеграция с PostgreSQL для долгосрочного хранения
-    - Оптимизация запросов к БД (индексы, batch обновления)
+### Horizontal Scaling
+- **Session affinity**: sticky sessions по player_id
+- **Shard-based**: sessions pinned to specific shards
+- **Load balancing**: round-robin с health checks
 
-  realtime_requirements:
-    - Синхронизация состояния сессий через WebSocket
-    - Уведомления о событиях сессий
-    - Управление WebSocket соединениями
+### Vertical Scaling Limits
+- **Single instance**: 5k concurrent sessions
+- **Cluster**: unlimited (Redis cluster limits)
 
-  performance_requirements:
-    - Создание сессии < 100ms
-    - Обработка heartbeat < 20ms
-    - Переподключение < 200ms
-    - Поддержка до 100K активных сессий
-    - Поддержка до 10K heartbeat в секунду
+## Резервное копирование и восстановление
 
-  scalability_requirements:
-    - Горизонтальное масштабирование через auth-service
-    - Распределение нагрузки на сессии
-    - Оптимизация запросов к БД (batch, индексы)
-    - Кэширование состояния в Redis
+### Backup Strategy
+- **PostgreSQL**: ежедневные full backups + WAL shipping
+- **Redis**: AOF + snapshots каждые 5 минут
+- **Event logs**: Kafka retention 30 дней
 
-subtasks:
-  - id: session-lifecycle-manager-module
-    title: Реализация модуля Session Lifecycle Manager
-    description: |
-      Управление жизненным циклом сессий
-      Создание и закрытие сессий
-      Переходы между состояниями
-    priority: high
-    estimated_time: 4-5 дней
+### Disaster Recovery
+- **RTO**: 15 минут для critical sessions
+- **RPO**: 5 минут data loss tolerance
+- **Failover**: automated PostgreSQL failover
 
-  - id: session-heartbeat-handler-implementation
-    title: Реализация Session Heartbeat Handler
-    description: |
-      Обработка heartbeat запросов
-      Обновление времени активности
-      Batch обновления в БД
-    priority: high
-    estimated_time: 3-4 дня
+## Интеграции
 
-  - id: session-reconnection-manager
-    title: Реализация Session Reconnection Manager
-    description: |
-      Обработка переподключений
-      Проверка окна переподключения
-      Восстановление состояния
-    priority: high
-    estimated_time: 3-4 дня
+### Внешние системы
+- **Auth Service**: валидация токенов, user info
+- **Gameplay Service**: session state sync
+- **Analytics Service**: session metrics aggregation
+- **Notification Service**: disconnect notifications
 
-  - id: session-state-manager
-    title: Реализация Session State Manager
-    description: |
-      Управление состоянием сессий
-      Хранение в Redis и PostgreSQL
-      Синхронизация состояния
-    priority: high
-    estimated_time: 3-4 дня
+### Внутренние компоненты
+- **World Service**: zone assignment
+- **Matchmaking Service**: session validation
+- **Inventory Service**: session-scoped items
 
-  - id: session-cleanup-service
-    title: Реализация Session Cleanup Service
-    description: |
-      Очистка истекших сессий
-      Удаление старых сессий
-      Освобождение ресурсов
-    priority: high
-    estimated_time: 2-3 дня
+## Мониторинг и поддержка
 
-  - id: session-security-manager
-    title: Реализация Session Security Manager
-    description: |
-      Защита от session hijacking
-      IP binding
-      Token rotation
-    priority: high
-    estimated_time: 3-4 дня
+### Health Checks
+```yaml
+# Readiness probe
+GET /health/ready
 
-  - id: session-monitoring-service
-    title: Реализация Session Monitoring Service
-    description: |
-      Мониторинг сессий
-      Сбор метрик
-      Административные операции
-    priority: medium
-    estimated_time: 2-3 дня
+# Liveness probe
+GET /health/live
 
-  - id: database-optimization
-    title: Оптимизация БД и запросов
-    description: |
-      Создание индексов
-      Оптимизация запросов
-      Кэширование состояния
-    priority: medium
-    estimated_time: 1-2 дня
+# Metrics endpoint
+GET /metrics
+```
 
-  - id: api-endpoints
-    title: Реализация REST API endpoints
-    description: |
-      Создание всех endpoints для сессий
-      Интеграция с существующим API auth-service
-    priority: high
-    estimated_time: 3-4 дня
+### Debug endpoints (admin only)
+```yaml
+GET /debug/sessions/active
+GET /debug/sessions/{id}/state
+GET /debug/cleanup/status
+```
 
-  - id: integration-testing
-    title: Интеграционное тестирование
-    description: |
-      Тесты жизненного цикла
-      Тесты heartbeat
-      Тесты переподключений
-      Тесты безопасности
-      Тесты интеграций
-    priority: high
-    estimated_time: 3-4 дня
+## Безопасность и compliance
 
-diagrams:
-  component_diagram: |
-    ```mermaid
-    graph TB
-        subgraph "Auth Service"
-            SLM[Session Lifecycle Manager]
-            SHH[Session Heartbeat Handler]
-            SRM[Session Reconnection Manager]
-            SSM[Session State Manager]
-            SCS[Session Cleanup Service]
-            SSecM[Session Security Manager]
-            SMoS[Session Monitoring Service]
-        end
+### Data Protection
+- **Encryption at rest**: PostgreSQL TDE
+- **Encryption in transit**: TLS 1.3
+- **PII masking**: sensitive data masked in logs
 
-        subgraph "Database"
-            DB[(PostgreSQL<br/>player_sessions<br/>session_audit_log<br/>session_reconnection_tokens)]
-        end
+### Audit Logging
+- **Session events**: все CRUD операции логируются
+- **Admin actions**: privileged operations auditable
+- **Security events**: token rotation, IP changes
 
-        subgraph "Cache"
-            REDIS[(Redis<br/>session state<br/>active players)]
-        end
+### Compliance
+- **GDPR**: session data retention policies
+- **CCPA**: data deletion on user request
+- **Security audits**: quarterly security reviews
 
-        subgraph "External Services"
-            CS[Character Service]
-            WS[World Service]
-            GS[Gameplay Service]
-            SS[Social Service]
-            ES[Economy Service]
-            NS[Notification Service]
-            RG[Realtime Gateway]
-        end
+---
 
-        subgraph "Client"
-            CL[UE5 Client]
-        end
+## Следующие шаги
 
-        CL -->|create session| SLM
-        CL -->|heartbeat| SHH
-        CL -->|reconnect| SRM
-        SLM --> SSM
-        SHH --> SSM
-        SRM --> SSM
-        SSM --> REDIS
-        SSM --> DB
-        SSecM --> SLM
-        SCS --> DB
-        SCS --> REDIS
-        SLM -->|sync| CS
-        SLM -->|sync| WS
-        SLM -->|sync| GS
-        SLM -->|sync| SS
-        SLM -->|sync| ES
-        SLM -->|events| NS
-        SLM -->|sync state| RG
-        RG -->|push events| CL
-    ```
+### Для Backend Developer
+- Реализовать session-service с ogen
+- Настроить PostgreSQL + Redis
+- Реализовать cleanup worker
+- Добавить monitoring
 
-  data_flow_diagram: |
-    ```mermaid
-    sequenceDiagram
-        participant P as Player
-        participant SLM as Session Lifecycle Manager
-        participant SHH as Session Heartbeat Handler
-        participant SSM as Session State Manager
-        participant SRM as Session Reconnection Manager
+### Для DevOps
+- Настроить Kubernetes deployment
+- Настроить monitoring stack
+- Настроить backup/DR procedures
 
-        P->>SLM: Create session
-        SLM->>SSM: Store state
-        SSM->>SSM: Save to Redis and DB
-        SLM->>P: Session created
-        
-        loop Every 30 seconds
-            P->>SHH: Heartbeat
-            SHH->>SSM: Update activity
-            SSM->>SSM: Update Redis
-        end
-        
-        P->>SRM: Reconnect
-        SRM->>SSM: Restore state
-        SSM->>SRM: State restored
-        SRM->>P: Reconnected
-    ```
+### Для QA
+- Нагрузочное тестирование (10k RPS)
+- Reconnect testing (5 мин окно)
+- Failover testing
 
-decisions:
-  - id: adr-session-architecture
-    summary: |
-      Выбрана модульная архитектура внутри auth-service-go для обеспечения
-      тесной интеграции с системой аутентификации.
+### Для Security
+- Реализовать token binding
+- Настроить rate limiting
+- Настроить audit logging
 
-  - id: adr-session-lifecycle
-    summary: |
-      State machine для жизненного цикла сессий обеспечивает надёжное управление
-      состоянием и предотвращает некорректные переходы.
-
-  - id: adr-heartbeat-mechanism
-    summary: |
-      Heartbeat механизм с batch обновлениями обеспечивает эффективное отслеживание
-      активности игроков и минимизирует нагрузку на БД.
-
-  - id: adr-reconnection-window
-    summary: |
-      Окно переподключения в 5 минут обеспечивает баланс между удобством игроков
-      и безопасностью системы.
-
-  - id: adr-session-security
-    summary: |
-      Многоуровневая система безопасности (IP binding, token rotation, rate limiting)
-      защищает от session hijacking и brute force атак.
-
-validation:
-  architecture_complete: true
-  components_defined: true
-  microservices_identified: true
-  api_endpoints_described: true
-  technical_specification_ready: true
-  subtasks_defined: true
-
-next_steps:
-  - Передача задачи агенту API Designer для создания OpenAPI спецификации
-  - Детализация API endpoints
-  - Создание request/response схем
-  - Определение формата состояний и событий
-
-history:
-  - version: '1.1.0'
-    date: 2025-11-30
-    author: Architect Agent
-    changes: |
-      Добавлена детальная синхронизация данных:
-      - Event Sourcing для всех изменений состояния сессий
-      - CQRS Pattern для разделения команд и запросов
-      - Saga Pattern для распределенных операций (создание сессии, закрытие сессии с освобождением ресурсов)
-      - Outbox Pattern для гарантированной доставки событий
-      - Обновлена секция data_consistency с механизмами синхронизации
-      - Добавлена спецификация тикрейта для операций с сессиями, heartbeat, переподключений и синхронизации состояния
-  - version: '1.0.0'
-    date: 2025-11-22
-    author: Architect Agent
-    changes: |
-      Создана полная архитектура системы управления сессиями:
-      - Определены компоненты (Session Lifecycle Manager, Session Heartbeat Handler, Session Reconnection Manager, Session State Manager, Session Cleanup Service, Session Security Manager, Session Monitoring Service)
-      - Описаны состояния сессий (CREATED, ACTIVE, IDLE, AFK, DISCONNECTED, EXPIRED, CLOSED)
-      - Описаны API endpoints (высокоуровнево)
-      - Спроектированы потоки данных
-      - Определена структура БД (player_sessions, session_audit_log, session_reconnection_tokens)
-      - Спроектирована система жизненного цикла сессий
-      - Спроектирована система heartbeat
-      - Спроектирована система переподключений
-      - Создано техническое задание
-      - Разбито на подзадачи
-
-
+**Готово к передаче Backend Developer для реализации сервиса.**

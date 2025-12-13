@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\london\2030-2039\quest-014-buckingham-scandal.yaml
--- Generated: 2025-12-06T21:12:59.986610
+-- Generated: 2025-12-13T21:13:35.917381
 
 BEGIN;
 

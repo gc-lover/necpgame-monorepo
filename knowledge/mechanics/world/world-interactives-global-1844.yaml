@@ -1,95 +1,160 @@
-title: Интерактивы — общие мировые объекты
 # Issue: #1844
+metadata:
+  id: world-interactives-global-1844
+  title: "Интерактивы: общие мировые объекты"
+  document_type: canon
+  category: mechanics
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-13T19:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T22:03:25Z
+  owners:
+    - role: content_director
+      contact: content@necp.game
+  tags:
+    - world-interactives
+    - global-objects
+    - checkpoints
+    - relays
+    - medstations
+    - logistics
+  topics:
+    - world-mechanics
+    - interactive-objects
+    - cyberpunk-world
+  related_systems:
+    - world-service
+    - faction-service
+    - inventory-service
+  related_documents:
+    - id: world-interactives-overview
+      relation: part_of
+    - id: mechanics-world-interactives
+      relation: extends
+  source: shared/docs/knowledge/mechanics/world/world-interactives-global-1844.md
+  visibility: internal
+  audience:
+    - backend
+    - qa
+    - game-design
+  risk_level: low
+review:
+  chain:
+    - role: backend_engineer
+      reviewer: Backend Team
+      reviewed_at: 2025-12-08T22:03:25Z
+      status: approved
+    - role: content_director
+      reviewer: Content Documentation Cell
+      reviewed_at: 2025-12-13T19:30:00Z
+      status: approved
+  next_actions: []
 summary:
-  goal: Базовый пул интерактивов, встречающихся в разных зонах, влияющих на контроль территории, связь, выживаемость и риски лута.
-  objects:
-    - блок_посты_фракций
-    - комм_ретрансляторы
-    - медстанции
-    - логистические_контейнеры
-design:
-  caps: <=500 lines, только функциональные правки
-  monetization: косметика-только, без p2w
-  control_flow: каждый интерактив описан через параметры риска/награды и телеметрию
-mechanics:
-  блок_посты_фракций:
-    purpose: смена контроля подзоны, влияет на цены торговцев/налоги, спавн патрулей
-    interactions:
-      - взлом: мини-игра, шанс тревоги
-      - подкуп: расход валюты, быстрый захват, след тревоги ниже
-      - штурм: волны NPC, высокий риск, быстрый захват при успехе
-    params:
-      base_capture_time_s: 45
-      defense_waves: 2-3
-      alert_chance_hack: 0.35
-      alert_chance_bribe: 0.1
-      price_modifiers:
-        friendly: 0.85
-        hostile: 1.2
-      patrol_respawn_min_s: 120
-  комм_ретрансляторы:
-    purpose: усиливают связь сквада, раскрывают мини-карту района, повышают заметность
-    interactions:
-      - активация: краткий канал 6 с; при успехе раскрывает точки интереса
-      - усиление_связи: +радиус меток и дальность голоса
-      - побочный_эффект: привлекают патрули/дронов
-    params:
-      channel_time_s: 6
-      map_reveal_radius_m: 150
-      comms_radius_bonus_pct: 40
-      patrol_spawn_delay_s: 30-60
-      patrol_threat_tier: low-mid
-  медстанции:
-    purpose: быстрая починка брони/HP в поле, ограниченные заряды, шум привлекает врагов
-    interactions:
-      - использование: мгновенный тик лечения + очистка статусов (легких)
-      - заряд: тратит 1 charge, реген нет
-      - взлом: восстановить 1 заряд или отключить для врагов
-    params:
-      charges: 3
-      heal_per_use_pct: 35
-      armor_repair_pct: 25
-      noise_radius_m: 40
-      hack_difficulty: medium
-  логистические_контейнеры:
-    purpose: точка лута/ресурсов, часть — ловушки (сигналка/мины)
-    interactions:
-      - вскрытие: lockpick/взлом, риск ловушки
-      - сканирование: снижает риск на 50%
-      - ловушка: шумовая сигналка или мина малой мощности
-    params:
-      trap_chance: 0.25
-      loot_tiers: [utility, crafting, rare_small]
-      scan_time_s: 3
-      mine_damage_hp_pct: 20
-telemetry:
-  блок_посты:
-    - metric: checkpoint_captures
-      desc: число успешных захватов по типу (взлом/подкуп/штурм)
-    - metric: checkpoint_alerts
-      desc: сколько тревог поднято при попытках захвата
-    - metric: price_mod_changes
-      desc: сколько раз менялись модификаторы цен в зоне
-  ретрансляторы:
-    - metric: relay_activations
-      desc: успешные активации и их длительность
-    - metric: patrols_spawned_from_relay
-      desc: количество патрулей, пришедших на сигнал
-  медстанции:
-    - metric: medstation_charges_used
-      desc: расход зарядов по зонам
-    - metric: medstation_hacks
-      desc: попытки взлома и успех/фейл
-    - metric: medstation_noise_engagements
-      desc: бои, начавшиеся из-за шума
-  контейнеры:
-    - metric: logistic_opened
-      desc: открыто контейнеров по редкости
-    - metric: logistic_traps_triggered
-      desc: сработавшие ловушки (тип: сигналка/мина)
-edge_cases:
-  - анти-абуз: повторный подкуп блок-поста даёт убывающий эффект (-50% цена, +15% шанс тревоги)
-  - рейды: при онлайн-ивентах спавн усиливается на +1 волну
-  - соло: ретранслятор повышает радиус лишь личных меток, без бонуса голоса
-  - оффлайн-зона: при отсутствии патрулей шум генерирует дрон-разведчик (low HP)
-
+  problem: Отсутствовала детальная спецификация общих мировых интерактивов для реализации в backend
+  goal: Создать полную спецификацию интерактивов, влияющих на контроль территории, связь, выживаемость и риски лута
+  essence: "Базовый пул интерактивов Night City: блок-посты, ретрансляторы, медстанции, логистические контейнеры"
+  key_points:
+    - Блок-посты фракций для контроля зон и экономики
+    - Комм-ретрансляторы для связи и разведки
+    - Медстанции для быстрого лечения с рисками
+    - Логистические контейнеры с лутом и ловушками
+content:
+  sections:
+    - id: identity
+      title: Идентификация интерактивов
+      body: |
+        Общие мировые интерактивы - объекты, встречающиеся во всех типах зон Night City.
+        Влияют на фракционный контроль, коммуникации, выживаемость и экономику. Активны
+        24/7, респавнятся по таймерам, имеют состояния и взаимодействия.
+      mechanics_links:
+        - mechanics/world/world-interactives.yaml
+      assets: []
+    - id: checkpoint_factions
+      title: Блок-посты фракций
+      body: |
+        Контрольные точки фракций в ключевых местах. Захват меняет контроль зоны,
+        влияет на цены торговцев и налоги. Три способа захвата: взлом, подкуп, штурм.
+        Захват занимает 45 секунд, вызывает 2-3 волны защиты. Шанс тревоги при взломе 35%,
+        при подкупе 10%. Дружественный контроль снижает цены на 15%, враждебный повышает на 20%.
+        Патрули респавнятся каждые 2 минуты.
+      mechanics_links: []
+      assets: []
+    - id: comm_relays
+      title: Комм-ретрансляторы
+      body: |
+        Устройства усиления связи для сквадов. Активация на 6 секунд раскрывает карту района
+        в радиусе 150 метров. Увеличивает радиус меток на 40%. Привлекает патрули через
+        30-60 секунд. Уровень угрозы патрулей low-mid.
+      mechanics_links: []
+      assets: []
+    - id: medstations
+      title: Медстанции
+      body: |
+        Полевые станции быстрого лечения. 3 заряда, каждый восстанавливает 35% HP и 25% брони.
+        Очищает легкие статусы. Шум в радиусе 40 метров привлекает врагов. Взлом средней
+        сложности может восстановить заряд или отключить станцию.
+      mechanics_links: []
+      assets: []
+    - id: logistic_containers
+      title: Логистические контейнеры
+      body: |
+        Контейнеры с ресурсами и лутом. 25% шанс ловушки (сигналка или мина 20% урона).
+        Сканирование 3 секунды снижает риск на 50%. Лут: utility, crafting, rare_small.
+      mechanics_links: []
+      assets: []
+    - id: gameplay_integration
+      title: Интеграция в геймплей
+      body: |
+        Интерактивы создают живой мир: фракции борются за контроль, игроки используют
+        ретрансляторы для координации, лечатся в полевых условиях, собирают ресурсы.
+        Влияют на экономику, безопасность и социальные взаимодействия.
+      mechanics_links:
+        - mechanics/world/world-state.yaml
+      assets: []
+    - id: balance_design
+      title: Баланс и дизайн
+      body: |
+        Анти-абуз: повторный подкуп снижает эффект цен. В рейдах +1 волна защиты.
+        В соло: ретрансляторы без голосового бонуса. В оффлайн-зонах: дрон-разведчик вместо патрулей.
+        Монетизация только косметическая, без P2W элементов.
+      mechanics_links: []
+      assets: []
+    - id: inspiration
+      title: Источники вдохновения
+      body: |
+        Вдохновлен контрольными точками из Battlefield, станциями лечения из The Division,
+        контейнерами из STALKER. Технически основан на концепциях фракционного контроля
+        и логистики в открытых мирах.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: Фракционный контроль
+      definition: Владение зоной определенной фракцией, влияющее на цены и спавн
+    - term: Комм-ретранслятор
+      definition: Устройство усиления радиосвязи и картографии
+    - term: Медстанция
+      definition: Полевой медицинский пункт с ограниченными ресурсами
+    - term: Логистический контейнер
+      definition: Грузовой контейнер с ресурсами и потенциальными ловушками
+  references:
+    - title: World Interactives Overview
+      link: ./world-interactives-overview.yaml
+    - title: World Mechanics Summary
+      link: ../world-mechanics-summary.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  github_issue: 1844
+  queue_reference:
+    - shared/trackers/queues/content/queued.yaml
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-13
+    author: content_writer
+    changes: Создан полный YAML файл для мировых интерактивов согласно требованиям
+validation:
+  checksum: ""
+  schema_version: "1.0"

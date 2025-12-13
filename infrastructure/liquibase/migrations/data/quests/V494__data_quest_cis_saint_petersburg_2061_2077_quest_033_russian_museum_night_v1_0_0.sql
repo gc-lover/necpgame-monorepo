@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\saint-petersburg\2061-2077\quest-033-russian-museum-night.yaml
--- Generated: 2025-12-06T21:12:59.428270
+-- Generated: 2025-12-13T21:13:35.378440
 
 BEGIN;
 

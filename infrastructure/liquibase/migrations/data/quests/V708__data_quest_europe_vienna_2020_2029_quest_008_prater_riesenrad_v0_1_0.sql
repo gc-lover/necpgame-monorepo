@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: europe\vienna\2020-2029\quest-008-prater-riesenrad.yaml
--- Generated: 2025-12-06T21:13:00.311559
+-- Generated: 2025-12-13T21:13:36.214633
 
 BEGIN;
 

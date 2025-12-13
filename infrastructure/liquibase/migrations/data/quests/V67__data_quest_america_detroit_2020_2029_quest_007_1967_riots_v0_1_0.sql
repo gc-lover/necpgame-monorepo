@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\detroit\2020-2029\quest-007-1967-riots.yaml
--- Generated: 2025-12-06T21:12:57.339999
+-- Generated: 2025-12-13T21:13:33.544550
 
 BEGIN;
 

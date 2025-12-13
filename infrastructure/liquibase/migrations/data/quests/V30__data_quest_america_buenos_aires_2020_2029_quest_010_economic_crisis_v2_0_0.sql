@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\buenos-aires\2020-2029\quest-010-economic-crisis.yaml
--- Generated: 2025-12-06T21:12:57.152570
+-- Generated: 2025-12-13T21:13:33.368819
 
 BEGIN;
 

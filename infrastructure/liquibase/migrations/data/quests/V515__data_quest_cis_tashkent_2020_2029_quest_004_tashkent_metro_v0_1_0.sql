@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\tashkent\2020-2029\quest-004-tashkent-metro.yaml
--- Generated: 2025-12-06T21:12:59.536271
+-- Generated: 2025-12-13T21:13:35.455474
 
 BEGIN;
 

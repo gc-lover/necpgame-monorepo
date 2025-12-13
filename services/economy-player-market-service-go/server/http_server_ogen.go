@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/economy-player-market-service-go/pkg/api"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type HTTPServerOgen struct {
@@ -16,17 +17,17 @@ type HTTPServerOgen struct {
 	router *http.ServeMux
 }
 
-func NewHTTPServerOgen(addr string) *HTTPServerOgen {
+func NewHTTPServerOgen(db *pgxpool.Pool, addr string) *HTTPServerOgen {
 	router := http.NewServeMux()
-	
-	handlers := NewMarketHandlersOgen()
+
+	handlers := NewMarketHandlersOgen(db)
 	security := NewSecurityHandler()
-	
+
 	srv, err := api.NewServer(handlers, security)
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	var handler http.Handler = srv
 	handler = LoggingMiddleware(handler)
 	handler = MetricsMiddleware(handler)
@@ -34,7 +35,7 @@ func NewHTTPServerOgen(addr string) *HTTPServerOgen {
 	router.Handle("/api/v1/", handler)
 	router.HandleFunc("/health", healthCheck)
 	router.HandleFunc("/metrics", metricsHandler)
-	
+
 	return &HTTPServerOgen{
 		addr:   addr,
 		router: router,
@@ -63,4 +64,3 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
-

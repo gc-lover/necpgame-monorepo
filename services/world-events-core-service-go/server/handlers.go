@@ -7,8 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-faster/jx"
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-core-service-go/pkg/api"
+	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -419,8 +419,8 @@ func (h *Handlers) GetWorldEventsByFrequency(ctx context.Context, params api.Get
 
 	filter := EventFilter{
 		Frequency: &[]string{string(params.Frequency)}[0],
-		Limit:      100,
-		Offset:     0,
+		Limit:     100,
+		Offset:    0,
 	}
 
 	events, total, err := h.service.ListEvents(ctx, filter)
@@ -490,3 +490,6 @@ func (h *Handlers) toAPIWorldEvent(event *WorldEvent) *api.WorldEvent {
 
 	return apiEvent
 }
+
+// Era-based functionality integrated into existing handlers
+// Era configurations are now available via service methods

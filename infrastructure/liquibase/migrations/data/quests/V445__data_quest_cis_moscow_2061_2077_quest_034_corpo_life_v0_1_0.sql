@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: cis\moscow\2061-2077\quest-034-corpo-life.yaml
--- Generated: 2025-12-06T21:12:59.146020
+-- Generated: 2025-12-13T21:13:35.193859
 
 BEGIN;
 

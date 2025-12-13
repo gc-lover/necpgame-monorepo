@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\philadelphia\2020-2029\quest-006-ben-franklin.yaml
--- Generated: 2025-12-06T21:12:57.893632
+-- Generated: 2025-12-13T21:13:34.109684
 
 BEGIN;
 

@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\philadelphia\2020-2029\quest-010-brotherly-love.yaml
--- Generated: 2025-12-06T21:12:57.910986
+-- Generated: 2025-12-13T21:13:34.126499
 
 BEGIN;
 

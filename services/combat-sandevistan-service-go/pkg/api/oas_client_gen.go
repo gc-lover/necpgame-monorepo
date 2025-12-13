@@ -46,6 +46,12 @@ type Invoker interface {
 	//
 	// POST /combat/players/{player_id}/sandevistan/counterplay
 	ApplyCounterplay(ctx context.Context, request *ApplyCounterplayReq, params ApplyCounterplayParams) (ApplyCounterplayRes, error)
+	// ApplyTemporalMarks invokes applyTemporalMarks operation.
+	//
+	// Применить Temporal Marks (delayed burst damage).
+	//
+	// POST /combat/players/{player_id}/sandevistan/apply-temporal-marks
+	ApplyTemporalMarks(ctx context.Context, params ApplyTemporalMarksParams) (ApplyTemporalMarksRes, error)
 	// DeactivateSandevistan invokes deactivateSandevistan operation.
 	//
 	// Досрочно деактивировать Sandevistan.
@@ -58,6 +64,12 @@ type Invoker interface {
 	//
 	// GET /combat/players/{player_id}/sandevistan/heat
 	GetHeatStatus(ctx context.Context, params GetHeatStatusParams) (GetHeatStatusRes, error)
+	// GetSandevistanBonuses invokes getSandevistanBonuses operation.
+	//
+	// Получить текущие бонусы Sandevistan.
+	//
+	// GET /combat/players/{player_id}/sandevistan/bonuses
+	GetSandevistanBonuses(ctx context.Context, params GetSandevistanBonusesParams) (GetSandevistanBonusesRes, error)
 	// GetSandevistanStatus invokes getSandevistanStatus operation.
 	//
 	// Получить статус Sandevistan.
@@ -70,6 +82,12 @@ type Invoker interface {
 	//
 	// GET /combat/players/{player_id}/sandevistan/temporal-marks
 	GetTemporalMarks(ctx context.Context, params GetTemporalMarksParams) (GetTemporalMarksRes, error)
+	// PublishPerceptionDragEvent invokes publishPerceptionDragEvent operation.
+	//
+	// Опубликовать Perception Drag событие.
+	//
+	// POST /combat/players/{player_id}/sandevistan/perception-drag
+	PublishPerceptionDragEvent(ctx context.Context, request *PerceptionDragEvent, params PublishPerceptionDragEventParams) (PublishPerceptionDragEventRes, error)
 	// SetTemporalMarks invokes setTemporalMarks operation.
 	//
 	// Установить Temporal Marks на цели.
@@ -510,6 +528,131 @@ func (c *Client) sendApplyCounterplay(ctx context.Context, request *ApplyCounter
 	return result, nil
 }
 
+// ApplyTemporalMarks invokes applyTemporalMarks operation.
+//
+// Применить Temporal Marks (delayed burst damage).
+//
+// POST /combat/players/{player_id}/sandevistan/apply-temporal-marks
+func (c *Client) ApplyTemporalMarks(ctx context.Context, params ApplyTemporalMarksParams) (ApplyTemporalMarksRes, error) {
+	res, err := c.sendApplyTemporalMarks(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendApplyTemporalMarks(ctx context.Context, params ApplyTemporalMarksParams) (res ApplyTemporalMarksRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("applyTemporalMarks"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/combat/players/{player_id}/sandevistan/apply-temporal-marks"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ApplyTemporalMarksOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/combat/players/"
+	{
+		// Encode "player_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "player_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.PlayerID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/sandevistan/apply-temporal-marks"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ApplyTemporalMarksOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeApplyTemporalMarksResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // DeactivateSandevistan invokes deactivateSandevistan operation.
 //
 // Досрочно деактивировать Sandevistan.
@@ -760,6 +903,131 @@ func (c *Client) sendGetHeatStatus(ctx context.Context, params GetHeatStatusPara
 	return result, nil
 }
 
+// GetSandevistanBonuses invokes getSandevistanBonuses operation.
+//
+// Получить текущие бонусы Sandevistan.
+//
+// GET /combat/players/{player_id}/sandevistan/bonuses
+func (c *Client) GetSandevistanBonuses(ctx context.Context, params GetSandevistanBonusesParams) (GetSandevistanBonusesRes, error) {
+	res, err := c.sendGetSandevistanBonuses(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetSandevistanBonuses(ctx context.Context, params GetSandevistanBonusesParams) (res GetSandevistanBonusesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getSandevistanBonuses"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/combat/players/{player_id}/sandevistan/bonuses"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetSandevistanBonusesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/combat/players/"
+	{
+		// Encode "player_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "player_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.PlayerID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/sandevistan/bonuses"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetSandevistanBonusesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetSandevistanBonusesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // GetSandevistanStatus invokes getSandevistanStatus operation.
 //
 // Получить статус Sandevistan.
@@ -1003,6 +1271,134 @@ func (c *Client) sendGetTemporalMarks(ctx context.Context, params GetTemporalMar
 
 	stage = "DecodeResponse"
 	result, err := decodeGetTemporalMarksResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PublishPerceptionDragEvent invokes publishPerceptionDragEvent operation.
+//
+// Опубликовать Perception Drag событие.
+//
+// POST /combat/players/{player_id}/sandevistan/perception-drag
+func (c *Client) PublishPerceptionDragEvent(ctx context.Context, request *PerceptionDragEvent, params PublishPerceptionDragEventParams) (PublishPerceptionDragEventRes, error) {
+	res, err := c.sendPublishPerceptionDragEvent(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendPublishPerceptionDragEvent(ctx context.Context, request *PerceptionDragEvent, params PublishPerceptionDragEventParams) (res PublishPerceptionDragEventRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("publishPerceptionDragEvent"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/combat/players/{player_id}/sandevistan/perception-drag"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PublishPerceptionDragEventOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/combat/players/"
+	{
+		// Encode "player_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "player_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.PlayerID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/sandevistan/perception-drag"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePublishPerceptionDragEventRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, PublishPerceptionDragEventOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodePublishPerceptionDragEventResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

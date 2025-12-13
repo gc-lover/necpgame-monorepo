@@ -166,3 +166,44 @@ func (h *Handlers) UseActionBudget(ctx context.Context, req *api.UseActionBudget
 
 	return result, nil
 }
+
+// ApplyTemporalMarks - TYPED response!
+func (h *Handlers) ApplyTemporalMarks(ctx context.Context, params api.ApplyTemporalMarksParams) (api.ApplyTemporalMarksRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	result, err := h.service.ApplyTemporalMarks(ctx, params.PlayerID)
+	if err != nil {
+		return &api.ApplyTemporalMarksInternalServerError{}, err
+	}
+
+	return result, nil
+}
+
+// GetSandevistanBonuses - TYPED response!
+func (h *Handlers) GetSandevistanBonuses(ctx context.Context, params api.GetSandevistanBonusesParams) (api.GetSandevistanBonusesRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	bonuses, err := h.service.GetBonuses(ctx, params.PlayerID)
+	if err != nil {
+		return &api.GetSandevistanBonusesInternalServerError{}, err
+	}
+
+	return bonuses, nil
+}
+
+// PublishPerceptionDragEvent - TYPED response!
+func (h *Handlers) PublishPerceptionDragEvent(ctx context.Context, req *api.PerceptionDragEvent, params api.PublishPerceptionDragEventParams) (api.PublishPerceptionDragEventRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	if err := h.service.PublishPerceptionDragEvent(ctx, params.PlayerID, req); err != nil {
+		if err.Error() == "event player_id does not match request player_id" {
+			return &api.PublishPerceptionDragEventBadRequest{}, nil
+		}
+		return &api.PublishPerceptionDragEventInternalServerError{}, err
+	}
+
+	return &api.StatusResponse{Status: api.NewOptString("published")}, nil
+}

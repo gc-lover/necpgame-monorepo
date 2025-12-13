@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: asia\tokyo\2078-2093\quest-048-simulation-shinto.yaml
--- Generated: 2025-12-06T21:12:58.708990
+-- Generated: 2025-12-13T21:13:34.850576
 
 BEGIN;
 

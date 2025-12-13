@@ -1,104 +1,104 @@
 # Issue: #1847
-  post:
-    tags:
-      - Damage Calculation
-    summary: Расчёт урона
-    description: |
-      Рассчитывает урон на основе характеристик атакующего и защищающегося.
+post:
+  tags:
+    - Damage Calculation
+  summary: Расчёт урона
+  description: |
+    Рассчитывает урон на основе характеристик атакующего и защищающегося.
 
-      **Учитывает:**
-      - Базовый урон оружия/способности
-      - Характеристики атакующего (сила, ловкость, интеллект)
-      - Броню и сопротивления защищающегося
-      - Модификаторы (критический удар, слабые места)
-      - Баффы и дебаффы
+    **Учитывает:**
+    - Базовый урон оружия/способности
+    - Характеристики атакующего (сила, ловкость, интеллект)
+    - Броню и сопротивления защищающегося
+    - Модификаторы (критический удар, слабые места)
+    - Баффы и дебаффы
 
-      **Формула:**
-      ```
-      final_damage = (base_damage + attacker_modifiers) * critical_multiplier
-                     - (armor + resistances) * defense_multiplier
-      ```
+    **Формула:**
+    ```
+    final_damage = (base_damage + attacker_modifiers) * critical_multiplier
+                   - (armor + resistances) * defense_multiplier
+    ```
 
-      **Защита от читов:**
-      - Все расчёты на сервере
-      - Валидация базового урона по оружию
-      - Проверка модификаторов на адекватность
-      - Логирование всех расчётов для аудита
-    operationId: calculateDamage
-    security:
-      - BearerAuth: []
-    requestBody:
-      required: true
+    **Защита от читов:**
+    - Все расчёты на сервере
+    - Валидация базового урона по оружию
+    - Проверка модификаторов на адекватность
+    - Логирование всех расчётов для аудита
+  operationId: calculateDamage
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/damage-request.yaml"
+        examples:
+          physical_attack:
+            summary: Физическая атака
+            value:
+              attacker_id: 123e4567-e89b-12d3-a456-426614174000
+              target_id: 123e4567-e89b-12d3-a456-426614174001
+              base_damage: 100
+              damage_type: physical
+              modifiers:
+                is_critical: false
+                weak_spot: false
+                range_modifier: 1
+          critical_hit:
+            summary: Критический удар
+            value:
+              attacker_id: 123e4567-e89b-12d3-a456-426614174000
+              target_id: 123e4567-e89b-12d3-a456-426614174001
+              base_damage: 100
+              damage_type: physical
+              modifiers:
+                is_critical: true
+                weak_spot: true
+                range_modifier: 1
+  responses:
+    "200":
+      description: Расчёт урона выполнен
       content:
         application/json:
           schema:
-            $ref: '../schemas/damage-request.yaml'
+            $ref: "../schemas/damage-result.yaml"
           examples:
-            physical_attack:
-              summary: Физическая атака
+            normal_damage:
+              summary: Обычный урон
               value:
                 attacker_id: 123e4567-e89b-12d3-a456-426614174000
                 target_id: 123e4567-e89b-12d3-a456-426614174001
                 base_damage: 100
+                final_damage: 75
                 damage_type: physical
-                modifiers:
-                  is_critical: false
-                  weak_spot: false
-                  range_modifier: 1
-            critical_hit:
-              summary: Критический удар
+                modifiers_applied:
+                  - name: armor_reduction
+                    value: -25
+                was_critical: false
+                was_blocked: false
+                damage_reduction: 25
+            critical_damage:
+              summary: Критический урон
               value:
                 attacker_id: 123e4567-e89b-12d3-a456-426614174000
                 target_id: 123e4567-e89b-12d3-a456-426614174001
                 base_damage: 100
+                final_damage: 175
                 damage_type: physical
-                modifiers:
-                  is_critical: true
-                  weak_spot: true
-                  range_modifier: 1
-    responses:
-      '200':
-        description: Расчёт урона выполнен
-        content:
-          application/json:
-            schema:
-              $ref: '../schemas/damage-result.yaml'
-            examples:
-              normal_damage:
-                summary: Обычный урон
-                value:
-                  attacker_id: 123e4567-e89b-12d3-a456-426614174000
-                  target_id: 123e4567-e89b-12d3-a456-426614174001
-                  base_damage: 100
-                  final_damage: 75
-                  damage_type: physical
-                  modifiers_applied:
-                    - name: armor_reduction
-                      value: -25
-                  was_critical: false
-                  was_blocked: false
-                  damage_reduction: 25
-              critical_damage:
-                summary: Критический урон
-                value:
-                  attacker_id: 123e4567-e89b-12d3-a456-426614174000
-                  target_id: 123e4567-e89b-12d3-a456-426614174001
-                  base_damage: 100
-                  final_damage: 175
-                  damage_type: physical
-                  modifiers_applied:
-                    - name: critical_multiplier
-                      value: 2
-                    - name: weak_spot_bonus
-                      value: 0.5
-                    - name: armor_reduction
-                      value: -25
-                  was_critical: true
-                  was_blocked: false
-                  damage_reduction: 25
-      '400':
-        $ref: '../common.yaml#/components/responses/BadRequest'
-      '401':
-        $ref: '../common.yaml#/components/responses/Unauthorized'
-      '500':
-        $ref: '../common.yaml#/components/responses/InternalServerError'
+                modifiers_applied:
+                  - name: critical_multiplier
+                    value: 2
+                  - name: weak_spot_bonus
+                    value: 0.5
+                  - name: armor_reduction
+                    value: -25
+                was_critical: true
+                was_blocked: false
+                damage_reduction: 25
+    "400":
+      $ref: "../common.yaml#/components/responses/BadRequest"
+    "401":
+      $ref: "../common.yaml#/components/responses/Unauthorized"
+    "500":
+      $ref: "../common.yaml#/components/responses/InternalServerError"
