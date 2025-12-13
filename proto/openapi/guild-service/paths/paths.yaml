@@ -1,0 +1,468 @@
+# Guild Service Paths
+# Issue: #1852
+
+# Создание и получение гильдий
+/guilds:
+  get:
+    tags: [Guilds]
+    operationId: getGuilds
+    summary: Получить список гильдий
+    description: Возвращает список гильдий с фильтрами и пагинацией
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: search
+        in: query
+        schema:
+          type: string
+          maxLength: 50
+        description: Поиск по названию или тегу
+      - name: type
+        in: query
+        schema:
+          $ref: "../schemas/schemas.yaml#/GuildType"
+        description: Фильтр по типу гильдии
+      - name: recruiting
+        in: query
+        schema:
+          type: boolean
+        description: Только recruiting гильдии
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+    responses:
+      "200":
+        description: Список гильдий
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/GuildListResponse"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+  post:
+    tags: [Guilds]
+    operationId: createGuild
+    summary: Создать гильдию
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/schemas.yaml#/CreateGuildRequest"
+    responses:
+      "201":
+        description: Гильдия создана
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/Guild"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+      "409":
+        description: Название или тег уже заняты
+
+# Управление конкретной гильдией
+/guilds/{guild_id}:
+  parameters:
+    - name: guild_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID гильдии
+
+  get:
+    tags: [Guilds]
+    operationId: getGuild
+    summary: Получить информацию о гильдии
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Информация о гильдии
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/Guild"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+  put:
+    tags: [Guilds]
+    operationId: updateGuild
+    summary: Обновить гильдию
+    description: Обновляет настройки гильдии (только лидер)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/schemas.yaml#/UpdateGuildRequest"
+    responses:
+      "200":
+        description: Гильдия обновлена
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/Guild"
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+
+  delete:
+    tags: [Guilds]
+    operationId: deleteGuild
+    summary: Распустить гильдию
+    description: Распускает гильдию (только лидер)
+    security:
+      - BearerAuth: []
+    responses:
+      "204":
+        description: Гильдия распущена
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+
+# Члены гильдии
+/guilds/{guild_id}/members:
+  get:
+    tags: [Members]
+    operationId: getGuildMembers
+    summary: Получить членов гильдии
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: online_only
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Только онлайн члены
+    responses:
+      "200":
+        description: Список членов
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/GuildMembersResponse"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+
+# Управление членом
+/guilds/{guild_id}/members/{user_id}:
+  parameters:
+    - name: guild_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  put:
+    tags: [Members]
+    operationId: updateMemberRole
+    summary: Изменить роль члена
+    description: Изменяет роль члена гильдии (только лидер/офицеры)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              role:
+                $ref: "../schemas/schemas.yaml#/GuildRole"
+            required:
+              - role
+    responses:
+      "200":
+        description: Роль обновлена
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/GuildMember"
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+
+  delete:
+    tags: [Members]
+    operationId: removeMember
+    summary: Исключить члена
+    description: Исключает члена из гильдии
+    security:
+      - BearerAuth: []
+    responses:
+      "204":
+        description: Член исключен
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+
+# Заявки на вступление
+/guilds/{guild_id}/applications:
+  get:
+    tags: [Members]
+    operationId: getGuildApplications
+    summary: Получить заявки на вступление
+    description: Получить список заявок (только офицеры)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          $ref: "../schemas/schemas.yaml#/ApplicationStatus"
+          default: PENDING
+    responses:
+      "200":
+        description: Список заявок
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/GuildApplicationsResponse"
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+
+# Подать заявку
+/guilds/{guild_id}/apply:
+  post:
+    tags: [Members]
+    operationId: applyToGuild
+    summary: Подать заявку на вступление
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/schemas.yaml#/ApplyToGuildRequest"
+    responses:
+      "201":
+        description: Заявка подана
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/GuildApplication"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "409":
+        description: Уже в гильдии или заявка уже подана
+
+# Пригласить в гильдию
+/guilds/{guild_id}/invite:
+  post:
+    tags: [Members]
+    operationId: inviteToGuild
+    summary: Пригласить игрока в гильдию
+    description: Отправляет приглашение игроку (только офицеры)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/schemas.yaml#/InviteToGuildRequest"
+    responses:
+      "200":
+        description: Приглашение отправлено
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+
+# Принять/отклонить заявку
+/guilds/{guild_id}/applications/{application_id}:
+  parameters:
+    - name: guild_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: application_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  post:
+    tags: [Members]
+    operationId: reviewApplication
+    summary: Рассмотреть заявку
+    description: Принять или отклонить заявку (только офицеры)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              action:
+                type: string
+                enum: [accept, reject]
+              reason:
+                type: string
+                maxLength: 200
+            required:
+              - action
+    responses:
+      "200":
+        description: Заявка обработана
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/GuildApplication"
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+      "404":
+        $ref: "../../common.yaml#/components/responses/NotFound"
+
+# Ресурсы гильдии
+/guilds/{guild_id}/treasury:
+  get:
+    tags: [Resources]
+    operationId: getGuildTreasury
+    summary: Получить состояние казны
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Состояние казны
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                balance:
+                  type: integer
+                  description: Текущий баланс (в эдди)
+                transactions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                        enum: [deposit, withdrawal, mission_reward, purchase]
+                      amount:
+                        type: integer
+                      description:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                  maxItems: 20
+      "403":
+        $ref: "../../common.yaml#/components/responses/Forbidden"
+
+# WebSocket для real-time
+/guilds/ws:
+  get:
+    tags: [Social]
+    operationId: guildWebSocket
+    summary: WebSocket для гильдейских событий
+    description: |
+      WebSocket endpoint для real-time гильдейских событий.
+
+      **Протокол:**
+      - Подключение: `ws://host/guilds/ws?token=jwt_token`
+      - Сообщения:
+        - `{"type": "member_online", "data": {"user_id": "...", "guild_id": "..."}}`
+        - `{"type": "member_offline", "data": {"user_id": "...", "guild_id": "..."}}`
+        - `{"type": "guild_message", "data": {"sender_id": "...", "content": "..."}}`
+        - `{"type": "application_received", "data": {"application_id": "..."}}`
+
+      **BACKEND NOTE:** Use Redis pub/sub for guild events.
+      Rate limit: 100 messages/minute per guild.
+    security:
+      - BearerAuth: []
+    responses:
+      "101":
+        description: WebSocket соединение установлено
+      "200":
+        description: WebSocket upgrade successful
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
