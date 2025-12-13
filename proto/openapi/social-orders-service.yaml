@@ -1,0 +1,239 @@
+# Issue: #140875791
+openapi: 3.0.3
+info:
+  title: Social Orders Service API
+  description: API для системы заказов и контрактов в MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/social
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/social
+    description: Продакшен сервер
+
+tags:
+  - name: Orders
+    description: Система заказов и контрактов
+
+paths:
+  /orders:
+    post:
+      tags:
+        - Orders
+      summary: Создание нового заказа
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-player-schemas.yaml#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    get:
+      tags:
+        - Orders
+      summary: Поиск заказов
+      operationId: searchOrders
+      parameters:
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum: [assassination, protection, delivery, investigation, bounty, escort, sabotage, recovery]
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [easy, medium, hard, deadly]
+        - name: min_reward
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: max_reward
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: currency
+          in: query
+          schema:
+            type: string
+            enum: [eurodollar, bitcoin, corporate_script, street_cred]
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, accepted, in_progress, completed, failed, cancelled, expired]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+                  total:
+                    type: integer
+
+  /orders/{order_id}:
+    get:
+      tags:
+        - Orders
+      summary: Получение деталей заказа
+      operationId: getOrder
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали заказа
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Orders
+      summary: Принятие или обновление статуса заказа
+      operationId: updateOrderStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [accept, start, complete, fail, cancel]
+                completion_notes:
+                  type: string
+                  maxLength: 1000
+                  description: Заметки о выполнении (для complete/fail)
+      responses:
+        '200':
+          description: Статус заказа обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /orders/my:
+    get:
+      tags:
+        - Orders
+      summary: Получение заказов игрока
+      operationId: getPlayerOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [client, contractor]
+            default: client
+            description: Роль игрока в заказах
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, accepted, in_progress, completed, failed, cancelled, expired]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Заказы игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

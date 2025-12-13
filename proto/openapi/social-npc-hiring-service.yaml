@@ -1,0 +1,250 @@
+# Issue: #140875791
+openapi: 3.0.3
+info:
+  title: Social NPC Hiring Service API
+  description: API для найма NPC в MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/social
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/social
+    description: Продакшен сервер
+
+tags:
+  - name: NPC Hiring
+    description: Найм NPC для выполнения задач
+
+paths:
+  /npcs/available:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Поиск доступных NPC для найма
+      operationId: searchAvailableNPCs
+      parameters:
+        - name: npc_type
+          in: query
+          schema:
+            type: string
+            enum: [mercenary, fixer, informant, bodyguard, hacker, medic, driver]
+        - name: min_loyalty
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+        - name: max_cost_per_hour
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: currency
+          in: query
+          schema:
+            type: string
+            enum: [eurodollar, bitcoin, corporate_script, street_cred]
+        - name: required_skill
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список доступных NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  npcs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum: [mercenary, fixer, informant, bodyguard, hacker, medic, driver]
+                        skills:
+                          type: array
+                          items:
+                            type: string
+                        loyalty_level:
+                          type: integer
+                          minimum: 1
+                          maximum: 10
+                        cost_per_hour:
+                          $ref: 'social-player-schemas.yaml#/components/schemas/Price'
+                        availability_status:
+                          type: string
+                          enum: [available, busy, unavailable]
+                  total:
+                    type: integer
+
+  /npcs/{npc_id}/hire:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Найм NPC
+      operationId: hireNPC
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-player-schemas.yaml#/components/schemas/HireNPCRequest'
+      responses:
+        '201':
+          description: NPC нанят
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/NPCHire'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /npcs/hired:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получение списка нанятых NPC
+      operationId: getHiredNPCs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, terminated]
+            default: active
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список нанятых NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hires:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/NPCHire'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /npcs/hired/{hire_id}:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получение деталей найма NPC
+      operationId: getNPCHireDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали найма
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/NPCHire'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - NPC Hiring
+      summary: Увольнение NPC
+      operationId: terminateNPCHire
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Причина увольнения
+      responses:
+        '204':
+          description: NPC уволен
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

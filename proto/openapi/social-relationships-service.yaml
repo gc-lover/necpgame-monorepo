@@ -1,0 +1,214 @@
+# Issue: #140875791
+openapi: 3.0.3
+info:
+  title: Social Relationships Service API
+  description: API для управления отношениями между игроками и NPC в MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/social
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/social
+    description: Продакшен сервер
+
+tags:
+  - name: Relationships
+    description: Управление отношениями между игроками и NPC
+
+paths:
+  /relationships:
+    get:
+      tags:
+        - Relationships
+      summary: Получение списка отношений игрока
+      operationId: getPlayerRelationships
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum: [player, npc]
+        - name: relationship_type
+          in: query
+          schema:
+            type: string
+            enum: [friend, rival, ally, mentor, apprentice, romantic, business]
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список отношений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  relationships:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Relationships
+      summary: Создание нового отношения
+      operationId: createRelationship
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_id
+                - target_type
+                - relationship_type
+              properties:
+                target_id:
+                  type: string
+                  format: uuid
+                target_type:
+                  type: string
+                  enum: [player, npc]
+                relationship_type:
+                  type: string
+                  enum: [friend, rival, ally, mentor, apprentice, romantic, business]
+      responses:
+        '201':
+          description: Отношение создано
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          description: Отношение уже существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Relationship already exists"
+
+  /relationships/{relationship_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получение деталей отношения
+      operationId: getRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали отношения
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - Relationships
+      summary: Обновление отношения
+      operationId: updateRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-player-schemas.yaml#/components/schemas/RelationshipUpdate'
+      responses:
+        '200':
+          description: Отношение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Relationships
+      summary: Удаление отношения
+      operationId: deleteRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Отношение удалено
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,659 @@
+# Issue: #140875791
+openapi: 3.0.3
+info:
+  title: Social Player Service API
+  description: API для игровой социальной системы (отношения, заказы, найм NPC) в MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/social
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/social
+    description: Продакшен сервер
+
+tags:
+  - name: Relationships
+    description: Управление отношениями между игроками и NPC
+  - name: Orders
+    description: Система заказов и контрактов
+  - name: NPC Hiring
+    description: Найм NPC для выполнения задач
+
+paths:
+  # === ОТНОШЕНИЯ ===
+
+  /relationships:
+    get:
+      tags:
+        - Relationships
+      summary: Получение списка отношений игрока
+      operationId: getPlayerRelationships
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum: [player, npc]
+        - name: relationship_type
+          in: query
+          schema:
+            type: string
+            enum: [friend, rival, ally, mentor, apprentice, romantic, business]
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список отношений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  relationships:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Relationships
+      summary: Создание нового отношения
+      operationId: createRelationship
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_id
+                - target_type
+                - relationship_type
+              properties:
+                target_id:
+                  type: string
+                  format: uuid
+                target_type:
+                  type: string
+                  enum: [player, npc]
+                relationship_type:
+                  type: string
+                  enum: [friend, rival, ally, mentor, apprentice, romantic, business]
+      responses:
+        '201':
+          description: Отношение создано
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          description: Отношение уже существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Relationship already exists"
+
+  /relationships/{relationship_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получение деталей отношения
+      operationId: getRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали отношения
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - Relationships
+      summary: Обновление отношения
+      operationId: updateRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-player-schemas.yaml#/components/schemas/RelationshipUpdate'
+      responses:
+        '200':
+          description: Отношение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/Relationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Relationships
+      summary: Удаление отношения
+      operationId: deleteRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Отношение удалено
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  # === ЗАКАЗЫ ===
+
+  /orders:
+    post:
+      tags:
+        - Orders
+      summary: Создание нового заказа
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-player-schemas.yaml#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    get:
+      tags:
+        - Orders
+      summary: Поиск заказов
+      operationId: searchOrders
+      parameters:
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum: [assassination, protection, delivery, investigation, bounty, escort, sabotage, recovery]
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [easy, medium, hard, deadly]
+        - name: min_reward
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: max_reward
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: currency
+          in: query
+          schema:
+            type: string
+            enum: [eurodollar, bitcoin, corporate_script, street_cred]
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, accepted, in_progress, completed, failed, cancelled, expired]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+                  total:
+                    type: integer
+
+  /orders/{order_id}:
+    get:
+      tags:
+        - Orders
+      summary: Получение деталей заказа
+      operationId: getOrder
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали заказа
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Orders
+      summary: Принятие или обновление статуса заказа
+      operationId: updateOrderStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [accept, start, complete, fail, cancel]
+                completion_notes:
+                  type: string
+                  maxLength: 1000
+                  description: Заметки о выполнении (для complete/fail)
+      responses:
+        '200':
+          description: Статус заказа обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /orders/my:
+    get:
+      tags:
+        - Orders
+      summary: Получение заказов игрока
+      operationId: getPlayerOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [client, contractor]
+            default: client
+            description: Роль игрока в заказах
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, accepted, in_progress, completed, failed, cancelled, expired]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Заказы игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/PlayerOrder'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  # === НАЙМ NPC ===
+
+  /npcs/available:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Поиск доступных NPC для найма
+      operationId: searchAvailableNPCs
+      parameters:
+        - name: npc_type
+          in: query
+          schema:
+            type: string
+            enum: [mercenary, fixer, informant, bodyguard, hacker, medic, driver]
+        - name: min_loyalty
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+        - name: max_cost_per_hour
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: currency
+          in: query
+          schema:
+            type: string
+            enum: [eurodollar, bitcoin, corporate_script, street_cred]
+        - name: required_skill
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список доступных NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  npcs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum: [mercenary, fixer, informant, bodyguard, hacker, medic, driver]
+                        skills:
+                          type: array
+                          items:
+                            type: string
+                        loyalty_level:
+                          type: integer
+                          minimum: 1
+                          maximum: 10
+                        cost_per_hour:
+                          $ref: 'social-player-schemas.yaml#/components/schemas/Price'
+                        availability_status:
+                          type: string
+                          enum: [available, busy, unavailable]
+                  total:
+                    type: integer
+
+  /npcs/{npc_id}/hire:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Найм NPC
+      operationId: hireNPC
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-player-schemas.yaml#/components/schemas/HireNPCRequest'
+      responses:
+        '201':
+          description: NPC нанят
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/NPCHire'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /npcs/hired:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получение списка нанятых NPC
+      operationId: getHiredNPCs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, terminated]
+            default: active
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список нанятых NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hires:
+                    type: array
+                    items:
+                      $ref: 'social-player-schemas.yaml#/components/schemas/NPCHire'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /npcs/hired/{hire_id}:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получение деталей найма NPC
+      operationId: getNPCHireDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали найма
+          content:
+            application/json:
+              schema:
+                $ref: 'social-player-schemas.yaml#/components/schemas/NPCHire'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - NPC Hiring
+      summary: Увольнение NPC
+      operationId: terminateNPCHire
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Причина увольнения
+      responses:
+        '204':
+          description: NPC уволен
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
