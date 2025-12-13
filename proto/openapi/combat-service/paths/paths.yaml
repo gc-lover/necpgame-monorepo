@@ -1,0 +1,275 @@
+# Combat Service Paths
+# Issue: #1851
+
+# Sandevistan имплант
+/sandevistan:
+  get:
+    tags: [Implants]
+    operationId: getSandevistanState
+    summary: Получить состояние Sandevistan
+    description: Возвращает текущее состояние импланта Sandevistan
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Состояние импланта
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/SandevistanState"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+  post:
+    tags: [Implants]
+    operationId: activateSandevistan
+    summary: Активировать Sandevistan
+    description: Запускает временной овердрайв
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/schemas.yaml#/SandevistanActivationRequest"
+    responses:
+      "200":
+        description: Sandevistan активирован
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/SandevistanState"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+      "429":
+        description: Имплант перегрет или на перезарядке
+
+# Berserk имплант
+/berserk:
+  get:
+    tags: [Implants]
+    operationId: getBerserkState
+    summary: Получить состояние Berserk
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Состояние Berserk
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/BerserkState"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+  post:
+    tags: [Implants]
+    operationId: activateBerserk
+    summary: Активировать Berserk
+    description: Запускает боевой режим Berserk
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Berserk активирован
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/BerserkState"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+      "429":
+        description: Недостаточно здоровья или на перезарядке
+
+# Способности
+/abilities:
+  get:
+    tags: [Abilities]
+    operationId: getPlayerAbilities
+    summary: Получить способности игрока
+    description: Возвращает все способности игрока с их состоянием
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Список способностей
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../schemas/schemas.yaml#/AbilityState"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+/abilities/{ability_id}/activate:
+  parameters:
+    - name: ability_id
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 50
+      description: ID способности
+
+  post:
+    tags: [Abilities]
+    operationId: activateAbility
+    summary: Активировать способность
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/schemas.yaml#/AbilityActivationRequest"
+    responses:
+      "200":
+        description: Способность активирована
+        content:
+          application/json:
+            schema:
+              $ref: "../../common.yaml#/components/schemas/SuccessResponse"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+      "404":
+        description: Способность не найдена
+      "429":
+        description: Способность на перезарядке
+
+# Боевые действия
+/actions:
+  post:
+    tags: [Combat]
+    operationId: performCombatAction
+    summary: Выполнить боевое действие
+    description: Отправляет боевое действие на сервер
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/schemas.yaml#/CombatActionRequest"
+    responses:
+      "200":
+        description: Действие выполнено
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/CombatActionResponse"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+      "429":
+        description: Слишком много действий за тик
+
+# Suppression
+/suppression:
+  get:
+    tags: [Combat]
+    operationId: getSuppressionState
+    summary: Получить состояние suppression
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Состояние suppression
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/SuppressionState"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+# Состояние боя
+/state:
+  get:
+    tags: [State]
+    operationId: getCombatState
+    summary: Получить состояние боя
+    description: Возвращает полное состояние боя для игрока
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Состояние боя
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/CombatState"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+/state/players:
+  get:
+    tags: [State]
+    operationId: getNearbyPlayerStates
+    summary: Получить состояния nearby игроков
+    description: Возвращает состояния боя для игроков в радиусе
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: radius
+        in: query
+        schema:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          default: 100
+        description: Радиус в метрах
+      - name: include_self
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Включить своё состояние
+    responses:
+      "200":
+        description: Состояния игроков
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/schemas.yaml#/PlayerCombatStatesResponse"
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"
+
+# WebSocket endpoint
+/ws/combat:
+  get:
+    tags: [State]
+    operationId: websocketCombat
+    summary: WebSocket для real-time combat
+    description: |
+      WebSocket endpoint для синхронизации боевого состояния.
+
+      **Протокол:**
+      - Клиент отправляет: `{"type": "subscribe_combat", "player_id": "uuid"}`
+      - Сервер отправляет состояния: `{"type": "combat_state", "data": {...}}`
+      - Real-time suppression: `{"type": "suppression_update", "data": {...}}`
+
+      **BACKEND NOTE:** Worker pool для 10k+ одновременных соединений.
+      Priority queue для critical combat updates.
+    security:
+      - BearerAuth: []
+    responses:
+      "101":
+        description: WebSocket соединение установлено
+      "200":
+        description: WebSocket handshake successful
+      "400":
+        $ref: "../../common.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../../common.yaml#/components/responses/Unauthorized"

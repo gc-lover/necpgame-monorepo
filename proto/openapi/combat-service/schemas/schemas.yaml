@@ -1,0 +1,329 @@
+# Combat Service Schemas
+# Issue: #1851
+
+# Боевые импланты
+SandevistanState:
+  type: object
+  description: Состояние Sandevistan импланта
+  properties:
+    player_id:
+      type: string
+      format: uuid
+      description: ID игрока
+    is_active:
+      type: boolean
+      description: Активен ли имплант
+    phase:
+      $ref: "#/SandevistanPhase"
+    activation_time:
+      type: string
+      format: date-time
+      description: Время активации
+    duration_remaining_ms:
+      type: integer
+      minimum: 0
+      maximum: 4000
+      description: Оставшееся время в мс
+    action_budget:
+      type: integer
+      minimum: 0
+      maximum: 3
+      description: Доступный бюджет действий за тик
+    heat_level:
+      type: number
+      minimum: 0
+      maximum: 100
+      description: Уровень перегрева (%)
+    cyberpsychosis_risk:
+      type: number
+      minimum: 0
+      maximum: 100
+      description: Риск киберпсихоза (%)
+  required:
+    - player_id
+    - is_active
+    - phase
+
+SandevistanPhase:
+  type: string
+  enum: [INACTIVE, ARMED, ACTIVE, RECUPERATION, OVERHEATED]
+  description: Фаза работы Sandevistan
+
+SandevistanActivationRequest:
+  type: object
+  description: Запрос на активацию Sandevistan
+  properties:
+    duration_override_ms:
+      type: integer
+      minimum: 1000
+      maximum: 6000
+      description: Переопределение длительности (опционально)
+    force_activation:
+      type: boolean
+      default: false
+      description: Игнорировать проверки перегрева
+  required: []
+
+# Berserk имплант
+BerserkState:
+  type: object
+  description: Состояние Berserk импланта
+  properties:
+    player_id:
+      type: string
+      format: uuid
+    is_active:
+      type: boolean
+    activation_time:
+      type: string
+      format: date-time
+    duration_remaining_ms:
+      type: integer
+      minimum: 0
+      maximum: 15000
+    damage_multiplier:
+      type: number
+      minimum: 1.0
+      maximum: 3.0
+      description: Множитель урона
+    health_drain_per_second:
+      type: number
+      minimum: 0
+      maximum: 50
+      description: Потеря здоровья в сек
+    cyberpsychosis_buildup:
+      type: number
+      minimum: 0
+      maximum: 100
+  required:
+    - player_id
+    - is_active
+
+# Способности и cooldowns
+AbilityState:
+  type: object
+  description: Состояние способности
+  properties:
+    ability_id:
+      type: string
+      maxLength: 50
+      description: ID способности
+    name:
+      type: string
+      maxLength: 100
+      description: Название способности
+    is_on_cooldown:
+      type: boolean
+      description: На перезарядке
+    cooldown_remaining_ms:
+      type: integer
+      minimum: 0
+      description: Оставшееся время перезарядки
+    charges_current:
+      type: integer
+      minimum: 0
+      description: Текущие заряды
+    charges_max:
+      type: integer
+      minimum: 1
+      description: Максимальные заряды
+    last_used_at:
+      type: string
+      format: date-time
+  required:
+    - ability_id
+    - name
+    - is_on_cooldown
+
+AbilityActivationRequest:
+  type: object
+  description: Запрос на активацию способности
+  properties:
+    ability_id:
+      type: string
+      maxLength: 50
+    target_position:
+      $ref: "../../common.yaml#/components/schemas/Position3D"
+    target_entity_id:
+      type: string
+      format: uuid
+      description: ID цели (опционально)
+  required:
+    - ability_id
+
+# Боевые действия
+CombatAction:
+  type: object
+  description: Боевое действие
+  properties:
+    action_type:
+      $ref: "#/CombatActionType"
+    timestamp:
+      type: string
+      format: date-time
+    position:
+      $ref: "../../common.yaml#/components/schemas/Position3D"
+    direction:
+      $ref: "../../common.yaml#/components/schemas/Direction3D"
+    weapon_id:
+      type: string
+      maxLength: 50
+      description: ID оружия
+    damage_dealt:
+      type: number
+      minimum: 0
+      description: Нанесенный урон
+    hit_targets:
+      type: array
+      items:
+        type: string
+        format: uuid
+      maxItems: 10
+      description: ID попаданий
+  required:
+    - action_type
+    - timestamp
+
+CombatActionType:
+  type: string
+  enum: [SHOOT, MELEE_ATTACK, GRENADE_THROW, ABILITY_USE, COVER_TAKE, SUPPRESSION_FIRE]
+  description: Тип боевого действия
+
+# Suppression система
+SuppressionState:
+  type: object
+  description: Состояние suppression
+  properties:
+    player_id:
+      type: string
+      format: uuid
+    suppression_level:
+      type: number
+      minimum: 0
+      maximum: 100
+      description: Уровень suppression (%)
+    is_suppressed:
+      type: boolean
+      description: Под suppression
+    last_suppression_time:
+      type: string
+      format: date-time
+    recovery_time_ms:
+      type: integer
+      minimum: 0
+      description: Время восстановления
+    audio_suppression:
+      type: boolean
+      description: Аудио-эффект suppression
+  required:
+    - player_id
+    - suppression_level
+
+# Состояние боя
+CombatState:
+  type: object
+  description: Полное состояние боя для игрока
+  properties:
+    player_id:
+      type: string
+      format: uuid
+    health_current:
+      type: number
+      minimum: 0
+    health_max:
+      type: number
+      minimum: 1
+    armor_current:
+      type: number
+      minimum: 0
+    is_alive:
+      type: boolean
+    position:
+      $ref: "../../common.yaml#/components/schemas/Position3D"
+    is_in_cover:
+      type: boolean
+    cover_type:
+      type: string
+      enum: [NONE, LOW, HIGH, FULL]
+    active_weapon_id:
+      type: string
+      maxLength: 50
+    active_implant:
+      type: string
+      enum: [NONE, SANDESVISTAN, BERSERK, CYBERPSYCHO]
+    abilities:
+      type: array
+      items:
+        $ref: "#/AbilityState"
+      maxItems: 10
+    suppression:
+      $ref: "#/SuppressionState"
+    last_combat_action:
+      $ref: "#/CombatAction"
+  required:
+    - player_id
+    - health_current
+    - health_max
+    - is_alive
+
+# Запросы
+CombatActionRequest:
+  type: object
+  description: Запрос на боевое действие
+  properties:
+    action_type:
+      $ref: "#/CombatActionType"
+    target_position:
+      $ref: "../../common.yaml#/components/schemas/Position3D"
+    target_entity_id:
+      type: string
+      format: uuid
+    weapon_slot:
+      type: integer
+      minimum: 0
+      maximum: 9
+      description: Слот оружия
+    ability_id:
+      type: string
+      maxLength: 50
+  required:
+    - action_type
+
+# Ответы
+CombatActionResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+    action_id:
+      type: string
+      format: uuid
+    damage_dealt:
+      type: number
+      minimum: 0
+    hit_targets:
+      type: array
+      items:
+        type: string
+        format: uuid
+      maxItems: 10
+    error_message:
+      type: string
+      maxLength: 200
+  required:
+    - success
+
+PlayerCombatStatesResponse:
+  type: object
+  properties:
+    states:
+      type: array
+      items:
+        $ref: "#/CombatState"
+      maxItems: 50
+    timestamp:
+      type: string
+      format: date-time
+  required:
+    - states
+    - timestamp
