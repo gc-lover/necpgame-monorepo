@@ -1,0 +1,538 @@
+# Issue: #140875788
+openapi: 3.0.3
+info:
+  title: Economy Player Service API
+  description: API для игровой экономической системы (торговля, рынки, аукционы) в MMOFPS RPG
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/economy
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/economy
+    description: Продакшен сервер
+
+tags:
+  - name: Trading
+    description: Система обмена между игроками
+  - name: Market
+    description: Рынки и магазины
+  - name: Auctions
+    description: Аукционная система
+  - name: Transactions
+    description: История транзакций
+
+paths:
+  # === ТОРГОВЛЯ ===
+
+  /trades:
+    post:
+      tags:
+        - Trading
+      summary: Создание предложения обмена
+      operationId: createTrade
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'economy-player-schemas.yaml#/components/schemas/CreateTradeRequest'
+      responses:
+        '201':
+          description: Предложение обмена создано
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/TradeOffer'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    get:
+      tags:
+        - Trading
+      summary: Получение списка активных предложений обмена
+      operationId: getActiveTrades
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID игрока (для фильтрации своих сделок)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список предложений обмена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: 'economy-player-schemas.yaml#/components/schemas/TradeOffer'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /trades/{trade_id}:
+    get:
+      tags:
+        - Trading
+      summary: Получение деталей предложения обмена
+      operationId: getTrade
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: trade_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали предложения обмена
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/TradeOffer'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - Trading
+      summary: Принятие/отклонение предложения обмена
+      operationId: respondToTrade
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: trade_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [accept, decline, cancel]
+      responses:
+        '200':
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/TradeOffer'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  # === РЫНКИ ===
+
+  /market/listings:
+    post:
+      tags:
+        - Market
+      summary: Создание объявления на рынке
+      operationId: createMarketListing
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'economy-player-schemas.yaml#/components/schemas/CreateMarketListingRequest'
+      responses:
+        '201':
+          description: Объявление создано
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/MarketListing'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    get:
+      tags:
+        - Market
+      summary: Поиск объявлений на рынке
+      operationId: searchMarketListings
+      parameters:
+        - name: item_type
+          in: query
+          schema:
+            type: string
+        - name: price_min
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: price_max
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: currency
+          in: query
+          schema:
+            type: string
+            enum: [eurodollar, bitcoin, corporate_script, street_cred]
+        - name: market_type
+          in: query
+          schema:
+            type: string
+            enum: [player_market, npc_shop, black_market]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  listings:
+                    type: array
+                    items:
+                      $ref: 'economy-player-schemas.yaml#/components/schemas/MarketListing'
+                  total:
+                    type: integer
+
+  /market/listings/{listing_id}/purchase:
+    post:
+      tags:
+        - Market
+      summary: Покупка предмета с рынка
+      operationId: purchaseMarketListing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Покупка совершена
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/Transaction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  # === АУКЦИОНЫ ===
+
+  /auctions:
+    post:
+      tags:
+        - Auctions
+      summary: Создание аукциона
+      operationId: createAuction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'economy-player-schemas.yaml#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Аукцион создан
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/Auction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    get:
+      tags:
+        - Auctions
+      summary: Получение списка активных аукционов
+      operationId: getActiveAuctions
+      parameters:
+        - name: item_type
+          in: query
+          schema:
+            type: string
+        - name: min_price
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: max_price
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список аукционов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctions:
+                    type: array
+                    items:
+                      $ref: 'economy-player-schemas.yaml#/components/schemas/Auction'
+                  total:
+                    type: integer
+
+  /auctions/{auction_id}:
+    get:
+      tags:
+        - Auctions
+      summary: Получение деталей аукциона
+      operationId: getAuction
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали аукциона
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/Auction'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /auctions/{auction_id}/bids:
+    post:
+      tags:
+        - Auctions
+      summary: Сделать ставку на аукционе
+      operationId: placeBid
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'economy-player-schemas.yaml#/components/schemas/PlaceBidRequest'
+      responses:
+        '200':
+          description: Ставка принята
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/Bid'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Auctions
+      summary: Получение истории ставок аукциона
+      operationId: getAuctionBids
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: История ставок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bids:
+                    type: array
+                    items:
+                      $ref: 'economy-player-schemas.yaml#/components/schemas/Bid'
+                  total:
+                    type: integer
+
+  /auctions/{auction_id}/buyout:
+    post:
+      tags:
+        - Auctions
+      summary: Выкуп аукциона по фиксированной цене
+      operationId: buyoutAuction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Аукцион выкуплен
+          content:
+            application/json:
+              schema:
+                $ref: 'economy-player-schemas.yaml#/components/schemas/Transaction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  # === ТРАНЗАКЦИИ ===
+
+  /transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Получение истории транзакций игрока
+      operationId: getPlayerTransactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID игрока (по умолчанию - текущий)
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [trade, market_purchase, auction_win, market_sell]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: 'economy-player-schemas.yaml#/components/schemas/Transaction'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
