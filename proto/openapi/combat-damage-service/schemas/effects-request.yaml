@@ -1,0 +1,66 @@
+# Issue: #1847
+type: object
+required:
+  - target_id
+  - effects
+properties:
+    target_id:
+      type: string
+      format: uuid
+      description: ID участника боя на которого применяются эффекты
+    effects:
+      type: array
+      description: Список эффектов для применения
+      items:
+        type: object
+        required:
+          - effect_type
+          - effect_name
+          - duration
+          - value
+        properties:
+          effect_type:
+            type: string
+            enum:
+              - buff
+              - debuff
+              - status
+            description: Тип эффекта
+          effect_name:
+            type: string
+            description: |
+              Название эффекта:
+
+              **Баффы:**
+              - `strength_boost` - увеличение силы
+              - `agility_boost` - увеличение ловкости
+              - `intelligence_boost` - увеличение интеллекта
+              - `speed_boost` - увеличение скорости
+              - `regeneration` - регенерация здоровья
+              - `shield` - щит/барьер
+
+              **Дебаффы:**
+              - `armor_reduction` - снижение защиты
+              - `slow` - замедление
+              - `weakness` - ослабление
+
+              **Статусы:**
+              - `poison` - яд
+              - `bleeding` - кровотечение
+              - `burn` - ожог
+              - `paralysis` - паралич
+              - `blindness` - ослепление
+          duration:
+            type: integer
+            description: Длительность эффекта в ходах
+            minimum: 1
+            maximum: 10
+          value:
+            type: integer
+            description: |
+              Значение эффекта:
+              - Для баффов/дебаффов: величина изменения характеристики
+              - Для статусов: урон в ход или вероятность срабатывания
+            minimum: 0
+description: |
+  BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.

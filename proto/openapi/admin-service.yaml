@@ -1,0 +1,85 @@
+# Issue: #1846
+openapi: 3.0.3
+info:
+  title: Admin Service API
+  description: |
+    Главная OpenAPI спецификация для всех административных сервисов NECPGAME.
+
+    **Обеспечивает унифицированный доступ к:**
+    - Управлению пользователями и ролями
+    - Модерации контента и игроков
+    - Аналитике и мониторингу
+    - Экономике и платежами
+    - Аудиту и безопасности
+
+    **Архитектура:**
+    - Каждый подсервис имеет отдельную спецификацию
+    - Общие схемы вынесены в admin-*-schemas.yaml
+    - Все сервисы используют единый security scheme
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME Admin API Support
+    url: https://necpgame.com/support
+    email: admin-api@necpgame.com
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Admin Service (локальная разработка)
+  - url: https://admin.necpgame.com/api/v1
+    description: Admin Service (продакшн)
+tags:
+  - name: Admin Overview
+    description: Общая информация об admin API
+paths:
+  /health:
+    get:
+      tags:
+        - Admin Overview
+      summary: Проверка здоровья сервиса
+      description: Проверяет доступность всех admin сервисов
+      operationId: getHealth
+      responses:
+        '200':
+          description: Сервисы доступны
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  services:
+                    type: object
+                    description: Статус каждого сервиса
+                    properties:
+                      auth:
+                        type: string
+                        enum: [healthy, degraded, down]
+                      dashboard:
+                        type: string
+                        enum: [healthy, degraded, down]
+                      moderation:
+                        type: string
+                        enum: [healthy, degraded, down]
+                      players:
+                        type: string
+                        enum: [healthy, degraded, down]
+                      analytics:
+                        type: string
+                        enum: [healthy, degraded, down]
+        '503':
+          description: Некоторые сервисы недоступны
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    Error:
+      $ref: common.yaml#/components/schemas/Error
+security:
+  - BearerAuth: []

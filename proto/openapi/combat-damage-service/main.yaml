@@ -1,0 +1,60 @@
+# Issue: #1847
+openapi: 3.0.3
+info:
+  title: Combat Damage Service API
+  description: |
+    API для расчёта урона и эффектов в боевой системе NECPGAME.
+
+    **Основные возможности:**
+    - Расчёт урона на основе характеристик
+    - Применение модификаторов (критические удары, сопротивления, броня)
+    - Управление боевыми эффектами (баффы, дебаффы, статусы)
+    - Валидация урона (защита от читов)
+
+    **Используется:**
+    - Combat Sessions Service (при обработке атак)
+    - Character Service (получение характеристик)
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Combat Damage Service (локальная разработка)
+  - url: https://combat-damage.necpgame.com/api/v1
+    description: Combat Damage Service (продакшн)
+tags:
+  - name: Damage Calculation
+    description: Расчёт урона
+  - name: Combat Effects
+    description: Управление эффектами
+paths:
+  /gameplay/combat/calculate-damage:
+    $ref: './paths/calculate-damage.yaml'
+  /gameplay/combat/apply-effects:
+    $ref: './paths/apply-effects.yaml'
+  /gameplay/combat/effects/{effect_id}:
+    $ref: './paths/manage-effects.yaml'
+  /gameplay/combat/effects/{effect_id}/extend:
+    $ref: './paths/extend-effect.yaml'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: './common.yaml#/components/securitySchemes/BearerAuth'
+  schemas:
+    DamageCalculationRequest:
+      $ref: './schemas/damage-request.yaml'
+    DamageCalculationResult:
+      $ref: './schemas/damage-result.yaml'
+    ApplyEffectsRequest:
+      $ref: './schemas/effects-request.yaml'
+    CombatEffect:
+      $ref: './schemas/combat-effect.yaml'
+    Error:
+      $ref: './common.yaml#/components/schemas/Error'
+security:
+  - BearerAuth: []

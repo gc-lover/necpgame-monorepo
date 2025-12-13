@@ -1,0 +1,86 @@
+# Issue: #1847
+  post:
+    tags:
+      - Combat Effects
+    summary: Применение эффектов
+    description: |
+      Применяет эффекты (баффы, дебаффы, статусы) к участнику боя.
+
+      **Типы эффектов:**
+      - `buff` - положительный эффект (увеличение характеристик)
+      - `debuff` - отрицательный эффект (снижение характеристик)
+      - `status` - статус (яд, кровотечение, ожог, паралич, ослепление)
+
+      **Примеры баффов:**
+      - Увеличение силы/ловкости/интеллекта
+      - Увеличение скорости
+      - Регенерация здоровья
+      - Щит/барьер
+
+      **Примеры дебаффов:**
+      - Снижение защиты
+      - Замедление
+      - Ослабление
+
+      **Примеры статусов:**
+      - Яд (урон каждый ход)
+      - Кровотечение (урон каждый ход)
+      - Ожог (урон каждый ход)
+      - Паралич (пропуск хода)
+      - Ослепление (снижение точности)
+    operationId: applyEffects
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/effects-request.yaml'
+          examples:
+            buff:
+              summary: Бафф на силу
+              value:
+                target_id: 123e4567-e89b-12d3-a456-426614174000
+                effects:
+                  - effect_type: buff
+                    effect_name: strength_boost
+                    duration: 3
+                    value: 20
+            status:
+              summary: Статус яда
+              value:
+                target_id: 123e4567-e89b-12d3-a456-426614174000
+                effects:
+                  - effect_type: status
+                    effect_name: poison
+                    duration: 5
+                    value: 10
+    responses:
+      '200':
+        description: Эффекты применены
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                effects:
+                  type: array
+                  items:
+                    $ref: '../schemas/combat-effect.yaml'
+            examples:
+              success:
+                summary: Эффекты применены
+                value:
+                  effects:
+                    - effect_type: buff
+                      effect_name: strength_boost
+                      duration: 3
+                      remaining_turns: 3
+                      value: 20
+      '400':
+        $ref: '../common.yaml#/components/responses/BadRequest'
+      '401':
+        $ref: '../common.yaml#/components/responses/Unauthorized'
+      '500':
+        $ref: '../common.yaml#/components/responses/InternalServerError'

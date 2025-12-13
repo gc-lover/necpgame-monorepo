@@ -1,0 +1,40 @@
+# Issue: #1847
+delete:
+  tags:
+    - Combat Effects
+  summary: Удаление эффекта
+  description: |
+    Удаляет активный эффект с участника боя.
+
+    Используется для:
+    - Снятия дебаффов/статусов через способности
+    - Очистки эффектов при завершении боя
+    - Ручного удаления эффектов (например, через предмет)
+  operationId: removeEffect
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: effect_id
+      in: path
+      required: true
+      description: ID эффекта для удаления
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Эффект удалён
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: removed
+    '401':
+      $ref: '../common.yaml#/components/responses/Unauthorized'
+    '404':
+      $ref: '../common.yaml#/components/responses/NotFound'
+    '500':
+      $ref: '../common.yaml#/components/responses/InternalServerError'

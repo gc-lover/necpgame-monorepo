@@ -1,0 +1,50 @@
+# Issue: #1847
+post:
+  tags:
+    - Combat Effects
+  summary: Продление эффекта
+  description: Продлевает длительность активного эффекта на указанное количество ходов
+  operationId: extendEffect
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: effect_id
+      in: path
+      required: true
+      description: ID эффекта для продления
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - additional_turns
+          properties:
+            additional_turns:
+              type: integer
+              description: Количество дополнительных ходов
+              minimum: 1
+              maximum: 10
+  responses:
+    '200':
+      description: Эффект продлён
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: extended
+    '400':
+      $ref: '../common.yaml#/components/responses/BadRequest'
+    '401':
+      $ref: '../common.yaml#/components/responses/Unauthorized'
+    '404':
+      $ref: '../common.yaml#/components/responses/NotFound'
+    '500':
+      $ref: '../common.yaml#/components/responses/InternalServerError'

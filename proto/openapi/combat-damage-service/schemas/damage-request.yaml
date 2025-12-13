@@ -1,0 +1,62 @@
+# Issue: #1847
+type: object
+description: |
+  BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+
+  Fields ordered for struct alignment (large → small).
+
+  Expected memory: ~56 bytes/instance.
+required:
+  - attacker_id
+  - target_id
+  - base_damage
+  - damage_type
+properties:
+    attacker_id:
+      type: string
+      format: uuid
+      description: ID атакующего участника боя
+    target_id:
+      type: string
+      format: uuid
+      description: ID цели атаки
+    damage_type:
+      type: string
+      enum:
+        - physical
+        - fire
+        - cold
+        - lightning
+        - poison
+        - cyber
+      description: |
+        Тип урона:
+        - `physical` - физический урон (огнестрельное, холодное оружие)
+        - `fire` - огненный урон
+        - `cold` - холодный урон
+        - `lightning` - электрический урон
+        - `poison` - урон ядом
+        - `cyber` - киберурон (взлом имплантов)
+    modifiers:
+      type: object
+      description: Модификаторы урона
+      properties:
+        range_modifier:
+          type: number
+          format: float
+          description: Модификатор дистанции (0.5-1.5)
+          minimum: 0.5
+          maximum: 1.5
+          default: 1
+        is_critical:
+          type: boolean
+          description: Критический удар (x2 урона)
+          default: false
+        weak_spot:
+          type: boolean
+          description: Попадание в слабое место (+50% урона)
+          default: false
+    base_damage:
+      type: integer
+      description: Базовый урон оружия/способности
+      minimum: 0

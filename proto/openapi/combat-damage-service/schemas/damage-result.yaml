@@ -1,0 +1,54 @@
+# Issue: #1847
+type: object
+description: |
+  BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+
+  Fields ordered for struct alignment (large → small).
+
+  Expected memory: ~64 bytes/instance.
+properties:
+    attacker_id:
+      type: string
+      format: uuid
+      description: ID атакующего
+    target_id:
+      type: string
+      format: uuid
+      description: ID цели
+    damage_type:
+      type: string
+      enum:
+        - physical
+        - fire
+        - cold
+        - lightning
+        - poison
+        - cyber
+      description: Тип урона
+    modifiers_applied:
+      type: array
+      description: Список примененных модификаторов
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Название модификатора
+          value:
+            type: number
+            description: Значение модификатора
+    base_damage:
+      type: integer
+      description: Базовый урон
+    final_damage:
+      type: integer
+      description: Финальный урон после всех модификаторов
+    damage_reduction:
+      type: integer
+      description: Урон поглощённый брони/сопротивлениями
+    was_critical:
+      type: boolean
+      description: Был ли критический удар
+    was_blocked:
+      type: boolean
+      description: Была ли блокировка/уклонение
