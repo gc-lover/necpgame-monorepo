@@ -1,0 +1,381 @@
+# Issue: #176
+# Schemas for Quest Engine Service
+
+components:
+  schemas:
+    # ============================================================================
+    # QUEST MANAGEMENT SCHEMAS
+    # ============================================================================
+
+    StartQuestRequest:
+      type: object
+      required: [character_id, quest_template_id]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        quest_template_id:
+          type: string
+          format: uuid
+        quest_parameters:
+          type: object
+          additionalProperties: true
+
+    QuestInstance:
+      type: object
+      required:
+        [instance_id, character_id, quest_template_id, status, created_at]
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        quest_template_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, paused, completed, failed, abandoned]
+        current_branch:
+          type: string
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        quest_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateQuestRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [paused, resumed]
+        quest_data:
+          type: object
+          additionalProperties: true
+
+    AbandonQuestRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [player_choice, timeout, system_error]
+        confirm_abandon:
+          type: boolean
+          default: false
+
+    # ============================================================================
+    # OBJECTIVES SCHEMAS
+    # ============================================================================
+
+    QuestObjective:
+      type: object
+      required:
+        [
+          objective_id,
+          objective_type,
+          description,
+          progress_current,
+          progress_required,
+        ]
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+        objective_type:
+          type: string
+          enum: [kill, collect, explore, interact, survive, escort, defend]
+        description:
+          type: string
+        progress_current:
+          type: integer
+          minimum: 0
+        progress_required:
+          type: integer
+          minimum: 1
+        is_completed:
+          type: boolean
+        is_optional:
+          type: boolean
+        reward_xp:
+          type: integer
+          minimum: 0
+        reward_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestRewardItem"
+        conditions:
+          type: object
+          additionalProperties: true
+
+    UpdateObjectiveRequest:
+      type: object
+      required: [progress_increment]
+      properties:
+        progress_increment:
+          type: integer
+          minimum: 0
+        progress_absolute:
+          type: integer
+          minimum: 0
+        objective_data:
+          type: object
+          additionalProperties: true
+
+    # ============================================================================
+    # DIALOGUE SCHEMAS
+    # ============================================================================
+
+    StartDialogueRequest:
+      type: object
+      required: [npc_id]
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        dialogue_context:
+          type: string
+        initial_topic:
+          type: string
+
+    DialogueState:
+      type: object
+      required: [dialogue_id, current_node_id, available_choices]
+      properties:
+        dialogue_id:
+          type: string
+          format: uuid
+        current_node_id:
+          type: string
+          format: uuid
+        npc_text:
+          type: string
+        available_choices:
+          type: array
+          items:
+            $ref: "#/components/schemas/DialogueChoice"
+        dialogue_context:
+          type: object
+          additionalProperties: true
+        is_complete:
+          type: boolean
+
+    DialogueChoice:
+      type: object
+      required: [choice_id, choice_text]
+      properties:
+        choice_id:
+          type: string
+          format: uuid
+        choice_text:
+          type: string
+        conditions:
+          type: object
+          additionalProperties: true
+        consequences:
+          type: object
+          additionalProperties: true
+
+    DialogueChoiceRequest:
+      type: object
+      required: [choice_id]
+      properties:
+        choice_id:
+          type: string
+          format: uuid
+        choice_parameters:
+          type: object
+          additionalProperties: true
+
+    # ============================================================================
+    # SKILL TESTS SCHEMAS
+    # ============================================================================
+
+    SkillTestRequest:
+      type: object
+      required: [skill_type, difficulty]
+      properties:
+        skill_type:
+          type: string
+          enum:
+            [
+              intelligence,
+              reflexes,
+              dexterity,
+              strength,
+              constitution,
+              charisma,
+              technical,
+              hacking,
+              crafting,
+            ]
+        difficulty:
+          type: string
+          enum: [trivial, easy, medium, hard, very_hard, impossible]
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              modifier_type:
+                type: string
+              value:
+                type: integer
+        test_context:
+          type: string
+
+    SkillTestResult:
+      type: object
+      required: [skill_type, difficulty, success, roll_result, target_number]
+      properties:
+        skill_type:
+          type: string
+        difficulty:
+          type: string
+        success:
+          type: boolean
+        roll_result:
+          type: integer
+          minimum: 1
+          maximum: 20
+        target_number:
+          type: integer
+          minimum: 1
+          maximum: 20
+        modifiers_applied:
+          type: integer
+        critical_success:
+          type: boolean
+        critical_failure:
+          type: boolean
+        test_context:
+          type: string
+
+    # ============================================================================
+    # REWARDS SCHEMAS
+    # ============================================================================
+
+    CompleteQuestRequest:
+      type: object
+      required: [confirm_completion]
+      properties:
+        confirm_completion:
+          type: boolean
+        reward_choices:
+          type: object
+          additionalProperties:
+            type: string
+            format: uuid
+
+    QuestCompletionResult:
+      type: object
+      required: [quest_instance, rewards_granted]
+      properties:
+        quest_instance:
+          $ref: "#/components/schemas/QuestInstance"
+        rewards_granted:
+          $ref: "#/components/schemas/QuestRewards"
+        completion_summary:
+          type: string
+        next_quests_available:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    QuestRewards:
+      type: object
+      required: [experience_points, credits]
+      properties:
+        experience_points:
+          type: integer
+          minimum: 0
+        credits:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestRewardItem"
+        reputation_changes:
+          type: object
+          additionalProperties:
+            type: integer
+        unlocks:
+          type: array
+          items:
+            type: string
+
+    QuestRewardItem:
+      type: object
+      required: [item_template_id, quantity]
+      properties:
+        item_template_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        quality:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, iconic]
+        is_choice_reward:
+          type: boolean
+
+    # ============================================================================
+    # BRANCHING SCHEMAS
+    # ============================================================================
+
+    QuestBranchRequest:
+      type: object
+      required: [branch_trigger]
+      properties:
+        branch_trigger:
+          type: string
+        branch_parameters:
+          type: object
+          additionalProperties: true
+        player_choice:
+          type: string
+
+    QuestBranchResult:
+      type: object
+      required: [new_branch, branch_effects]
+      properties:
+        new_branch:
+          type: string
+        branch_effects:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              effect_target:
+                type: string
+              effect_value:
+                type: string
+        new_objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"

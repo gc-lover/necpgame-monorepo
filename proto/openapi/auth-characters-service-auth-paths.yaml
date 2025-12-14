@@ -1,0 +1,161 @@
+# Issue: #153
+# Authentication paths for Auth & Character Management Service
+
+paths:
+  # ============================================================================
+  # AUTHENTICATION SYSTEM
+  # ============================================================================
+
+  /auth/register:
+    post:
+      tags: [authentication]
+      summary: Register new account
+      operationId: registerAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Account registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountResponse"
+        "400":
+          description: Invalid registration data
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "409":
+          description: Account already exists
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /auth/login:
+    post:
+      tags: [authentication]
+      summary: Authenticate user and get tokens
+      operationId: loginAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "429":
+          description: Too many login attempts
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /auth/refresh:
+    post:
+      tags: [authentication]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /auth/logout:
+    post:
+      tags: [authentication]
+      summary: Logout and invalidate session
+      operationId: logoutAccount
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Logged out successfully
+        "401":
+          $ref: common.yaml#/components/responses/Unauthorized
+
+  /auth/password/forgot:
+    post:
+      tags: [authentication]
+      summary: Request password reset
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password reset email sent"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+
+  /auth/password/reset:
+    post:
+      tags: [authentication]
+      summary: Reset password with token
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "200":
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password reset successfully"
+        "400":
+          description: Invalid reset token or password
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error

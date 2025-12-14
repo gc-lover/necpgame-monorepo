@@ -1,0 +1,67 @@
+# Issue: #176
+# Quest objectives paths for Quest Engine Service
+
+paths:
+  # ============================================================================
+  # QUEST OBJECTIVES
+  # ============================================================================
+
+  /gameplay/quests/instances/{instance_id}/objectives:
+    get:
+      tags: [objectives]
+      summary: Get quest objectives
+      operationId: getQuestObjectives
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Quest objectives
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestObjective"
+
+  /gameplay/quests/instances/{instance_id}/objectives/{objective_id}/progress:
+    post:
+      tags: [objectives]
+      summary: Update objective progress
+      operationId: updateObjectiveProgress
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: objective_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateObjectiveRequest"
+      responses:
+        "200":
+          description: Objective progress updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestObjective"
+        "400":
+          description: Invalid progress update
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error

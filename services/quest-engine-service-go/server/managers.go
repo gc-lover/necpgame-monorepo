@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -107,43 +108,43 @@ func (m *QuestMetrics) Handler() http.Handler {
 
 // QuestInstance represents an active quest instance
 type QuestInstance struct {
-	InstanceID       uuid.UUID              `json:"instance_id"`
-	TemplateID       uuid.UUID              `json:"template_id"`
-	CharacterID      uuid.UUID              `json:"character_id"`
-	Status           string                 `json:"status"`
-	CurrentBranch    string                 `json:"current_branch,omitempty"`
-	ProgressPercentage float64               `json:"progress_percentage"`
-	StartedAt        time.Time              `json:"started_at"`
-	CompletedAt      *time.Time             `json:"completed_at,omitempty"`
-	ExpiresAt        *time.Time             `json:"expires_at,omitempty"`
-	TimeSpentSeconds int                    `json:"time_spent_seconds"`
-	ObjectivesCompleted int                 `json:"objectives_completed"`
-	ObjectivesTotal  int                    `json:"objectives_total"`
-	QuestData        map[string]interface{} `json:"quest_data,omitempty"`
-	PlayerChoices    map[string]interface{} `json:"player_choices,omitempty"`
-	CompletionData   map[string]interface{} `json:"completion_data,omitempty"`
-	CreatedAt        time.Time              `json:"created_at"`
-	UpdatedAt        time.Time              `json:"updated_at"`
+	InstanceID          uuid.UUID              `json:"instance_id"`
+	TemplateID          uuid.UUID              `json:"template_id"`
+	CharacterID         uuid.UUID              `json:"character_id"`
+	Status              string                 `json:"status"`
+	CurrentBranch       string                 `json:"current_branch,omitempty"`
+	ProgressPercentage  float64                `json:"progress_percentage"`
+	StartedAt           time.Time              `json:"started_at"`
+	CompletedAt         *time.Time             `json:"completed_at,omitempty"`
+	ExpiresAt           *time.Time             `json:"expires_at,omitempty"`
+	TimeSpentSeconds    int                    `json:"time_spent_seconds"`
+	ObjectivesCompleted int                    `json:"objectives_completed"`
+	ObjectivesTotal     int                    `json:"objectives_total"`
+	QuestData           map[string]interface{} `json:"quest_data,omitempty"`
+	PlayerChoices       map[string]interface{} `json:"player_choices,omitempty"`
+	CompletionData      map[string]interface{} `json:"completion_data,omitempty"`
+	CreatedAt           time.Time              `json:"created_at"`
+	UpdatedAt           time.Time              `json:"updated_at"`
 }
 
 // QuestObjective represents a quest objective
 type QuestObjective struct {
-	ObjectiveID      uuid.UUID              `json:"objective_id"`
-	InstanceID       uuid.UUID              `json:"instance_id"`
-	TemplateObjectiveID string              `json:"template_objective_id"`
-	ObjectiveType    string                 `json:"objective_type"`
-	Description      string                 `json:"description,omitempty"`
-	ProgressCurrent  int                    `json:"progress_current"`
-	ProgressRequired int                    `json:"progress_required"`
-	IsCompleted      bool                   `json:"is_completed"`
-	IsOptional       bool                   `json:"is_optional"`
-	IsActive         bool                   `json:"is_active"`
-	RewardXP         int                    `json:"reward_xp"`
-	RewardItems      []interface{}          `json:"reward_items,omitempty"`
-	Conditions       map[string]interface{} `json:"conditions,omitempty"`
-	ProgressMetadata map[string]interface{} `json:"progress_metadata,omitempty"`
-	ActivatedAt      *time.Time             `json:"activated_at,omitempty"`
-	CompletedAt      *time.Time             `json:"completed_at,omitempty"`
-	CreatedAt        time.Time              `json:"created_at"`
-	UpdatedAt        time.Time              `json:"updated_at"`
+	ObjectiveID         uuid.UUID              `json:"objective_id"`
+	InstanceID          uuid.UUID              `json:"instance_id"`
+	TemplateObjectiveID string                 `json:"template_objective_id"`
+	ObjectiveType       string                 `json:"objective_type"`
+	Description         string                 `json:"description,omitempty"`
+	ProgressCurrent     int                    `json:"progress_current"`
+	ProgressRequired    int                    `json:"progress_required"`
+	IsCompleted         bool                   `json:"is_completed"`
+	IsOptional          bool                   `json:"is_optional"`
+	IsActive            bool                   `json:"is_active"`
+	RewardXP            int                    `json:"reward_xp"`
+	RewardItems         []interface{}          `json:"reward_items,omitempty"`
+	Conditions          map[string]interface{} `json:"conditions,omitempty"`
+	ProgressMetadata    map[string]interface{} `json:"progress_metadata,omitempty"`
+	ActivatedAt         *time.Time             `json:"activated_at,omitempty"`
+	CompletedAt         *time.Time             `json:"completed_at,omitempty"`
+	CreatedAt           time.Time              `json:"created_at"`
+	UpdatedAt           time.Time              `json:"updated_at"`
 }

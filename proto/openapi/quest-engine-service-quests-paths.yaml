@@ -1,0 +1,141 @@
+# Issue: #176
+# Quest management paths for Quest Engine Service
+
+paths:
+  # ============================================================================
+  # QUEST MANAGEMENT
+  # ============================================================================
+
+  /gameplay/quests/instances:
+    post:
+      tags: [quests]
+      summary: Start new quest instance
+      operationId: startQuestInstance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartQuestRequest"
+      responses:
+        "201":
+          description: Quest instance started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "400":
+          description: Invalid quest start request
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "409":
+          description: Quest already active or prerequisites not met
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+    get:
+      tags: [quests]
+      summary: List active quest instances
+      operationId: listQuestInstances
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, paused, completed, failed, abandoned]
+        - $ref: common.yaml#/components/parameters/Limit
+      responses:
+        "200":
+          description: Quest instances list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestInstance"
+
+  /gameplay/quests/instances/{instance_id}:
+    get:
+      tags: [quests]
+      summary: Get quest instance details
+      operationId: getQuestInstance
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Quest instance details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+    put:
+      tags: [quests]
+      summary: Update quest instance state
+      operationId: updateQuestInstance
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuestRequest"
+      responses:
+        "200":
+          description: Quest instance updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+
+    delete:
+      tags: [quests]
+      summary: Abandon quest instance
+      operationId: abandonQuestInstance
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AbandonQuestRequest"
+      responses:
+        "200":
+          description: Quest abandoned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound

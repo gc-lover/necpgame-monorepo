@@ -1,0 +1,70 @@
+# Issue: #153
+openapi: 3.0.3
+info:
+  title: Auth & Character Management Service API
+  version: 1.0.0
+  description: |
+    Auth & Character Management API for MMOFPS RPG - Account management, authentication, character creation, and progression systems.
+
+    ## Core Components
+    - Authentication System: Registration, login, JWT tokens, OAuth integration
+    - Account Management: User accounts, sessions, security features
+    - Character Management: Character creation, switching, slots management
+    - Progression System: Experience, levels, skills, attributes distribution
+
+    ## Architecture Overview
+    - Server-authoritative account and character management
+    - JWT-based authentication with refresh tokens
+    - Event-driven session and character state updates
+    - Anti-fraud validation and security monitoring
+
+    ## Performance Requirements
+    - Auth operations: 5000+ RPS with P99 <50ms
+    - Character operations: 2000+ RPS with P99 <100ms
+    - Progression updates: 3000+ RPS with P99 <75ms
+    - Memory optimized with field alignment
+    - Context timeouts for all operations
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: authentication
+    description: User authentication and authorization
+  - name: accounts
+    description: Account management operations
+  - name: sessions
+    description: Session management
+  - name: characters
+    description: Character management operations
+  - name: progression
+    description: Character progression and leveling
+  - name: security
+    description: Security and anti-fraud operations
+
+security:
+  - BearerAuth: []
+
+# Paths are split into separate files for maintainability
+paths:
+  $ref: ./auth-characters-service-auth-paths.yaml#/paths
+  $ref: ./auth-characters-service-accounts-paths.yaml#/paths
+  $ref: ./auth-characters-service-characters-paths.yaml#/paths
+  $ref: ./auth-characters-service-progression-paths.yaml#/paths
+
+# Components are split into separate files for maintainability
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    $ref: ./auth-characters-service-auth-schemas.yaml#/components/schemas
+    $ref: ./auth-characters-service-account-schemas.yaml#/components/schemas
+    $ref: ./auth-characters-service-character-schemas.yaml#/components/schemas
+    $ref: ./auth-characters-service-progression-schemas.yaml#/components/schemas

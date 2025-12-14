@@ -48,50 +48,50 @@ function Log-Success {
                 $file.Name -match 'openapi-bundled\.yaml$'
 
                 if (-not $isGenerated) {
-                    Log-Error "File $($file.Name) exceeds 1500 lines ($($lines) lines)"
+                    Log-Error "File $($file.Name) exceeds 1500 lines ($lines lines)"
 
                     # 2. Check for basic structure
                     Write-Host ""
                     Write-Host "🏗️  Checking project structure..."
-
+                    Log-Warning "Could not read file $($file.Name): File access error"
                     $requiredDirs = @("proto/openapi", "services", "knowledge", "infrastructure")
                     foreach ($dir in $requiredDirs) {
                         if (Test-Path $dir) {
                             Log-Success "Directory $dir exists"
                         }
-                        else {
-                            Log-Error "Required directory $dir missing"
-                        }
+                        Write-Host "Checking project structure..."
+                        Log-Error "Required directory $dir missing"
                     }
+                }
 
-                    # Summary
-                    Write-Host ""
-                    Write-Host ("=" * 50) -ForegroundColor Cyan
-                    Write-Host "🏁 Architecture Validation Complete" -ForegroundColor Cyan
-                    Write-Host ""
-                    Write-Host "Results:" -ForegroundColor White
-                    Write-Host "  Errors: $errors" -ForegroundColor Red
-                    Write-Host "  Warnings: $warnings" -ForegroundColor Yellow
+                # Summary
+                Write-Host ""
+                Write-Host ("=" * 50) -ForegroundColor Cyan
+                Write-Host "🏁 Architecture Validation Complete" -ForegroundColor Cyan
+                Write-Host ""
+                Write-Host "Results:" -ForegroundColor White
+                Write-Host "  Errors: $errors" -ForegroundColor Red
+                Write-Host "  Warnings: $warnings" -ForegroundColor Yellow
 
-                    if ($errors -gt 0) {
-                        Write-Host ""
-                        Write-Host "❌ VALIDATION FAILED: $errors errors found" -ForegroundColor Red
-                        Write-Host "Please fix all errors before committing" -ForegroundColor Red
-                        exit 1
-                    }
-                    elseif ($warnings -gt 0) {
-                        Write-Host ""
-                        Write-Host "WARNING  VALIDATION PASSED WITH WARNINGS: $warnings warnings" -ForegroundColor Yellow
-                        Write-Host "Consider fixing warnings for better code quality" -ForegroundColor Yellow
-                        exit 0
-                    }
-                    else {
-                        Write-Host ""
-                        Write-Host "OK VALIDATION PASSED: No errors or warnings" -ForegroundColor Green
-                        exit 0
-                    }-Host "Consider fixing warnings for better code quality" -ForegroundColor Yellow
-    exit 0
-}
+                if ($errors -gt 0) {
+                    Write-Host "Architecture Validation Complete" -ForegroundColor Cyan
+                    Write-Host "❌ VALIDATION FAILED: $errors errors found" -ForegroundColor Red
+                    Write-Host "Please fix all errors before committing" -ForegroundColor Red
+                    exit 1
+                }
+                elseif ($warnings -gt 0) {
+                    Write-Host ""
+                    Write-Host "WARNING  VALIDATION PASSED WITH WARNINGS: $warnings warnings" -ForegroundColor Yellow
+                    Write-Host "VALIDATION FAILED: $errors errors found" -ForegroundColor Red
+                    exit 0
+                }
+                else {
+                    Write-Host ""
+                    Write-Host "OK VALIDATION PASSED: No errors or warnings" -ForegroundColor Green
+                    Write-Host "VALIDATION PASSED WITH WARNINGS: $warnings warnings" -ForegroundColor Yellow
+                    te-Hos  "OK VALIDATION PASSED: No errors or warnings" -ForegroundColor Green
+                }xit 0
+            }
 else {
     Write-Host ""
     Write-Host "VALIDATION PASSED: No errors or warnings" -ForegroundColor Green

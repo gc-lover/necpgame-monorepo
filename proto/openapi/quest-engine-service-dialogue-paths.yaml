@@ -1,0 +1,71 @@
+# Issue: #176
+# Dialogue system paths for Quest Engine Service
+
+paths:
+  # ============================================================================
+  # DIALOGUE SYSTEM
+  # ============================================================================
+
+  /gameplay/quests/instances/{instance_id}/dialogue:
+    post:
+      tags: [dialogue]
+      summary: Start dialogue interaction
+      operationId: startDialogue
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartDialogueRequest"
+      responses:
+        "200":
+          description: Dialogue started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DialogueState"
+        "400":
+          description: Dialogue cannot be started
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /gameplay/quests/instances/{instance_id}/dialogue/choice:
+    post:
+      tags: [dialogue]
+      summary: Make dialogue choice
+      operationId: makeDialogueChoice
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DialogueChoiceRequest"
+      responses:
+        "200":
+          description: Choice processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DialogueState"
+        "400":
+          description: Invalid choice
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error

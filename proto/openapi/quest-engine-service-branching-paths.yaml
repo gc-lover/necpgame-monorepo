@@ -1,0 +1,39 @@
+# Issue: #176
+# Quest branching paths for Quest Engine Service
+
+paths:
+  # ============================================================================
+  # QUEST BRANCHING
+  # ============================================================================
+
+  /gameplay/quests/instances/{instance_id}/branch:
+    post:
+      tags: [branching]
+      summary: Trigger quest branching decision
+      operationId: triggerQuestBranch
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestBranchRequest"
+      responses:
+        "200":
+          description: Branch triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestBranchResult"
+        "400":
+          description: Branch cannot be triggered
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error

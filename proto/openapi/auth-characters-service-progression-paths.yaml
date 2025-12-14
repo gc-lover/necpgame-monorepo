@@ -1,0 +1,146 @@
+# Issue: #153
+# Progression system paths for Auth & Character Management Service
+
+paths:
+  # ============================================================================
+  # PROGRESSION SYSTEM
+  # ============================================================================
+
+  /characters/{character_id}/progression:
+    get:
+      tags: [progression]
+      summary: Get character progression status
+      operationId: getCharacterProgression
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Character progression
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterProgression"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+  /characters/{character_id}/progression/experience:
+    post:
+      tags: [progression]
+      summary: Grant experience to character
+      operationId: grantExperience
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrantExperienceRequest"
+      responses:
+        "200":
+          description: Experience granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperienceGrantResult"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+
+  /characters/{character_id}/progression/skills/{skill_id}:
+    post:
+      tags: [progression]
+      summary: Upgrade character skill
+      operationId: upgradeSkill
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpgradeSkillRequest"
+      responses:
+        "200":
+          description: Skill upgraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillUpgradeResult"
+        "400":
+          description: Cannot upgrade skill
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "402":
+          description: Insufficient attribute points
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /characters/{character_id}/progression/attributes:
+    post:
+      tags: [progression]
+      summary: Distribute attribute points
+      operationId: distributeAttributes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributeAttributesRequest"
+      responses:
+        "200":
+          description: Attributes distributed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeDistributionResult"
+        "400":
+          description: Invalid attribute distribution
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "402":
+          description: Insufficient attribute points
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error

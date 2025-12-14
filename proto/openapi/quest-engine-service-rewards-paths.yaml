@@ -1,0 +1,39 @@
+# Issue: #176
+# Quest rewards paths for Quest Engine Service
+
+paths:
+  # ============================================================================
+  # QUEST REWARDS
+  # ============================================================================
+
+  /gameplay/quests/instances/{instance_id}/complete:
+    post:
+      tags: [rewards]
+      summary: Complete quest and claim rewards
+      operationId: completeQuest
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteQuestRequest"
+      responses:
+        "200":
+          description: Quest completed with rewards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestCompletionResult"
+        "400":
+          description: Quest cannot be completed
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error

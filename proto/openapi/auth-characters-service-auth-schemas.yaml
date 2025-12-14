@@ -1,0 +1,86 @@
+# Issue: #153
+# Authentication schemas for Auth & Character Management Service
+
+components:
+  schemas:
+    # ============================================================================
+    # AUTHENTICATION SCHEMAS
+    # ============================================================================
+
+    RegisterRequest:
+      type: object
+      required: [email, password, username]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        accept_terms:
+          type: boolean
+          default: false
+        newsletter_subscribe:
+          type: boolean
+          default: false
+
+    LoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+          description: "Email or username"
+        password:
+          type: string
+        remember_me:
+          type: boolean
+          default: false
+
+    LoginResponse:
+      type: object
+      required: [access_token, refresh_token, expires_in, token_type]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+          description: "Access token expiration time in seconds"
+        token_type:
+          type: string
+          default: "Bearer"
+        user:
+          $ref: "#/components/schemas/UserSummary"
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, password, confirm_password]
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        confirm_password:
+          type: string

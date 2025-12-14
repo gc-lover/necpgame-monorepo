@@ -1,0 +1,264 @@
+# Issue: #153
+# Character management paths for Auth & Character Management Service
+
+paths:
+  # ============================================================================
+  # CHARACTER MANAGEMENT
+  # ============================================================================
+
+  /accounts/{account_id}/characters:
+    post:
+      tags: [characters]
+      summary: Create new character
+      operationId: createCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCharacterRequest"
+      responses:
+        "201":
+          description: Character created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "400":
+          description: Invalid character data or slot limit reached
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "402":
+          description: Insufficient funds for character creation
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+    get:
+      tags: [characters]
+      summary: List account characters
+      operationId: listCharacters
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of characters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CharacterSummary"
+
+  /accounts/{account_id}/characters/{character_id}:
+    get:
+      tags: [characters]
+      summary: Get character details
+      operationId: getCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Character details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+    put:
+      tags: [characters]
+      summary: Update character
+      operationId: updateCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCharacterRequest"
+      responses:
+        "200":
+          description: Character updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+
+    delete:
+      tags: [characters]
+      summary: Delete character (soft delete)
+      operationId: deleteCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Character deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  can_restore_until:
+                    type: string
+                    format: date-time
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+  /accounts/{account_id}/characters/{character_id}/restore:
+    post:
+      tags: [characters]
+      summary: Restore deleted character
+      operationId: restoreCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Character restored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "404":
+          description: Character not found or restore period expired
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /accounts/{account_id}/characters/switch:
+    post:
+      tags: [characters]
+      summary: Switch active character
+      operationId: switchCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwitchCharacterRequest"
+      responses:
+        "200":
+          description: Character switched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwitchCharacterResponse"
+        "404":
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /accounts/{account_id}/character-slots/purchase:
+    post:
+      tags: [characters]
+      summary: Purchase additional character slot
+      operationId: purchaseCharacterSlot
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Character slot purchased
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterSlotsResponse"
+        "402":
+          description: Insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error

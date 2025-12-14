@@ -1,0 +1,187 @@
+# Issue: #153
+# Progression schemas for Auth & Character Management Service
+
+components:
+  schemas:
+    # ============================================================================
+    # PROGRESSION SCHEMAS
+    # ============================================================================
+
+    CharacterProgression:
+      type: object
+      required:
+        [
+          character_id,
+          level,
+          experience,
+          experience_to_next_level,
+          attribute_points_available,
+        ]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        attribute_points_available:
+          type: integer
+          minimum: 0
+        attributes:
+          $ref: "#/components/schemas/CharacterAttributes"
+        skills:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/SkillInfo"
+        progression_stats:
+          type: object
+          properties:
+            total_experience_gained:
+              type: integer
+            levels_gained:
+              type: integer
+            attributes_distributed:
+              type: integer
+            skills_upgraded:
+              type: integer
+
+    SkillInfo:
+      type: object
+      required: [level, experience, experience_to_next_level]
+      properties:
+        level:
+          type: integer
+          minimum: 0
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        is_unlocked:
+          type: boolean
+        max_level:
+          type: integer
+
+    GrantExperienceRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum:
+            [
+              quest_completion,
+              combat_victory,
+              exploration,
+              achievement,
+              admin_grant,
+            ]
+        source_id:
+          type: string
+          format: uuid
+        multiplier:
+          type: number
+          minimum: 1.0
+          default: 1.0
+
+    ExperienceGrantResult:
+      type: object
+      required: [experience_granted, new_experience_total, leveled_up]
+      properties:
+        experience_granted:
+          type: integer
+        new_experience_total:
+          type: integer
+        leveled_up:
+          type: boolean
+        new_level:
+          type: integer
+        level_up_rewards:
+          type: array
+          items:
+            type: object
+            properties:
+              reward_type:
+                type: string
+              reward_amount:
+                type: integer
+
+    UpgradeSkillRequest:
+      type: object
+      required: [skill_name]
+      properties:
+        skill_name:
+          type: string
+        levels_to_upgrade:
+          type: integer
+          minimum: 1
+          default: 1
+
+    SkillUpgradeResult:
+      type: object
+      required: [skill_name, new_level, attribute_points_spent]
+      properties:
+        skill_name:
+          type: string
+        old_level:
+          type: integer
+        new_level:
+          type: integer
+        attribute_points_spent:
+          type: integer
+        experience_gained:
+          type: integer
+        skill_bonuses:
+          type: object
+          additionalProperties: true
+
+    DistributeAttributesRequest:
+      type: object
+      required: [attributes]
+      properties:
+        attributes:
+          type: object
+          properties:
+            strength:
+              type: integer
+              minimum: 0
+            dexterity:
+              type: integer
+              minimum: 0
+            constitution:
+              type: integer
+              minimum: 0
+            intelligence:
+              type: integer
+              minimum: 0
+            reflexes:
+              type: integer
+              minimum: 0
+            charisma:
+              type: integer
+              minimum: 0
+
+    AttributeDistributionResult:
+      type: object
+      required: [attributes_distributed, attribute_points_remaining]
+      properties:
+        attributes_distributed:
+          $ref: "#/components/schemas/CharacterAttributes"
+        attribute_points_spent:
+          type: integer
+        attribute_points_remaining:
+          type: integer
+        stat_bonuses_applied:
+          type: object
+          additionalProperties:
+            type: number
