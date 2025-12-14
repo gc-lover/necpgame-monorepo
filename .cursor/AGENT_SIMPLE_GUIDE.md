@@ -88,6 +88,8 @@ Idea → UI/UX → UE5 → QA → Release
 Status всегда: Todo → In Progress → Review/Returned/Blocked → Todo (следующий агент) → Done
 ```
 
+**Детали контентного workflow:** `.cursor/CONTENT_WORKFLOW.md`
+
 ---
 
 ## 📦 Конфигурация
@@ -101,10 +103,13 @@ Status всегда: Todo → In Progress → Review/Returned/Blocked → Todo (
 - status_field_id: `239690516`
 - agent_field_id: `243899542`
 
+**Контентный workflow:** `.cursor/CONTENT_WORKFLOW.md`
+
 **Для Backend Developer:**
 - Code gen: `ogen` (typed handlers, 90% faster)
 - Гайд: `.cursor/ogen/README.md`
 - Reference: `services/combat-combos-service-ogen-go/`
+- Контентный workflow: `.cursor/CONTENT_WORKFLOW.md`
 
 ---
 
@@ -153,4 +158,6 @@ Status всегда: Todo → In Progress → Review/Returned/Blocked → Todo (
 ---
 
 **Это всё что нужно знать! Следуй этим 4 шагам: Найти → Взять → Работать → Передать**
+
+**Контентный workflow:** `.cursor/CONTENT_WORKFLOW.md`
 

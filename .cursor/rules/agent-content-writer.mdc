@@ -111,23 +111,17 @@ yamllint knowledge/canon/lore/.../quest-*.yaml
 
 **Workflow:** Idea → Content Writer → Backend (import) → QA → Release
 
-**НЕ передавай в Database или QA напрямую!** Backend импортирует квест через API.
+**ВСЕГДА передавай в Backend!** Backend сам решает способ импорта (API или миграции).
 
-### Массовый импорт (первый раз):
-- Если создано много квестов (>10), Backend может использовать генератор миграций
-- Генератор: `scripts/generate-content-migrations.sh` создаст SQL миграции
-- **Формат:** 1 файл YAML = 1 миграция (с версией из metadata.version)
-- Миграции: `V*__data_quest_*.sql` в `infrastructure/liquibase/migrations/data/quests/`
-- После генерации → `Database - Todo` для применения миграций
+**Детали workflow:** `.cursor/CONTENT_WORKFLOW.md`
+
+**НЕ передавай в Database или QA напрямую!** Backend импортирует контент и передаёт дальше.
 
 ### NPC и диалоги:
 - **NPC:** YAML файлы в `knowledge/canon/narrative/npc-lore/`
 - **Диалоги:** YAML файлы в `knowledge/canon/narrative/dialogues/`
-- **Массовый импорт:** Backend использует `scripts/generate-content-migrations.sh`
-  - NPC: `V*__data_npc_*.sql` в `infrastructure/liquibase/migrations/data/npcs/`
-  - Диалоги: `V*__data_dialogue_*.sql` в `infrastructure/liquibase/migrations/data/dialogues/`
-  - 1 файл YAML = 1 миграция (с версией из metadata.version)
-- После генерации → `Database - Todo` для применения миграций
+- **Передача:** ВСЕГДА в Backend (как и квесты)
+- Backend сам решает способ импорта (API или миграции через `scripts/generate-content-migrations.sh`)
 
 ## Стиль работы
 

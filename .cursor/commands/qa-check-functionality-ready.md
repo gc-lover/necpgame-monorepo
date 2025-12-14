@@ -7,12 +7,13 @@ Check if functionality is ready for QA.
 - [ ] Agent = `QA`, Status = `Todo` или `In Progress`
 - [ ] Backend ready (from Backend Developer)
 - [ ] Client ready (from UE5 Developer, if applicable)
-- [ ] NOT content quest (YAML) - if labels `canon`, `lore`, `quest` → return to Content Writer
+- [ ] Content imported to DB (if content quest) - check via API `GET /api/v1/gameplay/quests/{quest_id}` or SQL query
 
 ## Return To
 
-**Content quest (YAML):**
-- ❌ Return to Content: Status `Returned`, Agent `Content`
+**Content quest (NOT imported to DB):**
+- ❌ Return to Backend: Status `Returned`, Agent `Backend`
+- Комментарий: "WARNING Quest not imported to DB. Backend must import first. Issue: #{number}"
 
 **Backend bugs:**
 - ❌ Return to Backend: Status `Returned`, Agent `Backend`

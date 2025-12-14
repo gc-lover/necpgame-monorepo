@@ -267,54 +267,87 @@ services/{service}-go/
 
 **Labels `canon`, `lore`, `quest` от Content Writer:**
 
-### Workflow для одного квеста:
-1. **Проверь:** YAML файл в `knowledge/canon/lore/timeline-author/quests/.../quest-*.yaml`
-2. **Импорт:** `POST /api/v1/gameplay/quests/content/reload` (используй `scripts/import-quest.ps1` или `scripts/import-quest.sh`)
-3. **Валидация:** Проверь что квест загружен в `gameplay.quest_definitions` (SQL или API)
-4. **Передача:** Status `Todo`, Agent `QA` для тестирования
+**Детали workflow:** `.cursor/CONTENT_WORKFLOW.md`
 
-### Workflow для массового импорта (первый раз):
+### Шаг 1: Проверка таблиц
+
+**Проверь наличие таблицы:** `gameplay.quest_definitions` (миграция `V1_46__quest_definitions_tables.sql`)
+
+#### Если таблиц НЕТ:
+1. **Создай Issue для Database:** "Create migration for `gameplay.quest_definitions` table"
+2. **Текущую задачу:** Status `Blocked`, Agent `Backend`
+3. **Комментарий:** "WARNING Blocked: Tables missing. Waiting for Database migration. Related Issue: #{db_issue_number}"
+4. **После создания таблиц:** Database разблокирует задачу, вернись к импорту
+
+#### Если таблицы ЕСТЬ:
+Переходи к шагу 2.
+
+### Шаг 2: Решение способа импорта
+
+#### Сценарий A: 1-10 квестов (одиночный импорт)
+1. **Импорт через API:** `POST /api/v1/gameplay/quests/content/reload`
+   - Используй: `scripts/import-quest.ps1` или `scripts/import-quest.sh`
+2. **Валидация:** Проверь что квест в БД (SQL: `SELECT * FROM gameplay.quest_definitions WHERE quest_id = ...`)
+3. **Передача:** Status `Todo`, Agent `QA`
+
+**Комментарий:**
+```markdown
+OK Quest imported to DB via API. Ready for QA testing.
+Quest ID: {quest_id}
+Issue: #{number}
+```
+
+#### Сценарий B: >10 квестов (массовый импорт)
 1. **Генерация миграций:** Запусти `scripts/generate-content-migrations.sh` (или `.ps1`)
-   - Создаёт миграции: **1 файл YAML = 1 миграция** (с версией из metadata.version)
+   - Формат: **1 файл YAML = 1 миграция** (с версией из `metadata.version`)
    - Пример: `quest-001-willis-tower.yaml` → `V*__data_quest_..._v1_0_0.sql`
-   - Все миграции в `infrastructure/liquibase/migrations/data/quests/`
-2. **Проверь:** Сгенерированные миграции в `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql`
-3. **Передача:** Status `Todo`, Agent `DB` для применения миграций
-4. **После миграции:** Все квесты уже в БД, передай: Status `Todo`, Agent `QA` для тестирования
+   - Миграции: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql`
+2. **Проверь:** Сгенерированные миграции существуют
+3. **Передача:** Status `Todo`, Agent `DB` (для применения миграций)
+
+**Комментарий:**
+```markdown
+OK Content migrations generated. Ready for Database agent.
+Quest migrations: {count} files
+Issue: #{number}
+```
 
 ### Обновления квестов (после первого импорта):
 - Используй API: `scripts/import-quest.ps1` или `scripts/import-quest.sh`
 - Или batch API (если реализован): `POST /api/v1/gameplay/quests/content/batch-reload`
-
-### Если миграции нет:
-- Передай: Status `Returned` или `Todo`, Agent `DB` для создания миграции `quest_definitions`
-- После миграции → вернись к импорту
-
-### Комментарий при передаче:
-```markdown
-OK Quest imported to DB. Ready for QA testing.
-Quest ID: {quest_id}
-Issue: #{number}
-```
+- **Workflow:** Content Writer → Backend (API import) → QA
 
 ## Контентные NPC и диалоги (ОБЯЗАТЕЛЬНО!)
 
 **Labels `canon`, `lore`, `npc`, `dialogue` от Content Writer:**
 
-### Workflow для массового импорта (первый раз):
+**Детали workflow:** `.cursor/CONTENT_WORKFLOW.md`
+
+### Шаг 1: Проверка таблиц
+
+**Проверь наличие таблиц:**
+- `narrative.npc_definitions` (миграция `V1_89__narrative_npc_dialogue_tables.sql`)
+- `narrative.dialogue_nodes` (миграция `V1_89__narrative_npc_dialogue_tables.sql`)
+
+#### Если таблиц НЕТ:
+1. **Создай Issue для Database:** "Create migration for `narrative.npc_definitions` and `narrative.dialogue_nodes` tables"
+2. **Текущую задачу:** Status `Blocked`, Agent `Backend`
+3. **Комментарий:** "WARNING Blocked: Tables missing. Waiting for Database migration. Related Issue: #{db_issue_number}"
+4. **После создания таблиц:** Database разблокирует задачу, вернись к генерации
+
+#### Если таблицы ЕСТЬ:
+Переходи к шагу 2.
+
+### Шаг 2: Генерация миграций данных
+
 1. **Генерация миграций:** Запусти `scripts/generate-content-migrations.sh` (или `.ps1`)
-   - Создаёт миграции: **1 файл YAML = 1 миграция** (с версией из metadata.version)
+   - Формат: **1 файл YAML = 1 миграция** (с версией из `metadata.version`)
    - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql`
    - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql`
-2. **Проверь:** Сгенерированные миграции в соответствующих папках
-3. **Передача:** Status `Todo`, Agent `DB` для применения миграций
-4. **После миграции:** Все NPC и диалоги уже в БД, передай: Status `Todo`, Agent `QA` для тестирования
+2. **Проверь:** Сгенерированные миграции существуют
+3. **Передача:** Status `Todo`, Agent `DB` (для применения миграций)
 
-### Если таблиц нет:
-- Передай: Status `Returned` или `Todo`, Agent `DB` для создания миграции `V1_89__narrative_npc_dialogue_tables.sql`
-- После миграции → вернись к генерации
-
-### Комментарий при передаче:
+**Комментарий:**
 ```markdown
 OK NPC/Dialogue migrations generated. Ready for Database agent.
 NPC migrations: {count} files

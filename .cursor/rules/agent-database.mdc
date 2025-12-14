@@ -198,17 +198,44 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 - `/database-check-openapi #123`
 - `/database-apply-content-migration` - применить миграцию контентных квестов
 
+## WARNING Различие системных и контентных задач
+
+**КРИТИЧНО:** Database агент должен различать системные и контентные задачи для правильной передачи.
+
+### Системные задачи (создание схем БД):
+- Создание таблиц, индексов, constraints
+- Миграции структуры БД
+- Оптимизация схемы
+- **Передача:** Status `Todo`, Agent `API Designer` (для создания OpenAPI)
+
+**Примеры:**
+- Создание таблицы `gameplay.quest_definitions` (миграция `V1_46__quest_definitions_tables.sql`)
+- Создание таблиц `narrative.npc_definitions`, `narrative.dialogue_nodes` (миграция `V1_89__narrative_npc_dialogue_tables.sql`)
+- Оптимизация индексов, партиционирование
+
+### Контентные задачи (применение миграций данных):
+- Применение миграций данных квестов, NPC, диалогов
+- Миграции: `V*__data_quest_*.sql`, `V*__data_npc_*.sql`, `V*__data_dialogue_*.sql`
+- **Передача:** Status `Todo`, Agent `QA` (для тестирования импортированного контента)
+
+**Детали workflow:** `.cursor/CONTENT_WORKFLOW.md`
+
+### Если задача заблокирована (Status `Blocked`):
+- Backend создал Issue для Database и заблокировал свою задачу
+- После создания таблиц → разблокируй задачу Backend (Status `Todo`, Agent `Backend`)
+- Комментарий: "OK Tables created. Backend task unblocked. Issue: #{backend_issue_number}"
+
+---
+
 ## Контентные квесты (если нужно)
 
 **Labels `canon`, `lore`, `quest`:**
 
-### Если таблица `quest_definitions` отсутствует:
+### Если таблица `quest_definitions` отсутствует (системная задача):
 1. **Проверь:** Миграция `V1_46__quest_definitions_tables.sql` применена?
-2. **Если нет:** Примени миграцию или создай новую
-3. **Передача:** Status `Todo`, Agent `Backend` для импорта квеста
-
-### Если миграция есть:
-- Передай сразу: Status `Todo`, Agent `Backend` (миграция уже применена)
+2. **Если нет:** Создай и примени миграцию
+3. **Передача:** Status `Todo`, Agent `API Designer` (системная задача)
+4. **Разблокируй задачу Backend:** Если есть заблокированная задача Backend, разблокируй её (Status `Todo`, Agent `Backend`)
 
 ### Массовый импорт квестов (первый раз):
 1. **Проверь:** Backend сгенерировал миграции через `scripts/generate-content-migrations.sh`
@@ -230,10 +257,11 @@ Issue: #{number}
 
 **Labels `canon`, `lore`, `npc`, `dialogue`:**
 
-### Если таблицы `npc_definitions` или `dialogue_nodes` отсутствуют:
+### Если таблицы `npc_definitions` или `dialogue_nodes` отсутствуют (системная задача):
 1. **Проверь:** Миграция `V1_89__narrative_npc_dialogue_tables.sql` применена?
-2. **Если нет:** Примени миграцию или создай новую
-3. **Передача:** Status `Todo`, Agent `Backend` для импорта NPC/диалогов
+2. **Если нет:** Создай и примени миграцию
+3. **Передача:** Status `Todo`, Agent `API Designer` (системная задача)
+4. **Разблокируй задачу Backend:** Если есть заблокированная задача Backend, разблокируй её (Status `Todo`, Agent `Backend`)
 
 ### Массовый импорт NPC и диалогов (первый раз):
 1. **Проверь:** Backend сгенерировал миграции через `scripts/generate-content-migrations.sh`
@@ -285,7 +313,9 @@ Issue: #{number}
 ## Переход к следующему
 
 1. `/database-validate-result #123`
-2. Update: Status `Todo`, Agent `API`
+2. **Определи тип задачи:**
+   - **Системная задача** (создание схем) → Status `Todo`, Agent `API Designer`
+   - **Контентная задача** (применение миграций данных) → Status `Todo`, Agent `QA`
 3. Комментарий с performance hints
 
 ```markdown
