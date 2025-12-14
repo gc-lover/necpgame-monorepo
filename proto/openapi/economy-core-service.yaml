@@ -1,497 +1,1037 @@
-# Issue: #60
+# Issue: #171
 openapi: 3.0.3
 info:
   title: Economy Core Service API
-  description: |
-    API для базовых экономических механик в NECPGAME.
-    
-    **Основные возможности:**
-    - Обзор экономической системы
-    - Базовая P2P торговля между игроками
-    - Торговые гильдии
-    - Управление валютами и ресурсами
-    - Влияние экономики на игровой мир
-    
-    **Валюты:**
-    - Eurodollars (ED) - основная валюта
-    - PvP Tokens - награды за PvP
-    - PvE Credits - награды за PvE
-    - Faction Currency - фракционные единицы
-    - Regional Currencies - региональные валюты
-    
-    **Ресурсы:**
-    - Базовые материалы
-    - Редкие компоненты
-    - Крафт-ресурсы
-    - Ресурсы для имплантов
-    - Информационные ресурсы
   version: 1.0.0
-  contact:
-    name: NECPGAME API Support
-    email: api@necp.game
+  description: |
+    Economy Core API for MMOFPS RPG - Inventory and P2P Trade Systems.
+
+    ## Core Components
+    - Inventory System: Item storage, equipment, transfer operations
+    - Trade System: P2P trading sessions with anti-fraud validation
+    - Stash System: Extended storage with organization features
+
+    ## Architecture Overview
+    - Server-authoritative economy with validation
+    - Event-driven architecture with Kafka
+    - Anti-fraud checks and audit logging
+    - Real-time inventory synchronization
+
+    ## Performance Requirements
+    - Inventory operations: 2000+ RPS with P99 <100ms
+    - Trade operations: 500+ RPS with P99 <200ms
+    - Memory optimized with field alignment
+    - Context timeouts for all operations
 
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Economy Service (локальная разработка)
-  - url: https://api.necp.game/api/v1
-    description: Economy Service (продакшн)
+  - url: http://localhost:8200
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
 
 tags:
-  - name: Economy Overview
-    description: Обзор экономики
-  - name: Currencies
-    description: Валюты
-  - name: Resources
-    description: Ресурсы
-  - name: Trading
-    description: Базовая торговля
-  - name: Trading Guilds
-    description: Торговые гильдии
-  - name: World Impact
-    description: Влияние на мир
+  - name: inventory
+    description: Inventory management operations
+  - name: equipment
+    description: Character equipment system
+  - name: stash
+    description: Extended storage system
+  - name: trade
+    description: P2P trading operations
+  - name: transfer
+    description: Item transfer operations
+
+security:
+  - BearerAuth: []
 
 paths:
-  /economy/overview:
-    get:
-      tags:
-        - Economy Overview
-      summary: Получить обзор экономики
-      description: |
-        Возвращает обзор экономической системы: общий объём торговли, инфляция, курсы валют.
-      operationId: getEconomyOverview
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Обзор экономики
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EconomyOverview'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+  # ============================================================================
+  # INVENTORY SYSTEM
+  # ============================================================================
 
-  /economy/model:
+  /gameplay/economy/inventory/{character_id}/slots:
     get:
-      tags:
-        - Economy Overview
-      summary: Получить информацию о типе экономической модели
-      description: |
-        Возвращает информацию о типе экономической модели:
-        структура рынков, управление, ценообразование.
-      operationId: getEconomyModel
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Информация о типе экономической модели
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EconomyModel'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/currencies:
-    get:
-      tags:
-        - Currencies
-      summary: Получить список валют
-      description: |
-        Возвращает список всех доступных валют в системе.
-      operationId: getCurrencies
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Список валют
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  currencies:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Currency'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/currencies/{currency_id}/balance:
-    get:
-      tags:
-        - Currencies
-      summary: Получить баланс валюты
-      description: |
-        Возвращает баланс указанной валюты для персонажа.
-      operationId: getCurrencyBalance
-      security:
-        - BearerAuth: []
+      tags: [inventory]
+      summary: Get character inventory slots
+      operationId: getInventorySlots
       parameters:
-        - name: currency_id
+        - name: character_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
-          description: Идентификатор валюты
+        - name: include_items
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - $ref: common.yaml#/components/parameters/Limit
+      responses:
+        "200":
+          description: Inventory slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventorySlot"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+    post:
+      tags: [inventory]
+      summary: Add item to inventory
+      operationId: addItemToInventory
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddItemRequest"
+      responses:
+        "201":
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventorySlot"
+        "400":
+          description: Invalid item or inventory full
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "409":
+          description: Item conflicts
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /gameplay/economy/inventory/{character_id}/slots/{slot_id}:
+    get:
+      tags: [inventory]
+      summary: Get specific inventory slot
+      operationId: getInventorySlot
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Inventory slot details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventorySlot"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+    put:
+      tags: [inventory]
+      summary: Update inventory slot
+      operationId: updateInventorySlot
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSlotRequest"
+      responses:
+        "200":
+          description: Slot updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventorySlot"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+
+    delete:
+      tags: [inventory]
+      summary: Remove item from slot
+      operationId: removeItemFromSlot
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Item removed
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+  /gameplay/economy/inventory/{character_id}/transfer:
+    post:
+      tags: [transfer]
+      summary: Transfer item between slots
+      operationId: transferItem
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequest"
+      responses:
+        "200":
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferResult"
+        "400":
+          description: Invalid transfer
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  # ============================================================================
+  # EQUIPMENT SYSTEM
+  # ============================================================================
+
+  /gameplay/economy/equipment/{character_id}/slots:
+    get:
+      tags: [equipment]
+      summary: Get character equipment slots
+      operationId: getEquipmentSlots
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Equipment slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EquipmentSlot"
+
+  /gameplay/economy/equipment/{character_id}/slots/{slot_type}:
+    post:
+      tags: [equipment]
+      summary: Equip item to slot
+      operationId: equipItem
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: slot_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [head, torso, arms, legs, weapon_primary, weapon_secondary, cyberware]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipRequest"
+      responses:
+        "200":
+          description: Item equipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipmentSlot"
+        "400":
+          description: Cannot equip item
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+    delete:
+      tags: [equipment]
+      summary: Unequip item from slot
+      operationId: unequipItem
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: slot_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [head, torso, arms, legs, weapon_primary, weapon_secondary, cyberware]
+      responses:
+        "200":
+          description: Item unequipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnequipResult"
+
+  # ============================================================================
+  # STASH SYSTEM
+  # ============================================================================
+
+  /gameplay/economy/stash/{character_id}/pages:
+    get:
+      tags: [stash]
+      summary: Get stash pages
+      operationId: getStashPages
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - $ref: common.yaml#/components/parameters/Limit
+      responses:
+        "200":
+          description: Stash pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StashPage"
+
+  /gameplay/economy/stash/{character_id}/transfer:
+    post:
+      tags: [stash]
+      summary: Transfer item to/from stash
+      operationId: stashTransfer
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StashTransferRequest"
+      responses:
+        "200":
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StashTransferResult"
+
+  # ============================================================================
+  # TRADE SYSTEM
+  # ============================================================================
+
+  /gameplay/economy/trade/sessions:
+    post:
+      tags: [trade]
+      summary: Create trade session
+      operationId: createTradeSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTradeSessionRequest"
+      responses:
+        "201":
+          description: Trade session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "409":
+          description: Trade conflict
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+    get:
+      tags: [trade]
+      summary: List active trade sessions
+      operationId: listTradeSessions
+      parameters:
+        - name: participant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, active, completed, cancelled]
+        - $ref: common.yaml#/components/parameters/Limit
+      responses:
+        "200":
+          description: Trade sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TradeSession"
+
+  /gameplay/economy/trade/sessions/{session_id}:
+    get:
+      tags: [trade]
+      summary: Get trade session details
+      operationId: getTradeSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Trade session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+    delete:
+      tags: [trade]
+      summary: Cancel trade session
+      operationId: cancelTradeSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelTradeRequest"
+      responses:
+        "200":
+          description: Session cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+  /gameplay/economy/trade/sessions/{session_id}/offers:
+    post:
+      tags: [trade]
+      summary: Add offer to trade session
+      operationId: addTradeOffer
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddOfferRequest"
+      responses:
+        "200":
+          description: Offer added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeOffer"
+        "400":
+          description: Invalid offer
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /gameplay/economy/trade/sessions/{session_id}/confirm:
+    post:
+      tags: [trade]
+      summary: Confirm trade session
+      operationId: confirmTradeSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmTradeRequest"
+      responses:
+        "200":
+          description: Trade completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeResult"
+        "400":
+          description: Confirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+  /gameplay/economy/trade/history:
+    get:
+      tags: [trade]
+      summary: Get trade history
+      operationId: getTradeHistory
+      parameters:
         - name: character_id
           in: query
           required: true
           schema:
             type: string
             format: uuid
-          description: Идентификатор персонажа
-      responses:
-        '200':
-          description: Баланс валюты
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CurrencyBalance'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/resources:
-    get:
-      tags:
-        - Resources
-      summary: Получить каталог ресурсов
-      description: |
-        Возвращает каталог ресурсов с возможностью фильтрации по типу.
-      operationId: getResources
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_type
+        - name: since
           in: query
           schema:
             type: string
-            enum: [basic, rare, craft, implant, information]
-          description: Фильтр по типу ресурса
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+            format: date-time
+        - $ref: common.yaml#/components/parameters/Limit
       responses:
-        '200':
-          description: Каталог ресурсов
+        "200":
+          description: Trade history
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  resources:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Resource'
-                  total:
-                    type: integer
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/resources/{resource_id}:
-    get:
-      tags:
-        - Resources
-      summary: Получить информацию о ресурсе
-      description: |
-        Возвращает детальную информацию о ресурсе по его ID.
-      operationId: getResourceById
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор ресурса
-      responses:
-        '200':
-          description: Информация о ресурсе
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Resource'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/resources/category/{category}:
-    get:
-      tags:
-        - Resources
-      summary: Получить ресурсы по категории
-      description: Возвращает список ресурсов, отфильтрованных по категории (raw_materials, electronics, bio_chem, data_assets).
-      operationId: getResourcesByCategory
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: category
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [raw_materials, electronics, bio_chem, data_assets]
-          description: Категория ресурсов
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Список ресурсов по категории
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  resources:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Resource'
-                  total:
-                    type: integer
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/resources/tier/{tier}:
-    get:
-      tags:
-        - Resources
-      summary: Получить ресурсы по tier
-      description: Возвращает список ресурсов, отфильтрованных по tier (1-5).
-      operationId: getResourcesByTier
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tier
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description: Tier ресурсов (1-5)
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Список ресурсов по tier
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  resources:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Resource'
-                  total:
-                    type: integer
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/resources/{resource_id}/price:
-    get:
-      tags:
-        - Resources
-      summary: Получить текущую цену ресурса
-      description: Возвращает текущую рыночную цену ресурса с историей изменений (опционально).
-      operationId: getResourcePrice
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор ресурса
-        - name: include_history
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Включить историю изменений цены
-        - name: history_days
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 30
-            default: 7
-          description: Количество дней истории
-      responses:
-        '200':
-          description: Текущая цена ресурса
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResourcePrice'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /economy/trade/initiate:
-    $ref: 'economy-core-trading-paths.yaml#/paths/~1economy~1trade~1initiate'
-
-  /economy/trade/{trade_id}/accept:
-    $ref: 'economy-core-trading-paths.yaml#/paths/~1economy~1trade~1{trade_id}~1accept'
-
-  /economy/trade/{trade_id}/cancel:
-    $ref: 'economy-core-trading-paths.yaml#/paths/~1economy~1trade~1{trade_id}~1cancel'
-
-  /economy/guilds:
-    $ref: 'economy-core-trading-paths.yaml#/paths/~1economy~1guilds'
-
-  /economy/guilds/create:
-    $ref: 'economy-core-trading-paths.yaml#/paths/~1economy~1guilds~1create'
-
-  /economy/guilds/{guild_id}/join:
-    $ref: 'economy-core-trading-paths.yaml#/paths/~1economy~1guilds~1{guild_id}~1join'
-
-  /economy/world-impact:
-    get:
-      tags:
-        - World Impact
-      summary: Получить влияние экономики на мир
-      description: |
-        Возвращает информацию о влиянии экономических операций на игровой мир.
-      operationId: getWorldImpact
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: region_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по региону
-      responses:
-        '200':
-          description: Влияние на мир
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WorldImpact'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  # Currency Exchange - Issue: #224
-  /currency-exchange/rates:
-    $ref: 'economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1rates'
-  
-  /currency-exchange/rates/{pair}:
-    $ref: 'economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1rates~1{pair}'
-  
-  /currency-exchange/rates/history:
-    $ref: 'economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1rates~1history'
-  
-  /currency-exchange/quote:
-    $ref: 'economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1quote'
-  
-  /currency-exchange/orders/instant:
-    $ref: 'economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders~1instant'
-  
-  /currency-exchange/orders/limit:
-    $ref: 'economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders~1limit'
-  
-  /currency-exchange/orders:
-    $ref: 'economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders'
-  
-  /currency-exchange/orders/{order_id}:
-    $ref: 'economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders~1{order_id}'
-  
-  # Investments - Issue: #228
-  /economy/investments/buy:
-    $ref: 'economy-investments-core-service.yaml#/paths/~1economy~1investments~1buy'
-  
-  /economy/investments/sell:
-    $ref: 'economy-investments-core-service.yaml#/paths/~1economy~1investments~1sell'
-  
-  /economy/investments/positions:
-    $ref: 'economy-investments-core-service.yaml#/paths/~1economy~1investments~1positions'
-  
-  /economy/investments/transactions:
-    $ref: 'economy-investments-core-service.yaml#/paths/~1economy~1investments~1transactions'
-  
-  # Economy Events - Issue: #225
-  /economy/events:
-    $ref: 'economy-events-service.yaml#/paths/~1economy~1events'
-  
-  /economy/events/{event_id}:
-    $ref: 'economy-events-service.yaml#/paths/~1economy~1events~1{event_id}'
-  
-  /economy/events/{event_id}/announce:
-    $ref: 'economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1announce'
-  
-  /economy/events/{event_id}/activate:
-    $ref: 'economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1activate'
-  
-  /economy/events/{event_id}/archive:
-    $ref: 'economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1archive'
-  
-  /economy/events/active:
-    $ref: 'economy-events-service.yaml#/paths/~1economy~1events~1active'
-  
-  /economy/events/{event_id}/metrics:
-    $ref: 'economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1metrics'
+                type: array
+                items:
+                  $ref: "#/components/schemas/TradeHistoryEntry"
 
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
   schemas:
-    EconomyOverview:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/EconomyOverview'
-    EconomyModel:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/EconomyModel'
-    Currency:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/Currency'
-    CurrencyBalance:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/CurrencyBalance'
-    Resource:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/Resource'
-    ResourcePrice:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/ResourcePrice'
-    PriceHistoryPoint:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/PriceHistoryPoint'
-    InitiateTradeRequest:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/InitiateTradeRequest'
+    # ============================================================================
+    # INVENTORY SCHEMAS
+    # ============================================================================
+
+    InventorySlot:
+      type: object
+      required: [slot_id, slot_type, position_x, position_y]
+      properties:
+        slot_id:
+          type: string
+          format: uuid
+        slot_type:
+          type: string
+          enum: [inventory, equipment, stash]
+        position_x:
+          type: integer
+          minimum: 0
+        position_y:
+          type: integer
+          minimum: 0
+        item:
+          $ref: "#/components/schemas/InventoryItem"
+        is_locked:
+          type: boolean
+          default: false
+        last_updated:
+          type: string
+          format: date-time
+
+    InventoryItem:
+      type: object
+      required: [item_id, template_id, quantity, quality]
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        template_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        quality:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, iconic]
+        durability:
+          type: integer
+          minimum: 0
+        max_durability:
+          type: integer
+          minimum: 1
+        custom_properties:
+          type: object
+          additionalProperties: true
+        is_bound:
+          type: boolean
+          default: false
+        bound_on:
+          type: string
+          enum: [pickup, equip, account]
+        created_at:
+          type: string
+          format: date-time
+
+    AddItemRequest:
+      type: object
+      required: [template_id, quantity]
+      properties:
+        template_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        quality:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, iconic]
+          default: common
+        custom_properties:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+          enum: [loot, craft, purchase, reward, admin]
+
+    UpdateSlotRequest:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 0
+        durability:
+          type: integer
+          minimum: 0
+        custom_properties:
+          type: object
+          additionalProperties: true
+
+    TransferRequest:
+      type: object
+      required: [from_slot_id, to_slot_id, quantity]
+      properties:
+        from_slot_id:
+          type: string
+          format: uuid
+        to_slot_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        split_stack:
+          type: boolean
+          default: false
+
+    TransferResult:
+      type: object
+      required: [from_slot, to_slot, transferred_quantity]
+      properties:
+        from_slot:
+          $ref: "#/components/schemas/InventorySlot"
+        to_slot:
+          $ref: "#/components/schemas/InventorySlot"
+        transferred_quantity:
+          type: integer
+        transfer_fee:
+          type: integer
+          minimum: 0
+
+    # ============================================================================
+    # EQUIPMENT SCHEMAS
+    # ============================================================================
+
+    EquipmentSlot:
+      type: object
+      required: [slot_type, is_equipped]
+      properties:
+        slot_type:
+          type: string
+          enum: [head, torso, arms, legs, weapon_primary, weapon_secondary, cyberware]
+        item:
+          $ref: "#/components/schemas/InventoryItem"
+        is_equipped:
+          type: boolean
+        equipped_at:
+          type: string
+          format: date-time
+        requirements_met:
+          type: boolean
+        stat_bonuses:
+          type: object
+          additionalProperties:
+            type: number
+
+    EquipRequest:
+      type: object
+      required: [item_id]
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        ignore_requirements:
+          type: boolean
+          default: false
+
+    UnequipResult:
+      type: object
+      required: [slot_type, unequipped_item]
+      properties:
+        slot_type:
+          type: string
+        unequipped_item:
+          $ref: "#/components/schemas/InventoryItem"
+        returned_to_inventory:
+          type: boolean
+        unequipped_at:
+          type: string
+          format: date-time
+
+    # ============================================================================
+    # STASH SCHEMAS
+    # ============================================================================
+
+    StashPage:
+      type: object
+      required: [page_id, page_number, slots]
+      properties:
+        page_id:
+          type: string
+          format: uuid
+        page_number:
+          type: integer
+          minimum: 1
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventorySlot"
+        is_unlocked:
+          type: boolean
+        unlock_cost:
+          type: integer
+
+    StashTransferRequest:
+      type: object
+      required: [direction, item_id, quantity]
+      properties:
+        direction:
+          type: string
+          enum: [to_stash, from_stash]
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        stash_page:
+          type: integer
+          minimum: 1
+        stash_slot_x:
+          type: integer
+          minimum: 0
+        stash_slot_y:
+          type: integer
+          minimum: 0
+
+    StashTransferResult:
+      type: object
+      required: [success, direction, transferred_quantity]
+      properties:
+        success:
+          type: boolean
+        direction:
+          type: string
+        transferred_quantity:
+          type: integer
+        stash_fee:
+          type: integer
+          minimum: 0
+        inventory_slot:
+          $ref: "#/components/schemas/InventorySlot"
+        stash_slot:
+          $ref: "#/components/schemas/InventorySlot"
+
+    # ============================================================================
+    # TRADE SCHEMAS
+    # ============================================================================
+
+    CreateTradeSessionRequest:
+      type: object
+      required: [initiator_id, target_id, initiator_items, target_items]
+      properties:
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        initiator_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        target_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        initiator_credits:
+          type: integer
+          minimum: 0
+          default: 0
+        target_credits:
+          type: integer
+          minimum: 0
+          default: 0
+        timeout_seconds:
+          type: integer
+          minimum: 30
+          maximum: 300
+          default: 120
+
     TradeSession:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/TradeSession'
-    TradingGuild:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/TradingGuild'
-    CreateGuildRequest:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/CreateGuildRequest'
-    WorldImpact:
-      $ref: 'economy-core-schemas.yaml#/components/schemas/WorldImpact'
+      type: object
+      required: [session_id, initiator_id, target_id, status, created_at]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, active, confirmed_by_initiator, confirmed_by_target, completed, cancelled, timed_out]
+        initiator_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        target_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        initiator_credits:
+          type: integer
+          minimum: 0
+        target_credits:
+          type: integer
+          minimum: 0
+        timeout_seconds:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        confirmed_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
 
-security:
-  - BearerAuth: []
+    TradeItem:
+      type: object
+      required: [item_id, quantity]
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
 
+    AddOfferRequest:
+      type: object
+      required: [participant_id, items, credits]
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        credits:
+          type: integer
+          minimum: 0
+
+    TradeOffer:
+      type: object
+      required: [offer_id, participant_id, items, credits, offered_at]
+      properties:
+        offer_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        credits:
+          type: integer
+          minimum: 0
+        offered_at:
+          type: string
+          format: date-time
+
+    CancelTradeRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [user_cancelled, timeout, fraud_detected, system_error]
+        participant_id:
+          type: string
+          format: uuid
+
+    ConfirmTradeRequest:
+      type: object
+      required: [participant_id]
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        anti_fraud_token:
+          type: string
+
+    TradeResult:
+      type: object
+      required: [session_id, success, initiator_items_transferred, target_items_transferred]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        initiator_items_transferred:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        target_items_transferred:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        initiator_credits_transferred:
+          type: integer
+        target_credits_transferred:
+          type: integer
+        completed_at:
+          type: string
+          format: date-time
+        trade_fee:
+          type: integer
+
+    TradeHistoryEntry:
+      type: object
+      required: [session_id, character_id, partner_id, items_given, items_received, credits_given, credits_received, completed_at]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        partner_id:
+          type: string
+          format: uuid
+        items_given:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        items_received:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        credits_given:
+          type: integer
+        credits_received:
+          type: integer
+        completed_at:
+          type: string
+          format: date-time
+        trade_fee:
+          type: integer

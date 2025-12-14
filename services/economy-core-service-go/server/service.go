@@ -1,4 +1,4 @@
-// Issue: #169
+// Issue: #171
 package server
 
 import (
@@ -18,66 +18,57 @@ import (
 
 // Config holds service configuration with performance optimizations
 type Config struct {
-	HTTPPort        int
-	WebSocketPort   int
-	DatabaseURL     string
-	KafkaBrokers    string
-	RedisURL        string
-	PrometheusPort  int
-	Environment     string
-	MaxConnections  int
-	WorkerPoolSize  int
-	BufferSize      int
-	ContextTimeout  time.Duration
-	ReadTimeout     time.Duration
-	WriteTimeout    time.Duration
-	MaxRequestSize  int64
-	RateLimitRPM    int
-	EnableMetrics   bool
-	EnableTracing   bool
-	EnableDebugLogs bool
+	HTTPPort         int
+	WebSocketPort    int
+	DatabaseURL      string
+	KafkaBrokers     string
+	RedisURL         string
+	PrometheusPort   int
+	Environment      string
+	MaxConnections   int
+	WorkerPoolSize   int
+	BufferSize       int
+	ContextTimeout   time.Duration
+	ReadTimeout      time.Duration
+	WriteTimeout     time.Duration
+	MaxRequestSize   int64
+	RateLimitRPM     int
+	EnableMetrics    bool
+	EnableTracing    bool
+	EnableDebugLogs  bool
 }
 
-// Service represents the combat systems wave 1 service
+// Service represents the economy core service
 type Service struct {
 	config     Config
 	logger     *zap.SugaredLogger
 	db         *pgxpool.Pool
 	kafka      *kafka.Writer
-	redis      *redis.Client
 	httpServer *fasthttp.Server
 	wsServer   *fasthttp.Server
-	metricsSrv *http.Server
 
 	// Performance optimizations
-	rateLimiter *rate.Limiter
-	semaphore   *semaphore.Weighted
-	workerPool  chan func()
-	bufferPool  *sync.Pool
-	contextPool *sync.Pool
+	rateLimiter   *rate.Limiter
+	semaphore     *semaphore.Weighted
+	workerPool    chan func()
+	bufferPool    *sync.Pool
+	contextPool   *sync.Pool
 
-	// Combat system managers
-	sessionManager    *CombatSessionManager
-	aiManager         *AIManager
-	abilityManager    *AbilityManager
-	shootingManager   *ShootingManager
-	comboManager      *ComboManager
-	freerunManager    *FreerunManager
-	hackingManager    *HackingManager
-	stealthManager    *StealthManager
-	extractionManager *ExtractionManager
-	arenaManager      *ArenaManager
-	cyberspaceManager *CyberspaceManager
+	// Economy system managers
+	inventoryManager *InventoryManager
+	tradeManager     *TradeManager
+	equipmentManager *EquipmentManager
+	stashManager     *StashManager
 
 	// Metrics and monitoring
-	metrics *CombatMetrics
+	metrics *EconomyMetrics
 
 	// Cleanup
 	shutdownCh chan struct{}
 	wg         sync.WaitGroup
 }
 
-// NewService creates a new combat systems wave 1 service instance
+// NewService creates a new economy core service instance
 func NewService(config Config) (*Service, error) {
 	logger, err := zap.NewProduction()
 	if err != nil {
@@ -106,20 +97,20 @@ func NewService(config Config) (*Service, error) {
 	}
 
 	return &Service{
-		config:      config,
-		logger:      sugar,
-		rateLimiter: rateLimiter,
-		semaphore:   sem,
-		workerPool:  workerPool,
-		bufferPool:  bufferPool,
-		contextPool: contextPool,
-		shutdownCh:  make(chan struct{}),
+		config:       config,
+		logger:       sugar,
+		rateLimiter:  rateLimiter,
+		semaphore:    sem,
+		workerPool:   workerPool,
+		bufferPool:   bufferPool,
+		contextPool:  contextPool,
+		shutdownCh:   make(chan struct{}),
 	}, nil
 }
 
 // Initialize initializes service components with performance optimizations
 func (s *Service) Initialize(ctx context.Context) error {
-	s.logger.Info("Initializing Combat Systems Wave 1 Service...")
+	s.logger.Info("Initializing Economy Core Service...")
 
 	// Initialize database connection with optimized settings
 	dbConfig, err := pgxpool.ParseConfig(s.config.DatabaseURL)
@@ -142,7 +133,7 @@ func (s *Service) Initialize(ctx context.Context) error {
 	// Initialize Kafka writer with optimizations
 	s.kafka = &kafka.Writer{
 		Addr:         kafka.TCP(s.config.KafkaBrokers),
-		Topic:        "combat.events",
+		Topic:        "economy.events",
 		Balancer:     &kafka.LeastBytes{},
 		BatchSize:    100,
 		BatchTimeout: 10 * time.Millisecond,
@@ -150,25 +141,15 @@ func (s *Service) Initialize(ctx context.Context) error {
 		Async:        true, // Async for performance
 	}
 
-	// Initialize Redis connection (placeholder)
-	// s.redis = redis.NewClient(&redis.Options{Addr: s.config.RedisURL})
-
-	// Initialize combat system managers with optimized memory layout
-	s.sessionManager = NewCombatSessionManager(s.db, s.kafka, s.logger)
-	s.aiManager = NewAIManager(s.db, s.kafka, s.logger)
-	s.abilityManager = NewAbilityManager(s.db, s.kafka, s.logger)
-	s.shootingManager = NewShootingManager(s.db, s.kafka, s.logger)
-	s.comboManager = NewComboManager(s.db, s.kafka, s.logger)
-	s.freerunManager = NewFreerunManager(s.db, s.kafka, s.logger)
-	s.hackingManager = NewHackingManager(s.db, s.kafka, s.logger)
-	s.stealthManager = NewStealthManager(s.db, s.kafka, s.logger)
-	s.extractionManager = NewExtractionManager(s.db, s.kafka, s.logger)
-	s.arenaManager = NewArenaManager(s.db, s.kafka, s.logger)
-	s.cyberspaceManager = NewCyberspaceManager(s.db, s.kafka, s.logger)
+	// Initialize economy system managers with optimized memory layout
+	s.inventoryManager = NewInventoryManager(s.db, s.kafka, s.logger)
+	s.tradeManager = NewTradeManager(s.db, s.kafka, s.logger)
+	s.equipmentManager = NewEquipmentManager(s.db, s.kafka, s.logger)
+	s.stashManager = NewStashManager(s.db, s.kafka, s.logger)
 
 	// Initialize metrics
 	if s.config.EnableMetrics {
-		s.metrics = NewCombatMetrics()
+		s.metrics = NewEconomyMetrics()
 	}
 
 	// Start worker pool
@@ -181,7 +162,7 @@ func (s *Service) Initialize(ctx context.Context) error {
 	s.wg.Add(1)
 	go s.cleanupRoutine()
 
-	s.logger.Info("Combat Systems Wave 1 Service initialized successfully")
+	s.logger.Info("Economy Core Service initialized successfully")
 	return nil
 }
 
@@ -189,18 +170,18 @@ func (s *Service) Initialize(ctx context.Context) error {
 func (s *Service) HTTPServer() *fasthttp.Server {
 	if s.httpServer == nil {
 		s.httpServer = &fasthttp.Server{
-			Handler:            s.handleHTTPRequest,
-			ReadTimeout:        s.config.ReadTimeout,
-			WriteTimeout:       s.config.WriteTimeout,
-			MaxRequestBodySize: int(s.config.MaxRequestSize),
-			Concurrency:        s.config.MaxConnections,
-			DisableKeepalive:   false,
-			TCPKeepalive:       true,
-			TCPKeepalivePeriod: 60 * time.Second,
-			MaxConnsPerIP:      50,
-			MaxRequestsPerConn: 1000,
-			ReduceMemoryUsage:  true, // Performance optimization
-			Logger:             zap.NewStdLog(s.logger.Desugar()),
+			Handler:               s.handleHTTPRequest,
+			ReadTimeout:           s.config.ReadTimeout,
+			WriteTimeout:          s.config.WriteTimeout,
+			MaxRequestBodySize:    int(s.config.MaxRequestSize),
+			Concurrency:           s.config.MaxConnections,
+			DisableKeepalive:      false,
+			TCPKeepalive:          true,
+			TCPKeepalivePeriod:    60 * time.Second,
+			MaxConnsPerIP:         50,
+			MaxRequestsPerConn:    1000,
+			ReduceMemoryUsage:     true, // Performance optimization
+			Logger:                zap.NewStdLog(s.logger.Desugar()),
 		}
 	}
 	return s.httpServer
@@ -240,7 +221,7 @@ func (s *Service) Config() Config {
 
 // Shutdown gracefully shuts down the service
 func (s *Service) Shutdown(ctx context.Context) error {
-	s.logger.Info("Shutting down Combat Systems Wave 1 Service...")
+	s.logger.Info("Shutting down Economy Core Service...")
 
 	// Signal shutdown
 	close(s.shutdownCh)
@@ -336,7 +317,7 @@ func (s *Service) handleWebSocketRequest(ctx *fasthttp.RequestCtx) {
 func (s *Service) handleHealthCheck(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 	ctx.SetStatusCode(fasthttp.StatusOK)
-	ctx.SetBodyString(`{"status":"healthy","service":"combat-systems-wave1"}`)
+	ctx.SetBodyString(`{"status":"healthy","service":"economy-core"}`)
 }
 
 // handleMetrics handles metrics requests
@@ -345,7 +326,7 @@ func (s *Service) handleMetrics(ctx *fasthttp.RequestCtx) {
 		// Prometheus metrics would be served here
 		ctx.SetContentType("text/plain")
 		ctx.SetStatusCode(fasthttp.StatusOK)
-		ctx.SetBodyString("# Combat Systems Wave 1 Metrics\n")
+		ctx.SetBodyString("# Economy Core Metrics\n")
 	} else {
 		ctx.SetStatusCode(fasthttp.StatusNotFound)
 	}
@@ -399,27 +380,27 @@ func (s *Service) cleanupRoutine() {
 
 // performCleanup performs maintenance cleanup tasks
 func (s *Service) performCleanup() {
-	// Cleanup expired sessions
-	if err := s.sessionManager.CleanupExpiredSessions(context.Background()); err != nil {
-		s.logger.Errorf("Failed to cleanup expired sessions: %v", err)
+	// Cleanup expired trade sessions
+	if err := s.tradeManager.CleanupExpiredSessions(context.Background()); err != nil {
+		s.logger.Errorf("Failed to cleanup expired trade sessions: %v", err)
 	}
 
-	// Cleanup old telemetry data
-	if err := s.cleanupOldTelemetry(context.Background()); err != nil {
-		s.logger.Errorf("Failed to cleanup old telemetry: %v", err)
+	// Cleanup old audit logs
+	if err := s.cleanupOldAuditLogs(context.Background()); err != nil {
+		s.logger.Errorf("Failed to cleanup old audit logs: %v", err)
 	}
 
 	s.logger.Debug("Cleanup completed")
 }
 
-// cleanupOldTelemetry removes old telemetry data to maintain performance
-func (s *Service) cleanupOldTelemetry(ctx context.Context) error {
-	// Keep only last 24 hours of telemetry data
-	cutoff := time.Now().Add(-24 * time.Hour)
+// cleanupOldAuditLogs removes old audit logs to maintain performance
+func (s *Service) cleanupOldAuditLogs(ctx context.Context) error {
+	// Keep only last 90 days of audit logs
+	cutoff := time.Now().Add(-90 * 24 * time.Hour)
 
 	_, err := s.db.Exec(ctx, `
-		DELETE FROM combat_telemetry
-		WHERE timestamp < $1 AND processed = true
+		DELETE FROM economy.trade_audit
+		WHERE action_timestamp < $1
 	`, cutoff)
 
 	return err

@@ -219,61 +219,61 @@ type Vector3 struct {
 
 // CombatSession represents a combat session
 type CombatSession struct {
-	ID               uuid.UUID `json:"id"`
-	PlayerIDs        []uuid.UUID `json:"player_ids"`
-	ZoneID           uuid.UUID `json:"zone_id"`
-	Status           string    `json:"status"`
-	Difficulty       string    `json:"difficulty"`
-	MissionType      string    `json:"mission_type"`
-	Score            int       `json:"score"`
-	MaxScore         *int      `json:"max_score,omitempty"`
-	TimeLimitSeconds *int      `json:"time_limit_seconds,omitempty"`
-	TimeElapsedSeconds int     `json:"time_elapsed_seconds"`
-	EnemiesSpawned  int       `json:"enemies_spawned"`
-	EnemiesRemaining int       `json:"enemies_remaining"`
-	ObjectivesCompleted int    `json:"objectives_completed"`
-	ObjectivesTotal  int       `json:"objectives_total"`
-	SessionData      map[string]interface{} `json:"session_data,omitempty"`
-	AntiCheatFlags   map[string]interface{} `json:"anti_cheat_flags,omitempty"`
-	CreatedAt        time.Time `json:"created_at"`
-	StartedAt        *time.Time `json:"started_at,omitempty"`
-	EndedAt          *time.Time `json:"ended_at,omitempty"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ID                  uuid.UUID              `json:"id"`
+	PlayerIDs           []uuid.UUID            `json:"player_ids"`
+	ZoneID              uuid.UUID              `json:"zone_id"`
+	Status              string                 `json:"status"`
+	Difficulty          string                 `json:"difficulty"`
+	MissionType         string                 `json:"mission_type"`
+	Score               int                    `json:"score"`
+	MaxScore            *int                   `json:"max_score,omitempty"`
+	TimeLimitSeconds    *int                   `json:"time_limit_seconds,omitempty"`
+	TimeElapsedSeconds  int                    `json:"time_elapsed_seconds"`
+	EnemiesSpawned      int                    `json:"enemies_spawned"`
+	EnemiesRemaining    int                    `json:"enemies_remaining"`
+	ObjectivesCompleted int                    `json:"objectives_completed"`
+	ObjectivesTotal     int                    `json:"objectives_total"`
+	SessionData         map[string]interface{} `json:"session_data,omitempty"`
+	AntiCheatFlags      map[string]interface{} `json:"anti_cheat_flags,omitempty"`
+	CreatedAt           time.Time              `json:"created_at"`
+	StartedAt           *time.Time             `json:"started_at,omitempty"`
+	EndedAt             *time.Time             `json:"ended_at,omitempty"`
+	UpdatedAt           time.Time              `json:"updated_at"`
 }
 
 // AIProfile represents an AI enemy profile
 type AIProfile struct {
-	ProfileID      uuid.UUID `json:"profile_id"`
-	AIType         string    `json:"ai_type"`
-	Difficulty     string    `json:"difficulty"`
-	BaseHealth     int       `json:"base_health"`
-	Damage         int       `json:"damage"`
-	Speed          float64   `json:"speed"`
-	DetectionRange float64   `json:"detection_range"`
-	AttackRange    float64   `json:"attack_range"`
+	ProfileID        uuid.UUID              `json:"profile_id"`
+	AIType           string                 `json:"ai_type"`
+	Difficulty       string                 `json:"difficulty"`
+	BaseHealth       int                    `json:"base_health"`
+	Damage           int                    `json:"damage"`
+	Speed            float64                `json:"speed"`
+	DetectionRange   float64                `json:"detection_range"`
+	AttackRange      float64                `json:"attack_range"`
 	BehaviorPatterns map[string]interface{} `json:"behavior_patterns,omitempty"`
-	LootTable      map[string]interface{} `json:"loot_table,omitempty"`
-	Weaknesses     []string  `json:"weaknesses,omitempty"`
-	IsActive       bool      `json:"is_active"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	LootTable        map[string]interface{} `json:"loot_table,omitempty"`
+	Weaknesses       []string               `json:"weaknesses,omitempty"`
+	IsActive         bool                   `json:"is_active"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
 }
 
 // AIInstance represents an active AI enemy instance
 type AIInstance struct {
-	InstanceID     uuid.UUID `json:"instance_id"`
-	SessionID      uuid.UUID `json:"session_id"`
-	ProfileID      uuid.UUID `json:"profile_id"`
-	CurrentHealth  int       `json:"current_health"`
-	MaxHealth      int       `json:"max_health"`
-	Position       Vector3   `json:"position"`
-	Rotation       float64   `json:"rotation"`
-	CurrentState   string    `json:"current_state"`
-	TargetPlayerID *uuid.UUID `json:"target_player_id,omitempty"`
-	ThreatLevel    float64   `json:"threat_level"`
-	LastDamageTaken *time.Time `json:"last_damage_taken,omitempty"`
-	LastAttackTime *time.Time `json:"last_attack_time,omitempty"`
-	BehaviorData   map[string]interface{} `json:"behavior_data,omitempty"`
-	SpawnedAt      time.Time `json:"spawned_at"`
-	DestroyedAt    *time.Time `json:"destroyed_at,omitempty"`
+	InstanceID      uuid.UUID              `json:"instance_id"`
+	SessionID       uuid.UUID              `json:"session_id"`
+	ProfileID       uuid.UUID              `json:"profile_id"`
+	CurrentHealth   int                    `json:"current_health"`
+	MaxHealth       int                    `json:"max_health"`
+	Position        Vector3                `json:"position"`
+	Rotation        float64                `json:"rotation"`
+	CurrentState    string                 `json:"current_state"`
+	TargetPlayerID  *uuid.UUID             `json:"target_player_id,omitempty"`
+	ThreatLevel     float64                `json:"threat_level"`
+	LastDamageTaken *time.Time             `json:"last_damage_taken,omitempty"`
+	LastAttackTime  *time.Time             `json:"last_attack_time,omitempty"`
+	BehaviorData    map[string]interface{} `json:"behavior_data,omitempty"`
+	SpawnedAt       time.Time              `json:"spawned_at"`
+	DestroyedAt     *time.Time             `json:"destroyed_at,omitempty"`
 }

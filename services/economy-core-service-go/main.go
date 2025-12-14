@@ -1,4 +1,4 @@
-// Issue: #169
+// Issue: #171
 package main
 
 import (
@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/NECPGAME/combat-systems-wave1-service-go/server"
+	"github.com/NECPGAME/economy-core-service-go/server"
 	"go.uber.org/zap"
 )
 
@@ -24,29 +24,26 @@ func main() {
 
 	sugar := logger.Sugar()
 
-	// Issue: #1611 - Continuous Profiling (Pyroscope)
-	// TODO: Add Pyroscope profiling integration
-
 	// Create service instance with performance optimizations
 	svc, err := server.NewService(server.Config{
-		HTTPPort:        getEnvInt("HTTP_PORT", 8100),
-		WebSocketPort:   getEnvInt("WS_PORT", 8101),
-		DatabaseURL:     getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/necp_game"),
-		KafkaBrokers:    getEnv("KAFKA_BROKERS", "localhost:9092"),
-		RedisURL:        getEnv("REDIS_URL", "redis://localhost:6379"),
-		PrometheusPort:  getEnvInt("PROMETHEUS_PORT", 9090),
-		Environment:     getEnv("ENVIRONMENT", "development"),
-		MaxConnections:  getEnvInt("MAX_CONNECTIONS", 10000),
-		WorkerPoolSize:  getEnvInt("WORKER_POOL_SIZE", 100),
-		BufferSize:      getEnvInt("BUFFER_SIZE", 8192),
-		ContextTimeout:  time.Duration(getEnvInt("CONTEXT_TIMEOUT_SEC", 30)) * time.Second,
-		ReadTimeout:     time.Duration(getEnvInt("READ_TIMEOUT_SEC", 10)) * time.Second,
-		WriteTimeout:    time.Duration(getEnvInt("WRITE_TIMEOUT_SEC", 10)) * time.Second,
-		MaxRequestSize:  getEnvInt("MAX_REQUEST_SIZE_MB", 1) * 1024 * 1024,
-		RateLimitRPM:    getEnvInt("RATE_LIMIT_RPM", 1000),
-		EnableMetrics:   getEnvBool("ENABLE_METRICS", true),
-		EnableTracing:   getEnvBool("ENABLE_TRACING", false),
-		EnableDebugLogs: getEnvBool("ENABLE_DEBUG_LOGS", false),
+		HTTPPort:         getEnvInt("HTTP_PORT", 8200),
+		WebSocketPort:    getEnvInt("WS_PORT", 8201),
+		DatabaseURL:      getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/necp_game"),
+		KafkaBrokers:     getEnv("KAFKA_BROKERS", "localhost:9092"),
+		RedisURL:         getEnv("REDIS_URL", "redis://localhost:6379"),
+		PrometheusPort:   getEnvInt("PROMETHEUS_PORT", 9091),
+		Environment:      getEnv("ENVIRONMENT", "development"),
+		MaxConnections:   getEnvInt("MAX_CONNECTIONS", 10000),
+		WorkerPoolSize:   getEnvInt("WORKER_POOL_SIZE", 100),
+		BufferSize:       getEnvInt("BUFFER_SIZE", 8192),
+		ContextTimeout:   time.Duration(getEnvInt("CONTEXT_TIMEOUT_SEC", 30)) * time.Second,
+		ReadTimeout:      time.Duration(getEnvInt("READ_TIMEOUT_SEC", 10)) * time.Second,
+		WriteTimeout:     time.Duration(getEnvInt("WRITE_TIMEOUT_SEC", 10)) * time.Second,
+		MaxRequestSize:   getEnvInt("MAX_REQUEST_SIZE_MB", 1) * 1024 * 1024,
+		RateLimitRPM:     getEnvInt("RATE_LIMIT_RPM", 1000),
+		EnableMetrics:    getEnvBool("ENABLE_METRICS", true),
+		EnableTracing:    getEnvBool("ENABLE_TRACING", false),
+		EnableDebugLogs:  getEnvBool("ENABLE_DEBUG_LOGS", false),
 	})
 	if err != nil {
 		sugar.Fatalf("Failed to create service: %v", err)

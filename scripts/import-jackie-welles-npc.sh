@@ -1,5 +1,5 @@
 #!/bin/bash
-# Issue: #1868
+# Issue: #1869
 # Script to import Jackie Welles NPC profile to database
 
 set -e

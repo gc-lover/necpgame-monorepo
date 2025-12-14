@@ -1,0 +1,366 @@
+// Issue: #171
+syntax = "proto3";
+
+package economy.events.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// Economy Core Event Bus Specification
+// Event-driven architecture for inventory and trade synchronization
+
+option java_package = "com.necpgame.economy.events.v1";
+option java_multiple_files = true;
+
+// ============================================================================
+// INVENTORY SYSTEM EVENTS
+// ============================================================================
+
+message InventoryEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string session_id = 4;
+  oneof event {
+    ItemAdded added = 5;
+    ItemRemoved removed = 6;
+    ItemUpdated updated = 7;
+    ItemTransferred transferred = 8;
+    InventoryFull full = 9;
+    WeightChanged weight_changed = 10;
+  }
+
+  message ItemAdded {
+    string item_id = 1;
+    string template_id = 2;
+    int32 quantity = 3;
+    string quality = 4;
+    string source = 5;
+    string slot_id = 6;
+    int32 slot_x = 7;
+    int32 slot_y = 8;
+  }
+
+  message ItemRemoved {
+    string item_id = 1;
+    int32 quantity = 2;
+    string reason = 3;
+    string slot_id = 4;
+  }
+
+  message ItemUpdated {
+    string item_id = 1;
+    string slot_id = 2;
+    google.protobuf.Int32Value new_quantity = 3;
+    google.protobuf.Int32Value new_durability = 4;
+    map<string, string> property_changes = 5;
+  }
+
+  message ItemTransferred {
+    string item_id = 1;
+    int32 quantity = 2;
+    string from_slot_id = 3;
+    string to_slot_id = 4;
+    string transfer_type = 5;
+    int32 transfer_fee = 6;
+  }
+
+  message InventoryFull {
+    int32 current_weight = 1;
+    int32 max_weight = 2;
+    int32 occupied_slots = 3;
+    int32 total_slots = 4;
+  }
+
+  message WeightChanged {
+    int32 previous_weight = 1;
+    int32 new_weight = 2;
+    int32 max_weight = 3;
+    string change_reason = 4;
+  }
+}
+
+// ============================================================================
+// EQUIPMENT SYSTEM EVENTS
+// ============================================================================
+
+message EquipmentEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    ItemEquipped equipped = 4;
+    ItemUnequipped unequipped = 5;
+    EquipmentFailed failed = 6;
+    StatsChanged stats_changed = 7;
+  }
+
+  message ItemEquipped {
+    string item_id = 1;
+    string slot_type = 2;
+    string previous_item_id = 3;
+    map<string, float> stat_bonuses = 4;
+    bool requirements_met = 5;
+  }
+
+  message ItemUnequipped {
+    string item_id = 1;
+    string slot_type = 2;
+    map<string, float> stat_changes = 3;
+    bool returned_to_inventory = 4;
+  }
+
+  message EquipmentFailed {
+    string item_id = 1;
+    string slot_type = 2;
+    string failure_reason = 3;
+    repeated string unmet_requirements = 4;
+  }
+
+  message StatsChanged {
+    map<string, float> stat_changes = 1;
+    string change_source = 2;
+    float total_weight_change = 3;
+  }
+}
+
+// ============================================================================
+// STASH SYSTEM EVENTS
+// ============================================================================
+
+message StashEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    ItemStored stored = 4;
+    ItemRetrieved retrieved = 5;
+    PageUnlocked page_unlocked = 6;
+    StashFull full = 7;
+  }
+
+  message ItemStored {
+    string item_id = 1;
+    int32 quantity = 2;
+    int32 page_number = 3;
+    int32 slot_x = 4;
+    int32 slot_y = 5;
+    int32 storage_fee = 6;
+  }
+
+  message ItemRetrieved {
+    string item_id = 1;
+    int32 quantity = 2;
+    int32 page_number = 3;
+    int32 slot_x = 4;
+    int32 slot_y = 5;
+  }
+
+  message PageUnlocked {
+    int32 page_number = 1;
+    int32 unlock_cost = 2;
+    int32 new_total_pages = 3;
+  }
+
+  message StashFull {
+    int32 current_pages = 1;
+    int32 max_pages = 2;
+    int32 occupied_slots = 3;
+    int32 total_slots = 4;
+  }
+}
+
+// ============================================================================
+// TRADE SYSTEM EVENTS
+// ============================================================================
+
+message TradeEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string session_id = 3;
+  oneof event {
+    TradeStarted started = 4;
+    TradeUpdated updated = 5;
+    TradeConfirmed confirmed = 6;
+    TradeCompleted completed = 7;
+    TradeCancelled cancelled = 8;
+    TradeTimeout timeout = 9;
+    FraudDetected fraud = 10;
+  }
+
+  message TradeStarted {
+    string initiator_id = 1;
+    string target_id = 2;
+    repeated TradeItem initiator_items = 3;
+    repeated TradeItem target_items = 4;
+    int32 initiator_credits = 5;
+    int32 target_credits = 6;
+    int32 timeout_seconds = 7;
+  }
+
+  message TradeUpdated {
+    string participant_id = 1;
+    repeated TradeItem new_items = 2;
+    int32 new_credits = 3;
+    string update_type = 4;
+  }
+
+  message TradeConfirmed {
+    string participant_id = 1;
+    bool both_confirmed = 2;
+    string anti_fraud_token = 3;
+  }
+
+  message TradeCompleted {
+    bool success = 1;
+    repeated TradeItem initiator_received = 2;
+    repeated TradeItem target_received = 3;
+    int32 initiator_credits_received = 4;
+    int32 target_credits_received = 5;
+    int32 trade_fee = 6;
+  }
+
+  message TradeCancelled {
+    string cancelled_by = 1;
+    string cancel_reason = 2;
+    repeated TradeItem returned_items = 3;
+  }
+
+  message TradeTimeout {
+    string timed_out_participant = 1;
+    repeated TradeItem returned_items = 2;
+  }
+
+  message FraudDetected {
+    string detected_by = 1;
+    string fraud_type = 2;
+    string evidence = 3;
+    repeated string affected_participants = 4;
+  }
+
+  message TradeItem {
+    string item_id = 1;
+    string template_id = 2;
+    int32 quantity = 3;
+    string quality = 4;
+  }
+}
+
+// ============================================================================
+// ECONOMY ANALYTICS EVENTS
+// ============================================================================
+
+message EconomyAnalyticsEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    InventoryAnalytics inventory = 4;
+    TradeAnalytics trade = 5;
+    EquipmentAnalytics equipment = 6;
+    StashAnalytics stash = 7;
+  }
+
+  message InventoryAnalytics {
+    int32 total_items = 1;
+    int32 unique_items = 2;
+    int32 inventory_value = 3;
+    float inventory_utilization = 4;
+    int32 weight_carried = 5;
+    int32 max_weight = 6;
+    repeated ItemCategoryBreakdown category_breakdown = 7;
+  }
+
+  message ItemCategoryBreakdown {
+    string category = 1;
+    int32 count = 2;
+    int32 value = 3;
+  }
+
+  message TradeAnalytics {
+    int32 total_trades = 1;
+    int32 successful_trades = 2;
+    int32 failed_trades = 3;
+    int32 total_credits_traded = 4;
+    int32 total_items_traded = 5;
+    float average_trade_value = 6;
+    repeated TradePartner partner_stats = 7;
+  }
+
+  message TradePartner {
+    string partner_id = 1;
+    int32 trade_count = 2;
+    int32 total_value = 3;
+    float success_rate = 4;
+  }
+
+  message EquipmentAnalytics {
+    int32 equipped_items = 1;
+    int32 equipment_value = 2;
+    map<string, float> stat_bonuses = 3;
+    float equipment_durability = 4;
+    repeated EquipmentSlotStats slot_stats = 5;
+  }
+
+  message EquipmentSlotStats {
+    string slot_type = 1;
+    bool is_equipped = 2;
+    float durability_percentage = 3;
+    int32 item_value = 4;
+  }
+
+  message StashAnalytics {
+    int32 total_pages = 1;
+    int32 unlocked_pages = 2;
+    int32 stored_items = 3;
+    int32 stash_value = 4;
+    int32 storage_fees_paid = 5;
+    float stash_utilization = 6;
+  }
+}
+
+// ============================================================================
+// ANTI-FRAUD AND SECURITY EVENTS
+// ============================================================================
+
+message EconomySecurityEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    SuspiciousActivity suspicious = 4;
+    TradeValidationFailed validation_failed = 5;
+    ItemDuplicationDetected duplication = 6;
+    RateLimitExceeded rate_limit = 7;
+  }
+
+  message SuspiciousActivity {
+    string activity_type = 1;
+    string description = 2;
+    float risk_score = 3;
+    repeated string indicators = 4;
+    string recommended_action = 5;
+  }
+
+  message TradeValidationFailed {
+    string session_id = 1;
+    string validation_type = 2;
+    string failure_reason = 3;
+    repeated string evidence = 4;
+  }
+
+  message ItemDuplicationDetected {
+    string item_id = 1;
+    string template_id = 2;
+    int32 expected_quantity = 3;
+    int32 actual_quantity = 4;
+    string duplication_method = 5;
+  }
+
+  message RateLimitExceeded {
+    string operation_type = 1;
+    int32 request_count = 2;
+    int32 time_window_seconds = 3;
+    string limit_type = 4;
+  }
+}

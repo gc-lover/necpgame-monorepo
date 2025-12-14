@@ -1,4 +1,4 @@
--- Issue: #1868
+-- Issue: #1869
 -- SQL script to import Jackie Welles NPC profile into database
 
 -- Enable UUID extension if not already enabled
@@ -91,7 +91,7 @@ SELECT import_npc_definition(
             "category": "lore",
             "status": "ready_for_backend",
             "version": "1.1.0",
-            "last_updated": "2025-12-14T17:25:00Z",
+            "last_updated": "2025-12-14T17:29:00Z",
             "concept_approved": true,
             "tags": ["npc", "street-partner", "nomad", "mercenary", "night-city"]
         },
@@ -215,7 +215,7 @@ SELECT import_npc_definition(
             "contacts": ["Misty Olshevski (spiritual)", "Rogue AM (debt)", "Panam Palmer (romantic interest)"]
         }
     }'::jsonb,
-    2
+    3
 );
 
 -- Clean up the temporary function
