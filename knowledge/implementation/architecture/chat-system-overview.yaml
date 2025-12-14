@@ -1,0 +1,121 @@
+# Issue: #172
+metadata:
+  id: chat-system-overview
+  title: Обзор архитектуры системы чата
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-14T12:20:00Z
+  concept_approved: false
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - chat
+    - architecture
+    - overview
+  related_documents:
+    - id: backend-chat-features
+      relation: extends
+    - id: backend-chat-channels
+      relation: extends
+    - id: backend-chat-moderation
+      relation: extends
+summary:
+  problem: Отсутствует полная архитектурная документация системы чата для текстовой коммуникации игроков.
+  goal: Спроектировать полную техническую архитектуру системы чата с микросервисной архитектурой.
+  essence: Система чата на 4 микросервисах с интеграцией модерации, каналов и истории сообщений.
+content:
+  sections:
+    - id: overview
+      title: Обзор архитектуры
+      body: |
+        Система чата построена на микросервисной архитектуре и состоит из 4 основных сервисов:
+
+        1. **chat-core-service** (порт 8088) - основной сервис управления чатом
+        2. **chat-channel-service** (порт 8089) - сервис управления каналами
+        3. **chat-moderation-service** (порт 8090) - сервис модерации
+        4. **chat-history-service** (порт 8091) - сервис истории сообщений
+
+        Все сервисы интегрируются с существующими системами (social, notification, translation, security).
+      mechanics_links: []
+      assets: []
+
+    - id: components
+      title: Компоненты системы
+      body: |
+        ## chat-core-service (порт 8088)
+        - Отправка и получение сообщений
+        - Форматирование текста (rich formatting)
+        - Обработка slash-команд
+        - Интеграция с translation-service
+
+        ## chat-channel-service (порт 8089)
+        - Создание и управление каналами
+        - Управление участниками каналов
+        - Права доступа к каналам
+        - Синхронизация списков участников
+
+        ## chat-moderation-service (порт 8090)
+        - Фильтрация запрещенных выражений
+        - Обнаружение спама
+        - Управление банами и mute
+        - Административные инструменты
+
+        ## chat-history-service (порт 8091)
+        - Хранение и поиск сообщений
+        - Кеширование истории в Redis
+        - Пагинация и фильтрация
+      mechanics_links: []
+      assets: []
+
+    - id: technical-requirements
+      title: Технические требования
+      body: |
+        ## Производительность
+        - P99 latency <100ms для основных операций
+        - Поддержка 10000+ одновременных пользователей
+        - 1000+ сообщений/секунду
+
+        ## Безопасность
+        - Шифрование сообщений в транзите
+        - Валидация всех входных данных
+        - Защита от XSS и injection атак
+
+        ## Масштабируемость
+        - Горизонтальное масштабирование сервисов
+        - Redis кластер для кеширования
+        - PostgreSQL read replicas
+      mechanics_links: []
+      assets: []
+
+    - id: implementation-plan
+      title: План реализации
+      body: |
+        ## Фаза 1: Базовая инфраструктура (2 недели)
+        - Настройка микросервисов и БД
+        - Базовые API endpoints
+        - WebSocket подключения
+
+        ## Фаза 2: Core функциональность (3 недели)
+        - Отправка/получение сообщений
+        - Управление каналами
+        - Базовое форматирование
+
+        ## Фаза 3: Расширенные возможности (2 недели)
+        - Slash-команды, Rich formatting
+        - История сообщений
+
+        ## Фаза 4: Модерация (2 недели)
+        - Фильтры, Spam detection, Баны
+
+        ## Фаза 5: Оптимизация (2 недели)
+        - Кеширование, Масштабирование, Мониторинг
+
+        ## Фаза 6: Интеграция и тестирование (1 неделя)
+        - Полное тестирование и интеграция
+      mechanics_links: []
+      assets: []
+implementation:
+  github_issue: 172

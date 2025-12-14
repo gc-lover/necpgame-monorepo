@@ -1,0 +1,112 @@
+# Issue: #172
+metadata:
+  id: chat-system-database
+  title: База данных системы чата
+  document_type: architecture
+  category: database
+  status: draft
+  version: '1.0.0'
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - chat
+    - database
+    - schema
+summary:
+  goal: Определить структуру базы данных для системы чата с оптимизированными индексами.
+content:
+  sections:
+    - id: schema
+      title: Схема базы данных
+      body: |
+        ## Основные таблицы
+
+        ### messages
+        ```sql
+        CREATE TABLE messages (
+          message_id UUID PRIMARY KEY,
+          channel_id UUID NOT NULL REFERENCES chat_channels(channel_id),
+          sender_id UUID NOT NULL REFERENCES players(player_id),
+          content TEXT NOT NULL,
+          formatted_content TEXT,
+          message_type VARCHAR(50) DEFAULT 'text',
+          reply_to_id UUID REFERENCES messages(message_id),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          is_deleted BOOLEAN DEFAULT FALSE
+        );
+
+        CREATE INDEX idx_messages_channel_created ON messages(channel_id, created_at DESC);
+        CREATE INDEX idx_messages_sender ON messages(sender_id);
+        CREATE INDEX idx_messages_reply_to ON messages(reply_to_id);
+        ```
+
+        ### chat_channels
+        ```sql
+        CREATE TABLE chat_channels (
+          channel_id UUID PRIMARY KEY,
+          channel_type VARCHAR(50) NOT NULL,
+          name VARCHAR(100),
+          description TEXT,
+          owner_id UUID REFERENCES players(player_id),
+          max_members INTEGER,
+          is_private BOOLEAN DEFAULT FALSE,
+          settings JSONB DEFAULT '{}',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+
+        CREATE INDEX idx_channels_type ON chat_channels(channel_type);
+        CREATE INDEX idx_channels_owner ON chat_channels(owner_id);
+        ```
+
+        ### channel_members
+        ```sql
+        CREATE TABLE channel_members (
+          channel_id UUID REFERENCES chat_channels(channel_id),
+          player_id UUID REFERENCES players(player_id),
+          role VARCHAR(50) DEFAULT 'member',
+          joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          last_seen_at TIMESTAMP WITH TIME ZONE,
+          is_muted BOOLEAN DEFAULT FALSE,
+          PRIMARY KEY (channel_id, player_id)
+        );
+
+        CREATE INDEX idx_channel_members_player ON channel_members(player_id);
+        ```
+
+        ### chat_bans
+        ```sql
+        CREATE TABLE chat_bans (
+          ban_id UUID PRIMARY KEY,
+          player_id UUID NOT NULL REFERENCES players(player_id),
+          banned_by UUID REFERENCES players(player_id),
+          channel_id UUID REFERENCES chat_channels(channel_id),
+          reason TEXT,
+          ban_type VARCHAR(50) DEFAULT 'channel',
+          expires_at TIMESTAMP WITH TIME ZONE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+
+        CREATE INDEX idx_bans_player ON chat_bans(player_id);
+        CREATE INDEX idx_bans_active ON chat_bans(expires_at) WHERE expires_at > NOW();
+        ```
+
+        ### user_chat_settings
+        ```sql
+        CREATE TABLE user_chat_settings (
+          player_id UUID PRIMARY KEY REFERENCES players(player_id),
+          language VARCHAR(10) DEFAULT 'en',
+          enable_translations BOOLEAN DEFAULT FALSE,
+          show_timestamps BOOLEAN DEFAULT TRUE,
+          font_size VARCHAR(20) DEFAULT 'medium',
+          sound_enabled BOOLEAN DEFAULT TRUE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+        ```
+      mechanics_links: []
+      assets: []
+implementation:
+  github_issue: 172
