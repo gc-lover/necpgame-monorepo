@@ -81,44 +81,6 @@ security:
   - BearerAuth: []
 
 paths:
-  # Combat Sessions - Main endpoint
-  /gameplay/combat/sessions:
-    post:
-      tags: [sessions]
-      summary: Create combat session
-      operationId: createCombatSession
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateSessionRequest"
-      responses:
-        "201":
-          description: Session created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CombatSession"
-        "400":
-          $ref: common.yaml#/components/responses/BadRequest
-
-    get:
-      tags: [sessions]
-      summary: List active combat sessions
-      operationId: listCombatSessions
-      parameters:
-        - $ref: common.yaml#/components/parameters/Limit
-      responses:
-        "200":
-          description: Sessions list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CombatSession"
-
   # Health check endpoint
   /health:
     get:
@@ -146,42 +108,6 @@ components:
       bearerFormat: JWT
 
   schemas:
-    # Core schemas for main endpoints
-    CreateSessionRequest:
-      type: object
-      required: [player_ids, zone_id, difficulty]
-      properties:
-        player_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-        zone_id:
-          type: string
-          format: uuid
-        difficulty:
-          type: string
-          enum: [easy, normal, hard, nightmare]
-
-    CombatSession:
-      type: object
-      required: [id, player_ids, status, created_at]
-      properties:
-        id:
-          type: string
-          format: uuid
-        player_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-        status:
-          type: string
-          enum: [active, paused, completed, failed]
-        created_at:
-          type: string
-          format: date-time
-
     # Health check schema
     HealthResponse:
       type: object
