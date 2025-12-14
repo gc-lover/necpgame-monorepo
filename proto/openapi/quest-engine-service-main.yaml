@@ -1,0 +1,71 @@
+# Issue: #176
+openapi: 3.0.3
+info:
+  title: Quest Engine Service API
+  version: 1.0.0
+  description: |
+    Quest Engine API for MMOFPS RPG - Dynamic quest management, branching narratives, and interactive storytelling.
+
+    ## Core Components
+    - Quest Instances: Active quest state management
+    - Quest Objectives: Progress tracking and completion
+    - Dialogue System: Interactive conversations and choices
+    - Skill Tests: Attribute and ability checks
+    - Quest Rewards: Dynamic reward distribution
+    - Branching Logic: Conditional quest paths and outcomes
+
+    ## Architecture Overview
+    - Event-driven quest state machine
+    - Real-time quest progress updates
+    - Integrated dialogue and choice validation
+    - Dynamic reward calculation and distribution
+
+    ## Performance Requirements
+    - Quest operations: 3000+ RPS with P99 <150ms
+    - Dialogue processing: 1000+ RPS with P99 <100ms
+    - State persistence: 5000+ RPS with P99 <50ms
+    - Memory optimized with field alignment
+    - Context timeouts for all operations
+
+servers:
+  - url: http://localhost:8300
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: quests
+    description: Quest lifecycle and management
+  - name: objectives
+    description: Quest objective tracking
+  - name: dialogue
+    description: Interactive dialogue system
+  - name: rewards
+    description: Quest reward distribution
+  - name: branching
+    description: Quest branching logic
+  - name: skill-tests
+    description: Character skill and attribute tests
+
+security:
+  - BearerAuth: []
+
+# Paths are split into separate files for maintainability
+paths:
+  $ref: ./quest-engine-service-quests-paths.yaml#/paths
+  $ref: ./quest-engine-service-objectives-paths.yaml#/paths
+  $ref: ./quest-engine-service-dialogue-paths.yaml#/paths
+  $ref: ./quest-engine-service-skill-tests-paths.yaml#/paths
+  $ref: ./quest-engine-service-rewards-paths.yaml#/paths
+  $ref: ./quest-engine-service-branching-paths.yaml#/paths
+
+# Components are split into separate files for maintainability
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    $ref: ./quest-engine-service-schemas.yaml#/components/schemas

@@ -29,3 +29,4 @@ COMMENT ON COLUMN gameplay.battle_pass_level_requirements.updated_at IS 'Вре�
 
 
 
+

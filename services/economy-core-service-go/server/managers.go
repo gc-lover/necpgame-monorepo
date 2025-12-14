@@ -153,3 +153,4 @@ type TradeItem struct {
 	Quantity   int       `json:"quantity"`
 	Quality    string    `json:"quality"`
 }
+
