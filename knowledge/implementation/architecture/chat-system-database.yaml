@@ -1,112 +1,354 @@
 # Issue: #172
 metadata:
   id: chat-system-database
-  title: База данных системы чата
+  title: Chat System — Схема базы данных
   document_type: architecture
-  category: database
+  category: systems
   status: draft
-  version: '1.0.0'
+  version: "1.0.0"
+  last_updated: 2025-12-14T15:00:00Z
   owners:
     - role: architect
       contact: architect@necp.game
-  tags:
-    - chat
-    - database
-    - schema
-summary:
-  goal: Определить структуру базы данных для системы чата с оптимизированными индексами.
-content:
-  sections:
-    - id: schema
-      title: Схема базы данных
-      body: |
-        ## Основные таблицы
 
-        ### messages
-        ```sql
-        CREATE TABLE messages (
-          message_id UUID PRIMARY KEY,
-          channel_id UUID NOT NULL REFERENCES chat_channels(channel_id),
-          sender_id UUID NOT NULL REFERENCES players(player_id),
-          content TEXT NOT NULL,
-          formatted_content TEXT,
-          message_type VARCHAR(50) DEFAULT 'text',
-          reply_to_id UUID REFERENCES messages(message_id),
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          is_deleted BOOLEAN DEFAULT FALSE
-        );
+database_schema:
+  overview: |
+    Chat System использует PostgreSQL с JSONB для гибкого хранения настроек,
+    партиционированием для исторических сообщений и оптимизированными индексами для высоконагруженных запросов.
 
-        CREATE INDEX idx_messages_channel_created ON messages(channel_id, created_at DESC);
-        CREATE INDEX idx_messages_sender ON messages(sender_id);
-        CREATE INDEX idx_messages_reply_to ON messages(reply_to_id);
-        ```
+  core_tables:
+    chat_channels:
+      description: "Основная таблица каналов чата"
+      columns:
+        - name: id
+          type: UUID
+          constraints: PRIMARY KEY, NOT NULL
+        - name: name
+          type: VARCHAR(100)
+          constraints: NOT NULL
+        - name: channel_type
+          type: VARCHAR(50)
+          constraints: NOT NULL
+          description: "Тип канала (global, local, party, guild, private)"
+        - name: owner_id
+          type: UUID
+          constraints: "", FOREIGN KEY (character.id)
+          description: "Владелец канала (для приватных каналов)"
+        - name: max_members
+          type: INTEGER
+          constraints: NOT NULL, DEFAULT 100
+        - name: is_active
+          type: BOOLEAN
+          constraints: NOT NULL, DEFAULT true
+        - name: settings
+          type: JSONB
+          constraints: NOT NULL, DEFAULT '{}'
+          description: "Настройки канала (permissions, rules)"
+        - name: created_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
+        - name: updated_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
 
-        ### chat_channels
-        ```sql
-        CREATE TABLE chat_channels (
-          channel_id UUID PRIMARY KEY,
-          channel_type VARCHAR(50) NOT NULL,
-          name VARCHAR(100),
-          description TEXT,
-          owner_id UUID REFERENCES players(player_id),
-          max_members INTEGER,
-          is_private BOOLEAN DEFAULT FALSE,
-          settings JSONB DEFAULT '{}',
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
+      indexes:
+        - name: idx_chat_channels_type_active
+          columns: [channel_type, is_active]
+          type: btree
+        - name: idx_chat_channels_owner
+          columns: [owner_id]
+          type: btree
 
-        CREATE INDEX idx_channels_type ON chat_channels(channel_type);
-        CREATE INDEX idx_channels_owner ON chat_channels(owner_id);
-        ```
+    chat_messages:
+      description: "Таблица сообщений чата"
+      columns:
+        - name: id
+          type: UUID
+          constraints: PRIMARY KEY, NOT NULL
+        - name: channel_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (chat_channels.id) ON DELETE CASCADE
+        - name: sender_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (character.id)
+        - name: content
+          type: TEXT
+          constraints: NOT NULL
+        - name: content_type
+          type: VARCHAR(50)
+          constraints: NOT NULL, DEFAULT 'text'
+          description: "Тип контента (text, emote, system)"
+        - name: formatted_content
+          type: TEXT
+          constraints: ""
+          description: "Отформатированное содержимое (HTML)"
+        - name: metadata
+          type: JSONB
+          constraints: ""
+          description: "Метаданные (mentions, links, etc.)"
+        - name: is_deleted
+          type: BOOLEAN
+          constraints: NOT NULL, DEFAULT false
+        - name: deleted_by
+          type: UUID
+          constraints: "", FOREIGN KEY (character.id)
+        - name: deleted_at
+          type: TIMESTAMP
+          constraints: ""
+        - name: created_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
 
-        ### channel_members
-        ```sql
-        CREATE TABLE channel_members (
-          channel_id UUID REFERENCES chat_channels(channel_id),
-          player_id UUID REFERENCES players(player_id),
-          role VARCHAR(50) DEFAULT 'member',
-          joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          last_seen_at TIMESTAMP WITH TIME ZONE,
-          is_muted BOOLEAN DEFAULT FALSE,
-          PRIMARY KEY (channel_id, player_id)
-        );
+      indexes:
+        - name: idx_chat_messages_channel_created
+          columns: [channel_id, created_at DESC]
+          type: btree
+        - name: idx_chat_messages_sender
+          columns: [sender_id, created_at DESC]
+          type: btree
+        - name: idx_chat_messages_type
+          columns: [content_type]
+          type: btree
 
-        CREATE INDEX idx_channel_members_player ON channel_members(player_id);
-        ```
+      partitioning:
+        strategy: RANGE
+        column: created_at
+        interval: MONTHLY
 
-        ### chat_bans
-        ```sql
-        CREATE TABLE chat_bans (
-          ban_id UUID PRIMARY KEY,
-          player_id UUID NOT NULL REFERENCES players(player_id),
-          banned_by UUID REFERENCES players(player_id),
-          channel_id UUID REFERENCES chat_channels(channel_id),
-          reason TEXT,
-          ban_type VARCHAR(50) DEFAULT 'channel',
-          expires_at TIMESTAMP WITH TIME ZONE,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
+    chat_channel_members:
+      description: "Участники каналов чата"
+      columns:
+        - name: id
+          type: UUID
+          constraints: PRIMARY KEY, NOT NULL
+        - name: channel_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (chat_channels.id) ON DELETE CASCADE
+        - name: user_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (character.id)
+        - name: role
+          type: VARCHAR(50)
+          constraints: NOT NULL, DEFAULT 'member'
+          description: "Роль в канале (owner, moderator, member)"
+        - name: permissions
+          type: JSONB
+          constraints: NOT NULL, DEFAULT '{}'
+        - name: joined_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
+        - name: last_seen
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
 
-        CREATE INDEX idx_bans_player ON chat_bans(player_id);
-        CREATE INDEX idx_bans_active ON chat_bans(expires_at) WHERE expires_at > NOW();
-        ```
+      indexes:
+        - name: idx_channel_members_channel_user
+          columns: [channel_id, user_id]
+          type: btree
+          unique: true
+        - name: idx_channel_members_user
+          columns: [user_id]
+          type: btree
+        - name: idx_channel_members_role
+          columns: [channel_id, role]
+          type: btree
 
-        ### user_chat_settings
-        ```sql
-        CREATE TABLE user_chat_settings (
-          player_id UUID PRIMARY KEY REFERENCES players(player_id),
-          language VARCHAR(10) DEFAULT 'en',
-          enable_translations BOOLEAN DEFAULT FALSE,
-          show_timestamps BOOLEAN DEFAULT TRUE,
-          font_size VARCHAR(20) DEFAULT 'medium',
-          sound_enabled BOOLEAN DEFAULT TRUE,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-        ```
-      mechanics_links: []
-      assets: []
-implementation:
-  github_issue: 172
+    chat_bans:
+      description: "Баны пользователей в чате"
+      columns:
+        - name: id
+          type: UUID
+          constraints: PRIMARY KEY, NOT NULL
+        - name: user_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (character.id)
+        - name: channel_id
+          type: UUID
+          constraints: "", FOREIGN KEY (chat_channels.id) ON DELETE CASCADE
+          description: "NULL для глобального бана"
+        - name: moderator_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (character.id)
+        - name: reason
+          type: TEXT
+          constraints: NOT NULL
+        - name: ban_type
+          type: VARCHAR(50)
+          constraints: NOT NULL
+          description: "Тип бана (temporary, permanent)"
+        - name: duration_minutes
+          type: INTEGER
+          constraints: ""
+          description: "Длительность для временного бана"
+        - name: expires_at
+          type: TIMESTAMP
+          constraints: ""
+        - name: is_active
+          type: BOOLEAN
+          constraints: NOT NULL, DEFAULT true
+        - name: created_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
+
+      indexes:
+        - name: idx_chat_bans_user_channel
+          columns: [user_id, channel_id]
+          type: btree
+        - name: idx_chat_bans_active_expires
+          columns: [is_active, expires_at]
+          type: btree
+        - name: idx_chat_bans_moderator
+          columns: [moderator_id]
+          type: btree
+
+    chat_voice_sessions:
+      description: "Сессии голосового чата"
+      columns:
+        - name: id
+          type: UUID
+          constraints: PRIMARY KEY, NOT NULL
+        - name: channel_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (chat_channels.id) ON DELETE CASCADE
+        - name: host_user_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (character.id)
+        - name: session_token
+          type: VARCHAR(255)
+          constraints: NOT NULL, UNIQUE
+        - name: max_participants
+          type: INTEGER
+          constraints: NOT NULL, DEFAULT 10
+        - name: current_participants
+          type: INTEGER
+          constraints: NOT NULL, DEFAULT 0
+        - name: settings
+          type: JSONB
+          constraints: NOT NULL, DEFAULT '{}'
+          description: "Настройки голоса (quality, permissions)"
+        - name: started_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
+        - name: ended_at
+          type: TIMESTAMP
+          constraints: ""
+
+      indexes:
+        - name: idx_voice_sessions_channel
+          columns: [channel_id]
+          type: btree
+        - name: idx_voice_sessions_token
+          columns: [session_token]
+          type: btree
+
+    chat_voice_participants:
+      description: "Участники голосовых сессий"
+      columns:
+        - name: id
+          type: UUID
+          constraints: PRIMARY KEY, NOT NULL
+        - name: session_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (chat_voice_sessions.id) ON DELETE CASCADE
+        - name: user_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (character.id)
+        - name: is_muted
+          type: BOOLEAN
+          constraints: NOT NULL, DEFAULT false
+        - name: is_deafened
+          type: BOOLEAN
+          constraints: NOT NULL, DEFAULT false
+        - name: joined_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
+        - name: left_at
+          type: TIMESTAMP
+          constraints: ""
+
+      indexes:
+        - name: idx_voice_participants_session_user
+          columns: [session_id, user_id]
+          type: btree
+          unique: true
+        - name: idx_voice_participants_user
+          columns: [user_id]
+          type: btree
+
+    chat_reports:
+      description: "Жалобы на сообщения и пользователей"
+      columns:
+        - name: id
+          type: UUID
+          constraints: PRIMARY KEY, NOT NULL
+        - name: reporter_id
+          type: UUID
+          constraints: NOT NULL, FOREIGN KEY (character.id)
+        - name: target_type
+          type: VARCHAR(50)
+          constraints: NOT NULL
+          description: "Тип цели (message, user)"
+        - name: target_id
+          type: UUID
+          constraints: NOT NULL
+        - name: reason
+          type: VARCHAR(100)
+          constraints: NOT NULL
+        - name: description
+          type: TEXT
+          constraints: ""
+        - name: status
+          type: VARCHAR(50)
+          constraints: NOT NULL, DEFAULT 'pending'
+          description: "Статус рассмотрения"
+        - name: moderator_id
+          type: UUID
+          constraints: "", FOREIGN KEY (character.id)
+        - name: resolution
+          type: TEXT
+          constraints: ""
+        - name: created_at
+          type: TIMESTAMP
+          constraints: NOT NULL, DEFAULT CURRENT_TIMESTAMP
+        - name: resolved_at
+          type: TIMESTAMP
+          constraints: ""
+
+      indexes:
+        - name: idx_chat_reports_status_created
+          columns: [status, created_at DESC]
+          type: btree
+        - name: idx_chat_reports_reporter
+          columns: [reporter_id]
+          type: btree
+        - name: idx_chat_reports_target
+          columns: [target_type, target_id]
+          type: btree
+
+  performance_optimizations:
+    connection_pooling:
+      - Maximum connections: 200 per service
+      - Connection timeout: 30 seconds
+      - Idle timeout: 10 minutes
+
+    query_optimizations:
+      - Use of prepared statements for message inserts
+      - JSONB operators for permission checks
+      - Partial indexes for active sessions and bans
+      - Covering indexes for common message lookups
+
+    data_archival:
+      - Automatic archival of old messages after 90 days
+      - Compression of message history
+      - Aggregation of chat analytics data
+
+  backup_and_recovery:
+    backup_strategy:
+      - Daily incremental backups during low-traffic hours
+      - Continuous WAL archiving for point-in-time recovery
+      - Cross-region replication for critical chat data
+
+    disaster_recovery:
+      - Automatic failover to backup chat services
+      - Message queue persistence for undelivered messages
+      - User session state preservation during outages

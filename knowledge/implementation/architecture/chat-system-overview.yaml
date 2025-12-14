@@ -1,121 +1,176 @@
 # Issue: #172
 metadata:
   id: chat-system-overview
-  title: Обзор архитектуры системы чата
+  title: Chat System — Обзор и компоненты
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-12-14T12:20:00Z
-  concept_approved: false
+  version: "1.0.0"
+  last_updated: 2025-12-14T15:00:00Z
   owners:
     - role: architect
       contact: architect@necp.game
-  tags:
-    - chat
-    - architecture
-    - overview
-  related_documents:
-    - id: backend-chat-features
-      relation: extends
-    - id: backend-chat-channels
-      relation: extends
-    - id: backend-chat-moderation
-      relation: extends
+
 summary:
-  problem: Отсутствует полная архитектурная документация системы чата для текстовой коммуникации игроков.
-  goal: Спроектировать полную техническую архитектуру системы чата с микросервисной архитектурой.
-  essence: Система чата на 4 микросервисах с интеграцией модерации, каналов и истории сообщений.
-content:
-  sections:
-    - id: overview
-      title: Обзор архитектуры
-      body: |
-        Система чата построена на микросервисной архитектуре и состоит из 4 основных сервисов:
+  problem: |
+    Требуется спроектировать полную архитектуру Chat System для текстовой коммуникации игроков,
+    включая каналы, модерацию, форматирование и интеграцию с существующими социальными системами.
+  goal: |
+    Создать архитектурную схему Chat System с определением:
+    - Компонентов и микросервисов
+    - API контрактов (REST, WebSocket, Events)
+    - Потоков данных и интеграций
+    - Схемы базы данных
+    - Систем каналов, модерации и форматирования
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура Chat System для управления коммуникациями в MMOFPS RPG,
+    интегрирующая текстовый чат, голосовую связь и модерацию.
 
-        1. **chat-core-service** (порт 8088) - основной сервис управления чатом
-        2. **chat-channel-service** (порт 8089) - сервис управления каналами
-        3. **chat-moderation-service** (порт 8090) - сервис модерации
-        4. **chat-history-service** (порт 8091) - сервис истории сообщений
+architecture:
+  overview: |
+    Chat System - это комплексная система коммуникации игроков, обеспечивающая
+    текстовый чат, голосовую связь, модерацию контента и социальные взаимодействия.
+    Система построена на принципах микросервисной архитектуры с real-time коммуникацией.
 
-        Все сервисы интегрируются с существующими системами (social, notification, translation, security).
-      mechanics_links: []
-      assets: []
-
-    - id: components
-      title: Компоненты системы
-      body: |
-        ## chat-core-service (порт 8088)
-        - Отправка и получение сообщений
-        - Форматирование текста (rich formatting)
-        - Обработка slash-команд
-        - Интеграция с translation-service
-
-        ## chat-channel-service (порт 8089)
-        - Создание и управление каналами
+  system_components:
+    - name: Chat Core Service
+      type: microservice
+      description: Основной сервис управления чатом
+      responsibilities:
+        - Обработка сообщений и каналов
+        - Маршрутизация сообщений
         - Управление участниками каналов
-        - Права доступа к каналам
-        - Синхронизация списков участников
+        - Синхронизация состояния чата
+      technologies:
+        - Go (backend)
+        - PostgreSQL (primary storage)
+        - Redis (caching)
+        - Kafka (events)
 
-        ## chat-moderation-service (порт 8090)
+    - name: Chat Moderation Service
+      type: microservice
+      description: Сервис модерации контента
+      responsibilities:
         - Фильтрация запрещенных выражений
         - Обнаружение спама
-        - Управление банами и mute
-        - Административные инструменты
+        - Управление банами
+        - Обработка жалоб
+      technologies:
+        - Go (backend)
+        - PostgreSQL (storage)
+        - Redis (caching)
 
-        ## chat-history-service (порт 8091)
-        - Хранение и поиск сообщений
-        - Кеширование истории в Redis
-        - Пагинация и фильтрация
-      mechanics_links: []
-      assets: []
+    - name: Chat Formatting Engine
+      type: microservice
+      description: Движок форматирования сообщений
+      responsibilities:
+        - Rich text formatting
+        - Emoji и ссылок обработка
+        - Slash-команды обработка
+        - XSS защита
+      technologies:
+        - Go (backend)
+        - Redis (caching)
 
-    - id: technical-requirements
-      title: Технические требования
-      body: |
-        ## Производительность
-        - P99 latency <100ms для основных операций
-        - Поддержка 10000+ одновременных пользователей
-        - 1000+ сообщений/секунду
+    - name: Chat Voice Gateway
+      type: microservice
+      description: Шлюз голосовой связи
+      responsibilities:
+        - WebRTC сигнализация
+        - Управление голосовыми каналами
+        - Участников управление
+        - Качество звука оптимизация
+      technologies:
+        - Go (backend)
+        - WebRTC (protocol)
+        - Redis Pub/Sub (messaging)
 
-        ## Безопасность
-        - Шифрование сообщений в транзите
-        - Валидация всех входных данных
-        - Защита от XSS и injection атак
+    - name: Chat Translation Service
+      type: microservice
+      description: Сервис переводов сообщений
+      responsibilities:
+        - Автоматическое определение языка
+        - Перевод сообщений
+        - Кеширование переводов
+        - Управление языковыми настройками
+      technologies:
+        - Go (backend)
+        - External translation APIs
+        - Redis (caching)
 
-        ## Масштабируемость
-        - Горизонтальное масштабирование сервисов
-        - Redis кластер для кеширования
-        - PostgreSQL read replicas
-      mechanics_links: []
-      assets: []
+    - name: Chat Analytics Service
+      type: microservice
+      description: Аналитика и статистика чата
+      responsibilities:
+        - Метрики использования каналов
+        - Модерации отчеты
+        - Пользовательской активности анализ
+        - Производительности мониторинг
+      technologies:
+        - Go (backend)
+        - PostgreSQL (storage)
+        - Elasticsearch (analytics)
+        - Grafana (visualization)
 
-    - id: implementation-plan
-      title: План реализации
-      body: |
-        ## Фаза 1: Базовая инфраструктура (2 недели)
-        - Настройка микросервисов и БД
-        - Базовые API endpoints
-        - WebSocket подключения
+  microservices_architecture:
+    chat_core_service:
+      port: 8090
+      database: social_db
+      dependencies:
+        - character-service (user validation)
+        - moderation-service (content filtering)
+        - formatting-service (message processing)
 
-        ## Фаза 2: Core функциональность (3 недели)
-        - Отправка/получение сообщений
-        - Управление каналами
-        - Базовое форматирование
+    chat_moderation_service:
+      port: 8091
+      dependencies:
+        - chat-core-service (message interception)
+        - security-service (ban enforcement)
 
-        ## Фаза 3: Расширенные возможности (2 недели)
-        - Slash-команды, Rich formatting
-        - История сообщений
+    chat_formatting_engine:
+      port: 8092
+      dependencies:
+        - chat-core-service (message preprocessing)
 
-        ## Фаза 4: Модерация (2 недели)
-        - Фильтры, Spam detection, Баны
+    chat_voice_gateway:
+      port: 8093
+      dependencies:
+        - chat-core-service (channel management)
+        - party-service (group channels)
 
-        ## Фаза 5: Оптимизация (2 недели)
-        - Кеширование, Масштабирование, Мониторинг
+    chat_translation_service:
+      port: 8094
+      dependencies:
+        - chat-core-service (message routing)
 
-        ## Фаза 6: Интеграция и тестирование (1 неделя)
-        - Полное тестирование и интеграция
-      mechanics_links: []
-      assets: []
-implementation:
-  github_issue: 172
+    chat_analytics:
+      port: 8095
+      dependencies:
+        - monitoring-service (metrics collection)
+
+  integration_points:
+    with_social_service:
+      - Shared user profiles and relationships
+      - Friend lists for private channels
+      - Social reputation for moderation
+
+    with_party_service:
+      - Party channels creation
+      - Group communication management
+      - Raid coordination
+
+    with_guild_service:
+      - Guild channels and officer chats
+      - Guild announcements
+      - Leadership communication
+
+    with_moderation_service:
+      - Content filtering integration
+      - Automated moderation rules
+      - Admin tools access
+
+    with_translation_service:
+      - Real-time message translation
+      - Language detection
+      - Cultural adaptation

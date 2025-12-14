@@ -1,0 +1,153 @@
+# Issue: #172
+metadata:
+  id: chat-system-channels
+  title: Chat System — Система каналов чата
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-14T15:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+
+chat_channels_system:
+  overview: |
+    Система каналов чата обеспечивает структурированную коммуникацию игроков
+    с различными уровнями доступа, областями действия и правилами модерации.
+
+  channel_types:
+    global_channels:
+      description: "Глобальные каналы для всех игроков сервера"
+      types:
+        - general: "Общий чат для общения"
+        - trade: "Торговля предметами и услугами"
+        - help: "Помощь новичкам и вопросы"
+        - announcements: "Системные объявления"
+      characteristics:
+        - scope: "Весь сервер"
+        - cooldown: "30 секунд между сообщениями"
+        - moderation: "Строгая автоматическая модерация"
+        - persistence: "История сохраняется 7 дней"
+
+    regional_channels:
+      description: "Региональные каналы для географических зон"
+      types:
+        - city: "Городской чат"
+        - region: "Региональный чат"
+        - continent: "Континентальный чат"
+      characteristics:
+        - scope: "Игроки в определенной зоне"
+        - cooldown: "15 секунд между сообщениями"
+        - moderation: "Средний уровень модерации"
+        - persistence: "История сохраняется 3 дня"
+
+    social_channels:
+      description: "Социальные каналы для группового общения"
+      types:
+        - party: "Чат группы (до 5 участников)"
+        - raid: "Чат рейда (до 20 участников)"
+        - guild: "Гильдейский чат"
+        - guild_officer: "Офицерский чат гильдии"
+      characteristics:
+        - scope: "Участники группы/гильдии"
+        - cooldown: "5 секунд между сообщениями"
+        - moderation: "Легкая модерация среди участников"
+        - persistence: "История сохраняется 30 дней"
+
+    private_channels:
+      description: "Приватные каналы для персонального общения"
+      types:
+        - whisper: "Личный шепот (1 на 1)"
+        - group_dm: "Групповой DM (до 10 участников)"
+        - friend_chat: "Чат с друзьями"
+      characteristics:
+        - scope: "Приглашенные участники"
+        - cooldown: "3 секунды между сообщениями"
+        - moderation: "Минимальная модерация"
+        - persistence: "История сохраняется навсегда"
+
+    system_channels:
+      description: "Системные каналы для специальных функций"
+      types:
+        - combat_log: "Лог боя с фильтрами"
+        - quest_updates: "Обновления заданий"
+        - achievement_feed: "Лента достижений"
+        - error_messages: "Системные ошибки"
+      characteristics:
+        - scope: "Автоматические сообщения"
+        - cooldown: "Нет ограничений"
+        - moderation: "Не применяется"
+        - persistence: "История сохраняется 1 день"
+
+  channel_management:
+    creation_rules:
+      - global_channels: "Создаются автоматически системой"
+      - regional_channels: "Создаются по зонам мира"
+      - social_channels: "Создаются при формировании групп"
+      - private_channels: "Создаются пользователями по запросу"
+      - system_channels: "Создаются автоматически"
+
+    access_control:
+      - permission_based: "Права доступа по ролям"
+      - level_requirements: "Минимальный уровень персонажа"
+      - faction_restrictions: "Ограничения по фракциям"
+      - reputation_filters: "Фильтры по репутации"
+
+    lifecycle_management:
+      - automatic_cleanup: "Удаление неактивных каналов"
+      - capacity_limits: "Ограничения на количество участников"
+      - archival_rules: "Правила архивирования истории"
+
+  message_routing:
+    recipient_resolution:
+      - global_channels: "Все онлайн игроки сервера"
+      - regional_channels: "Игроки в заданной географической зоне"
+      - social_channels: "Все участники группы/гильдии"
+      - private_channels: "Приглашенные участники"
+      - system_channels: "Затронутые игроки или все"
+
+    delivery_guarantees:
+      - at_most_once: "Для глобальных объявлений"
+      - at_least_once: "Для личных сообщений"
+      - exactly_once: "Для транзакционных сообщений"
+
+    offline_handling:
+      - queue_for_later: "Очередь для оффлайн пользователей"
+      - email_notifications: "Уведомления по email"
+      - expiration_rules: "Сроки действия сообщений"
+
+  channel_features:
+    message_history:
+      - pagination_support: "Поддержка пагинации"
+      - search_functionality: "Поиск по истории"
+      - export_capabilities: "Экспорт истории"
+      - retention_policies: "Политики хранения"
+
+    real_time_features:
+      - typing_indicators: "Индикаторы набора текста"
+      - read_receipts: "Подтверждения прочтения"
+      - presence_indicators: "Индикаторы присутствия"
+      - activity_status: "Статус активности"
+
+    advanced_features:
+      - message_threads: "Ветвление сообщений"
+      - file_sharing: "Обмен файлами"
+      - voice_integration: "Интеграция голоса"
+      - bot_commands: "Команды ботов"
+
+  scalability_considerations:
+    sharding_strategy:
+      - by_region: "Разделение по регионам сервера"
+      - by_channel_type: "Разделение по типам каналов"
+      - by_user_groups: "Разделение по группам пользователей"
+
+    caching_layers:
+      - channel_metadata: "Метаданные каналов в Redis"
+      - message_cache: "Кеш сообщений для быстрого доступа"
+      - user_permissions: "Кеш прав пользователей"
+
+    load_balancing:
+      - geographic_distribution: "Распределение по географии"
+      - channel_type_distribution: "По типам каналов"
+      - user_density_distribution: "По плотности пользователей"

@@ -1,0 +1,147 @@
+# Issue: #172
+metadata:
+  id: chat-system-data-flow
+  title: Chat System — Потоки данных и интеграции
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-14T15:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+
+data_flows:
+  message_send_flow:
+    steps:
+      - User submits message via WebSocket or REST API
+      - Chat Core validates user permissions and channel access
+      - Message passes through Formatting Engine (rich text, emoji, links)
+      - Message sent to Moderation Service for content filtering
+      - If approved: Message stored in database and published to Kafka
+      - WebSocket broadcast to all channel members
+      - Message cached in Redis for history retrieval
+      - Analytics Service records message metrics
+    error_handling:
+      - Permission denied → 403 Forbidden, WebSocket error event
+      - Content filtered → Message blocked, user notification
+      - Database error → Retry with exponential backoff
+
+  channel_join_flow:
+    steps:
+      - User requests to join channel via REST API or WebSocket
+      - Chat Core validates channel existence and access permissions
+      - Check if user meets channel requirements (level, faction, etc.)
+      - Database transaction adds user to channel membership
+      - Event published: 'chat.user.joined' (Kafka)
+      - WebSocket notification sent to all channel members
+      - User's message history loaded from cache/database
+      - Voice Gateway notified if voice channel
+    validation_rules:
+      - Channel exists and is active
+      - User has required permissions
+      - Channel capacity not exceeded
+      - User not banned from channel
+
+  moderation_violation_flow:
+    steps:
+      - Moderation Service detects violation (spam, profanity, etc.)
+      - Violation details logged to database
+      - Automatic action applied (message deletion, user warning)
+      - If severe: User banned from channel or globally
+      - Event published: 'chat.moderation.violation'
+      - User receives notification via WebSocket
+      - Moderation team alerted if manual review needed
+      - Analytics Service records moderation metrics
+    escalation_levels:
+      - Warning: Message deletion only
+      - Temporary ban: Channel ban for set duration
+      - Permanent ban: Global chat ban
+      - Account action: Escalated to security service
+
+  voice_channel_flow:
+    steps:
+      - User requests to join voice channel
+      - Voice Gateway validates channel access and capacity
+      - WebRTC signaling established with TURN/STUN servers
+      - Voice session created in Redis cache
+      - Event published: 'chat.voice.user.joined'
+      - All channel participants notified via WebSocket
+      - Audio stream routing configured
+      - Quality monitoring initiated
+    quality_assurance:
+      - Packet loss monitoring
+      - Latency measurement
+      - Bandwidth optimization
+      - Automatic quality adjustment
+
+cross_service_integrations:
+  with_character_service:
+    data_exchange:
+      - User profiles for channel permissions
+      - Character stats for channel requirements
+      - Online/offline status for presence
+    event_subscriptions:
+      - user.level_up → Update channel access
+      - user.faction_changed → Modify channel permissions
+
+  with_party_service:
+    data_exchange:
+      - Party membership for group channels
+      - Party leadership for channel management
+      - Party quests for coordination channels
+    event_subscriptions:
+      - party.created → Auto-create party channels
+      - party.disbanded → Cleanup party channels
+      - party.member.joined → Grant channel access
+
+  with_guild_service:
+    data_exchange:
+      - Guild membership for guild channels
+      - Guild ranks for officer channels
+      - Guild events for announcements
+    event_subscriptions:
+      - guild.member.promoted → Update officer channel access
+      - guild.war.started → Create war coordination channels
+
+  with_moderation_service:
+    data_exchange:
+      - Content filters and rules
+      - Ban lists and restrictions
+      - Moderation reports and actions
+    event_subscriptions:
+      - moderation.rule_updated → Update chat filters
+      - moderation.global_ban → Apply chat restrictions
+
+data_consistency_patterns:
+  eventual_consistency:
+    - Message delivery across distributed clients
+    - User presence status updates
+    - Channel membership synchronization
+
+  strong_consistency:
+    - Message ordering within channels
+    - Ban enforcement across services
+    - Channel access control changes
+
+  sagas_for_complex_operations:
+    - Channel creation with permissions setup
+    - User ban with cross-service cleanup
+    - Voice session establishment with fallback
+
+caching_strategy:
+  redis_caching:
+    - User channel memberships (TTL: 1 hour)
+    - Recent messages per channel (TTL: 24 hours)
+    - User ban status (TTL: 5 minutes)
+    - Voice session state (TTL: session duration)
+
+  database_read_replicas:
+    - Message history queries
+    - Channel configuration lookups
+    - Moderation log searches
+
+  cdn_caching:
+    - Chat assets (emojis, formatting styles)
+    - Static channel information
+    - Public message archives

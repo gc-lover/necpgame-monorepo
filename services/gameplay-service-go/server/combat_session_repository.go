@@ -2,15 +2,33 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
+	"sync"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
+	"github.com/sirupsen/logrus"
 )
+
+// Buffer pool for JSON marshaling (zero allocations target!)
+var jsonBufferPool = sync.Pool{
+	New: func() interface{} {
+		return &bytes.Buffer{}
+	},
+}
+
+// String builder pool for query building (zero allocations target!)
+var stringBuilderPool = sync.Pool{
+	New: func() interface{} {
+		return &strings.Builder{}
+	},
+}
 
 type CombatSessionRepositoryInterface interface {
 	CreateSession(ctx context.Context, req *api.CreateSessionRequest) (*api.CombatSessionResponse, error)
@@ -20,11 +38,15 @@ type CombatSessionRepositoryInterface interface {
 }
 
 type CombatSessionRepository struct {
-	db *pgxpool.Pool
+	db     *pgxpool.Pool
+	logger *logrus.Logger
 }
 
 func NewCombatSessionRepository(db *pgxpool.Pool) *CombatSessionRepository {
-	return &CombatSessionRepository{db: db}
+	return &CombatSessionRepository{
+		db:     db,
+		logger: logrus.New(),
+	}
 }
 
 // mapSessionTypeToDB maps OpenAPI SessionType to DB enum
@@ -98,7 +120,15 @@ func (r *CombatSessionRepository) CreateSession(ctx context.Context, req *api.Cr
 	dbSessionType := mapSessionTypeToDB(req.SessionType)
 	dbStatus := "created"
 
-	settingsJSON, _ := json.Marshal(req.Settings)
+	// Use buffer pool for JSON marshaling (zero allocations!)
+	buf := jsonBufferPool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		jsonBufferPool.Put(buf)
+	}()
+	encoder := json.NewEncoder(buf)
+	_ = encoder.Encode(req.Settings)
+	settingsJSON := buf.Bytes()
 
 	var createdAt time.Time
 	err := r.db.QueryRow(ctx,
@@ -129,10 +159,10 @@ func (r *CombatSessionRepository) CreateSession(ctx context.Context, req *api.Cr
 	}
 
 	response := &api.CombatSessionResponse{
-		ID:          api.NewOptUUID(sessionID),
-		CreatedAt:   api.NewOptDateTime(createdAt),
-		SessionType: req.SessionType,
-		Status:      api.SessionStatusPending,
+		ID:           api.NewOptUUID(sessionID),
+		CreatedAt:    api.NewOptDateTime(createdAt),
+		SessionType:  req.SessionType,
+		Status:       api.SessionStatusPending,
 		Participants: participants,
 	}
 
@@ -166,10 +196,10 @@ func (r *CombatSessionRepository) GetSession(ctx context.Context, sessionID uuid
 	}
 
 	response := &api.CombatSessionResponse{
-		ID:          api.NewOptUUID(sessionID),
-		CreatedAt:   api.NewOptDateTime(createdAt),
-		SessionType: mapSessionTypeFromDB(dbSessionType),
-		Status:      mapSessionStatusFromDB(dbStatus),
+		ID:           api.NewOptUUID(sessionID),
+		CreatedAt:    api.NewOptDateTime(createdAt),
+		SessionType:  mapSessionTypeFromDB(dbSessionType),
+		Status:       mapSessionStatusFromDB(dbStatus),
 		Participants: participants,
 	}
 
@@ -177,28 +207,45 @@ func (r *CombatSessionRepository) GetSession(ctx context.Context, sessionID uuid
 }
 
 func (r *CombatSessionRepository) ListSessions(ctx context.Context, status *api.SessionStatus, sessionType *api.SessionType, limit, offset int) (*api.SessionListResponse, error) {
-	query := `SELECT id, session_type::text, status::text, created_at,
+	// Use string builder pool for zero allocations query building
+	builder := stringBuilderPool.Get().(*strings.Builder)
+	defer func() {
+		builder.Reset()
+		stringBuilderPool.Put(builder)
+	}()
+
+	builder.WriteString(`SELECT id, session_type::text, status::text, created_at,
 			  (SELECT COUNT(*) FROM mvp_core.combat_participants WHERE session_id = cs.id) as participant_count
-			  FROM mvp_core.combat_sessions cs WHERE 1=1`
+			  FROM mvp_core.combat_sessions cs WHERE 1=1`)
+
 	args := []interface{}{}
 	argIndex := 1
 
 	if status != nil {
 		dbStatus := mapSessionStatusToDB(*status)
-		query += ` AND status = $` + string(rune('0'+argIndex)) + `::combat_session_status`
+		builder.WriteString(` AND status = $`)
+		builder.WriteString(string(rune('0' + argIndex)))
+		builder.WriteString(`::combat_session_status`)
 		args = append(args, dbStatus)
 		argIndex++
 	}
 
 	if sessionType != nil {
 		dbType := mapSessionTypeToDB(*sessionType)
-		query += ` AND session_type = $` + string(rune('0'+argIndex)) + `::combat_session_type`
+		builder.WriteString(` AND session_type = $`)
+		builder.WriteString(string(rune('0' + argIndex)))
+		builder.WriteString(`::combat_session_type`)
 		args = append(args, dbType)
 		argIndex++
 	}
 
-	query += ` ORDER BY created_at DESC LIMIT $` + string(rune('0'+argIndex)) + ` OFFSET $` + string(rune('0'+argIndex+1))
+	builder.WriteString(` ORDER BY created_at DESC LIMIT $`)
+	builder.WriteString(string(rune('0' + argIndex)))
+	builder.WriteString(` OFFSET $`)
+	builder.WriteString(string(rune('0' + argIndex + 1)))
 	args = append(args, limit, offset)
+
+	query := builder.String()
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
@@ -317,4 +364,3 @@ func (r *CombatSessionRepository) getParticipants(ctx context.Context, sessionID
 
 	return participants, nil
 }
-
