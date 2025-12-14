@@ -1,0 +1,32 @@
+name: Architecture Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Architecture Validation
+      run: powershell -ExecutionPolicy Bypass -File scripts/validate-architecture-simple.ps1
+
+    - name: Check File Sizes
+      run: |
+        Write-Host "📏 Checking file sizes..."
+        Get-ChildItem -Recurse -Include "*.yaml", "*.go", "*.sql", "*.md" | Where-Object {
+          $_.FullName -notmatch '\\(\.git|node_modules|vendor)\\'
+        } | ForEach-Object {
+          $lines = (Get-Content $_.FullName | Measure-Object -Line).Lines
+          if ($lines -gt 600) {
+            Write-Host "❌ File $($_.Name) exceeds 600 lines ($lines lines)"
+            exit 1
+          }
+        }
+        Write-Host "OK All files within size limits"
