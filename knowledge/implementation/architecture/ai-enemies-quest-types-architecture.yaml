@@ -1,340 +1,1470 @@
 # Issue: #1861
 metadata:
-  id: ai-enemies-quest-types-architecture
-  title: "Архитектура системы новых AI врагов и типов квестов"
-  document_type: architecture
-  category: systems
+  id: architecture-ai-enemies-quest-types
+  title: "Архитектура новых AI врагов и типов квестов"
+  document_type: architecture_design
+  category: gameplay_systems
   status: draft
-  version: "1.0.0"
-  last_updated: 2025-12-14T14:15:00Z
-  owners:
-    - role: architect
-      contact: architect@necp.game
-  tags:
-    - architecture
-    - ai
-    - enemies
-    - quests
-    - gameplay
-    - combat
-    - narrative
-  related_systems:
-    - gameplay-service
-    - world-service
-    - narrative-service
-    - analytics-service
-  related_documents:
-    - id: combat-ai-enemies-architecture
-      relation: extends
-    - id: quest-system-architecture
-      relation: extends
-  github_issue: 1861
-  visibility: internal
-  audience:
-    - architect
-    - backend
-    - content-writer
-    - api-designer
-
-summary:
-  problem: |
-    Требуется спроектировать единую архитектуру для новых AI врагов и типов квестов,
-    включающую:
-    - Расширенные профили AI врагов с новыми механиками
-    - Новые типы квестов с интеграцией AI
-    - Синергию между AI поведением и квестовым нарративом
-    - Телеметрию и аналитику для балансировки
-  goal: |
-    Создать архитектурную схему объединенной системы AI врагов и квестов с:
-    - Новыми профилями AI врагов (Hacker-Illusionist, Sniper-Tracker, Cyberpsycho)
-    - Новыми типами квестов (Elimination, Escort, Defense, Investigation)
-    - Интеграцией AI поведения с квестовым прогрессом
-    - Системой телеметрии для аналитики
-  essence: |
-    Объединенная архитектура AI врагов и квестовой системы с фокусом на
-    динамические взаимодействия, нарративную глубину и адаптивную сложность.
+  version: 1.0.0
+  last_updated: "2025-12-14"
+  author: Architect Agent
+  description: "Высокоуровневая архитектура для новых AI врагов, типов квестов и интерактивов"
 
 architecture:
-  overview: |
-    Архитектура объединяет AI врагов и квестовую систему в единый игровой опыт:
+  # СИСТЕМА AI ВРАГОВ
+  ai_enemies_system:
+    description: "Модульная система AI врагов с динамическими паттернами поведения"
 
-    1. **AI Enemy Profiles** - расширенные профили с уникальными механиками
-    2. **Quest Types** - новые типы квестов с AI интеграцией
-    3. **Dynamic Encounters** - адаптивные встречи на основе квестового прогресса
-    4. **Narrative AI** - поведенческие изменения AI в зависимости от сюжета
-    5. **Telemetry & Analytics** - сбор данных для балансировки
-    6. **Quest-AI Synergy** - взаимосвязь между квестами и поведением AI
+    components:
+      # ЯДРО СИСТЕМЫ
+      ai_core:
+        description: "Центральный контроллер AI с распределенной обработкой"
+        services:
+          - ai_behavior_engine: "Движок поведенческих паттернов"
+          - ai_coordination_service: "Сервис координации группового поведения"
+          - ai_adaptation_service: "Сервис адаптации к игрокам"
+          - ai_performance_monitor: "Мониторинг производительности AI"
 
-  microservices:
-    - name: gameplay-service
-      port: 8083
-      responsibility: |
-        Управление AI врагами и квестами:
-        - Профили AI врагов с новыми механиками
-        - Логика типов квестов
-        - Управление динамическими встречами
-        - Синхронизация AI с квестовым прогрессом
-      components:
-        - ai-enemy-manager: управление профилями AI врагов
-        - quest-engine: движок обработки квестов
-        - dynamic-encounter-manager: управление адаптивными встречами
-        - ai-narrative-adapter: адаптация AI под нарратив
-        - quest-ai-synergy: синергия квестов и AI
-      endpoints:
-        - GET /api/v1/gameplay/ai/enemies/profiles - профили AI врагов
-        - POST /api/v1/gameplay/ai/enemies/spawn/{profileId} - спавн AI врага
-        - GET /api/v1/gameplay/quests/types - типы квестов
-        - POST /api/v1/gameplay/quests/create/{typeId} - создание квеста
-        - GET /api/v1/gameplay/quests/{questId}/ai-synergy - AI синергия квеста
-        - POST /api/v1/gameplay/encounters/dynamic - создание динамической встречи
+      # ЭЛИТНЫЕ НАЁМНИКИ-БОССЫ
+      elite_mercenary_bosses:
+        description: "Элитные одиночные боссы с уникальными механиками"
+        architecture:
+          behavior_system:
+            type: "finite_state_machine"
+            states:
+              ["patrol", "engage", "retreat", "special_ability", "defeated"]
+            transitions:
+              - "patrol -> engage": "player_detected"
+              - "engage -> special_ability": "health_below_50%"
+              - "engage -> retreat": "health_below_25%"
 
-    - name: narrative-service
-      port: 8085
-      responsibility: |
-        Нарративная интеграция AI врагов:
-        - Контент AI врагов и их backstory
-        - Квестовый контент с AI элементами
-        - Динамические диалоги на основе AI поведения
-        - Лоровая интеграция AI и квестов
-      components:
-        - ai-lore-manager: управление лором AI врагов
-        - quest-narrative-engine: нарративный движок квестов
-        - dynamic-dialogue-system: система динамических диалогов
-        - ai-quest-integration: интеграция AI в квесты
+          ability_system:
+            cooldown_management: "distributed_cooldown_tracking"
+            ability_chaining: "combo_system_with_resource_costs"
+            environmental_interaction: "dynamic_object_manipulation"
 
-  data_flows:
-    ai_enemy_creation:
-      steps:
-        - user_initiates_quest: Пользователь начинает квест
-        - quest_engine_selects_type: Движок квестов выбирает тип
-        - narrative_service_provides_content: Нарративный сервис предоставляет контент
-        - gameplay_service_spawns_ai: Игровой сервис спавнит AI врагов
-        - ai_adapts_to_narrative: AI адаптируется под нарратив квеста
-        - telemetry_collects_data: Сбор телеметрии
+          scaling_system:
+            difficulty_tiers: ["normal", "hard", "mythic", "legendary"]
+            player_count_scaling: "linear_damage_health_increase"
+            time_pressure_scaling: "increasing_attack_speed"
 
-    quest_ai_interaction:
-      steps:
-        - player_encounters_ai: Игрок встречает AI врага
-        - ai_behavior_engine_processes: Движок поведения обрабатывает действия
-        - quest_progress_updates: Прогресс квеста обновляется
-        - narrative_adapts_to_ai: Нарратив адаптируется под поведение AI
-        - player_receives_feedback: Игрок получает обратную связь
-        - analytics_store_data: Аналитика сохраняет данные
+      # КИБЕРПСИХИЧЕСКИЕ ЭЛИТЫ
+      cyberpsycho_elites:
+        description: "Нестабильные киберпсихические враги с непредсказуемым поведением"
+        architecture:
+          psychosis_engine:
+            mental_state_machine:
+              states: ["calm", "agitated", "berserk", "catatonic", "explosive"]
+              triggers:
+                - damage_received: "increases_agitation"
+                - time_elapsed: "random_state_changes"
+                - player_proximity: "heightens_aggression"
 
-  ai_enemy_profiles:
-    hacker_illusionist:
-      description: "Хакер-иллюзионист создает ложные сигналы и фантомы"
-      mechanics:
-        - phantom_signals: ложные метки на карте
-        - hud_glitches: помехи в интерфейсе игрока
-        - distraction_tactics: отвлечение для союзников
-      difficulty_levels:
-        street: базовые иллюзии, короткие помехи
-        tactical: сложные фантомы, координация с отрядом
-        mythic: массовые иллюзии, адаптивные тактики
-      quest_integration:
-        - investigation_quests: раскрытие истинного положения
-        - defense_quests: защита от иллюзорных угроз
-        - escort_quests: сопровождение сквозь иллюзии
+          ability_randomization:
+            ability_pool:
+              ["teleportation", "force_push", "mind_control", "self_destruct"]
+            randomization_engine: "weighted_probability_system"
+            cooldown_override: "psychosis_state_modifiers"
 
-    sniper_tracker:
-      description: "Снайпер с маркерами и зональным контролем"
-      mechanics:
-        - target_marking: метки для союзников
-        - smoke_mines: создание зон контроля
-        - position_rotation: смена огневых позиций
-      difficulty_levels:
-        street: одиночные выстрелы с метками
-        tactical: координация с отрядом, дымовые завесы
-        mythic: множественные маркеры, адаптивный ротация
-      quest_integration:
-        - elimination_quests: приоритетные цели
-        - defense_quests: зональный контроль
-        - escort_quests: предотвращение прорывов
+          environmental_hazards:
+            destruction_patterns:
+              ["object_throwing", "explosive_devices", "environmental_traps"]
+            collateral_damage: "dynamic_physics_simulation"
+            cleanup_system: "debris_management"
 
-    cyberpsycho_boss:
-      description: "Босс с киберпсихозом и фазовыми изменениями"
-      mechanics:
-        - rage_phases: режимы ярости и замыканий
-        - unpredictable_movement: рывки и телепортация
-        - adaptive_behavior: смена целей по приоритетам
-      difficulty_levels:
-        raid_tier_1: базовые фазы, предсказуемые паттерны
-        raid_tier_2: сложные комбо, адаптивные приоритеты
-        raid_tier_3: хаотичные движения, множественные фазы
-      quest_integration:
-        - boss_hunt_quests: специализированная охота
-        - raid_quests: командные сражения
-        - story_quests: нарративные босс-файты
+      # КОРПОРАТИВНЫЕ ОТРЯДЫ
+      corporate_squads:
+        description: "Тактические отряды с координированным поведением"
+        architecture:
+          squad_coordination:
+            command_hierarchy: ["leader", "specialist", "grunt"]
+            communication_system: "event_driven_messaging"
+            formation_system: "dynamic_tactical_formations"
 
-  quest_types:
-    elimination:
-      description: "Устранение целей с AI адаптацией"
-      mechanics:
-        - target_prioritization: AI меняет поведение при устранении
-        - reinforcement_calls: вызов подкреплений
-        - escape_behaviors: побег при угрозе
-      ai_integration:
-        - dynamic_difficulty: сложность растет с прогрессом
-        - behavioral_changes: AI становится осторожнее
-        - narrative_feedback: диалоги отражают изменения
+          role_specialization:
+            leader: ["coordination", "tactical_commands", "emergency_protocols"]
+            specialist: ["suppression", "breaching", "technical_operations"]
+            grunt: ["area_control", "fire_support", "melee_engagement"]
 
-    escort:
-      description: "Сопровождение с AI угрозами"
-      mechanics:
-        - dynamic_threats: AI появляются на маршруте
-        - route_adaptation: изменение пути из-за угроз
-        - protection_objectives: защита от AI атак
-      ai_integration:
-        - ambush_coordination: скоординированные засады
-        - pursuit_behaviors: преследование при обнаружении
-        - escalation_mechanics: усиление угроз с временем
+          tactical_ai:
+            objective_system: "multi-objective_optimization"
+            threat_assessment: "real_time_risk_evaluation"
+            adaptation_engine: "counter_tactic_generation"
 
-    defense:
-      description: "Защита позиций от AI волн"
-      mechanics:
-        - wave_systems: последовательные волны AI
-        - reinforcement_points: точки спавна подкреплений
-        - objective_hold: удержание ключевых точек
-      ai_integration:
-        - tactical_coordination: скоординированные атаки
-        - adaptive_strategies: смена тактик при провалах
-        - boss_encounters: финальные босс-фазы
+    # ИНТЕГРАЦИЯ И СИНХРОНИЗАЦИЯ
+    integration:
+      event_system:
+        type: "distributed_event_bus"
+        channels:
+          - ai_behavior_events: "поведенческие изменения"
+          - ai_damage_events: "получение урона"
+          - ai_coordination_events: "командная координация"
+          - ai_adaptation_events: "адаптация к игрокам"
 
-    investigation:
-      description: "Расследование с AI подсказками"
-      mechanics:
-        - clue_discovery: поиск улик от AI поведения
-        - false_leads: ложные следы от AI иллюзий
-        - evidence_collection: сбор доказательств
-      ai_integration:
-        - deceptive_behaviors: AI создает ложные следы
-        - reactive_changes: AI реагирует на расследование
-        - revelation_moments: раскрытие истинной природы AI
+      state_synchronization:
+        type: "CRDT_based_state_management"
+        conflict_resolution: "last_write_wins_with_timestamp"
+        consistency_model: "eventual_consistency"
 
-  database_schema:
-    tables:
-      ai_enemy_profiles:
-        columns:
-          - id: uuid primary key
-          - name: varchar(255) not null
-          - type: varchar(100) not null
-          - difficulty_level: enum('street','tactical','mythic','raid')
-          - mechanics: jsonb
-          - quest_synergies: jsonb
-          - telemetry_config: jsonb
-          - created_at: timestamp
-          - updated_at: timestamp
+      performance_optimization:
+        spatial_partitioning: "quadtree_based_culling"
+        behavior_caching: "LRU_cache_for_common_patterns"
+        load_balancing: "dynamic_ai_distribution"
 
-      quest_types:
-        columns:
-          - id: uuid primary key
-          - name: varchar(255) not null
-          - category: varchar(100) not null
-          - ai_integration_rules: jsonb
-          - difficulty_scaling: jsonb
-          - reward_structure: jsonb
-          - created_at: timestamp
-          - updated_at: timestamp
+  # СИСТЕМА НОВЫХ ТИПОВ КВЕСТОВ
+  quest_system:
+    description: "Event-driven система квестов с динамической генерацией"
 
-      dynamic_encounters:
-        columns:
-          - id: uuid primary key
-          - quest_id: uuid references quests(id)
-          - ai_profile_ids: uuid[] references ai_enemy_profiles(id)
-          - spawn_conditions: jsonb
-          - behavior_modifiers: jsonb
-          - narrative_triggers: jsonb
-          - created_at: timestamp
+    components:
+      # ГИЛЬДЕЙСКИЕ ВОЙНЫ
+      guild_wars:
+        description: "Масштабируемая система PvP конфликтов между гильдиями"
+        architecture:
+          war_engine:
+            declaration_system:
+              type: "formal_war_declaration_protocol"
+              phases:
+                [
+                  "negotiation",
+                  "declaration",
+                  "preparation",
+                  "active",
+                  "resolution",
+                ]
+              validation_rules:
+                ["resource_requirements", "guild_standing_checks"]
 
-      ai_quest_telemetry:
-        columns:
-          - id: uuid primary key
-          - encounter_id: uuid references dynamic_encounters(id)
-          - ai_profile_id: uuid references ai_enemy_profiles(id)
-          - player_actions: jsonb
-          - ai_responses: jsonb
-          - quest_progress_impact: jsonb
-          - timestamp: timestamp
+            territory_control:
+              type: "real_time_zone_ownership"
+              ownership_mechanics:
+                ["capture_points", "siege_mechanics", "resource_drain"]
+              control_transfers:
+                ["battle_victories", "time_based_decay", "diplomatic_transfers"]
 
-  technical_requirements:
-    performance:
-      - ai_processing: <50ms per enemy per tick
-      - quest_evaluation: <10ms per quest update
-      - telemetry_collection: <5ms per event
-      - memory_usage: <100MB per active encounter
+            resource_conflict:
+              type: "economic_warfare_mechanics"
+              war_resources:
+                ["territory_taxes", "trade_route_control", "resource_sabotage"]
+              economic_impacts:
+                [
+                  "price_modifiers",
+                  "supply_disruptions",
+                  "black_market_opportunities",
+                ]
 
-    scalability:
-      - concurrent_encounters: 1000+ simultaneous
-      - ai_instances: 10000+ active enemies
-      - quest_processing: horizontal scaling support
-      - database_connections: connection pooling
+          battle_system:
+            engagement_zones:
+              type: "dynamic_battlefield_generation"
+              zone_types:
+                [
+                  "open_field",
+                  "urban_combat",
+                  "siege_positions",
+                  "ambush_points",
+                ]
+              scaling_factors:
+                ["guild_size", "technology_level", "terrain_modifiers"]
 
-    reliability:
-      - ai_state_persistence: guaranteed state recovery
-      - quest_progress_backup: automatic checkpoints
-      - telemetry_durability: event sourcing pattern
-      - failure_recovery: graceful degradation
+            victory_conditions:
+              type: "configurable_objectives"
+              condition_types:
+                [
+                  "territory_hold",
+                  "resource_control",
+                  "enemy_elimination",
+                  "time_based",
+                ]
+              scoring_system:
+                ["participation_points", "damage_dealt", "objectives_completed"]
 
-  implementation_plan:
-    phase_1: "AI Enemy Profiles"
-      - hacker_illusionist: базовая реализация
-      - sniper_tracker: маркерная система
-      - database_schema: профили и телеметрия
+            participation_tracking:
+              type: "real_time_contribution_metrics"
+              tracking_categories:
+                [
+                  "damage_output",
+                  "healing_provided",
+                  "objectives_secured",
+                  "survival_time",
+                ]
+              reward_distribution:
+                ["merit_based_allocation", "role_based_multipliers"]
 
-    phase_2: "Quest Types"
-      - elimination: AI адаптация
-      - escort: динамические угрозы
-      - defense: волновая система
+          post_war_system:
+            treaty_negotiation:
+              type: "diplomatic_resolution_engine"
+              negotiation_types:
+                ["peace_treaties", "ceasefire_agreements", "alliance_proposals"]
+              consequence_systems:
+                ["reparations", "territory_transfers", "resource_compensations"]
 
-    phase_3: "Integration"
-      - investigation: AI подсказки
-      - dynamic_encounters: адаптивные встречи
-      - narrative_ai: поведенческая адаптация
+            reputation_changes:
+              type: "guild_standing_modifications"
+              standing_impacts:
+                ["victory_bonuses", "defeat_penalties", "participation_rewards"]
+              community_effects:
+                ["ranking_changes", "alliance_opportunities", "trade_modifiers"]
 
-    phase_4: "Optimization"
-      - performance_tuning: <50ms требования
-      - telemetry_analytics: балансировка
-      - scalability_testing: нагрузочное тестирование
+            territory_redistribution:
+              type: "victory_based_rewards"
+              redistribution_logic:
+                [
+                  "merit_based_allocation",
+                  "strategic_value_weighting",
+                  "historical_claims",
+                ]
+              transition_periods:
+                ["immediate_transfers", "phased_handovers", "contested_periods"]
 
-  risk_assessment:
-    technical_risks:
-      - ai_complexity: высокая сложность поведенческих деревьев
-      - quest_ai_sync: синхронизация состояний
-      - performance_overhead: влияние на общую производительность
+      # КИБЕРПРОСТРАНСТВЕННЫЕ МИССИИ
+      cyberspace_missions:
+        description: "VR-based миссии в цифровом пространстве"
+        architecture:
+          cyberspace_engine:
+            reality_simulation:
+              type: "physics_defying_environment"
+              physics_modes:
+                [
+                  "normal_physics",
+                  "low_gravity",
+                  "zero_gravity",
+                  "custom_rules",
+                ]
+              environmental_hazards:
+                [
+                  "data_storms",
+                  "ice_barriers",
+                  "logic_loops",
+                  "reality_glitches",
+                ]
 
-    mitigation_strategies:
-      - modular_design: разделение на независимые компоненты
-      - incremental_implementation: поэтапная разработка
-      - performance_monitoring: постоянный мониторинг метрик
+            data_manipulation:
+              type: "dynamic_world_modification"
+              manipulation_types:
+                [
+                  "object_creation",
+                  "property_changes",
+                  "reality_warping",
+                  "time_manipulation",
+                ]
+              persistence_rules:
+                [
+                  "temporary_changes",
+                  "permanent_modifications",
+                  "session_based_reverts",
+                ]
 
-    fallback_options:
-      - simplified_ai: базовые поведения при перегрузке
-      - quest_fallback: статические квесты без AI адаптации
-      - telemetry_throttling: ограничение сбора данных
+            ice_encounter_system:
+              type: "intrusion_countermeasures"
+              ice_types:
+                ["barrier_ice", "killer_ice", "tracer_ice", "mind_control_ice"]
+              countermeasure_logic:
+                [
+                  "bypass_mechanics",
+                  "override_protocols",
+                  "deception_strategies",
+                ]
 
-validation:
-  success_criteria:
-    - ai_profiles: 3+ новых профиля с уникальными механиками
-    - quest_types: 4+ типа квестов с AI интеграцией
-    - performance: <50ms на AI обработку
-    - telemetry: полная аналитика поведения
-    - scalability: 1000+ одновременных встреч
+          mission_types:
+            data_theft:
+              type: "infiltration_and_exfiltration"
+              phases: ["breach", "locate", "extract", "escape"]
+              risk_factors:
+                [
+                  "detection_probability",
+                  "pursuit_intensity",
+                  "data_corruption",
+                ]
 
-  testing_approach:
-    - unit_tests: компонентное тестирование AI и квестов
-    - integration_tests: тестирование AI-квест взаимодействия
-    - performance_tests: нагрузочное тестирование
-    - gameplay_tests: пользовательское тестирование баланса
+            system_hack:
+              type: "network_penetration_challenges"
+              objectives:
+                [
+                  "firewall_breach",
+                  "system_compromise",
+                  "data_extraction",
+                  "cover_tracks",
+                ]
+              complexity_levels:
+                ["basic_intrusion", "deep_penetration", "system_takeover"]
 
-  monitoring_metrics:
-    - ai_processing_time: среднее время обработки AI
-    - quest_completion_rate: процент завершения квестов
-    - encounter_success_rate: успех в динамических встречах
-    - player_satisfaction: метрики вовлеченности
+            ai_confrontation:
+              type: "digital_entity_battles"
+              ai_types:
+                [
+                  "security_algorithms",
+                  "guardian_entities",
+                  "network_defenders",
+                ]
+              battle_mechanics:
+                ["code_combat", "logic_duels", "data_corruption_attacks"]
 
-history:
-  - version: "1.0.0"
-    date: 2025-12-14
-    author: architect_agent
-    changes: Created architecture for new AI enemies and quest types
+          synchronization:
+            player_state_sync:
+              type: "cross_reality_position_tracking"
+              sync_mechanisms:
+                [
+                  "real_time_positioning",
+                  "action_prediction",
+                  "state_reconciliation",
+                ]
+              latency_compensation:
+                ["client_side_prediction", "server_authoritative_resolution"]
+
+            world_state_sync:
+              type: "distributed_world_modification"
+              consistency_models:
+                [
+                  "strong_consistency",
+                  "eventual_consistency",
+                  "causal_consistency",
+                ]
+              conflict_resolution:
+                ["timestamp_based", "authority_based", "voting_based"]
+
+            event_propagation:
+              type: "real_time_change_distribution"
+              propagation_methods:
+                ["direct_messaging", "pub_sub_channels", "state_replication"]
+              reliability_guarantees:
+                ["at_least_once", "exactly_once", "best_effort"]
+
+      # СОЦИАЛЬНЫЕ ИНТРИГИ
+      social_intrigue_quests:
+        description: "Репутационные и социальные квестовые линии"
+        architecture:
+          reputation_engine:
+            faction_standing:
+              type: "multi_faction_relationship_tracking"
+              standing_levels:
+                [
+                  "hostile",
+                  "unfriendly",
+                  "neutral",
+                  "friendly",
+                  "allied",
+                  "vassal",
+                ]
+              relationship_modifiers:
+                ["trade_bonuses", "access_rights", "hostility_penalties"]
+
+            social_credit:
+              type: "influence_and_favor_systems"
+              credit_sources:
+                [
+                  "quest_completions",
+                  "social_interactions",
+                  "economic_transactions",
+                ]
+              credit_applications:
+                ["favor_calls", "influence_exercises", "privilege_grants"]
+
+            reputation_events:
+              type: "dynamic_social_consequences"
+              event_types:
+                [
+                  "public_scandals",
+                  "private_betrayals",
+                  "heroic_actions",
+                  "diplomatic_incidents",
+                ]
+              consequence_chains:
+                [
+                  "immediate_reactions",
+                  "long_term_effects",
+                  "cascading_impacts",
+                ]
+
+          intrigue_mechanics:
+            information_brokerage:
+              type: "rumor_and_intelligence_system"
+              information_types:
+                [
+                  "faction_secrets",
+                  "personal_scandals",
+                  "strategic_intelligence",
+                ]
+              broker_networks:
+                ["street_informants", "corporate_spies", "social_contacts"]
+
+            blackmail_system:
+              type: "compromising_information_mechanics"
+              leverage_types:
+                [
+                  "financial_records",
+                  "personal_secrets",
+                  "illegal_activities",
+                  "political_embarrassments",
+                ]
+              resolution_paths:
+                [
+                  "payment_demands",
+                  "service_requests",
+                  "information_exchanges",
+                  "exposure_risks",
+                ]
+
+            alliance_formations:
+              type: "dynamic_political_coalitions"
+              alliance_types:
+                [
+                  "trade_pacts",
+                  "defense_agreements",
+                  "intelligence_sharing",
+                  "resource_partnerships",
+                ]
+              stability_factors:
+                [
+                  "mutual_benefits",
+                  "power_balance",
+                  "external_threats",
+                  "internal_conflicts",
+                ]
+
+          consequence_system:
+            butterfly_effect:
+              type: "cascading_social_changes"
+              ripple_patterns:
+                ["direct_impacts", "secondary_effects", "tertiary_consequences"]
+              amplification_factors:
+                ["social_influence", "economic_power", "political_position"]
+
+            reputation_ripple:
+              type: "secondary_social_impacts"
+              impact_zones:
+                [
+                  "personal_relationships",
+                  "guild_standing",
+                  "faction_reputation",
+                  "community_status",
+                ]
+              recovery_mechanisms:
+                ["time_based_decay", "redemptive_actions", "reputation_repairs"]
+
+            long_term_effects:
+              type: "persistent_world_changes"
+              effect_types:
+                [
+                  "policy_changes",
+                  "alliance_shifts",
+                  "economic_realignments",
+                  "social_movements",
+                ]
+              duration_models:
+                [
+                  "temporary_fluctuations",
+                  "semi_permanent_changes",
+                  "fundamental_transformations",
+                ]
+
+      # РЕПУТАЦИОННЫЕ ЗАДАНИЯ
+      reputation_quests:
+        description: "Динамические задания на основе репутации"
+        architecture:
+          reputation_tracking:
+            global_standing:
+              type: "universal_reputation_metrics"
+              standing_ranges: [-1000, 1000]
+              standing_categories:
+                ["honor", "influence", "notoriety", "prestige"]
+
+            faction_specific:
+              type: "organization_based_ratings"
+              faction_types:
+                [
+                  "corporations",
+                  "nomads",
+                  "criminals",
+                  "government",
+                  "religious",
+                ]
+              faction_relations:
+                ["membership", "alliance", "neutrality", "rivalry", "hostility"]
+
+            personal_relationships:
+              type: "individual_character_bonds"
+              relationship_types:
+                ["friendship", "romance", "mentorship", "rivalry", "enmity"]
+              bond_strengths:
+                [
+                  "acquaintance",
+                  "associate",
+                  "confidant",
+                  "trusted_ally",
+                  "lifelong_bond",
+                ]
+
+          quest_generation:
+            reputation_gates:
+              type: "standing_based_quest_unlocks"
+              gate_conditions:
+                [
+                  "minimum_standing",
+                  "maximum_notoriety",
+                  "faction_membership",
+                  "personal_connections",
+                ]
+              progressive_unlocks:
+                [
+                  "basic_access",
+                  "advanced_options",
+                  "exclusive_opportunities",
+                  "legendary_challenges",
+                ]
+
+            dynamic_objectives:
+              type: "context_aware_goal_setting"
+              objective_types:
+                [
+                  "personal_requests",
+                  "faction_missions",
+                  "social_challenges",
+                  "reputation_repairs",
+                ]
+              contextual_factors:
+                [
+                  "current_standing",
+                  "recent_events",
+                  "relationship_status",
+                  "world_state",
+                ]
+
+            consequence_modifiers:
+              type: "reputation_based_difficulty_scaling"
+              difficulty_adjustments:
+                [
+                  "objective_complexity",
+                  "time_constraints",
+                  "risk_levels",
+                  "reward_multipliers",
+                ]
+              consequence_impacts:
+                [
+                  "success_bonuses",
+                  "failure_penalties",
+                  "reputation_changes",
+                  "relationship_effects",
+                ]
+
+          feedback_system:
+            reputation_changes:
+              type: "transparent_standing_modifications"
+              change_sources:
+                [
+                  "quest_outcomes",
+                  "social_interactions",
+                  "economic_transactions",
+                  "public_actions",
+                ]
+              change_visibility:
+                [
+                  "immediate_feedback",
+                  "detailed_explanations",
+                  "long_term_summaries",
+                ]
+
+            social_feedback:
+              type: "community_response_mechanisms"
+              feedback_channels:
+                [
+                  "public_announcements",
+                  "private_messages",
+                  "guild_notices",
+                  "news_reports",
+                ]
+              community_reactions:
+                [
+                  "approval_ratings",
+                  "popularity_trends",
+                  "influence_shifts",
+                  "reputation_trends",
+                ]
+
+            progression_indicators:
+              type: "clear_advancement_metrics"
+              indicator_types:
+                [
+                  "standing_progress",
+                  "achievement_unlocks",
+                  "title_changes",
+                  "privilege_grants",
+                ]
+              visualization_methods:
+                [
+                  "progress_bars",
+                  "milestone_markers",
+                  "achievement_badges",
+                  "status_displays",
+                ]
+
+    # ТЕХНИЧЕСКАЯ АРХИТЕКТУРА КВЕСТОВ
+    technical_architecture:
+      event_driven_core:
+        type: "CQRS_with_Event_Sourcing"
+        command_handlers:
+          description: "Обработчики команд для модификации состояния квестов"
+          categories:
+            [
+              "quest_creation",
+              "quest_updates",
+              "quest_completion",
+              "quest_cancellation",
+            ]
+          validation_layers:
+            ["business_rules", "permission_checks", "resource_validation"]
+
+        event_store:
+          description: "Неизменяемое хранилище истории квестов"
+          persistence_model: "append_only_event_log"
+          event_categories:
+            ["quest_events", "player_events", "world_events", "system_events"]
+          retention_policies:
+            [
+              "permanent_storage",
+              "time_based_archival",
+              "importance_based_filtering",
+            ]
+
+        read_models:
+          description: "Оптимизированные представления данных квестов"
+          model_types:
+            [
+              "quest_summaries",
+              "player_progress",
+              "guild_statistics",
+              "world_quest_states",
+            ]
+          update_strategies:
+            ["real_time_sync", "periodic_refresh", "on_demand_rebuild"]
+
+      scalability_design:
+        sharding_strategy:
+          type: "quest_type_based_partitioning"
+          shard_keys: ["quest_id", "guild_id", "player_id", "zone_id"]
+          rebalancing_logic:
+            [
+              "load_based_migration",
+              "geographic_distribution",
+              "type_based_grouping",
+            ]
+
+        caching_layers:
+          type: "multi_level_quest_data_cache"
+          cache_levels:
+            ["memory_cache", "distributed_cache", "persistent_cache"]
+          cache_strategies:
+            ["write_through", "write_behind", "cache_aside", "read_through"]
+
+        async_processing:
+          type: "background_quest_evaluation"
+          processing_queues:
+            [
+              "quest_generation",
+              "objective_validation",
+              "reward_distribution",
+              "cleanup_tasks",
+            ]
+          priority_systems:
+            [
+              "critical_operations",
+              "time_sensitive_tasks",
+              "background_maintenance",
+            ]
+
+      integration_points:
+        player_systems:
+          type: "character_state_integration"
+          integration_points:
+            [
+              "inventory_management",
+              "skill_progression",
+              "reputation_tracking",
+              "relationship_management",
+            ]
+          data_flow_patterns:
+            [
+              "bidirectional_sync",
+              "event_driven_updates",
+              "periodic_reconciliation",
+            ]
+
+        world_systems:
+          type: "environmental_quest_triggers"
+          trigger_types:
+            ["location_based", "time_based", "event_based", "condition_based"]
+          world_integration:
+            [
+              "zone_states",
+              "npc_behaviors",
+              "environmental_changes",
+              "dynamic_events",
+            ]
+
+        social_systems:
+          type: "relationship_based_modifiers"
+          social_factors:
+            [
+              "guild_membership",
+              "alliance_status",
+              "rivalry_conditions",
+              "personal_relationships",
+            ]
+          social_integration:
+            [
+              "group_activities",
+              "political_events",
+              "economic_interactions",
+              "cultural_events",
+            ]
+
+  # ИНТЕРАКТИВЫ НОВЫХ ЗОН
+  zone_interactives:
+    description: "Модульная система интерактивов для специальных зон"
+
+    components:
+      # АЭРОПОРТЫ
+      airport_interactives:
+        description: "Транспортный хаб с уникальными механиками"
+        architecture:
+          flight_control:
+            type: "dynamic_flight_scheduling"
+            flight_types:
+              [
+                "commercial_flights",
+                "private_jets",
+                "cargo_planes",
+                "emergency_evacuations",
+              ]
+            scheduling_logic:
+              [
+                "demand_based",
+                "security_priority",
+                "weather_dependent",
+                "emergency_override",
+              ]
+
+          security_systems:
+            type: "multi_layer_access_control"
+            security_layers:
+              [
+                "perimeter_fencing",
+                "checkpoint_scanning",
+                "boarding_pass_validation",
+                "random_inspections",
+              ]
+            access_control:
+              [
+                "passenger_screening",
+                "cargo_inspection",
+                "crew_verification",
+                "vip_protocols",
+              ]
+
+          cargo_operations:
+            type: "logistics_and_smuggling_mechanics"
+            cargo_types:
+              [
+                "legitimate_freight",
+                "contraband_goods",
+                "illegal_cargo",
+                "hazardous_materials",
+              ]
+            smuggling_mechanics:
+              [
+                "hidden_compartments",
+                "bribe_systems",
+                "customs_evasion",
+                "detection_risks",
+              ]
+
+          interactive_elements:
+            boarding_gates: "dynamic_gate_assignments"
+            baggage_claim: "package_tracking_system"
+            air_traffic_control: "flight_coordination_center"
+            maintenance_hangars: "repair_and_modification_facilities"
+
+      # ВОЕННЫЕ БАЗЫ
+      military_bases:
+        description: "Высокобезопасные зоны с тактическими вызовами"
+        architecture:
+          defense_network:
+            type: "integrated_security_systems"
+            security_components:
+              [
+                "perimeter_defenses",
+                "internal_checkpoints",
+                "surveillance_network",
+                "rapid_response_teams",
+              ]
+            threat_detection:
+              [
+                "intrusion_sensors",
+                "motion_tracking",
+                "signature_analysis",
+                "behavioral_patterns",
+              ]
+
+          tactical_zones:
+            type: "combat_oriented_area_design"
+            zone_types:
+              [
+                "command_centers",
+                "barracks",
+                "armories",
+                "training_grounds",
+                "research_facilities",
+              ]
+            tactical_features:
+              [
+                "cover_positions",
+                "choke_points",
+                "kill_zones",
+                "extraction_routes",
+                "fallback_positions",
+              ]
+
+          intelligence_operations:
+            type: "recon_and_sabotage_mechanics"
+            intel_types:
+              [
+                "classified_documents",
+                "prototype_technology",
+                "strategic_plans",
+                "personnel_records",
+              ]
+            sabotage_options:
+              [
+                "equipment_destruction",
+                "communication_disruption",
+                "power_grid_failure",
+                "data_corruption",
+              ]
+
+          base_operations:
+            patrol_routes: "dynamic_security_patrols"
+            alarm_systems: "escalating_threat_responses"
+            lockdown_protocols: "containment_and_isolation"
+            evacuation_procedures: "emergency_extraction_plans"
+
+      # НЕГОСТИНИЦЫ
+      flop_hotels:
+        description: "Уличные убежища с социальными взаимодействиями"
+        architecture:
+          social_spaces:
+            type: "community_interaction_zones"
+            interaction_types:
+              [
+                "casual_conversations",
+                "information_sharing",
+                "alliance_formations",
+                "trade_negotiations",
+              ]
+            social_dynamics:
+              [
+                "trust_building",
+                "rumor_spreading",
+                "reputation_management",
+                "relationship_development",
+              ]
+
+          resource_sharing:
+            type: "temporary_alliance_systems"
+            sharing_mechanics:
+              [
+                "safe_house_access",
+                "medical_supplies",
+                "weapon_caches",
+                "information_networks",
+              ]
+            alliance_dynamics:
+              [
+                "formation_requirements",
+                "maintenance_costs",
+                "betrayal_risks",
+                "dissolution_conditions",
+              ]
+
+          underground_economy:
+            type: "black_market_integration"
+            market_types:
+              [
+                "contraband_trading",
+                "information_brokerage",
+                "service_exchanges",
+                "favor_economy",
+              ]
+            economic_mechanics:
+              [
+                "price_negotiation",
+                "supply_demand",
+                "quality_assurance",
+                "reputation_bonuses",
+              ]
+
+          hotel_features:
+            room_types:
+              [
+                "private_rooms",
+                "dormitory_spaces",
+                "common_areas",
+                "hidden_chambers",
+              ]
+            service_offerings:
+              [
+                "medical_attention",
+                "equipment_repairs",
+                "information_services",
+                "safe_storage",
+              ]
+            security_measures:
+              [
+                "guest_verification",
+                "activity_monitoring",
+                "emergency_protocols",
+                "eviction_policies",
+              ]
+
+      # СЕКРЕТНЫЕ ЛАБОРАТОРИИ
+      secret_labs:
+        description: "Исследовательские комплексы с технологическими рисками"
+        architecture:
+          research_systems:
+            type: "experimental_technology_mechanics"
+            research_focuses:
+              [
+                "cyberware_improvements",
+                "weapon_modifications",
+                "medical_breakthroughs",
+                "ai_enhancements",
+              ]
+            experimentation_risks:
+              [
+                "system_failures",
+                "containment_breaches",
+                "data_corruption",
+                "reality_distortions",
+              ]
+
+          containment_protocols:
+            type: "hazard_and_escape_systems"
+            containment_levels:
+              [
+                "basic_isolation",
+                "advanced_sealing",
+                "reality_stabilization",
+                "emergency_shutdown",
+              ]
+            escape_mechanics:
+              [
+                "security_bypass",
+                "ventilation_systems",
+                "maintenance_tunnels",
+                "emergency_elevators",
+              ]
+
+          data_theft_opportunities:
+            type: "intellectual_property_challenges"
+            data_types:
+              [
+                "research_notes",
+                "prototype_schematics",
+                "test_results",
+                "personnel_records",
+              ]
+            theft_methods:
+              [
+                "digital_infiltration",
+                "physical_intrusion",
+                "social_engineering",
+                "electromagnetic_pulse",
+              ]
+
+          laboratory_zones:
+            research_sectors:
+              [
+                "cyberware_lab",
+                "weapons_development",
+                "medical_research",
+                "ai_programming",
+              ]
+            security_measures:
+              [
+                "biometric_scanning",
+                "environmental_hazards",
+                "automated_defenses",
+                "self_destruct_systems",
+              ]
+            experimental_equipment:
+              [
+                "prototype_devices",
+                "testing_chambers",
+                "data_terminals",
+                "emergency_containment",
+              ]
+
+    # ОБЩАЯ АРХИТЕКТУРА ИНТЕРАКТИВОВ
+    interactive_framework:
+      modularity_system:
+        component_registry:
+          type: "plugin_based_interactive_types"
+          plugin_interface: "standardized_component_api"
+          registration_system: "runtime_component_discovery"
+          dependency_management: "component_interaction_graphs"
+
+        configuration_engine:
+          type: "yaml_based_customization"
+          configuration_layers:
+            [
+              "global_defaults",
+              "zone_specifics",
+              "instance_customization",
+              "runtime_adjustments",
+            ]
+          validation_system: "schema_based_configuration_checking"
+          hot_reload_capability: "runtime_configuration_updates"
+
+        instantiation_manager:
+          type: "runtime_object_creation"
+          object_pooling: "pre_allocated_instance_management"
+          lifecycle_management: "creation_initialization_destruction"
+          memory_optimization: "garbage_collection_and_reuse"
+
+      telemetry_integration:
+        interaction_tracking:
+          type: "detailed_usage_analytics"
+          tracking_categories:
+            [
+              "interaction_frequency",
+              "duration_metrics",
+              "success_rates",
+              "failure_patterns",
+            ]
+          data_collection:
+            [
+              "real_time_streaming",
+              "batch_processing",
+              "historical_aggregation",
+            ]
+
+        performance_monitoring:
+          type: "system_health_metrics"
+          performance_indicators:
+            [
+              "response_times",
+              "resource_usage",
+              "error_rates",
+              "scalability_limits",
+            ]
+          monitoring_tools:
+            [
+              "real_time_dashboards",
+              "alert_systems",
+              "trend_analysis",
+              "predictive_modeling",
+            ]
+
+        player_behavior_analysis:
+          type: "engagement_pattern_recognition"
+          behavior_patterns:
+            [
+              "exploration_tendencies",
+              "risk_assessment",
+              "social_preferences",
+              "learning_curves",
+            ]
+          analysis_methods:
+            [
+              "statistical_modeling",
+              "machine_learning",
+              "behavioral_clustering",
+              "predictive_analytics",
+            ]
+
+      scalability_features:
+        zone_based_loading:
+          type: "spatial_partitioning"
+          partitioning_strategies:
+            ["grid_based", "player_centric", "interest_based", "distance_based"]
+          loading_priorities:
+            ["immediate_visibility", "nearby_regions", "background_preloading"]
+
+        dynamic_generation:
+          type: "procedural_content_creation"
+          generation_algorithms:
+            [
+              "template_based",
+              "rule_based",
+              "machine_learning",
+              "hybrid_approaches",
+            ]
+          quality_assurance:
+            ["constraint_validation", "balance_checking", "playtesting_metrics"]
+
+        resource_pooling:
+          type: "object_reuse_optimization"
+          pooling_strategies:
+            [
+              "object_pooling",
+              "component_sharing",
+              "memory_reuse",
+              "lazy_initialization",
+            ]
+          optimization_goals:
+            [
+              "memory_efficiency",
+              "loading_speed",
+              "runtime_performance",
+              "resource_utilization",
+            ]
+
+# EVENT-DRIVEN СИСТЕМА С CQRS/EVENT SOURCING
+event_driven_system:
+  description: "Распределенная event-driven архитектура для PvP/PvE систем"
+
+  core_components:
+    # EVENT BUS
+    event_bus:
+      type: "distributed_message_broker"
+      transport_protocols: ["nats_streaming", "kafka", "redis_pubsub"]
+      event_categories:
+        - game_events: "игровые события (убийства, достижения)"
+        - player_events: "действия игроков (движения, взаимодействия)"
+        - ai_events: "поведение AI (атаки, патрулирование)"
+        - system_events: "системные события (серверные изменения)"
+        - quest_events: "квестовые события (прогресс, завершения)"
+        - social_events: "социальные события (альянсы, конфликты)"
+
+      routing_logic:
+        topic_partitioning: "event_type_based_routing"
+        subscriber_filtering: "interest_based_delivery"
+        delivery_guarantees: ["at_least_once", "exactly_once", "best_effort"]
+
+    # CQRS IMPLEMENTATION
+    cqrs_framework:
+      command_side:
+        description: "Обработка команд изменения состояния"
+        command_types:
+          - player_commands: "действия игроков"
+          - ai_commands: "управление AI"
+          - system_commands: "административные действия"
+          - quest_commands: "модификация квестов"
+
+        command_validation:
+          business_rules: "domain_logic_checks"
+          permission_checks: "access_control_validation"
+          resource_limits: "capacity_and_rate_limits"
+
+        command_handlers:
+          synchronous_processing: "immediate_execution"
+          asynchronous_queuing: "background_processing"
+          distributed_execution: "cross_service_coordination"
+
+      query_side:
+        description: "Оптимизированные запросы данных"
+        read_models:
+          - player_states: "текущие состояния игроков"
+          - ai_states: "состояния AI сущностей"
+          - quest_states: "прогресс квестов"
+          - world_states: "глобальное состояние мира"
+          - social_states: "социальные связи и репутации"
+
+        query_optimization:
+          materialized_views: "предварительно рассчитанные агрегаты"
+          caching_strategies: "multi_level_caching"
+          indexing_strategies: "optimized_data_structures"
+
+    # EVENT SOURCING
+    event_sourcing:
+      event_store:
+        type: "append_only_event_log"
+        storage_backend: "distributed_database_cluster"
+        event_persistence: "durable_write_guarantees"
+        retention_policies: "configurable_event_lifecycles"
+
+      event_projection:
+        description: "Преобразование событий в состояния"
+        projection_types:
+          - synchronous: "real_time_state_updates"
+          - asynchronous: "background_aggregation"
+          - on_demand: "lazy_state_reconstruction"
+
+        consistency_models:
+          - eventual_consistency: "eventual_accuracy"
+          - strong_consistency: "immediate_accuracy"
+          - causal_consistency: "dependency_aware_accuracy"
+
+      event_replay:
+        description: "Восстановление состояния из истории событий"
+        replay_scenarios:
+          - system_recovery: "восстановление после сбоев"
+          - state_reconstruction: "перестроение представлений"
+          - debugging_analysis: "анализ исторических данных"
+          - testing_scenarios: "создание тестовых состояний"
+
+    # AGGREGATE DESIGN
+    domain_aggregates:
+      player_aggregate:
+        description: "Агрегат состояния игрока"
+        entities: ["character", "inventory", "skills", "reputation"]
+        invariants:
+          ["resource_limits", "skill_requirements", "reputation_bounds"]
+        event_sources:
+          ["player_actions", "system_effects", "social_interactions"]
+
+      ai_aggregate:
+        description: "Агрегат состояния AI"
+        entities: ["behavior_state", "combat_stats", "coordination_links"]
+        invariants:
+          [
+            "behavior_consistency",
+            "resource_constraints",
+            "coordination_limits",
+          ]
+        event_sources:
+          ["ai_decisions", "environmental_changes", "player_interactions"]
+
+      quest_aggregate:
+        description: "Агрегат состояния квеста"
+        entities: ["objectives", "progress_tracking", "reward_state"]
+        invariants:
+          ["objective_requirements", "progress_limits", "reward_eligibility"]
+        event_sources:
+          ["player_progress", "objective_completion", "system_triggers"]
+
+      world_aggregate:
+        description: "Агрегат глобального состояния мира"
+        entities: ["zone_states", "guild_relations", "global_events"]
+        invariants:
+          ["zone_capacity", "relationship_consistency", "event_coherence"]
+        event_sources: ["zone_changes", "guild_actions", "system_events"]
+
+  # SCALING И PERFORMANCE
+  scalability_architecture:
+    horizontal_scaling:
+      service_partitioning:
+        type: "domain_based_microservices"
+        partition_keys: ["player_id", "guild_id", "zone_id", "quest_type"]
+        load_distribution:
+          ["consistent_hashing", "range_partitioning", "geographic_sharding"]
+
+      event_streaming:
+        type: "distributed_event_processing"
+        stream_processing:
+          [
+            "real_time_analytics",
+            "complex_event_processing",
+            "pattern_detection",
+          ]
+        throughput_optimization:
+          ["parallel_processing", "batch_operations", "async_processing"]
+
+      caching_strategy:
+        multi_level_cache:
+          l1_cache: "in_memory_per_service"
+          l2_cache: "distributed_redis_cluster"
+          l3_cache: "persistent_database_cache"
+        cache_invalidation: ["event_based", "time_based", "manual_override"]
+
+    performance_optimization:
+      query_optimization:
+        read_model_denormalization: "precomputed_aggregates"
+        query_result_caching: "intelligent_cache_keys"
+        database_indexing: "composite_and_partial_indexes"
+
+      event_processing_optimization:
+        event_filtering: "subscription_based_delivery"
+        event_batching: "bulk_processing_operations"
+        event_compression: "efficient_serialization"
+
+      memory_management:
+        object_pooling: "reusable_object_instances"
+        garbage_collection: "generational_gc_tuning"
+        memory_limits: "per_service_resource_constraints"
+
+  # FAULT TOLERANCE
+  fault_tolerance:
+    event_persistence:
+      type: "durable_event_storage"
+      replication_strategy: "multi_region_redundancy"
+      backup_frequency: "continuous_streaming"
+      recovery_procedures: "automated_failover"
+
+    state_reconstruction:
+      type: "event_replay_capability"
+      snapshot_frequency: "configurable_intervals"
+      incremental_updates: "delta_based_reconstruction"
+      consistency_verification: "hash_based_validation"
+
+    circuit_breakers:
+      failure_detection: "error_rate_thresholds"
+      graceful_degradation: "fallback_modes"
+      recovery_automation: "automatic_retry_logic"
+
+# ТРЕБОВАНИЯ ПРОИЗВОДИТЕЛЬНОСТИ
+performance_requirements:
+  ai_enemies:
+    response_time: "<50ms for behavior updates"
+    concurrent_enemies: "1000+ simultaneous AI entities"
+    memory_usage: "<500MB per 100 enemies"
+    network_sync: "<20ms latency for coordination"
+
+  quest_system:
+    quest_generation: "<100ms for dynamic quests"
+    concurrent_wars: "1000+ simultaneous guild wars"
+    event_processing: "<10ms per event"
+    state_persistence: "<50ms write operations"
+
+  zone_interactives:
+    object_loading: "<200ms for zone initialization"
+    concurrent_interactions: "5000+ simultaneous interactions"
+    telemetry_processing: "<5ms per interaction event"
+
+  event_system:
+    event_throughput: "10000+ events per second"
+    event_latency: "<10ms end-to-end"
+    state_reconstruction: "<5 seconds for complex aggregates"
+    query_response: "<50ms for complex queries"
+
+# СТРАТЕГИЯ ШАРДИНГА И МАСШТАБИРОВАНИЯ
+scalability_strategy:
+  horizontal_scaling:
+    ai_sharding: "zone_based_ai_distribution"
+    quest_sharding: "guild_based_quest_partitioning"
+    interactive_sharding: "geographic_zone_partitioning"
+
+  load_balancing:
+    ai_balancer: "behavior_complexity_based_distribution"
+    quest_balancer: "participation_count_based_distribution"
+    interactive_balancer: "player_density_based_distribution"
+
+  caching_strategy:
+    ai_cache: "behavior_pattern_LRU_cache"
+    quest_cache: "active_quest_multi_level_cache"
+    interactive_cache: "zone_object_instance_cache"
+
+# ВИЗУАЛИЗАЦИЯ АРХИТЕКТУРЫ
+architecture_diagram:
+  mermaid_definition: |
+    graph TB
+        %% EVENT BUS - CENTRAL COMPONENT
+        EB[Event Bus]:::central
+
+        %% AI ENEMIES SYSTEM
+        subgraph "AI Enemies System"
+            AI_CORE[AI Core Engine]:::service
+            ELITE_BOSSES[Elite Mercenary Bosses]:::component
+            CYBERPSYCHOS[Cyberpsycho Elites]:::component
+            CORPORATE_SQUADS[Corporate Squads]:::component
+        end
+
+        %% QUEST SYSTEM
+        subgraph "Quest System"
+            QUEST_ENGINE[Quest Engine]:::service
+            GUILD_WARS[Guild Wars]:::component
+            CYBERSPACE_MISSIONS[Cyberspace Missions]:::component
+            SOCIAL_INTRIGUE[Social Intrigue]:::component
+            REPUTATION_QUESTS[Reputation Quests]:::component
+        end
+
+        %% ZONE INTERACTIVES
+        subgraph "Zone Interactives"
+            AIRPORT[Airport Systems]:::component
+            MILITARY[Military Bases]:::component
+            FLOP_HOTELS[Flop Hotels]:::component
+            SECRET_LABS[Secret Labs]:::component
+        end
+
+        %% CQRS/EVENT SOURCING
+        subgraph "CQRS/Event Sourcing"
+            CMD_HANDLERS[Command Handlers]:::service
+            EVENT_STORE[Event Store]:::storage
+            READ_MODELS[Read Models]:::service
+            PROJECTIONS[Event Projections]:::service
+        end
+
+        %% INFRASTRUCTURE
+        subgraph "Infrastructure"
+            POSTGRES[(PostgreSQL)]:::database
+            REDIS[(Redis Cache)]:::database
+            KAFKA[Kafka Event Bus]:::infrastructure
+            MICROSERVICES[Microservices]:::infrastructure
+        end
+
+        %% CONNECTIONS
+        AI_CORE --> EB
+        QUEST_ENGINE --> EB
+        CMD_HANDLERS --> EB
+        EB --> EVENT_STORE
+        EVENT_STORE --> PROJECTIONS
+        PROJECTIONS --> READ_MODELS
+
+        ELITE_BOSSES --> AI_CORE
+        CYBERPSYCHOS --> AI_CORE
+        CORPORATE_SQUADS --> AI_CORE
+
+        GUILD_WARS --> QUEST_ENGINE
+        CYBERSPACE_MISSIONS --> QUEST_ENGINE
+        SOCIAL_INTRIGUE --> QUEST_ENGINE
+        REPUTATION_QUESTS --> QUEST_ENGINE
+
+        AIRPORT --> EB
+        MILITARY --> EB
+        FLOP_HOTELS --> EB
+        SECRET_LABS --> EB
+
+        CMD_HANDLERS --> POSTGRES
+        READ_MODELS --> REDIS
+        EB --> KAFKA
+        MICROSERVICES --> EB
+
+        %% STYLES
+        classDef central fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+        classDef service fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+        classDef component fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+        classDef storage fill:#fff3e0,stroke:#e65100,stroke-width:2px
+        classDef database fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+        classDef infrastructure fill:#f5f5f5,stroke:#424242,stroke-width:2px
+
+# МОНИТОРИНГ И ОТЛАДКА
+monitoring:
+  ai_systems:
+    behavior_metrics: "pattern_execution_times"
+    coordination_metrics: "group_sync_performance"
+    adaptation_metrics: "learning_algorithm_effectiveness"
+
+  quest_systems:
+    generation_metrics: "quest_creation_performance"
+    execution_metrics: "objective_completion_rates"
+    event_metrics: "system_throughput_statistics"
+
+  interactive_systems:
+    usage_metrics: "interaction_frequency_analysis"
+    performance_metrics: "loading_and_execution_times"
+    reliability_metrics: "system_uptime_and_error_rates"
+
+  event_system:
+    throughput_metrics: "events_per_second_processing"
+    latency_metrics: "end_to_end_event_delivery"
+    consistency_metrics: "state_reconciliation_accuracy"
+    reliability_metrics: "event_delivery_guarantees"
+
+# РИСКИ И МИТИГАЦИЯ
+risks_and_mitigation:
+  scalability_risks:
+    concurrent_load: "Масштабируемая event-driven архитектура с горизонтальным шардингом"
+    database_contention: "CQRS разделение чтения и записи, read models optimization"
+    network_latency: "Edge computing, regional data centers, CDN integration"
+
+  performance_risks:
+    event_processing: "Asynchronous processing, event batching, parallel execution"
+    state_reconstruction: "Incremental snapshots, event compression, caching layers"
+    memory_pressure: "Object pooling, garbage collection tuning, memory limits"
+
+  reliability_risks:
+    event_loss: "Durable event storage, replication, backup strategies"
+    system_failures: "Circuit breakers, graceful degradation, automated recovery"
+    data_corruption: "Event validation, integrity checks, rollback capabilities"
+
+  security_risks:
+    event_injection: "Authentication, authorization, input validation"
+    data_leakage: "Encryption, access controls, audit logging"
+    ddos_attacks: "Rate limiting, traffic shaping, distributed filtering"

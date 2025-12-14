@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Guild Core Service API
+  description: Core guild management service
+  version: 1.0.0
+servers:
+  - url: http://localhost:8084/api/v1
+security:
+  - BearerAuth: []
+paths:
+  /guilds:
+    get:
+      operationId: listGuilds
+      summary: List guilds
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Guild list
+    post:
+      operationId: createGuild
+      summary: Create guild
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Created
+
+  /guilds/{guild_id}:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getGuild
+      summary: Get guild
+      responses:
+        '200':
+          description: Guild info
+    put:
+      operationId: updateGuild
+      summary: Update guild
+      responses:
+        '200':
+          description: Updated
+    delete:
+      operationId: deleteGuild
+      summary: Delete guild
+      responses:
+        '204':
+          description: Deleted
+
+  /guilds/ws:
+    get:
+      operationId: guildWebSocket
+      summary: Guild WebSocket
+      responses:
+        '101':
+          description: WebSocket connection
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CreateGuildRequest:
+      type: object
+      required: [name, tag]
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        tag:
+          type: string
+          maxLength: 5
+        description:
+          type: string
+          maxLength: 500
+
+    Guild:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tag:
+          type: string
+        level:
+          type: integer
+        member_count:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string

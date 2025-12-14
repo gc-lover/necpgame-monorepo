@@ -12,19 +12,22 @@ if (Test-Path $qualityGatesPath) {
     $content = Get-Content $qualityGatesPath -Raw
     if ($content -match "architecture-validator") {
         Write-Host "✓ Workflow includes architecture validation" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "✗ Workflow missing architecture validation" -ForegroundColor Red
     }
 
     if ($content -match "openapi-validator") {
         Write-Host "✓ Workflow includes OpenAPI validation" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "✗ Workflow missing OpenAPI validation" -ForegroundColor Red
     }
 
     if ($content -match "file-structure-validator") {
         Write-Host "✓ Workflow includes file structure validation" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "✗ Workflow missing file structure validation" -ForegroundColor Red
     }
 }
@@ -63,4 +66,4 @@ foreach ($script in $scripts) {
     }
 }
 
-Write-Host "`nCI/CD setup test completed!" -ForegroundColor Blue
+Write-Host "CI/CD setup test completed!" -ForegroundColor Blue
