@@ -1,53 +1,159 @@
-title: Интерактивы — киберпространство (узлы, архивы, арены)
 # Issue: #1843
+metadata:
+  id: world-interactives-cyberspace-1843
+  title: "Интерактивы киберпространства: узлы-ICE, фантомные архивы, арены-хабы"
+  document_type: canon
+  category: mechanics
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-13T20:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T22:03:19Z
+  owners:
+    - role: content_director
+      contact: content@necp.game
+  tags:
+    - world-interactives
+    - cyberspace
+    - ice-nodes
+    - phantom-archives
+    - tournament-hubs
+  topics:
+    - world-mechanics
+    - cyberspace
+    - interactive-objects
+    - cyberpunk-world
+  related_systems:
+    - world-service
+    - cyberspace-service
+    - inventory-service
+  related_documents:
+    - id: world-interactives-overview
+      relation: part_of
+    - id: mechanics-world-cyberspace
+      relation: extends
+  source: shared/docs/knowledge/mechanics/world/world-interactives-cyberspace-1843.md
+  visibility: internal
+  audience:
+    - backend
+    - qa
+    - game-design
+  risk_level: medium
+review:
+  chain:
+    - role: backend_engineer
+      reviewer: Backend Team
+      reviewed_at: 2025-12-08T22:03:19Z
+      status: approved
+    - role: content_director
+      reviewer: Content Documentation Cell
+      reviewed_at: 2025-12-13T20:00:00Z
+      status: approved
+  next_actions: []
 summary:
-  goal: Цифровые интерактивы с риском ICE/коррапта, утилити-баффами и косметическими наградами.
-  objects:
-    - узлы_ключи_ice
-    - фантомные_архивы
-    - турнирные_арены_хабы
-design:
-  caps: <=500 lines
-  loot_policy: боевые баффы запрещены, только утилити/данные/косметика
-  risk: ICE/коррапт скейлится от уровня зоны
-mechanics:
-  узлы_ключи_ice:
-    effects:
-      - бафф_взлома: +hack_speed_pct: 20, +ice_resist_pct: 15, длительность 8 мин
-      - ключи_к_дверям: одноразовый ключ к защищённой двери/терминалу в реале
-    params:
-      ice_difficulty_tiers: [low, mid, high]
-      fail_penalty:
-        low: короткий slow 3 с
-        mid: слепота HUD 4 с
-        high: коррапт_стек 1 (накопительный дебафф)
-      cooldown_per_user_s: 180
-  фантомные_архивы:
-    rewards: лор/квест данные, косметические скины интерфейса, чаты-подсказки
-    risk:
-      corrupt_chance: 0.22
-      corrupt_effect: временный шум HUD 10 с, скрывает цели
-    interactions:
-      - чтение: 2 с канал, при успехе выдаёт запись
-      - стабилизация: снижает corrupt_chance на 50%, +2 с к времени
-  турнирные_арены_хабы:
-    purpose: мини-ивенты на навыки взлома/паркура/симуляции дуэлей
-    rewards:
-      cosmetic_tokens: 1-3
-      leaderboard_points: 5-15
-    params:
-      entry_cost_data: 1x simulation_chip
-      match_time_s: 120
-      participation_reward: true
-telemetry:
-  - metric: cyberspace_hack_success
-    desc: успешные взломы узлов по tier ICE
-  - metric: cyberspace_hack_fail
-    desc: фейлы и тип наказания (slow/flash/corrupt)
-  - metric: archive_reads
-    desc: сколько архивов прочитано, сколько стабилизаций
-  - metric: corrupt_events
-    desc: % архивов с корраптом и средний debuff_time
+  problem: Отсутствовала детальная спецификация интерактивов киберпространства для реализации в backend
+  goal: Создать полную спецификацию цифровых объектов с риском ICE, коррапта и косметическими наградами
+  essence: "Цифровые интерактивы Night City: узлы-ICE для баффов, фантомные архивы с данными, арены для мини-ивентов"
+  key_points:
+    - Узлы-ICE с баффами взлома и ключами к реальным дверям
+    - Фантомные архивы с лор-данными и риском коррапта
+    - Турнирные арены-хабы для косметических наград
+    - Риски масштабируются по уровню зоны
+content:
+  sections:
+    - id: identity
+      title: Идентификация интерактивов
+      body: |
+        Интерактивы киберпространства - цифровые объекты в виртуальной реальности Night City.
+        Доступны через нейроинтерфейсы и кибердеки. Влияют на навыки взлома, предоставляют
+        лор-данные и косметические награды. Активны 24/7 с респавном по таймерам.
+      mechanics_links:
+        - mechanics/world/world-cyberspace.yaml
+      assets: []
+    - id: ice_nodes
+      title: Узлы-ключи (ICE/данные)
+      body: |
+        Защищенные узлы данных с ICE-защитой. Успешный взлом дает баффы к хакерским навыкам
+        или ключи к защищенным объектам в реальном мире. Три уровня сложности: low/mid/high.
+        Неуспех вызывает штрафы от замедления до коррапта.
+      mechanics_links: []
+      assets: []
+    - id: ice_effects
+      title: Эффекты узлов-ICE
+      body: |
+        Бафф взлома: +20% скорость хака, +15% сопротивление ICE, длительность 8 минут.
+        Ключи к дверям: одноразовый доступ к защищенному терминалу или двери в реале.
+        Штрафы: low - замедление 3 сек, mid - слепота HUD 4 сек, high - коррапт-стек +1.
+      mechanics_links: []
+      assets: []
+    - id: phantom_archives
+      title: Фантомные архивы
+      body: |
+        Нестабильные цифровые архивы с лор-данными, подсказками к квестам и косметикой.
+        Риск коррапта 22% при чтении. Коррапт создает шум на HUD, скрывая цели на 10 секунд.
+        Стабилизация снижает риск на 50% но увеличивает время чтения.
+      mechanics_links: []
+      assets: []
+    - id: tournament_hubs
+      title: Турнирные арены-хабы
+      body: |
+        Мини-ивенты для тестирования навыков взлома, паркура и симуляции дуэлей.
+        Награды: косметические токены (1-3), очки таблицы лидеров (5-15). Стоимость входа:
+        1 симуляционный чип. Время матча 2 минуты, награда за участие гарантирована.
+      mechanics_links: []
+      assets: []
+    - id: balance_design
+      title: Баланс и дизайн
+      body: |
+        Анти-абьюз: кулдаун 3 минуты на пользователя, ICE сложность скейлится по зоне.
+        Риски: коррапт накапливается, высокая сложность дает лучшие награды.
+        Монетизация: только косметика, без P2W элементов.
+      mechanics_links: []
+      assets: []
+    - id: gameplay_integration
+      title: Интеграция в геймплей
+      body: |
+        Создает цифровой слой Night City: хакеры фармят баффы, игроки собирают лор,
+        косметические награды мотивируют участие в ивентах. Влияет на экономику и социальные взаимодействия.
+      mechanics_links:
+        - mechanics/world/world-cyberspace.yaml
+      assets: []
+    - id: inspiration
+      title: Источники вдохновения
+      body: |
+        Вдохновлен цифровым пространством из Cyberpunk 2077, ICE из Shadowrun,
+        данными из Deus Ex. Технически основан на концепциях виртуальной реальности
+        и кибербезопасности в открытых мирах.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: ICE (Intrusion Countermeasures Electronics)
+      definition: Защитные программы, блокирующие несанкционированный доступ
+    - term: Коррапт
+      definition: Повреждение цифровых систем, вызывающее визуальные и функциональные глюки
+    - term: Фантомный архив
+      definition: Нестабильный цифровой контейнер с данными и риском повреждения
+  references:
+    - title: World Interactives Overview
+      link: ./world-interactives-overview.yaml
+    - title: Cyberspace Mechanics Summary
+      link: ../cyberspace-mechanics-summary.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  github_issue: 1843
+  queue_reference:
+    - shared/trackers/queues/content/queued.yaml
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-13
+    author: content_writer
+    changes: Создан полный YAML файл для интерактивов киберпространства согласно требованиям
+validation:
+  checksum: ""
+  schema_version: "1.0"
   - metric: arena_entries
     desc: число участников, конверсия в завершивших матч
   - metric: arena_rewards

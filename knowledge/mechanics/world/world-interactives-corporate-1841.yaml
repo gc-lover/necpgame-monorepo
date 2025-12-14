@@ -1,65 +1,162 @@
-title: Интерактивы — корп-зоны (серверные, биометрия, сейфы, конференц)
 # Issue: #1841
+metadata:
+  id: world-interactives-corporate-1841
+  title: "Интерактивы корпоративных зон: серверы, биометрия, сейфы, конференции"
+  document_type: canon
+  category: mechanics
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-13T21:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T22:03:09Z
+  owners:
+    - role: content_director
+      contact: content@necp.game
+  tags:
+    - world-interactives
+    - corporate
+    - corp-zones
+    - servers
+    - biometrics
+    - safes
+    - conferences
+  topics:
+    - world-mechanics
+    - interactive-objects
+    - corporate-security
+    - cyberpunk-world
+  related_systems:
+    - world-service
+    - security-service
+    - inventory-service
+  related_documents:
+    - id: world-interactives-overview
+      relation: part_of
+    - id: mechanics-world-corporate
+      relation: extends
+  source: shared/docs/knowledge/mechanics/world/world-interactives-corporate-1841.md
+  visibility: internal
+  audience:
+    - backend
+    - qa
+    - game-design
+  risk_level: high
+review:
+  chain:
+    - role: backend_engineer
+      reviewer: Backend Team
+      reviewed_at: 2025-12-08T22:03:09Z
+      status: approved
+    - role: content_director
+      reviewer: Content Documentation Cell
+      reviewed_at: 2025-12-13T21:00:00Z
+      status: approved
+  next_actions: []
 summary:
-  goal: Высокодоходные, но рискованные интерактивы в корпоративных зонах с многоступенчатым взломом и тревогами.
-  objects:
-    - серверные_стойки
-    - биометрические_замки
-    - сейфы_датаволты
-    - конференц_системы
-design:
-  caps: <=500 lines
-  risk: высокий ICE, тревоги вызывают силовой ответ
-  loot: данные/чертежи, без боевых статов
-mechanics:
-  серверные_стойки:
-    interactions:
-      - кража_данных: выгрузка для продажи/квестов
-      - загрузка_вируса: дебафф охраны, шанс ICE-контратаки
-    params:
-      ice_tier: high
-      hack_time_s: 12
-      fail_penalty: hud_glitch_6s | trace_ping
-      alert_chance_on_fail: 0.4
-  биометрические_замки:
-    interactions:
-      - соц_инж: маска/повтор биометрии, средний шанс
-      - хак: сложный, риск тревоги
-      - физ_ключ: редкий лут, гарантированный проход
-    params:
-      success_rates:
-        social: 0.55
-        hack: 0.35
-        keycard: 1.0
-      alert_on_fail_chance: 0.5
-      lockout_s: 60
-  сейфы_датаволты:
-    interactions:
-      - многоступенчатый_взлом: 3 фазы, каждая +сложность
-      - награда: редкие чертежи/доки, косметические планы
-    params:
-      phase_time_s: [6, 8, 10]
-      loot_tables: [rare_data, epic_blueprint, cosmetic_plan]
-      alarm_threshold: при 2 фейлах — тревога
-  конференц_системы:
-    interactions:
-      - прослушка: запись переговоров → компромат
-      - подмена: внедрить ложный сигнал, снижает готовность NPC
-    params:
-      record_time_s: 8
-      compromise_effect_duration_s: 180
-      detection_chance: 0.2
-telemetry:
-  - metric: corp_hacks_success
-    desc: успешные взломы (серверные/био/сейфы) по фазам
-  - metric: corp_hacks_fail
-    desc: фейлы и тип тревоги/ICE
-  - metric: corp_loot_tables
-    desc: выданные редкости (data/blueprint/cosmetic)
-  - metric: conference_taps
-    desc: успешные прослушки, длительность записи
-edge_cases:
-  - анти-абуз: повторный фейл на сейфах удваивает lockout_s
-  - скрытность: если тревога уже активна, биометрия даёт +15% к alert_chance
-  - кооп: только один игрок может держать фазу, остальные — охрана/прикрытие
+  problem: Отсутствовала детальная спецификация интерактивов корпоративных зон для реализации в backend
+  goal: Создать полную спецификацию высокорискованных объектов с многоступенчатым взломом и корпоративной безопасностью
+  essence: "Корпоративные интерактивы Night City: серверы с данными, биометрия с высоким риском, сейфы с чертежами, конференц-системы"
+  key_points:
+    - Серверные стойки с кражей данных и загрузкой вирусов
+    - Биометрические замки с соц-инж, хаком и физическими ключами
+    - Сейфы/датаволты с многоступенчатым взломом и редкими чертежами
+    - Конференц-системы для прослушки и компромата
+    - Высокий риск ICE и тревог с силовым ответом
+content:
+  sections:
+    - id: identity
+      title: Идентификация интерактивов
+      body: |
+        Интерактивы корпоративных зон - высокотехнологичные объекты в офисных зданиях и дата-центрах.
+        Требуют продвинутых навыков взлома и скрытности. Влияют на корпоративную экономику,
+        квесты и безопасность. Активны 24/7 с динамической охраной.
+      mechanics_links:
+        - mechanics/world/world-corporate.yaml
+      assets: []
+    - id: server_racks
+      title: Серверные стойки
+      body: |
+        Корпоративные серверы с конфиденциальными данными. Взлом занимает 12 секунд с высоким
+        уровнем ICE. Успех дает данные для продажи или квестов. Можно загрузить вирус для
+        дебаффа охраны, но с риском ICE-контратаки.
+      mechanics_links: []
+      assets: []
+    - id: biometric_locks
+      title: Биометрические замки
+      body: |
+        Продвинутые замки с распознаванием. Три способа открытия: социальная инженерия 55%,
+        хак 35%, физический ключ-карта 100%. При провале блокировка на 60 секунд и шанс
+        тревоги 50%.
+      mechanics_links: []
+      assets: []
+    - id: safes_datavaults
+      title: Сейфы/датаволты
+      body: |
+        Многоступенчатые хранилища данных. Три фазы взлома (6, 8, 10 секунд) с нарастающей
+        сложностью. Награды: редкие данные, эпические чертежи, косметические планы.
+        Тревога при 2 провалах.
+      mechanics_links: []
+      assets: []
+    - id: conference_systems
+      title: Конференц-системы
+      body: |
+        Системы корпоративных совещаний. Прослушка разговоров (8 секунд) для получения
+        компромата. Можно подменить сигнал для снижения готовности NPC на 3 минуты.
+        Шанс обнаружения 20%.
+      mechanics_links: []
+      assets: []
+    - id: balance_design
+      title: Баланс и дизайн
+      body: |
+        Анти-абьюз: повторные провалы удваивают блокировку. Активная тревога увеличивает
+        шанс обнаружения на 15%. В кооперативе только один игрок взламывает, остальные
+        обеспечивают прикрытие. Лут: только данные/чертежи, без боевых статов.
+      mechanics_links: []
+      assets: []
+    - id: gameplay_integration
+      title: Интеграция в геймплей
+      body: |
+        Создает корпоративный слой Night City: игроки крадут данные, собирают компромат,
+        получают чертежи. Влияет на экономику, фракционные отношения и квестовые линии.
+      mechanics_links:
+        - mechanics/world/world-corporate.yaml
+      assets: []
+    - id: inspiration
+      title: Источники вдохновения
+      body: |
+        Вдохновлен корпоративной безопасностью из Cyberpunk 2077, взломом из Deus Ex,
+        конференциями из Watch Dogs. Технически основан на концепциях корпоративной
+        кибербезопасности и социальной инженерии.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: ICE (Intrusion Countermeasures Electronics)
+      definition: Корпоративная система защиты от несанкционированного доступа
+    - term: Биометрический замок
+      definition: Замок с распознаванием по биологическим параметрам
+    - term: Датаволт
+      definition: Защищенное хранилище цифровых данных
+    - term: Конференц-система
+      definition: Корпоративная система для удаленных совещаний
+  references:
+    - title: World Interactives Overview
+      link: ./world-interactives-overview.yaml
+    - title: Corporate Mechanics Summary
+      link: ../corporate-mechanics-summary.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  github_issue: 1841
+  queue_reference:
+    - shared/trackers/queues/content/queued.yaml
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-13
+    author: content_writer
+    changes: Создан полный YAML файл для интерактивов корпоративных зон согласно требованиям
+validation:
+  checksum: ""
+  schema_version: "1.0"
 

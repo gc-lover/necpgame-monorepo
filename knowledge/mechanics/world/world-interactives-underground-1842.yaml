@@ -1,57 +1,151 @@
-title: Интерактивы — подполье/гетто (чёрные рынки, лаби, тоннели)
 # Issue: #1842
+metadata:
+  id: world-interactives-underground-1842
+  title: "Интерактивы подполья/гетто: чёрные рынки, лаборатории, тоннели"
+  document_type: canon
+  category: mechanics
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-13T20:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T22:03:14Z
+  owners:
+    - role: content_director
+      contact: content@necp.game
+  tags:
+    - world-interactives
+    - underground
+    - ghetto
+    - black-markets
+    - labs
+    - tunnels
+  topics:
+    - world-mechanics
+    - interactive-objects
+    - underground-economy
+    - cyberpunk-world
+  related_systems:
+    - world-service
+    - faction-service
+    - inventory-service
+    - crafting-service
+  related_documents:
+    - id: world-interactives-overview
+      relation: part_of
+    - id: mechanics-world-underground
+      relation: extends
+  source: shared/docs/knowledge/mechanics/world/world-interactives-underground-1842.md
+  visibility: internal
+  audience:
+    - backend
+    - qa
+    - game-design
+  risk_level: high
+review:
+  chain:
+    - role: backend_engineer
+      reviewer: Backend Team
+      reviewed_at: 2025-12-08T22:03:14Z
+      status: approved
+    - role: content_director
+      reviewer: Content Documentation Cell
+      reviewed_at: 2025-12-13T20:30:00Z
+      status: approved
+  next_actions: []
 summary:
-  goal: Высокорискованные интерактивы для гетто-зон с фокусом на редкий бартер, крафт и быстрые переходы.
-  objects:
-    - черные_рынки
-    - импровизированные_лаборатории
-    - контрабандные_люки_тоннели
-design:
-  caps: <=500 lines
-  economy: бартер и редкости, без боевых бустов
-  risk_profile: засадные события и взрывы масштабируются от угрозы района
-mechanics:
-  черные_рынки:
-    features:
-      - бартер: обмен редких ресурсов, шанс скрытого квестового NPC
-      - аукцион_тихий: ставки без UI, вывод в чат-сигналы
-      - охрана: нейтральная, реагирует на оружие
-    params:
-      restock_min: 900s
-      rare_offer_chance: 0.18
-      npc_quest_chance: 0.1
-      guard_alert_radius_m: 25
-  импровизированные_лаборатории:
-    features:
-      - крафт_апгрейд: ускоренный, но с шансом взрыва
-      - модификатор: +20% скорость, +10% шанс брака
-    params:
-      explosion_chance: 0.12
-      explosion_damage_pct: 35
-      failure_refund_pct: 50
-      lockdown_duration_s: 40
-  контрабандные_люки_тоннели:
-    features:
-      - быстрый_переход: выход в соседний квартал/подвал
-      - случайные_встречи: дружественные носильщики, засады, пусто
-    params:
-      ambush_chance: 0.22
-      friendly_carrier_chance: 0.15
-      travel_time_s: 12-18
-      cooldown_per_team_s: 180
-telemetry:
-  - metric: black_market_turnover
-    desc: оборот обменов/аукционов по редкости
-  - metric: black_market_quests
-    desc: заспавненные квестовые NPC и их конверсия
-  - metric: lab_crafts
-    desc: успешные/неуспешные крафты, процент брака
-  - metric: lab_explosions
-    desc: частота взрывов и нанесённый урон
-  - metric: tunnel_uses
-    desc: использований тоннелей, тип события (friendly/ambush/empty)
-edge_cases:
-  - анти-абуз: спам крафтов >5 подряд увеличивает explosion_chance на +50%
-  - ресток: при пустых офферах рынок даёт квест-наводку вместо товара
-  - соло: скидка у охраны отсутствует, бартер без бонусов
+  problem: Отсутствовала детальная спецификация интерактивов подполья для реализации в backend
+  goal: Создать полную спецификацию высокорискованных объектов с бартером, крафтом и быстрыми переходами
+  essence: "Подпольные интерактивы Night City: чёрные рынки для бартера, лаборатории с риском взрыва, контрабандные тоннели"
+  key_points:
+    - Чёрные рынки в бэкрумах с бартером редкостей и квестовыми NPC
+    - Импровизированные лаборатории с ускоренным крафтом и риском взрыва
+    - Контрабандные люки/тоннели с быстрыми переходами и случайными встречами
+    - Риски масштабируются по уровню угрозы района
+content:
+  sections:
+    - id: identity
+      title: Идентификация интерактивов
+      body: |
+        Интерактивы подполья/гетто - объекты в скрытых частях Night City. Доступны только
+        через разведку или инсайдерскую информацию. Влияют на экономику, крафт и мобильность.
+        Активны круглосуточно с динамическим респавном.
+      mechanics_links:
+        - mechanics/world/world-underground.yaml
+      assets: []
+    - id: black_markets
+      title: Чёрные рынки в бэкрумах
+      body: |
+        Скрытые рынки в подвалах и заброшенных зданиях. Обмен редкими ресурсами на бартер,
+        тихие аукционы без UI (через чат-сигналы). Шанс встретить квестового NPC 10%.
+        Охрана нейтральна, реагирует на оружие в радиусе 25 метров.
+      mechanics_links: []
+      assets: []
+    - id: improvised_labs
+      title: Импровизированные лаборатории
+      body: |
+        Подпольные мастерские для крафта и апгрейда. Ускоряют процесс на 20%, но с шансом
+        взрыва 12% (урон 35% HP). При провале возвращается 50% материалов. Локация блокируется
+        на 40 секунд после взрыва.
+      mechanics_links: []
+      assets: []
+    - id: contraband_tunnels
+      title: Контрабандные люки/тоннели
+      body: |
+        Быстрые переходы между кварталами через подземные туннели. Время перехода 12-18 секунд,
+        кулдаун 3 минуты на команду. Случайные события: засады 22%, дружественные носильщики 15%,
+        пустые проходы 63%.
+      mechanics_links: []
+      assets: []
+    - id: balance_design
+      title: Баланс и дизайн
+      body: |
+        Анти-абьюз: спам крафта >5 подряд увеличивает шанс взрыва на 50%. Пустые рынки
+        дают квест-наводки вместо товаров. В соло: без скидок охраны, бартер без бонусов.
+        Экономика: только бартер редкостей, без боевых бустов.
+      mechanics_links: []
+      assets: []
+    - id: gameplay_integration
+      title: Интеграция в геймплей
+      body: |
+        Создает подпольный слой Night City: игроки торгуют редкостями, крафтят с риском,
+        используют тоннели для быстрой навигации. Влияет на экономику и социальные связи.
+      mechanics_links:
+        - mechanics/world/world-underground.yaml
+      assets: []
+    - id: inspiration
+      title: Источники вдохновения
+      body: |
+        Вдохновлен подпольем из Cyberpunk 2077, чёрными рынками из Shadowrun,
+        лабораториями из Fallout. Технически основан на концепциях скрытой экономики
+        и рискованного крафта в открытых мирах.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: Чёрный рынок
+      definition: Скрытый рынок для обмена редкими ресурсами и информацией
+    - term: Импровизированная лаборатория
+      definition: Подпольная мастерская с повышенным риском для ускоренного крафта
+    - term: Контрабандный туннель
+      definition: Скрытый подземный проход с случайными событиями
+  references:
+    - title: World Interactives Overview
+      link: ./world-interactives-overview.yaml
+    - title: Underground Mechanics Summary
+      link: ../underground-mechanics-summary.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  github_issue: 1842
+  queue_reference:
+    - shared/trackers/queues/content/queued.yaml
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-13
+    author: content_writer
+    changes: Создан полный YAML файл для интерактивов подполья согласно требованиям
+validation:
+  checksum: ""
+  schema_version: "1.0"
 
