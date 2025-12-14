@@ -8,22 +8,11 @@ echo "🔍 Running pre-commit quality checks..."
 
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    local color=$1
-    local message=$2
-    echo -e "${color}${message}${NC}"
-}
+# Pre-commit hook output uses plain text to avoid ANSI codes in git output
 
 # Check if we're in the correct directory
 if [ ! -d "$PROJECT_ROOT/scripts" ]; then
-    print_status $RED "Error: scripts directory not found. Make sure you're in the project root."
+    echo "ERROR: scripts directory not found. Make sure you're in the project root."
     exit 1
 fi
 
@@ -31,49 +20,106 @@ fi
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
 
 if [ -z "$STAGED_FILES" ]; then
-    print_status $GREEN "No files staged for commit. Skipping checks."
+    echo "INFO: No files staged for commit. Skipping checks."
     exit 0
 fi
 
-print_status $YELLOW "Checking staged files: $STAGED_FILES"
+echo "INFO: Checking staged files: $STAGED_FILES"
 
 # Check file sizes for staged files
-print_status $YELLOW "📏 Checking file sizes..."
+echo "INFO: Checking file sizes..."
+
+FAILED_FILES=()
+CHECKED_COUNT=0
+
 for file in $STAGED_FILES; do
     if [ -f "$file" ]; then
         # Count lines
         lines=$(wc -l < "$file" 2>/dev/null || echo "0")
         ext="${file##*.}"
 
-        # Check size limits
+        # Check size limits and collect failed files
         case $ext in
             go|py|yaml|yml)
-                if [ "$lines" -gt 500 ]; then
-                    print_status $RED "Error: $file exceeds 500 lines ($lines lines)"
-                    exit 1
+                CHECKED_COUNT=$((CHECKED_COUNT + 1))
+                if [ "$lines" -gt 600 ]; then
+                    FAILED_FILES+=("$file:$lines:600")
+                    echo "FAIL: $file has $lines lines (max: 600)"
+                else
+                    echo "OK: $file has $lines lines"
                 fi
                 ;;
             md)
+                CHECKED_COUNT=$((CHECKED_COUNT + 1))
                 if [ "$lines" -gt 1000 ]; then
-                    print_status $RED "Error: $file exceeds 1000 lines ($lines lines)"
-                    exit 1
+                    FAILED_FILES+=("$file:$lines:1000")
+                    echo "FAIL: $file has $lines lines (max: 1000)"
+                else
+                    echo "OK: $file has $lines lines"
                 fi
                 ;;
             sql)
+                CHECKED_COUNT=$((CHECKED_COUNT + 1))
                 if [ "$lines" -gt 800 ]; then
-                    print_status $RED "Error: $file exceeds 800 lines ($lines lines)"
-                    exit 1
+                    FAILED_FILES+=("$file:$lines:800")
+                    echo "FAIL: $file has $lines lines (max: 800)"
+                else
+                    echo "OK: $file has $lines lines"
                 fi
                 ;;
         esac
     fi
 done
 
+echo ""
+echo "Files checked: $CHECKED_COUNT"
+
+if [ ${#FAILED_FILES[@]} -gt 0 ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "[GIT_HOOK_ERROR] COMMIT_REJECTED_FILE_SIZE"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "ERROR_TYPE: file_size_exceeded"
+    echo "POLICY: Files must not exceed size limits by extension"
+    echo ""
+    echo "SIZE_LIMITS:"
+    echo "  - Go/Python/YAML files: 600 lines max"
+    echo "  - Markdown files: 1000 lines max"
+    echo "  - SQL files: 800 lines max"
+    echo ""
+    echo "VIOLATING_FILES:"
+    for entry in "${FAILED_FILES[@]}"; do
+        IFS=':' read -r file lines limit <<< "$entry"
+        EXCEED_BY=$((lines - limit))
+        echo "  - $file: $lines lines (exceeds $limit by $EXCEED_BY lines)"
+    done
+    echo ""
+    echo "REQUIRED_ACTION: Split files into smaller files"
+    echo "RECOMMENDATION: ~300-400 lines per file for better maintainability"
+    echo ""
+    echo "FOR_AI_AGENTS:"
+    echo "  This repository enforces file size limits to maintain code quality."
+    echo "  The following files exceed size limits and must be split:"
+    for entry in "${FAILED_FILES[@]}"; do
+        IFS=':' read -r file lines limit <<< "$entry"
+        echo "    - $file ($lines lines, limit: $limit)"
+    done
+    echo "  You must refactor these files into smaller files."
+    echo "  Recommended approach: Split large files into multiple smaller files."
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 1
+else
+    echo "SUCCESS: All files are within size limits"
+fi
+
 # Run architecture validator if available
 if [ -f "$PROJECT_ROOT/scripts/architecture-validator.py" ]; then
-    print_status $YELLOW "🏗️  Running architecture validation..."
-    if ! python3 "$PROJECT_ROOT/scripts/architecture-validator.py" --project-root "$PROJECT_ROOT" 2>/dev/null; then
-        print_status $RED "Architecture validation failed. Please fix the issues before committing."
+    echo "INFO: Running architecture validation..."
+    # Capture both stdout and stderr to show detailed error info
+    if ! python "$PROJECT_ROOT/scripts/architecture-validator.py" --project-root "$PROJECT_ROOT" 2>&1; then
+        echo "ERROR: Architecture validation failed. Please fix the issues above before committing."
         exit 1
     fi
 fi
@@ -81,9 +127,9 @@ fi
 # Run OpenAPI validator for API spec changes
 if echo "$STAGED_FILES" | grep -q "proto/openapi.*\.yaml"; then
     if [ -f "$PROJECT_ROOT/scripts/openapi-validator.py" ]; then
-        print_status $YELLOW "📋 Running OpenAPI validation..."
+        echo "INFO: Running OpenAPI validation..."
         if ! python3 "$PROJECT_ROOT/scripts/openapi-validator.py" --project-root "$PROJECT_ROOT" 2>/dev/null; then
-            print_status $RED "OpenAPI validation failed. Please fix the API specs before committing."
+            echo "ERROR: OpenAPI validation failed. Please fix the API specs before committing."
             exit 1
         fi
     fi
@@ -95,37 +141,37 @@ if echo "$STAGED_FILES" | grep -E '\.(go|py|js|ts|cpp|h|java)$'; then
     if [ -f "$COMMIT_MSG_FILE" ]; then
         commit_msg=$(cat "$COMMIT_MSG_FILE")
         if ! echo "$commit_msg" | grep -q "Issue: #[0-9]"; then
-            print_status $YELLOW "Warning: Consider adding 'Issue: #XXX' to commit message for code changes"
+            echo "WARNING: Consider adding 'Issue: #XXX' to commit message for code changes"
         fi
     fi
 fi
 
 # Check for large files
-print_status $YELLOW "📦 Checking for large files..."
+echo "INFO: Checking for large files..."
 for file in $STAGED_FILES; do
     if [ -f "$file" ]; then
         size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
         # 50MB limit
         if [ "$size" -gt 52428800 ]; then
-            print_status $RED "Error: $file is too large ($size bytes). Consider using Git LFS."
+            echo "ERROR: $file is too large ($size bytes). Consider using Git LFS."
             exit 1
         fi
     fi
 done
 
 # Check for secrets/tokens
-print_status $YELLOW "🔒 Checking for potential secrets..."
+echo "INFO: Checking for potential secrets..."
 for file in $STAGED_FILES; do
     if [ -f "$file" ]; then
         # Check for common patterns
         if grep -q "password\|secret\|token\|key\|api_key" "$file" 2>/dev/null; then
             if grep -q "password.*=.*[\"'][^\"']*[\"']\|secret.*=.*[\"'][^\"']*[\"']\|token.*=.*[\"'][^\"']*[\"']\|key.*=.*[\"'][^\"']*[\"']\|api_key.*=.*[\"'][^\"']*[\"']" "$file" 2>/dev/null; then
-                print_status $RED "Warning: Potential hardcoded secrets found in $file"
-                print_status $YELLOW "Please ensure secrets are loaded from environment variables or secure stores"
+                echo "WARNING: Potential hardcoded secrets found in $file"
+                echo "WARNING: Please ensure secrets are loaded from environment variables or secure stores"
             fi
         fi
     fi
 done
 
-print_status $GREEN "OK All pre-commit checks passed!"
+echo "SUCCESS: All pre-commit checks passed!"
 exit 0

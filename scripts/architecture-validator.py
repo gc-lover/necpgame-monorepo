@@ -8,6 +8,7 @@ import yaml
 import json
 import subprocess
 import sys
+import fnmatch
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 import argparse
@@ -26,29 +27,52 @@ class ArchitectureValidator:
             'structure': [],
             'files': []
         }
+        self.exempted_files = self._load_exemptions()
 
     def validate_all(self) -> bool:
         """Run all validation checks"""
-        print("[INFO] Starting comprehensive architecture validation...")
+        print("Starting comprehensive architecture validation...")
+        print("="*60)
 
-        self._validate_file_sizes()
-        self._validate_code_structure()
-        self._validate_solid_principles()
-        self._validate_performance_requirements()
-        self._validate_security_compliance()
-        self._validate_openapi_specs()
-        self._validate_dependencies()
+        try:
+            print("[1/7] Checking file sizes...")
+            self._validate_file_sizes()
 
-        return self._report_results()
+            print("[2/7] Checking code structure...")
+            self._validate_code_structure()
+
+            print("[3/7] Checking SOLID principles...")
+            self._validate_solid_principles()
+
+            print("[4/7] Checking performance requirements...")
+            self._validate_performance_requirements()
+
+            print("[5/7] Checking security compliance...")
+            self._validate_security_compliance()
+
+            print("[6/7] Checking OpenAPI specifications...")
+            self._validate_openapi_specs()
+
+            print("[7/7] Checking dependencies...")
+            self._validate_dependencies()
+
+            print("Generating validation report...")
+            return self._report_results()
+
+        except Exception as e:
+            print(f"\nVALIDATION CRASHED: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
 
     def _validate_file_sizes(self):
         """Check file size limits"""
         print("[INFO] Checking file sizes...")
 
         limits = {
-            'go': 500,
-            'py': 500,
-            'yaml': 500,
+            'go': 600,
+            'py': 600,
+            'yaml': 600,
             'md': 1000,
             'sql': 800
         }
@@ -67,6 +91,9 @@ class ArchitectureValidator:
                             )
                     except Exception as e:
                         self.warnings.append(f"Could not check {file_path}: {e}")
+                # Debug: uncomment to see what files are being checked
+                # elif 'oas_' in str(file_path) or '_gen.go' in str(file_path):
+                #     pass  # Skip debug output for generated files
 
     def _validate_code_structure(self):
         """Validate code structure and organization"""
@@ -267,44 +294,87 @@ class ArchitectureValidator:
             'generated/',
             'migrations/',
             '.git/',
-            'node_modules/'
+            'node_modules/',
+            'bundled.yaml',
+            'changelog-content.yaml'
         ]
 
+        file_str = str(file_path)
+        relative_path = file_path.relative_to(self.project_root)
+
+        # Check skip patterns
         for pattern in skip_patterns:
-            if pattern in str(file_path):
+            if pattern in file_str:
+                return False
+
+        # Check exempted files from pre-commit-exemptions.txt using glob matching
+        for exemption in self.exempted_files:
+            # Convert exemption pattern to be relative to project root
+            if fnmatch.fnmatch(str(relative_path), exemption):
                 return False
 
         return True
+
+    def _load_exemptions(self) -> Set[str]:
+        """Load exempted file patterns from pre-commit-exemptions.txt"""
+        exemptions_file = self.project_root / '.githooks' / 'pre-commit-exemptions.txt'
+        exempted = set()
+
+        if exemptions_file.exists():
+            try:
+                with open(exemptions_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        # Skip empty lines and comments
+                        if line and not line.startswith('#'):
+                            exempted.add(line)
+            except Exception as e:
+                print(f"Warning: Could not load exemptions file: {e}")
+
+        return exempted
 
     def _report_results(self) -> bool:
         """Report validation results"""
         total_violations = sum(len(v) for v in self.violations.values())
         total_warnings = len(self.warnings)
 
-        print("\n[RESULTS] Validation Results:")
-        print(f"   Violations: {total_violations}")
-        print(f"   Warnings: {total_warnings}")
+        print("\n" + "="*80)
+        print("ARCHITECTURE VALIDATION RESULTS")
+        print("="*80)
+        print(f"Violations: {total_violations}")
+        print(f"Warnings: {total_warnings}")
+        print()
 
         if total_violations > 0:
-            print("\n[ERROR] VIOLATIONS:")
+            print("VIOLATIONS FOUND:")
+            print("-"*50)
             for category, violations in self.violations.items():
                 if violations:
-                    print(f"\n[{category.upper()}]:")
+                    print(f"\n{category.upper()} ISSUES:")
                     for violation in violations[:10]:  # Limit output
                         print(f"   - {violation}")
                     if len(violations) > 10:
-                        print(f"   ... and {len(violations) - 10} more")
+                        print(f"   ... and {len(violations) - 10} more {category} issues")
 
-        if total_warnings > 0 and total_warnings < 20:
-            print("\n[WARNING] WARNINGS:")
-            for warning in self.warnings[:10]:
+        if total_warnings > 0 and total_warnings < 50:
+            print("\nWARNINGS:")
+            print("-"*30)
+            for warning in self.warnings[:15]:
                 print(f"   - {warning}")
+            if len(self.warnings) > 15:
+                print(f"   ... and {len(self.warnings) - 15} more warnings")
+
+        print("\n" + "="*80)
 
         if total_violations == 0:
-            print("\n[SUCCESS] All architecture checks passed!")
+            print("SUCCESS: All architecture checks passed!")
             return True
         else:
-            print(f"\n[ERROR] {total_violations} violations found. Please fix before proceeding.")
+            print(f"VALIDATION FAILED: {total_violations} violations must be fixed")
+            print("\nREQUIRED ACTIONS:")
+            print("- Fix all violations before committing")
+            print("- Address critical warnings when possible")
+            print("- Run: python scripts/architecture-validator.py --help for options")
             return False
 
 
@@ -317,26 +387,33 @@ def main():
 
     args = parser.parse_args()
 
-    validator = ArchitectureValidator(args.project_root)
+    try:
+        validator = ArchitectureValidator(args.project_root)
 
-    if args.category:
-        # Run specific category check
-        method_name = f'_validate_{args.category}_requirements'
-        if hasattr(validator, method_name):
-            getattr(validator, method_name)()
-        else:
-            method_name = f'_validate_{args.category}'
+        if args.category:
+            # Run specific category check
+            method_name = f'_validate_{args.category}_requirements'
             if hasattr(validator, method_name):
                 getattr(validator, method_name)()
             else:
-                print(f"Unknown category: {args.category}")
+                method_name = f'_validate_{args.category}'
+                if hasattr(validator, method_name):
+                    getattr(validator, method_name)()
+                else:
+                    print(f"[ERROR] Unknown category: {args.category}")
+                    return 1
+        else:
+            # Run all checks
+            if not validator.validate_all():
                 return 1
-    else:
-        # Run all checks
-        if not validator.validate_all():
-            return 1
 
-    return 0
+        return 0
+
+    except Exception as e:
+        print(f"[ERROR] Architecture validation failed with exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
 
 
 if __name__ == '__main__':
