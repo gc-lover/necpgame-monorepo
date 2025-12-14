@@ -1,0 +1,791 @@
+openapi: 3.0.3
+info:
+  title: Character Management Service API
+  description: API для управления персонажами игроков в NECPGAME
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+tags:
+  - name: Characters
+    description: Управление персонажами
+  - name: Players
+    description: Управление профилями игроков
+  - name: Slots
+    description: Управление слотами персонажей
+  - name: Switching
+    description: Переключение персонажей
+  - name: Restoration
+    description: Восстановление персонажей
+paths:
+  # Управление персонажами игрока
+  /players/{playerId}/characters:
+    get:
+      tags:
+        - Characters
+      summary: Получить список персонажей игрока
+      operationId: getPlayerCharacters
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: includeDeleted
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Список персонажей
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterListResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Characters
+      summary: Создать нового персонажа
+      operationId: createCharacter
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCharacterRequest"
+      responses:
+        "201":
+          description: Персонаж создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление конкретным персонажем
+  /characters/{characterId}:
+    get:
+      tags:
+        - Characters
+      summary: Получить информацию о персонаже
+      operationId: getCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о персонаже
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Characters
+      summary: Обновить персонажа
+      operationId: updateCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCharacterRequest"
+      responses:
+        "200":
+          description: Персонаж обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Characters
+      summary: Удалить персонажа (soft delete)
+      operationId: deleteCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Персонаж удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Персонаж нельзя удалить (в бою и т.д.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Восстановление персонажа
+  /characters/{characterId}/restore:
+    post:
+      tags:
+        - Restoration
+      summary: Восстановить удаленного персонажа
+      operationId: restoreCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Персонаж восстановлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "410":
+          description: Персонаж удален окончательно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Переключение активного персонажа
+  /players/{playerId}/switch:
+    post:
+      tags:
+        - Switching
+      summary: Переключить активного персонажа
+      operationId: switchCharacter
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwitchCharacterRequest"
+      responses:
+        "200":
+          description: Персонаж переключен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwitchCharacterResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Переключение заблокировано (бой и т.д.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Получение активного персонажа
+  /players/{playerId}/active-character:
+    get:
+      tags:
+        - Switching
+      summary: Получить активного персонажа игрока
+      operationId: getActiveCharacter
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Активный персонаж
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterResponse"
+        "404":
+          description: Активный персонаж не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление слотами персонажей
+  /players/{playerId}/slots:
+    get:
+      tags:
+        - Slots
+      summary: Получить информацию о слотах персонажей
+      operationId: getPlayerSlots
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о слотах
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerSlotsResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Покупка дополнительных слотов
+  /players/{playerId}/slots/purchase:
+    post:
+      tags:
+        - Slots
+      summary: Купить дополнительные слоты для персонажей
+      operationId: purchaseSlots
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseSlotsRequest"
+      responses:
+        "200":
+          description: Слоты куплены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseSlotsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "402":
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Пересчет статов персонажа
+  /characters/{characterId}/recalculate-stats:
+    post:
+      tags:
+        - Characters
+      summary: Пересчитать статистики персонажа
+      operationId: recalculateCharacterStats
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статистики пересчитаны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterStatsResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Аудит активности персонажа
+  /characters/{characterId}/activity:
+    get:
+      tags:
+        - Characters
+      summary: Получить историю активности персонажа
+      operationId: getCharacterActivity
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: История активности
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterActivityResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Запросы
+    CreateCharacterRequest:
+      type: object
+      required:
+        - name
+        - characterClass
+        - origin
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Имя персонажа
+        characterClass:
+          type: string
+          enum:
+            [
+              solo,
+              nomad,
+              corpo,
+              fixer,
+              netrunner,
+              techie,
+              media,
+              rockerboy,
+              edgerunner,
+            ]
+          description: Класс персонажа
+        origin:
+          type: string
+          enum: [nomad, corpo, street_kid, edgerunner, trauma_team]
+          description: Происхождение персонажа
+        appearance:
+          $ref: "#/components/schemas/CharacterAppearance"
+        attributes:
+          $ref: "#/components/schemas/CharacterAttributes"
+
+    UpdateCharacterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Новое имя персонажа
+        appearance:
+          $ref: "#/components/schemas/CharacterAppearance"
+
+    SwitchCharacterRequest:
+      type: object
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID персонажа для активации
+
+    PurchaseSlotsRequest:
+      type: object
+      required:
+        - slotsCount
+      properties:
+        slotsCount:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Количество слотов для покупки
+
+    # Ответы
+    CharacterListResponse:
+      type: object
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: "#/components/schemas/Character"
+        totalCount:
+          type: integer
+        activeCharacterId:
+          type: string
+          format: uuid
+
+    CharacterResponse:
+      type: object
+      properties:
+        character:
+          $ref: "#/components/schemas/Character"
+
+    SwitchCharacterResponse:
+      type: object
+      properties:
+        previousCharacterId:
+          type: string
+          format: uuid
+        newCharacterId:
+          type: string
+          format: uuid
+        switchedAt:
+          type: string
+          format: date-time
+
+    PlayerSlotsResponse:
+      type: object
+      properties:
+        totalSlots:
+          type: integer
+          description: Общее количество слотов
+        usedSlots:
+          type: integer
+          description: Занятых слотов
+        availableSlots:
+          type: integer
+          description: Доступных слотов
+        canPurchaseMore:
+          type: boolean
+          description: Можно ли купить дополнительные слоты
+
+    PurchaseSlotsResponse:
+      type: object
+      properties:
+        newTotalSlots:
+          type: integer
+          description: Новое общее количество слотов
+        purchasedSlots:
+          type: integer
+          description: Купленных слотов
+        cost:
+          type: object
+          description: Стоимость покупки
+          properties:
+            currency:
+              type: string
+            amount:
+              type: number
+
+    CharacterStatsResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        stats:
+          $ref: "#/components/schemas/CharacterStats"
+        recalculatedAt:
+          type: string
+          format: date-time
+
+    CharacterActivityResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterActivity"
+        totalCount:
+          type: integer
+        hasMore:
+          type: boolean
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+
+    # Основные сущности
+    Character:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        characterClass:
+          type: string
+        origin:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        appearance:
+          $ref: "#/components/schemas/CharacterAppearance"
+        stats:
+          $ref: "#/components/schemas/CharacterStats"
+        status:
+          type: string
+          enum: [active, deleted, dead]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+
+    CharacterAppearance:
+      type: object
+      properties:
+        gender:
+          type: string
+          enum: [male, female, other]
+        hairColor:
+          type: string
+        eyeColor:
+          type: string
+        skinTone:
+          type: string
+        cyberware:
+          type: array
+          items:
+            type: string
+        tattoos:
+          type: array
+          items:
+            type: string
+
+    CharacterAttributes:
+      type: object
+      properties:
+        intelligence:
+          type: integer
+          minimum: 1
+          maximum: 10
+        reflexes:
+          type: integer
+          minimum: 1
+          maximum: 10
+        dexterity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        technology:
+          type: integer
+          minimum: 1
+          maximum: 10
+        cool:
+          type: integer
+          minimum: 1
+          maximum: 10
+        willpower:
+          type: integer
+          minimum: 1
+          maximum: 10
+        luck:
+          type: integer
+          minimum: 1
+          maximum: 10
+        movement:
+          type: integer
+          minimum: 1
+          maximum: 10
+        body:
+          type: integer
+          minimum: 1
+          maximum: 10
+        empathy:
+          type: integer
+          minimum: 1
+          maximum: 10
+
+    CharacterStats:
+      type: object
+      properties:
+        health:
+          type: integer
+        maxHealth:
+          type: integer
+        armor:
+          type: integer
+        actionPoints:
+          type: integer
+        humanity:
+          type: integer
+        maxHumanity:
+          type: integer
+        reputation:
+          type: integer
+        streetCred:
+          type: integer
+
+    CharacterActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        characterId:
+          type: string
+          format: uuid
+        activityType:
+          type: string
+          enum: [login, logout, combat, quest, trade, crafting, leveling]
+        description:
+          type: string
+        location:
+          type: string
+        experienceGained:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Conflict:
+      description: Конфликт данных
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    TooManyRequests:
+      description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

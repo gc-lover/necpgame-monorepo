@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -11,9 +12,19 @@ import (
 
 	"github.com/gc-lover/necpgame-monorepo/services/trade-p2p-service-go/server"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 func main() {
+	// Initialize structured logger for MMOFPS performance monitoring
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	defer logger.Sync()
+
+	logger.Info("Starting trade-p2p-service", zap.String("version", "1.0.0"))
+
 	// Database connection
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -44,6 +55,13 @@ func main() {
 
 	// Create handlers
 	handlers := server.NewHandlers(svc)
+
+	// Issue: #1637 - Initialize goroutine monitor for leak detection
+	goroutineMonitor := server.NewGoroutineMonitor(500, logger) // Max 500 goroutines for MMOFPS trade service
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	goroutineMonitor.Start(ctx)
+	defer goroutineMonitor.Stop()
 
 	// Create HTTP server
 	addr := os.Getenv("HTTP_ADDR")

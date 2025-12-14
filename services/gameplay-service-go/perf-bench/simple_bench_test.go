@@ -171,11 +171,11 @@ func BenchmarkGCPressure(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Simulate JSON processing (common in APIs)
 		data := map[string]interface{}{
-			"id":        uuid.New(),
-			"type":      "combat_session",
-			"status":    "active",
-			"players":   []string{"p1", "p2", "p3", "p4", "p5"},
-			"metadata":  map[string]int{"level": 10, "score": 1000},
+			"id":       uuid.New(),
+			"type":     "combat_session",
+			"status":   "active",
+			"players":  []string{"p1", "p2", "p3", "p4", "p5"},
+			"metadata": map[string]int{"level": 10, "score": 1000},
 		}
 		_, _ = json.Marshal(data)
 

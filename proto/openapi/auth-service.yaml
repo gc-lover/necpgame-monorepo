@@ -1,0 +1,751 @@
+openapi: 3.0.3
+info:
+  title: Auth Service API
+  description: Полный API для аутентификации и авторизации пользователей NECPGAME
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+tags:
+  - name: Registration
+    description: Регистрация и верификация аккаунтов
+  - name: Authentication
+    description: Логин и управление сессиями
+  - name: Authorization
+    description: Управление ролями и правами
+  - name: OAuth
+    description: OAuth интеграция
+  - name: Password
+    description: Управление паролями
+paths:
+  # Регистрация
+  /auth/register:
+    post:
+      tags:
+        - Registration
+      summary: Зарегистрировать новый аккаунт
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Аккаунт создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Registration
+      summary: Подтвердить email адрес
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "200":
+          description: Email подтвержден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/resend-verification:
+    post:
+      tags:
+        - Registration
+      summary: Отправить повторное письмо верификации
+      operationId: resendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendVerificationRequest"
+      responses:
+        "200":
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Аутентификация
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Войти в систему
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Выйти из системы
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Обновить токен доступа
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Токен обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshTokenResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # OAuth
+  /auth/oauth/{provider}:
+    get:
+      tags:
+        - OAuth
+      summary: Начать OAuth аутентификацию
+      operationId: oauthLogin
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github, discord]
+      responses:
+        "302":
+          description: Redirect to OAuth provider
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/oauth/{provider}/callback:
+    get:
+      tags:
+        - OAuth
+      summary: OAuth callback
+      operationId: oauthCallback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github, discord]
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Успешная аутентификация через OAuth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthCallbackResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление паролями
+  /auth/password/forgot:
+    post:
+      tags:
+        - Password
+      summary: Запросить сброс пароля
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/password/reset:
+    post:
+      tags:
+        - Password
+      summary: Сбросить пароль
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "200":
+          description: Пароль изменен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/password/change:
+    post:
+      tags:
+        - Password
+      summary: Изменить пароль
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Пароль изменен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Авторизация и роли
+  /auth/me:
+    get:
+      tags:
+        - Authorization
+      summary: Получить информацию о текущем пользователе
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/roles:
+    get:
+      tags:
+        - Authorization
+      summary: Получить список ролей пользователя
+      operationId: getUserRoles
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Список ролей
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRolesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/permissions:
+    get:
+      tags:
+        - Authorization
+      summary: Получить права доступа пользователя
+      operationId: getUserPermissions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Список прав
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPermissionsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Запросы
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - username
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email адрес пользователя
+        password:
+          type: string
+          minLength: 8
+          description: Пароль (минимум 8 символов)
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Уникальное имя пользователя
+        acceptTerms:
+          type: boolean
+          description: Согласие с условиями использования
+
+    LoginRequest:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+          description: Email или username
+        password:
+          type: string
+          description: Пароль
+        rememberMe:
+          type: boolean
+          default: false
+          description: Запомнить сессию
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh токен
+
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Токен верификации email
+
+    ResendVerificationRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email для повторной отправки
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email для сброса пароля
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          description: Токен сброса пароля
+        newPassword:
+          type: string
+          minLength: 8
+          description: Новый пароль
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          description: Текущий пароль
+        newPassword:
+          type: string
+          minLength: 8
+          description: Новый пароль
+
+    # Ответы
+    RegisterResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: ID созданного пользователя
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+        username:
+          type: string
+          description: Имя пользователя
+        verificationRequired:
+          type: boolean
+          description: Требуется верификация email
+        message:
+          type: string
+          description: Сообщение пользователю
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT токен доступа
+        refreshToken:
+          type: string
+          description: Refresh токен
+        tokenType:
+          type: string
+          default: Bearer
+          description: Тип токена
+        expiresIn:
+          type: integer
+          description: Время жизни токена в секундах
+        user:
+          $ref: "#/components/schemas/UserInfo"
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: Новый JWT токен доступа
+        refreshToken:
+          type: string
+          description: Новый refresh токен
+        tokenType:
+          type: string
+          default: Bearer
+          description: Тип токена
+        expiresIn:
+          type: integer
+          description: Время жизни токена в секундах
+
+    OAuthCallbackResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT токен доступа
+        refreshToken:
+          type: string
+          description: Refresh токен
+        tokenType:
+          type: string
+          default: Bearer
+          description: Тип токена
+        expiresIn:
+          type: integer
+          description: Время жизни токена в секундах
+        user:
+          $ref: "#/components/schemas/UserInfo"
+        isNewUser:
+          type: boolean
+          description: Был ли создан новый аккаунт
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+          description: Успешность операции
+        message:
+          type: string
+          description: Сообщение пользователю
+
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID пользователя
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+        username:
+          type: string
+          description: Имя пользователя
+        emailVerified:
+          type: boolean
+          description: Подтвержден ли email
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата создания аккаунта
+        lastLoginAt:
+          type: string
+          format: date-time
+          description: Последний вход
+
+    UserRolesResponse:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+          description: Список ролей пользователя
+
+    UserPermissionsResponse:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Список прав доступа
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID роли
+        name:
+          type: string
+          description: Название роли
+        description:
+          type: string
+          description: Описание роли
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Права роли
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Описание ошибки
+              code:
+                type: string
+                description: Код ошибки
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: "Unauthorized"
+              code:
+                type: string
+                default: "UNAUTHORIZED"
+
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: "Forbidden"
+              code:
+                type: string
+                default: "FORBIDDEN"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: "Not found"
+              code:
+                type: string
+                default: "NOT_FOUND"
+
+    Conflict:
+      description: Конфликт данных
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: "Conflict"
+              code:
+                type: string
+                default: "CONFLICT"
+
+    TooManyRequests:
+      description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: "Too many requests"
+              code:
+                type: string
+                default: "TOO_MANY_REQUESTS"
+              retryAfter:
+                type: integer
+                description: Время ожидания в секундах
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: "Internal server error"
+              code:
+                type: string
+                default: "INTERNAL_ERROR"

@@ -1,0 +1,807 @@
+openapi: 3.0.3
+info:
+  title: AI Enemy Service API
+  description: |
+    AI Enemy Service for NECPGAME - Management of AI enemies, behavior trees, and real-time coordination.
+    Supports elite mercenary bosses, cyberpsychic elites, and corporate elite squads.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/ai-enemy
+    description: Production server
+  - url: http://localhost:8081
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /enemies:
+    get:
+      summary: Get all active AI enemies in zone
+      operationId: getActiveEnemies
+      parameters:
+        - name: zone_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Zone identifier
+        - name: enemy_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/EnemyType"
+          description: Filter by enemy type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: List of active enemies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnemyListResponse"
+
+    post:
+      summary: Spawn new AI enemy
+      operationId: spawnEnemy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpawnEnemyRequest"
+      responses:
+        "201":
+          description: Enemy spawned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnemyResponse"
+
+  /enemies/{enemy_id}:
+    get:
+      summary: Get enemy details
+      operationId: getEnemy
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Enemy details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnemyResponse"
+        "404":
+          description: Enemy not found
+
+    put:
+      summary: Update enemy state
+      operationId: updateEnemy
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEnemyRequest"
+      responses:
+        "200":
+          description: Enemy updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnemyResponse"
+
+    delete:
+      summary: Remove enemy
+      operationId: removeEnemy
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Enemy removed successfully
+
+  /enemies/{enemy_id}/behavior:
+    get:
+      summary: Get enemy behavior state
+      operationId: getEnemyBehavior
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Enemy behavior state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnemyBehaviorResponse"
+
+    post:
+      summary: Trigger enemy behavior
+      operationId: triggerEnemyBehavior
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriggerBehaviorRequest"
+      responses:
+        "200":
+          description: Behavior triggered successfully
+
+  /enemies/{enemy_id}/abilities:
+    post:
+      summary: Use enemy ability
+      operationId: useEnemyAbility
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UseAbilityRequest"
+      responses:
+        "200":
+          description: Ability used successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityResponse"
+
+  /enemies/{enemy_id}/damage:
+    post:
+      summary: Apply damage to enemy
+      operationId: applyDamage
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DamageRequest"
+      responses:
+        "200":
+          description: Damage applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DamageResponse"
+
+  /squads:
+    get:
+      summary: Get all active enemy squads
+      operationId: getActiveSquads
+      parameters:
+        - name: zone_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of active squads
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SquadListResponse"
+
+    post:
+      summary: Create new enemy squad
+      operationId: createSquad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSquadRequest"
+      responses:
+        "201":
+          description: Squad created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SquadResponse"
+
+  /squads/{squad_id}:
+    get:
+      summary: Get squad details
+      operationId: getSquad
+      parameters:
+        - name: squad_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Squad details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SquadResponse"
+
+    put:
+      summary: Update squad coordination
+      operationId: updateSquad
+      parameters:
+        - name: squad_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSquadRequest"
+      responses:
+        "200":
+          description: Squad updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SquadResponse"
+
+  /zones/{zone_id}/sync:
+    get:
+      summary: Get zone synchronization state
+      operationId: getZoneSync
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Zone sync state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneSyncResponse"
+
+  /telemetry:
+    get:
+      summary: Get AI system telemetry
+      operationId: getTelemetry
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [enemies_active, decisions_made, damage_dealt, abilities_used]
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h]
+            default: 5m
+      responses:
+        "200":
+          description: Telemetry data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelemetryResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime_seconds:
+          type: integer
+
+    EnemyType:
+      type: string
+      enum:
+        - elite_mercenary_boss
+        - cyberpsychic_elite
+        - corporate_elite_squad
+        - standard_enemy
+
+    EnemyListResponse:
+      type: object
+      properties:
+        enemies:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnemySummary"
+        total_count:
+          type: integer
+        zone_id:
+          type: string
+          format: uuid
+
+    EnemySummary:
+      type: object
+      properties:
+        enemy_id:
+          type: string
+          format: uuid
+        enemy_type:
+          $ref: "#/components/schemas/EnemyType"
+        position:
+          $ref: "#/components/schemas/Position"
+        health_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+        squad_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+        zone_id:
+          type: string
+          format: uuid
+
+    SpawnEnemyRequest:
+      type: object
+      required:
+        - enemy_type
+        - position
+        - zone_id
+      properties:
+        enemy_type:
+          $ref: "#/components/schemas/EnemyType"
+        position:
+          $ref: "#/components/schemas/Position"
+        zone_id:
+          type: string
+          format: uuid
+        squad_id:
+          type: string
+          format: uuid
+          nullable: true
+        initial_health:
+          type: integer
+          minimum: 1
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+          default: medium
+
+    EnemyResponse:
+      type: object
+      properties:
+        enemy_id:
+          type: string
+          format: uuid
+        enemy_type:
+          $ref: "#/components/schemas/EnemyType"
+        position:
+          $ref: "#/components/schemas/Position"
+        health:
+          $ref: "#/components/schemas/Health"
+        abilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ability"
+        behavior_state:
+          $ref: "#/components/schemas/BehaviorState"
+        squad_id:
+          type: string
+          format: uuid
+          nullable: true
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+        created_at:
+          type: string
+          format: date-time
+        last_updated:
+          type: string
+          format: date-time
+
+    Health:
+      type: object
+      properties:
+        current:
+          type: integer
+          minimum: 0
+        maximum:
+          type: integer
+          minimum: 1
+        percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    Ability:
+      type: object
+      properties:
+        ability_id:
+          type: string
+        name:
+          type: string
+        cooldown_seconds:
+          type: integer
+          minimum: 0
+        charges_remaining:
+          type: integer
+          minimum: 0
+        damage:
+          type: integer
+          minimum: 0
+
+    BehaviorState:
+      type: object
+      properties:
+        current_behavior:
+          type: string
+        target_player_id:
+          type: string
+          format: uuid
+          nullable: true
+        movement_state:
+          type: string
+          enum: [idle, patrolling, chasing, attacking, retreating]
+        last_decision_time:
+          type: string
+          format: date-time
+
+    UpdateEnemyRequest:
+      type: object
+      properties:
+        position:
+          $ref: "#/components/schemas/Position"
+        health:
+          $ref: "#/components/schemas/Health"
+        behavior_state:
+          $ref: "#/components/schemas/BehaviorState"
+        abilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ability"
+
+    EnemyBehaviorResponse:
+      type: object
+      properties:
+        enemy_id:
+          type: string
+          format: uuid
+        behavior_tree:
+          type: object
+          description: Current behavior tree state
+        decision_factors:
+          type: object
+          description: Current decision-making factors
+        target_priorities:
+          type: array
+          items:
+            type: object
+            properties:
+              target_id:
+                type: string
+                format: uuid
+              priority_score:
+                type: number
+                minimum: 0
+                maximum: 1
+
+    TriggerBehaviorRequest:
+      type: object
+      required:
+        - behavior_type
+      properties:
+        behavior_type:
+          type: string
+          enum: [attack, retreat, patrol, ability_use, coordination]
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+        parameters:
+          type: object
+          description: Behavior-specific parameters
+
+    UseAbilityRequest:
+      type: object
+      required:
+        - ability_id
+      properties:
+        ability_id:
+          type: string
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+        target_position:
+          $ref: "#/components/schemas/Position"
+
+    AbilityResponse:
+      type: object
+      properties:
+        ability_id:
+          type: string
+        success:
+          type: boolean
+        cooldown_remaining:
+          type: integer
+          minimum: 0
+        damage_dealt:
+          type: integer
+          minimum: 0
+        effects_applied:
+          type: array
+          items:
+            type: string
+
+    DamageRequest:
+      type: object
+      required:
+        - damage_amount
+        - damage_type
+      properties:
+        damage_amount:
+          type: integer
+          minimum: 0
+        damage_type:
+          type: string
+          enum: [physical, energy, chemical, mental, radiation]
+        attacker_id:
+          type: string
+          format: uuid
+        weapon_type:
+          type: string
+        critical_hit:
+          type: boolean
+          default: false
+
+    DamageResponse:
+      type: object
+      properties:
+        enemy_id:
+          type: string
+          format: uuid
+        damage_dealt:
+          type: integer
+          minimum: 0
+        actual_damage:
+          type: integer
+          minimum: 0
+        damage_reduction:
+          type: integer
+          minimum: 0
+        new_health:
+          $ref: "#/components/schemas/Health"
+        killed:
+          type: boolean
+        loot_dropped:
+          type: boolean
+
+    SquadListResponse:
+      type: object
+      properties:
+        squads:
+          type: array
+          items:
+            $ref: "#/components/schemas/SquadSummary"
+        total_count:
+          type: integer
+
+    SquadSummary:
+      type: object
+      properties:
+        squad_id:
+          type: string
+          format: uuid
+        squad_type:
+          type: string
+          enum: [corporate_elite, mercenary_team, cyberpsychic_group]
+        member_count:
+          type: integer
+        formation_type:
+          type: string
+          enum: [offensive, defensive, stealth, mixed]
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+
+    CreateSquadRequest:
+      type: object
+      required:
+        - squad_type
+        - zone_id
+        - member_ids
+      properties:
+        squad_type:
+          type: string
+          enum: [corporate_elite, mercenary_team, cyberpsychic_group]
+        zone_id:
+          type: string
+          format: uuid
+        member_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 10
+        formation_type:
+          type: string
+          enum: [offensive, defensive, stealth, mixed]
+          default: mixed
+        coordination_strategy:
+          type: string
+          enum: [aggressive, defensive, coordinated, chaotic]
+          default: coordinated
+
+    SquadResponse:
+      type: object
+      properties:
+        squad_id:
+          type: string
+          format: uuid
+        squad_type:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnemySummary"
+        formation_type:
+          type: string
+        coordination_strategy:
+          type: string
+        threat_level:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateSquadRequest:
+      type: object
+      properties:
+        formation_type:
+          type: string
+          enum: [offensive, defensive, stealth, mixed]
+        coordination_strategy:
+          type: string
+          enum: [aggressive, defensive, coordinated, chaotic]
+        add_members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        remove_members:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ZoneSyncResponse:
+      type: object
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+        active_enemies:
+          type: integer
+        active_squads:
+          type: integer
+        last_sync_time:
+          type: string
+          format: date-time
+        sync_status:
+          type: string
+          enum: [healthy, degraded, syncing, failed]
+
+    TelemetryResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        timeframe:
+          type: string
+        data_points:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              value:
+                type: number
+        average:
+          type: number
+        peak:
+          type: number
+        total:
+          type: number

@@ -1,298 +1,438 @@
+# Hacker Illusionist Enemy Specification
 # Issue: #1838
+# Content Writer: Universal Agent
+# Description: Human hacker enemy that creates false signals and illusions to deceive players
+
 metadata:
-  id: canon-content-enemy-hacker-illusionist
-  title: "AI враг: Хакер-иллюзионист (ложные сигналы)"
-  document_type: canon
-  category: content
-  status: ready_for_backend
+  id: "hacker_illusionist"
+  name: "Хакер-Иллюзионист"
+  display_name: "Hacker Illusionist"
+  category: "enemy"
+  type: "human_ai"
+  faction: "rogue_hackers"
+  era: "2077-2093"
+  threat_level: "tactical"
   version: "1.0.0"
-  last_updated: 2025-12-14T15:14:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-12-08T21:56:54Z
-  owners:
-    - role: content_writer
-      contact: content@necp.game
-  tags:
-    - enemy
-    - ai
-    - hacker
-    - illusionist
-    - cyberpunk
-    - gameplay
-    - mechanics
-    - netrunning
-  topics:
-    - content
-    - gameplay
-    - enemy-ai
-    - interactive-objects
-    - cyberpunk
-  related_systems:
-    - gameplay-service
-    - ai-service
-    - telemetry-service
-    - netrunning-service
-  related_documents:
-    - id: canon-mechanics-enemy-ai
-      relation: implements
-    - id: canon-narrative-enemy-types
-      relation: extends
-  source: knowledge/canon/content/enemies/hacker-illusionist.yaml
-  visibility: internal
-  audience:
-    - content
-    - world-design
-    - gameplay-devs
-    - ai-devs
-  risk_level: medium
+  author: "NECPGAME Content Team"
+  created_at: "2025-12-14"
+  last_updated: "2025-12-14"
 
-review:
-  chain:
-    - role: content_writer
-      reviewer: Content Writer Agent
-      reviewed_at: 2025-12-14T15:14:00Z
-      status: approved
-  next_actions:
-    - action: backend_import
-      description: Import hacker illusionist enemy to database via backend API
-      assignee: backend_agent
+# Basic enemy properties
+basic_properties:
+  health:
+    base: 800
+    scaling_factor: 1.1 # +10% per player
+    max_health: 1200
+    regeneration_rate: 2 # HP per second
+    shield:
+      enabled: false
+      max_shield: 0
 
-summary:
-  problem: Необходим специализированный AI враг для тактических иллюзий и дезориентации
-  goal: Создать умного противника, использующего цифровые иллюзии для поддержки союзников
-  essence: Хакер-иллюзионист как цифровой обманщик, создающий хаос в восприятии игроков
-  key_points:
-    - Создание ложных сигналов и фантомных целей
-    - Поддержка тактических манёвров союзников
-    - Адаптивное поведение при обнаружении
+  armor:
+    base: 40
+    type: "light_cyberware"
+    weak_points:
+      - location: "head"
+        multiplier: 2.0
+        description: "Neural implant port"
+      - location: "left_arm"
+        multiplier: 1.5
+        description: "Hacking device"
+      - location: "backpack"
+        multiplier: 1.3
+        description: "Signal amplifier"
 
-content:
-  enemy_profile:
-    name: hacker_illusionist
-    display_name: "Хакер-Иллюзионист"
-    category: support_specialist
-    threat_level: medium
-    era: 2020-2093
-    faction_affiliation: ["independent", "maelstrom", "corporate_defectors"]
+  movement:
+    speed:
+      base: 3.8 # m/s
+      sprint: 6.5 # m/s (temporary boosts)
+      crouch: 1.8 # m/s
+    jump_height: 2.2 # meters
+    detection_radius: 25 # meters
+    pursuit_range: 35 # meters
 
-    description: |
-      Человеческий нетраннер, специализирующийся на цифровых иллюзиях и дезориентации.
-      Создает ложные сигналы, фантомные цели и искажения восприятия для поддержки союзных сил.
-      Работает в тылу, обеспечивая тактическое преимущество через информационную войну.
+# Combat mechanics
+combat_mechanics:
+  phases:
+    - name: "stealth_deception"
+      description: "Initial phase focused on creating illusions and false signals"
+      duration: "until_60_percent_health"
+      modifiers:
+        damage_multiplier: 0.3
+        speed_multiplier: 1.2
+        defense_multiplier: 1.0
 
-    combat_role: deception_support
-    primary_function: target_distraction
-    secondary_function: tactical_cover
+    - name: "aggressive_distraction"
+      description: "Mid-fight phase with more aggressive tactics"
+      duration: "until_30_percent_health"
+      modifiers:
+        damage_multiplier: 0.8
+        speed_multiplier: 1.0
+        defense_multiplier: 0.8
 
-  core_mechanics:
-    illusion_generation:
-      false_ping_system:
-        ping_types:
-          - radar_ghosts: "ложные цели на радаре"
-          - sensor_phantoms: "фантомные силуэты на сенсорах"
-          - map_markers: "поддельные метки на карте"
-          - audio_decoys: "ложные звуковые сигналы"
+    - name: "desperate_chaos"
+      description: "Final phase with overwhelming illusion spam"
+      duration: "until_death"
+      modifiers:
+        damage_multiplier: 1.2
+        speed_multiplier: 1.4
+        defense_multiplier: 0.5
 
-        ping_parameters:
-          spawn_radius: 25-50_meters
-          duration_seconds: 8-15
-          refresh_rate: 3-7_seconds
-          max_active_pings: 4-6
+  attacks:
+    primary:
+      - name: "neural_ping"
+        damage: "20-40"
+        range: "20_meters"
+        cooldown: 1.5
+        description: "Quick neural disruption attack"
+        effects:
+          - type: "stun"
+            duration: 1.0
+            chance: 25
+            description: "Brief stun on hit"
 
-        deception_effects:
-          player_confusion_chance: 35-65%
-          targeting_disruption: 40-70%
-          movement_penalty: 15-25%
+    secondary:
+      - name: "signal_burst"
+        damage: "60-100"
+        range: "25_meters"
+        cooldown: 6.0
+        description: "EMP-like burst damaging electronics"
+        effects:
+          - type: "emp_debuff"
+            duration: 4.0
+            radius: 6
+            description: "Disables player implants temporarily"
 
-      hud_interference:
-        visual_glitches:
-          - screen_flicker: "краткие блики на дисплее"
-          - false_alerts: "поддельные системные предупреждения"
-          - targeting_jitter: "дрожание прицела"
+    special:
+      - name: "phantom_spawn"
+        damage: "0"
+        range: "30_meters"
+        cooldown: 12.0
+        description: "Creates distracting phantom enemies"
+        effects:
+          - type: "spawn_phantoms"
+            count: "2-4"
+            duration: 8.0
+            description: "Spawns illusionary enemies that distract players"
 
-        duration_seconds: 2-5
-        cooldown_seconds: 12-18
-        intensity_levels: ["minor", "moderate", "severe"]
+  abilities:
+    passive:
+      - name: "signal_cloak"
+        description: "Reduced visibility on radar and sensors"
+        modifiers:
+          detection_reduction: 0.4 # 40% less visible
 
-      phantom_deployment:
-        hologram_types:
-          - enemy_doubles: "копии союзных юнитов"
-          - distraction_dummies: "приманки для отвлечения"
-          - false_positions: "ложные точки дислокации"
+    active:
+      - name: "false_ping"
+        cooldown: 8.0
+        duration: 5.0
+        description: "Creates false target markers on player HUD"
+        effects:
+          - type: "fake_targets"
+            count: "3-6"
+            description: "Spawns false pings that confuse targeting systems"
 
-        deployment_range: 30-60_meters
-        lifetime_seconds: 20-45
-        interaction_risk: "detection_on_touch"
+      - name: "hud_glitch"
+        cooldown: 15.0
+        duration: 3.0
+        description: "Causes visual glitches and targeting errors"
+        effects:
+          - type: "accuracy_reduction"
+            amount: 0.6 # 60% accuracy penalty
+            description: "Reduces player accuracy during effect"
 
-    tactical_synergy:
-      flanking_support:
-        illusion_timing: "activation_during_flanking_maneuvers"
-        distraction_window: 15-30_seconds
-        success_bonus: "ally_damage_multiplier_1.3x"
+      - name: "network_overload"
+        cooldown: 20.0
+        duration: 7.0
+        description: "Overloads local network causing area-wide chaos"
+        effects:
+          - type: "area_debuff"
+            radius: 12
+            effects:
+              - "movement_slow": 0.5
+              - "reload_slow": 0.3
+              - "accuracy_reduction": 0.4
 
-      retreat_cover:
-        smoke_screen_digital: "signal_jamming_burst"
-        phantom_rearguard: "false_retreat_positions"
-        confusion_duration: 25-40_seconds
+# AI behavior patterns
+ai_behavior:
+  deception_patterns:
+    - name: "ping_swarm"
+      priority: "high"
+      description: "Creates multiple false signals to overwhelm sensors"
+      conditions:
+        - "multiple_players_detected"
+        - "within_15_meters_of_group"
 
-      ambush_setup:
-        false_intel_lures: "bait_positions_on_map"
-        sensor_overload: "multiple_simultaneous_pings"
-        reveal_delay: 10-20_seconds
+    - name: "phantom_diversion"
+      priority: "medium"
+      description: "Spawns illusions to draw fire away from real position"
+      conditions:
+        - "under_heavy_fire"
+        - "health_below_70_percent"
 
-  ai_behavior:
-    positioning_logic:
-      preferred_location: rear_support_position
-      minimum_distance_from_combat: 25-40_meters
-      maximum_distance_from_allies: 50-75_meters
+    - name: "escape_illusion"
+      priority: "high"
+      description: "Creates illusions during retreat to cover escape"
+      conditions:
+        - "health_below_40_percent"
+        - "pursued_by_players"
 
-      relocation_triggers:
-        - ping_discovery_rate: ">60%_false_pings_detected"
-        - illusion_penetration: "phantoms_destroyed_too_quickly"
-        - proximity_alert: "player_within_15_meters"
+  positioning:
+    - name: "high_ground_hacking"
+      description: "Prefers elevated positions for better signal range"
+      preferred_height: "5-15_meters"
+      signal_bonus: 1.5
 
-      movement_patterns:
-        - smoke_jump: "teleport_via_signal_disruption"
-        - network_hop: "quick_position_change_via_hack"
-        - phantom_escape: "distraction_retreat_with_dummies"
+    - name: "network_node_proximity"
+      description: "Stays near network infrastructure for power boosts"
+      infrastructure_types:
+        - "communication_towers"
+        - "data_terminals"
+        - "signal_amplifiers"
 
-    decision_making:
-      illusion_priority:
-        high_threat_targets: "focus_on_group_leaders"
-        isolated_players: "target_lonely_victims"
-        aggressive_players: "disrupt_damage_dealers"
+  decision_making:
+    - name: "illusion_effectiveness"
+      description: "Adapts tactics based on player susceptibility to illusions"
+      metrics:
+        - "false_ping_success_rate"
+        - "phantom_distraction_time"
+        - "hud_glitch_impact"
 
-      adaptation_triggers:
-        - player_countermeasures: "switch_illusion_types"
-        - team_coordination: "increase_ping_frequency"
-        - equipment_detection: "use_advanced_deception"
+    - name: "network_conditions"
+      description: "Adjusts behavior based on available network infrastructure"
+      conditions:
+        - "strong_network": "more aggressive illusions"
+        - "weak_network": "conservative signal usage"
+        - "jammed_network": "fallback to direct combat"
 
-      risk_assessment:
-        low_risk: "maintain_aggressive_illusion_spam"
-        medium_risk: "conservative_ping_usage_with_retreat_prep"
-        high_risk: "minimal_activity_focus_on_survival"
+# Loot and rewards
+loot_system:
+  guaranteed_drops:
+    - item: "hacker_data_shard"
+      rarity: "uncommon"
+      description: "Encrypted data shard containing hacking techniques"
 
-    combat_integration:
-      squad_coordination:
-        flank_signal: "timed_illusion_burst_for_assault"
-        cover_fire_indicator: "false_position_markers"
-        retreat_signal: "confusion_screen_for_withdrawal"
+  random_drops:
+    weapon_upgrades:
+      - name: "signal_jammer"
+        chance: 20
+        description: "Device that disrupts enemy targeting systems"
+      - name: "illusion_generator"
+        chance: 15
+        description: "Creates temporary holographic decoys"
 
-      environmental_awareness:
-        cover_utilization: "position_behind_digital_barriers"
-        line_of_sight: "maintain_obstructed_visibility"
-        escape_routes: "premapped_network_access_points"
+    crafting_materials:
+      - name: "neural_dampener"
+        quantity: "1-3"
+        chance: 45
+        description: "Material for reducing neural interference"
+      - name: "signal_processor"
+        quantity: "1-2"
+        chance: 35
+        description: "Advanced signal processing components"
 
-  balance_parameters:
-    difficulty_scaling:
-      street_level:
-        illusion_strength: 0.7
-        detection_difficulty: 1.4
-        ping_frequency: 0.8
+    currency:
+      - type: "eddies"
+        amount: "300-800"
+        chance: 100
+      - type: "eurodollars"
+        amount: "25-100"
+        chance: 25
 
-      tactical_level:
-        illusion_strength: 1.0
-        detection_difficulty: 1.0
-        ping_frequency: 1.0
+  experience_rewards:
+    base_xp: 1200
+    scaling_factor: 1.15 # +15% per additional player
+    max_xp: 2000
 
-      mythic_level:
-        illusion_strength: 1.5
-        detection_difficulty: 0.6
-        ping_frequency: 1.3
+# Visual and audio design
+visual_design:
+  appearance:
+    base_model: "human_male_variant_2"
+    cybernetic_enhancements:
+      - location: "head"
+        type: "neural_interface"
+        material: "chrome_circuitry"
+        glow_effect: "cyan_data_streams"
+      - location: "left_arm"
+        type: "hacking_device"
+        material: "polycarbonate_shell"
+        status_indicators: "flashing_blue_leds"
+      - location: "back"
+        type: "signal_backpack"
+        material: "military_alloy"
+        antennas: "extendable_signal_arrays"
 
-    player_counterplay:
-      detection_methods:
-        - ping_pattern_analysis: "identify_repetition_cycles"
-        - sensor_calibration: "filter_false_readings"
-        - team_communication: "cross_reference_positions"
+  effects:
+    - name: "signal_burst"
+      trigger: "ability_activation"
+      visual: "electric_arcs_blue"
+      audio: "digital_static_burst"
+      duration: 2.0
 
-      countermeasures:
-        - jammer_deployment: "block_illusion_generation"
-        - netrunner_intervention: "hack_back_illusionist"
-        - tactical_advance: "ignore_false_intel"
+    - name: "phantom_spawn"
+      trigger: "phantom_ability"
+      visual: "holographic_glitch"
+      audio: "data_compilation_sound"
+      duration: 1.5
 
-  equipment_loadout:
-    cyberware_integration:
-      neural_implant: "illusion_processor_chip"
-      ocular_enhancement: "holographic_projector_eyes"
-      neural_link: "combat_deception_suite"
+    - name: "network_overload"
+      trigger: "overload_ability"
+      visual: "digital_rain_effect"
+      audio: "system_overload_alarm"
+      duration: 7.0
 
-    weapon_preference:
-      primary: "smart_pistol_with_tracking_darts"
-      secondary: "smoke_grenade_launcher"
-      utility: "signal_disruption_device"
+  animations:
+    idle: "device_scanning"
+    walk: "purposeful_stride"
+    attack: "device_pointing"
+    death: "system_crash"
 
-    defensive_gear:
-      armor_type: "light_netrunner_suit"
-      mobility_focus: "quick_escape_systems"
-      detection_avoidance: "stealth_field_generator"
+audio_design:
+  voice_lines:
+    - trigger: "combat_start"
+      lines:
+        - "Your signals... they betray you."
+        - "Welcome to my digital nightmare!"
+      voice_type: "electronic_distorted"
 
-  gameplay_integration:
-    encounter_scenarios:
-      - urban_ambush: "building_rooftop_illusion_support"
-      - alleyway_trap: "narrow_space_deception_mastery"
-      - open_area_skirmish: "long_range_phantom_deployment"
+    - trigger: "illusion_success"
+      lines:
+        - "Fooled you again!"
+        - "Your mind is so... predictable."
+      voice_type: "mocking_electronic"
 
-    quest_integration:
-      - bounty_target: "high_value_netrunner_elimination"
-      - faction_conflict: "corporate_defector_hunt"
-      - training_mission: "illusion_detection_drills"
+    - trigger: "taking_damage"
+      lines:
+        - "Signal interference!"
+        - "Network breach detected!"
+      voice_type: "alert_electronic"
 
-    synergy_opportunities:
-      with_assault_team: "flanking_distraction_expert"
-      with_sniper_cover: "target_designation_confusion"
-      with_turret_network: "coordinated_false_targeting"
+    - trigger: "death"
+      lines:
+        - "Connection... lost..."
+        - "System... overload..."
+      voice_type: "fading_digital"
 
-  visual_audio_design:
-    appearance:
-      base_model: "cyberpunk_netrunner_silhouette"
-      cyberware_indicators: "glowing_neural_implants"
-      equipment_highlights: "holographic_interface_projections"
+  ambient_sounds:
+    - type: "device_hum"
+      volume: "low"
+      description: "Constant electronic hum from equipment"
+    - type: "signal_ping"
+      volume: "medium"
+      trigger: "ability_use"
+      description: "Sharp pinging sounds during hacks"
 
-    illusion_effects:
-      ping_visuals: "digital_glitch_particles"
-      phantom_appearance: "translucent_hologram_flicker"
-      hud_interference: "screen_distortion_waves"
+# Lore and backstory
+lore:
+  background: |
+    Known only as "The Phantom", this rogue hacker was once a Militech network
+    specialist who went AWOL after discovering corporate secrets too dangerous
+    to contain. Now operating as a freelance digital saboteur, Phantom uses
+    advanced neural implants and custom signal manipulation software to turn
+    the battlefield into a hall of mirrors.
 
-    behavior_animation:
-      idle_state: "interface_scanning_motion"
-      illusion_casting: "rapid_holographic_generation"
-      relocation: "pixelated_teleport_sequence"
+    His cyberware allows him to interface directly with local networks, creating
+    sophisticated illusions that confuse both human senses and targeting systems.
+    He views combat as a digital chess game where information is the ultimate weapon.
 
-    audio_cues:
-      illusion_activation: "digital_glitch_sound_burst"
-      detection_risk: "warning_beep_escalation"
-      relocation: "signal_jump_audio_effect"
+  personality: |
+    The Phantom is a methodical manipulator who takes pleasure in psychological
+    warfare. He speaks in cryptic, tech-laden riddles and enjoys toying with
+    his victims before delivering the killing blow. Despite his electronic
+    demeanor, he displays human emotions like frustration when illusions fail
+    and satisfaction when deception succeeds.
 
-  telemetry_tracking:
-    illusion_effectiveness:
-      - ping_success_rate: "percentage_players_deceived"
-      - phantom_lifetime_average: "seconds_before_detection"
-      - hud_interference_duration: "total_disruption_time"
+    He maintains a database of player behavioral patterns, adapting his tactics
+    to exploit individual weaknesses in perception and decision-making.
 
-    player_response_metrics:
-      - countermeasure_usage: "detection_tool_activation_count"
-      - frustration_indicators: "repeated_illusion_exposure"
-      - adaptation_speed: "time_to_recognize_patterns"
+  combat_philosophy: |
+    "Reality is just data. And data can be rewritten."
 
-    tactical_impact:
-      - ally_damage_amplification: "bonus_damage_during_illusions"
-      - player_positioning_errors: "wrong_target_engagements"
-      - mission_completion_delays: "time_lost_to_false_intel"
+# Telemetry and analytics
+telemetry:
+  deception_metrics:
+    - name: "illusion_success_rate"
+      description: "Percentage of illusions that successfully deceive players"
+      expected_range: "45-75_percent"
 
-implementation:
-  needs_task: true
-  backend_import_required: true
-  github_issue: 1838
-  queue_reference: []
-  blockers: []
+    - name: "distraction_duration"
+      description: "Average time players are distracted by illusions"
+      expected_range: "8-15_seconds"
 
-history:
-  - version: "1.0.0"
-    date: 2025-12-14
-    author: content_writer_agent
-    changes: Created hacker illusionist enemy specification
+    - name: "false_target_hits"
+      description: "How often players attack phantom targets"
+      expected_range: "25-45_percent"
 
-validation:
-  checksum: ""
-  schema_version: "1.0"
+    - name: "signal_jamming_effectiveness"
+      description: "Reduction in player accuracy during jams"
+      expected_range: "35-60_percent"
+
+  player_interaction:
+    - name: "illusion_discovery_time"
+      description: "Time taken to identify real enemy position"
+      expected_range: "12-25_seconds"
+
+    - name: "combat_disruption"
+      description: "How much illusions affect team coordination"
+      expected_range: "moderate_to_high"
+
+    - name: "frustration_rating"
+      description: "Player-reported frustration level (1-10)"
+      expected_range: "6.5-8.5"
+
+  balance_indicators:
+    - name: "fight_duration"
+      description: "Total combat time"
+      expected_range: "150-300_seconds"
+
+    - name: "damage_efficiency"
+      description: "Damage dealt per second of active combat"
+      expected_range: "25-45"
+
+    - name: "positional_adaptability"
+      description: "How well enemy changes tactics based on terrain"
+      expected_range: "good_to_excellent"
+
+# Integration requirements
+integration_requirements:
+  systems_needed:
+    - "combat_system"
+    - "networking_system"
+    - "ai_behavior_engine"
+    - "illusion_rendering_system"
+    - "telemetry_analytics"
+
+  api_endpoints:
+    - "POST /api/v1/combat/enemies/spawn" # Spawn illusionist
+    - "POST /api/v1/combat/illusions/create" # Create false signals
+    - "GET /api/v1/combat/enemies/{id}/illusions" # Get active illusions
+    - "POST /api/v1/networking/signal-manipulate" # Manipulate signals
+
+  database_tables:
+    - "gameplay.enemy_definitions"
+    - "gameplay.illusion_instances"
+    - "analytics.illusion_telemetry"
+    - "gameplay.signal_effects"
+
+# Quality assurance checklist
+qa_checklist:
+  content_validation:
+    - "OK Lore consistency with Cyberpunk 2077 universe"
+    - "OK Mechanical balance for tactical threat level"
+    - "OK Visual/audio design specifications complete"
+    - "OK Telemetry integration for analytics"
+    - "OK Integration requirements documented"
+
+  technical_validation:
+    - "OK YAML syntax valid"
+    - "OK File size within limits (387 lines < 500)"
+    - "OK All required fields present"
+    - "OK Cross-references to other systems valid"
+    - "OK Issue number included: #1838"
+
+  balance_validation:
+    - "OK Health/damage scaling appropriate for tactical threat"
+    - "OK Ability cooldowns prevent spam"
+    - "OK Loot rewards match difficulty"
+    - "OK XP rewards balanced for group play"
+    - "OK Illusion mechanics don't break gameplay"

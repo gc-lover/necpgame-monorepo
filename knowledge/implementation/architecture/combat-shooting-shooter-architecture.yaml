@@ -1,0 +1,345 @@
+# Issue: #1638 - Combat Shooting Shooter Update Architecture
+
+metadata:
+  id: architecture-combat-shooting-shooter-update
+  title: "Combat Shooting — Shooter Paradigm Architecture"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-14T14:00:00Z
+  concept_approved: false
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - combat
+    - shooting
+    - shooter
+    - ttk
+    - ballistics
+  topics:
+    - combat-systems
+    - real-time-gaming
+    - weapon-balance
+  related_systems:
+    - gameplay-service
+    - character-service
+    - analytics-service
+  related_documents:
+    - id: mechanics-combat-shooting
+      relation: implements
+    - id: combat-shooter-core
+      relation: extends
+    - id: combat-session-system-part1
+      relation: integrates
+
+summary:
+  problem: "Требуется обновление архитектуры стрельбы для перехода от MMORPG к shooter парадигме с детальными TTK, баллистикой и оружием"
+  goal: "Спроектировать масштабируемую архитектуру боевой системы для MMOFPS с 60+ FPS и P99 <50ms"
+  essence: "Микросервисная архитектура с event-driven интеграцией, server-authoritative моделью и оптимизациями для high-throughput"
+  key_points:
+    - Server-authoritative модель с client-side prediction
+    - Event-driven архитектура через Kafka для телеметрии
+    - Масштабируемые сервисы с horizontal scaling
+    - Детальная баллистика с raycasting и hit registration
+
+content:
+  sections:
+    - id: system-overview
+      title: "Обзор системы"
+      body: |
+        ## Shooter Paradigm Transition
+
+        Combat Shooting переходит от MMORPG dice-roll механик к полноценной 3D-shooter системе:
+
+        ### Ключевые изменения:
+        - **От dice-roll к баллистике**: Реальная физика пуль, raycasting, hit registration
+        - **От abstract damage к detailed TTK**: Weapon-specific time-to-kill с учетом дистанции, accuracy
+        - **От turn-based к real-time**: 60-128 Hz tick rate, client-side prediction
+        - **От simplified к complex weapons**: Множество типов оружия с уникальными параметрами
+
+        ### Архитектурные принципы:
+        - **Server-authoritative**: Сервер контролирует все боевые действия
+        - **Event-driven**: Все события через Kafka для analytics и quest integration
+        - **Horizontally scalable**: Stateless handlers + stateful session managers
+        - **Low latency**: P99 <50ms для всех операций
+
+    - id: weapon-system
+      title: "Система оружия"
+      body: |
+        ## Weapon Categories
+
+        ### Primary Weapons (Основное оружие)
+        - **Assault Rifles**: AR-15 платформа с различными калибрами
+        - **SMGs**: Высокий fire rate, low recoil, close-quarters
+        - **Shotguns**: High damage at close range, spread patterns
+        - **Sniper Rifles**: Long-range precision, bolt-action mechanics
+        - **LMGs**: Sustained fire, high magazine capacity
+
+        ### Secondary Weapons (Второстепенное)
+        - **Pistols**: Backup weapons, high accuracy
+        - **Machine Pistols**: High fire rate, low damage
+        - **Revolvers**: High damage, slow fire rate
+
+        ### Special Weapons (Специальное)
+        - **Grenade Launchers**: Area denial, explosive damage
+        - **Rocket Launchers**: Heavy anti-vehicle, splash damage
+        - **Railguns**: Energy weapons, high penetration
+
+        ## Weapon Parameters
+
+        ### Core Stats:
+        - **Damage**: Base damage per shot
+        - **Fire Rate**: Rounds per minute
+        - **Magazine Size**: Bullets per magazine
+        - **Reload Time**: Time to reload
+        - **Recoil Pattern**: Vertical/horizontal recoil
+        - **Accuracy**: Base accuracy, bloom mechanics
+
+        ### Advanced Mechanics:
+        - **Bullet Drop**: Gravity simulation
+        - **Wind Effects**: Environmental factors
+        - **Penetration**: Wall/material penetration
+        - **Ricochet**: Bullet bouncing physics
+
+    - id: ttk-system
+      title: "Time-to-Kill (TTK) система"
+      body: |
+        ## TTK Calculation
+
+        ### Base Formula:
+        ```
+        TTK = (Health / DPS) + Reload_Penalty + Positioning_Penalty
+        ```
+
+        ### Factors Affecting TTK:
+        - **Weapon DPS**: Damage × Fire Rate
+        - **Player Positioning**: Cover usage, distance
+        - **Reload Timing**: Weapon-specific reload times
+        - **Hit Accuracy**: Headshot multipliers, body part modifiers
+
+        ### Zone-Based TTK Scaling
+
+        #### PvP Arenas (Competitive):
+        - **Fast TTK**: 150-300ms average
+        - **High skill ceiling**: Precision aiming required
+        - **Counter-play**: Positioning, cover usage
+
+        #### PvP Streets (Open World):
+        - **Medium TTK**: 400-600ms average
+        - **Environmental factors**: Cover, elevation
+        - **Vehicle integration**: Drive-by shooting
+
+        #### PvE Zones:
+        - **Variable TTK**: 200-800ms based on enemy type
+        - **Scaling difficulty**: AI behavior affects effective TTK
+        - **Group mechanics**: Multiple targets, area effects
+
+    - id: ballistics-system
+      title: "Баллистическая система"
+      body: |
+        ## Physics Simulation
+
+        ### Bullet Trajectory:
+        - **Gravity**: Realistic bullet drop over distance
+        - **Drag**: Air resistance affecting velocity
+        - **Wind**: Environmental wind effects
+        - **Magnus Effect**: Bullet spin stabilization
+
+        ### Hit Registration:
+        - **Raycasting**: Server-side line-of-sight checks
+        - **Hitbox System**: Multi-part hitboxes (head, torso, limbs)
+        - **Material Penetration**: Wall thickness, armor types
+        - **Ricochet**: Angle-based bullet bouncing
+
+        ### Anti-Cheat Integration:
+        - **Position Validation**: Client position verification
+        - **Angle Validation**: View angle sanity checks
+        - **Timing Validation**: Shot timing verification
+        - **Pattern Analysis**: Aimbot detection algorithms
+
+    - id: network-architecture
+      title: "Сетевая архитектура"
+      body: |
+        ## Communication Protocols
+
+        ### PvP (Competitive):
+        - **Protocol**: UDP with reliability layer
+        - **Tick Rate**: 128 Hz (8ms intervals)
+        - **Latency Target**: <30ms P99
+        - **Bandwidth**: ~50 KB/s per player
+
+        ### PvE (Story):
+        - **Protocol**: WebSocket + UDP hybrid
+        - **Tick Rate**: 60 Hz (16ms intervals)
+        - **Latency Target**: <100ms P99
+        - **Bandwidth**: ~20 KB/s per player
+
+        ### Open World (Exploration):
+        - **Protocol**: WebSocket primary, UDP for combat
+        - **Tick Rate**: 30 Hz (33ms intervals)
+        - **Latency Target**: <150ms P99
+        - **Bandwidth**: ~10 KB/s per player
+
+        ## Server Architecture
+
+        ### Session Managers:
+        - **Stateful**: Maintain combat session state
+        - **Sharded**: session_id % num_shards
+        - **Redundant**: Active-passive failover
+
+        ### Combat Engines:
+        - **Stateless**: Pure calculation services
+        - **Horizontally scaled**: Load balancer distribution
+        - **Cached**: Hot path optimizations
+
+        ### Event Publishers:
+        - **Kafka Integration**: Async event publishing
+        - **Batch Processing**: High-throughput optimization
+        - **Reliability**: At-least-once delivery
+
+    - id: services-architecture
+      title: "Архитектура сервисов"
+      body: |
+        ## Core Services
+
+        ### gameplay-service (Combat Core):
+        - **Responsibilities**: Session management, damage calculation, state sync
+        - **Scaling**: 10-20 instances, session-sticky routing
+        - **Performance**: P99 <50ms for all operations
+
+        ### character-service (Stats):
+        - **Responsibilities**: Character stats, weapon loadouts, progression
+        - **Integration**: REST API for stat queries
+        - **Caching**: Redis with 10min TTL
+
+        ### analytics-service (Telemetry):
+        - **Responsibilities**: Combat event logging, performance metrics
+        - **Storage**: ClickHouse for time-series data
+        - **Throughput**: 100k+ events/sec
+
+        ### security-service (Anti-Cheat):
+        - **Responsibilities**: Action validation, cheat detection
+        - **Processing**: Real-time pattern analysis
+        - **Alerting**: Automated ban systems
+
+        ## Database Schema
+
+        ### combat_weapons:
+        ```sql
+        CREATE TABLE combat_weapons (
+          id UUID PRIMARY KEY,
+          weapon_type VARCHAR(50),
+          base_damage INT,
+          fire_rate INT,
+          magazine_size INT,
+          reload_time_ms INT,
+          recoil_pattern JSONB,
+          created_at TIMESTAMP
+        );
+        ```
+
+        ### combat_shots:
+        ```sql
+        CREATE TABLE combat_shots (
+          id BIGSERIAL PRIMARY KEY,
+          session_id UUID,
+          shooter_id UUID,
+          weapon_id UUID,
+          hit_position POINT,
+          damage_dealt INT,
+          hit_part VARCHAR(20),
+          timestamp TIMESTAMP,
+          server_verified BOOLEAN
+        );
+        ```
+
+        ### combat_damage_events:
+        ```sql
+        CREATE TABLE combat_damage_events (
+          id BIGSERIAL PRIMARY KEY,
+          session_id UUID,
+          attacker_id UUID,
+          victim_id UUID,
+          weapon_id UUID,
+          damage_amount INT,
+          damage_type VARCHAR(20),
+          was_fatal BOOLEAN,
+          timestamp TIMESTAMP
+        );
+        ```
+
+    - id: performance-targets
+      title: "Цели производительности"
+      body: |
+        ## Latency Requirements
+
+        ### Critical Path (<10ms):
+        - Hit registration validation
+        - Damage calculation
+        - State synchronization
+
+        ### Fast Path (<50ms):
+        - Session state updates
+        - Inventory changes
+        - Progression updates
+
+        ### Normal Path (<200ms):
+        - Analytics processing
+        - Match history updates
+        - Leaderboard calculations
+
+        ## Throughput Targets
+
+        ### Peak Load:
+        - 10,000 concurrent sessions
+        - 100,000 shots per minute
+        - 1,000,000 damage events per minute
+
+        ### Scaling Strategy:
+        - Horizontal scaling of stateless services
+        - Sharding of stateful session managers
+        - Redis clustering for cache
+        - Kafka partitioning for events
+
+        ## Memory Optimization
+
+        ### Hot Path Allocations:
+        - Zero allocations in damage calculation
+        - Pooled objects for frequent structs
+        - Stack allocation for temporary data
+
+        ### Cache Strategy:
+        - Weapon stats: Redis, 1hr TTL
+        - Player stats: Redis, 10min TTL
+        - Session state: Redis, 30min TTL
+
+appendix:
+  glossary:
+    - term: "TTK"
+      definition: "Time To Kill - время, необходимое для убийства противника"
+    - term: "Server Authoritative"
+      definition: "Модель, где сервер контролирует все игровые действия"
+    - term: "Client-side Prediction"
+      definition: "Предсказание действий клиента для плавного геймплея"
+
+  references:
+    - title: "Combat Shooting Mechanics"
+      url: "knowledge/mechanics/combat/combat-shooting.yaml"
+    - title: "Shooter Core Systems"
+      url: "knowledge/mechanics/combat/combat-shooter-core.yaml"
+
+implementation:
+  github_issue: 1638
+  needs_task: false
+  next_steps:
+    - "API Designer: Создать OpenAPI спецификации для weapon system"
+    - "Backend: Реализовать weapon handlers с оптимизациями"
+    - "Network: Настроить UDP/WebSocket для real-time shooting"
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-14
+    author: architect
+    changes: "Initial shooter paradigm architecture for combat shooting system"

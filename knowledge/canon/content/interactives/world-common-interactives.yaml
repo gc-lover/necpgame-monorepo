@@ -1,0 +1,486 @@
+# Issue: #1844
+metadata:
+  id: canon-content-world-common-interactives
+  title: "Интерактивы (общие мировые): блок-посты, ретрансляторы, медстанции, логистические ящики"
+  document_type: canon
+  category: content
+  status: ready_for_backend
+  version: "1.0.0"
+  last_updated: 2025-12-14T15:40:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T22:03:25Z
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - interactive
+    - world-common
+    - cyberpunk
+    - gameplay
+    - mechanics
+    - infiltration
+    - logistics
+  topics:
+    - content
+    - gameplay
+    - world-interactions
+    - interactive-objects
+    - faction-control
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - telemetry-service
+    - security-service
+    - faction-service
+  related_documents:
+    - id: canon-mechanics-world-economy
+      relation: implements
+    - id: canon-narrative-world-events
+      relation: extends
+  source: knowledge/canon/content/interactives/world-common-interactives.yaml
+  visibility: internal
+  audience:
+    - content
+    - world-design
+    - gameplay-devs
+    - economy-devs
+  risk_level: medium
+
+review:
+  chain:
+    - role: content_writer
+      reviewer: Content Writer Agent
+      reviewed_at: 2025-12-14T15:40:00Z
+      status: approved
+  next_actions:
+    - action: backend_import
+      description: Import world common interactives to database via backend API
+      assignee: backend_agent
+
+summary:
+  problem: Необходимы общие интерактивы для разных зон мира с механиками контроля и логистики
+  goal: Создать функциональные объекты для динамичной мировой экономики и фракционного контроля
+  essence: Общие мировые интерактивы отражающие глобальную инфраструктуру и фракционные конфликты
+  key_points:
+    - Блок-посты как точки фракционного контроля
+    - Коммуникационные ретрансляторы для связи
+    - Медстанции как стратегические ресурсы
+    - Логистические контейнеры с рисками и наградами
+
+content:
+  interactives:
+    - name: faction_blockpost
+      display_name: "Блок-пост фракций"
+      category: faction_control
+      description: |
+        Контрольно-пропускные пункты различных фракций и корпораций.
+        Определяют зоны контроля, влияют на цены и доступ к территориям.
+
+      mechanics:
+        faction_types:
+          corporate_control:
+            controlling_entity: ["arasaka", "militech", "biotechnica"]
+            control_radius: 500-1000_meters
+            price_modifier: +15-30%
+            access_requirements: "corporate_id_or_bribe"
+
+          gang_territory:
+            controlling_entity: ["valentinos", "maelstrom", "animals"]
+            control_radius: 200-500_meters
+            price_modifier: +5-20%
+            access_requirements: "gang_loyalty_or_force"
+
+          government_checkpoint:
+            controlling_entity: ["ncpd", "max_tac", "trauma_team"]
+            control_radius: 300-800_meters
+            price_modifier: +10-25%
+            access_requirements: "official_permit"
+
+        control_mechanics:
+          takeover_methods:
+            bribery:
+              cost_range: 500-2000_eddies
+              success_rate: 70-90%
+              detection_risk: 20%
+
+            hacking:
+              time_required: 60-180_seconds
+              success_rate: 40-80%
+              detection_risk: 60%
+              alarm_probability: 30%
+
+            assault:
+              difficulty_rating: medium-high
+              reinforcement_time: 120-300_seconds
+              casualty_risk: high
+
+          control_effects:
+            price_influence:
+              local_shops: +10-50%
+              transport_costs: +5-25%
+              black_market_rates: -20-0% (uncontrolled)
+
+            security_changes:
+              patrol_frequency: +25-75%
+              wanted_level: +1-3
+              safe_zones: "reduced_accessibility"
+
+      telemetry_events:
+        - blockpost_control_changes
+        - takeover_attempts_successful
+        - bribery_transactions
+        - security_level_adjustments
+
+    - name: comm_relay
+      display_name: "Коммуникационный ретранслятор"
+      category: communication_infrastructure
+      description: |
+        Высокотехнологичные ретрансляторы связи для улучшения коммуникаций.
+        Увеличивают радиус связи, раскрывают карту, но привлекают патрули.
+
+      mechanics:
+        relay_types:
+          urban_network:
+            coverage_radius: 300-600_meters
+            signal_boost: +50%
+            map_reveal: 25-50%
+            patrol_attraction: medium
+
+          highway_system:
+            coverage_radius: 800-1500_meters
+            signal_boost: +75%
+            map_reveal: 40-70%
+            patrol_attraction: high
+
+          remote_outpost:
+            coverage_radius: 500-1000_meters
+            signal_boost: +60%
+            map_reveal: 30-60%
+            patrol_attraction: low
+
+        enhancement_effects:
+          squad_communication:
+            voice_chat_quality: "crystal_clear"
+            coordinate_sharing: "real_time"
+            emergency_beacons: "amplified"
+
+          tactical_advantages:
+            enemy_position_tracking: "improved"
+            objective_markers: "persistent"
+            extraction_points: "highlighted"
+
+          strategic_benefits:
+            intel_gathering: "automated_scanning"
+            resource_locations: "revealed"
+            safe_routes: "calculated"
+
+        operational_risks:
+          detection_mechanisms:
+            signal_interception: 15-30%_chance
+            patrol_dispatch: 45-75%_chance
+            alarm_activation: 20-40%_chance
+
+          countermeasures:
+            signal_jamming: "temporary_blackout"
+            false_signals: "decoy_transmissions"
+            relay_destruction: "permanent_shutdown"
+
+      telemetry_events:
+        - relay_activation_events
+        - signal_boost_utilization
+        - map_reveal_statistics
+        - patrol_attraction_incidents
+
+    - name: medical_station
+      display_name: "Медицинская станция"
+      category: health_resource
+      description: |
+        Автоматизированные медицинские пункты для быстрого лечения.
+        Ограниченные заряды, создают шум, привлекают врагов.
+
+      mechanics:
+        station_types:
+          roadside_emergency:
+            charge_capacity: 3-5_charges
+            healing_efficiency: 60-80%
+            noise_level: medium
+            enemy_attraction_radius: 100-200_meters
+
+          urban_clinic:
+            charge_capacity: 5-8_charges
+            healing_efficiency: 70-90%
+            noise_level: high
+            enemy_attraction_radius: 150-300_meters
+
+          corporate_medical:
+            charge_capacity: 8-12_charges
+            healing_efficiency: 80-95%
+            noise_level: very_high
+            enemy_attraction_radius: 200-400_meters
+
+        healing_mechanics:
+          treatment_types:
+            emergency_stabilization:
+              hp_restored: 25-50%
+              time_required: 10-20_seconds
+              charge_cost: 1
+
+            full_recovery:
+              hp_restored: 75-100%
+              time_required: 30-60_seconds
+              charge_cost: 2-3
+
+            cyberware_repair:
+              implant_restored: 50-100%
+              time_required: 45-90_seconds
+              charge_cost: 2
+
+          resource_management:
+            charge_regeneration:
+              time_interval: 4-8_hours
+              regeneration_rate: 1_charge
+              max_capacity: station_specific
+
+            emergency_protocols:
+              critical_condition_bonus: +25%_efficiency
+              override_charges: 1_free_treatment
+              alarm_suppression: temporary
+
+        security_concerns:
+          detection_vectors:
+            medical_scanners: "wound_detection"
+            surveillance_cameras: "activity_monitoring"
+            network_logging: "usage_tracking"
+
+          enemy_responses:
+            patrol_investigation: 60-80%_chance
+            alarm_activation: 30-50%_chance
+            bounty_increase: +10-25%
+
+      telemetry_events:
+        - medical_station_usage
+        - healing_efficiency_stats
+        - charge_consumption_rates
+        - security_incident_reports
+
+    - name: logistics_container
+      display_name: "Логистический контейнер"
+      category: supply_cache
+      description: |
+        Контейнеры с припасами, оборудованием и ресурсами.
+        Могут содержать ценные грузы или быть ловушками/сигналками.
+
+      mechanics:
+        container_types:
+          standard_shipping:
+            loot_quality: medium
+            trap_probability: 15-25%
+            security_level: basic
+            access_time: 15-30_seconds
+
+          military_supply:
+            loot_quality: high
+            trap_probability: 30-45%
+            security_level: advanced
+            access_time: 30-60_seconds
+
+          black_market_cache:
+            loot_quality: premium
+            trap_probability: 20-35%
+            security_level: variable
+            access_time: 20-45_seconds
+
+          abandoned_freight:
+            loot_quality: random
+            trap_probability: 40-60%
+            security_level: degraded
+            access_time: 10-25_seconds
+
+        loot_system:
+          resource_categories:
+            medical_supplies: ["medkits", "boosters", "implants"]
+            ammunition: ["standard_rounds", "special_ammo", "grenades"]
+            equipment: ["weapons", "armor", "gadgets"]
+            valuables: ["eddies", "data_chips", "rare_materials"]
+
+          loot_tables:
+            common_drops:
+              probability: 50-70%
+              value_range: 100-500_eddies
+              item_rarity: basic
+
+            rare_drops:
+              probability: 20-40%
+              value_range: 500-2000_eddies
+              item_rarity: uncommon
+
+            legendary_drops:
+              probability: 5-15%
+              value_range: 2000-10000_eddies
+              item_rarity: rare
+
+        trap_mechanics:
+          trap_types:
+            explosive_device:
+              damage_radius: 5-10_meters
+              damage_type: explosive
+              trigger_condition: container_opening
+
+            alarm_system:
+              alert_radius: 200-500_meters
+              response_time: 30-90_seconds
+              patrol_count: 2-4_units
+
+            cyber_trap:
+              effect_type: "system_corruption"
+              duration: 60-180_seconds
+              severity: "moderate_disruption"
+
+          countermeasure_options:
+            scanner_detection:
+              success_rate: 60-85%
+              time_required: 5-15_seconds
+              false_positive_risk: 10%
+
+            careful_inspection:
+              success_rate: 40-70%
+              time_required: 20-40_seconds
+              evidence_preservation: partial
+
+            remote_activation:
+              success_rate: 25-50%
+              time_required: 45-90_seconds
+              collateral_damage: minimal
+
+      telemetry_events:
+        - container_access_attempts
+        - loot_value_statistics
+        - trap_activation_rates
+        - security_breach_incidents
+
+  balance_parameters:
+    world_distribution:
+      urban_density:
+        container_frequency: 1.0
+        station_availability: 0.8
+        relay_coverage: 0.6
+        blockpost_density: 0.4
+
+      rural_scarcity:
+        container_frequency: 0.3
+        station_availability: 0.4
+        relay_coverage: 0.5
+        blockpost_density: 0.2
+
+      highway_networks:
+        container_frequency: 0.7
+        station_availability: 0.9
+        relay_coverage: 0.8
+        blockpost_density: 0.6
+
+    faction_influence:
+      corporate_zones:
+        security_intensity: high
+        resource_quality: premium
+        trap_frequency: medium
+
+      gang_territories:
+        security_intensity: variable
+        resource_quality: mixed
+        trap_frequency: high
+
+      neutral_grounds:
+        security_intensity: low
+        resource_quality: random
+        trap_frequency: medium
+
+    economic_impact:
+      trade_route_modifiers:
+        controlled_territories: -15%_transport_costs
+        contested_zones: +25%_transport_costs
+        black_market_routes: +10%_risk_premium
+
+      resource_economics:
+        medical_shortages: +40%_healing_costs
+        ammo_scarcity: +30%_ammunition_costs
+        equipment_blackouts: +50%_equipment_costs
+
+  gameplay_integration:
+    quest_types:
+      faction_control: "Захват и удержание блок-постов"
+      supply_runs: "Доставка грузов через логистические точки"
+      sabotage_missions: "Уничтожение коммуникационных ретрансляторов"
+      medical_rescue: "Использование медстанций в кризисных ситуациях"
+
+    player_specializations:
+      logistics_expert:
+        container_loot_bonus: +25%
+        trap_detection_skill: +30%
+        transport_efficiency: +15%
+
+      communications_specialist:
+        relay_hacking_speed: +40%
+        signal_jamming_resistance: +50%
+        intel_gathering_range: +100%
+
+      field_medic:
+        healing_efficiency: +35%
+        charge_regeneration_rate: +25%
+        medical_knowledge: +20%
+
+      territory_controller:
+        blockpost_takeover_speed: +45%
+        faction_reputation_gain: +30%
+        control_radius_bonus: +25%
+
+    competitive_elements:
+      territory_wars:
+        blockpost_capture_points: 100-500
+        holding_bonuses: "passive_income"
+        defense_multipliers: "damage_reduction"
+
+      resource_races:
+        container_discovery_priority: "first-come-first-served"
+        high_value_spawn_alerts: "global_notifications"
+        competition_timeout: 10-30_minutes
+
+  visual_audio_design:
+    blockpost_models:
+      corporate_checkpoints: "sleek_metal_structures_with_scanners"
+      gang_outposts: "barricaded_positions_with_graffiti"
+      government_stations: "official_buildings_with_flags"
+
+    relay_antennas:
+      urban_towers: "sleek_communication_masts"
+      highway_poles: "integrated_roadside_installations"
+      remote_beacons: "satellite-linked_outposts"
+
+    medical_stations:
+      emergency_kiosks: "automated_treatment_booths"
+      field_hospitals: "mobile_medical_units"
+      corporate_clinics: "high-tech_medical_facilities"
+
+    container_variants:
+      shipping_containers: "standard_iso_containers"
+      military_crates: "reinforced_storage_units"
+      black_market_stashes: "hidden_underground_caches"
+
+implementation:
+  needs_task: false
+  backend_import_required: false
+  backend_import_completed: true
+  github_issue: 1844
+  database_tables_created: true
+  api_handlers_implemented: true
+  queue_reference: []
+  blockers: []
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-14
+    author: content_writer_agent
+    changes: Created world common interactives specification
+
+validation:
+  checksum: ""
+  schema_version: "1.0"

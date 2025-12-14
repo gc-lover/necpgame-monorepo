@@ -1,0 +1,1052 @@
+openapi: 3.0.3
+info:
+  title: Interactive Objects Service API
+  description: |
+    Interactive Objects Service for NECPGAME - Management of interactive objects across different zones
+    (airports, military bases, no-tell motels, covert labs) with real-time state synchronization.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/interactive-objects
+    description: Production server
+  - url: http://localhost:8083
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /objects:
+    get:
+      summary: Get active interactive objects
+      operationId: getActiveObjects
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by zone
+        - name: zone_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ZoneType"
+          description: Filter by zone type
+        - name: object_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ObjectType"
+          description: Filter by object type
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ObjectStatus"
+          description: Filter by object status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: List of active objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectListResponse"
+
+    post:
+      summary: Create new interactive object
+      operationId: createObject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateObjectRequest"
+      responses:
+        "201":
+          description: Object created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectResponse"
+
+  /objects/{object_id}:
+    get:
+      summary: Get object details
+      operationId: getObject
+      parameters:
+        - name: object_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Object details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectResponse"
+        "404":
+          description: Object not found
+
+    put:
+      summary: Update object state
+      operationId: updateObject
+      parameters:
+        - name: object_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateObjectRequest"
+      responses:
+        "200":
+          description: Object updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectResponse"
+
+    delete:
+      summary: Remove object
+      operationId: removeObject
+      parameters:
+        - name: object_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Object removed successfully
+
+  /objects/{object_id}/interact:
+    post:
+      summary: Interact with object
+      operationId: interactWithObject
+      parameters:
+        - name: object_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InteractRequest"
+      responses:
+        "200":
+          description: Interaction successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractResponse"
+        "400":
+          description: Interaction failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractError"
+
+  /objects/{object_id}/hack:
+    post:
+      summary: Attempt to hack object
+      operationId: hackObject
+      parameters:
+        - name: object_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HackRequest"
+      responses:
+        "200":
+          description: Hack successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackResponse"
+        "403":
+          description: Hack failed - detection/alarm
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackFailure"
+
+  /zones/{zone_id}/objects:
+    get:
+      summary: Get all objects in zone
+      operationId: getZoneObjects
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_inactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Zone objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneObjectsResponse"
+
+  /airport-objects:
+    get:
+      summary: Get airport-specific objects
+      operationId: getAirportObjects
+      parameters:
+        - name: airport_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: object_category
+          in: query
+          schema:
+            type: string
+            enum: [transport, security, storage, surveillance]
+      responses:
+        "200":
+          description: Airport objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AirportObjectsResponse"
+
+  /military-objects:
+    get:
+      summary: Get military base objects
+      operationId: getMilitaryObjects
+      parameters:
+        - name: base_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: threat_level
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, extreme]
+      responses:
+        "200":
+          description: Military objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MilitaryObjectsResponse"
+
+  /motel-objects:
+    get:
+      summary: Get motel objects
+      operationId: getMotelObjects
+      parameters:
+        - name: motel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: room_type
+          in: query
+          schema:
+            type: string
+            enum: [standard, vip, basement]
+      responses:
+        "200":
+          description: Motel objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MotelObjectsResponse"
+
+  /lab-objects:
+    get:
+      summary: Get laboratory objects
+      operationId: getLabObjects
+      parameters:
+        - name: lab_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: clearance_level
+          in: query
+          schema:
+            type: string
+            enum: [public, restricted, classified, top_secret]
+      responses:
+        "200":
+          description: Lab objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabObjectsResponse"
+
+  /telemetry:
+    get:
+      summary: Get interaction telemetry
+      operationId: getTelemetry
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum:
+              [
+                interactions_total,
+                hacks_successful,
+                hacks_failed,
+                objects_destroyed,
+                alarms_triggered,
+              ]
+        - name: zone_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ZoneType"
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h]
+            default: 5m
+      responses:
+        "200":
+          description: Telemetry data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelemetryResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime_seconds:
+          type: integer
+        active_objects:
+          type: integer
+        zones_served:
+          type: integer
+
+    ZoneType:
+      type: string
+      enum:
+        - airport
+        - military_base
+        - no_tell_motel
+        - covert_lab
+
+    ObjectType:
+      type: string
+      enum:
+        - terminal
+        - security_system
+        - storage_container
+        - surveillance_camera
+        - weapon_system
+        - ammo_depot
+        - shield_generator
+        - safe
+        - listening_device
+        - black_market
+        - emergency_exit
+        - experimental_sample
+        - ai_terminal
+        - chemical_synthesizer
+        - cryo_chamber
+
+    ObjectStatus:
+      type: string
+      enum:
+        - active
+        - inactive
+        - destroyed
+        - locked
+        - hacked
+        - alarmed
+
+    ObjectListResponse:
+      type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/components/schemas/ObjectSummary"
+        total_count:
+          type: integer
+        zone_filter:
+          type: string
+          format: uuid
+          nullable: true
+
+    ObjectSummary:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        object_type:
+          $ref: "#/components/schemas/ObjectType"
+        zone_type:
+          $ref: "#/components/schemas/ZoneType"
+        position:
+          $ref: "#/components/schemas/Position"
+        status:
+          $ref: "#/components/schemas/ObjectStatus"
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+        last_interaction:
+          type: string
+          format: date-time
+          nullable: true
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+        zone_id:
+          type: string
+          format: uuid
+
+    CreateObjectRequest:
+      type: object
+      required:
+        - object_type
+        - zone_type
+        - position
+      properties:
+        object_type:
+          $ref: "#/components/schemas/ObjectType"
+        zone_type:
+          $ref: "#/components/schemas/ZoneType"
+        position:
+          $ref: "#/components/schemas/Position"
+        initial_status:
+          $ref: "#/components/schemas/ObjectStatus"
+          default: active
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+          default: medium
+        custom_properties:
+          type: object
+          description: Zone-specific properties
+
+    ObjectResponse:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        object_type:
+          $ref: "#/components/schemas/ObjectType"
+        zone_type:
+          $ref: "#/components/schemas/ZoneType"
+        position:
+          $ref: "#/components/schemas/Position"
+        status:
+          $ref: "#/components/schemas/ObjectStatus"
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+        properties:
+          type: object
+          description: Object-specific properties
+        interaction_count:
+          type: integer
+        last_interaction:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateObjectRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ObjectStatus"
+        position:
+          $ref: "#/components/schemas/Position"
+        properties:
+          type: object
+        threat_level:
+          type: string
+          enum: [low, medium, high, extreme]
+
+    InteractRequest:
+      type: object
+      required:
+        - player_id
+        - interaction_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum: [use, examine, destroy, repair, search]
+        parameters:
+          type: object
+          description: Interaction-specific parameters
+
+    InteractResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        result:
+          type: object
+          description: Interaction outcome
+        rewards:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [item, credit, experience, reputation]
+              value:
+                type: string
+        effects:
+          type: array
+          items:
+            type: string
+        object_state_changed:
+          type: boolean
+        new_object_status:
+          $ref: "#/components/schemas/ObjectStatus"
+
+    InteractError:
+      type: object
+      properties:
+        error_code:
+          type: string
+          enum: [insufficient_level, wrong_tools, locked, destroyed, alarmed]
+        error_message:
+          type: string
+        required_level:
+          type: integer
+        cooldown_seconds:
+          type: integer
+
+    HackRequest:
+      type: object
+      required:
+        - player_id
+        - hack_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        hack_type:
+          type: string
+          enum: [bypass, override, extract_data, disable_alarm]
+        hacking_skill:
+          type: integer
+          minimum: 1
+          maximum: 100
+        tools_used:
+          type: array
+          items:
+            type: string
+
+    HackResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        hack_duration:
+          type: integer
+          description: Seconds taken
+        data_extracted:
+          type: object
+          description: Retrieved information
+        alarm_triggered:
+          type: boolean
+        detection_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        new_object_status:
+          $ref: "#/components/schemas/ObjectStatus"
+
+    HackFailure:
+      type: object
+      properties:
+        failure_reason:
+          type: string
+          enum: [detection, insufficient_skill, system_locked, alarm_triggered]
+        alarm_level:
+          type: string
+          enum: [silent, local, zone_wide, city_wide]
+        cooldown_seconds:
+          type: integer
+        reputation_loss:
+          type: integer
+
+    ZoneObjectsResponse:
+      type: object
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+        zone_type:
+          $ref: "#/components/schemas/ZoneType"
+        objects:
+          type: array
+          items:
+            $ref: "#/components/schemas/ObjectResponse"
+        total_objects:
+          type: integer
+        active_objects:
+          type: integer
+
+    AirportObjectsResponse:
+      type: object
+      properties:
+        airport_id:
+          type: string
+          format: uuid
+        terminals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AirportTerminal"
+        security_systems:
+          type: array
+          items:
+            $ref: "#/components/schemas/SecuritySystem"
+        storage_containers:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorageContainer"
+        surveillance_cameras:
+          type: array
+          items:
+            $ref: "#/components/schemas/SurveillanceCamera"
+
+    AirportTerminal:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        terminal_type:
+          type: string
+          enum: [atm, info_kiosk, luggage_scanner, boarding_gate]
+        access_level:
+          type: string
+          enum: [public, staff_only, restricted]
+        data_value:
+          type: integer
+          description: Credits worth of data
+        alarm_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    SecuritySystem:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        system_type:
+          type: string
+          enum: [metal_detector, xray_scanner, biometric_lock, access_control]
+        security_level:
+          type: string
+          enum: [basic, advanced, military]
+        bypass_difficulty:
+          type: integer
+          minimum: 1
+          maximum: 100
+
+    StorageContainer:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        container_type:
+          type: string
+          enum: [suitcase, cargo_box, locker, safe]
+        loot_quality:
+          type: string
+          enum: [trash, common, rare, epic]
+        trap_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    SurveillanceCamera:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        coverage_angle:
+          type: integer
+          minimum: 1
+          maximum: 360
+        detection_range:
+          type: number
+          format: float
+        night_vision:
+          type: boolean
+        recording_active:
+          type: boolean
+
+    MilitaryObjectsResponse:
+      type: object
+      properties:
+        base_id:
+          type: string
+          format: uuid
+        weapon_systems:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeaponSystem"
+        ammo_depots:
+          type: array
+          items:
+            $ref: "#/components/schemas/AmmoDepot"
+        shield_generators:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShieldGenerator"
+
+    WeaponSystem:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        weapon_type:
+          type: string
+          enum: [artillery, missile_launcher, turret, railgun]
+        damage_per_shot:
+          type: integer
+        rate_of_fire:
+          type: number
+          format: float
+        range:
+          type: number
+          format: float
+
+    AmmoDepot:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        ammo_type:
+          type: string
+          enum: [explosive, incendiary, emp, armor_piercing]
+        capacity:
+          type: integer
+        current_stock:
+          type: integer
+        explosion_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    ShieldGenerator:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        protection_radius:
+          type: number
+          format: float
+        energy_capacity:
+          type: integer
+        recharge_rate:
+          type: number
+          format: float
+        active:
+          type: boolean
+
+    MotelObjectsResponse:
+      type: object
+      properties:
+        motel_id:
+          type: string
+          format: uuid
+        safes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MotelSafe"
+        listening_devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListeningDevice"
+        black_markets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlackMarket"
+        emergency_exits:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmergencyExit"
+
+    MotelSafe:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        safe_type:
+          type: string
+          enum: [wall_safe, floor_safe, hidden_compartment]
+        lock_difficulty:
+          type: integer
+          minimum: 1
+          maximum: 100
+        contents_value:
+          type: integer
+          description: Credit value of contents
+
+    ListeningDevice:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        device_type:
+          type: string
+          enum: [microphone, camera, both]
+        recording_quality:
+          type: string
+          enum: [poor, good, excellent]
+        active_recording:
+          type: boolean
+
+    BlackMarket:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        merchant_type:
+          type: string
+          enum: [weapons, implants, information, contraband]
+        inventory_slots:
+          type: integer
+        current_stock:
+          type: integer
+        raid_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    EmergencyExit:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        exit_type:
+          type: string
+          enum: [fire_escape, service_door, ventilation_shaft, sewer_access]
+        destination_zone:
+          type: string
+          format: uuid
+        alarm_triggered:
+          type: boolean
+        locked:
+          type: boolean
+
+    LabObjectsResponse:
+      type: object
+      properties:
+        lab_id:
+          type: string
+          format: uuid
+        experimental_samples:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExperimentalSample"
+        ai_terminals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AITerminal"
+        chemical_synthesizers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChemicalSynthesizer"
+        cryo_chambers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CryoChamber"
+
+    ExperimentalSample:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        sample_type:
+          type: string
+          enum: [dna, virus, nanites, chemical_compound]
+        containment_level:
+          type: string
+          enum: [low, medium, high, extreme]
+        research_value:
+          type: integer
+        infection_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    AITerminal:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        ai_type:
+          type: string
+          enum: [research_ai, security_ai, experimental_ai]
+        access_level:
+          type: string
+          enum: [public, restricted, classified, top_secret]
+        data_value:
+          type: integer
+        ice_protection:
+          type: boolean
+
+    ChemicalSynthesizer:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        synthesizer_type:
+          type: string
+          enum: [basic, advanced, experimental]
+        available_reagents:
+          type: array
+          items:
+            type: string
+        explosion_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        output_quality:
+          type: string
+          enum: [low, medium, high, perfect]
+
+    CryoChamber:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        subject_type:
+          type: string
+          enum: [human, cyberpsycho, mutant, experimental]
+        chamber_status:
+          type: string
+          enum: [active, inactive, breached, destroyed]
+        awakening_difficulty:
+          type: integer
+          minimum: 1
+          maximum: 100
+
+    TelemetryResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        zone_type:
+          $ref: "#/components/schemas/ZoneType"
+        timeframe:
+          type: string
+        data_points:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              value:
+                type: number
+        average:
+          type: number
+        peak:
+          type: number
+        total:
+          type: number

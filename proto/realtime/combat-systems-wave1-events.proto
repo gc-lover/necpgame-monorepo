@@ -1,0 +1,876 @@
+// Issue: #169
+syntax = "proto3";
+
+package combat.events.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// Combat Systems Wave 1 Event Bus Specification
+// Event-driven architecture for real-time combat synchronization
+
+option java_package = "com.necpgame.combat.events.v1";
+option java_multiple_files = true;
+
+// ============================================================================
+// COMBAT SESSION EVENTS
+// ============================================================================
+
+message CombatSessionEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string session_id = 3;
+  oneof event {
+    SessionCreated created = 4;
+    SessionUpdated updated = 5;
+    SessionEnded ended = 6;
+    PlayerJoined joined = 7;
+    PlayerLeft left = 8;
+  }
+
+  message SessionCreated {
+    repeated string player_ids = 1;
+    string zone_id = 2;
+    Difficulty difficulty = 3;
+    MissionType mission_type = 4;
+  }
+
+  message SessionUpdated {
+    SessionStatus status = 1;
+    google.protobuf.Int32Value score = 2;
+  }
+
+  message SessionEnded {
+    SessionStatus final_status = 1;
+    int32 final_score = 2;
+    repeated string survivors = 3;
+  }
+
+  message PlayerJoined {
+    string player_id = 1;
+    string character_name = 2;
+    Vector3 spawn_position = 3;
+  }
+
+  message PlayerLeft {
+    string player_id = 1;
+    LeaveReason reason = 2;
+  }
+
+  enum SessionStatus {
+    SESSION_STATUS_UNSPECIFIED = 0;
+    SESSION_ACTIVE = 1;
+    SESSION_PAUSED = 2;
+    SESSION_COMPLETED = 3;
+    SESSION_FAILED = 4;
+  }
+
+  enum Difficulty {
+    DIFFICULTY_UNSPECIFIED = 0;
+    EASY = 1;
+    NORMAL = 2;
+    HARD = 3;
+    NIGHTMARE = 4;
+  }
+
+  enum MissionType {
+    MISSION_TYPE_UNSPECIFIED = 0;
+    RAID = 1;
+    PATROL = 2;
+    EXTRACTION = 3;
+    ARENA = 4;
+  }
+
+  enum LeaveReason {
+    LEAVE_REASON_UNSPECIFIED = 0;
+    DISCONNECTED = 1;
+    EXTRACTED = 2;
+    ELIMINATED = 3;
+    TIMEOUT = 4;
+  }
+}
+
+// ============================================================================
+// AI SYSTEM EVENTS
+// ============================================================================
+
+message AICombatEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string session_id = 3;
+  string ai_id = 4;
+  oneof event {
+    AISpawned spawned = 5;
+    AIBehaviorChanged behavior_changed = 6;
+    AIDamaged damaged = 7;
+    AIDestroyed destroyed = 8;
+    AITargeting targeting = 9;
+  }
+
+  message AISpawned {
+    AIType ai_type = 1;
+    Difficulty difficulty = 2;
+    Vector3 position = 3;
+    int32 initial_health = 4;
+    int32 damage = 5;
+  }
+
+  message AIBehaviorChanged {
+    AIState new_state = 1;
+    google.protobuf.StringValue target_player_id = 2;
+    Vector3 position = 3;
+  }
+
+  message AIDamaged {
+    string attacker_id = 1;
+    int32 damage = 2;
+    int32 health_remaining = 3;
+    bool critical_hit = 4;
+    DamageType damage_type = 5;
+  }
+
+  message AIDestroyed {
+    string destroyer_id = 1;
+    DestructionCause cause = 2;
+    repeated string loot_dropped = 3;
+  }
+
+  message AITargeting {
+    string target_id = 1;
+    float threat_level = 2;
+    TargetingPriority priority = 3;
+  }
+
+  enum AIType {
+    AI_TYPE_UNSPECIFIED = 0;
+    TURRET = 1;
+    DRONE = 2;
+    ASSAULT = 3;
+    SNIPER = 4;
+    BERSERKER = 5;
+    CHAMELEON = 6;
+    SWARM = 7;
+    CORPORATE = 8;
+  }
+
+  enum AIState {
+    AI_STATE_UNSPECIFIED = 0;
+    IDLE = 1;
+    PATROL = 2;
+    COMBAT = 3;
+    ALERTED = 4;
+    FLEEING = 5;
+    DEAD = 6;
+  }
+
+  enum DamageType {
+    DAMAGE_TYPE_UNSPECIFIED = 0;
+    BULLET = 1;
+    EXPLOSIVE = 2;
+    MELEE = 3;
+    HACK = 4;
+    ENVIRONMENTAL = 5;
+  }
+
+  enum DestructionCause {
+    DESTRUCTION_CAUSE_UNSPECIFIED = 0;
+    PLAYER_DAMAGE = 1;
+    SELF_DESTRUCT = 2;
+    TIMEOUT = 3;
+    SYSTEM_ERROR = 4;
+  }
+
+  enum TargetingPriority {
+    TARGETING_PRIORITY_UNSPECIFIED = 0;
+    LOW = 1;
+    MEDIUM = 2;
+    HIGH = 3;
+    IMMEDIATE = 4;
+  }
+}
+
+// ============================================================================
+// ABILITY SYSTEM EVENTS
+// ============================================================================
+
+message AbilityEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string ability_id = 4;
+  oneof event {
+    AbilityActivated activated = 5;
+    AbilityDeactivated deactivated = 6;
+    AbilityCooldownStarted cooldown_started = 7;
+    AbilityCooldownEnded cooldown_ended = 8;
+  }
+
+  message AbilityActivated {
+    string ability_name = 1;
+    float duration = 2;
+    float cooldown = 3;
+    google.protobuf.StringValue target_id = 4;
+    Vector3 target_position = 5;
+  }
+
+  message AbilityDeactivated {
+    DeactivationReason reason = 1;
+    float duration_used = 2;
+  }
+
+  message AbilityCooldownStarted {
+    float cooldown_duration = 1;
+  }
+
+  message AbilityCooldownEnded {
+    bool ready_for_use = 1;
+  }
+
+  enum DeactivationReason {
+    DEACTIVATION_REASON_UNSPECIFIED = 0;
+    TIMEOUT = 1;
+    CANCELLED = 2;
+    INTERRUPTED = 3;
+    RESOURCE_DEPLETED = 4;
+  }
+}
+
+// ============================================================================
+// SHOOTING SYSTEM EVENTS
+// ============================================================================
+
+message ShootingEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string session_id = 3;
+  string shooter_id = 4;
+  oneof event {
+    ShotFired fired = 5;
+    HitValidated validated = 6;
+    ShotMissed missed = 7;
+    RicochetOccurred ricochet = 8;
+  }
+
+  message ShotFired {
+    string weapon_id = 1;
+    Vector3 muzzle_position = 2;
+    Vector3 direction = 3;
+    float muzzle_velocity = 4;
+    AmmoType ammo_type = 5;
+  }
+
+  message HitValidated {
+    string target_id = 1;
+    string weapon_id = 2;
+    Vector3 hit_position = 3;
+    int32 damage = 4;
+    HitType hit_type = 5;
+    bool critical_hit = 6;
+    bool armor_penetrated = 7;
+  }
+
+  message ShotMissed {
+    string weapon_id = 1;
+    Vector3 miss_position = 2;
+    MissReason reason = 3;
+  }
+
+  message RicochetOccurred {
+    Vector3 ricochet_position = 1;
+    Vector3 new_direction = 2;
+    int32 bounce_count = 3;
+  }
+
+  enum AmmoType {
+    AMMO_TYPE_UNSPECIFIED = 0;
+    STANDARD = 1;
+    ARMOR_PIERCING = 2;
+    HOLLOW_POINT = 3;
+    EXPLOSIVE = 4;
+    INCENDIARY = 5;
+  }
+
+  enum HitType {
+    HIT_TYPE_UNSPECIFIED = 0;
+    HEADSHOT = 1;
+    BODYSHOT = 2;
+    LIMBSHOT = 3;
+    ENVIRONMENT = 4;
+  }
+
+  enum MissReason {
+    MISS_REASON_UNSPECIFIED = 0;
+    OUT_OF_RANGE = 1;
+    OBSTRUCTED = 2;
+    MOVEMENT = 3;
+    INACCURACY = 4;
+  }
+}
+
+// ============================================================================
+// COMBO SYSTEM EVENTS
+// ============================================================================
+
+message ComboEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string combo_id = 4;
+  oneof event {
+    ComboStarted started = 5;
+    ComboProgressed progressed = 6;
+    ComboCompleted completed = 7;
+    ComboFailed failed = 8;
+    SynergyActivated synergy = 9;
+  }
+
+  message ComboStarted {
+    repeated string sequence = 1;
+    string combo_name = 2;
+  }
+
+  message ComboProgressed {
+    int32 current_step = 1;
+    string last_action = 2;
+    float time_window_remaining = 3;
+  }
+
+  message ComboCompleted {
+    bool perfect_execution = 1;
+    float damage_multiplier = 2;
+    int32 total_damage = 3;
+    repeated string bonus_effects = 4;
+  }
+
+  message ComboFailed {
+    FailReason reason = 1;
+    int32 steps_completed = 2;
+  }
+
+  message SynergyActivated {
+    string synergy_type = 1;
+    string synergy_name = 2;
+    float bonus_multiplier = 3;
+    float duration = 4;
+  }
+
+  enum FailReason {
+    FAIL_REASON_UNSPECIFIED = 0;
+    TIMEOUT = 1;
+    INTERRUPTED = 2;
+    WRONG_SEQUENCE = 3;
+    STAMINA_DEPLETED = 4;
+  }
+}
+
+// ============================================================================
+// FREERUN SYSTEM EVENTS
+// ============================================================================
+
+message FreerunEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    MoveExecuted executed = 4;
+    MomentumChanged momentum = 5;
+    StaminaDepleted stamina = 6;
+    FallDetected fall = 7;
+  }
+
+  message MoveExecuted {
+    MoveType move_type = 1;
+    Vector3 start_position = 2;
+    Vector3 end_position = 3;
+    float momentum_used = 4;
+    int32 stamina_cost = 5;
+    bool perfect_execution = 6;
+  }
+
+  message MomentumChanged {
+    float new_momentum = 1;
+    MomentumChangeReason reason = 2;
+  }
+
+  message StaminaDepleted {
+    int32 stamina_remaining = 1;
+    float recovery_time = 2;
+  }
+
+  message FallDetected {
+    Vector3 fall_position = 1;
+    float fall_distance = 2;
+    int32 damage_taken = 3;
+  }
+
+  enum MoveType {
+    MOVE_TYPE_UNSPECIFIED = 0;
+    VAULT = 1;
+    WALL_RUN = 2;
+    AIR_DASH = 3;
+    SLIDE = 4;
+    LEDGE_GRAB = 5;
+  }
+
+  enum MomentumChangeReason {
+    MOMENTUM_CHANGE_UNSPECIFIED = 0;
+    MOVE_EXECUTED = 1;
+    SURFACE_CONTACT = 2;
+    AIR_RESISTANCE = 3;
+    GRAVITY = 4;
+  }
+}
+
+// ============================================================================
+// HACKING SYSTEM EVENTS
+// ============================================================================
+
+message HackingEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string target_id = 4;
+  oneof event {
+    HackStarted started = 5;
+    HackProgressed progressed = 6;
+    HackCompleted completed = 7;
+    HackFailed failed = 8;
+    CountermeasureTriggered countermeasure = 9;
+  }
+
+  message HackStarted {
+    HackType hack_type = 1;
+    TargetSystem target_system = 2;
+    float duration = 3;
+    int32 detection_risk = 4;
+  }
+
+  message HackProgressed {
+    float progress_percentage = 1;
+    float time_remaining = 2;
+  }
+
+  message HackCompleted {
+    bool success = 1;
+    repeated string effects_applied = 2;
+    int32 data_extracted = 3;
+  }
+
+  message HackFailed {
+    FailReason reason = 1;
+    float progress_lost = 2;
+  }
+
+  message CountermeasureTriggered {
+    string countermeasure_type = 1;
+    int32 severity = 2;
+    repeated string effects = 3;
+  }
+
+  enum HackType {
+    HACK_TYPE_UNSPECIFIED = 0;
+    QUICKHACK = 1;
+    BREACH = 2;
+    OVERLOAD = 3;
+    PING = 4;
+    CYBERPSYCHOSIS = 5;
+  }
+
+  enum TargetSystem {
+    TARGET_SYSTEM_UNSPECIFIED = 0;
+    TURRET = 1;
+    CAMERA = 2;
+    DOOR = 3;
+    ENEMY_IMPLANT = 4;
+    VEHICLE = 5;
+    NETWORK_NODE = 6;
+  }
+
+  enum FailReason {
+    FAIL_REASON_UNSPECIFIED = 0;
+    INTERRUPTED = 1;
+    COUNTERMEASURE = 2;
+    TIMEOUT = 3;
+    INSUFFICIENT_SKILL = 4;
+  }
+}
+
+// ============================================================================
+// STEALTH SYSTEM EVENTS
+// ============================================================================
+
+message StealthEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    VisibilityChanged visibility = 4;
+    Detected detected = 5;
+    ConcealmentAction action = 6;
+    NoiseGenerated noise = 7;
+  }
+
+  message VisibilityChanged {
+    float visibility_level = 1;
+    float detection_risk = 2;
+    ChangeReason reason = 3;
+  }
+
+  message Detected {
+    string detector_id = 1;
+    DetectionType detection_type = 2;
+    AlertLevel alert_level = 3;
+    Vector3 detection_position = 4;
+  }
+
+  message ConcealmentAction {
+    ActionType action_type = 1;
+    float effectiveness = 2;
+    float duration = 3;
+  }
+
+  message NoiseGenerated {
+    float noise_level = 1;
+    NoiseType noise_type = 2;
+    Vector3 noise_position = 3;
+  }
+
+  enum ChangeReason {
+    CHANGE_REASON_UNSPECIFIED = 0;
+    MOVEMENT = 1;
+    LIGHTING = 2;
+    COVER = 3;
+    CROUCHING = 4;
+    EQUIPMENT = 5;
+  }
+
+  enum DetectionType {
+    DETECTION_TYPE_UNSPECIFIED = 0;
+    VISUAL = 1;
+    AUDIO = 2;
+    SENSOR = 3;
+    CAMERA = 4;
+    AI_PATROL = 5;
+  }
+
+  enum AlertLevel {
+    ALERT_LEVEL_UNSPECIFIED = 0;
+    LOW = 1;
+    MEDIUM = 2;
+    HIGH = 3;
+    COMBAT = 4;
+  }
+
+  enum ActionType {
+    ACTION_TYPE_UNSPECIFIED = 0;
+    CROUCH = 1;
+    PRONE = 2;
+    USE_COVER = 3;
+    SILENT_MOVEMENT = 4;
+    DISTRACTION = 5;
+  }
+
+  enum NoiseType {
+    NOISE_TYPE_UNSPECIFIED = 0;
+    FOOTSTEPS = 1;
+    EQUIPMENT = 2;
+    RELOADING = 3;
+    SPEECH = 4;
+    COMBAT = 5;
+  }
+}
+
+// ============================================================================
+// EXTRACTION SYSTEM EVENTS
+// ============================================================================
+
+message ExtractionEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string session_id = 3;
+  oneof event {
+    ExtractionStarted started = 4;
+    ExtractionProgressed progressed = 5;
+    ExtractionCompleted completed = 6;
+    ExtractionFailed failed = 7;
+  }
+
+  message ExtractionStarted {
+    string extraction_point_id = 1;
+    repeated string team_members = 2;
+    int32 time_limit = 3;
+    repeated string objectives_required = 4;
+  }
+
+  message ExtractionProgressed {
+    float progress_percentage = 1;
+    int32 enemies_remaining = 2;
+    int32 objectives_completed = 3;
+    int32 time_remaining = 4;
+  }
+
+  message ExtractionCompleted {
+    bool success = 1;
+    int32 total_score = 2;
+    repeated Reward rewards = 3;
+    int32 completion_time = 4;
+  }
+
+  message ExtractionFailed {
+    FailReason reason = 1;
+    string failure_point = 2;
+    int32 progress_lost = 3;
+  }
+
+  message Reward {
+    RewardType type = 1;
+    int32 amount = 2;
+    string item_id = 3;
+  }
+
+  enum FailReason {
+    FAIL_REASON_UNSPECIFIED = 0;
+    TIME_EXPIRED = 1;
+    TEAM_ELIMINATED = 2;
+    OBJECTIVES_FAILED = 3;
+    EXTRACTION_BLOCKED = 4;
+  }
+
+  enum RewardType {
+    REWARD_TYPE_UNSPECIFIED = 0;
+    EXPERIENCE = 1;
+    CREDITS = 2;
+    ITEM = 3;
+    ACHIEVEMENT = 4;
+  }
+}
+
+// ============================================================================
+// ARENA SYSTEM EVENTS
+// ============================================================================
+
+message ArenaEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string match_id = 3;
+  oneof event {
+    MatchStarted started = 4;
+    MatchEnded ended = 5;
+    ScoreUpdated score_updated = 6;
+    PlayerEliminated eliminated = 7;
+  }
+
+  message MatchStarted {
+    repeated string player_ids = 1;
+    ArenaType arena_type = 2;
+    Ruleset ruleset = 3;
+    int32 time_limit = 4;
+  }
+
+  message MatchEnded {
+    google.protobuf.StringValue winner_id = 1;
+    EndReason reason = 2;
+    map<string, int32> final_scores = 3;
+  }
+
+  message ScoreUpdated {
+    map<string, int32> current_scores = 1;
+    string last_scorer = 2;
+    ScoreType score_type = 3;
+  }
+
+  message PlayerEliminated {
+    string player_id = 1;
+    string eliminator_id = 2;
+    EliminationType elimination_type = 3;
+    Vector3 elimination_position = 4;
+  }
+
+  enum ArenaType {
+    ARENA_TYPE_UNSPECIFIED = 0;
+    DEATHMATCH = 1;
+    TEAM_DEATHMATCH = 2;
+    CAPTURE_FLAG = 3;
+    KING_OF_HILL = 4;
+  }
+
+  enum Ruleset {
+    RULESET_UNSPECIFIED = 0;
+    STANDARD = 1;
+    HARDCORE = 2;
+    RANKED = 3;
+    TOURNAMENT = 4;
+  }
+
+  enum EndReason {
+    END_REASON_UNSPECIFIED = 0;
+    TIME_EXPIRED = 1;
+    SCORE_LIMIT = 2;
+    LAST_MAN_STANDING = 3;
+    FORFEIT = 4;
+  }
+
+  enum ScoreType {
+    SCORE_TYPE_UNSPECIFIED = 0;
+    ELIMINATION = 1;
+    OBJECTIVE = 2;
+    BONUS = 3;
+    PENALTY = 4;
+  }
+
+  enum EliminationType {
+    ELIMINATION_TYPE_UNSPECIFIED = 0;
+    PLAYER_KILL = 1;
+    SELF_DESTRUCT = 2;
+    ENVIRONMENT = 3;
+    DISCONNECT = 4;
+  }
+}
+
+// ============================================================================
+// CYBERSPACE SYSTEM EVENTS
+// ============================================================================
+
+message CyberspaceEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    CyberspaceEntered entered = 4;
+    CyberspaceExited exited = 5;
+    NodeNavigated navigated = 6;
+    HackExecuted executed = 7;
+    DataStolen stolen = 8;
+  }
+
+  message CyberspaceEntered {
+    string entry_point_id = 1;
+    int32 implant_level = 2;
+    float connection_strength = 3;
+    int32 time_limit = 4;
+  }
+
+  message CyberspaceExited {
+    ExitReason reason = 1;
+    int32 time_spent = 2;
+    int32 data_collected = 3;
+  }
+
+  message NodeNavigated {
+    string node_id = 1;
+    string node_type = 2;
+    NavigationType navigation_type = 3;
+  }
+
+  message HackExecuted {
+    string target_system = 1;
+    bool success = 2;
+    HackType hack_type = 3;
+    int32 data_amount = 4;
+  }
+
+  message DataStolen {
+    string data_type = 1;
+    int32 amount = 2;
+    string source_node = 3;
+  }
+
+  enum ExitReason {
+    EXIT_REASON_UNSPECIFIED = 0;
+    COMPLETED = 1;
+    TIMEOUT = 2;
+    DISCONNECTED = 3;
+    DETECTED = 4;
+    DAMAGE = 5;
+  }
+
+  enum NavigationType {
+    NAVIGATION_TYPE_UNSPECIFIED = 0;
+    MANUAL = 1;
+    QUICKJACK = 2;
+    TELEPORT = 3;
+    BACKDOOR = 4;
+  }
+
+  enum HackType {
+    HACK_TYPE_UNSPECIFIED = 0;
+    BREACH = 1;
+    EXTRACT = 2;
+    CONTROL = 3;
+    DELETE = 4;
+  }
+}
+
+// ============================================================================
+// TELEMETRY AND ANALYTICS EVENTS
+// ============================================================================
+
+message CombatTelemetryEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string session_id = 3;
+  string player_id = 4;
+  oneof event {
+    PlayerMetrics metrics = 5;
+    CombatStats stats = 6;
+    PerformanceData performance = 7;
+    AntiCheatAlert alert = 8;
+  }
+
+  message PlayerMetrics {
+    Vector3 position = 1;
+    Vector3 velocity = 2;
+    float health_percentage = 3;
+    int32 kills = 4;
+    int32 deaths = 5;
+    float accuracy = 6;
+    int32 score = 7;
+  }
+
+  message CombatStats {
+    int32 shots_fired = 1;
+    int32 shots_hit = 2;
+    int32 headshots = 3;
+    int32 abilities_used = 4;
+    int32 hacks_performed = 5;
+    float average_ttk = 6;
+    int32 damage_dealt = 7;
+    int32 damage_taken = 8;
+  }
+
+  message PerformanceData {
+    float fps = 1;
+    int32 ping = 2;
+    int32 packet_loss = 3;
+    float input_lag = 4;
+    int32 memory_usage = 5;
+  }
+
+  message AntiCheatAlert {
+    AlertType alert_type = 1;
+    string description = 2;
+    float confidence = 3;
+    repeated string evidence = 4;
+  }
+
+  enum AlertType {
+    ALERT_TYPE_UNSPECIFIED = 0;
+    SPEED_HACK = 1;
+    TELEPORT_HACK = 2;
+    FLY_HACK = 3;
+    AIMBOT = 4;
+    WALLHACK = 5;
+    INFINITE_AMMO = 6;
+    GOD_MODE = 7;
+  }
+}
+
+// ============================================================================
+// COMMON TYPES
+// ============================================================================
+
+message Vector3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}

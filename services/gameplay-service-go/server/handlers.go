@@ -15,8 +15,8 @@ import (
 
 // Cache entry for lock-free session caching
 type cacheEntry struct {
-	data      *api.CombatSessionResponse
-	timestamp int64 // unix nano
+	data        *api.CombatSessionResponse
+	timestamp   int64 // unix nano
 	accessCount int64 // atomic
 }
 
@@ -49,15 +49,15 @@ type Handlers struct {
 	bufferPool                sync.Pool // For JSON encoding/decoding
 
 	// Lock-free statistics (zero contention target!)
-	requestsTotal       int64 // atomic
-	sessionsCreated     int64 // atomic
-	sessionsListed      int64 // atomic
-	errorsTotal         int64 // atomic
-	lastRequestTime     int64 // atomic unix nano
+	requestsTotal   int64 // atomic
+	sessionsCreated int64 // atomic
+	sessionsListed  int64 // atomic
+	errorsTotal     int64 // atomic
+	lastRequestTime int64 // atomic unix nano
 
 	// Lock-free session cache (LRU with atomic operations)
-	sessionCache        map[string]*cacheEntry // concurrent access with atomic.Value
-	cacheMu             sync.RWMutex          // lightweight mutex for cache operations
+	sessionCache map[string]*cacheEntry // concurrent access with atomic.Value
+	cacheMu      sync.RWMutex           // lightweight mutex for cache operations
 }
 
 // NewHandlers creates new handlers with memory pooling
@@ -199,9 +199,9 @@ func (h *Handlers) getCachedSession(sessionID string) (*api.CombatSessionRespons
 
 func (h *Handlers) setCachedSession(sessionID string, data *api.CombatSessionResponse) {
 	entry := &cacheEntry{
-		data:         data,
-		timestamp:    time.Now().UnixNano(),
-		accessCount:  1,
+		data:        data,
+		timestamp:   time.Now().UnixNano(),
+		accessCount: 1,
 	}
 
 	h.cacheMu.Lock()

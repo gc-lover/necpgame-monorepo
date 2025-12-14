@@ -5,13 +5,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // BenchmarkCreateChannel benchmarks CreateChannel handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCreateChannel(b *testing.B) {
-	service := &mockVoiceService{}
+	service := &mockVoiceService{
+		channels:     make(map[uuid.UUID]*models.VoiceChannel),
+		participants: make(map[uuid.UUID][]models.VoiceParticipant),
+	}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
@@ -30,12 +35,14 @@ func BenchmarkCreateChannel(b *testing.B) {
 // BenchmarkGetChannel benchmarks GetChannel handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkGetChannel(b *testing.B) {
-	service := &mockVoiceService{}
+	service := &mockVoiceService{
+		channels:     make(map[uuid.UUID]*models.VoiceChannel),
+		participants: make(map[uuid.UUID][]models.VoiceParticipant),
+	}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetChannelParams{
-	}
+	params := api.GetChannelParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -48,12 +55,14 @@ func BenchmarkGetChannel(b *testing.B) {
 // BenchmarkListChannels benchmarks ListChannels handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkListChannels(b *testing.B) {
-	service := &mockVoiceService{}
+	service := &mockVoiceService{
+		channels:     make(map[uuid.UUID]*models.VoiceChannel),
+		participants: make(map[uuid.UUID][]models.VoiceParticipant),
+	}
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.ListChannelsParams{
-	}
+	params := api.ListChannelsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -62,4 +71,3 @@ func BenchmarkListChannels(b *testing.B) {
 		_, _ = handlers.ListChannels(ctx, params)
 	}
 }
-

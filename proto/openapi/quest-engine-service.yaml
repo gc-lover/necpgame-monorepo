@@ -1,0 +1,1483 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Service API
+  description: |
+    Quest Engine Service for NECPGAME - Management of all quest types including Guild Wars,
+    Cyber Space Missions, Social Intrigue, and Reputation Contracts with event-driven architecture.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/quest-engine
+    description: Production server
+  - url: http://localhost:8082
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /quests:
+    get:
+      summary: Get active quests for player
+      operationId: getActiveQuests
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player identifier
+        - name: quest_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/QuestType"
+          description: Filter by quest type
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/QuestStatus"
+          description: Filter by quest status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        "200":
+          description: List of active quests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestListResponse"
+
+    post:
+      summary: Create new quest instance
+      operationId: createQuest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuestRequest"
+      responses:
+        "201":
+          description: Quest created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestResponse"
+
+  /quests/{quest_id}:
+    get:
+      summary: Get quest details
+      operationId: getQuest
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Quest details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestResponse"
+        "404":
+          description: Quest not found
+
+    put:
+      summary: Update quest progress
+      operationId: updateQuestProgress
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuestRequest"
+      responses:
+        "200":
+          description: Quest updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestResponse"
+
+    delete:
+      summary: Cancel quest
+      operationId: cancelQuest
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Quest cancelled successfully
+
+  /quests/{quest_id}/objectives:
+    get:
+      summary: Get quest objectives
+      operationId: getQuestObjectives
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Quest objectives
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestObjectivesResponse"
+
+    post:
+      summary: Complete quest objective
+      operationId: completeObjective
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteObjectiveRequest"
+      responses:
+        "200":
+          description: Objective completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveResponse"
+
+  /quests/{quest_id}/complete:
+    post:
+      summary: Complete quest
+      operationId: completeQuest
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteQuestRequest"
+      responses:
+        "200":
+          description: Quest completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestCompletionResponse"
+
+  /guild-wars:
+    get:
+      summary: Get active guild wars
+      operationId: getActiveGuildWars
+      parameters:
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific guild
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/WarStatus"
+          description: Filter by war status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 10
+      responses:
+        "200":
+          description: List of active guild wars
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildWarListResponse"
+
+    post:
+      summary: Declare guild war
+      operationId: declareGuildWar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeclareWarRequest"
+      responses:
+        "201":
+          description: War declared successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildWarResponse"
+
+  /guild-wars/{war_id}:
+    get:
+      summary: Get guild war details
+      operationId: getGuildWar
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Guild war details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildWarResponse"
+
+    put:
+      summary: Update guild war state
+      operationId: updateGuildWar
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWarRequest"
+      responses:
+        "200":
+          description: War updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildWarResponse"
+
+    delete:
+      summary: Surrender guild war
+      operationId: surrenderGuildWar
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SurrenderWarRequest"
+      responses:
+        "200":
+          description: War surrendered successfully
+
+  /guild-wars/{war_id}/territories:
+    get:
+      summary: Get war territories
+      operationId: getWarTerritories
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: War territories
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarTerritoriesResponse"
+
+    post:
+      summary: Claim territory in war
+      operationId: claimTerritory
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimTerritoryRequest"
+      responses:
+        "200":
+          description: Territory claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerritoryClaimResponse"
+
+  /cyber-space/missions:
+    get:
+      summary: Get available cyber space missions
+      operationId: getCyberSpaceMissions
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: difficulty
+          in: query
+          schema:
+            $ref: "#/components/schemas/CyberDifficulty"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+      responses:
+        "200":
+          description: Available cyber space missions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberMissionListResponse"
+
+    post:
+      summary: Enter cyber space mission
+      operationId: enterCyberSpace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnterCyberSpaceRequest"
+      responses:
+        "201":
+          description: Entered cyber space successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberSessionResponse"
+
+  /cyber-space/sessions/{session_id}:
+    get:
+      summary: Get cyber space session state
+      operationId: getCyberSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Cyber session state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberSessionResponse"
+
+    post:
+      summary: Execute cyber space action
+      operationId: executeCyberAction
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CyberActionRequest"
+      responses:
+        "200":
+          description: Action executed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberActionResponse"
+
+    delete:
+      summary: Exit cyber space session
+      operationId: exitCyberSpace
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Exited cyber space successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberExitResponse"
+
+  /social-intrigue/relationships:
+    get:
+      summary: Get player relationships
+      operationId: getRelationships
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_type
+          in: query
+          schema:
+            type: string
+            enum: [corporations, gangs, government, underworld]
+      responses:
+        "200":
+          description: Player relationships
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationshipsResponse"
+
+    post:
+      summary: Update relationship
+      operationId: updateRelationship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRelationshipRequest"
+      responses:
+        "200":
+          description: Relationship updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationshipResponse"
+
+  /social-intrigue/intrigues:
+    get:
+      summary: Get active intrigues
+      operationId: getActiveIntrigues
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Active intrigues
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntrigueListResponse"
+
+    post:
+      summary: Start new intrigue
+      operationId: startIntrigue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartIntrigueRequest"
+      responses:
+        "201":
+          description: Intrigue started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntrigueResponse"
+
+  /reputation-contracts:
+    get:
+      summary: Get available reputation contracts
+      operationId: getReputationContracts
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 10
+      responses:
+        "200":
+          description: Available contracts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractListResponse"
+
+    post:
+      summary: Accept reputation contract
+      operationId: acceptContract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptContractRequest"
+      responses:
+        "201":
+          description: Contract accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractResponse"
+
+  /reputation-contracts/{contract_id}/complete:
+    post:
+      summary: Complete reputation contract
+      operationId: completeContract
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteContractRequest"
+      responses:
+        "200":
+          description: Contract completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractCompletionResponse"
+
+  /telemetry:
+    get:
+      summary: Get quest system telemetry
+      operationId: getQuestTelemetry
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum:
+              [
+                active_quests,
+                completed_quests,
+                guild_wars,
+                cyber_sessions,
+                reputation_gains,
+              ]
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h]
+            default: 5m
+      responses:
+        "200":
+          description: Telemetry data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelemetryResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime_seconds:
+          type: integer
+        active_quests:
+          type: integer
+        active_wars:
+          type: integer
+
+    QuestType:
+      type: string
+      enum:
+        - guild_war
+        - cyber_space_mission
+        - social_intrigue
+        - reputation_contract
+
+    QuestStatus:
+      type: string
+      enum:
+        - active
+        - completed
+        - failed
+        - cancelled
+
+    QuestListResponse:
+      type: object
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestSummary"
+        total_count:
+          type: integer
+
+    QuestSummary:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        quest_type:
+          $ref: "#/components/schemas/QuestType"
+        title:
+          type: string
+        status:
+          $ref: "#/components/schemas/QuestStatus"
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        time_remaining:
+          type: integer
+          description: Seconds remaining
+          nullable: true
+
+    CreateQuestRequest:
+      type: object
+      required:
+        - quest_type
+        - player_id
+        - template_id
+      properties:
+        quest_type:
+          $ref: "#/components/schemas/QuestType"
+        player_id:
+          type: string
+          format: uuid
+        template_id:
+          type: string
+          format: uuid
+        parameters:
+          type: object
+          description: Quest-specific parameters
+
+    QuestResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        quest_type:
+          $ref: "#/components/schemas/QuestType"
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/QuestStatus"
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"
+        rewards:
+          $ref: "#/components/schemas/QuestRewards"
+        progress:
+          type: object
+          properties:
+            completed_objectives:
+              type: integer
+            total_objectives:
+              type: integer
+            percentage:
+              type: number
+        time_limit:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    QuestObjective:
+      type: object
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        type:
+          type: string
+          enum: [kill, collect, deliver, interact, reach_location]
+        target_count:
+          type: integer
+          minimum: 1
+        current_count:
+          type: integer
+          minimum: 0
+        completed:
+          type: boolean
+
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+        credits:
+          type: integer
+          minimum: 0
+        reputation:
+          type: object
+          additionalProperties:
+            type: integer
+        items:
+          type: array
+          items:
+            type: string
+
+    UpdateQuestRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/QuestStatus"
+        progress:
+          type: object
+        metadata:
+          type: object
+
+    QuestObjectivesResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"
+
+    CompleteObjectiveRequest:
+      type: object
+      required:
+        - objective_id
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+        progress_increment:
+          type: integer
+          minimum: 1
+          default: 1
+
+    ObjectiveResponse:
+      type: object
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+        completed:
+          type: boolean
+        new_progress:
+          type: integer
+        rewards_granted:
+          type: boolean
+
+    CompleteQuestRequest:
+      type: object
+      properties:
+        force_complete:
+          type: boolean
+          default: false
+        metadata:
+          type: object
+
+    QuestCompletionResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        rewards_granted:
+          $ref: "#/components/schemas/QuestRewards"
+        reputation_changes:
+          type: object
+          additionalProperties:
+            type: integer
+
+    WarStatus:
+      type: string
+      enum:
+        - declared
+        - active
+        - paused
+        - completed
+        - surrendered
+
+    GuildWarListResponse:
+      type: object
+      properties:
+        wars:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuildWarSummary"
+        total_count:
+          type: integer
+
+    GuildWarSummary:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        attacker_guild_id:
+          type: string
+          format: uuid
+        defender_guild_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/WarStatus"
+        territories_claimed:
+          type: integer
+        casualties:
+          type: integer
+        duration_hours:
+          type: integer
+
+    DeclareWarRequest:
+      type: object
+      required:
+        - attacker_guild_id
+        - defender_guild_id
+        - territories
+      properties:
+        attacker_guild_id:
+          type: string
+          format: uuid
+        defender_guild_id:
+          type: string
+          format: uuid
+        territories:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+        war_duration_hours:
+          type: integer
+          minimum: 24
+          maximum: 168
+          default: 72
+        war_type:
+          type: string
+          enum: [territorial, resource, revenge]
+          default: territorial
+
+    GuildWarResponse:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        attacker_guild:
+          $ref: "#/components/schemas/GuildInfo"
+        defender_guild:
+          $ref: "#/components/schemas/GuildInfo"
+        status:
+          $ref: "#/components/schemas/WarStatus"
+        territories:
+          type: array
+          items:
+            $ref: "#/components/schemas/WarTerritory"
+        statistics:
+          $ref: "#/components/schemas/WarStatistics"
+        started_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+
+    GuildInfo:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+
+    WarTerritory:
+      type: object
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        controlling_guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        contested:
+          type: boolean
+        capture_progress:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    WarStatistics:
+      type: object
+      properties:
+        attacker_casualties:
+          type: integer
+        defender_casualties:
+          type: integer
+        territories_captured:
+          type: integer
+        territories_lost:
+          type: integer
+        total_battles:
+          type: integer
+
+    UpdateWarRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/WarStatus"
+        new_territories:
+          type: array
+          items:
+            type: string
+            format: uuid
+        ceasefire_requested:
+          type: boolean
+
+    SurrenderWarRequest:
+      type: object
+      required:
+        - surrender_reason
+      properties:
+        surrender_reason:
+          type: string
+          enum: [unwinnable, time_up, leadership_decision, internal_conflict]
+
+    WarTerritoriesResponse:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        territories:
+          type: array
+          items:
+            $ref: "#/components/schemas/WarTerritory"
+
+    ClaimTerritoryRequest:
+      type: object
+      required:
+        - territory_id
+        - guild_id
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        capture_points:
+          type: integer
+          minimum: 1
+
+    TerritoryClaimResponse:
+      type: object
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        claimed_by_guild_id:
+          type: string
+          format: uuid
+        previous_controller:
+          type: string
+          format: uuid
+          nullable: true
+        claim_successful:
+          type: boolean
+        new_control_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    CyberDifficulty:
+      type: string
+      enum:
+        - beginner
+        - intermediate
+        - advanced
+        - expert
+        - legendary
+
+    CyberMissionListResponse:
+      type: object
+      properties:
+        missions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CyberMission"
+        player_level:
+          type: integer
+
+    CyberMission:
+      type: object
+      properties:
+        mission_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        difficulty:
+          $ref: "#/components/schemas/CyberDifficulty"
+        estimated_duration:
+          type: integer
+          description: Minutes
+        potential_rewards:
+          $ref: "#/components/schemas/CyberRewards"
+        required_level:
+          type: integer
+
+    CyberRewards:
+      type: object
+      properties:
+        data_fragments:
+          type: integer
+        software_upgrades:
+          type: array
+          items:
+            type: string
+        reputation_boost:
+          type: integer
+
+    EnterCyberSpaceRequest:
+      type: object
+      required:
+        - player_id
+        - mission_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        mission_id:
+          type: string
+          format: uuid
+        deck_configuration:
+          type: object
+          description: Player's cyberdeck setup
+
+    CyberSessionResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        mission:
+          $ref: "#/components/schemas/CyberMission"
+        cyberspace_map:
+          type: object
+          description: Generated cyberspace topology
+        session_start_time:
+          type: string
+          format: date-time
+
+    CyberActionRequest:
+      type: object
+      required:
+        - action_type
+      properties:
+        action_type:
+          type: string
+          enum: [move, hack, defend, extract_data, combat]
+        target_node_id:
+          type: string
+          format: uuid
+        parameters:
+          type: object
+
+    CyberActionResponse:
+      type: object
+      properties:
+        action_success:
+          type: boolean
+        action_result:
+          type: object
+        session_state:
+          type: object
+        ice_encountered:
+          type: boolean
+        data_extracted:
+          type: integer
+
+    CyberExitResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        total_data_extracted:
+          type: integer
+        time_spent:
+          type: integer
+          description: Seconds
+        psychological_impact:
+          type: integer
+          description: Sanity damage
+        rewards:
+          $ref: "#/components/schemas/CyberRewards"
+
+    RelationshipsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relationships:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Relationship"
+
+    Relationship:
+      type: object
+      properties:
+        faction_name:
+          type: string
+        reputation_level:
+          type: integer
+          minimum: -100
+          maximum: 100
+        reputation_tier:
+          type: string
+          enum: [hated, disliked, neutral, liked, trusted, allied]
+        influence_points:
+          type: integer
+
+    UpdateRelationshipRequest:
+      type: object
+      required:
+        - player_id
+        - faction_name
+        - reputation_change
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        reputation_change:
+          type: integer
+        reason:
+          type: string
+
+    RelationshipResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        old_reputation:
+          type: integer
+        new_reputation:
+          type: integer
+        new_tier:
+          type: string
+
+    IntrigueListResponse:
+      type: object
+      properties:
+        intrigues:
+          type: array
+          items:
+            $ref: "#/components/schemas/Intrigue"
+
+    Intrigue:
+      type: object
+      properties:
+        intrigue_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        involved_factions:
+          type: array
+          items:
+            type: string
+        player_role:
+          type: string
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    StartIntrigueRequest:
+      type: object
+      required:
+        - player_id
+        - intrigue_template_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        intrigue_template_id:
+          type: string
+          format: uuid
+        initial_choice:
+          type: string
+
+    IntrigueResponse:
+      type: object
+      properties:
+        intrigue_id:
+          type: string
+          format: uuid
+        intrigue:
+          $ref: "#/components/schemas/Intrigue"
+        first_decision:
+          type: object
+          properties:
+            question:
+              type: string
+            choices:
+              type: array
+              items:
+                type: object
+                properties:
+                  choice_id:
+                    type: string
+                  text:
+                    type: string
+                  consequences:
+                    type: string
+
+    ContractListResponse:
+      type: object
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReputationContract"
+        player_reputation:
+          type: object
+          additionalProperties:
+            type: integer
+
+    ReputationContract:
+      type: object
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        faction:
+          type: string
+        required_reputation:
+          type: integer
+        time_limit:
+          type: integer
+          description: Seconds
+        reward_reputation:
+          type: integer
+        reward_credits:
+          type: integer
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, extreme]
+
+    AcceptContractRequest:
+      type: object
+      required:
+        - player_id
+        - contract_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+
+    ContractResponse:
+      type: object
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        contract:
+          $ref: "#/components/schemas/ReputationContract"
+        accepted_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    CompleteContractRequest:
+      type: object
+      required:
+        - player_id
+        - success
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        completion_time:
+          type: integer
+          description: Seconds taken
+
+    ContractCompletionResponse:
+      type: object
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        reputation_gained:
+          type: integer
+        credits_earned:
+          type: integer
+        faction_reputation:
+          type: object
+          additionalProperties:
+            type: integer
+
+    TelemetryResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        timeframe:
+          type: string
+        data_points:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              value:
+                type: number
+        average:
+          type: number
+        peak:
+          type: number
+        total:
+          type: number

@@ -1,0 +1,871 @@
+openapi: 3.0.3
+info:
+  title: Economy Analytics Service API
+  description: |
+    Economy Analytics Service предоставляет инструменты аналитики для экономической системы NECPGAME.
+
+    ## Architecture Overview
+    - Professional-grade charting with TradingView-style interface
+    - Technical indicators and market sentiment analysis
+    - Portfolio analytics and risk management
+    - Real-time alerts and notifications system
+
+    ## Performance Notes
+    - Hot paths: chart data queries (500+ RPS), real-time updates (1000+ RPS)
+    - Memory optimized time-series data with compression
+    - Context timeouts for all analytics operations
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Local development
+  - url: https://api.necp.game/api/v1
+    description: Production API
+tags:
+  - name: Charts
+    description: Chart data and visualization
+  - name: Indicators
+    description: Technical indicators calculation
+  - name: Sentiment
+    description: Market sentiment analysis
+  - name: Portfolio
+    description: Portfolio analytics and metrics
+  - name: Alerts
+    description: Alert management and notifications
+paths:
+  # Chart Data
+  /economy/analytics/charts/{asset_type}/{asset_id}:
+    get:
+      tags:
+        - Charts
+      summary: Get chart data for asset
+      operationId: getChartData
+      description: |
+        Get historical price and volume data for charting.
+
+        ## Performance Note
+        - Cached data with TTL for hot assets
+        - Supports multiple timeframes and data types
+        - Real-time updates via WebSocket
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: asset_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [stock, currency, item, real_estate, vehicle]
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 4h, 1d, 1w, 1M]
+            default: 1h
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: data_type
+          in: query
+          schema:
+            type: string
+            enum: [ohlc, line, area]
+            default: ohlc
+      responses:
+        "200":
+          description: Chart data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartDataResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "404":
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+  # Technical Indicators
+  /economy/analytics/indicators/{asset_type}/{asset_id}:
+    get:
+      tags:
+        - Indicators
+      summary: Calculate technical indicators
+      operationId: getTechnicalIndicators
+      description: |
+        Calculate and return technical indicators for asset.
+
+        ## Security & Validation
+        - Rate limited to prevent abuse
+        - Cached results for common indicator combinations
+        - Supports multiple indicator types and periods
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: asset_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [stock, currency, item, real_estate, vehicle]
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: indicators
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [sma, ema, rsi, macd, bb, stoch, williams_r]
+        - name: periods
+          in: query
+          schema:
+            type: string
+            description: Comma-separated periods for indicators
+            default: "14,20,26"
+      responses:
+        "200":
+          description: Technical indicators data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechnicalIndicatorsResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/responses/TooManyRequests
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+  # Market Sentiment
+  /economy/analytics/sentiment:
+    get:
+      tags:
+        - Sentiment
+      summary: Get market sentiment analysis
+      operationId: getMarketSentiment
+      description: |
+        Get overall market sentiment indicators and analysis.
+
+        ## Performance Note
+        - Aggregated data from multiple sources
+        - Cached for 5-minute intervals
+        - Used for market mood visualization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: asset_type
+          in: query
+          schema:
+            type: string
+            enum: [stock, currency, item, real_estate, vehicle]
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 4h, 1d, 1w]
+            default: 1d
+      responses:
+        "200":
+          description: Market sentiment data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketSentimentResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+  /economy/analytics/sentiment/heatmap:
+    get:
+      tags:
+        - Sentiment
+      summary: Get sentiment heatmap data
+      operationId: getSentimentHeatmap
+      description: |
+        Get heatmap data showing sentiment across different sectors/markets.
+
+        ## Performance Note
+        - Heavy computation, cached for 15 minutes
+        - Color-coded visualization data
+        - Supports drill-down by sector
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sector
+          in: query
+          schema:
+            type: string
+            enum: [stocks, currencies, items, real_estate, vehicles, all]
+            default: all
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [sentiment, volume, volatility, fear_greed]
+            default: sentiment
+      responses:
+        "200":
+          description: Sentiment heatmap data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SentimentHeatmapResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+  # Portfolio Analytics
+  /economy/analytics/portfolio/{characterId}:
+    get:
+      tags:
+        - Portfolio
+      summary: Get portfolio analytics
+      operationId: getPortfolioAnalytics
+      description: |
+        Get comprehensive portfolio analysis and metrics.
+
+        ## Security & Validation
+        - Only accessible by portfolio owner
+        - Includes P&L, risk metrics, performance charts
+        - Real-time valuation calculations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1d, 1w, 1M, 3M, 1y, all]
+            default: 1M
+        - name: include_history
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Portfolio analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioAnalyticsResponse"
+        "403":
+          $ref: common.yaml#/components/responses/Forbidden
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+  /economy/analytics/portfolio/{characterId}/performance:
+    get:
+      tags:
+        - Portfolio
+      summary: Get portfolio performance metrics
+      operationId: getPortfolioPerformance
+      description: |
+        Get detailed performance metrics including Sharpe ratio, win rate, etc.
+
+        ## Performance Note
+        - Computed on-demand with caching
+        - Heavy calculations for large portfolios
+        - Supports multiple risk-adjusted metrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: benchmark
+          in: query
+          schema:
+            type: string
+            enum: [market, sector, none]
+            default: market
+      responses:
+        "200":
+          description: Portfolio performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioPerformanceResponse"
+        "403":
+          $ref: common.yaml#/components/responses/Forbidden
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+  # Alert Management
+  /economy/analytics/alerts:
+    get:
+      tags:
+        - Alerts
+      summary: Get user alerts
+      operationId: getUserAlerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, triggered, expired, all]
+            default: active
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: List of user alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAlertsResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+    post:
+      tags:
+        - Alerts
+      summary: Create new alert
+      operationId: createAlert
+      description: |
+        Create a new price or event-based alert.
+
+        ## Security & Validation
+        - Rate limited (max 50 active alerts per user)
+        - Validates alert conditions and permissions
+        - Supports multiple alert types and channels
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAlertRequest"
+      responses:
+        "201":
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "429":
+          description: Too many active alerts
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/responses/TooManyRequests
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+  /economy/analytics/alerts/{alertId}:
+    get:
+      tags:
+        - Alerts
+      summary: Get alert details
+      operationId: getAlert
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Alert details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertResponse"
+        "403":
+          $ref: common.yaml#/components/responses/Forbidden
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+    put:
+      tags:
+        - Alerts
+      summary: Update alert
+      operationId: updateAlert
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAlertRequest"
+      responses:
+        "200":
+          description: Alert updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertResponse"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "403":
+          $ref: common.yaml#/components/responses/Forbidden
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+    delete:
+      tags:
+        - Alerts
+      summary: Delete alert
+      operationId: deleteAlert
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Alert deleted
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        "403":
+          $ref: common.yaml#/components/responses/Forbidden
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+        "500":
+          $ref: common.yaml#/components/responses/InternalServerError
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Chart Data
+    ChartDataResponse:
+      type: object
+      properties:
+        asset_type:
+          type: string
+        asset_id:
+          type: string
+        timeframe:
+          type: string
+        data_type:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartDataPoint"
+        metadata:
+          $ref: "#/components/schemas/ChartMetadata"
+
+    ChartDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        open:
+          type: number
+          format: float
+        high:
+          type: number
+          format: float
+        low:
+          type: number
+          format: float
+        close:
+          type: number
+          format: float
+        volume:
+          type: integer
+
+    ChartMetadata:
+      type: object
+      properties:
+        total_points:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+        data_quality:
+          type: string
+          enum: [realtime, delayed, historical]
+
+    # Technical Indicators
+    TechnicalIndicatorsResponse:
+      type: object
+      properties:
+        asset_type:
+          type: string
+        asset_id:
+          type: string
+        indicators:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/IndicatorData"
+
+    IndicatorData:
+      type: object
+      properties:
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            type: number
+            format: float
+        signals:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndicatorSignal"
+
+    IndicatorSignal:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [buy, sell, neutral]
+        strength:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    # Market Sentiment
+    MarketSentimentResponse:
+      type: object
+      properties:
+        overall_sentiment:
+          type: number
+          minimum: -1
+          maximum: 1
+          description: -1 (bearish) to 1 (bullish)
+        fear_greed_index:
+          type: integer
+          minimum: 0
+          maximum: 100
+        sector_sentiment:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: -1
+            maximum: 1
+        last_updated:
+          type: string
+          format: date-time
+
+    SentimentHeatmapResponse:
+      type: object
+      properties:
+        sector:
+          type: string
+        metric:
+          type: string
+        heatmap_data:
+          type: array
+          items:
+            $ref: "#/components/schemas/HeatmapPoint"
+        color_scale:
+          type: array
+          items:
+            type: string
+
+    HeatmapPoint:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        value:
+          type: number
+        label:
+          type: string
+
+    # Portfolio Analytics
+    PortfolioAnalyticsResponse:
+      type: object
+      properties:
+        portfolio_value:
+          type: number
+          format: float
+        total_return:
+          type: number
+          format: float
+        daily_change:
+          type: number
+          format: float
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioAsset"
+        performance_chart:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioValuePoint"
+        risk_metrics:
+          $ref: "#/components/schemas/RiskMetrics"
+
+    PortfolioAsset:
+      type: object
+      properties:
+        asset_type:
+          type: string
+        asset_id:
+          type: string
+        quantity:
+          type: number
+        current_price:
+          type: number
+          format: float
+        total_value:
+          type: number
+          format: float
+        gain_loss:
+          type: number
+          format: float
+        gain_loss_percent:
+          type: number
+          format: float
+
+    PortfolioValuePoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        value:
+          type: number
+          format: float
+
+    RiskMetrics:
+      type: object
+      properties:
+        sharpe_ratio:
+          type: number
+          format: float
+        volatility:
+          type: number
+          format: float
+        max_drawdown:
+          type: number
+          format: float
+        beta:
+          type: number
+          format: float
+
+    PortfolioPerformanceResponse:
+      type: object
+      properties:
+        total_trades:
+          type: integer
+        winning_trades:
+          type: integer
+        losing_trades:
+          type: integer
+        win_rate:
+          type: number
+          format: float
+        profit_factor:
+          type: number
+          format: float
+        average_win:
+          type: number
+          format: float
+        average_loss:
+          type: number
+          format: float
+        largest_win:
+          type: number
+          format: float
+        largest_loss:
+          type: number
+          format: float
+        risk_metrics:
+          $ref: "#/components/schemas/RiskMetrics"
+
+    # Alerts
+    UserAlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Alert"
+        total_count:
+          type: integer
+
+    CreateAlertRequest:
+      type: object
+      required:
+        - name
+        - condition
+        - asset_type
+        - asset_id
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        condition:
+          $ref: "#/components/schemas/AlertCondition"
+        asset_type:
+          type: string
+          enum: [stock, currency, item, real_estate, vehicle]
+        asset_id:
+          type: string
+        notification_channels:
+          type: array
+          items:
+            type: string
+            enum: [push, email, in_game]
+          default: ["push"]
+        active:
+          type: boolean
+          default: true
+
+    UpdateAlertRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        condition:
+          $ref: "#/components/schemas/AlertCondition"
+        notification_channels:
+          type: array
+          items:
+            type: string
+            enum: [push, email, in_game]
+        active:
+          type: boolean
+
+    AlertResponse:
+      type: object
+      properties:
+        alert:
+          $ref: "#/components/schemas/Alert"
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        condition:
+          $ref: "#/components/schemas/AlertCondition"
+        asset_type:
+          type: string
+        asset_id:
+          type: string
+        status:
+          type: string
+          enum: [active, triggered, expired, paused]
+        created_at:
+          type: string
+          format: date-time
+        last_triggered:
+          type: string
+          format: date-time
+        notification_channels:
+          type: array
+          items:
+            type: string
+
+    AlertCondition:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            [
+              price_above,
+              price_below,
+              price_change,
+              volume_spike,
+              indicator_signal,
+              custom_event,
+            ]
+        value:
+          type: number
+          format: float
+        comparison_operator:
+          type: string
+          enum: [gt, lt, gte, lte, eq]
+        timeframe:
+          type: string
+          enum: [1m, 5m, 15m, 1h, 4h, 1d, 1w]
+        additional_params:
+          type: object
