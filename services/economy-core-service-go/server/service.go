@@ -18,24 +18,24 @@ import (
 
 // Config holds service configuration with performance optimizations
 type Config struct {
-	HTTPPort         int
-	WebSocketPort    int
-	DatabaseURL      string
-	KafkaBrokers     string
-	RedisURL         string
-	PrometheusPort   int
-	Environment      string
-	MaxConnections   int
-	WorkerPoolSize   int
-	BufferSize       int
-	ContextTimeout   time.Duration
-	ReadTimeout      time.Duration
-	WriteTimeout     time.Duration
-	MaxRequestSize   int64
-	RateLimitRPM     int
-	EnableMetrics    bool
-	EnableTracing    bool
-	EnableDebugLogs  bool
+	HTTPPort        int
+	WebSocketPort   int
+	DatabaseURL     string
+	KafkaBrokers    string
+	RedisURL        string
+	PrometheusPort  int
+	Environment     string
+	MaxConnections  int
+	WorkerPoolSize  int
+	BufferSize      int
+	ContextTimeout  time.Duration
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	MaxRequestSize  int64
+	RateLimitRPM    int
+	EnableMetrics   bool
+	EnableTracing   bool
+	EnableDebugLogs bool
 }
 
 // Service represents the economy core service
@@ -48,11 +48,11 @@ type Service struct {
 	wsServer   *fasthttp.Server
 
 	// Performance optimizations
-	rateLimiter   *rate.Limiter
-	semaphore     *semaphore.Weighted
-	workerPool    chan func()
-	bufferPool    *sync.Pool
-	contextPool   *sync.Pool
+	rateLimiter *rate.Limiter
+	semaphore   *semaphore.Weighted
+	workerPool  chan func()
+	bufferPool  *sync.Pool
+	contextPool *sync.Pool
 
 	// Economy system managers
 	inventoryManager *InventoryManager
@@ -97,14 +97,14 @@ func NewService(config Config) (*Service, error) {
 	}
 
 	return &Service{
-		config:       config,
-		logger:       sugar,
-		rateLimiter:  rateLimiter,
-		semaphore:    sem,
-		workerPool:   workerPool,
-		bufferPool:   bufferPool,
-		contextPool:  contextPool,
-		shutdownCh:   make(chan struct{}),
+		config:      config,
+		logger:      sugar,
+		rateLimiter: rateLimiter,
+		semaphore:   sem,
+		workerPool:  workerPool,
+		bufferPool:  bufferPool,
+		contextPool: contextPool,
+		shutdownCh:  make(chan struct{}),
 	}, nil
 }
 
@@ -170,18 +170,18 @@ func (s *Service) Initialize(ctx context.Context) error {
 func (s *Service) HTTPServer() *fasthttp.Server {
 	if s.httpServer == nil {
 		s.httpServer = &fasthttp.Server{
-			Handler:               s.handleHTTPRequest,
-			ReadTimeout:           s.config.ReadTimeout,
-			WriteTimeout:          s.config.WriteTimeout,
-			MaxRequestBodySize:    int(s.config.MaxRequestSize),
-			Concurrency:           s.config.MaxConnections,
-			DisableKeepalive:      false,
-			TCPKeepalive:          true,
-			TCPKeepalivePeriod:    60 * time.Second,
-			MaxConnsPerIP:         50,
-			MaxRequestsPerConn:    1000,
-			ReduceMemoryUsage:     true, // Performance optimization
-			Logger:                zap.NewStdLog(s.logger.Desugar()),
+			Handler:            s.handleHTTPRequest,
+			ReadTimeout:        s.config.ReadTimeout,
+			WriteTimeout:       s.config.WriteTimeout,
+			MaxRequestBodySize: int(s.config.MaxRequestSize),
+			Concurrency:        s.config.MaxConnections,
+			DisableKeepalive:   false,
+			TCPKeepalive:       true,
+			TCPKeepalivePeriod: 60 * time.Second,
+			MaxConnsPerIP:      50,
+			MaxRequestsPerConn: 1000,
+			ReduceMemoryUsage:  true, // Performance optimization
+			Logger:             zap.NewStdLog(s.logger.Desugar()),
 		}
 	}
 	return s.httpServer

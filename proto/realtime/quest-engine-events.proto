@@ -1,0 +1,479 @@
+// Issue: #176
+syntax = "proto3";
+
+package quest.events.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// Quest Engine Event Bus Specification
+// Event-driven architecture for dynamic quest management
+
+option java_package = "com.necpgame.quest.events.v1";
+option java_multiple_files = true;
+
+// ============================================================================
+// QUEST LIFECYCLE EVENTS
+// ============================================================================
+
+message QuestEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string instance_id = 4;
+  oneof event {
+    QuestStarted started = 5;
+    QuestUpdated updated = 6;
+    QuestCompleted completed = 7;
+    QuestFailed failed = 8;
+    QuestAbandoned abandoned = 9;
+    QuestExpired expired = 10;
+    QuestBranchTriggered branch_triggered = 11;
+  }
+
+  message QuestStarted {
+    string quest_template_id = 1;
+    string quest_name = 2;
+    string starting_branch = 3;
+    repeated string initial_objectives = 4;
+    map<string, string> quest_parameters = 5;
+  }
+
+  message QuestUpdated {
+    string update_type = 1;
+    string update_reason = 2;
+    float progress_percentage = 3;
+    map<string, string> state_changes = 4;
+  }
+
+  message QuestCompleted {
+    string completion_reason = 1;
+    string final_branch = 2;
+    int32 completion_time_seconds = 3;
+    bool perfect_completion = 4;
+    repeated string achievements_unlocked = 5;
+  }
+
+  message QuestFailed {
+    string failure_reason = 1;
+    string failure_point = 2;
+    repeated string recoverable_objectives = 3;
+  }
+
+  message QuestAbandoned {
+    string abandon_reason = 1;
+    int32 time_spent_seconds = 2;
+    float progress_lost = 3;
+  }
+
+  message QuestExpired {
+    int32 expiry_time_seconds = 1;
+    string expiry_reason = 2;
+  }
+
+  message QuestBranchTriggered {
+    string branch_trigger = 1;
+    string new_branch = 2;
+    string trigger_condition = 3;
+    repeated string branch_effects = 4;
+  }
+}
+
+// ============================================================================
+// QUEST OBJECTIVES EVENTS
+// ============================================================================
+
+message QuestObjectiveEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string instance_id = 4;
+  string objective_id = 5;
+  oneof event {
+    ObjectiveProgressed progressed = 6;
+    ObjectiveCompleted completed = 7;
+    ObjectiveFailed failed = 8;
+    ObjectiveActivated activated = 9;
+    ObjectiveDeactivated deactivated = 10;
+  }
+
+  message ObjectiveProgressed {
+    int32 previous_progress = 1;
+    int32 current_progress = 2;
+    int32 required_progress = 3;
+    string progress_source = 4;
+    map<string, string> progress_metadata = 5;
+  }
+
+  message ObjectiveCompleted {
+    int32 completion_time_seconds = 1;
+    bool was_optional = 2;
+    repeated string reward_items = 3;
+    int32 reward_xp = 4;
+  }
+
+  message ObjectiveFailed {
+    string failure_reason = 1;
+    bool can_retry = 2;
+    int32 retry_cost = 3;
+  }
+
+  message ObjectiveActivated {
+    string objective_type = 1;
+    string objective_description = 2;
+    int32 required_progress = 3;
+    map<string, string> activation_conditions = 4;
+  }
+
+  message ObjectiveDeactivated {
+    string deactivation_reason = 1;
+    int32 progress_preserved = 2;
+  }
+}
+
+// ============================================================================
+// DIALOGUE SYSTEM EVENTS
+// ============================================================================
+
+message QuestDialogueEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string instance_id = 4;
+  string dialogue_id = 5;
+  oneof event {
+    DialogueStarted started = 6;
+    DialogueChoiceMade choice_made = 7;
+    DialogueCompleted completed = 8;
+    DialogueInterrupted interrupted = 9;
+    DialogueBranchTriggered branch_triggered = 10;
+  }
+
+  message DialogueStarted {
+    string npc_id = 1;
+    string npc_name = 2;
+    string initial_topic = 3;
+    string dialogue_context = 4;
+    int32 available_choices = 5;
+  }
+
+  message DialogueChoiceMade {
+    string choice_id = 1;
+    string choice_text = 2;
+    string choice_category = 3;
+    repeated string choice_effects = 4;
+    map<string, string> choice_metadata = 5;
+  }
+
+  message DialogueCompleted {
+    string completion_reason = 1;
+    int32 dialogue_duration_seconds = 2;
+    int32 choices_made = 3;
+    repeated string dialogue_outcomes = 4;
+  }
+
+  message DialogueInterrupted {
+    string interruption_reason = 1;
+    string interruption_source = 2;
+    int32 dialogue_progress_lost = 3;
+  }
+
+  message DialogueBranchTriggered {
+    string branch_condition = 1;
+    string new_dialogue_branch = 2;
+    repeated string branch_effects = 3;
+  }
+}
+
+// ============================================================================
+// SKILL TEST EVENTS
+// ============================================================================
+
+message QuestSkillTestEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string instance_id = 4;
+  string skill_test_id = 5;
+  oneof event {
+    SkillTestStarted started = 6;
+    SkillTestCompleted completed = 7;
+    SkillTestFailed failed = 8;
+    SkillTestCriticalSuccess critical_success = 9;
+    SkillTestCriticalFailure critical_failure = 10;
+  }
+
+  message SkillTestStarted {
+    string skill_type = 1;
+    string difficulty = 2;
+    int32 target_number = 3;
+    repeated string modifiers = 4;
+    string test_context = 5;
+  }
+
+  message SkillTestCompleted {
+    string skill_type = 1;
+    int32 roll_result = 2;
+    int32 final_result = 3;
+    int32 target_number = 4;
+    int32 margin_of_success = 5;
+  }
+
+  message SkillTestFailed {
+    string skill_type = 1;
+    int32 roll_result = 2;
+    int32 final_result = 3;
+    int32 target_number = 4;
+    int32 margin_of_failure = 5;
+  }
+
+  message SkillTestCriticalSuccess {
+    string skill_type = 1;
+    int32 roll_result = 2;
+    repeated string critical_effects = 3;
+    int32 bonus_magnitude = 4;
+  }
+
+  message SkillTestCriticalFailure {
+    string skill_type = 1;
+    int32 roll_result = 2;
+    repeated string critical_effects = 3;
+    int32 penalty_magnitude = 4;
+  }
+}
+
+// ============================================================================
+// QUEST REWARD EVENTS
+// ============================================================================
+
+message QuestRewardEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  string instance_id = 4;
+  oneof event {
+    RewardGranted granted = 5;
+    RewardClaimed claimed = 6;
+    RewardExpired expired = 7;
+    RewardBonusApplied bonus_applied = 8;
+  }
+
+  message RewardGranted {
+    string reward_type = 1;
+    string reward_id = 2;
+    int32 base_amount = 3;
+    float multiplier = 4;
+    int32 final_amount = 5;
+    string grant_reason = 6;
+  }
+
+  message RewardClaimed {
+    string reward_type = 1;
+    string reward_id = 2;
+    int32 claimed_amount = 3;
+    string claim_method = 4;
+    int32 claim_delay_seconds = 5;
+  }
+
+  message RewardExpired {
+    string reward_type = 1;
+    string reward_id = 2;
+    int32 expired_amount = 3;
+    string expiry_reason = 4;
+  }
+
+  message RewardBonusApplied {
+    string bonus_type = 1;
+    string bonus_source = 2;
+    float bonus_multiplier = 3;
+    string bonus_condition = 4;
+    int32 bonus_duration_seconds = 5;
+  }
+}
+
+// ============================================================================
+// QUEST ANALYTICS EVENTS
+// ============================================================================
+
+message QuestAnalyticsEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string character_id = 3;
+  oneof event {
+    QuestProgressAnalytics progress = 4;
+    DialogueAnalytics dialogue = 5;
+    SkillTestAnalytics skill_test = 6;
+    QuestCompletionAnalytics completion = 7;
+    PlayerQuestBehavior behavior = 8;
+  }
+
+  message QuestProgressAnalytics {
+    string quest_template_id = 1;
+    string instance_id = 2;
+    float completion_percentage = 3;
+    int32 time_spent_seconds = 4;
+    int32 objectives_completed = 5;
+    int32 objectives_total = 6;
+    repeated string completion_blockers = 7;
+    string player_skill_level = 8;
+  }
+
+  message DialogueAnalytics {
+    string dialogue_id = 1;
+    int32 dialogue_duration_seconds = 2;
+    int32 choices_made = 3;
+    repeated string choice_categories = 4;
+    int32 dialogue_branches_taken = 5;
+    float player_aggression_level = 6;
+    float player_cooperation_level = 7;
+  }
+
+  message SkillTestAnalytics {
+    string skill_type = 1;
+    string difficulty = 2;
+    int32 tests_attempted = 3;
+    int32 tests_succeeded = 4;
+    int32 critical_successes = 5;
+    int32 critical_failures = 6;
+    float average_margin = 7;
+    repeated string common_modifiers = 8;
+  }
+
+  message QuestCompletionAnalytics {
+    string quest_template_id = 1;
+    bool completed_successfully = 2;
+    int32 completion_time_seconds = 3;
+    string completion_path = 4;
+    int32 retries_count = 5;
+    repeated string assistance_used = 6;
+    float difficulty_rating = 7;
+    float enjoyment_rating = 8;
+  }
+
+  message PlayerQuestBehavior {
+    string behavior_type = 1;
+    string behavior_context = 2;
+    float behavior_intensity = 3;
+    repeated string behavior_triggers = 4;
+    string player_personality_type = 5;
+    repeated string preferred_quest_types = 6;
+  }
+}
+
+// ============================================================================
+// QUEST SYSTEM HEALTH EVENTS
+// ============================================================================
+
+message QuestSystemHealthEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  oneof event {
+    QuestTemplateActivated activated = 3;
+    QuestTemplateDeactivated deactivated = 4;
+    QuestBranchValidationFailed validation_failed = 5;
+    QuestStateCorruptionDetected corruption = 6;
+    QuestPerformanceIssue performance = 7;
+  }
+
+  message QuestTemplateActivated {
+    string quest_template_id = 1;
+    string activation_reason = 2;
+    repeated string affected_characters = 3;
+    int32 expected_instances = 4;
+  }
+
+  message QuestTemplateDeactivated {
+    string quest_template_id = 1;
+    string deactivation_reason = 2;
+    int32 active_instances_killed = 3;
+    repeated string affected_characters = 4;
+  }
+
+  message QuestBranchValidationFailed {
+    string quest_template_id = 1;
+    string branch_id = 2;
+    string validation_error = 3;
+    repeated string affected_instances = 4;
+  }
+
+  message QuestStateCorruptionDetected {
+    string instance_id = 1;
+    string corruption_type = 2;
+    string corruption_details = 3;
+    bool auto_recovered = 4;
+    string recovery_action = 5;
+  }
+
+  message QuestPerformanceIssue {
+    string issue_type = 1;
+    string affected_component = 2;
+    float performance_degradation = 3;
+    int32 affected_instances = 4;
+    string mitigation_action = 5;
+  }
+}
+
+// ============================================================================
+// GLOBAL QUEST EVENTS
+// ============================================================================
+
+message GlobalQuestEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  oneof event {
+    WorldEventQuestTriggered world_event = 3;
+    FactionQuestAvailable faction_quest = 4;
+    DynamicQuestGenerated dynamic_quest = 5;
+    QuestMilestoneReached milestone = 6;
+    QuestLeaderboardUpdated leaderboard = 7;
+  }
+
+  message WorldEventQuestTriggered {
+    string world_event_id = 1;
+    string event_name = 2;
+    string quest_template_id = 3;
+    repeated string affected_zones = 4;
+    int32 time_limit_seconds = 5;
+    int32 expected_participants = 6;
+  }
+
+  message FactionQuestAvailable {
+    string faction_id = 1;
+    string faction_name = 2;
+    string quest_template_id = 3;
+    int32 reputation_required = 4;
+    repeated string quest_rewards = 5;
+    int32 availability_duration_seconds = 6;
+  }
+
+  message DynamicQuestGenerated {
+    string generation_reason = 1;
+    string quest_template_id = 2;
+    string target_character_id = 3;
+    repeated string generation_parameters = 4;
+    int32 uniqueness_score = 5;
+  }
+
+  message QuestMilestoneReached {
+    string milestone_type = 1;
+    string milestone_value = 2;
+    int32 characters_affected = 3;
+    repeated string rewards_unlocked = 4;
+    string milestone_context = 5;
+  }
+
+  message QuestLeaderboardUpdated {
+    string leaderboard_type = 1;
+    string leaderboard_period = 2;
+    repeated LeaderboardEntry top_entries = 3;
+    int32 total_participants = 4;
+  }
+
+  message LeaderboardEntry {
+    int32 rank = 1;
+    string character_name = 2;
+    string character_id = 3;
+    string value = 4;
+    string achievement_date = 5;
+  }
+}

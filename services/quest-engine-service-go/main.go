@@ -1,127 +1,129 @@
-//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target . --package quest_engine --clean ../../proto/openapi/quest-engine-service.yaml
-
+// Issue: #176
 package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"necpgame/services/quest-engine-service-go/internal/config"
-	"necpgame/services/quest-engine-service-go/internal/handler"
-	"necpgame/services/quest-engine-service-go/internal/repository"
-	"necpgame/services/quest-engine-service-go/internal/service"
+	"github.com/NECPGAME/quest-engine-service-go/server"
+	"go.uber.org/zap"
 )
 
 func main() {
+	// Initialize structured logging
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	defer logger.Sync()
+
+	sugar := logger.Sugar()
+
+	// Create service instance with performance optimizations
+	svc, err := server.NewService(server.Config{
+		HTTPPort:         getEnvInt("HTTP_PORT", 8300),
+		WebSocketPort:    getEnvInt("WS_PORT", 8301),
+		DatabaseURL:      getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/necp_game"),
+		KafkaBrokers:     getEnv("KAFKA_BROKERS", "localhost:9092"),
+		RedisURL:         getEnv("REDIS_URL", "redis://localhost:6379"),
+		PrometheusPort:   getEnvInt("PROMETHEUS_PORT", 9092),
+		Environment:      getEnv("ENVIRONMENT", "development"),
+		MaxConnections:   getEnvInt("MAX_CONNECTIONS", 10000),
+		WorkerPoolSize:   getEnvInt("WORKER_POOL_SIZE", 100),
+		BufferSize:       getEnvInt("BUFFER_SIZE", 8192),
+		ContextTimeout:   time.Duration(getEnvInt("CONTEXT_TIMEOUT_SEC", 30)) * time.Second,
+		ReadTimeout:      time.Duration(getEnvInt("READ_TIMEOUT_SEC", 10)) * time.Second,
+		WriteTimeout:     time.Duration(getEnvInt("WRITE_TIMEOUT_SEC", 10)) * time.Second,
+		MaxRequestSize:   getEnvInt("MAX_REQUEST_SIZE_MB", 1) * 1024 * 1024,
+		RateLimitRPM:     getEnvInt("RATE_LIMIT_RPM", 1000),
+		EnableMetrics:    getEnvBool("ENABLE_METRICS", true),
+		EnableTracing:    getEnvBool("ENABLE_TRACING", false),
+		EnableDebugLogs:  getEnvBool("ENABLE_DEBUG_LOGS", false),
+	})
+	if err != nil {
+		sugar.Fatalf("Failed to create service: %v", err)
+	}
+
+	// Initialize service components
 	ctx := context.Background()
-
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+	if err := svc.Initialize(ctx); err != nil {
+		sugar.Fatalf("Failed to initialize service: %v", err)
 	}
 
-	db, err := initDatabase(ctx, cfg.DatabaseURL)
-	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
-	}
-	defer db.Close()
+	// Start HTTP server
+	httpServer := svc.HTTPServer()
+	go func() {
+		sugar.Infof("Starting HTTP server on port %d", svc.Config().HTTPPort)
+		if err := httpServer.ListenAndServe(); err != nil {
+			sugar.Errorf("HTTP server error: %v", err)
+		}
+	}()
 
-	rdb := initRedis(cfg.RedisURL)
-
-	questService := service.NewQuestService(repository.NewRepository(db, rdb))
-	h := handler.NewHandler(questService)
-
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
-		Handler:      h.Router(),
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
+	// Start WebSocket server
+	wsServer := svc.WebSocketServer()
+	go func() {
+		sugar.Infof("Starting WebSocket server on port %d", svc.Config().WebSocketPort)
+		if err := wsServer.ListenAndServe(); err != nil {
+			sugar.Errorf("WebSocket server error: %v", err)
+		}
+	}()
 
 	// Start metrics server
-	go func() {
-		metricsSrv := &http.Server{
-			Addr:    ":9091",
-			Handler: promhttp.Handler(),
-		}
-		log.Printf("Starting metrics server on :9091")
-		if err := metricsSrv.ListenAndServe(); err != nil {
-			log.Printf("Metrics server error: %v", err)
-		}
-	}()
+	if svc.Config().EnableMetrics {
+		metricsServer := svc.MetricsServer()
+		go func() {
+			sugar.Infof("Starting metrics server on port %d", svc.Config().PrometheusPort)
+			if err := metricsServer.ListenAndServe(); err != nil {
+				sugar.Errorf("Metrics server error: %v", err)
+			}
+		}()
+	}
 
-	go func() {
-		log.Printf("Starting Quest Engine Service on port %d", cfg.Port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
-		}
-	}()
-
+	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	sugar.Info("Shutting down servers...")
+
+	// Graceful shutdown with timeout
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+	if err := svc.Shutdown(shutdownCtx); err != nil {
+		sugar.Errorf("Server forced to shutdown: %v", err)
 	}
 
-	log.Println("Server exited")
+	sugar.Info("Servers exited")
 }
 
-func initDatabase(ctx context.Context, url string) (*pgxpool.Pool, error) {
-	config, err := pgxpool.ParseConfig(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse database config: %w", err)
+// Helper functions for environment variables
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-
-	config.MaxConns = 20
-	config.MinConns = 5
-	config.MaxConnLifetime = time.Hour
-	config.MaxConnIdleTime = 30 * time.Minute
-
-	pool, err := pgxpool.ConnectConfig(ctx, config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
-	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
-	}
-
-	return pool, nil
+	return defaultValue
 }
 
-func initRedis(url string) *redis.Client {
-	opt, err := redis.ParseURL(url)
-	if err != nil {
-		log.Fatalf("Failed to parse Redis URL: %v", err)
+func getEnvInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
 	}
-
-	rdb := redis.NewClient(opt)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
-	}
-
-	return rdb
+	return defaultValue
 }
 
-// Issue: #1861
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
+		}
+	}
+	return defaultValue
+}

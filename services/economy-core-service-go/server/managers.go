@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -101,54 +102,54 @@ func (m *EconomyMetrics) Handler() http.Handler {
 
 // InventorySlot represents an inventory slot
 type InventorySlot struct {
-	SlotID     uuid.UUID    `json:"slot_id"`
-	CharacterID uuid.UUID   `json:"character_id"`
-	SlotType   string       `json:"slot_type"`
-	PositionX  int          `json:"position_x"`
-	PositionY  int          `json:"position_y"`
-	Item       *InventoryItem `json:"item,omitempty"`
-	IsLocked   bool         `json:"is_locked"`
-	UpdatedAt  time.Time    `json:"updated_at"`
+	SlotID      uuid.UUID      `json:"slot_id"`
+	CharacterID uuid.UUID      `json:"character_id"`
+	SlotType    string         `json:"slot_type"`
+	PositionX   int            `json:"position_x"`
+	PositionY   int            `json:"position_y"`
+	Item        *InventoryItem `json:"item,omitempty"`
+	IsLocked    bool           `json:"is_locked"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 // InventoryItem represents an inventory item instance
 type InventoryItem struct {
-	ItemID        uuid.UUID              `json:"item_id"`
-	TemplateID    uuid.UUID              `json:"template_id"`
-	CharacterID   uuid.UUID              `json:"character_id"`
-	Quantity      int                    `json:"quantity"`
-	Quality       string                 `json:"quality"`
-	Durability    *int                   `json:"durability,omitempty"`
-	MaxDurability *int                   `json:"max_durability,omitempty"`
+	ItemID           uuid.UUID              `json:"item_id"`
+	TemplateID       uuid.UUID              `json:"template_id"`
+	CharacterID      uuid.UUID              `json:"character_id"`
+	Quantity         int                    `json:"quantity"`
+	Quality          string                 `json:"quality"`
+	Durability       *int                   `json:"durability,omitempty"`
+	MaxDurability    *int                   `json:"max_durability,omitempty"`
 	CustomProperties map[string]interface{} `json:"custom_properties,omitempty"`
-	IsBound       bool                   `json:"is_bound"`
-	BoundOn       *string                `json:"bound_on,omitempty"`
-	BoundTimestamp *time.Time            `json:"bound_timestamp,omitempty"`
-	CreatedAt     time.Time              `json:"created_at"`
-	UpdatedAt     time.Time              `json:"updated_at"`
+	IsBound          bool                   `json:"is_bound"`
+	BoundOn          *string                `json:"bound_on,omitempty"`
+	BoundTimestamp   *time.Time             `json:"bound_timestamp,omitempty"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
 }
 
 // TradeSession represents a trade session
 type TradeSession struct {
-	SessionID       uuid.UUID `json:"session_id"`
-	InitiatorID     uuid.UUID `json:"initiator_id"`
-	TargetID        uuid.UUID `json:"target_id"`
-	Status          string    `json:"status"`
-	InitiatorItems  []TradeItem `json:"initiator_items"`
-	TargetItems     []TradeItem `json:"target_items"`
-	InitiatorCredits int       `json:"initiator_credits"`
-	TargetCredits   int       `json:"target_credits"`
-	TimeoutSeconds  int       `json:"timeout_seconds"`
-	CreatedAt       time.Time `json:"created_at"`
-	ExpiresAt       *time.Time `json:"expires_at,omitempty"`
-	ConfirmedAt     *time.Time `json:"confirmed_at,omitempty"`
-	CompletedAt     *time.Time `json:"completed_at,omitempty"`
+	SessionID        uuid.UUID   `json:"session_id"`
+	InitiatorID      uuid.UUID   `json:"initiator_id"`
+	TargetID         uuid.UUID   `json:"target_id"`
+	Status           string      `json:"status"`
+	InitiatorItems   []TradeItem `json:"initiator_items"`
+	TargetItems      []TradeItem `json:"target_items"`
+	InitiatorCredits int         `json:"initiator_credits"`
+	TargetCredits    int         `json:"target_credits"`
+	TimeoutSeconds   int         `json:"timeout_seconds"`
+	CreatedAt        time.Time   `json:"created_at"`
+	ExpiresAt        *time.Time  `json:"expires_at,omitempty"`
+	ConfirmedAt      *time.Time  `json:"confirmed_at,omitempty"`
+	CompletedAt      *time.Time  `json:"completed_at,omitempty"`
 }
 
 // TradeItem represents an item in a trade
 type TradeItem struct {
-	ItemID   uuid.UUID `json:"item_id"`
+	ItemID     uuid.UUID `json:"item_id"`
 	TemplateID uuid.UUID `json:"template_id"`
-	Quantity int       `json:"quantity"`
-	Quality  string    `json:"quality"`
+	Quantity   int       `json:"quantity"`
+	Quality    string    `json:"quality"`
 }
