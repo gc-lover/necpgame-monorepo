@@ -6,8 +6,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/world-service-go/models"
 	"github.com/gc-lover/necpgame-monorepo/services/world-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,12 +20,21 @@ const (
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
-	logger *logrus.Logger
+	logger          *logrus.Logger
+	interactiveRepo models.InteractiveRepository
 }
 
 // NewHandlers creates handlers with dependency injection
-func NewHandlers(logger *logrus.Logger) *Handlers {
-	return &Handlers{logger: logger}
+func NewHandlers(logger *logrus.Logger, interactiveRepo ...models.InteractiveRepository) *Handlers {
+	h := &Handlers{
+		logger: logger,
+	}
+
+	if len(interactiveRepo) > 0 {
+		h.interactiveRepo = interactiveRepo[0]
+	}
+
+	return h
 }
 
 // ListContinents implements GET /world/continents (TYPED ogen response)
@@ -71,8 +81,8 @@ func (h *Handlers) CreateContinent(ctx context.Context, req *api.CreateContinent
 		climateMap := map[api.CreateContinentRequestClimate]api.SchemasContinentClimate{
 			api.CreateContinentRequestClimateTemperate: api.SchemasContinentClimateTemperate,
 			api.CreateContinentRequestClimateArid:      api.SchemasContinentClimateArid,
-			api.CreateContinentRequestClimateTropical:   api.SchemasContinentClimateTropical,
-			api.CreateContinentRequestClimateArctic:     api.SchemasContinentClimateArctic,
+			api.CreateContinentRequestClimateTropical:  api.SchemasContinentClimateTropical,
+			api.CreateContinentRequestClimateArctic:    api.SchemasContinentClimateArctic,
 			api.CreateContinentRequestClimateToxic:     api.SchemasContinentClimateToxic,
 		}
 		if climate, ok := climateMap[req.Climate.Value]; ok {

@@ -29,7 +29,7 @@ Write-Host ""
 Write-Host "📏 Checking file sizes..."
 
 $filesToCheck = Get-ChildItem -Recurse -Include "*.yaml", "*.go", "*.sql", "*.md" |
-    Where-Object { $_.FullName -notmatch '\\(\.git|node_modules|vendor)\\' }
+Where-Object { $_.FullName -notmatch '\\(\.git|node_modules|vendor)\\' }
 
 foreach ($file in $filesToCheck) {
     try {
@@ -37,7 +37,8 @@ foreach ($file in $filesToCheck) {
         if ($lines -gt 600) {
             Log-Error "File $($file.Name) exceeds 600 lines ($lines lines)"
         }
-    } catch {
+    }
+    catch {
         Log-Warning "Could not read file $($file.Name)"
     }
 }
@@ -50,7 +51,8 @@ $requiredDirs = @("proto/openapi", "services", "knowledge", "infrastructure")
 foreach ($dir in $requiredDirs) {
     if (Test-Path $dir) {
         Log-Success "Directory $dir exists"
-    } else {
+    }
+    else {
         Log-Error "Required directory $dir missing"
     }
 }
@@ -69,12 +71,14 @@ if ($errors -gt 0) {
     Write-Host "❌ VALIDATION FAILED: $errors errors found" -ForegroundColor Red
     Write-Host "Please fix all errors before committing" -ForegroundColor Red
     exit 1
-} elseif ($warnings -gt 0) {
+}
+elseif ($warnings -gt 0) {
     Write-Host ""
     Write-Host "WARNING  VALIDATION PASSED WITH WARNINGS: $warnings warnings" -ForegroundColor Yellow
     Write-Host "Consider fixing warnings for better code quality" -ForegroundColor Yellow
     exit 0
-} else {
+}
+else {
     Write-Host ""
     Write-Host "OK VALIDATION PASSED: No errors or warnings" -ForegroundColor Green
     exit 0

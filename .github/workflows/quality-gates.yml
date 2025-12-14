@@ -1,0 +1,154 @@
+name: Quality Gates
+
+on:
+  push:
+    paths:
+      - "services/**"
+      - "proto/**"
+      - "infrastructure/**"
+      - "knowledge/**"
+      - ".github/workflows/quality-gates.yml"
+  pull_request:
+    paths:
+      - "services/**"
+      - "proto/**"
+      - "infrastructure/**"
+      - "knowledge/**"
+
+jobs:
+  quality-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          pip install PyYAML
+          # Install redocly if available
+          npm install -g @redocly/cli || echo "Redocly not available, skipping"
+
+      - name: Create reports directory
+        run: mkdir -p infrastructure/reports
+
+      - name: Run architecture validation
+        run: |
+          chmod +x infrastructure/scripts/validate-architecture.sh
+          ./infrastructure/scripts/validate-architecture.sh
+
+      - name: Run file structure validation
+        run: |
+          chmod +x infrastructure/scripts/validate-file-structure.sh
+          ./infrastructure/scripts/validate-file-structure.sh
+
+      - name: Run OpenAPI validation
+        run: |
+          chmod +x infrastructure/scripts/validate-openapi.sh
+          ./infrastructure/scripts/validate-openapi.sh
+
+      - name: Upload validation reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: quality-validation-reports
+          path: infrastructure/reports/
+          retention-days: 30
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  performance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Run performance validation
+        run: |
+          # Check for performance issues in Go code
+          echo "🔍 Checking for performance issues..."
+
+          # Check for inefficient operations
+          if find services -name "*.go" -exec grep -l "append.*range\|for.*append" {} \; | grep -q .; then
+            echo "WARNING  Found potential slice allocation inefficiencies"
+            find services -name "*.go" -exec grep -l "append.*range\|for.*append" {} \;
+          else
+            echo "OK No slice allocation inefficiencies found"
+          fi
+
+          # Check for memory pooling usage
+          pool_count=$(find services -name "*.go" -exec grep -l "sync\.Pool" {} \; | wc -l)
+          echo "📊 Found $pool_count services using memory pooling"
+
+          # Check for proper context usage
+          if find services -name "*.go" -exec grep -l "context\.WithTimeout\|DBTimeout" {} \; | grep -q .; then
+            echo "OK Context timeouts properly implemented"
+          else
+            echo "WARNING  Missing context timeout implementations"
+          fi
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Check for dependency issues
+        run: |
+          echo "🔍 Checking Go dependencies..."
+
+          # Check for outdated dependencies
+          go list -u -m all | grep -v "=>" | head -20
+
+          # Check for security vulnerabilities
+          go mod download
+          go list -json -m all | docker run --rm -i golang:1.24 go mod download && go list -json -m all | jq -r '.Path + "@" + .Version' | nancy sleuth || echo "Nancy not available, skipping vulnerability check"
+
+      - name: Check for unused dependencies
+        run: |
+          echo "🧹 Checking for unused Go dependencies..."
+
+          # This would require a tool like `go mod tidy` analysis
+          # For now, just check if go.mod is properly formatted
+          go mod tidy
+          if [ -n "$(git diff go.mod go.sum)" ]; then
+            echo "WARNING  go.mod/go.sum need to be updated"
+            git diff go.mod go.sum
+          else
+            echo "OK Go modules are properly formatted"
+          fi

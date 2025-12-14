@@ -3,16 +3,20 @@ name: Backend CI
 on:
   push:
     paths:
-      - 'services/**'
-      - 'proto/**'
-      - '.github/workflows/ci-backend.yml'
+      - "services/**"
+      - "proto/**"
+      - ".github/workflows/ci-backend.yml"
   pull_request:
     paths:
-      - 'services/**'
-      - 'proto/**'
+      - "services/**"
+      - "proto/**"
 
 jobs:
+  quality-gates:
+    uses: ./.github/workflows/quality-gates.yml
+
   discover-services:
+    needs: quality-gates
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.list.outputs.services }}
@@ -30,29 +34,29 @@ jobs:
             BASE_SHA="${{ github.event.before }}"
             HEAD_SHA="${{ github.sha }}"
           fi
-          
+
           if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
             BASE_SHA=$(git rev-parse HEAD~1)
           fi
-          
+
           changed_files=$(git diff --name-only --diff-filter=ACMR $BASE_SHA $HEAD_SHA)
           echo "Changed files: $changed_files"
-          
+
           proto_changed=$(echo "$changed_files" | grep -qE '^proto/' && echo "true" || echo "false")
           changed_service_dirs=$(echo "$changed_files" | grep -E '^services/[^/]+-go/' | cut -d'/' -f1-2 | sort -u | sed 's|services/||')
-          
+
           echo "Proto changed: $proto_changed"
           echo "Changed service dirs: $changed_service_dirs"
-          
+
           all_services=$(find services -maxdepth 1 -type d -name "*-go" -exec basename {} \;)
           valid_services=""
-          
+
           while IFS= read -r service; do
             if [ -f "services/$service/go.mod" ]; then
               valid_services="${valid_services}${service}\n"
             fi
           done <<< "$all_services"
-          
+
           if [ "$proto_changed" = "true" ] && [ -z "$changed_service_dirs" ]; then
             services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
             echo "Proto changed, using all services"
@@ -69,17 +73,17 @@ jobs:
             services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
             echo "No changes detected, using all services"
           fi
-          
+
           if [ -z "$services" ] || [ "$services" = "[]" ] || [ "$services" = "" ]; then
             echo "WARNING: No services to process, using all valid services as fallback"
             services=$(echo -e "$valid_services" | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
           fi
-          
+
           if [ -z "$services" ] || [ "$services" = "[]" ]; then
             echo "ERROR: Still no services found after fallback"
             services="[]"
           fi
-          
+
           echo "services=$services" >> $GITHUB_OUTPUT
           echo "Found services: $services"
 
@@ -91,15 +95,15 @@ jobs:
       matrix:
         service: ${{ fromJson(needs.discover-services.outputs.services) }}
       max-parallel: 10
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
-      
+          go-version: "1.24"
+
       - name: Build (runs tests and benchmarks)
         working-directory: services/${{ matrix.service }}
         run: |
@@ -126,15 +130,13 @@ jobs:
       max-parallel: 10
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
-      
+          go-version: "1.24"
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
           working-directory: services/${{ matrix.service }}
-
-

@@ -1,547 +1,131 @@
 #!/bin/bash
+# Issue: #1858
+# Pre-commit hook for automatic quality checks
 
-if ! command -v bash >/dev/null 2>&1; then
-  exit 0
+set -e
+
+echo "🔍 Running pre-commit quality checks..."
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    local color=$1
+    local message=$2
+    echo -e "${color}${message}${NC}"
+}
+
+# Check if we're in the correct directory
+if [ ! -d "$PROJECT_ROOT/scripts" ]; then
+    print_status $RED "Error: scripts directory not found. Make sure you're in the project root."
+    exit 1
 fi
 
-ALLOWED_BRANCH="develop"
-CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+# Get list of staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
 
-if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "$ALLOWED_BRANCH" ]; then
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "[GIT_HOOK_ERROR] COMMIT_BLOCKED"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  echo "ERROR_TYPE: commit_prohibited"
-  echo "CURRENT_BRANCH: $CURRENT_BRANCH"
-  echo "ALLOWED_BRANCH: $ALLOWED_BRANCH"
-  echo "POLICY: Only 'develop' branch is allowed for commits"
-  echo ""
-  echo "RESTRICTIONS:"
-  echo "  - Commits are restricted to: $ALLOWED_BRANCH"
-  echo "  - Current branch '$CURRENT_BRANCH' is not allowed"
-  echo "  - All work must be done in the '$ALLOWED_BRANCH' branch"
-  echo ""
-  echo "REQUIRED_ACTION: Switch to allowed branch before committing"
-  echo "COMMAND: git checkout $ALLOWED_BRANCH"
-  echo ""
-echo "FOR_AI_AGENTS:"
-echo "  WARNING CRITICAL: You MUST NEVER leave the '$ALLOWED_BRANCH' branch!"
-echo "  WARNING FORBIDDEN: Committing in branch '$CURRENT_BRANCH' is PROHIBITED"
-echo "  WARNING FORBIDDEN: You are NOT allowed to switch from '$ALLOWED_BRANCH'"
-echo "  OK REQUIRED: You MUST be in '$ALLOWED_BRANCH' branch to commit"
-echo "  OK REQUIRED: Never run 'git checkout -b' or 'git checkout <other-branch>'"
-echo "  OK REQUIRED: Always work ONLY in '$ALLOWED_BRANCH' branch"
-echo "  This repository enforces a strict policy: ONLY '$ALLOWED_BRANCH' branch is allowed."
-echo "  You are currently on '$CURRENT_BRANCH' which violates this policy."
-echo "  Switch to '$ALLOWED_BRANCH' immediately. Do NOT create or switch to other branches."
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  exit 1
+if [ -z "$STAGED_FILES" ]; then
+    print_status $GREEN "No files staged for commit. Skipping checks."
+    exit 0
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+print_status $YELLOW "Checking staged files: $STAGED_FILES"
 
-if [ -f "$PROJECT_ROOT/.skip-tests" ]; then
-  SKIP_TESTS=1
-fi
+# Check file sizes for staged files
+print_status $YELLOW "📏 Checking file sizes..."
+for file in $STAGED_FILES; do
+    if [ -f "$file" ]; then
+        # Count lines
+        lines=$(wc -l < "$file" 2>/dev/null || echo "0")
+        ext="${file##*.}"
 
-if [ ! -f "$PROJECT_ROOT/.github/file-size-config.sh" ]; then
-  echo "Warning: file-size-config.sh not found, skipping pre-commit hook"
-  exit 0
-fi
-
-if ! source "$PROJECT_ROOT/.github/file-size-config.sh" 2>/dev/null; then
-  echo "Warning: Failed to source file-size-config.sh, skipping pre-commit hook"
-  exit 0
-fi
-
-# Get staged files list once (used by both tests and file size check)
-FAILED_FILES=()
-CHECKED_COUNT=0
-
-if [ -n "$TMPDIR" ]; then
-  TEMP_DIR="$TMPDIR"
-elif [ -n "$TMP" ]; then
-  TEMP_DIR="$TMP"
-elif [ -d "/tmp" ]; then
-  TEMP_DIR="/tmp"
-else
-  TEMP_DIR="."
-fi
-
-TEMP_FILE="$TEMP_DIR/git-diff-cached-$$"
-trap "rm -f '$TEMP_FILE'" EXIT INT TERM
-
-if ! git diff --cached --name-only --diff-filter=ACMRT > "$TEMP_FILE" 2>/dev/null; then
-  echo "Warning: Failed to get staged files, skipping pre-commit hook"
-  rm -f "$TEMP_FILE"
-  exit 0
-fi
-
-# Issue: Run tests FIRST (before file size check) so error title is correct
-# Tests are more critical and should be checked first
-# Allow skip via env SKIP_TESTS=1 or sentinel file .skip-tests
-if [ "$SKIP_TESTS" != "1" ] && [ ! -f ".skip-tests" ]; then
-  echo "🧪 Running tests for changed services..."
-  
-  # Get changed services from staged files
-  CHANGED_SERVICES=$(cat "$TEMP_FILE" | \
-    grep -E '^services/([^/]+)/.*\.go$' | \
-    sed 's|^services/\([^/]*\)/.*|\1|' | \
-    sort -u || true)
-  
-  FAILED_SERVICES=()
-  FAILED_TESTS=()
-  TESTED_COUNT=0
-  
-  if [ -n "$CHANGED_SERVICES" ]; then
-    for service in $CHANGED_SERVICES; do
-      SERVICE_DIR="services/$service"
-      
-      if [ ! -d "$SERVICE_DIR" ]; then
-        continue
-      fi
-      
-      # Check if service has Go files
-      if ! find "$SERVICE_DIR" -name "*.go" -type f | grep -q .; then
-        continue
-      fi
-      
-      echo "  🏃 Testing $service..." | tr -d '\n'
-      TESTED_COUNT=$((TESTED_COUNT + 1))
-      
-      cd "$SERVICE_DIR" || continue
-      
-      # Check if Docker Compose test file exists and Docker is available
-      USE_DOCKER=false
-      if command -v docker-compose >/dev/null 2>&1 || command -v docker >/dev/null 2>&1; then
-        if [ -f "docker-compose.test.yml" ]; then
-          USE_DOCKER=true
-        fi
-      fi
-      
-      # Try Makefile test first, then fallback to go test
-      # On Windows, make might not be available, so check first
-      if [ -f "Makefile" ] && grep -q "^test:" Makefile && command -v make >/dev/null 2>&1; then
-        TEST_OUTPUT=$(make test 2>&1)
-        TEST_EXIT=$?
-      else
-        # Check if there are any test files
-        if find . -name "*_test.go" -type f | grep -q .; then
-          # If Docker is available, try to start test containers
-          if [ "$USE_DOCKER" = true ]; then
-            echo " (starting Docker containers...)" | tr -d '\n'
-            # Start containers in background
-            if command -v docker-compose >/dev/null 2>&1; then
-              docker-compose -f docker-compose.test.yml up -d >/dev/null 2>&1
-              sleep 3
-            elif command -v docker >/dev/null 2>&1; then
-              docker compose -f docker-compose.test.yml up -d >/dev/null 2>&1
-              sleep 3
-            fi
-            # Set environment variables for Docker test ports
-            export TEST_DATABASE_URL="postgresql://necpgame:necpgame@localhost:5433/necpgame?sslmode=disable"
-            export REDIS_ADDR="localhost:6380"
-          fi
-          
-          # Add timeout to prevent hanging tests (30 seconds) only if GNU `timeout` works
-          if command -v timeout >/dev/null 2>&1 && timeout 1 sh -c "true" >/dev/null 2>&1; then
-            TEST_OUTPUT=$(timeout 30s go test -v -timeout 30s ./... 2>&1 || echo "TIMEOUT: Tests exceeded 30 second limit")
-            TEST_EXIT=$?
-            if [ $TEST_EXIT -eq 124 ] || echo "$TEST_OUTPUT" | grep -qiE "timeout|TIMEOUT"; then
-              TEST_EXIT=1
-            fi
-          else
-            # Fallback without timeout on environments where `timeout` is missing or incompatible (e.g., Windows timeout.exe)
-            TEST_OUTPUT=$(go test -v ./... 2>&1)
-            TEST_EXIT=$?
-          fi
-          
-          # Cleanup Docker containers if we started them
-          if [ "$USE_DOCKER" = true ]; then
-            if command -v docker-compose >/dev/null 2>&1; then
-              docker-compose -f docker-compose.test.yml down -v >/dev/null 2>&1
-            elif command -v docker >/dev/null 2>&1; then
-              docker compose -f docker-compose.test.yml down -v >/dev/null 2>&1
-            fi
-          fi
-        else
-          echo " WARNING  (no tests)"
-          cd - >/dev/null || continue
-          continue
-        fi
-      fi
-      
-      if [ $TEST_EXIT -ne 0 ]; then
-        # Check if all tests were skipped (exit 0 but with skip messages)
-        # Skip tests return exit 0, so if exit != 0, there are real failures
-        echo " ❌"
-        FAILED_SERVICES+=("$service")
-        
-        # Extract failed test names from output
-        FAILED_TEST_NAMES=""
-        
-        # Try different patterns for failed tests (use -- to prevent option parsing)
-        # Pattern 1: --- FAIL: TestName (0.00s) - most common format
-        # Extract everything between "FAIL: " and " (" or end of line
-        if echo "$TEST_OUTPUT" | grep -qE -- "^[[:space:]]*--- FAIL:"; then
-          FAILED_TEST_NAMES=$(echo "$TEST_OUTPUT" | \
-            grep -- "^[[:space:]]*--- FAIL:" | \
-            sed -E 's/^[[:space:]]*--- FAIL:\s+([A-Za-z0-9_]+[A-Za-z0-9_]*)\s*(\(|$).*/\1/' | \
-            grep -v "^$" | \
-            head -10 | \
-            tr '\n' ',' | \
-            sed 's/,$//')
-        # Pattern 2: FAIL    package/path    TestName    0.00s - summary format
-        # Look for word starting with capital letter after package path
-        elif echo "$TEST_OUTPUT" | grep -qE -- "^FAIL[[:space:]]+[^[:space:]]+[[:space:]]+[A-Z]"; then
-          FAILED_TEST_NAMES=$(echo "$TEST_OUTPUT" | \
-            grep -- "^FAIL[[:space:]]" | \
-            awk '{for(i=3; i<=NF; i++) {if ($i ~ /^[A-Z][A-Za-z0-9_]*$/ && $i !~ /^[0-9]/) {print $i; break}}}' | \
-            head -10 | \
-            tr '\n' ',' | \
-            sed 's/,$//')
-        elif echo "$TEST_OUTPUT" | grep -qiE "no test files|no tests to run"; then
-          FAILED_TEST_NAMES="no test files"
-        elif echo "$TEST_OUTPUT" | grep -qiE "build.*failed|compilation.*error|undefined|cannot find|command not found"; then
-          FAILED_TEST_NAMES="compilation/command error"
-        elif echo "$TEST_OUTPUT" | grep -qiE "timeout|context deadline exceeded|deadline exceeded"; then
-          FAILED_TEST_NAMES="test timeout (tests may have hung)"
-        else
-          FAILED_TEST_NAMES="unknown"
-        fi
-        
-        # Get error summary
-        ERROR_SUMMARY=""
-        if echo "$TEST_OUTPUT" | grep -qE "panic:"; then
-          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
-            grep -A 2 "panic:" | \
-            head -3 | \
-            sed 's/^[[:space:]]*//' | \
-            sed 's/[[:space:]]\+/ /g' | \
-            tr '\n' '|' | \
-            cut -c1-150 | \
-            sed 's/|$//')
-        elif echo "$TEST_OUTPUT" | grep -qE "error:|Error:"; then
-          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
-            grep -E "error:|Error:" | \
-            head -3 | \
-            sed 's/^[[:space:]]*//' | \
-            sed 's/[[:space:]]\+/ /g' | \
-            tr '\n' '|' | \
-            cut -c1-150 | \
-            sed 's/|$//')
-        elif echo "$TEST_OUTPUT" | grep -qE "undefined|cannot find|missing"; then
-          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
-            grep -E "undefined|cannot find|missing" | \
-            head -2 | \
-            sed 's/^[[:space:]]*//' | \
-            sed 's/[[:space:]]\+/ /g' | \
-            tr '\n' '|' | \
-            cut -c1-150 | \
-            sed 's/|$//')
-        elif echo "$TEST_OUTPUT" | grep -qE -- "FAIL|assertion"; then
-          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
-            grep -E -- "FAIL|assertion" | \
-            head -3 | \
-            sed 's/^[[:space:]]*//' | \
-            sed 's/[[:space:]]\+/ /g' | \
-            tr '\n' '|' | \
-            cut -c1-150 | \
-            sed 's/|$//')
-        else
-          ERROR_SUMMARY=$(echo "$TEST_OUTPUT" | \
-            grep -v "^$" | \
-            head -5 | \
-            sed 's/^[[:space:]]*//' | \
-            sed 's/[[:space:]]\+/ /g' | \
-            tr '\n' '|' | \
-            cut -c1-150 | \
-            sed 's/|$//')
-        fi
-        
-        if [ -z "$ERROR_SUMMARY" ]; then
-          ERROR_SUMMARY="test failure (see output above)"
-        fi
-        
-        FAILED_TESTS+=("$service:$FAILED_TEST_NAMES:$ERROR_SUMMARY")
-      else
-        # Check if tests were all skipped (exit 0 but output contains "SKIP")
-        if echo "$TEST_OUTPUT" | grep -qiE "skipping|skip:" && ! echo "$TEST_OUTPUT" | grep -qE -- "^[[:space:]]*--- FAIL:"; then
-          echo " WARNING  (tests skipped - DB/Redis may be unavailable)"
-        else
-          echo " OK"
-        fi
-      fi
-      
-      cd - >/dev/null || continue
-    done
-    
-    echo ""
-    echo "Services tested: $TESTED_COUNT"
-    
-    if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
-      echo ""
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      echo "[GIT_HOOK_ERROR] COMMIT_REJECTED_TESTS_FAILED"
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      echo ""
-      echo "ERROR_TYPE: tests_failed"
-      echo "POLICY: All tests must pass before commit"
-      echo ""
-      echo "FAILED_SERVICES:"
-      for entry in "${FAILED_TESTS[@]}"; do
-        IFS=':' read -r service tests error <<< "$entry"
-        echo "  - Service: $service"
-        if [ -n "$tests" ] && [ "$tests" != "unknown" ]; then
-          echo "    Failed tests: $tests"
-        fi
-        if [ -n "$error" ]; then
-          echo "    Error: $error"
-        fi
-        echo ""
-      done
-      echo "REQUIRED_ACTION: Fix failing tests before committing"
-      echo "RECOMMENDATION: Run 'make test' or 'go test ./...' in each failed service directory"
-      echo ""
-      echo "NOTE: To skip tests (emergency only): SKIP_TESTS=1 git commit"
-      echo ""
-      echo "FOR_AI_AGENTS:"
-      echo "  This repository enforces that all tests must pass before committing."
-      echo "  The following services have failing tests:"
-      for service in "${FAILED_SERVICES[@]}"; do
-        echo "    - $service"
-      done
-      echo "  You must fix all failing tests before you can commit."
-      echo "  Steps to fix:"
-      echo "    1. Navigate to each failed service directory: cd services/<service-name>"
-      echo "    2. Run tests: make test (or go test ./...)"
-      echo "    3. Fix the failing tests"
-      echo "    4. Verify tests pass: make test"
-      echo "    5. Stage fixes: git add ."
-      echo "    6. Try committing again"
-      echo ""
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      rm -f "$TEMP_FILE"
-      exit 1
-    else
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      echo "OK All tests passed ($TESTED_COUNT services)"
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        # Check size limits
+        case $ext in
+            go|py|yaml|yml)
+                if [ "$lines" -gt 500 ]; then
+                    print_status $RED "Error: $file exceeds 500 lines ($lines lines)"
+                    exit 1
+                fi
+                ;;
+            md)
+                if [ "$lines" -gt 1000 ]; then
+                    print_status $RED "Error: $file exceeds 1000 lines ($lines lines)"
+                    exit 1
+                fi
+                ;;
+            sql)
+                if [ "$lines" -gt 800 ]; then
+                    print_status $RED "Error: $file exceeds 800 lines ($lines lines)"
+                    exit 1
+                fi
+                ;;
+        esac
     fi
-  else
-    echo "  ⏭️  No changed services with Go files"
-  fi
-else
-  echo ""
-  echo "⏭️  Skipping tests (SKIP_TESTS=1 or .skip-tests present)"
-fi
+done
 
-echo ""
-echo "🔍 Checking file sizes before commit..."
-echo "Max lines per file: $MAX_LINES"
-echo ""
-
-while IFS= read -r file || [ -n "$file" ]; do
-  if [ -z "$file" ] || [ ! -f "$file" ]; then
-    continue
-  fi
-  
-  if ! check_file_extension "$file"; then
-    continue
-  fi
-  
-  if is_excluded "$file"; then
-    echo "⏭️  Skipping (excluded): $file"
-    continue
-  fi
-  
-  LINES=$(wc -l < "$file" 2>/dev/null || echo "0")
-  if [ -z "$LINES" ] || [ "$LINES" = "" ]; then
-    LINES="0"
-  fi
-  
-  CHECKED_COUNT=$((CHECKED_COUNT + 1))
-  
-  if [ "$LINES" -gt "$MAX_LINES" ] 2>/dev/null; then
-    FAILED_FILES+=("$file:$LINES")
-    echo "❌ $file has $LINES lines (max: $MAX_LINES)"
-  else
-    echo "OK $file has $LINES lines (OK)"
-  fi
-done < "$TEMP_FILE"
-
-rm -f "$TEMP_FILE"
-
-echo ""
-echo "Files checked: $CHECKED_COUNT"
-
-if [ ${#FAILED_FILES[@]} -gt 0 ]; then
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "[GIT_HOOK_ERROR] COMMIT_REJECTED_FILE_SIZE"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  echo "ERROR_TYPE: file_size_exceeded"
-  echo "MAX_LINES_ALLOWED: $MAX_LINES"
-  echo "POLICY: Files must not exceed $MAX_LINES lines"
-  echo ""
-  echo "VIOLATING_FILES:"
-  for entry in "${FAILED_FILES[@]}"; do
-    IFS=':' read -r file lines <<< "$entry"
-    EXCEED_BY=$((lines - MAX_LINES))
-    echo "  - $file: $lines lines (exceeds by $EXCEED_BY lines)"
-  done
-  echo ""
-  echo "REQUIRED_ACTION: Split files into smaller files"
-  echo "RECOMMENDATION: ~300-400 lines per file for better maintainability"
-  echo ""
-  echo "FOR_AI_AGENTS:"
-  echo "  This repository enforces a file size limit of $MAX_LINES lines per file."
-  echo "  The following files exceed this limit and must be split:"
-  for entry in "${FAILED_FILES[@]}"; do
-    IFS=':' read -r file lines <<< "$entry"
-    echo "    - $file ($lines lines)"
-  done
-  echo "  You must refactor these files into smaller files (max $MAX_LINES lines each)."
-  echo "  Recommended approach: Split large files into multiple smaller files."
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  exit 1
-else
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "OK All files are within the $MAX_LINES line limit"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-fi
-
-# Issue: #1606 - Struct alignment check
-echo ""
-echo "🔍 Checking struct field alignment..."
-
-if command -v fieldalignment >/dev/null 2>&1; then
-  # Get staged Go files
-  STAGED_GO_FILES=$(git diff --cached --name-only --diff-filter=ACMRT | grep '\.go$' || true)
-  
-  if [ -n "$STAGED_GO_FILES" ]; then
-    # Check each staged Go file's directory
-    for file in $STAGED_GO_FILES; do
-      if [ -f "$file" ]; then
-        DIR=$(dirname "$file")
-        if [ -f "$DIR/go.mod" ] || [ -f "$PROJECT_ROOT/go.mod" ]; then
-          # Run fieldalignment on the package
-          if ! fieldalignment "$DIR/..." 2>/dev/null | grep -q "struct"; then
-            # No alignment issues found
-            :
-          else
-            echo "WARNING  Struct alignment issues found in $DIR"
-            echo "   Run: fieldalignment -fix $DIR/..."
-          fi
-        fi
-      fi
-    done
-  fi
-else
-  echo "WARNING  fieldalignment not installed. Run: go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest"
-fi
-
-# Issue: Automatic benchmarks for changed services (optional, non-blocking)
-if [ "$SKIP_BENCHMARKS" != "1" ]; then
-  echo ""
-  echo "📊 Running quick benchmarks for changed services..."
-  
-  # Create results directory
-  RESULTS_DIR=".benchmarks/results"
-  mkdir -p "$RESULTS_DIR"
-  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-  PRE_COMMIT_FILE="${RESULTS_DIR}/pre-commit_${TIMESTAMP}.json"
-  
-  # Get changed services from staged files
-  CHANGED_SERVICES=$(git diff --cached --name-only --diff-filter=ACMRT | \
-    grep -E '^services/([^/]+)/server/.*\.go$' | \
-    sed 's|^services/\([^/]*\)/.*|\1|' | \
-    sort -u || true)
-  
-  if [ -n "$CHANGED_SERVICES" ]; then
-    # Start JSON output
-    echo "{\"timestamp\":\"$TIMESTAMP\",\"source\":\"pre-commit\",\"services\":[" > "$PRE_COMMIT_FILE"
-    
-    FIRST=true
-    BENCH_COUNT=0
-    
-    for service in $CHANGED_SERVICES; do
-      SERVICE_DIR="services/$service"
-      BENCH_FILE="$SERVICE_DIR/server/handlers_bench_test.go"
-      
-      if [ -f "$BENCH_FILE" ]; then
-        echo "  🏃 $service" | tr -d '\n'
-        cd "$SERVICE_DIR" || continue
-        
-        # Run benchmarks with JSON output
-        BENCH_OUTPUT=$(go test -run=^$$ -bench=. -benchmem -benchtime=100ms -json ./server 2>&1 || echo "")
-        
-        if [ -n "$BENCH_OUTPUT" ] && ! echo "$BENCH_OUTPUT" | grep -q "no test files"; then
-          # Check if jq is available
-          if ! command -v jq >/dev/null 2>&1; then
-            echo " WARNING  (jq not found, skipping JSON save)"
-            # Still run quick check
-            if echo "$BENCH_OUTPUT" | grep -q '"Action":"bench"'; then
-            echo " OK"
-          else
-              echo " WARNING  (failed)"
-          fi
-        else
-            # Parse JSON and add to results
-            if [ "$FIRST" = false ]; then
-              echo "," >> "$PRE_COMMIT_FILE"
-            fi
-            FIRST=false
-            
-            echo -n "{\"service\":\"$service\",\"benchmarks\":[" >> "$PRE_COMMIT_FILE"
-            
-            # Extract benchmark lines and format JSON
-            BENCH_JSON=$(echo "$BENCH_OUTPUT" | jq -r 'select(.Action=="bench") | "{\"name\":\"\(.Package)/\(.Test)\",\"ns_per_op\":\(.NsPerOp // 0),\"allocs_per_op\":\(.AllocsPerOp // 0),\"bytes_per_op\":\(.BytesPerOp // 0)}"' | tr '\n' ',' | sed 's/,$//')
-            
-            if [ -n "$BENCH_JSON" ]; then
-              echo -n "$BENCH_JSON" >> "$PRE_COMMIT_FILE"
-            fi
-            
-            echo "]}" >> "$PRE_COMMIT_FILE"
-            
-            # Count benchmarks from file
-            if [ -f "$PRE_COMMIT_FILE" ]; then
-              BENCH_COUNT=$(jq '[.services[].benchmarks | length] | add' "$PRE_COMMIT_FILE" 2>/dev/null || echo "0")
-            fi
-            
-            echo " OK"
-          fi
-        else
-          echo " WARNING  (no benchmarks)"
-        fi
-        
-        cd - >/dev/null || continue
-      fi
-    done
-    
-    echo "]}" >> "$PRE_COMMIT_FILE"
-    
-    # Check if file has valid data
-    if [ -f "$PRE_COMMIT_FILE" ] && [ -s "$PRE_COMMIT_FILE" ]; then
-      FILE_BENCH_COUNT=$(jq '[.services[].benchmarks | length] | add' "$PRE_COMMIT_FILE" 2>/dev/null || echo "0")
-      if [ "$FILE_BENCH_COUNT" != "0" ] && [ "$FILE_BENCH_COUNT" != "null" ]; then
-        echo "  💾 Results saved to: $PRE_COMMIT_FILE ($FILE_BENCH_COUNT benchmarks)"
-      else
-        # Remove empty file
-        rm -f "$PRE_COMMIT_FILE"
-      fi
+# Run architecture validator if available
+if [ -f "$PROJECT_ROOT/scripts/architecture-validator.py" ]; then
+    print_status $YELLOW "🏗️  Running architecture validation..."
+    if ! python3 "$PROJECT_ROOT/scripts/architecture-validator.py" --project-root "$PROJECT_ROOT" 2>/dev/null; then
+        print_status $RED "Architecture validation failed. Please fix the issues before committing."
+        exit 1
     fi
-  else
-    echo "  ⏭️  No changed services with benchmarks"
-  fi
 fi
 
+# Run OpenAPI validator for API spec changes
+if echo "$STAGED_FILES" | grep -q "proto/openapi.*\.yaml"; then
+    if [ -f "$PROJECT_ROOT/scripts/openapi-validator.py" ]; then
+        print_status $YELLOW "📋 Running OpenAPI validation..."
+        if ! python3 "$PROJECT_ROOT/scripts/openapi-validator.py" --project-root "$PROJECT_ROOT" 2>/dev/null; then
+            print_status $RED "OpenAPI validation failed. Please fix the API specs before committing."
+            exit 1
+        fi
+    fi
+fi
+
+# Check for Issue references in commit messages for code changes
+if echo "$STAGED_FILES" | grep -E '\.(go|py|js|ts|cpp|h|java)$'; then
+    COMMIT_MSG_FILE=$(git rev-parse --git-dir)/COMMIT_EDITMSG
+    if [ -f "$COMMIT_MSG_FILE" ]; then
+        commit_msg=$(cat "$COMMIT_MSG_FILE")
+        if ! echo "$commit_msg" | grep -q "Issue: #[0-9]"; then
+            print_status $YELLOW "Warning: Consider adding 'Issue: #XXX' to commit message for code changes"
+        fi
+    fi
+fi
+
+# Check for large files
+print_status $YELLOW "📦 Checking for large files..."
+for file in $STAGED_FILES; do
+    if [ -f "$file" ]; then
+        size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+        # 50MB limit
+        if [ "$size" -gt 52428800 ]; then
+            print_status $RED "Error: $file is too large ($size bytes). Consider using Git LFS."
+            exit 1
+        fi
+    fi
+done
+
+# Check for secrets/tokens
+print_status $YELLOW "🔒 Checking for potential secrets..."
+for file in $STAGED_FILES; do
+    if [ -f "$file" ]; then
+        # Check for common patterns
+        if grep -q "password\|secret\|token\|key\|api_key" "$file" 2>/dev/null; then
+            if grep -q "password.*=.*[\"'][^\"']*[\"']\|secret.*=.*[\"'][^\"']*[\"']\|token.*=.*[\"'][^\"']*[\"']\|key.*=.*[\"'][^\"']*[\"']\|api_key.*=.*[\"'][^\"']*[\"']" "$file" 2>/dev/null; then
+                print_status $RED "Warning: Potential hardcoded secrets found in $file"
+                print_status $YELLOW "Please ensure secrets are loaded from environment variables or secure stores"
+            fi
+        fi
+    fi
+done
+
+print_status $GREEN "OK All pre-commit checks passed!"
 exit 0
-

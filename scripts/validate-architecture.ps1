@@ -34,7 +34,7 @@ if ($Check -eq "all" -or $Check -eq "file-sizes") {
     Write-Host "📏 Checking file sizes..."
 
     $filesToCheck = Get-ChildItem -Recurse -Include "*.yaml", "*.go", "*.sql", "*.md" |
-        Where-Object { $_.FullName -notmatch '\\(\.git|node_modules|vendor)\\' }
+    Where-Object { $_.FullName -notmatch '\\(\.git|node_modules|vendor)\\' }
 
     foreach ($file in $filesToCheck) {
         try {
@@ -42,7 +42,8 @@ if ($Check -eq "all" -or $Check -eq "file-sizes") {
             if ($lines -gt 600) {
                 Log-Error "File $($file.Name) exceeds 600 lines ($lines lines)"
             }
-        } catch {
+        }
+        catch {
             Log-Warning "Could not read file $($file.Name)"
         }
     }
@@ -57,7 +58,8 @@ if ($Check -eq "all" -or $Check -eq "structure") {
     foreach ($dir in $requiredDirs) {
         if (Test-Path $dir) {
             Log-Success "Directory $dir exists"
-        } else {
+        }
+        else {
             Log-Error "Required directory $dir missing"
         }
     }
@@ -69,7 +71,7 @@ if ($Check -eq "all" -or $Check -eq "yaml") {
     Write-Host "📄 Checking YAML files..."
 
     $yamlFiles = Get-ChildItem -Recurse -Include "*.yaml" |
-        Where-Object { $_.FullName -match '\\knowledge\\' }
+    Where-Object { $_.FullName -match '\\knowledge\\' }
 
     foreach ($file in $yamlFiles) {
         $content = Get-Content $file.FullName -Raw
@@ -90,7 +92,7 @@ if ($Check -eq "all" -or $Check -eq "security") {
     Write-Host "🔒 Checking security patterns..."
 
     $codeFiles = Get-ChildItem -Recurse -Include "*.go", "*.yaml" |
-        Where-Object { $_.FullName -notmatch '\\(\.git|node_modules|vendor)\\' }
+    Where-Object { $_.FullName -notmatch '\\(\.git|node_modules|vendor)\\' }
 
     foreach ($file in $codeFiles) {
         $content = Get-Content $file.FullName -Raw
@@ -116,12 +118,14 @@ if ($errors -gt 0) {
     Write-Host "❌ VALIDATION FAILED: $errors errors found" -ForegroundColor Red
     Write-Host "Please fix all errors before committing" -ForegroundColor Red
     exit 1
-} elseif ($warnings -gt 0) {
+}
+elseif ($warnings -gt 0) {
     Write-Host ""
     Write-Host "WARNING  VALIDATION PASSED WITH WARNINGS: $warnings warnings" -ForegroundColor Yellow
     Write-Host "Consider fixing warnings for better code quality" -ForegroundColor Yellow
     exit 0
-} else {
+}
+else {
     Write-Host ""
     Write-Host "OK VALIDATION PASSED: No errors or warnings" -ForegroundColor Green
     exit 0
