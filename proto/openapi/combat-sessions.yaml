@@ -1,0 +1,216 @@
+# Issue: #169
+openapi: 3.0.3
+info:
+  title: Combat Sessions API
+  version: 1.0.0
+  description: |
+    Combat session lifecycle management for MMOFPS RPG.
+
+    ## Session Management
+    - Session creation and configuration
+    - Real-time state synchronization
+    - Performance monitoring and telemetry
+
+servers:
+  - url: http://localhost:8100
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: sessions
+    description: Combat session lifecycle management
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Combat Sessions
+  /gameplay/combat/sessions:
+    post:
+      tags: [sessions]
+      summary: Create combat session
+      operationId: createCombatSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatSession"
+        "400":
+          $ref: common.yaml#/components/responses/BadRequest
+        "409":
+          description: Session conflict
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+    get:
+      tags: [sessions]
+      summary: List active combat sessions
+      operationId: listCombatSessions
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, paused, completed]
+        - $ref: common.yaml#/components/parameters/Limit
+      responses:
+        "200":
+          description: Sessions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CombatSession"
+
+  /gameplay/combat/sessions/{session_id}:
+    get:
+      tags: [sessions]
+      summary: Get session details
+      operationId: getCombatSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatSession"
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+    put:
+      tags: [sessions]
+      summary: Update session state
+      operationId: updateCombatSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSessionRequest"
+      responses:
+        "200":
+          description: Session updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatSession"
+
+    delete:
+      tags: [sessions]
+      summary: End combat session
+      operationId: endCombatSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Session ended
+        "404":
+          $ref: common.yaml#/components/responses/NotFound
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Combat Sessions
+    CreateSessionRequest:
+      type: object
+      required: [player_ids, zone_id, difficulty]
+      properties:
+        player_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        zone_id:
+          type: string
+          format: uuid
+        difficulty:
+          type: string
+          enum: [easy, normal, hard, nightmare]
+        mission_type:
+          type: string
+          enum: [raid, patrol, extraction, arena]
+
+    CombatSession:
+      type: object
+      required: [id, player_ids, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        zone_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, paused, completed, failed]
+        difficulty:
+          type: string
+          enum: [easy, normal, hard, nightmare]
+        mission_type:
+          type: string
+          enum: [raid, patrol, extraction, arena]
+        score:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateSessionRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [paused, resumed]
+        score:
+          type: integer
+          minimum: 0

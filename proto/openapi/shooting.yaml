@@ -1,0 +1,161 @@
+# Issue: #169
+openapi: 3.0.3
+info:
+  title: Shooting Systems API
+  version: 1.0.0
+  description: |
+    Weapon systems and ballistic calculations for MMOFPS RPG.
+
+    ## Shooting Mechanics
+    - Ballistic trajectory calculations
+    - Hit validation and damage processing
+    - Weapon accuracy and spread simulation
+
+servers:
+  - url: http://localhost:8100
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: shooting
+    description: Weapon systems and ballistic calculations
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Shooting
+  /gameplay/combat/shooting/calculate:
+    post:
+      tags: [shooting]
+      summary: Calculate ballistic trajectory
+      operationId: calculateBallistics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BallisticRequest"
+      responses:
+        "200":
+          description: Trajectory calculated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BallisticResult"
+
+  /gameplay/combat/shooting/hit:
+    post:
+      tags: [shooting]
+      summary: Process hit validation
+      operationId: processHit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HitRequest"
+      responses:
+        "200":
+          description: Hit processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HitResult"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Shooting
+    BallisticRequest:
+      type: object
+      required: [weapon_id, start_position, direction]
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        start_position:
+          $ref: "#/components/schemas/Vector3"
+        direction:
+          $ref: "#/components/schemas/Vector3"
+        muzzle_velocity:
+          type: number
+          minimum: 0
+
+    BallisticResult:
+      type: object
+      required: [trajectory_points, impact_point, damage]
+      properties:
+        trajectory_points:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vector3"
+        impact_point:
+          $ref: "#/components/schemas/Vector3"
+        damage:
+          type: integer
+          minimum: 0
+        ricochet:
+          type: boolean
+        penetration:
+          type: boolean
+
+    HitRequest:
+      type: object
+      required: [session_id, shooter_id, target_id, weapon_id, hit_position]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        shooter_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        hit_position:
+          $ref: "#/components/schemas/Vector3"
+        damage:
+          type: integer
+          minimum: 0
+        hit_type:
+          type: string
+          enum: [headshot, bodyshot, limb]
+
+    HitResult:
+      type: object
+      required: [valid, damage_dealt, target_health_remaining]
+      properties:
+        valid:
+          type: boolean
+        damage_dealt:
+          type: integer
+          minimum: 0
+        target_health_remaining:
+          type: integer
+          minimum: 0
+        critical_hit:
+          type: boolean
+        armor_penetration:
+          type: boolean
+
+    # Common
+    Vector3:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number

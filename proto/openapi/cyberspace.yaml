@@ -1,0 +1,104 @@
+# Issue: #169
+openapi: 3.0.3
+info:
+  title: Cyberspace Systems API
+  version: 1.0.0
+  description: |
+    Digital realm interactions for MMOFPS RPG.
+
+    ## Cyberspace Mechanics
+    - Neural implant integration
+    - Digital navigation and exploration
+    - Connection strength and time management
+
+servers:
+  - url: http://localhost:8100
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: cyberspace
+    description: Digital realm interactions
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Cyberspace
+  /gameplay/combat/cyberspace/{character_id}/enter:
+    post:
+      tags: [cyberspace]
+      summary: Enter cyberspace
+      operationId: enterCyberspace
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CyberspaceEntryRequest"
+      responses:
+        "200":
+          description: Cyberspace entered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberspaceState"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Cyberspace
+    CyberspaceEntryRequest:
+      type: object
+      required: [entry_point_id]
+      properties:
+        entry_point_id:
+          type: string
+          format: uuid
+        implant_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        duration:
+          type: integer
+          minimum: 30
+          maximum: 300
+
+    CyberspaceState:
+      type: object
+      required:
+        [character_id, current_node, connection_strength, time_remaining]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_node:
+          type: string
+          format: uuid
+        connection_strength:
+          type: number
+          minimum: 0
+          maximum: 1
+        time_remaining:
+          type: integer
+          minimum: 0
+        active_hacks:
+          type: array
+          items:
+            type: string
+        last_update:
+          type: string
+          format: date-time

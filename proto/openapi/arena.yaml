@@ -1,0 +1,124 @@
+# Issue: #169
+openapi: 3.0.3
+info:
+  title: Arena Systems API
+  version: 1.0.0
+  description: |
+    PvP arena management for MMOFPS RPG.
+
+    ## Arena Mechanics
+    - Match creation and queue management
+    - Real-time score tracking
+    - Tournament and ranked systems
+
+servers:
+  - url: http://localhost:8100
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: arena
+    description: PvP arena management
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Arena
+  /gameplay/combat/arena/matches:
+    post:
+      tags: [arena]
+      summary: Create arena match
+      operationId: createArenaMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateArenaMatchRequest"
+      responses:
+        "201":
+          description: Match created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArenaMatch"
+
+    get:
+      tags: [arena]
+      summary: List arena matches
+      operationId: listArenaMatches
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [waiting, active, completed]
+        - $ref: common.yaml#/components/parameters/Limit
+      responses:
+        "200":
+          description: Matches list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ArenaMatch"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Arena
+    CreateArenaMatchRequest:
+      type: object
+      required: [player_ids, arena_type, ruleset]
+      properties:
+        player_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        arena_type:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_flag]
+        ruleset:
+          type: string
+          enum: [standard, hardcore, ranked]
+
+    ArenaMatch:
+      type: object
+      required: [id, player_ids, arena_type, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        arena_type:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_flag]
+        ruleset:
+          type: string
+          enum: [standard, hardcore, ranked]
+        status:
+          type: string
+          enum: [waiting, active, completed]
+        winner_id:
+          type: string
+          format: uuid
+        score:
+          type: object
+          additionalProperties:
+            type: integer
+        created_at:
+          type: string
+          format: date-time

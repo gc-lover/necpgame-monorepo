@@ -1,0 +1,107 @@
+# Issue: #169
+openapi: 3.0.3
+info:
+  title: Extraction Systems API
+  version: 1.0.0
+  description: |
+    Mission completion and reward systems for MMOFPS RPG.
+
+    ## Extraction Mechanics
+    - Mission completion validation
+    - Reward calculation and distribution
+    - Loot and experience processing
+
+servers:
+  - url: http://localhost:8100
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: extraction
+    description: Mission completion systems
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Extraction
+  /gameplay/combat/extraction/{session_id}/attempt:
+    post:
+      tags: [extraction]
+      summary: Attempt mission extraction
+      operationId: attemptExtraction
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExtractionRequest"
+      responses:
+        "200":
+          description: Extraction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionResult"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Extraction
+    ExtractionRequest:
+      type: object
+      required: [extraction_point_id]
+      properties:
+        extraction_point_id:
+          type: string
+          format: uuid
+        team_members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        loot_items:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ExtractionResult:
+      type: object
+      required: [success, session_id, rewards]
+      properties:
+        success:
+          type: boolean
+        session_id:
+          type: string
+          format: uuid
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+              minimum: 0
+            credits:
+              type: integer
+              minimum: 0
+            items:
+              type: array
+              items:
+                type: string
+                format: uuid
+        completion_time:
+          type: string
+          format: date-time

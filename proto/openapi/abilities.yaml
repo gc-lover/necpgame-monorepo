@@ -1,0 +1,110 @@
+# Issue: #169
+openapi: 3.0.3
+info:
+  title: Abilities API
+  version: 1.0.0
+  description: |
+    Player ability activation and management systems for MMOFPS RPG.
+
+    ## Ability System
+    - Skill activation and cooldown management
+    - Ability state tracking
+    - Resource consumption validation
+
+servers:
+  - url: http://localhost:8100
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: abilities
+    description: Player ability activation and management
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Abilities
+  /gameplay/combat/abilities/{character_id}/activate:
+    post:
+      tags: [abilities]
+      summary: Activate player ability
+      operationId: activateAbility
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AbilityActivationRequest"
+      responses:
+        "200":
+          description: Ability activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityState"
+        "400":
+          description: Invalid activation (cooldown, resources, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/Error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Abilities
+    AbilityActivationRequest:
+      type: object
+      required: [ability_id]
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+        target_position:
+          $ref: "#/components/schemas/Vector3"
+        target_id:
+          type: string
+          format: uuid
+
+    AbilityState:
+      type: object
+      required: [ability_id, status, cooldown_remaining]
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ready, active, cooldown, disabled]
+        cooldown_remaining:
+          type: number
+          minimum: 0
+        duration_remaining:
+          type: number
+          minimum: 0
+
+    # Common
+    Vector3:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number

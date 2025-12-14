@@ -1,0 +1,152 @@
+# Issue: #169
+openapi: 3.0.3
+info:
+  title: Stealth Systems API
+  version: 1.0.0
+  description: |
+    Stealth and detection mechanics for MMOFPS RPG.
+
+    ## Stealth Mechanics
+    - Visibility calculation and detection
+    - Noise level management
+    - Cover system integration
+
+servers:
+  - url: http://localhost:8100
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: stealth
+    description: Stealth and detection mechanics
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Stealth
+  /gameplay/combat/stealth/{character_id}/visibility:
+    get:
+      tags: [stealth]
+      summary: Get stealth visibility status
+      operationId: getStealthVisibility
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Visibility status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthVisibility"
+
+    post:
+      tags: [stealth]
+      summary: Update stealth state
+      operationId: updateStealthState
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StealthUpdateRequest"
+      responses:
+        "200":
+          description: Stealth updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthState"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Stealth
+    StealthVisibility:
+      type: object
+      required: [character_id, visibility_level, detection_risk]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        visibility_level:
+          type: number
+          minimum: 0
+          maximum: 1
+        detection_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        nearby_enemies:
+          type: array
+          items:
+            type: string
+            format: uuid
+        last_detected:
+          type: string
+          format: date-time
+
+    StealthUpdateRequest:
+      type: object
+      required: [action_type]
+      properties:
+        action_type:
+          type: string
+          enum: [crouch, prone, move_silently, use_cover]
+        position:
+          $ref: "#/components/schemas/Vector3"
+        noise_level:
+          type: number
+          minimum: 0
+
+    StealthState:
+      type: object
+      required: [character_id, visibility_level, detection_risk]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        visibility_level:
+          type: number
+          minimum: 0
+          maximum: 1
+        detection_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        current_action:
+          type: string
+          enum: [standing, crouching, prone, moving]
+        last_update:
+          type: string
+          format: date-time
+
+    # Common
+    Vector3:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
