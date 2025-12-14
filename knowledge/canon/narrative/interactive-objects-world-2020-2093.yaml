@@ -1,0 +1,377 @@
+# Issue: #1859
+metadata:
+  id: canon-narrative-interactive-world
+  title: "Интерактивы (общие мировые): блок-посты, ретрансляторы, медстанции, логистические ящики"
+  document_type: canon
+  category: narrative
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-14T14:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-08T22:03:25Z
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - interactive
+    - world
+    - common
+    - gameplay
+    - mechanics
+  topics:
+    - narrative
+    - gameplay
+    - world-interactions
+    - interactive-objects
+  related_systems:
+    - gameplay-service
+    - environment-service
+    - telemetry-service
+  related_documents:
+    - id: canon-mechanics-world-environment
+      relation: implements
+    - id: canon-narrative-interactive-template
+      relation: based_on
+  source: knowledge/canon/narrative/interactive-objects-world-2020-2093.yaml
+  visibility: internal
+  audience:
+    - content
+    - world-design
+    - gameplay-devs
+  risk_level: low
+review:
+  chain:
+    - role: content_writer
+      reviewer: Content Writer Agent
+      reviewed_at: 2025-12-14T14:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Необходимы общие интерактивы для создания атмосферы и тактического геймплея во всех зонах
+  goal: Создать функциональные объекты для динамичного мира с механиками контроля и выживания
+  essence: Стратегические точки взаимодействия, влияющие на контроль зон и мобильность игроков
+  key_points:
+    - Блок-посты для фракционного контроля территорий
+    - Ретрансляторы для коммуникаций и разведки
+    - Медстанции для быстрого восстановления здоровья
+    - Логистические контейнеры с элементами риска/награды
+content:
+  interactives:
+    - name: Faction_Checkpoint
+      display_name: "Блок-пост Фракции"
+      category: world_control
+      era: 2020-2093
+      threat_level: strategic
+      description: |
+        Контрольно-пропускные пункты различных фракций, контролирующие доступ к зонам.
+        Взлом, подкуп или штурм меняют контроль зоны и экономические параметры.
+        Высокий риск привлечения подкреплений контролирующей фракции.
+
+    - name: Comm_Relay
+      display_name: "Коммуникационный Ретранслятор"
+      category: world_communication
+      era: 2020-2093
+      threat_level: tactical
+      description: |
+        Башни и антенны, усиливающие связь и раскрывающие карту района.
+        Взлом дает временное преимущество в коммуникациях, но привлекает патрули.
+        Ключевые точки для тактического контроля территории.
+
+    - name: Trauma_Station
+      display_name: "Медстанция/Trauma Team"
+      category: world_survival
+      era: 2020-2093
+      threat_level: utility
+      description: |
+        Автоматизированные медицинские станции для быстрого восстановления.
+        Ограниченные заряды, создают шум, привлекающий врагов.
+        Баланс между выживанием и риском обнаружения.
+
+    - name: Logistics_Container
+      display_name: "Логистический Контейнер"
+      category: world_logistics
+      era: 2020-2093
+      threat_level: variable
+      description: |
+        Грузовые контейнеры с припасами, оружием или ловушками.
+        Могут содержать ценные ресурсы или быть заминированными.
+        Элементы риска/награды для исследования мира.
+
+  mechanics:
+    faction_checkpoint:
+      activation:
+        type: complex_interaction
+        method: multiple_approaches
+        difficulty: variable
+        time: 10-30_seconds
+      effects:
+        - name: zone_control_change
+          type: territorial_impact
+          control_shift: 20-50%
+          duration: 1800_seconds
+          economic_impact:
+            ["tax_changes", "price_modifiers", "access_restrictions"]
+        - name: faction_response
+          type: patrol_attraction
+          reinforcement_types: ["light_patrol", "heavy_response", "air_support"]
+          delay: 60-300_seconds
+          intensity_scale: faction_importance
+        - name: economic_bonuses
+          type: trade_modifiers
+          bonuses: ["resource_discounts", "market_access", "faction_reputation"]
+          penalties: ["enemy_tariffs", "restricted_zones", "bounty_hunters"]
+      telemetry:
+        - checkpoint_breaches
+        - control_transfers
+        - faction_conflicts
+        - economic_impacts
+
+    comm_relay:
+      activation:
+        type: stealth_interaction
+        method: hack_or_physical
+        difficulty: medium
+        time: 5-15_seconds
+      effects:
+        - name: signal_boost
+          type: communication_enhancement
+          squad_link_bonus: 25%
+          range_increase: 200m
+          duration: 600_seconds
+        - name: map_reveal
+          type: intelligence_gain
+          reveal_radius: 500m
+          enemy_positions: true
+          hidden_paths: true
+        - name: patrol_distraction
+          type: attention_diversion
+          attraction_radius: 300m
+          patrol_count: 2-4
+          duration: 120_seconds
+        - name: jamming_counter
+          type: defensive_measure
+          blocks_enemy_jamming: true
+          prevents_tracking: true
+      telemetry:
+        - relay_hacks
+        - signal_boosts
+        - map_reveals
+        - patrol_attractions
+
+    trauma_station:
+      activation:
+        type: emergency_interaction
+        method: quick_access
+        difficulty: low
+        time: 2-5_seconds
+      effects:
+        - name: rapid_healing
+          type: health_restoration
+          heal_amount: 50-100%
+          charge_cost: 1
+          cooldown: 300_seconds
+        - name: noise_generation
+          type: detection_risk
+          sound_radius: 100m
+          enemy_attraction_chance: 70%
+          alert_level: moderate
+        - name: limited_charges
+          type: resource_management
+          max_charges: 3-5
+          recharge_time: 3600_seconds
+          emergency_override: true
+        - name: contamination_risk
+          type: environmental_hazard
+          infection_chance: 5%
+          symptoms: ["reduced_healing", "periodic_damage"]
+      telemetry:
+        - healing_sessions
+        - charge_consumption
+        - enemy_attractions
+        - contamination_incidents
+
+    logistics_container:
+      activation:
+        type: exploration_interaction
+        method: manual_opening
+        difficulty: low
+        time: 3-8_seconds
+      effects:
+        - name: loot_spawn
+          type: random_rewards
+          loot_tables:
+            ["basic_supplies", "valuable_goods", "rare_artifacts", "weapons"]
+          quality_modifiers: ["container_age", "location_risk", "owner_faction"]
+        - name: trap_activation
+          type: hazard_trigger
+          trap_types: ["explosive", "alarm", "toxic", "electrified"]
+          trigger_chance: 15-30%
+          damage_range: 100-500
+        - name: signal_beacon
+          type: detection_mechanism
+          alert_radius: 200m
+          patrol_attraction: guaranteed
+          signal_duration: 60_seconds
+        - name: container_integrity
+          type: durability_system
+          damage_states: ["pristine", "damaged", "compromised", "destroyed"]
+          loot_quality_modifier: -25%_per_state
+      telemetry:
+        - container_openings
+        - loot_discoveries
+        - trap_triggers
+        - signal_activations
+
+  balance:
+    difficulty_scaling:
+      street_level:
+        activation_time_multiplier: 0.8
+        success_chance_multiplier: 1.2
+        reward_quality_multiplier: 0.8
+        risk_level_multiplier: 0.7
+      tactical_level:
+        activation_time_multiplier: 1.0
+        success_chance_multiplier: 1.0
+        reward_quality_multiplier: 1.0
+        risk_level_multiplier: 1.0
+      mythic_level:
+        activation_time_multiplier: 1.3
+        success_chance_multiplier: 0.8
+        reward_quality_multiplier: 1.5
+        risk_level_multiplier: 1.8
+
+    player_impact:
+      positive_effects:
+        - territorial_control
+        - communication_advantages
+        - health_recovery
+        - resource_acquisition
+      negative_effects:
+        - enemy_attraction
+        - detection_risks
+        - resource_limits
+        - environmental_hazards
+
+  gameplay_integration:
+    quest_objectives:
+      - territorial_control
+      - signal_disruption
+      - emergency_survival
+      - supply_chain_disruption
+    synergy:
+      with_player_classes:
+        - infiltrator: silent_checkpoint_hacks
+        - social: checkpoint_bribery_options
+        - heavy: checkpoint_assault_specialist
+      with_enemy_types:
+        - patrols: relay_distraction_tactics
+        - drones: container_interception
+        - bosses: station_overload_attacks
+
+  visual_audio:
+    faction_checkpoint:
+      model: faction_checkpoint_variants
+      animations:
+        - gate_opening
+        - alarm_activation
+        - faction_flag_swap
+      sounds:
+        - gate_mechanism
+        - alarm_sirens
+        - faction_chants
+
+    comm_relay:
+      model: communication_tower_systems
+      animations:
+        - signal_transmission
+        - antenna_rotation
+        - hack_glitch_effects
+      sounds:
+        - signal_hum
+        - data_transmission
+        - interference_noise
+
+    trauma_station:
+      model: trauma_team_pod_variants
+      animations:
+        - healing_sequence
+        - charge_depletion
+        - contamination_warning
+      sounds:
+        - medical_beeps
+        - healing_hum
+        - contamination_alarm
+
+    logistics_container:
+      model: shipping_container_types
+      animations:
+        - door_opening
+        - loot_reveal
+        - trap_activation
+      sounds:
+        - container_creak
+        - item_rustle
+        - trap_mechanism
+
+  inspiration:
+    cyberpunk_sources:
+      - "Cyberpunk 2077: Environmental storytelling through interactive world elements"
+      - "Deus Ex: Security checkpoints and communication systems"
+      - "Metro Exodus: Survival stations and supply caches"
+    unique_elements:
+      - "Factional territorial control mechanics"
+      - "Communication warfare through signal disruption"
+      - "Risk-reward logistics in hostile environments"
+      - "Medical infrastructure as tactical elements"
+
+  maintenance:
+    open_questions: []
+    visual_needs:
+      - faction_specific_models
+      - signal_effects
+      - healing_animations
+      - container_variations
+    quest_integration:
+      - checkpoint_capture_missions
+      - signal_jamming_objectives
+      - supply_run_quests
+    change_history:
+      - version: "1.0.0"
+        date: 2025-12-14
+        author: content_writer_agent
+        changes: Created world interactive objects specification
+appendix:
+  glossary:
+    - term: Zone Control
+      definition: Territorial ownership affecting economics and NPC behavior
+    - term: Signal Boost
+      definition: Enhanced squad communication and radar capabilities
+    - term: Trauma Station
+      definition: Automated medical facilities with limited emergency supplies
+    - term: Logistics Container
+      definition: Supply caches with potential hazards and valuable contents
+  references:
+    - title: World Environment Mechanics
+      link: ../../mechanics/world-environment.yaml
+    - title: Interactive Objects Template
+      link: ./interactive-objects-template.yaml
+  decisions:
+    - rationale: Multiple interaction methods encourage diverse playstyles
+      impact: Increases replayability through player choice and specialization
+    - rationale: Risk-reward systems create meaningful tactical decisions
+      impact: Forces players to balance survival needs with strategic goals
+    - rationale: Environmental storytelling through interactive elements
+      impact: Immerses players in a living, breathing cyberpunk world
+implementation:
+  needs_task: false
+  github_issue: 1859
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-12-14
+    author: content_writer_agent
+    changes: Created world interactive objects specification
+validation:
+  checksum: ""
+  schema_version: "1.0"
