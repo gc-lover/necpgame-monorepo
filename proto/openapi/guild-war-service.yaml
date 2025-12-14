@@ -1,186 +1,60 @@
 openapi: 3.0.3
-# Issue: #1856
-# Guild War Service - сервис гильдейских войн
-# Port: 8086
 info:
   title: Guild War Service API
-  description: |
-    Микросервис для управления гильдейскими войнами в NECPGAME.
-    Обеспечивает объявление войн, систему очков, бонусы и статистику.
-
-    **Архитектурные требования:**
-    - P99 latency <40ms для основных операций
-    - Real-time обновления очков через WebSocket
-    - Интеграция с combat-service для регистрации боев
-    - Rate limiting: 30 req/min per user
-    - Struct alignment для оптимизации памяти
+  description: Guild warfare management service
   version: 1.0.0
-  contact:
-    name: API Designer Agent
-    email: api@necp.game
-
 servers:
   - url: http://localhost:8086/api/v1
-    description: Development server
-  - url: https://guild-war.necp.game/api/v1
-    description: Production server
-
 security:
   - BearerAuth: []
-
 paths:
-  # Управление войнами
   /wars:
     get:
-      tags: [Wars]
       operationId: listWars
-      summary: Получить список войн
-      description: Возвращает активные и завершенные войны
-      parameters:
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/WarStatus'
-          description: Фильтр по статусу войны
-        - name: guild_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по участию гильдии
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/WarType'
-          description: Фильтр по типу войны
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      summary: List wars
       responses:
         '200':
-          description: Список войн
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarListResponse'
+          description: Wars list
 
   /guilds/{guild_id}/wars:
     parameters:
       - name: guild_id
         in: path
-        required: true
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Wars]
       operationId: getGuildWars
-      summary: Получить войны гильдии
-      parameters:
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/WarStatus'
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 20
-            default: 10
+      summary: Get guild wars
       responses:
         '200':
-          description: Войны гильдии
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildWarsResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+          description: Guild wars
     post:
-      tags: [Wars]
       operationId: declareWar
-      summary: Объявить войну
-      description: Объявляет войну другой гильдии (только офицеры)
+      summary: Declare war
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/DeclareWarRequest'
       responses:
         '201':
-          description: Война объявлена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/War'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          description: Уже существует активная война
+          description: War declared
 
   /wars/{war_id}:
     parameters:
       - name: war_id
         in: path
-        required: true
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Wars]
       operationId: getWar
-      summary: Получить детали войны
+      summary: Get war details
       responses:
         '200':
-          description: Детали войны
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/War'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: War details
 
-    put:
-      tags: [Wars]
-      operationId: updateWar
-      summary: Обновить войну
-      description: Обновляет статус войны или условия
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateWarRequest'
-      responses:
-        '200':
-          description: Война обновлена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/War'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Очки войны
   /wars/{war_id}/points:
     parameters:
       - name: war_id
@@ -189,45 +63,18 @@ paths:
         schema:
           type: string
           format: uuid
-
     post:
-      tags: [Points]
       operationId: addWarPoints
-      summary: Добавить очки войне
-      description: Добавляет очки за боевые действия (системный вызов)
+      summary: Add war points
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AddPointsRequest'
       responses:
         '200':
-          description: Очки добавлены
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarPointsUpdate'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Points added
 
-    get:
-      tags: [Points]
-      operationId: getWarPoints
-      summary: Получить очки войны
-      responses:
-        '200':
-          description: Очки войны
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarPoints'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Завершение войны
   /wars/{war_id}/end:
     parameters:
       - name: war_id
@@ -236,169 +83,28 @@ paths:
         schema:
           type: string
           format: uuid
-
     post:
-      tags: [Wars]
       operationId: endWar
-      summary: Завершить войну
-      description: Завершает войну и определяет победителя
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EndWarRequest'
+      summary: End war
       responses:
         '200':
-          description: Война завершена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+          description: War ended
 
-  # Статистика войны
-  /wars/{war_id}/stats:
-    parameters:
-      - name: war_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    get:
-      tags: [Stats]
-      operationId: getWarStats
-      summary: Получить статистику войны
-      responses:
-        '200':
-          description: Статистика войны
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarStats'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Капитуляция
-  /wars/{war_id}/surrender:
-    parameters:
-      - name: war_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    post:
-      tags: [Wars]
-      operationId: surrenderWar
-      summary: Капитулировать в войне
-      description: Капитулирует в войне (только лидер гильдии)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SurrenderRequest'
-      responses:
-        '200':
-          description: Капитуляция принята
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarResult'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Лидерборды войн
   /wars/leaderboard:
     get:
-      tags: [Leaderboard]
       operationId: getWarLeaderboard
-      summary: Получить лидерборд войн
-      parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [week, month, year, all_time]
-            default: month
-          description: Период лидерборда
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/WarType'
-          description: Тип войн для лидерборда
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
+      summary: Get war leaderboard
       responses:
         '200':
-          description: Лидерборд войн
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarLeaderboardResponse'
+          description: Leaderboard
 
-  # WebSocket для real-time обновлений
   /wars/ws:
     get:
-      tags: [WebSocket]
       operationId: warWebSocket
-      summary: WebSocket для войны
-      description: |
-        WebSocket endpoint для real-time обновлений войны.
-
-        **Протокол подключения:**
-        `ws://host/wars/ws?token=jwt_token&war_id=uuid`
-
-        **Входящие сообщения:**
-        - `{"type": "join_war_updates", "war_id": "uuid"}`
-
-        **Исходящие сообщения:**
-        - `{"type": "points_update", "data": {"war_id": "uuid", "attacker_points": 100, "defender_points": 80}}`
-        - `{"type": "war_ended", "data": {"war_id": "uuid", "winner_guild_id": "uuid", "reason": "capitulation"}}`
-        - `{"type": "war_event", "data": {"type": "territory_captured", "guild_id": "uuid", "territory_id": "uuid"}}`
-
-        **Ограничения:**
-        - Rate limit: 200 messages/minute per war
-        - Max connections: 500 per war
-        - Message size limit: 2KB
+      summary: War WebSocket
       responses:
         '101':
-          description: WebSocket соединение установлено
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  # Внутренние API для интеграции
-  /internal/combat/report:
-    post:
-      tags: [Internal]
-      operationId: reportCombatEvent
-      summary: Сообщить о боевом событии
-      description: Регистрирует боевые события для подсчета очков войны
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CombatEventReport'
-      responses:
-        '200':
-          description: Событие зарегистрировано
-        '400':
-          $ref: '#/components/responses/BadRequest'
+          description: WebSocket connection
 
 components:
   securitySchemes:
@@ -406,178 +112,40 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Основные типы
-    WarStatus:
-      type: string
-      enum: [preparing, active, ended, cancelled]
-      description: Статус войны
-
-    WarType:
-      type: string
-      enum: [territorial, ranking, resource, event]
-      description: Тип войны
-
-    WarResult:
-      type: string
-      enum: [attacker_victory, defender_victory, draw, cancelled]
-      description: Результат войны
-
-    # Запросы
     DeclareWarRequest:
       type: object
-      required:
-        - target_guild_id
-        - type
+      required: [target_guild_id, type]
       properties:
         target_guild_id:
           type: string
           format: uuid
-          description: ID целевой гильдии
         type:
-          $ref: '#/components/schemas/WarType'
-        territory_id:
           type: string
-          format: uuid
-          description: ID территории (для территориальных войн)
+          enum: [territorial, ranking, resource, event]
         duration_hours:
           type: integer
           minimum: 24
           maximum: 168
           default: 168
-          description: Длительность войны в часах (1-7 дней)
-        preparation_hours:
-          type: integer
-          minimum: 1
-          maximum: 24
-          default: 24
-          description: Период подготовки в часах
-        win_condition:
-          type: string
-          maxLength: 500
-          description: Условия победы
-
-    UpdateWarRequest:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/WarStatus'
-        win_condition:
-          type: string
-          maxLength: 500
 
     AddPointsRequest:
       type: object
-      required:
-        - guild_id
-        - points
-        - reason
+      required: [guild_id, points, reason]
       properties:
         guild_id:
           type: string
           format: uuid
-          description: ID гильдии, получающей очки
         points:
           type: integer
           minimum: 1
           maximum: 1000
-          description: Количество очков
         reason:
           type: string
           enum: [kill, objective_capture, defense, bonus]
-          description: Причина начисления очков
-        event_id:
-          type: string
-          format: uuid
-          description: ID связанного события
-        description:
-          type: string
-          maxLength: 200
 
-    EndWarRequest:
+    War:
       type: object
-      required:
-        - result
-      properties:
-        result:
-          $ref: '#/components/schemas/WarResult'
-        reason:
-          type: string
-          maxLength: 500
-          description: Причина завершения
-
-    SurrenderRequest:
-      type: object
-      properties:
-        terms:
-          type: string
-          maxLength: 500
-          description: Условия капитуляции
-
-    CombatEventReport:
-      type: object
-      required:
-        - war_id
-        - event_type
-        - participants
-      properties:
-        war_id:
-          type: string
-          format: uuid
-        event_type:
-          type: string
-          enum: [pvp_kill, objective_capture, territory_defense, resource_control]
-        participants:
-          type: array
-          items:
-            type: object
-            properties:
-              guild_id:
-                type: string
-                format: uuid
-              user_id:
-                type: string
-                format: uuid
-              contribution:
-                type: integer
-                minimum: 0
-          minItems: 1
-        metadata:
-          type: object
-          description: Дополнительные данные события
-
-    # Ответы
-    WarListResponse:
-      type: object
-      required:
-        - wars
-        - total
-        - limit
-        - offset
-      properties:
-        wars:
-          type: array
-          items:
-            $ref: '#/components/schemas/WarSummary'
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    WarSummary:
-      type: object
-      required:
-        - war_id
-        - attacker_guild
-        - defender_guild
-        - type
-        - status
-        - points_attacker
-        - points_defender
-        - created_at
       properties:
         war_id:
           type: string
@@ -587,9 +155,11 @@ components:
         defender_guild:
           $ref: '#/components/schemas/GuildSummary'
         type:
-          $ref: '#/components/schemas/WarType'
+          type: string
+          enum: [territorial, ranking, resource, event]
         status:
-          $ref: '#/components/schemas/WarStatus'
+          type: string
+          enum: [preparing, active, ended]
         points_attacker:
           type: integer
         points_defender:
@@ -597,16 +167,10 @@ components:
         created_at:
           type: string
           format: date-time
-        ended_at:
-          type: string
-          format: date-time
 
     GuildSummary:
       type: object
-      required:
-        - guild_id
-        - name
-        - tag
+      required: [guild_id, name, tag]
       properties:
         guild_id:
           type: string
@@ -616,257 +180,10 @@ components:
         tag:
           type: string
 
-    GuildWarsResponse:
-      type: object
-      required:
-        - wars
-        - total
-      properties:
-        wars:
-          type: array
-          items:
-            $ref: '#/components/schemas/War'
-        total:
-          type: integer
-
-    War:
-      type: object
-      required:
-        - war_id
-        - attacker_guild
-        - defender_guild
-        - type
-        - status
-        - points_attacker
-        - points_defender
-        - preparation_end_at
-        - end_at
-        - created_at
-      properties:
-        war_id:
-          type: string
-          format: uuid
-        attacker_guild:
-          $ref: '#/components/schemas/GuildSummary'
-        defender_guild:
-          $ref: '#/components/schemas/GuildSummary'
-        type:
-          $ref: '#/components/schemas/WarType'
-        status:
-          $ref: '#/components/schemas/WarStatus'
-        territory_id:
-          type: string
-          format: uuid
-        points_attacker:
-          type: integer
-          default: 0
-        points_defender:
-          type: integer
-          default: 0
-        win_condition:
-          type: string
-        preparation_end_at:
-          type: string
-          format: date-time
-        end_at:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        ended_at:
-          type: string
-          format: date-time
-        winner_guild_id:
-          type: string
-          format: uuid
-        result:
-          $ref: '#/components/schemas/WarResult'
-
-    WarPoints:
-      type: object
-      required:
-        - war_id
-        - attacker_points
-        - defender_points
-        - last_updated
-      properties:
-        war_id:
-          type: string
-          format: uuid
-        attacker_points:
-          type: integer
-        defender_points:
-          type: integer
-        point_history:
-          type: array
-          items:
-            type: object
-            properties:
-              timestamp:
-                type: string
-                format: date-time
-              guild_id:
-                type: string
-                format: uuid
-              points_added:
-                type: integer
-              reason:
-                type: string
-              event_id:
-                type: string
-                format: uuid
-          maxItems: 100
-        last_updated:
-          type: string
-          format: date-time
-
-    WarPointsUpdate:
-      type: object
-      required:
-        - war_id
-        - points_before
-        - points_after
-        - points_added
-      properties:
-        war_id:
-          type: string
-          format: uuid
-        guild_id:
-          type: string
-          format: uuid
-        points_before:
-          type: integer
-        points_after:
-          type: integer
-        points_added:
-          type: integer
-        reason:
-          type: string
-
-    WarStats:
-      type: object
-      required:
-        - war_id
-        - total_kills
-        - total_objectives
-        - average_participants
-        - duration_hours
-      properties:
-        war_id:
-          type: string
-          format: uuid
-        total_kills:
-          type: integer
-        total_objectives:
-          type: integer
-        average_participants:
-          type: integer
-        duration_hours:
-          type: integer
-        top_contributors:
-          type: array
-          items:
-            type: object
-            properties:
-              user_id:
-                type: string
-                format: uuid
-              username:
-                type: string
-              guild_id:
-                type: string
-                format: uuid
-              points_contributed:
-                type: integer
-              kills:
-                type: integer
-              objectives:
-                type: integer
-          maxItems: 10
-        event_timeline:
-          type: array
-          items:
-            type: object
-            properties:
-              timestamp:
-                type: string
-                format: date-time
-              event_type:
-                type: string
-              description:
-                type: string
-              points_awarded:
-                type: integer
-
-    WarLeaderboardResponse:
-      type: object
-      required:
-        - period
-        - rankings
-      properties:
-        period:
-          type: string
-        rankings:
-          type: array
-          items:
-            type: object
-            properties:
-              rank:
-                type: integer
-              guild:
-                $ref: '#/components/schemas/GuildSummary'
-              wars_won:
-                type: integer
-              wars_lost:
-                type: integer
-              total_points:
-                type: integer
-              win_rate:
-                type: number
-              avg_war_duration:
-                type: integer
-                description: Средняя длительность войн в часах
-
-    # Общие схемы ошибок
     Error:
       type: object
-      required:
-        - code
-        - message
       properties:
         code:
           type: string
         message:
           type: string
-        details:
-          type: object
-
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Unauthorized:
-      description: Не авторизован
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Forbidden:
-      description: Доступ запрещен
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: Не найдено
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'

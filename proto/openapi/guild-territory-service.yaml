@@ -1,109 +1,35 @@
 openapi: 3.0.3
-# Issue: #1856
-# Guild Territory Service - сервис территорий и собственности
-# Port: 8087
 info:
   title: Guild Territory Service API
-  description: |
-    Микросервис для управления территориями и собственностью гильдий в NECPGAME.
-    Обеспечивает захват территорий, управление собственностью и экономические бонусы.
-
-    **Архитектурные требования:**
-    - P99 latency <45ms для основных операций
-    - Real-time обновления статуса территорий
-    - Интеграция с world-service для географических данных
-    - Rate limiting: 25 req/min per user
-    - Struct alignment для оптимизации памяти
+  description: Guild territory and property management service
   version: 1.0.0
-  contact:
-    name: API Designer Agent
-    email: api@necp.game
-
 servers:
   - url: http://localhost:8087/api/v1
-    description: Development server
-  - url: https://guild-territory.necp.game/api/v1
-    description: Production server
-
 security:
   - BearerAuth: []
-
 paths:
-  # Территории
   /territories:
     get:
-      tags: [Territories]
       operationId: listTerritories
-      summary: Получить список территорий
-      description: Возвращает все доступные территории с их статусом
-      parameters:
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/TerritoryStatus'
-          description: Фильтр по статусу территории
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/TerritoryType'
-          description: Фильтр по типу территории
-        - name: controlling_guild_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по контролирующей гильдии
-        - name: region
-          in: query
-          schema:
-            type: string
-            maxLength: 50
-          description: Фильтр по региону
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      summary: List territories
       responses:
         '200':
-          description: Список территорий
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TerritoryListResponse'
+          description: Territories list
 
   /territories/{territory_id}:
     parameters:
       - name: territory_id
         in: path
-        required: true
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Territories]
       operationId: getTerritory
-      summary: Получить информацию о территории
+      summary: Get territory
       responses:
         '200':
-          description: Информация о территории
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Territory'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Territory info
 
-  # Захват территорий
   /territories/{territory_id}/claim:
     parameters:
       - name: territory_id
@@ -112,252 +38,97 @@ paths:
         schema:
           type: string
           format: uuid
-
     post:
-      tags: [Claim]
       operationId: claimTerritory
-      summary: Захватить территорию
-      description: Инициирует процесс захвата территории гильдией
+      summary: Claim territory
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ClaimTerritoryRequest'
       responses:
         '202':
-          description: Процесс захвата начат
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaimProcess'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          description: Территория уже захватывается
-
+          description: Claim started
     delete:
-      tags: [Claim]
       operationId: abandonTerritory
-      summary: Отказаться от территории
-      description: Отказывается от контроля над территорией
+      summary: Abandon territory
       responses:
         '200':
-          description: Контроль над территорией снят
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Territory abandoned
 
-  # Процессы захвата
   /claim-processes/{process_id}:
     parameters:
       - name: process_id
         in: path
-        required: true
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Claim]
       operationId: getClaimProcess
-      summary: Получить статус процесса захвата
+      summary: Get claim process
       responses:
         '200':
-          description: Статус процесса захвата
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaimProcess'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Process status
 
-  /claim-processes/{process_id}/cancel:
-    parameters:
-      - name: process_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    post:
-      tags: [Claim]
-      operationId: cancelClaimProcess
-      summary: Отменить процесс захвата
-      responses:
-        '200':
-          description: Процесс захвата отменен
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Территории гильдии
   /guilds/{guild_id}/territories:
     parameters:
       - name: guild_id
         in: path
-        required: true
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Guild]
       operationId: getGuildTerritories
-      summary: Получить территории гильдии
-      parameters:
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/TerritoryStatus'
-          description: Фильтр по статусу
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/TerritoryType'
-          description: Фильтр по типу
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
+      summary: Get guild territories
       responses:
         '200':
-          description: Территории гильдии
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildTerritoriesResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Guild territories
 
-  # Управление собственностью
   /properties:
     get:
-      tags: [Properties]
       operationId: listProperties
-      summary: Получить список всей собственности
-      parameters:
-        - name: territory_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по территории
-        - name: owner_guild_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по владельцу
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/PropertyType'
-          description: Фильтр по типу собственности
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
+      summary: List properties
       responses:
         '200':
-          description: Список собственности
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PropertyListResponse'
-
+          description: Properties list
     post:
-      tags: [Properties]
       operationId: createProperty
-      summary: Создать собственность
-      description: Создает новую собственность на территории
+      summary: Create property
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreatePropertyRequest'
       responses:
         '201':
-          description: Собственность создана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Property'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Property created
 
   /properties/{property_id}:
     parameters:
       - name: property_id
         in: path
-        required: true
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Properties]
       operationId: getProperty
-      summary: Получить информацию о собственности
+      summary: Get property
       responses:
         '200':
-          description: Информация о собственности
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Property'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+          description: Property info
     put:
-      tags: [Properties]
       operationId: updateProperty
-      summary: Обновить собственность
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePropertyRequest'
+      summary: Update property
       responses:
         '200':
-          description: Собственность обновлена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Property'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+          description: Property updated
     delete:
-      tags: [Properties]
       operationId: deleteProperty
-      summary: Удалить собственность
+      summary: Delete property
       responses:
         '204':
-          description: Собственность удалена
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Property deleted
 
-  # Экономические бонусы территорий
   /territories/{territory_id}/bonuses:
     parameters:
       - name: territory_id
@@ -366,20 +137,12 @@ paths:
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Bonuses]
       operationId: getTerritoryBonuses
-      summary: Получить бонусы территории
+      summary: Get territory bonuses
       responses:
         '200':
-          description: Бонусы территории
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TerritoryBonuses'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Territory bonuses
 
   /guilds/{guild_id}/territory-bonuses:
     parameters:
@@ -389,108 +152,20 @@ paths:
         schema:
           type: string
           format: uuid
-
     get:
-      tags: [Bonuses]
       operationId: getGuildTerritoryBonuses
-      summary: Получить суммарные бонусы территорий гильдии
+      summary: Get guild territory bonuses
       responses:
         '200':
-          description: Суммарные бонусы территорий
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildTerritoryBonuses'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Guild bonuses
 
-  # Статистика территорий
-  /territories/stats:
-    get:
-      tags: [Stats]
-      operationId: getTerritoryStats
-      summary: Получить общую статистику территорий
-      responses:
-        '200':
-          description: Статистика территорий
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TerritoryStats'
-
-  /guilds/{guild_id}/territory-stats:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    get:
-      tags: [Stats]
-      operationId: getGuildTerritoryStats
-      summary: Получить статистику территорий гильдии
-      responses:
-        '200':
-          description: Статистика территорий гильдии
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildTerritoryStats'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # WebSocket для real-time обновлений
   /territories/ws:
     get:
-      tags: [WebSocket]
       operationId: territoryWebSocket
-      summary: WebSocket для территорий
-      description: |
-        WebSocket endpoint для real-time обновлений территорий.
-
-        **Протокол подключения:**
-        `ws://host/territories/ws?token=jwt_token`
-
-        **Входящие сообщения:**
-        - `{"type": "subscribe_territory", "territory_id": "uuid"}`
-        - `{"type": "subscribe_guild_territories", "guild_id": "uuid"}`
-
-        **Исходящие сообщения:**
-        - `{"type": "territory_claimed", "data": {"territory_id": "uuid", "guild_id": "uuid"}}`
-        - `{"type": "territory_abandoned", "data": {"territory_id": "uuid", "previous_guild_id": "uuid"}}`
-        - `{"type": "claim_process_update", "data": {"process_id": "uuid", "status": "in_progress", "progress": 75}}`
-        - `{"type": "territory_bonuses_changed", "data": {"territory_id": "uuid", "bonuses": {...}}}`
-
-        **Ограничения:**
-        - Rate limit: 150 messages/minute per user
-        - Max subscriptions: 20 territories per connection
-        - Message size limit: 2KB
+      summary: Territory WebSocket
       responses:
         '101':
-          description: WebSocket соединение установлено
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  # Внутренние API для интеграции
-  /internal/territory/update-status:
-    post:
-      tags: [Internal]
-      operationId: updateTerritoryStatus
-      summary: Обновить статус территории
-      description: Внутренний API для обновления статуса территории
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTerritoryStatusRequest'
-      responses:
-        '200':
-          description: Статус обновлен
-        '400':
-          $ref: '#/components/responses/BadRequest'
+          description: WebSocket connection
 
 components:
   securitySchemes:
@@ -498,44 +173,18 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Основные типы
-    TerritoryStatus:
-      type: string
-      enum: [neutral, claimed, contested, controlled]
-      description: Статус территории
-
-    TerritoryType:
-      type: string
-      enum: [resource, strategic, commercial, residential, industrial]
-      description: Тип территории
-
-    PropertyType:
-      type: string
-      enum: [building, facility, outpost, stronghold, warehouse]
-      description: Тип собственности
-
-    ClaimStatus:
-      type: string
-      enum: [preparing, in_progress, completed, failed, cancelled]
-      description: Статус процесса захвата
-
-    # Запросы
     ClaimTerritoryRequest:
       type: object
-      required:
-        - guild_id
+      required: [guild_id]
       properties:
         guild_id:
           type: string
           format: uuid
-          description: ID гильдии, захватывающей территорию
         priority:
           type: string
           enum: [low, medium, high, critical]
           default: medium
-          description: Приоритет захвата
         resources_allocated:
           type: object
           properties:
@@ -543,112 +192,31 @@ components:
               type: integer
               minimum: 1
               maximum: 100
-              description: Количество выделенного персонала
-            equipment:
-              type: object
-              description: Выделенное оборудование
-        expected_duration_hours:
-          type: integer
-          minimum: 1
-          maximum: 72
-          description: Ожидаемая длительность захвата в часах
 
     CreatePropertyRequest:
       type: object
-      required:
-        - territory_id
-        - type
-        - name
+      required: [territory_id, type, name]
       properties:
         territory_id:
           type: string
           format: uuid
         type:
-          $ref: '#/components/schemas/PropertyType'
+          type: string
+          enum: [building, facility, outpost, stronghold, warehouse]
         name:
           type: string
-          minLength: 3
           maxLength: 50
         description:
           type: string
           maxLength: 200
-        coordinates:
-          type: object
-          properties:
-            x:
-              type: number
-            y:
-              type: number
-            z:
-              type: number
         level:
           type: integer
           minimum: 1
           maximum: 10
           default: 1
 
-    UpdatePropertyRequest:
+    Territory:
       type: object
-      properties:
-        name:
-          type: string
-          minLength: 3
-          maxLength: 50
-        description:
-          type: string
-          maxLength: 200
-        level:
-          type: integer
-          minimum: 1
-          maximum: 10
-
-    UpdateTerritoryStatusRequest:
-      type: object
-      required:
-        - territory_id
-        - status
-      properties:
-        territory_id:
-          type: string
-          format: uuid
-        status:
-          $ref: '#/components/schemas/TerritoryStatus'
-        controlling_guild_id:
-          type: string
-          format: uuid
-        control_established_at:
-          type: string
-          format: date-time
-
-    # Ответы
-    TerritoryListResponse:
-      type: object
-      required:
-        - territories
-        - total
-        - limit
-        - offset
-      properties:
-        territories:
-          type: array
-          items:
-            $ref: '#/components/schemas/TerritorySummary'
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    TerritorySummary:
-      type: object
-      required:
-        - territory_id
-        - name
-        - type
-        - status
-        - region
-        - coordinates
       properties:
         territory_id:
           type: string
@@ -656,32 +224,41 @@ components:
         name:
           type: string
         type:
-          $ref: '#/components/schemas/TerritoryType'
-        status:
-          $ref: '#/components/schemas/TerritoryStatus'
-        region:
           type: string
-        coordinates:
-          type: object
-          properties:
-            x:
-              type: number
-            y:
-              type: number
-            z:
-              type: number
+          enum: [resource, strategic, commercial, residential, industrial]
+        status:
+          type: string
+          enum: [neutral, claimed, contested, controlled]
         controlling_guild:
           $ref: '#/components/schemas/GuildSummary'
-        control_established_at:
+        bonuses:
+          type: object
+        created_at:
           type: string
           format: date-time
 
+    Property:
+      type: object
+      properties:
+        property_id:
+          type: string
+          format: uuid
+        territory_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [building, facility, outpost, stronghold, warehouse]
+        name:
+          type: string
+        level:
+          type: integer
+        owner_guild:
+          $ref: '#/components/schemas/GuildSummary'
+
     GuildSummary:
       type: object
-      required:
-        - guild_id
-        - name
-        - tag
+      required: [guild_id, name, tag]
       properties:
         guild_id:
           type: string
@@ -691,219 +268,6 @@ components:
         tag:
           type: string
 
-    Territory:
-      type: object
-      required:
-        - territory_id
-        - name
-        - type
-        - status
-        - region
-        - coordinates
-        - size
-        - difficulty
-        - created_at
-      properties:
-        territory_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        type:
-          $ref: '#/components/schemas/TerritoryType'
-        status:
-          $ref: '#/components/schemas/TerritoryStatus'
-        region:
-          type: string
-        coordinates:
-          type: object
-          properties:
-            x:
-              type: number
-            y:
-              type: number
-            z:
-              type: number
-        size:
-          type: integer
-          description: Размер территории в условных единицах
-        difficulty:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Сложность захвата
-        controlling_guild:
-          $ref: '#/components/schemas/GuildSummary'
-        control_established_at:
-          type: string
-          format: date-time
-        bonuses:
-          $ref: '#/components/schemas/TerritoryBonuses'
-        properties:
-          type: array
-          items:
-            $ref: '#/components/schemas/PropertySummary'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    ClaimProcess:
-      type: object
-      required:
-        - process_id
-        - territory_id
-        - guild_id
-        - status
-        - started_at
-      properties:
-        process_id:
-          type: string
-          format: uuid
-        territory_id:
-          type: string
-          format: uuid
-        guild_id:
-          type: string
-          format: uuid
-        status:
-          $ref: '#/components/schemas/ClaimStatus'
-        progress:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Процент завершения (0-100)
-        started_at:
-          type: string
-          format: date-time
-        estimated_completion_at:
-          type: string
-          format: date-time
-        resources_allocated:
-          type: object
-          description: Выделенные ресурсы
-        events:
-          type: array
-          items:
-            type: object
-            properties:
-              timestamp:
-                type: string
-                format: date-time
-              event_type:
-                type: string
-              description:
-                type: string
-          maxItems: 50
-
-    GuildTerritoriesResponse:
-      type: object
-      required:
-        - territories
-        - total
-      properties:
-        territories:
-          type: array
-          items:
-            $ref: '#/components/schemas/Territory'
-        total:
-          type: integer
-        total_controlled_area:
-          type: integer
-          description: Общая контролируемая площадь
-        average_difficulty:
-          type: number
-          description: Средняя сложность контролируемых территорий
-
-    PropertyListResponse:
-      type: object
-      required:
-        - properties
-        - total
-      properties:
-        properties:
-          type: array
-          items:
-            $ref: '#/components/schemas/PropertySummary'
-        total:
-          type: integer
-
-    PropertySummary:
-      type: object
-      required:
-        - property_id
-        - territory_id
-        - type
-        - name
-        - level
-      properties:
-        property_id:
-          type: string
-          format: uuid
-        territory_id:
-          type: string
-          format: uuid
-        type:
-          $ref: '#/components/schemas/PropertyType'
-        name:
-          type: string
-        level:
-          type: integer
-        owner_guild:
-          $ref: '#/components/schemas/GuildSummary'
-
-    Property:
-      type: object
-      required:
-        - property_id
-        - territory_id
-        - type
-        - name
-        - level
-        - created_at
-      properties:
-        property_id:
-          type: string
-          format: uuid
-        territory_id:
-          type: string
-          format: uuid
-        type:
-          $ref: '#/components/schemas/PropertyType'
-        name:
-          type: string
-        description:
-          type: string
-        level:
-          type: integer
-        coordinates:
-          type: object
-          properties:
-            x:
-              type: number
-            y:
-              type: number
-            z:
-              type: number
-        owner_guild:
-          $ref: '#/components/schemas/GuildSummary'
-        bonuses:
-          type: object
-          description: Бонусы от собственности
-        maintenance_cost:
-          type: object
-          description: Стоимость обслуживания
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
     TerritoryBonuses:
       type: object
       properties:
@@ -912,152 +276,24 @@ components:
           properties:
             resource_generation:
               type: object
-              description: Генерация ресурсов в час
             tax_income:
               type: number
-              description: Дополнительный доход от налогов (%)
             trade_efficiency:
               type: number
-              description: Эффективность торговли (%)
         strategic_bonuses:
           type: object
           properties:
             defense_bonus:
               type: number
-              description: Бонус к защите (%)
             movement_speed:
               type: number
-              description: Бонус к скорости передвижения (%)
             detection_range:
               type: number
-              description: Бонус к дальности обнаружения (meters)
-        social_bonuses:
-          type: object
-          properties:
-            reputation_gain:
-              type: number
-              description: Бонус к репутации (%)
-            recruitment_efficiency:
-              type: number
-              description: Эффективность вербовки (%)
 
-    GuildTerritoryBonuses:
-      type: object
-      required:
-        - total_bonuses
-        - territory_count
-      properties:
-        total_bonuses:
-          $ref: '#/components/schemas/TerritoryBonuses'
-        territory_count:
-          type: integer
-        bonuses_by_type:
-          type: object
-          properties:
-            resource:
-              $ref: '#/components/schemas/TerritoryBonuses'
-            strategic:
-              $ref: '#/components/schemas/TerritoryBonuses'
-            commercial:
-              $ref: '#/components/schemas/TerritoryBonuses'
-
-    TerritoryStats:
-      type: object
-      required:
-        - total_territories
-        - controlled_territories
-        - contested_territories
-        - neutral_territories
-      properties:
-        total_territories:
-          type: integer
-        controlled_territories:
-          type: integer
-        contested_territories:
-          type: integer
-        neutral_territories:
-          type: integer
-        territories_by_type:
-          type: object
-          additionalProperties:
-            type: integer
-        territories_by_region:
-          type: object
-          additionalProperties:
-            type: integer
-        average_control_duration_days:
-          type: number
-
-    GuildTerritoryStats:
-      type: object
-      required:
-        - controlled_territories
-        - total_area
-        - average_difficulty
-      properties:
-        controlled_territories:
-          type: integer
-        total_area:
-          type: integer
-        average_difficulty:
-          type: number
-        territories_by_type:
-          type: object
-          additionalProperties:
-            type: integer
-        control_history:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              territories_controlled:
-                type: integer
-              area_controlled:
-                type: integer
-          maxItems: 30
-
-    # Общие схемы ошибок
     Error:
       type: object
-      required:
-        - code
-        - message
       properties:
         code:
           type: string
         message:
           type: string
-        details:
-          type: object
-
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Unauthorized:
-      description: Не авторизован
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Forbidden:
-      description: Доступ запрещен
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: Не найдено
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'

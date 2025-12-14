@@ -1,400 +1,60 @@
 openapi: 3.0.3
-# Issue: #1856
-# Guild Bank Service - сервис банка гильдии
-# Port: 8085
 info:
   title: Guild Bank Service API
-  description: |
-    Микросервис для управления банковскими операциями гильдий в NECPGAME.
-    Обеспечивает депозиты, снятия, налоги и экономические транзакции.
-
-    **Архитектурные требования:**
-    - P99 latency <30ms для транзакций
-    - Атомарные операции с валидацией через economy-service
-    - Rate limiting: 50 req/min per user
-    - Полная аудитория всех транзакций
-    - Struct alignment для оптимизации памяти
+  description: Guild banking operations service
   version: 1.0.0
-  contact:
-    name: API Designer Agent
-    email: api@necp.game
-
 servers:
   - url: http://localhost:8085/api/v1
-    description: Development server
-  - url: https://guild-bank.necp.game/api/v1
-    description: Production server
-
 security:
   - BearerAuth: []
-
 paths:
-  # Баланс банка
   /guilds/{guild_id}/bank/balance:
     parameters:
       - name: guild_id
         in: path
-        required: true
         schema:
           type: string
           format: uuid
-        description: ID гильдии
-
     get:
-      tags: [Bank]
       operationId: getGuildBankBalance
-      summary: Получить баланс банка гильдии
-      description: Возвращает текущий баланс всех валют и ресурсов
+      summary: Get bank balance
       responses:
         '200':
-          description: Баланс банка
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildBankBalance'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Balance info
 
-  # Депозиты
   /guilds/{guild_id}/bank/deposit:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
     post:
-      tags: [Bank]
       operationId: depositToGuildBank
-      summary: Внести средства в банк гильдии
-      description: Депозит средств или ресурсов в банк гильдии
+      summary: Deposit funds
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/DepositRequest'
       responses:
         '200':
-          description: Депозит выполнен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Transaction'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Deposited
 
-  # Снятия
   /guilds/{guild_id}/bank/withdraw:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
     post:
-      tags: [Bank]
       operationId: withdrawFromGuildBank
-      summary: Снять средства из банка гильдии
-      description: Снятие средств или ресурсов из банка гильдии (только авторизованные роли)
+      summary: Withdraw funds
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/WithdrawRequest'
       responses:
         '200':
-          description: Снятие выполнено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Transaction'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Withdrawn
 
-  # История транзакций
   /guilds/{guild_id}/bank/transactions:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
     get:
-      tags: [Bank]
       operationId: getGuildBankTransactions
-      summary: Получить историю транзакций банка
-      description: Возвращает историю всех транзакций банка гильдии
-      parameters:
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/TransactionType'
-          description: Фильтр по типу транзакции
-        - name: user_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по пользователю
-        - name: date_from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Дата начала периода
-        - name: date_to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Дата окончания периода
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Количество результатов
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Смещение для пагинации
+      summary: Get transactions
       responses:
         '200':
-          description: История транзакций
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionHistoryResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Детали транзакции
-  /guilds/{guild_id}/bank/transactions/{transaction_id}:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: transaction_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    get:
-      tags: [Bank]
-      operationId: getGuildBankTransaction
-      summary: Получить детали транзакции
-      responses:
-        '200':
-          description: Детали транзакции
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Transaction'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Налоговые настройки
-  /guilds/{guild_id}/bank/tax:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    get:
-      tags: [Tax]
-      operationId: getGuildTaxSettings
-      summary: Получить налоговые настройки
-      responses:
-        '200':
-          description: Налоговые настройки
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildTaxSettings'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags: [Tax]
-      operationId: updateGuildTaxSettings
-      summary: Обновить налоговые настройки
-      description: Изменяет ставку налога (только лидер)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTaxSettingsRequest'
-      responses:
-        '200':
-          description: Настройки обновлены
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildTaxSettings'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Экономические награды
-  /guilds/{guild_id}/bank/rewards:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    post:
-      tags: [Rewards]
-      operationId: grantGuildReward
-      summary: Выдать награду гильдии
-      description: Выдает экономическую награду гильдии (от системы или админов)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GrantRewardRequest'
-      responses:
-        '200':
-          description: Награда выдана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Transaction'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  # Автоматические налоги
-  /guilds/{guild_id}/bank/tax/collection:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    post:
-      tags: [Tax]
-      operationId: collectGuildTaxes
-      summary: Собрать налоги
-      description: Автоматический сбор налогов с членов гильдии (системный вызов)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CollectTaxesRequest'
-      responses:
-        '200':
-          description: Налоги собраны
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaxCollectionResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  # Статистика банка
-  /guilds/{guild_id}/bank/stats:
-    parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    get:
-      tags: [Stats]
-      operationId: getGuildBankStats
-      summary: Получить статистику банка
-      parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [day, week, month, year]
-            default: month
-          description: Период статистики
-      responses:
-        '200':
-          description: Статистика банка
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildBankStats'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Валидация баланса (внутренний API)
-  /internal/balance/validate:
-    post:
-      tags: [Internal]
-      operationId: validateBalance
-      summary: Валидировать баланс
-      description: Внутренний API для валидации балансов перед транзакциями
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BalanceValidationRequest'
-      responses:
-        '200':
-          description: Баланс валиден
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                  current_balance:
-                    $ref: '#/components/schemas/CurrencyAmount'
-        '400':
-          description: Недостаточно средств
+          description: Transactions list
 
 components:
   securitySchemes:
@@ -402,341 +62,70 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Основные типы
-    TransactionType:
-      type: string
-      enum: [deposit, withdrawal, tax_collection, reward, purchase, transfer]
-      description: Тип транзакции
-
-    CurrencyAmount:
-      type: object
-      description: Сумма в определенной валюте
-      required:
-        - currency
-        - amount
-      properties:
-        currency:
-          type: string
-          enum: [credits, premium_currency, metal, energy, rare_materials]
-          description: Тип валюты или ресурса
-        amount:
-          type: integer
-          minimum: 0
-          description: Количество
-
-    # Запросы
     DepositRequest:
       type: object
-      required:
-        - amounts
+      required: [amounts]
       properties:
         amounts:
           type: array
           items:
-            $ref: '#/components/schemas/CurrencyAmount'
-          minItems: 1
-          maxItems: 10
-          description: Суммы для депозита
-        description:
-          type: string
-          maxLength: 200
-          description: Описание депозита
+            type: object
+            properties:
+              currency:
+                type: string
+                enum: [credits, premium_currency, metal, energy]
+              amount:
+                type: integer
+                minimum: 0
 
     WithdrawRequest:
       type: object
-      required:
-        - amounts
-        - reason
+      required: [amounts, reason]
       properties:
         amounts:
           type: array
           items:
-            $ref: '#/components/schemas/CurrencyAmount'
-          minItems: 1
-          maxItems: 10
-          description: Суммы для снятия
+            type: object
+            properties:
+            currency:
+              type: string
+              enum: [credits, premium_currency, metal, energy]
+            amount:
+              type: integer
+              minimum: 0
         reason:
           type: string
           maxLength: 200
-          description: Причина снятия (обязательно для аудита)
-
-    UpdateTaxSettingsRequest:
-      type: object
-      required:
-        - tax_rate
-      properties:
-        tax_rate:
-          type: number
-          minimum: 0
-          maximum: 0.5
-          description: Ставка налога (0-50%)
-
-    GrantRewardRequest:
-      type: object
-      required:
-        - amounts
-        - reason
-      properties:
-        amounts:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-          minItems: 1
-          maxItems: 10
-        reason:
-          type: string
-          enum: [quest_completion, war_victory, territory_control, event_reward, admin_grant]
-          description: Причина награды
-        description:
-          type: string
-          maxLength: 200
-
-    CollectTaxesRequest:
-      type: object
-      required:
-        - period_start
-        - period_end
-      properties:
-        period_start:
-          type: string
-          format: date-time
-          description: Начало периода для сбора налогов
-        period_end:
-          type: string
-          format: date-time
-          description: Конец периода для сбора налогов
-
-    BalanceValidationRequest:
-      type: object
-      required:
-        - guild_id
-        - amounts
-      properties:
-        guild_id:
-          type: string
-          format: uuid
-        amounts:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-          minItems: 1
-
-    # Ответы
-    GuildBankBalance:
-      type: object
-      required:
-        - guild_id
-        - balance
-        - last_updated
-      properties:
-        guild_id:
-          type: string
-          format: uuid
-        balance:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-          description: Текущий баланс по всем валютам
-        last_transaction_at:
-          type: string
-          format: date-time
-          description: Время последней транзакции
-        tax_rate:
-          type: number
-          description: Текущая ставка налога
 
     Transaction:
       type: object
-      required:
-        - transaction_id
-        - guild_id
-        - type
-        - amounts
-        - user_id
-        - created_at
       properties:
         transaction_id:
           type: string
           format: uuid
-        guild_id:
-          type: string
-          format: uuid
         type:
-          $ref: '#/components/schemas/TransactionType'
+          type: string
+          enum: [deposit, withdrawal, tax_collection, reward]
         amounts:
           type: array
           items:
-            $ref: '#/components/schemas/CurrencyAmount'
-        user_id:
-          type: string
-          format: uuid
-          description: ID пользователя, выполнившего транзакцию
-        description:
-          type: string
+            type: object
+            properties:
+            currency:
+              type: string
+              enum: [credits, premium_currency, metal, energy]
+            amount:
+              type: integer
+              minimum: 0
         created_at:
           type: string
           format: date-time
-        balance_after:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-          description: Баланс после транзакции
 
-    TransactionHistoryResponse:
-      type: object
-      required:
-        - transactions
-        - total
-        - limit
-        - offset
-      properties:
-        transactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Transaction'
-        total:
-          type: integer
-          description: Общее количество транзакций
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    GuildTaxSettings:
-      type: object
-      required:
-        - guild_id
-        - tax_rate
-        - last_updated
-      properties:
-        guild_id:
-          type: string
-          format: uuid
-        tax_rate:
-          type: number
-          minimum: 0
-          maximum: 0.5
-        auto_collect:
-          type: boolean
-          default: true
-          description: Автоматический сбор налогов
-        last_updated:
-          type: string
-          format: date-time
-
-    TaxCollectionResult:
-      type: object
-      required:
-        - collected_amount
-        - member_count
-        - success_count
-        - failure_count
-      properties:
-        collected_amount:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-        member_count:
-          type: integer
-          description: Общее количество членов
-        success_count:
-          type: integer
-          description: Успешно собрано с членов
-        failure_count:
-          type: integer
-          description: Не удалось собрать
-        failures:
-          type: array
-          items:
-            type: object
-            properties:
-              user_id:
-                type: string
-                format: uuid
-              reason:
-                type: string
-                enum: [insufficient_funds, error]
-
-    GuildBankStats:
-      type: object
-      required:
-        - period
-        - total_deposits
-        - total_withdrawals
-        - tax_collected
-        - rewards_granted
-      properties:
-        period:
-          type: string
-          enum: [day, week, month, year]
-        total_deposits:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-        total_withdrawals:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-        tax_collected:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-        rewards_granted:
-          type: array
-          items:
-            $ref: '#/components/schemas/CurrencyAmount'
-        transaction_count:
-          type: integer
-        avg_transaction_amount:
-          type: number
-        top_contributors:
-          type: array
-          items:
-            type: object
-            properties:
-              user_id:
-                type: string
-                format: uuid
-              total_deposited:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CurrencyAmount'
-          maxItems: 10
-
-    # Общие схемы ошибок
     Error:
       type: object
-      required:
-        - code
-        - message
       properties:
         code:
           type: string
         message:
           type: string
-        details:
-          type: object
-
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Forbidden:
-      description: Доступ запрещен
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: Не найдено
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
